@@ -89,6 +89,8 @@ typedef struct
 	int		rbufferPos; //next read position
 } fileHandleData_t; //0x11C (284) Size
 
+extern int dvar_modifiedFlags;
+
 void FS_InitFilesystem();
 long FS_FOpenFileRead(const char *filename, fileHandle_t *file);
 long FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
@@ -97,3 +99,4 @@ int FS_ReadFile( const char *qpath, void **buffer );
 int FS_SV_ReadFile( const char *qpath, void **buffer );
 void FS_FCloseFile( fileHandle_t f );
 void FS_FreeFile( void *buffer );
+int FS_LoadStack();

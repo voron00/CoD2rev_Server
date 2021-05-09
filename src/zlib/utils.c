@@ -5,33 +5,15 @@
 #include "zlib.h"
 #include "ioapi.h"
 
-#define Com_Memset memset
-
-void *Z_TryMallocInternalZip( int size )
-{
-	void *buf;
-
-	buf = malloc(size);
-	if (buf)
-		Com_Memset(buf, 0, size);
-
-	return buf;
-}
-
-void Z_FreeInternalZip( void *ptr )
-{
-	free(ptr);
-}
-
 voidp zcalloc (voidp opaque, unsigned items, unsigned size)
 {
 	if (opaque) items += size - size; /* make compiler happy */
-	return (voidp)Z_TryMallocInternalZip(items*size);
+	return (voidp)malloc(items*size);
 }
 
 void  zcfree (voidp opaque, voidp ptr)
 {
-	Z_FreeInternalZip(ptr);
+	free(ptr);
 	if (opaque) return; /* make compiler happy */
 }
 

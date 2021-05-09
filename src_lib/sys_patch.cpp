@@ -1,4 +1,3 @@
-#include "i_shared.h"
 #include "sys_patch.h"
 
 DWORD SetCall(DWORD addr, DWORD destination)
