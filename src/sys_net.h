@@ -31,3 +31,4 @@ typedef struct
 } netadr_t;
 
 qboolean Sys_SendPacket( int length, const void *data, netadr_t to );
+qboolean Sys_GetPacket( netadr_t *net_from, msg_t *net_message );

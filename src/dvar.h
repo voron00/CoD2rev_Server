@@ -108,6 +108,10 @@ dvar_t* Dvar_RegisterInt(const char* dvarName, int value, int min, int max, unsi
 dvar_t* Dvar_RegisterFloat(const char* dvarName, float value, float min, float max, unsigned short flags);
 dvar_t* Dvar_RegisterString(const char* dvarName, const char* value, unsigned short flags);
 dvar_t* Dvar_RegisterEnum(const char* dvarName, const char** valueList, int defaultIndex, unsigned short flags);
+dvar_t* Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, float max, unsigned short flags);
+dvar_t* Dvar_RegisterVec3(const char *dvarName, float x, float y, float z, float min, float max, unsigned short flags);
+dvar_t* Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float w, float min, float max, unsigned short flags);
+dvar_t* Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned short flags);
 int Dvar_GetCombinedString(char *dest, int arg);
 void Dvar_SetLatchedValue(dvar_t *var, DvarValue value);
 qboolean Dvar_ValuesEqual(DvarType type, DvarValue val0, DvarValue val1);

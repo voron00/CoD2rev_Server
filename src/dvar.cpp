@@ -283,6 +283,75 @@ dvar_t* Dvar_RegisterEnum(const char* dvarName, const char** valueList, int defa
 	return dvar;
 }
 
+dvar_t* Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, float max, unsigned short flags)
+{
+	dvar_t* dvar;
+	DvarLimits domain;
+	DvarValue val;
+
+	domain.decimal.min = min;
+	domain.decimal.max = max;
+
+	val.vec2[0] = x;
+	val.vec2[1] = y;
+
+	dvar = Dvar_Register(dvarName, DVAR_VEC2, flags, val, domain);
+	return dvar;
+}
+
+dvar_t* Dvar_RegisterVec3(const char *dvarName, float x, float y, float z, float min, float max, unsigned short flags)
+{
+	dvar_t* dvar;
+	DvarLimits domain;
+	DvarValue val;
+
+	domain.decimal.min = min;
+	domain.decimal.max = max;
+
+	val.vec3[0] = x;
+	val.vec3[1] = y;
+	val.vec3[2] = z;
+
+	dvar = Dvar_Register(dvarName, DVAR_VEC3, flags, val, domain);
+	return dvar;
+}
+
+dvar_t* Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float w, float min, float max, unsigned short flags)
+{
+	dvar_t* dvar;
+	DvarLimits domain;
+	DvarValue val;
+
+	domain.decimal.min = min;
+	domain.decimal.max = max;
+
+	val.vec4[0] = x;
+	val.vec4[1] = y;
+	val.vec4[2] = z;
+	val.vec4[3] = w;
+
+	dvar = Dvar_Register(dvarName, DVAR_VEC4, flags, val, domain);
+	return dvar;
+}
+
+dvar_t* Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned short flags)
+{
+	dvar_t* dvar;
+	DvarLimits domain;
+	DvarValue val;
+
+	domain.decimal.min = 0.0;
+	domain.decimal.max = 0.0;
+
+	val.color.rgba[0] = (byte)(0xff * r);
+	val.color.rgba[1] = (byte)(0xff * g);
+	val.color.rgba[2] = (byte)(0xff * b);
+	val.color.rgba[3] = (byte)(0xff * a);
+
+	dvar = Dvar_Register(dvarName, DVAR_COLOR, flags, val, domain);
+	return dvar;
+}
+
 const char *Dvar_DisplayableLatchedValue(dvar_t *var)
 {
 	return Dvar_ValueToString(var, var->latched);
@@ -824,12 +893,15 @@ int Dvar_GetCombinedString(char *dest, int arg)
 	for (int i = arg; i < maxarg; i++)
 	{
 		const char *string = Cmd_Argv(i);
-		length += strlen(string);
+		length += strlen(string + 1);
 
 		if (length > MAX_STRING_CHARS)
 			break;
 
 		I_strncat(dest, MAX_STRING_CHARS, string);
+
+		if (i < maxarg - 1)
+			I_strncat(dest, MAX_STRING_CHARS, " ");
 	}
 
 	return length;
@@ -859,25 +931,25 @@ int Dvar_StringToValue(DvarValue *value, const char *string, DvarType type)
 		break;
 
 	case DVAR_VEC2:
-		if (isVector(string, 0, sizeof(vec2_t)))
+		if (isVector(string, 0, 2))
 		{
-			strToVect(string, value->vec2, sizeof(vec2_t));
+			strToVect(string, value->vec2, 2);
 			valueset = 1;
 		}
 		break;
 
 	case DVAR_VEC3:
-		if (isVector(string, 0, sizeof(vec3_t)))
+		if (isVector(string, 0, 3))
 		{
-			strToVect(string, value->vec2, sizeof(vec3_t));
+			strToVect(string, value->vec3, 3);
 			valueset = 1;
 		}
 		break;
 
 	case DVAR_VEC4:
-		if (isVector(string, 0, sizeof(vec4_t)))
+		if (isVector(string, 0, 4))
 		{
-			strToVect(string, value->vec2, sizeof(vec4_t));
+			strToVect(string, value->vec4, 4);
 			valueset = 1;
 		}
 		break;

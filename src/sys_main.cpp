@@ -586,8 +586,8 @@ sysEvent_t Sys_GetEvent( void )
 {
 	sysEvent_t ev;
 	char    *s;
-	//msg_t netmsg;
-	//netadr_t adr;
+	msg_t netmsg;
+	netadr_t adr;
 
 	// return if we have data
 	if ( eventHead > eventTail )
@@ -617,7 +617,6 @@ sysEvent_t Sys_GetEvent( void )
 	//IN_Frame();
 
 	// check for network packets
-	/*
 	MSG_Init( &netmsg, sys_packetReceived, sizeof( sys_packetReceived ) );
 	if ( Sys_GetPacket( &adr, &netmsg ) )
 	{
@@ -626,12 +625,11 @@ sysEvent_t Sys_GetEvent( void )
 
 		// copy out to a seperate buffer for qeueing
 		len = sizeof( netadr_t ) + netmsg.cursize;
-		buf = Z_Malloc( len );
+		buf = (netadr_t *)Z_Malloc( len );
 		*buf = adr;
 		memcpy( buf + 1, netmsg.data, netmsg.cursize );
 		Sys_QueEvent( 0, SE_PACKET, 0, 0, len, buf );
 	}
-	*/
 
 	// return if we have data
 	if ( eventHead > eventTail )
