@@ -4,6 +4,8 @@
 #include "cmd.h"
 #include "dvar.h"
 #include "filesystem.h"
+#include "server.h"
+#include "entity.h"
 
 dvar_t *com_dedicated;
 dvar_t *com_maxfps;
@@ -768,6 +770,21 @@ The games main initialization
 void Com_Init(char* commandLine)
 {
 	Com_Printf("%s %s build %s %s\n", GAME_STRING,PRODUCT_VERSION,PLATFORM_STRING, __DATE__);
+
+	if (sizeof(client_t) != 0x78F14)
+	{
+		Com_Error( ERR_FATAL, "Error: client_t struct has invalid size %d\n", sizeof(client_t) );
+	}
+
+	if (sizeof(gentity_t) != 560)
+	{
+		Com_Error( ERR_FATAL, "Error: gentity_t struct has invalid size %d\n", sizeof(gentity_t) );
+	}
+
+	if (sizeof(gclient_t) != 0x28A4)
+	{
+		Com_Error( ERR_FATAL, "Error: gclient_t struct has invalid size %d\n", sizeof(gclient_t) );
+	}
 
 	// bk001129 - do this before anything else decides to push events
 	Com_InitPushEvent();

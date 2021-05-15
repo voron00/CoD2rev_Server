@@ -8,15 +8,6 @@
 #include "entity.h"
 #include "player.h"
 
-typedef enum
-{
-	TEAM_FREE,
-	TEAM_RED,
-	TEAM_BLUE,
-	TEAM_SPEC,
-	TEAM_NUM_TEAMS
-} team_t;
-
 typedef struct
 {
 	netadr_t adr;
@@ -29,14 +20,14 @@ typedef struct
 	int guid;
 } challenge_t;
 
-typedef enum
+enum
 {
 	CS_FREE,
 	CS_ZOMBIE,
 	CS_CONNECTED,
 	CS_PRIMED,
 	CS_ACTIVE
-} clientState_t;
+};
 
 typedef struct
 {
@@ -62,9 +53,9 @@ typedef struct
 
 typedef struct client_s
 {
-	clientState_t	state;
-	int				unksnapshotvar;
-	int				unksnapshotvar2;
+	int				state;
+	int				delayed;
+	const char		*delayDropMsg;
 	char			userinfo[MAX_STRING_CHARS];
 	reliableCommands_t	reliableCommands[MAX_RELIABLE_COMMANDS];
 	int				reliableSequence;
@@ -303,16 +294,4 @@ typedef struct
 	char gametype[MAX_QPATH];
 } server_t; // verified
 
-#define MAX_GAMESTATE_CHARS MAX_MSGLEN
-typedef struct
-{
-	int			stringOffsets[MAX_CONFIGSTRINGS];
-	char		stringData[MAX_GAMESTATE_CHARS];
-	int			dataCount;
-} gameState_t;
-
 qboolean SV_GameCommand(void);
-
-#if __GNUC__ >= 6
-static_assert((sizeof(client_t) == 0x78F14), "ERROR: client_t size is invalid!");
-#endif

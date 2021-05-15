@@ -13,7 +13,7 @@ $cc $options $constants -c src_lib/sys_patch.cpp -o objects/sys_patch.o
 
 echo "Linking objects..."
 objects="$(ls objects/*.o)"
-$cc -m32 -shared -L/lib32 -o bin/libcod2rev.so -ldl $objects $pthread_link $objects_zlib
+$cc -m32 -shared -L/lib32 -o bin/libcod2rev.so -ldl $objects $pthread_link
 
 echo "Cleaning up..."
 rm objects -r

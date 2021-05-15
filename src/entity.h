@@ -6,6 +6,15 @@ typedef struct gclient_s gclient_t;
 typedef struct gentity_s gentity_t;
 typedef int scr_entref_t;
 
+typedef enum team_s
+{
+	TEAM_FREE,
+	TEAM_RED,
+	TEAM_BLUE,
+	TEAM_SPEC,
+	TEAM_NUM_TEAMS
+} team_t;
+
 typedef enum
 {
 	CON_DISCONNECTED,
@@ -33,11 +42,11 @@ typedef enum
 
 typedef struct
 {
-	trType_t	trType;
-	int			trTime;
-	int			trDuration;
-	vec3_t		trBase;
-	vec3_t		trDelta;
+	trType_t trType;
+	int trTime;
+	int trDuration;
+	vec3_t trBase;
+	vec3_t trDelta;
 } trajectory_t;
 
 typedef struct entityState_s
@@ -59,52 +68,44 @@ typedef struct entityState_s
 	int surfaceFlags;
 	int modelindex;
 	int clientNum;
-	int	iHeadIcon;
-	int	iHeadIconTeam;
-	int	solid;
-	int	eventParm;
-	int	eventSequence;
+	int iHeadIcon;
+	int iHeadIconTeam;
+	int solid;
+	int eventParm;
+	int eventSequence;
 	vec4_t events;
 	vec4_t eventParms;
 	int weapon;
 	int legsAnim;
 	int torsoAnim;
 	int stage;
-	int loopfxid;
 	int hintstring;
+	int cursorhint;
 	int animMovetype;
-	vec3_t unkAngles;
+	vec3_t angles2;
 } entityState_t; // verified
 
 typedef struct
 {
-	byte		linked;
-	byte		bmodel;
-	byte		svFlags;
-	byte		pad1;
-	int			clientMask[2];
-	byte		inuse;
-	byte		pad2[3];
-	int			broadcastTime;
-	vec3_t		mins, maxs;
-	int			contents;
-	vec3_t		absmin, absmax;
-	vec3_t		currentOrigin;
-	vec3_t		currentAngles;
-	u_int16_t	ownerNum;
-	u_int16_t	pad3;
-	int			eventTime;
+	byte linked;
+	byte bmodel;
+	byte svFlags;
+	byte pad1;
+	int clientMask[2];
+	byte inuse;
+	byte pad2[3];
+	int broadcastTime;
+	vec3_t mins;
+	vec3_t maxs;
+	int contents;
+	vec3_t absmin;
+	vec3_t absmax;
+	vec3_t currentOrigin;
+	vec3_t currentAngles;
+	u_int16_t ownerNum;
+	u_int16_t pad3;
+	int eventTime;
 } entityShared_t; // verified
-
-typedef enum
-{
-	STAT_HEALTH,
-	STAT_DEAD_YAW,
-	STAT_MAX_HEALTH,
-	STAT_FRIENDLY_LOOKAT_CLIENTNUM,
-	STAT_FRIENDLY_LOOKAT_HEALTH,
-	STAT_SPAWN_COUNT
-} statIndex_t;
 
 typedef enum
 {
@@ -217,22 +218,30 @@ typedef struct
 	int	flags;
 } mantleState_t;
 
+typedef struct
+{
+	byte slot_none;
+	byte slot_primary;
+	byte slot_primaryb;
+	byte pad;
+} weapSlot_t;
+
 typedef struct playerState_s
 {
-	int	commandTime;
+	int commandTime;
 	int pm_type;
 	int bobCycle;
 	int pm_flags;
 	int pm_time;
 	vec3_t origin;
 	vec3_t velocity;
-	vec2_t oldVelocity; // 48
-	int	weaponTime;
+	vec2_t oldVelocity;
+	int weaponTime;
 	int weaponDelay;
-	int	grenadeTimeLeft;
-	int	throwBackGrenadeOwner;
-	int	throwBackGrenadeTimeLeft;
-	int	gravity;
+	int grenadeTimeLeft;
+	int weaponRestrictKickTime;
+	int foliageSoundTime;
+	int gravity;
 	float leanf;
 	int speed;
 	vec3_t delta_angles;
@@ -244,45 +253,53 @@ typedef struct playerState_s
 	int legsAnim;
 	int torsoTime;
 	int torsoAnim;
-	int	legsAnimDuration;
-	int	torsoAnimDuration;
-	int	damageTimer;
-	int	damageDuration;
-	int	flinchYawAnim;
-	int	movementDir;
-	int	eFlags;
-	int	eventSequence;
+	int legsAnimDuration;
+	int torsoAnimDuration;
+	int damageTimer;
+	int damageDuration;
+	int flinchYawAnim;
+	int movementDir;
+	int eFlags;
+	int eventSequence;
 	int events[4];
 	unsigned int eventParms[4];
-	int	oldEventSequence;
-	int	clientNum;
-	int	offHandIndex;
+	int oldEventSequence;
+	int clientNum;
+	int offHandIndex;
 	unsigned int weapon;
-	int	weaponstate;
+	int weaponstate;
 	float fWeaponPosFrac;
 	int adsDelayTime;
-	int	viewmodelIndex;
+	int viewmodelIndex;
 	vec3_t viewangles;
 	int viewHeightTarget;
 	float viewHeightCurrent;
 	int viewHeightLerpTime;
 	int viewHeightLerpTarget;
 	int viewHeightLerpDown;
-	int unknown[5];
-	int	damageEvent;
-	int	damageYaw;
-	int	damagePitch;
-	int	damageCount;
-	int	stats[6];
-	int	ammo[128];
-	int	ammoclip[128]; // 836
+	vec2_t		viewAngleClampBase;
+	vec2_t		viewAngleClampRange;
+	int unknown;
+	int damageCount;
+	int damageYaw;
+	int damagePitch;
+	int damageEvent;
+	int health;
+	int deadYaw;
+	int maxhealth;
+	int teamPlayInfoEntNum;
+	struct gclient_s *teamPlayInfoClient;
+	int clientSpawnCounter;
+	int ammo[128];
+	int ammoclip[128];
 	int weapFlags;
 	int weapFlags2;
-	int unknown2[2];
-	byte slot_none;
-	byte slot_primary;
-	byte slot_primaryb;
-	int unknown3[5];
+	int otherFlags;
+	int otherFlags2;
+	weapSlot_t weaponSlot;
+	int nonPVSFriendlyFlags;
+	int weaponRechamber;
+	vec3_t unknownVector;
 	vec3_t mins;
 	vec3_t maxs;
 	float proneDirection;
@@ -290,20 +307,20 @@ typedef struct playerState_s
 	float proneTorsoPitch;
 	ViewLockTypes_t viewlocked;
 	int viewlocked_entNum;
-	int	cursorHint;
-	int	cursorHintString;
-	int	cursorHintEntIndex;
-	int unknown1;
-	vec3_t unkAngles;
+	int cursorHint;
+	int cursorHintString;
+	int cursorHintEntIndex;
+	int unknownInteger;
+	vec3_t angles2;
 	float holdBreathScale;
-	int holdBreathTimer;
+	int holdBreathTime;
 	mantleState_t mantleState;
 	int entityEventSequence;
-	int	weapAnim;
+	int weaponSequenceFlags;
 	float aimSpreadScale;
-	int	shellshockIndex;
-	int	shellshockTime;
-	int	shellshockDuration;
+	int shellshockIndex;
+	int shellshockTime;
+	int shellshockDuration;
 	objective_t objective[16];
 	int archiveTime;
 	hudElemState_t hud;
@@ -319,20 +336,30 @@ typedef enum
 
 typedef struct
 {
+	int clientIndex;
+	int team;
+	int modelindex;
+	int attachModelIndex[6];
+	int attachTagIndex[6];
+	char name[32];
+} clientState_t;
+
+typedef struct
+{
 	sessionState_t state;
 	int forceSpectatorClient;
 	int statusIcon;
 	int archiveTime;
-	int	score;
+	int score;
 	int deaths;
 	u_int16_t scriptPersId;
 	byte pad2;
 	byte pad;
-	clientConnected_t connected;
-	usercmd_t cmd;
-	usercmd_t oldcmd;
-	qboolean localClient;
-	qboolean predictItemPickup;
+	int connected;
+	usercmd_s cmd;
+	usercmd_s oldcmd;
+	int localClient;
+	int predictItemPickup;
 	char name[32];
 	int maxHealth;
 	int enterTime;
@@ -340,14 +367,9 @@ typedef struct
 	int teamVoteCount;
 	float unknown;
 	int viewmodelIndex;
-	qboolean noSpectate;
+	int noSpectate;
 	int teamInfo;
-	int clientId;
-	sessionTeam_t team;
-	int model;
-	int attachedModels[6];
-	int attachedModelsTags[6];
-	char manualModeName[32];
+	clientState_t clState;
 	int psOffsetTime;
 } clientSession_t; // verified
 
@@ -356,9 +378,9 @@ struct gclient_s
 	playerState_t ps;
 	clientSession_t sess;
 	int spectatorClient;
-	qboolean noclip;
-	qboolean ufo;
-	qboolean bFrozen;
+	int noclip;
+	int ufo;
+	int bFrozen;
 	int lastCmdTime;
 	int buttons;
 	int oldbuttons;
@@ -369,31 +391,33 @@ struct gclient_s
 	float fGunYaw;
 	int damage_blood;
 	vec3_t damage_from;
-	qboolean damage_fromWorld;
+	int damage_fromWorld;
 	int accurateCount; // N/A
 	int accuracy_shots; // N/A
 	int accuracy_hits; // N/A
 	int inactivityTime;
-	qboolean inactivityWarning;
+	int inactivityWarning;
 	int playerTalkTime;
 	int rewardTime; // N/A
-	float currentAimSpreadScale; // 10256
-	int unknown_space[2];
+	float currentAimSpreadScale;
+	int sniperRifleFiredTime; // N/A
+	float sniperRifleMuzzleYaw; // N/A
 	int unknownClientEndFrameVar;
-	int unknown_space2[3];
-	gentity_t *lookAtEntity; // needs a NULL check, otherwise crash.
+	vec3_t unknownVector;  // N/A
+	gentity_s *lookAtEntity;
 	int activateEntNumber;
 	int activateTime;
 	int nonPVSFriendlyEntNum;
 	int pingPlayerTime;
 	int damageFeedBackTime;
 	vec2_t damageFeedBackDir;
-	vec3_t swayViewAngles; // 10316
+	vec3_t swayViewAngles;
 	vec3_t swayOffset;
 	vec3_t swayAngles;
-	int unknown_space3[7];
-	float weaponRecoil; // 10380
-	int unknown_space4[3];
+	vec3_t vLastMoveAng;
+	vec3_t vGunOffset;
+	vec3_t vGunSpeed;
+	int vGunAngle[2];
 	int lastServerTime;
 	int lastActivateTime;
 }; // verified
@@ -418,60 +442,125 @@ struct turretInfo_s
 	char stopSndPlayer;
 };
 
+struct tagInfo_s
+{
+	struct gentity_s *parent;
+	struct gentity_s *next;
+	u_int16_t name;
+	u_int16_t pad;
+	int index;
+	float axis[4][3];
+	float parentInvAxis[4][3];
+};
+
+struct trigger_ent_t
+{
+	int threshold;
+	int accumulate;
+	int timestamp;
+	int singleUserEntIndex;
+	byte requireLookAt;
+};
+
+struct item_ent_t
+{
+	int ammoCount;
+	int clipAmmoCount;
+	int index;
+};
+
+struct mover_ent_t
+{
+	float decelTime;
+	float aDecelTime;
+	float speed;
+	float aSpeed;
+	float midTime;
+	float aMidTime;
+	vec3_t pos1;
+	vec3_t pos2;
+	vec3_t pos3;
+	vec3_t apos1;
+	vec3_t apos2;
+	vec3_t apos3;
+};
+
+struct corpse_ent_t
+{
+	int deathAnimStartTime;
+};
+
+enum MissileStage
+{
+	MISSILESTAGE_SOFTLAUNCH = 0x0,
+	MISSILESTAGE_ASCENT = 0x1,
+	MISSILESTAGE_DESCENT = 0x2,
+};
+
+enum MissileFlightMode
+{
+	MISSILEFLIGHTMODE_TOP = 0x0,
+	MISSILEFLIGHTMODE_DIRECT = 0x1,
+};
+
+struct missile_ent_t
+{
+	float time;
+	int timeOfBirth;
+	float travelDist;
+	vec3_t surfaceNormal;
+	enum team_s team;
+	vec3_t curvature;
+	int targetEntNum;
+	vec3_t targetOffset;
+	enum MissileStage stage;
+	enum MissileFlightMode flightMode;
+};
+
 struct gentity_s
 {
 	entityState_t s;
 	entityShared_t r;
-	struct gclient_s *client; // 344
-	turretInfo_s *pTurretInfo; // 348
-	byte physicsObject; // 352
-	byte takedamage; // 353
-	byte active; // 354
-	byte nopickup; // 355 ?
-	byte model; // 356
-	byte dobjbits; // 357 ?
-	byte handler; // 358
-	byte team; // 359
-	u_int16_t classname; // 360
+	struct gclient_s *client;
+	turretInfo_s *pTurretInfo;
+	byte physicsObject;
+	byte takedamage;
+	byte active;
+	byte nopickup;
+	byte model;
+	byte dobjbits;
+	byte handler;
+	byte team;
+	u_int16_t classname;
 	u_int16_t target;
 	u_int16_t targetname;
 	u_int16_t padding;
 	int spawnflags;
 	int flags;
 	int eventTime;
-	qboolean freeAfterEvent; // 380
-	qboolean unlinkAfterEvent; // 384
-	int clipmask; // 388
-	int framenum; // 392
-	gentity_t *parent; // 396
-	int nextthink; // 400
-	int healthPoints; // 404
-	int reservedHealth; // 408 ?
-	int damage; // 412
-	int splashDamage; // 416 ?
-	int splashRadius; // 420 ?
-	float pfDecelTimeMove; // 424
-	float pfDecelTimeRotate; // 428
-	float pfSpeedMove; // 432
-	float pfSpeedRotate; // 436
-	float pfMidTimeMove; // 440
-	float pfMidTimeRotate; // 444
-	vec3_t vPos1Move; // 448 ?
-	vec3_t vPos2Move; // 460
-	vec3_t vPos3Move; // 472
-	vec3_t vPos1Rotate; // 484 ?
-	vec3_t vPos2Rotate; // 496
-	vec3_t vPos3Rotate; // 508
-	int moverState; // 520 ?
-	gentity_t** linkedEntities; // 524 ??
-	byte attachedModels[6]; // 528
-	u_int16_t attachedModelsIndexes; // 536 ?
-	u_int16_t numAttachedModels; // 538 ?
-	int animTree; // 540 ?
-	vec4_t color; // ?
+	int freeAfterEvent;
+	int unlinkAfterEvent;
+	int clipmask;
+	int framenum;
+	gentity_s *parent;
+	int nextthink;
+	int healthPoints;
+	int reservedHealth;
+	int damage;
+	int count;
+	int unknown;
+	union
+	{
+		struct item_ent_t item[2];
+		struct trigger_ent_t trigger;
+		struct mover_ent_t mover;
+		struct corpse_ent_t corpse;
+		struct missile_ent_t missile;
+	};
+	tagInfo_s *tagInfo;
+	gentity_s *tagChildren;
+	u_int16_t attachModelNames[6];
+	u_int16_t attachTagNames[6];
+	int useCount;
+	gentity_s *nextFree;
 }; // verified
-
-#if __GNUC__ >= 6
-static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
-static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
-#endif
