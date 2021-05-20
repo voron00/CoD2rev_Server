@@ -1,5 +1,3 @@
-#include "functions.h"
-#include "declarations.h"
 #include "sys_patch.h"
 
 void hook_sv_init(const char *format, ...)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cc="g++"
-options="-I. -m32 -shared -fPIC -Wall"
+options="-I. -m32 -shared -fPIC -Wall -std=gnu++11"
 constants=""
 
 mkdir -p bin
