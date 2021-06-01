@@ -116,33 +116,60 @@ typedef struct cachedClient_s
 	playerState_t *ps;
 } cachedClient_t;
 
+typedef struct cachedSnapshot_s
+{
+	int archivedFrame;
+	int time;
+	int num_entities;
+	int first_entity;
+	int num_clients;
+	int first_client;
+	int usesDelta;
+} cachedSnapshot_t;
+
 typedef struct
 {
-	qboolean	initialized;
-	int			time;
-	int			snapFlagServerBit;
-	client_t	*clients;
-	int			numSnapshotEntities;
-	int			numSnapshotClients;
-	int			nextSnapshotEntities;
-	int			nextSnapshotClients;
+	int svFlags;
+	int clientMask[2];
+	vec3_t absmin;
+	vec3_t absmax;
+} archivedEntityShared_t;
+
+typedef struct archivedEntity_s
+{
+	entityState_t s;
+	archivedEntityShared_t r;
+} archivedEntity_t;
+
+typedef struct
+{
+	qboolean initialized;
+	int time;
+	int snapFlagServerBit;
+	client_t *clients;
+	int numSnapshotEntities;
+	int numSnapshotClients;
+	int nextSnapshotEntities;
+	int nextSnapshotClients;
 	entityState_t *snapshotEntities;
 	clientState_t *snapshotClients;
-	int 		archivedSnapshotEnabled;
-	int 		nextArchivedSnapshotFrames;
+	int archivedSnapshotEnabled;
+	int nextArchivedSnapshotFrames;
 	archivedSnapshot_t *archivedSnapshotFrames;
-	int 		*archivedSnapshotBuffer;
-	int 		nextArchivedSnapshotBuffer;
-	int			nextCachedSnapshotEntities;
-	int 		nextCachedSnapshotClients;
-	int 		nextCachedSnapshotFrames;
-	cachedClient_t cachedSnapshotClients;
-	int			nextHeartbeatTime;
-	int 		nextStatusResponseTime;
-	challenge_t	challenges[1024];
-	netadr_t	redirectAddress;
-	netadr_t	authorizeAddress;
-	char 		netProfilingBuf[1504];
+	byte *archivedSnapshotBuffer;
+	int nextArchivedSnapshotBuffer;
+	int nextCachedSnapshotEntities;
+	int nextCachedSnapshotClients;
+	int nextCachedSnapshotFrames;
+	archivedEntity_t *cachedSnapshotEntities;
+	cachedClient_t *cachedSnapshotClients;
+	cachedSnapshot_t *cachedSnapshotFrames;
+	int nextHeartbeatTime;
+	int nextStatusResponseTime;
+	challenge_t challenges[1024];
+	netadr_t redirectAddress;
+	netadr_t authorizeAddress;
+	char netProfilingBuf[1504];
 } serverStatic_t; // verified
 
 typedef struct
@@ -235,20 +262,6 @@ typedef enum
 #define MAX_GENTITIES       ( 1 << GENTITYNUM_BITS )
 #define MAX_ENT_CLUSTERS    16
 #define MAX_BPS_WINDOW 		20
-
-typedef struct
-{
-	int svFlags;
-	int clientMask[2];
-	vec3_t absmin;
-	vec3_t absmax;
-} archivedEntityShared_t;
-
-typedef struct archivedEntity_s
-{
-	entityState_t s;
-	archivedEntityShared_t r;
-} archivedEntity_t;
 
 typedef struct svEntity_s
 {
