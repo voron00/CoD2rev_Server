@@ -16,7 +16,7 @@ static const char *netsrcString[2] =
 dvar_t      *showpackets;
 dvar_t      *showdrop;
 dvar_t      *packetDebug;
-dvar_t      *g_qport;
+dvar_t      *net_qport;
 dvar_t      *net_profile;
 dvar_t      *net_showprofile;
 dvar_t      *net_lanauthorize;
@@ -49,7 +49,7 @@ void Netchan_Init( int port )
 	showpackets = Dvar_RegisterBool("showpackets", 0, 4096);
 	showdrop = Dvar_RegisterBool("showdrop", 0, 4096);
 	packetDebug = Dvar_RegisterBool("packetDebug", 0, 4096);
-	g_qport = Dvar_RegisterInt("net_qport", port, 1, 65535, 4096);
+	net_qport = Dvar_RegisterInt("net_qport", port, 1, 65535, 4096);
 	net_profile = Dvar_RegisterInt("net_profile", 0, 0, 2, 4096);
 	net_showprofile = Dvar_RegisterInt("net_showprofile", 0, 0, 3, 4096);
 	net_lanauthorize = Dvar_RegisterBool("net_lanauthorize", 0, 4096);
@@ -411,7 +411,7 @@ qboolean Netchan_TransmitNextFragment( netchan_t *chan )
 	// send the qport if we are a client
 	if ( chan->sock == NS_CLIENT )
 	{
-		MSG_WriteShort( &send, g_qport->current.integer );
+		MSG_WriteShort( &send, net_qport->current.integer );
 	}
 
 	// copy the reliable message to the packet first
@@ -493,7 +493,7 @@ qboolean Netchan_Transmit( netchan_t *chan, int length, const byte *data )
 	// send the qport if we are a client
 	if ( chan->sock == NS_CLIENT )
 	{
-		MSG_WriteShort( &send, g_qport->current.integer );
+		MSG_WriteShort( &send, net_qport->current.integer );
 	}
 
 	MSG_WriteData( &send, data, length );
