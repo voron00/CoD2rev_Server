@@ -145,4 +145,7 @@ void Com_Init(char* commandLine);
 void Com_Frame(void);
 void COM_DefaultExtension( char *path, int maxSize, const char *extension );
 
+void *Hunk_AllocInternal( int size );
+void *Hunk_AllocLowInternal( int size );
+
 typedef void (*xcommand_t)(void);

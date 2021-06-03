@@ -6,6 +6,7 @@
 #include "filesystem.h"
 #include "server.h"
 #include "entity.h"
+#include "sys_thread.h"
 
 dvar_t *com_dedicated;
 dvar_t *com_maxfps;
@@ -44,13 +45,9 @@ typedef struct
 	int temp;
 } hunkUsed_t;
 
+static byte *s_hunkData = NULL;
 static hunkUsed_t hunk_low, hunk_high;
-static hunkUsed_t  *hunk_permanent, *hunk_temp;
-
-static byte    *s_hunkData = NULL;
 static int s_hunkTotal;
-
-int com_hunkusedvalue;
 
 void Com_ErrorMessage(int err, const char* fmt,...)
 {
@@ -649,11 +646,58 @@ void Hunk_Clear( void )
 
 	hunk_high.permanent = 0;
 	hunk_high.temp = 0;
+}
 
-	hunk_permanent = &hunk_low;
-	hunk_temp = &hunk_high;
+/*
+=================
+Hunk_AllocInternal
+=================
+*/
+void *Hunk_AllocInternal( int size )
+{
+	void    *buf;
 
-	com_hunkusedvalue = hunk_low.permanent + hunk_high.permanent;
+	// round to cacheline
+	size = ( size + 31 ) & ~31;
+
+	hunk_high.permanent += size;
+	hunk_high.temp = hunk_high.permanent;
+
+	buf = ( void * )( s_hunkData + s_hunkTotal - hunk_high.permanent );
+
+	if ( hunk_low.temp + hunk_high.temp + size > s_hunkTotal )
+	{
+		Com_Error( ERR_DROP, "Hunk_AllocInternal failed on %i", size );
+	}
+
+	memset( buf, 0, size );
+	return buf;
+}
+
+/*
+=================
+Hunk_AllocLowInternal
+=================
+*/
+void *Hunk_AllocLowInternal( int size )
+{
+	void    *buf;
+
+	// round to cacheline
+	size = ( size + 31 ) & ~31;
+
+	hunk_low.permanent += size;
+	hunk_low.temp = hunk_low.permanent;
+
+	buf = ( void * )( s_hunkData + s_hunkTotal - hunk_low.permanent );
+
+	if ( hunk_low.temp + hunk_high.temp + size > s_hunkTotal )
+	{
+		Com_Error( ERR_DROP, "Hunk_AllocLowInternal failed on %i", size );
+	}
+
+	memset( buf, 0, size );
+	return buf;
 }
 
 /*
@@ -673,7 +717,8 @@ void Com_Meminfo_f(void)
 	if ( hunk_high.temp != hunk_high.permanent )
 		Com_Printf("%8i high temp\n", hunk_high.temp);
 	Com_Printf("\n");
-	Com_Printf("%8i total hunk in use\n", hunk_low.permanent + hunk_high.permanent);
+	Com_Printf("%8i total hunk in use\n", hunk_high.permanent + hunk_low.permanent);
+	Com_Printf("\n");
 }
 
 /*
@@ -722,12 +767,15 @@ void Com_InitHunkMemory( void )
 	}
 
 	s_hunkData = (byte *)malloc( s_hunkTotal + 31 );
+
 	if ( !s_hunkData )
 	{
 		Com_Error( ERR_FATAL, "Hunk data failed to allocate %i megs", s_hunkTotal / ( 1024 * 1024 ) );
 	}
+
 	// cacheline align
 	s_hunkData = ( byte * )( ( (int)s_hunkData + 31 ) & ~31 );
+
 	Hunk_Clear();
 
 	Cmd_AddCommand( "meminfo", Com_Meminfo_f );
@@ -812,6 +860,8 @@ void Com_Init(char* commandLine)
 
 	// allocate the stack based hunk allocator
 	Com_InitHunkMemory();
+
+	CM_InitThreadData(THREAD_CONTEXT_MAIN);
 
 	dvar_modifiedFlags &= ~DVAR_ARCHIVE;
 	com_codeTimeScale = 1.0;
