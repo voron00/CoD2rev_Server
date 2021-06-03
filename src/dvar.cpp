@@ -859,11 +859,6 @@ void Dvar_List_f(void)
 	Com_Printf("==================================== End Dvar List ====================================\n");
 }
 
-void Dvar_Dump_f(void)
-{
-
-}
-
 qboolean Dvar_IsValidName(const char *dvarName)
 {
 	size_t len = strlen(dvarName);
@@ -1431,7 +1426,6 @@ void Dvar_AddCommands()
 	Cmd_AddCommand("setfromdvar", Dvar_SetFromDvar_f);
 	Cmd_AddCommand("reset", Dvar_Reset_f);
 	Cmd_AddCommand("dvarlist", Dvar_List_f);
-	Cmd_AddCommand("dvardump", Dvar_Dump_f);
 	Cmd_AddCommand("dvar_bool", Dvar_RegisterBool_f);
 	Cmd_AddCommand("dvar_int", Dvar_RegisterInt_f);
 	Cmd_AddCommand("dvar_float", Dvar_RegisterFloat_f);

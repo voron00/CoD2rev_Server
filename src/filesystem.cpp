@@ -21,6 +21,7 @@
 #include "sys_main.h"
 #include "dvar.h"
 #include "filesystem.h"
+#include "cmd.h"
 
 #define BASEGAME "main"
 #define fs_gamedirvar fs_gameDirVar
@@ -52,6 +53,9 @@ int fs_packFiles;
 int fs_checksumFeed;
 static int fs_loadStack;
 
+char lastValidBase[MAX_OSPATH];
+char lastValidGame[MAX_OSPATH];
+
 /*
 ================
 FS_fplength
@@ -75,11 +79,9 @@ long FS_fplength(FILE *h)
 FS_Initialized
 ==============
 */
-
 qboolean FS_Initialized()
 {
-	qboolean init = (fs_searchpaths != NULL);
-	return init;
+	return fs_searchpaths != NULL;
 }
 
 /*
@@ -150,19 +152,6 @@ int FS_PathCmp( const char *s1, const char *s2 )
 
 static FILE *FS_FileForHandle( fileHandle_t f )
 {
-	if ( f < 0 || f > MAX_FILE_HANDLES )
-	{
-		Com_Error( ERR_DROP, "FS_FileForHandle: %d out of range", f );
-	}
-	if ( fsh[f].zipFile == qtrue )
-	{
-		Com_Error( ERR_DROP, "FS_FileForHandle: can't get FILE on zip file" );
-	}
-	if ( !fsh[f].handleFiles.file.o )
-	{
-		Com_Error( ERR_DROP, "FS_FileForHandle: NULL" );
-	}
-
 	return fsh[f].handleFiles.file.o;
 }
 
@@ -344,7 +333,6 @@ void FS_AddIwdPureCheckReference(searchpath_t *search)
 
 	checks->next = newCheck;
 }
-
 
 void FS_ShutdownIwdPureCheckReferences()
 {
@@ -946,15 +934,70 @@ void FS_RegisterDvars()
 	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x10A0u);
 }
 
+const char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles)
+{
+	return (const char**)Sys_ListFiles(path, extension, 0, numfiles, qfalse);
+}
+
+void FS_FreeFileList(const char** list)
+{
+	Sys_FreeFileList((char**)list);
+}
+
+void FS_Dir_f( void )
+{
+	const char	*path;
+	const char	*extension;
+	const char	**dirnames;
+	int		ndirs;
+	int		i;
+
+	if ( Cmd_Argc() < 2 || Cmd_Argc() > 3 )
+	{
+		Com_Printf( "usage: dir <directory> [extension]\n" );
+		return;
+	}
+
+	if ( Cmd_Argc() == 2 )
+	{
+		path = Cmd_Argv( 1 );
+		extension = "";
+	}
+	else
+	{
+		path = Cmd_Argv( 1 );
+		extension = Cmd_Argv( 2 );
+	}
+
+	Com_Printf( "Directory of %s %s\n", path, extension );
+	Com_Printf( "---------------\n" );
+
+	dirnames = FS_ListFiles( path, extension, 0, &ndirs );
+
+	for ( i = 0; i < ndirs; i++ )
+	{
+		Com_Printf( "%s\n", dirnames[i] );
+	}
+	FS_FreeFileList( dirnames );
+}
+
+void FS_Path_f(void)
+{
+	FS_DisplayPath();
+}
+
+void FS_FullPath_f(void)
+{
+	FS_DisplayPath();
+}
+
 void FS_AddCommands()
 {
-	/*
-	Cmd_AddComamnd("path", (int)sub_809FFA2);
-	Cmd_AddComamnd("fullpath", (int)sub_809FF8E);
-	Cmd_AddComamnd("dir", (int)sub_8064C7C);
-	Cmd_AddComamnd("fdir", (int)sub_8064D88);
-	Cmd_AddComamnd("touchFile", (int)sub_8064E98);
-	*/
+	Cmd_AddCommand("path", FS_Path_f);
+	Cmd_AddCommand("fullpath", FS_FullPath_f);
+	Cmd_AddCommand("dir", FS_Dir_f);
+	//Cmd_AddCommand("fdir", FS_NewDir_f);
+	//Cmd_AddCommand("touchFile", FS_TouchFile_f);
 }
 
 int FS_LoadStack()
@@ -1651,4 +1694,6 @@ void FS_InitFilesystem()
 		// TTimo - added some verbosity, 'couldn't load default.cfg' confuses the hell out of users
 		Com_Error( ERR_FATAL, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", DEFAULT_CONFIG );
 	}
+	I_strncpyz(lastValidBase, fs_basepath->current.string, sizeof(lastValidBase));
+	I_strncpyz(lastValidGame, fs_gameDirVar->current.string, sizeof(lastValidGame));
 }

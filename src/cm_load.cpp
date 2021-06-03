@@ -10,10 +10,11 @@ cmodel_t g_box_model[NUMTHREADS];
 void CM_InitThreadData(int threadContext)
 {
 	TraceThreadInfo *traceThreadInfo;
-
 	traceThreadInfo = &g_traceThreadInfo[threadContext];
-	traceThreadInfo->checkcount.global = 0;
-	//traceThreadInfo->checkcount.partitions = (int *)Hunk_Alloc(4 * cm.partitionCount);
+	traceThreadInfo->global = 0;
+	//traceThreadInfo.partitions = Hunk_AllocInternal(2 * cm.partitionCount);
+	//traceThreadInfo.edges = Hunk_AllocInternal(4 * cm.edgeCount);
+	//traceThreadInfo.verts = Hunk_AllocInternal(4 * cm.vertCount);
 	traceThreadInfo->box_brush = &g_box_brush[threadContext];
 	memcpy(traceThreadInfo->box_brush, cm.box_brush, sizeof(cbrush_t));
 	traceThreadInfo->box_model = &g_box_model[threadContext];

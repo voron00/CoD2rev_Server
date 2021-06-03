@@ -15,15 +15,12 @@ struct va_info_t
 	int index;
 };
 
-struct TraceCheckCount
-{
-	int global;
-	int *partitions;
-};
-
 typedef struct TraceThreadInfo
 {
-	TraceCheckCount checkcount;
+	int global;
+	int *edges;
+	int *verts;
+	int *partitions;
 	cbrush_t *box_brush;
 	cmodel_t *box_model;
 } TraceThreadInfo;
