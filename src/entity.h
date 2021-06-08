@@ -58,15 +58,15 @@ typedef struct entityState_s
 	trajectory_t apos;
 	int time;
 	int time2;
-	vec3_t origin;
-	vec3_t angles;
+	vec3_t origin2;
+	vec3_t angles2;
 	int otherEntityNum;
 	int attackerEntityNum;
 	int groundEntityNum;
 	int constantLight;
 	int loopSound;
-	int surfaceFlags;
-	int modelindex;
+	int surfType;
+	int index;
 	int clientNum;
 	int iHeadIcon;
 	int iHeadIconTeam;
@@ -78,12 +78,14 @@ typedef struct entityState_s
 	int weapon;
 	int legsAnim;
 	int torsoAnim;
-	int stage;
-	int hintstring;
-	int cursorhint;
+	float leanf;
+	float scale;
+	int dmgFlags;
 	int animMovetype;
-	vec3_t angles2;
-} entityState_t; // verified
+	float fTorsoHeight;
+	float fTorsoPitch;
+	float fWaistPitch;
+} entityState_t;
 
 typedef struct
 {
@@ -105,54 +107,16 @@ typedef struct
 	u_int16_t ownerNum;
 	u_int16_t pad3;
 	int eventTime;
-} entityShared_t; // verified
-
-typedef enum
-{
-	PLAYERVIEWLOCK_NONE = 0x0,
-	PLAYERVIEWLOCK_FULL = 0x1,
-	PLAYERVIEWLOCK_WEAPONJITTER = 0x2,
-	PLAYERVIEWLOCKCOUNT = 0x3,
-} ViewLockTypes_t;
-
-typedef enum
-{
-	OBJST_EMPTY = 0x0,
-	OBJST_ACTIVE = 0x1,
-	OBJST_INVISIBLE = 0x2,
-	OBJST_DONE = 0x3,
-	OBJST_CURRENT = 0x4,
-	OBJST_FAILED = 0x5,
-	OBJST_NUMSTATES = 0x6,
-} objectiveState_t;
+} entityShared_t;
 
 typedef struct objective_s
 {
-	objectiveState_t state;
+	int state;
 	vec3_t origin;
 	int entNum;
 	int teamNum;
 	int icon;
 } objective_t;
-
-typedef enum
-{
-	HE_TYPE_FREE = 0x0,
-	HE_TYPE_TEXT = 0x1,
-	HE_TYPE_VALUE = 0x2,
-	HE_TYPE_PLAYERNAME = 0x3,
-	HE_TYPE_MAPNAME = 0x4,
-	HE_TYPE_GAMETYPE = 0x5,
-	HE_TYPE_MATERIAL = 0x6,
-	HE_TYPE_TIMER_DOWN = 0x7,
-	HE_TYPE_TIMER_UP = 0x8,
-	HE_TYPE_TENTHS_TIMER_DOWN = 0x9,
-	HE_TYPE_TENTHS_TIMER_UP = 0xA,
-	HE_TYPE_CLOCK_DOWN = 0xB,
-	HE_TYPE_CLOCK_UP = 0xC,
-	HE_TYPE_WAYPOINT = 0xD,
-	HE_TYPE_COUNT = 0xE,
-} he_type_t;
 
 typedef struct
 {
@@ -170,7 +134,7 @@ typedef union
 
 typedef struct hudelem_s
 {
-	he_type_t type;
+	int type;
 	float x;
 	float y;
 	float z;
@@ -201,8 +165,8 @@ typedef struct hudelem_s
 	float value;
 	int text;
 	float sort;
-	hudelem_color_t glowColor;
-} hudelem_t; // verified
+	hudelem_color_t foreground;
+} hudelem_t;
 
 typedef struct hudElemState_s
 {
@@ -212,19 +176,11 @@ typedef struct hudElemState_s
 
 typedef struct
 {
-	float	yaw;
-	int	timer;
-	int	transIndex;
-	int	flags;
+	float yaw;
+	int timer;
+	int transIndex;
+	int flags;
 } mantleState_t;
-
-typedef struct
-{
-	byte slot_none;
-	byte slot_primary;
-	byte slot_primaryb;
-	byte pad;
-} weapSlot_t;
 
 typedef struct playerState_s
 {
@@ -249,15 +205,15 @@ typedef struct playerState_s
 	vec3_t vLadderVec;
 	int jumpTime;
 	float jumpOriginZ;
-	int legsTime;
+	int legsTimer;
 	int legsAnim;
-	int torsoTime;
+	int torsoTimer;
 	int torsoAnim;
 	int legsAnimDuration;
 	int torsoAnimDuration;
 	int damageTimer;
 	int damageDuration;
-	int flinchYawAnim;
+	int flinchYaw;
 	int movementDir;
 	int eFlags;
 	int eventSequence;
@@ -277,52 +233,53 @@ typedef struct playerState_s
 	int viewHeightLerpTime;
 	int viewHeightLerpTarget;
 	int viewHeightLerpDown;
-	vec2_t		viewAngleClampBase;
-	vec2_t		viewAngleClampRange;
-	int unknown;
-	int damageCount;
+	int viewHeightLerpPosAdj;
+	vec2_t viewAngleClampBase;
+	vec2_t viewAngleClampRange;
+	int damageEvent;
 	int damageYaw;
 	int damagePitch;
-	int damageEvent;
+	int damageCount;
 	int health;
 	int deadYaw;
 	int maxhealth;
 	int teamPlayInfoEntNum;
 	struct gclient_s *teamPlayInfoClient;
-	int clientSpawnCounter;
+	int count;
 	int ammo[128];
 	int ammoclip[128];
+	int weapons[2];
 	int weapFlags;
 	int weapFlags2;
+	byte weaponslots[8];
+	int weaponrechamber[2];
 	int otherFlags;
 	int otherFlags2;
-	weapSlot_t weaponSlot;
-	int nonPVSFriendlyFlags;
-	int weaponRechamber;
-	vec3_t unknownVector;
 	vec3_t mins;
 	vec3_t maxs;
 	float proneDirection;
 	float proneDirectionPitch;
 	float proneTorsoPitch;
-	ViewLockTypes_t viewlocked;
+	int viewlocked;
 	int viewlocked_entNum;
 	int cursorHint;
 	int cursorHintString;
 	int cursorHintEntIndex;
-	int unknownInteger;
-	vec3_t angles2;
+	int iCompassFriendInfo;
+	float fTorsoHeight;
+	float fTorsoPitch;
+	float fWaistPitch;
 	float holdBreathScale;
-	int holdBreathTime;
+	int holdBreathTimer;
 	mantleState_t mantleState;
 	int entityEventSequence;
-	int weaponSequenceFlags;
+	int weapAnim;
 	float aimSpreadScale;
 	int shellshockIndex;
 	int shellshockTime;
 	int shellshockDuration;
 	objective_t objective[16];
-	int archiveTime;
+	int deltaTime;
 	hudElemState_t hud;
 } playerState_t;
 
@@ -371,7 +328,7 @@ typedef struct
 	int teamInfo;
 	clientState_t clState;
 	int psOffsetTime;
-} clientSession_t; // verified
+} clientSession_t;
 
 struct gclient_s
 {
@@ -420,7 +377,7 @@ struct gclient_s
 	int vGunAngle[2];
 	int lastServerTime;
 	int lastActivateTime;
-}; // verified
+};
 
 struct turretInfo_s
 {
@@ -563,4 +520,4 @@ struct gentity_s
 	u_int16_t attachTagNames[6];
 	int useCount;
 	gentity_s *nextFree;
-}; // verified
+};
