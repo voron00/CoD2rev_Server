@@ -141,6 +141,12 @@ typedef struct archivedEntity_s
 	archivedEntityShared_t r;
 } archivedEntity_t;
 
+struct tempban_t
+{
+	int guid;
+	int time;
+};
+
 typedef struct
 {
 	qboolean initialized;
@@ -169,8 +175,9 @@ typedef struct
 	challenge_t challenges[1024];
 	netadr_t redirectAddress;
 	netadr_t authorizeAddress;
-	char netProfilingBuf[1504];
-} serverStatic_t; // verified
+	netProfileInfo_t *netProfilingBuf;
+	tempban_t bans[16];
+} serverStatic_t; // possibly more stuff here
 
 typedef struct
 {
@@ -305,6 +312,6 @@ typedef struct
 	float ucompAve;
 	int	ucompNum;
 	char gametype[MAX_QPATH];
-} server_t; // verified
+} server_t;
 
 qboolean SV_GameCommand(void);

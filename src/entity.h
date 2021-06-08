@@ -233,7 +233,7 @@ typedef struct playerState_s
 	int viewHeightLerpTime;
 	int viewHeightLerpTarget;
 	int viewHeightLerpDown;
-	int viewHeightLerpPosAdj;
+	float viewHeightLerpPosAdj;
 	vec2_t viewAngleClampBase;
 	vec2_t viewAngleClampRange;
 	int damageEvent;
