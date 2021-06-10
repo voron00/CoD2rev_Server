@@ -1,21 +1,17 @@
 #include "sys_patch.h"
-
-void hook_sv_init(const char *format, ...)
-{
-	char s[1024];
-	va_list va;
-
-	va_start(va, format);
-	vsnprintf(s, sizeof(s), format, va);
-	va_end(va);
-
-	Com_Printf("%s", s);
-}
+#include "../src/sys_thread.h"
 
 void Sys_RedirectFunctions()
 {
-	// Main function hook (testing)
+	// Main function hook
 	// SetJump(0x080D2990, (DWORD)Sys_Main);
+
+	// Threads
+	SetJump(0x080D4444, (DWORD)Sys_InitMainThread);
+	SetJump(0x080D446C, (DWORD)Sys_IsMainThread); // unused in server binary
+	SetJump(0x080D44A4, (DWORD)Sys_GetValue);
+	SetJump(0x080D4492, (DWORD)Sys_SetValue);
+	SetJump(0x08051E9C, (DWORD)CM_InitThreadData);
 }
 
 class cCallOfDuty2Pro

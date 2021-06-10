@@ -1,17 +1,31 @@
 #!/bin/bash
 
+name="cod2rev_lnxded"
+constants="-D TESTING_LIBRARY=0"
+shared=""
+pthread_link="-lpthread"
+
+if [ "$1" = "lib" ]; then
+	name="libcod2rev.so"
+	constants="-D TESTING_LIBRARY=1"
+	shared="-shared"
+fi
+
 cc="g++"
-options="-I. -m32 -fPIC -Wall -std=gnu++11"
+options="-I. -m32 $shared -fPIC -Wall -std=gnu++11"
 
 cc_zlib="gcc"
-options_zlib="-I. -m32 -fPIC"
-
-constants=""
-pthread_link="-lpthread"
+options_zlib="-I. -m32 $shared -fPIC"
 
 mkdir -p bin
 mkdir -p objects
 mkdir -p objects/zlib
+
+if [ "$1" = "lib" ]; then
+	echo "Compiling /src_lib..."
+	$cc $options $constants -c src_lib/sys_libloader.cpp -o objects/sys_libloader.o
+	$cc $options $constants -c src_lib/sys_patch.cpp -o objects/sys_patch.o
+fi
 
 echo "Compiling /src..."
 $cc $options $constants -c src/dvar.cpp -o objects/dvar.o
@@ -48,7 +62,7 @@ $cc_zlib $options_zlib $constants -c src/zlib/utils.c -o objects/zlib/utils.o
 echo "Linking objects..."
 objects="$(ls objects/*.o)"
 objects_zlib="$(ls objects/zlib/*.o)"
-$cc -m32 -static -L/lib32 -o bin/cod2rev_lnxded -ldl $objects $pthread_link $objects_zlib
+$cc -m32 -static $shared -L/lib32 -o bin/$name -ldl $objects $objects_zlib $pthread_link
 
 echo "Cleaning up..."
 rm objects/zlib -r

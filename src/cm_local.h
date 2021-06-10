@@ -1,55 +1,6 @@
 #pragma once
 #include "i_math.h"
 
-typedef struct XBoneInfo_s
-{
-	float bounds[2][3];
-	float offset[3];
-	float radiusSquared;
-} XBoneInfo_t;
-
-typedef struct XModelCollSurf_s
-{
-	float mins[3];
-	float maxs[3];
-	int boneIdx;
-	int contents;
-	int surfFlags;
-} XModelCollSurf_t;
-
-typedef struct XModelHighMipBounds_s
-{
-	float mins[3];
-	float maxs[3];
-} XModelHighMipBounds_t;
-
-typedef struct XModelStreamInfo_s
-{
-	XModelHighMipBounds_t *highMipBounds;
-} XModelStreamInfo_t;
-
-typedef struct XModel_s
-{
-	char numBones;
-	char numRootBones;
-	u_int16_t *boneNames;
-	char *parentList;
-	byte unk[72];
-	XModelCollSurf_t *collSurfs; // 84
-	int numCollSurfs; // 88
-	int contents; // 92
-	XBoneInfo_t *boneInfo; // 96
-	vec3_t mins; // 100
-	vec3_t maxs;
-	short numLods; // 124
-	short collLod;
-	XModelStreamInfo_t streamInfo; // 128
-	int memUsage; // 132
-	const char *name; // 136
-	char flags; // 140
-	char bad; // 141
-} XModel_t;
-
 typedef struct
 {
 	char material[64];
@@ -60,7 +11,7 @@ typedef struct
 typedef struct cStaticModel_s
 {
 	u_int16_t writable;
-	XModel_t *xmodel;
+	struct XModel *xmodel;
 	vec3_t origin;
 	vec3_t invScaledAxis[3];
 	vec3_t absmin;
@@ -183,8 +134,7 @@ typedef struct
 {
 	float position[3];
 	float normal[3][3];
-}
-CollisionEdge_t;
+} CollisionEdge_t;
 
 typedef struct
 {
@@ -193,8 +143,7 @@ typedef struct
 	float unknown[8];
 	unsigned int vertex_id[3];
 	int edge_id[3];
-}
-CollisionTriangle_t;
+} CollisionTriangle_t;
 
 typedef void DynEntityDef;
 typedef void DynEntityPose;
@@ -250,7 +199,7 @@ typedef struct clipMap_s
 	DynEntityClient *dynEntClientList[2];
 	DynEntityColl *dynEntCollList[2];
 	unsigned int checksum;
-} clipMap_t; // verified
+} clipMap_t;
 
 enum LumpType
 {

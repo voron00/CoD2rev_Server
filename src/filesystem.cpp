@@ -845,7 +845,7 @@ void FS_AddGameDirectory_Single(const char *path, const char *dir_nolocal, qbool
 	}
 
 	search = (searchpath_t *)S_Malloc(sizeof(searchpath_t));
-	search->dir = (directory_t *)Z_MallocInternal(sizeof(directory_t));
+	search->dir = (directory_t *)Z_Malloc(sizeof(directory_t));
 	I_strncpyz(search->dir->path, path, sizeof(search->dir->path));
 	I_strncpyz(search->dir->gamedir, dir, sizeof(search->dir->gamedir));
 	search->localized = localized;
