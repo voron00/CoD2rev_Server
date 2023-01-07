@@ -7,5 +7,4 @@ BASEPATH="bin"
 HOMEPATH="bin/.callofduty2"
 PARAMS="+set fs_cdpath $BASEPATH +set fs_homepath $HOMEPATH +set dedicated 2 +set net_port 28962 +set developer 1 +set developer_script 1 +map mp_toujane"
 
-chmod +x bin/cod2_lnxded
 "bin/cod2_lnxded" "$PARAMS"
