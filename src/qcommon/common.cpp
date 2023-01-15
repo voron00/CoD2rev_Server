@@ -28,7 +28,9 @@ dvar_t *ui_errorMessage;
 dvar_t *ui_errorTitle;
 
 static fileHandle_t logfile;
-float com_codeTimeScale;
+
+int com_frameTime;
+int com_lastFrameTime;
 
 #define MAX_CONSOLE_LINES 32
 
@@ -956,10 +958,112 @@ void Com_StartHunkUsers()
 #endif
 }
 
+int Com_ModifyMsec( int msec )
+{
+	int clampTime;
+
+	//
+	// modify time for debugging values
+	//
+	if ( com_fixedtime->current.integer )
+	{
+		msec = com_fixedtime->current.integer;
+	}
+	else if ( com_timescale->current.decimal )
+	{
+		msec *= com_timescale->current.decimal;
+	}
+
+	// don't let it scale below 1 msec
+	if ( msec < 1 && com_timescale->current.decimal )
+	{
+		msec = 1;
+	}
+
+	if ( com_dedicated->current.integer )
+	{
+		// dedicated servers don't want to clamp for a much longer
+		// period, because it would mess up all the client's views
+		// of time.
+		if ( msec > 500 && msec < 500000 )
+		{
+			Com_Printf( "Hitch warning: %i msec frame time\n", msec );
+		}
+		clampTime = 5000;
+	}
+	else if ( !com_sv_running->current.integer )
+	{
+		// clients of remote servers do not want to clamp time, because
+		// it would skew their view of the server's time temporarily
+		clampTime = 5000;
+	}
+	else
+	{
+		// for local single player gaming
+		// we may want to clamp the time to prevent players from
+		// flying off edges when something hitches.
+		clampTime = 200;
+	}
+
+	if ( msec > clampTime )
+	{
+		msec = clampTime;
+	}
+
+	return msec;
+}
+
+void Com_UpdateViewLog()
+{
+	if ( com_viewlog->modified )
+	{
+		if ( !com_dedicated->current.integer )
+		{
+			Sys_ShowConsole( com_viewlog->current.integer, qfalse );
+		}
+
+		Dvar_ClearModified(com_viewlog);
+	}
+}
+
 void Com_Frame_Try_Block_Function()
 {
+	int msec, minMsec;
+
+	Com_WriteConfiguration();
+	Com_UpdateViewLog();
+	SetAnimCheck(com_animCheck->current.boolean);
+
+	// we may want to spin here if things are going too fast
+	if ( !com_dedicated->current.integer && com_maxfps->current.integer > 0 )
+	{
+		minMsec = 1000 / com_maxfps->current.integer;
+	}
+	else
+	{
+		minMsec = 1;
+	}
+	do
+	{
+		com_frameTime = Com_EventLoop();
+
+		if ( com_lastFrameTime > com_frameTime )
+		{
+			com_lastFrameTime = com_frameTime;
+		}
+
+		msec = com_frameTime - com_lastFrameTime;
+		NET_Sleep(0);
+	}
+	while ( msec < minMsec );
+
 	Cbuf_Execute();
-	Com_EventLoop();
+	com_lastFrameTime = com_frameTime;
+	msec = Com_ModifyMsec( msec );
+#ifndef DEDICATED
+	CL_SwitchToLocalClient();
+#endif
+	SV_Frame( msec );
 }
 
 void Com_Frame( void )
@@ -1087,7 +1191,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	Com_InitHunkMemory();
 	Com_InitParse();
 	dvar_modifiedFlags &= 0xFFFFFFFE;
-	com_codeTimeScale = 1.0;
+	// com_codeTimeScale = 1.0;
 	if ( com_developer->current.integer )
 	{
 		Cmd_AddCommand("error", Com_Error_f);
@@ -1110,7 +1214,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	DObjInit();
 	SV_Init();
 	NET_Init();
-	sv.start_frameTime = Com_Milliseconds();
+	com_frameTime  = Com_Milliseconds();
 	Com_AddStartupCommands();
 	Com_SetCinematic();
 	com_fullyInitialized = 1;

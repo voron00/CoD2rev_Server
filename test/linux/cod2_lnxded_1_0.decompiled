@@ -554,7 +554,7 @@ void *Com_InitPushEvent();
 int __cdecl sub_806136C(int *a1);
 int sub_806141C();
 _DWORD *__stdcall sub_8061498(_DWORD *a1);
-// int __usercall sub_8061526@<eax>(long double a1@<st0>);
+// int __usercall Com_EventLoop@<eax>(long double a1@<st0>);
 int sub_80617B4();
 int Com_Milliseconds();
 int sub_80618CE();
@@ -571,11 +571,11 @@ void Com_SetCinematic();
 // void __usercall Com_Init(long double a1@<st0>, char *a2);
 void __cdecl Com_WriteConfigToFile(char *src);
 void __cdecl Com_WriteDefaultConfigToFile(char *src);
-void sub_8062112();
+void Com_WriteConfiguration();
 void Com_WriteConfig_f();
 void Com_WriteDefaults_f();
-signed int __cdecl sub_806228A(signed int a1);
-int sub_80623A4();
+signed int __cdecl Com_ModifyMsec(signed int a1);
+int Com_UpdateViewLog();
 // void __usercall Com_Frame_Try_Block_Function(long double a1@<st0>);
 void sub_80624CC();
 int sub_80624D2();
@@ -766,7 +766,7 @@ int __cdecl sub_806C750(char *s1, void *s); // idb
 int __cdecl sub_806C8B8(int a1);
 int sub_806C8C0();
 void *sub_806C8EA();
-int __cdecl sub_806C918(int a1);
+int __cdecl SetAnimCheck(int a1);
 char *__cdecl sub_806C926(int a1);
 int sub_806C95E();
 int __cdecl sub_806CA12(_DWORD *a1, unsigned int a2, int a3);
@@ -1576,7 +1576,7 @@ signed int sub_80946DA();
 // void __usercall sub_8094780(long double a1@<st0>);
 // int __usercall sub_809479A@<eax>(long double a1@<st0>, char *a2);
 // int __usercall sub_8094980@<eax>(long double a1@<st0>);
-// void __usercall sub_80949DE(long double a1@<st0>, int a2);
+// void __usercall SV_Frame(long double a1@<st0>, int a2);
 int *sub_8094E38();
 void __cdecl sub_8094F02(int a1);
 void sub_8094FFC();
@@ -1674,7 +1674,7 @@ int __cdecl FS_FOpenFileAppend(char *src); // idb
 signed int __cdecl FS_FilenameCompare(char *a1, char *a2);
 int __cdecl sub_809D1C6(char *filename, char *); // idb
 char *__cdecl sub_809D424(char *haystack, int a2, char a3);
-_BOOL4 __cdecl sub_809D498(char *s1);
+_BOOL4 __cdecl FS_PureIgnoreFiles(char *s1);
 _BOOL4 __cdecl sub_809D516(_BYTE *a1);
 signed int __cdecl FS_IsBackupSubStr(char a1);
 signed int __cdecl FS_SanitizeFilename(int a1, int a2);
@@ -2155,10 +2155,10 @@ int __cdecl sub_80B4B6C(char **a1);
 int __cdecl sub_80B4B8E(char **a1, int a2, int a3);
 int __cdecl sub_80B4C14(char **a1, int a2, int a3, int a4);
 int __cdecl sub_80B4C8E(char **a1, int a2, int a3, int a4, int a5);
-signed int __cdecl sub_80B4D14(char a1);
+signed int __cdecl ColorIndex(char a1);
 int __cdecl sub_80B4D44(_BYTE *a1);
 void *__cdecl sub_80B4D74(void *src, char *s, char *a3, void *dest, int a5);
-_BYTE *__cdecl sub_80B4E42(_BYTE *a1);
+_BYTE *__cdecl Com_GetExtensionSubString(_BYTE *a1);
 _BYTE *__cdecl sub_80B4E98(_BYTE *a1, _BYTE *a2);
 char *__cdecl sub_80B4ED6(void *src, void *dest);
 char *__cdecl Com_DefaultExtension(char *s, size_t maxlen, int a3);
@@ -2643,7 +2643,7 @@ struct hostent *sub_80D313E();
 int __cdecl sub_80D3438(char *cp, int a2);
 int sub_80D360E();
 char *sub_80D3636();
-int __cdecl sub_80D3654(int a1);
+int __cdecl NET_Sleep(int a1);
 int Sys_MilliSeconds();
 int sub_80D37B0();
 void __cdecl sub_80D3824(float *a1);
@@ -12929,8 +12929,8 @@ int nextmap; // idb
 int dword_819EF30; // weak
 int sv_paused; // weak
 int com_animCheck; // weak
-int sv.start_frameTime; // weak
-int dword_819EF44; // weak
+int com_frameTime; // weak
+int com_lastFrameTime; // weak
 int com_codeTimeScale; // weak
 int com_frameNumber; // weak
 int com_errorEntered; // weak
@@ -26151,7 +26151,7 @@ _DWORD *__stdcall sub_8061498(_DWORD *a1)
 // 81A0014: using guessed type int dword_81A0014[];
 
 //----- (08061526) --------------------------------------------------------
-int __usercall sub_8061526@<eax>(long double a1@<st0>)
+int __usercall Com_EventLoop@<eax>(long double a1@<st0>)
 {
   int v1; // ebx
   int v3; // [esp+30h] [ebp-A8h]
@@ -26538,7 +26538,7 @@ void __usercall Com_Init_Try_Block_Function(long double a1@<st0>, char *a2)
   DObjInit();
   SV_Init(a1);
   NET_Init(a1);
-  sv.start_frameTime = Com_Milliseconds();
+  com_frameTime = Com_Milliseconds();
   Com_AddStartupCommands();
   Com_SetCinematic();
   com_fullyInitialized = 1;
@@ -26550,7 +26550,7 @@ void __usercall Com_Init_Try_Block_Function(long double a1@<st0>, char *a2)
 // 819EEFC: using guessed type int com_developer;
 // 819EF14: using guessed type int com_sv_running;
 // 819EF20: using guessed type int shortversion;
-// 819EF40: using guessed type int sv.start_frameTime;
+// 819EF40: using guessed type int com_frameTime;
 // 819EF48: using guessed type int com_codeTimeScale;
 // 819EF58: using guessed type int com_fullyInitialized;
 // 85178A8: using guessed type int dvar_modifiedFlags;
@@ -26607,7 +26607,7 @@ void __cdecl Com_WriteDefaultConfigToFile(char *src)
 }
 
 //----- (08062112) --------------------------------------------------------
-void sub_8062112()
+void Com_WriteConfiguration()
 {
   char dest; // [esp+10h] [ebp-48h]
 
@@ -26665,7 +26665,7 @@ void Com_WriteDefaults_f()
 }
 
 //----- (0806228A) --------------------------------------------------------
-signed int __cdecl sub_806228A(signed int a1)
+signed int __cdecl Com_ModifyMsec(signed int a1)
 {
   float v1; // ST00_4
   float v2; // ST08_4
@@ -26728,7 +26728,7 @@ signed int __cdecl sub_806228A(signed int a1)
 // 8494204: using guessed type int com_dedicated;
 
 //----- (080623A4) --------------------------------------------------------
-int sub_80623A4()
+int Com_UpdateViewLog()
 {
   int result; // eax
   int v1; // ST00_4
@@ -26755,9 +26755,9 @@ void __usercall Com_Frame_Try_Block_Function(long double a1@<st0>)
   int v2; // [esp+10h] [ebp-8h]
   signed int v3; // [esp+14h] [ebp-4h]
 
-  sub_8062112();
-  sub_80623A4();
-  sub_806C918(*(unsigned __int8 *)(com_animCheck + 8));
+  Com_WriteConfiguration();
+  Com_UpdateViewLog();
+  SetAnimCheck(*(unsigned __int8 *)(com_animCheck + 8));
   v2 = 1;
   if ( *(_DWORD *)(com_maxfps + 8) > 0 && !*(_DWORD *)(com_dedicated + 8) )
   {
@@ -26767,25 +26767,25 @@ void __usercall Com_Frame_Try_Block_Function(long double a1@<st0>)
   }
   while ( 1 )
   {
-    sv.start_frameTime = sub_8061526(a1);
-    if ( dword_819EF44 > sv.start_frameTime )
-      dword_819EF44 = sv.start_frameTime;
-    v3 = sv.start_frameTime - dword_819EF44;
-    if ( sv.start_frameTime - dword_819EF44 >= v2 )
+    com_frameTime = Com_EventLoop(a1);
+    if ( com_lastFrameTime > com_frameTime )
+      com_lastFrameTime = com_frameTime;
+    v3 = com_frameTime - com_lastFrameTime;
+    if ( com_frameTime - com_lastFrameTime >= v2 )
       break;
-    sub_80D3654(0);
+    NET_Sleep(0);
   }
   Cbuf_Execute(a1);
-  dword_819EF44 = sv.start_frameTime;
-  v1 = sub_806228A(v3);
+  com_lastFrameTime = com_frameTime;
+  v1 = Com_ModifyMsec(v3);
   CL_SwitchToLocalClient();
-  sub_80949DE(a1, v1);
+  SV_Frame(a1, v1);
 }
 // 819EF0C: using guessed type int com_fixedtime;
 // 819EF10: using guessed type int com_maxfps;
 // 819EF3C: using guessed type int com_animCheck;
-// 819EF40: using guessed type int sv.start_frameTime;
-// 819EF44: using guessed type int dword_819EF44;
+// 819EF40: using guessed type int com_frameTime;
+// 819EF44: using guessed type int com_lastFrameTime;
 // 8494204: using guessed type int com_dedicated;
 
 //----- (080624CC) --------------------------------------------------------
@@ -26800,10 +26800,10 @@ int sub_80624D2()
   int result; // eax
 
   result = Sys_MilliSeconds();
-  dword_819EF44 = result;
+  com_lastFrameTime = result;
   return result;
 }
-// 819EF44: using guessed type int dword_819EF44;
+// 819EF44: using guessed type int com_lastFrameTime;
 
 //----- (080624EA) --------------------------------------------------------
 void __usercall Com_Frame(long double a1@<st0>)
@@ -32241,7 +32241,7 @@ void *sub_806C8EA()
 // 8202218: using guessed type int dword_8202218;
 
 //----- (0806C918) --------------------------------------------------------
-int __cdecl sub_806C918(int a1)
+int __cdecl SetAnimCheck(int a1)
 {
   int result; // eax
 
@@ -50546,14 +50546,14 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
     v4 = sub_810695E();
     if ( !*(_BYTE *)(dword_848B1CC + 7) && !strcasecmp(byte_848B174, *(const char **)(dword_848B1F4 + 8)) && a2 )
     {
-      if ( sv.start_frameTime != dword_842BC88 )
+      if ( com_frameTime != dword_842BC88 )
       {
         sub_8091B5A();
         sub_8091A70();
         dword_841FB08 ^= 4u;
         dword_841FA88 = (((_BYTE)dword_841FA88 + 1) & 0xF) + (unsigned __int8)(dword_841FA88 & 0xF0);
         Dvar_SetInt(dword_848B1E4, (char *)dword_841FA88);
-        dword_842BC88 = sv.start_frameTime;
+        dword_842BC88 = com_frameTime;
         dword_842BC80 = 1;
         dword_842BC84 = 1;
         sub_8090D6A(a1, v4);
@@ -50603,7 +50603,7 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
   }
 }
 // 819EF14: using guessed type int com_sv_running;
-// 819EF40: using guessed type int sv.start_frameTime;
+// 819EF40: using guessed type int com_frameTime;
 // 841FA88: using guessed type int dword_841FA88;
 // 841FB08: using guessed type int dword_841FB08;
 // 842BC80: using guessed type int dword_842BC80;
@@ -54341,7 +54341,7 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
       ++i;
       v16 += 123845;
     }
-    sub_80D3654(250);
+    NET_Sleep(250);
   }
   else
   {
@@ -54395,7 +54395,7 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
   if ( !(dword_841FA88 & 0xF0) )
     dword_841FA88 += 16;
   Dvar_SetInt(dword_848B1E4, (char *)dword_841FA88);
-  dword_842BC88 = sv.start_frameTime;
+  dword_842BC88 = com_frameTime;
   dword_842BC80 = 1;
   v8 = sub_80A139C();
   Com_sprintf(&s, 0x40u, "maps/mp/%s.%s", a2, v8);
@@ -54448,7 +54448,7 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
 }
 // 819EF14: using guessed type int com_sv_running;
 // 819EF28: using guessed type int cl_paused;
-// 819EF40: using guessed type int sv.start_frameTime;
+// 819EF40: using guessed type int com_frameTime;
 // 841FA88: using guessed type int dword_841FA88;
 // 841FB08: using guessed type int dword_841FB08;
 // 841FB10: using guessed type int dword_841FB10;
@@ -55654,7 +55654,7 @@ int __usercall sub_8094980@<eax>(long double a1@<st0>)
 // 848B1CC: using guessed type int dword_848B1CC;
 
 //----- (080949DE) --------------------------------------------------------
-void __usercall sub_80949DE(long double a1@<st0>, int a2)
+void __usercall SV_Frame(long double a1@<st0>, int a2)
 {
   char *v2; // eax
   char *v3; // eax
@@ -59578,7 +59578,7 @@ char *__cdecl sub_809D424(char *haystack, int a2, char a3)
 // 809D424: using guessed type char needle[264];
 
 //----- (0809D498) --------------------------------------------------------
-_BOOL4 __cdecl sub_809D498(char *s1)
+_BOOL4 __cdecl FS_PureIgnoreFiles(char *s1)
 {
   if ( *s1 == 46 )
     ++s1;
@@ -59783,8 +59783,8 @@ LABEL_71:
   {
     if ( *((_DWORD *)i + 2) )
     {
-      s1 = sub_80B4E42(&src);
-      if ( !*(_BYTE *)(fs_restrict + 8) && !fs_numServerIwds || *((_DWORD *)i + 3) || sub_809D498(s1) )
+      s1 = Com_GetExtensionSubString(&src);
+      if ( !*(_BYTE *)(fs_restrict + 8) && !fs_numServerIwds || *((_DWORD *)i + 3) || FS_PureIgnoreFiles(s1) )
       {
         v17 = (void *)*((_DWORD *)i + 2);
         FS_BuildOSPath_Internal(v17, (char *)v17 + 256, &src, &filename, a4);
@@ -59792,7 +59792,7 @@ LABEL_71:
         dword_848B800[v5] = (int)FS_FileOpen(&filename, "rb");
         if ( dword_848B800[71 * *a2] )
         {
-          if ( !*((_DWORD *)i + 3) && !sub_809D498(s1) )
+          if ( !*((_DWORD *)i + 3) && !FS_PureIgnoreFiles(s1) )
             *(_DWORD *)dword_848B7F0 = rand() + 1;
           I_strncpyz((char *)(284 * *a2 + 138983452), &src, 256);
           dword_848B814[71 * *a2] = 0;
@@ -70533,7 +70533,7 @@ int __cdecl sub_80B4C8E(char **a1, int a2, int a3, int a4, int a5)
 }
 
 //----- (080B4D14) --------------------------------------------------------
-signed int __cdecl sub_80B4D14(char a1)
+signed int __cdecl ColorIndex(char a1)
 {
   signed int v2; // [esp+0h] [ebp-8h]
 
@@ -70579,7 +70579,7 @@ void *__cdecl sub_80B4D74(void *src, char *s, char *a3, void *dest, int a5)
 }
 
 //----- (080B4E42) --------------------------------------------------------
-_BYTE *__cdecl sub_80B4E42(_BYTE *a1)
+_BYTE *__cdecl Com_GetExtensionSubString(_BYTE *a1)
 {
   _BYTE *v2; // [esp+0h] [ebp-4h]
 
@@ -70608,7 +70608,7 @@ _BYTE *__cdecl sub_80B4E98(_BYTE *a1, _BYTE *a2)
   _BYTE *result; // eax
   _BYTE *v4; // [esp+4h] [ebp-4h]
 
-  v4 = sub_80B4E42(a1);
+  v4 = Com_GetExtensionSubString(a1);
   while ( a1 != v4 )
   {
     v2 = a1++;
@@ -85342,7 +85342,7 @@ char *sub_80D3636()
 }
 
 //----- (080D3654) --------------------------------------------------------
-int __cdecl sub_80D3654(int a1)
+int __cdecl NET_Sleep(int a1)
 {
   fd_set readfds; // [esp+30h] [ebp-98h]
   struct timeval timeout; // [esp+B8h] [ebp-10h]
@@ -101529,7 +101529,7 @@ char *__cdecl sub_80F63D4(char *a1, char *a2, int a3)
       {
         if ( !*a1 )
           break;
-        if ( (unsigned __int8)sub_80B4D14(*a1) )
+        if ( (unsigned __int8)ColorIndex(*a1) )
         {
           if ( v10 > v12 - 2 )
             break;

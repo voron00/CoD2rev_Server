@@ -1,8 +1,8 @@
 # Compiler options.
 CC	= gcc
 CXX	= g++
-CFLAGS=-m32 -g -Wall -std=gnu++11
-CFLAGS_TESTLIB=-m32 -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
+CFLAGS=-m32 -g -Wall -std=gnu++11 -DBOTLIB
+CFLAGS_TESTLIB=-m32 -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY -DBOTLIB
 CFLAGS_ZLIB=-m32
 CFLAGS_ZLIB_TEST=-m32 -fPIC
 LFLAGS=-m32
@@ -42,6 +42,7 @@ else
 TESTLIB_DIR=$(TEST_DIR)/linux
 endif
 
+BOTLIB_DIR=$(SRC_DIR)/botlib
 CLIENTSCR_DIR=$(SRC_DIR)/clientscript
 GAME_DIR=$(SRC_DIR)/game
 QCOMMON_DIR=$(SRC_DIR)/qcommon
@@ -56,6 +57,7 @@ XANIM_DIR=$(SRC_DIR)/xanim
 TARGET=$(addprefix $(BIN_DIR)/,$(BIN_NAME)$(BIN_EXT))
 TARGET_TESTLIB=$(addprefix $(BIN_DIR)/,$(LIB_NAME)$(LIB_EXT))
 
+BOTLIB_SOURCES=$(wildcard $(BOTLIB_DIR)/*.cpp)
 CLIENTSCR_SOURCES=$(wildcard $(CLIENTSCR_DIR)/*.cpp)
 GAME_SOURCES=$(wildcard $(GAME_DIR)/*.cpp)
 QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/*.cpp)
@@ -71,6 +73,7 @@ WIN32_SOURCES=$(wildcard $(WIN32_DIR)/*.cpp)
 ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 
 # Object files lists.
+BOTLIB_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
 CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
 GAME_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(GAME_SOURCES))
 QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
@@ -88,6 +91,7 @@ LINUX_OBJ=$(patsubst $(LINUX_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LINUX_SOURCES))
 endif
 ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 
+BOTLIB_TEST_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
 CLIENTSCR_TEST_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
 GAME_TEST_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(GAME_SOURCES))
 QCOMMON_TEST_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
@@ -108,13 +112,13 @@ ZLIB_TEST_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(TEST_OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 # Default rule.
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
-	$(CLIENTSCR_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(SOUND_OBJ) $(STRINGED_OBJ) $(UI_MP_OBJ) \
+	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(SOUND_OBJ) $(STRINGED_OBJ) $(UI_MP_OBJ) \
 	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(ZLIB_OBJ)
 	$(CXX) $(LFLAGS) -o $@ $^ $(LLIBS)
 
 test: mkdir_test $(TARGET_TESTLIB)
     $(TARGET_TESTLIB): \
-	$(CLIENTSCR_TEST_OBJ) $(GAME_TEST_OBJ) $(QCOMMON_TEST_OBJ) $(SERVER_TEST_OBJ) \
+	$(BOTLIB_TEST_OBJ) $(CLIENTSCR_TEST_OBJ) $(GAME_TEST_OBJ) $(QCOMMON_TEST_OBJ) $(SERVER_TEST_OBJ) \
 	$(SOUND_TEST_OBJ) $(STRINGED_TEST_OBJ) $(UI_MP_TEST_OBJ) $(UNIVERSAL_TEST_OBJ) $(XANIM_TEST_OBJ) $(LINUX_TEST_OBJ) $(WIN32_TEST_OBJ) \
 	$(TESTLIB_TEST_OBJ) $(ZLIB_TEST_OBJ)
 	$(CXX) $(LFLAGS_TESTLIB) -o $@ $^ $(LLIBS)
@@ -137,8 +141,13 @@ mkdir_test:
 	mkdir -p $(TEST_OBJ_DIR)
 endif
 
-# A rule to build testlib source code.
-$(TEST_OBJ_DIR)/%.o: $(TESTLIB_DIR)/%.cpp
+# A rule to build botlib source code.
+$(OBJ_DIR)/%.o: $(BOTLIB_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS) -o $@ $<
+
+# A rule to build botlib source code (test).
+$(TEST_OBJ_DIR)/%.o: $(BOTLIB_DIR)/%.cpp
 	@echo $(CXX)  $@
 	@$(CXX) -c $(CFLAGS_TESTLIB) -o $@ $<
 
@@ -261,6 +270,11 @@ $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 $(TEST_OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 	@echo $(CC)  $@
 	@$(CC) -c $(CFLAGS_ZLIB_TEST) -o $@ $<
+
+# A rule to build testlib source code.
+$(TEST_OBJ_DIR)/%.o: $(TESTLIB_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS_TESTLIB) -o $@ $<
 
 ifeq ($(OS),Windows_NT)
 clean:

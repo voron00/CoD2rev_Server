@@ -245,5 +245,6 @@ extern dvar_t *nextmap;
 
 void SV_Init();
 void SV_PacketEvent( netadr_t from, msg_t *msg );
+void SV_Frame(int msec);
 void SV_Shutdown( const char* finalmsg );
 void SV_ShutdownGameProgs();

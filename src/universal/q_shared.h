@@ -226,6 +226,18 @@ typedef struct
 	byte	b7;
 } qint64;
 
+#define MAX_TOKENLENGTH     1024
+typedef struct pc_token_s
+{
+	int type;
+	int subtype;
+	int intvalue;
+	float floatvalue;
+	char string[MAX_TOKENLENGTH];
+	int line;
+	int linescrossed;
+} pc_token_t;
+
 extern qboolean com_fileAccessed;
 
 short   LittleShort( short l );

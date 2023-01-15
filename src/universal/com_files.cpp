@@ -1003,21 +1003,18 @@ int FS_IwdIsPure(const iwd_t *iwd)
 	return 0;
 }
 
-qboolean FS_PureIgnoreFiles(const char *filename)
+qboolean FS_PureIgnoreFiles(const char *extension)
 {
-	const char* extension;
-
-	if (!I_stricmp(filename, "ban.txt"))
-		return 1;
-
-	extension = Com_GetExtensionSubString(filename);
 	if (*extension == '.')
 		++extension;
 
 	if (!I_stricmp(extension, "cfg"))
 		return 1;
 
-	return I_stricmp(extension, ".dm_NETWORK_PROTOCOL_VERSION") == 0;
+	if (I_stricmp(extension, "menu"))
+		return I_stricmp(extension, ".dm_NETWORK_PROTOCOL_VERSION") == 0;
+
+	return qtrue;
 }
 
 void FS_AddIwdPureCheckReference(const searchpath_t *search)
@@ -1039,6 +1036,7 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 	int hash;
 	iwd_t* iwd;
 	char sanitizedName[MAX_OSPATH];
+	const char *extension;
 	directory_t* dir;
 	unz_s* zfi;
 	file_in_zip_read_info_s* ziptemp;
@@ -1188,8 +1186,9 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 		}
 		else if (search->dir)
 		{
+			extension = Com_GetExtensionSubString(sanitizedName);
 			// check a file in the directory tree
-			if (!fs_restrict->current.boolean && (!fs_numServerIwds || search->localized || FS_PureIgnoreFiles(sanitizedName)))
+			if (!fs_restrict->current.boolean && (!fs_numServerIwds || search->localized || FS_PureIgnoreFiles(extension)))
 			{
 				dir = search->dir;
 
@@ -1200,7 +1199,7 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 					continue;
 				}
 
-				if (!search->localized && !FS_PureIgnoreFiles(sanitizedName))
+				if (!search->localized && !FS_PureIgnoreFiles(extension))
 				{
 					fs_fakeChkSum = rand() + 1;
 				}

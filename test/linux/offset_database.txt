@@ -73,6 +73,7 @@ SetJump(0x0804A644, (DWORD)SourceError);
 SetJump(0x0804A6AA, (DWORD)SourceWarning);
 SetJump(0x08135CE0, (DWORD)Language_UpdateCurrentAsian);
 SetJump(0x08136CB4, (DWORD)Language_IsAsian);
+SetJump(0x080B4D14, (DWORD)ColorIndex);
 
 // Common
 SetJump(0x08060B2C, (DWORD)Com_Printf);
@@ -118,12 +119,18 @@ SetJump(0x08063B04, (DWORD)Com_DvarDump);
 SetJump(0x080AA2D8, (DWORD)Com_Filter);
 SetJump(0x080AA81C, (DWORD)Com_Memcpy);
 SetJump(0x080B47DA, (DWORD)Com_Parse);
+SetJump(0x080B4E42, (DWORD)Com_GetExtensionSubString);
+SetJump(0x08062112, (DWORD)Com_WriteConfiguration);
+SetJump(0x080623A4, (DWORD)Com_UpdateViewLog);
+SetJump(0x08061526, (DWORD)Com_EventLoop);
+SetJump(0x0806228A, (DWORD)Com_ModifyMsec);
 
 // Xanim
 SetJump(0x080B6F34, (DWORD)DObjShutdown);
 SetJump(0x080BA21E, (DWORD)XAnimShutdown);
 SetJump(0x080BA0EC, (DWORD)XAnimInit);
 SetJump(0x080B6EE8, (DWORD)DObjInit);
+SetJump(0x0806C918, (DWORD)SetAnimCheck);
 
 // Clipmap
 SetJump(0x080B3A76, (DWORD)CM_Cleanup);
@@ -200,6 +207,7 @@ SetJump(0x080A1200, (DWORD)FS_FOpenFileByMode);
 SetJump(0x0809CFDA, (DWORD)FS_FOpenFileAppend);
 SetJump(0x0809CD3C, (DWORD)FS_GetHandleAndOpenFile);
 SetJump(0x0809C8DE, (DWORD)FS_CreatePath);
+SetJump(0x0809D498, (DWORD)FS_PureIgnoreFiles);
 
 // Unzip
 SetJump(0x080CF97D, (DWORD)unzOpen);
@@ -212,6 +220,7 @@ SetJump(0x080D0329, (DWORD)unzGoToNextFile);
 
 // NET
 SetJump(0x080D33EC, (DWORD)NET_Init);
+SetJump(0x080D3654, (DWORD)NET_Sleep);
 
 // Netchan
 SetJump(0x0806B3FE, (DWORD)Netchan_Init);
@@ -290,6 +299,7 @@ SetJump(0x08090DC2, (DWORD)CL_ForwardCommandToServer);
 SetJump(0x08092906, (DWORD)SV_Shutdown);
 SetJump(0x08090BA2, (DWORD)SV_ShutdownGameProgs);
 SetJump(0x0809216E, (DWORD)SV_Init);
+SetJump(0x080949DE, (DWORD)SV_Frame);
 
 // Script Runtime (Scr)
 SetJump(0x0807F9DC, (DWORD)Scr_Abort);
@@ -337,7 +347,6 @@ SetDword(0x08515288, (DWORD)hunk_low.temp);
 SetDword(0x0851528C, (DWORD)hunk_high.permanent);
 SetDword(0x08515290, (DWORD)hunk_high.temp);
 SetDword(0x0819EEF4, (DWORD)logfile);
-SetDword(0x0819EF40, (DWORD)sv.start_frameTime);
 SetDword(0x0819EF58, (DWORD)com_fullyInitialized);
 SetDword(0x0819EF14, (DWORD)com_sv_running);
 SetDword(0x08494204, (DWORD)com_dedicated);
@@ -373,3 +382,5 @@ SetDword(0x0848B6A4, (DWORD)fs_loadStack);
 SetDword(0x089BD5A0, (DWORD)g_currentAsian);
 SetDword(0x08168644, (DWORD)g_languages);
 SetDword(0x0848B7F4, (DWORD)fs_checksumFeed);
+SetDword(0x0819EF40, (DWORD)com_frameTime);
+SetDword(0x0819EF44, (DWORD)com_lastFrameTime);

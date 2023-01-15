@@ -133,6 +133,7 @@ void NET_Init( void );
 void NET_Shutdown( void );
 void NET_Restart( void );
 void NET_Config( qboolean enableNetworking );
+void NET_Sleep(int msec);
 
 typedef enum
 {

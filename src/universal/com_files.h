@@ -109,6 +109,7 @@ int FS_Read(void *buffer, int len, int h);
 int FS_ReadFile(const char* qpath, void** buffer);
 int FS_FOpenTextFileWrite(const char* filename);
 int FS_FOpenFileWrite( const char *filename );
+int FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void FS_Printf( fileHandle_t h, const char *fmt, ... );
 int FS_Write(const void *buffer, int len, int h);
 void FS_FreeFile(void* buffer);

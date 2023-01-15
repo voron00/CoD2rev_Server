@@ -37,6 +37,8 @@ extern vec3_t vec3_origin;
 
 #define SnapVector( v ) {v[0] = (int)v[0]; v[1] = (int)v[1]; v[2] = (int)v[2];}
 
+float Q_fabs( float f );
+
 /*
 ==============
 I_fmax
