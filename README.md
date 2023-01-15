@@ -1,13 +1,10 @@
 # cod2rev
 
-Reverse Engeneering of Call of Duty 2 Linux Server
+Reverse Engeneering of Call of Duty 2 Server
 
-Credits to id Software and CoD4x devs for alot of code reference.
+Nothing interesting is here yet. Project is in very early state.
 
-Current Progress:
-
-Cmd system - Works
-File system - Works
-Dvar system - Mostly works
-
-More to come ...
+Credits:
+id Software
+CoD4x Server: https://github.com/callofduty4x/CoD4x_Server
+OpenBO2: https://github.com/builtbyxeno/OpenBO2

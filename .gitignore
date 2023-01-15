@@ -32,10 +32,12 @@
 *.app
 
 # cod2rev
+*.bak
 *.iwd
 *.dm_1
 *.cfg
 
 bin/**
-objects/**
 main/**
+obj/**
+obj_test/**
