@@ -434,6 +434,26 @@ void Cmd_TokenizeString( const char *text_in )
 }
 
 /*
+==============
+Cmd_FindCommand
+==============
+*/
+cmd_function_t* Cmd_FindCommand(const char *cmdName)
+{
+	cmd_function_t *cmd;
+
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
+	{
+		if (!strcmp(cmdName, cmd->name))
+		{
+			return cmd;
+		}
+	}
+
+	return NULL;
+}
+
+/*
 ============
 Cmd_AddCommand
 ============
@@ -443,17 +463,15 @@ void Cmd_AddCommand( const char *cmd_name, xcommand_t function )
 	cmd_function_t  *cmd;
 
 	// fail if the command already exists
-	for ( cmd = cmd_functions ; cmd ; cmd = cmd->next )
+	cmd = Cmd_FindCommand(cmd_name);
+
+	if (cmd)
 	{
-		if ( !strcmp( cmd_name, cmd->name ) )
+		if (function != NULL)
 		{
-			// allow completion-only commands to be silently doubled
-			if ( function != NULL )
-			{
-				Com_Printf( "Cmd_AddCommand: %s already defined\n", cmd_name );
-			}
-			return;
+			Com_Printf("Cmd_AddCommand: %s already defined\n", cmd_name);
 		}
+		return;
 	}
 
 	// use a small malloc to avoid zone fragmentation
@@ -638,8 +656,8 @@ Cmd_Init
 */
 void Cmd_Init( void )
 {
-	Cmd_AddCommand("cmdlist",Cmd_List_f);
-	Cmd_AddCommand("exec",Cmd_Exec_f);
-	Cmd_AddCommand("vstr",Cmd_Vstr_f);
+	Cmd_AddCommand("cmdlist", Cmd_List_f);
+	Cmd_AddCommand("exec", Cmd_Exec_f);
+	Cmd_AddCommand("vstr", Cmd_Vstr_f);
 	Cmd_AddCommand("wait", Cmd_Wait_f);
 }

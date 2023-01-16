@@ -76,7 +76,6 @@ void Sys_ShowConsole( int level, qboolean quitOnClose );
 
 char **Sys_ListFiles( const char *directory, const char *extension, const char *filter, int *numfiles, qboolean wantsubs );
 void Sys_FreeFileList( char **list );
-
 char *Sys_Cwd( void );
 void Sys_StreamSeek( fileHandle_t f, int offset, int origin );
 void Sys_EndStreamedFile( fileHandle_t f );

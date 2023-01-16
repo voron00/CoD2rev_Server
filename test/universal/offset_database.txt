@@ -38,6 +38,12 @@ SetJump(0x080D3EB8, (DWORD)Sys_FreeFileList);
 SetJump(0x080D3F5A, (DWORD)Sys_DefaultCDPath);
 SetJump(0x080D3FAE, (DWORD)Sys_DefaultInstallPath);
 SetJump(0x080D3FF8, (DWORD)Sys_DefaultHomePath);
+SetJump(0x080D3874, (DWORD)Sys_Mkdir);
+SetJump(0x080D3890, (DWORD)Sys_ListFilteredFiles);
+SetJump(0x080D3F0E, (DWORD)Sys_Cwd);
+SetJump(0x080D40F0, (DWORD)Sys_GetCurrentUser);
+SetJump(0x080D416A, (DWORD)Sys_DirectoryHasContents);
+SetJump(0x080D2262, (DWORD)Sys_GetEvent);
 
 // Cmd
 SetJump(0x0806080A, (DWORD)Cmd_Init);
@@ -53,6 +59,23 @@ SetJump(0x0805FB7E, (DWORD)Cbuf_InsertText);
 SetJump(0x080606A2, (DWORD)Cmd_ExecuteString);
 SetJump(0x08060142, (DWORD)Cmd_TokenizeStringInternal);
 SetJump(0x0806042C, (DWORD)Cmd_TokenizeString);
+SetJump(0x08060768, (DWORD)Cmd_List_f);
+SetJump(0x0805FE66, (DWORD)Cmd_Exec_f);
+SetJump(0x0805FEF2, (DWORD)Cmd_Vstr_f);
+SetJump(0x0805FA5E, (DWORD)Cmd_Wait_f);
+SetJump(0x08060754, (DWORD)SV_Cmd_ExecuteString);
+SetJump(0x08060598, (DWORD)Cmd_SetAutoComplete);
+SetJump(0x08060464, (DWORD)Cmd_FindCommand);
+SetJump(0x08060448, (DWORD)SV_Cmd_TokenizeString);
+SetJump(0x080603CC, (DWORD)Cmd_TokenizeStringWithLimit);
+SetJump(0x080603FC, (DWORD)SV_Cmd_TokenizeStringWithLimit);
+SetJump(0x0805FFE6, (DWORD)SV_Cmd_Argc);
+SetJump(0x0806001C, (DWORD)SV_Cmd_Argv);
+SetJump(0x08060074, (DWORD)SV_Cmd_ArgvBuffer);
+SetJump(0x08060048, (DWORD)Cmd_ArgvBuffer);
+SetJump(0x080600A0, (DWORD)Cmd_Args);
+SetJump(0x0805FCB2, (DWORD)Cbuf_ExecuteInternal);
+SetJump(0x0805FE0A, (DWORD)Cmd_ExecFromDisk);
 
 // TTY
 SetJump(0x080D117E, (DWORD)tty_FlushIn);
@@ -74,6 +97,8 @@ SetJump(0x0804A6AA, (DWORD)SourceWarning);
 SetJump(0x08135CE0, (DWORD)Language_UpdateCurrentAsian);
 SetJump(0x08136CB4, (DWORD)Language_IsAsian);
 SetJump(0x080B4D14, (DWORD)ColorIndex);
+SetJump(0x080611E6, (DWORD)Info_Print);
+SetJump(0x08062590, (DWORD)Field_Clear);
 
 // Common
 SetJump(0x08060B2C, (DWORD)Com_Printf);
@@ -124,6 +149,14 @@ SetJump(0x08062112, (DWORD)Com_WriteConfiguration);
 SetJump(0x080623A4, (DWORD)Com_UpdateViewLog);
 SetJump(0x08061526, (DWORD)Com_EventLoop);
 SetJump(0x0806228A, (DWORD)Com_ModifyMsec);
+SetJump(0x080B5A86, (DWORD)Com_InitThreadData);
+SetJump(0x0806092A, (DWORD)Com_BeginRedirect);
+SetJump(0x08060964, (DWORD)Com_EndRedirect);
+SetJump(0x0806136C, (DWORD)Com_PushEvent);
+SetJump(0x08061498, (DWORD)Com_GetEvent);
+SetJump(0x0806191E, (DWORD)Com_Error_f);
+SetJump(0x080619C8, (DWORD)Com_Crash_f);
+SetJump(0x0806195A, (DWORD)Com_Freeze_f);
 
 // Xanim
 SetJump(0x080B6F34, (DWORD)DObjShutdown);
@@ -135,6 +168,9 @@ SetJump(0x0806C918, (DWORD)SetAnimCheck);
 // Clipmap
 SetJump(0x080B3A76, (DWORD)CM_Cleanup);
 SetJump(0x08052006, (DWORD)CM_Shutdown);
+
+// BG
+SetJump(0x080D4624, (DWORD)BG_AnimParseError);
 
 // Filesystem
 SetJump(0x080A0F3E, (DWORD)FS_InitFilesystem);
@@ -208,6 +244,9 @@ SetJump(0x0809CFDA, (DWORD)FS_FOpenFileAppend);
 SetJump(0x0809CD3C, (DWORD)FS_GetHandleAndOpenFile);
 SetJump(0x0809C8DE, (DWORD)FS_CreatePath);
 SetJump(0x0809D498, (DWORD)FS_PureIgnoreFiles);
+SetJump(0x0809F7B2, (DWORD)FS_ListFiles);
+SetJump(0x0809E454, (DWORD)FS_Write);
+SetJump(0x080A1380, (DWORD)FS_Flush);
 
 // Unzip
 SetJump(0x080CF97D, (DWORD)unzOpen);
@@ -221,6 +260,14 @@ SetJump(0x080D0329, (DWORD)unzGoToNextFile);
 // NET
 SetJump(0x080D33EC, (DWORD)NET_Init);
 SetJump(0x080D3654, (DWORD)NET_Sleep);
+SetJump(0x080D2B64, (DWORD)NetadrToSockadr);
+SetJump(0x080D3636, (DWORD)NET_ErrorString);
+SetJump(0x0806AD14, (DWORD)NET_AdrToString);
+SetJump(0x080D2BE2, (DWORD)SockadrToNetadr);
+SetJump(0x080D313E, (DWORD)NET_GetLocalAddress);
+SetJump(0x080D30D2, (DWORD)Sys_ShowIP);
+SetJump(0x080D330E, (DWORD)NET_OpenIP);
+SetJump(0x080D3438, (DWORD)NET_IPSocket);
 
 // Netchan
 SetJump(0x0806B3FE, (DWORD)Netchan_Init);
@@ -231,6 +278,8 @@ SetJump(0x080B5620, (DWORD)I_stricmp);
 SetJump(0x080B55B0, (DWORD)I_strncmp);
 SetJump(0x080B59CE, (DWORD)va);
 SetJump(0x080D4122, (DWORD)strlwr);
+SetJump(0x080A93B0, (DWORD)CopyString);
+SetJump(0x080B57C0, (DWORD)I_strncat);
 
 // Dvars
 SetJump(0x080B2BD0, (DWORD)Dvar_Init);
@@ -290,6 +339,14 @@ SetJump(0x080A994C, (DWORD)Hunk_ClearDataFor);
 SetJump(0x080A92FA, (DWORD)Z_MallocInternal);
 SetJump(0x080A9BE0, (DWORD)Hunk_AllocInternal);
 SetJump(0x080A9BFC, (DWORD)Hunk_AllocAlignInternal);
+SetJump(0x080AA1F6, (DWORD)LargeLocal);
+SetJump(0x080AA240, (DWORD)LargeLocalGetBuf);
+SetJump(0x080AA22A, (DWORD)LargeLocalDealloc);
+
+// MSG
+SetJump(0x08067718, (DWORD)MSG_Init);
+SetJump(0x08067CE4, (DWORD)MSG_WriteString);
+SetJump(0x08099DE4, (DWORD)MSG_WriteByte);
 
 // Client
 SetJump(0x080609A2, (DWORD)CL_SwitchToLocalClient);
@@ -300,6 +357,9 @@ SetJump(0x08092906, (DWORD)SV_Shutdown);
 SetJump(0x08090BA2, (DWORD)SV_ShutdownGameProgs);
 SetJump(0x0809216E, (DWORD)SV_Init);
 SetJump(0x080949DE, (DWORD)SV_Frame);
+SetJump(0x0808BBDC, (DWORD)SV_AddOperatorCommands);
+SetJump(0x08090BE6, (DWORD)SV_SetGametype);
+SetJump(0x08090E6C, (DWORD)SV_SetConfigstring);
 
 // Script Runtime (Scr)
 SetJump(0x0807F9DC, (DWORD)Scr_Abort);

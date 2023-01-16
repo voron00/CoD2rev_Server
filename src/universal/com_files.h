@@ -111,6 +111,7 @@ int FS_FOpenTextFileWrite(const char* filename);
 int FS_FOpenFileWrite( const char *filename );
 int FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void FS_Printf( fileHandle_t h, const char *fmt, ... );
+void FS_Flush(int f);
 int FS_Write(const void *buffer, int len, int h);
 void FS_FreeFile(void* buffer);
 void FS_FCloseFile( fileHandle_t f );

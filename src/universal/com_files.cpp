@@ -1412,6 +1412,14 @@ int FS_Read(void *buffer, int len, int h)
 	return len;
 }
 
+void FS_Flush(int f)
+{
+	FILE* file;
+
+	file = FS_FileForHandle(f);
+	fflush(file);
+}
+
 int FS_Write(const void *buffer, int len, int h)
 {
 	int tries;

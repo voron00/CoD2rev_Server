@@ -415,6 +415,9 @@ void Com_PrintMessage( conChannel_t channel, const char *fmt, ... )
 		if ( logfile && FS_Initialized())
 		{
 			FS_Write(msg, strlen(msg), logfile);
+
+			if ( com_logfile->current.integer > 1 )
+				FS_Flush(logfile);
 		}
 	}
 }
