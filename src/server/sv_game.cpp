@@ -1,4 +1,4 @@
-#include "server.h"
+#include "../qcommon/qcommon.h"
 
 qboolean ConsoleCommand()
 {

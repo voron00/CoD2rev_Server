@@ -53,6 +53,11 @@ typedef enum {qfalse, qtrue}    qboolean;
 
 #endif //SCREWUP
 
+// CoD2rev
+#ifndef BOTLIB
+#define BOTLIB
+#endif
+
 #ifdef BOTLIB
 //include files for usage in the bot library
 #include "../qcommon/qcommon.h"

@@ -261,7 +261,8 @@ int I_strnicmp(const char *s0, const char *s1, int n)
 				return c0 < c1 ? -1 : 1;
 			}
 		}
-	} while (c0);
+	}
+	while (c0);
 
 	return 0;
 }
@@ -1092,4 +1093,54 @@ void Info_SetValueForKey_Big( char *s, const char *key, const char *value )
 	}
 
 	strcat (s, newi);
+}
+
+char *I_CleanStr(char *string)
+{
+	char* d;
+	char c;
+	char* s;
+	int keep_cleaning;
+
+	do
+	{
+		s = string;
+		d = string;
+		keep_cleaning = 0;
+
+		while (1)
+		{
+			c = *s;
+			if (!*s)
+			{
+				break;
+			}
+			if (s && *s == '^' && s[1] && s[1] != '^' && s[1] >= '0' && s[1] <= '@')
+			{
+				++s;
+				keep_cleaning = 1;
+			}
+			else if (c >= 0x20 && c != 0x7F)
+			{
+				*d++ = c;
+			}
+			++s;
+		}
+		*d = '\0';
+	}
+	while (keep_cleaning);
+
+	return string;
+}
+
+char I_CleanChar(char character)
+{
+	if ((unsigned char)character == 146)
+	{
+		return 39;
+	}
+	else
+	{
+		return character;
+	}
 }

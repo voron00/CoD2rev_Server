@@ -1,9 +1,9 @@
 # Compiler options.
-CC	=  gcc
-CXX	=  g++
+CC = gcc
+CXX = g++
 NASM = nasm
-CFLAGS=-m32 -g -Wall -std=gnu++11 -DBOTLIB
-CFLAGS_TESTLIB=-m32 -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY -DBOTLIB
+CFLAGS=-m32 -g -Wall -std=gnu++11
+CFLAGS_TESTLIB=-m32 -g -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
 CFLAGS_ZLIB=-m32
 CFLAGS_ZLIB_TEST=-m32 -fPIC
 LFLAGS=-m32
@@ -121,20 +121,32 @@ LINUX_OBJ=$(patsubst $(LINUX_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LINUX_SOURCES))
 endif
 ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 
+# Object files lists for testing library.
+BOTLIB_TEST_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
+CLIENTSCR_TEST_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
+GAME_TEST_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(GAME_SOURCES))
+QCOMMON_TEST_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
+SERVER_TEST_OBJ=$(patsubst $(SERVER_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(SERVER_SOURCES))
+SOUND_TEST_OBJ=$(patsubst $(SOUND_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(SOUND_SOURCES))
+STRINGED_TEST_OBJ=$(patsubst $(STRINGED_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(STRINGED_SOURCES))
+UI_MP_TEST_OBJ=$(patsubst $(UI_MP_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(UI_MP_SOURCES))
+UNIVERSAL_TEST_OBJ=$(patsubst $(UNIVERSAL_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(UNIVERSAL_SOURCES))
+XANIM_TEST_OBJ=$(patsubst $(XANIM_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(XANIM_SOURCES))
+
 # Testing library obj
-TESTLIB_OBJ=$(patsubst $(TESTLIB_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(TESTLIB_SOURCES))
+TESTLIB_OBJ=$(patsubst $(TESTLIB_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(TESTLIB_SOURCES))
 
 # Object files lists for testing library (asm).
-ASM_BOTLIB_TEST_OBJ=$(patsubst $(BOTLIB_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
-ASM_CLIENTSCR_TEST_OBJ=$(patsubst $(CLIENTSCR_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
-ASM_GAME_TEST_OBJ=$(patsubst $(GAME_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(GAME_SOURCES))
-ASM_QCOMMON_TEST_OBJ=$(patsubst $(QCOMMON_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
-ASM_SERVER_TEST_OBJ=$(patsubst $(SERVER_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(SERVER_SOURCES))
-ASM_SOUND_TEST_OBJ=$(patsubst $(SOUND_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(SOUND_SOURCES))
-ASM_STRINGED_TEST_OBJ=$(patsubst $(STRINGED_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(STRINGED_SOURCES))
-ASM_UI_MP_TEST_OBJ=$(patsubst $(UI_MP_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(UI_MP_SOURCES))
-ASM_UNIVERSAL_TEST_OBJ=$(patsubst $(UNIVERSAL_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(UNIVERSAL_SOURCES))
-ASM_XANIM_TEST_OBJ=$(patsubst $(XANIM_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(XANIM_SOURCES))
+ASM_BOTLIB_TEST_OBJ=$(patsubst $(BOTLIB_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_BOTLIB_SOURCES))
+ASM_CLIENTSCR_TEST_OBJ=$(patsubst $(CLIENTSCR_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_CLIENTSCR_SOURCES))
+ASM_GAME_TEST_OBJ=$(patsubst $(GAME_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_GAME_SOURCES))
+ASM_QCOMMON_TEST_OBJ=$(patsubst $(QCOMMON_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_QCOMMON_SOURCES))
+ASM_SERVER_TEST_OBJ=$(patsubst $(SERVER_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_SERVER_SOURCES))
+ASM_SOUND_TEST_OBJ=$(patsubst $(SOUND_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_SOUND_SOURCES))
+ASM_STRINGED_TEST_OBJ=$(patsubst $(STRINGED_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_STRINGED_SOURCES))
+ASM_UI_MP_TEST_OBJ=$(patsubst $(UI_MP_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_UI_MP_SOURCES))
+ASM_UNIVERSAL_TEST_OBJ=$(patsubst $(UNIVERSAL_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_UNIVERSAL_SOURCES))
+ASM_XANIM_TEST_OBJ=$(patsubst $(XANIM_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_XANIM_SOURCES))
 
 # Platform specific lists for testing library.
 ifeq ($(OS),Windows_NT)
@@ -159,7 +171,7 @@ test: mkdir_test $(TARGET_TESTLIB)
 	$(ASM_SOUND_TEST_OBJ) $(ASM_STRINGED_TEST_OBJ) $(ASM_UI_MP_TEST_OBJ) $(ASM_UNIVERSAL_TEST_OBJ) $(ASM_XANIM_TEST_OBJ) \
 	$(BOTLIB_TEST_OBJ) $(CLIENTSCR_TEST_OBJ) $(GAME_TEST_OBJ) $(QCOMMON_TEST_OBJ) $(SERVER_TEST_OBJ) \
 	$(SOUND_TEST_OBJ) $(STRINGED_TEST_OBJ) $(UI_MP_TEST_OBJ) $(UNIVERSAL_TEST_OBJ) $(XANIM_TEST_OBJ) \
-	$(LINUX_TEST_OBJ) $(WIN32_TEST_OBJ) $(TESTLIB_TEST_OBJ) $(ZLIB_TEST_OBJ)
+	$(LINUX_TEST_OBJ) $(WIN32_TEST_OBJ) $(TESTLIB_OBJ) $(ZLIB_TEST_OBJ)
 	$(CXX) $(LFLAGS_TESTLIB) -o $@ $^ $(LLIBS)
 
 ifeq ($(OS),Windows_NT)

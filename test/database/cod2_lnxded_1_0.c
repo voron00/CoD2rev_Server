@@ -384,7 +384,7 @@ int __cdecl sub_8058162(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058192(float *a1, float *a2, float *a3);
 float *__cdecl sub_80581D8(int a1, float *a2, float *a3, float *a4);
 int __cdecl sub_80582EC(int a1, char *a2, float *a3, float *a4, float *a5);
-char *sub_80583FA();
+char *CM_LoadStaticModels();
 int __cdecl sub_80588E0(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058910(float *a1, float *a2, float *a3);
 float *__cdecl sub_8058954(float *a1, float a2, float *a3);
@@ -536,7 +536,7 @@ int Hunk_ClearTempMemoryHigh();
 void sub_8060924();
 char *__cdecl Com_BeginRedirect(char *a1, int a2, int a3);
 int Com_EndRedirect();
-void CL_SwitchToLocalClient();
+void sub_80609A2();
 void __cdecl Com_PrintMessage(int a1, char *s);
 void Com_Printf(char *format, ...);
 void Com_DPrintf(char *format, ...);
@@ -581,7 +581,7 @@ int __cdecl Com_ModifyMsec(int a1);
 int Com_UpdateViewLog();
 // void __usercall Com_Frame_Try_Block_Function(long double a1@<st0>);
 void sub_80624CC();
-int sub_80624D2();
+int Com_ResetFrametime();
 // void __usercall Com_Frame(long double a1@<st0>);
 void *Com_CloseLogFile();
 void Com_Close();
@@ -666,15 +666,15 @@ _DWORD *__cdecl sub_8065E3E(int a1, _DWORD *a2);
 _DWORD *__cdecl sub_8065E5E(int a1, int a2, int a3);
 int __cdecl sub_8065EE6(int a1, int a2);
 void __cdecl sub_8065FA6(int a1, int a2);
-void __cdecl sub_806610E(_DWORD *a1, unsigned __int8 a2);
+void __cdecl Huff_addRef(_DWORD *a1, unsigned __int8 a2);
 int __cdecl sub_8066394(_DWORD *a1, _DWORD *a2, int a3);
-int __cdecl sub_80663F6(_DWORD *a1, _DWORD *a2, int a3, int *a4);
+int __cdecl Huff_offsetReceive(_DWORD *a1, _DWORD *a2, int a3, int *a4);
 int __cdecl sub_8066466(int a1, int a2, int a3);
 int *__cdecl sub_80664CC(int a1, int a2, int a3);
-int __cdecl sub_8066550(int a1, int a2, int a3, int *a4);
+int __cdecl Huff_offsetTransmit(int a1, int a2, int a3, int *a4);
 int __cdecl sub_806658E(_DWORD *a1, int a2);
 int __cdecl sub_8066838(int a1, int a2);
-int __cdecl sub_8066A70(char *s);
+int __cdecl Huff_Init(char *s);
 _DWORD *__cdecl sub_8066C14(_DWORD *a1);
 void *__cdecl sub_8066C54(int *a1, char *src, unsigned int a3);
 void *__cdecl sub_8066D50(int a1, int *s);
@@ -684,64 +684,64 @@ unsigned int __cdecl sub_80675C6(int a1, int a2, unsigned int a3);
 int __cdecl sub_8067642(char *src, int a2);
 int sub_806769E(char *a1, int a2, ...);
 int __cdecl MSG_Init(void *s, int, int); // idb
-_DWORD *__cdecl sub_806775C(_DWORD *a1);
-int __cdecl sub_80677A2(_DWORD *a1, int a2, int a3);
-_DWORD *__cdecl sub_8067868(_DWORD *a1);
-_DWORD *__cdecl sub_80678C6(_DWORD *a1);
-int __cdecl sub_8067960(_DWORD *a1, int a2);
-int __cdecl sub_8067A0E(_DWORD *a1);
-int __cdecl sub_8067A8E(unsigned __int8 *a1, int a2, int a3);
-_BYTE *__cdecl sub_8067AE2(int a1, _BYTE *a2, int a3);
-_DWORD *__cdecl sub_8067B4C(_DWORD *a1, char a2);
-_DWORD *__cdecl sub_8067B84(_DWORD *a1, void *src, size_t n);
-_DWORD *__cdecl sub_8067BDA(_DWORD *a1, __int16 a2);
-_DWORD *__cdecl sub_8067C2A(_DWORD *a1, int a2);
-_DWORD *__cdecl sub_8067C78(_DWORD *a1, int a2, int a3);
+_DWORD *__cdecl MSG_BeginReading(_DWORD *a1);
+int __cdecl MSG_WriteBits(_DWORD *a1, int a2, int a3);
+_DWORD *__cdecl MSG_WriteBit0(_DWORD *a1);
+_DWORD *__cdecl MSG_WriteBit1(_DWORD *a1);
+int __cdecl MSG_ReadBits(_DWORD *a1, int a2);
+int __cdecl MSG_ReadBit(_DWORD *a1);
+int __cdecl MSG_WriteBitsCompress(unsigned __int8 *a1, int a2, int a3);
+_BYTE *__cdecl MSG_ReadBitsCompress(int a1, _BYTE *a2, int a3);
+_DWORD *__cdecl MSG_WriteByte(_DWORD *a1, char a2);
+_DWORD *__cdecl MSG_WriteData(_DWORD *a1, void *src, size_t n);
+_DWORD *__cdecl MSG_WriteShort(_DWORD *a1, __int16 a2);
+_DWORD *__cdecl MSG_WriteLong(_DWORD *a1, int a2);
+_DWORD *__cdecl MSG_ReadString(_DWORD *a1, int a2, int a3);
 _DWORD *__cdecl MSG_WriteString(_DWORD *a1, char *s);
-_DWORD *__cdecl sub_8067D96(_DWORD *a1, char *s);
+_DWORD *__cdecl MSG_WriteBigString(_DWORD *a1, char *s);
 _DWORD *__cdecl sub_8067EA6(_DWORD *a1, float a2);
-int __cdecl sub_8067EE8(_DWORD *a1);
-int __cdecl sub_8067F32(_DWORD *a1);
-int __cdecl sub_8067F90(_DWORD *a1);
-unsigned __int64 __cdecl sub_8067FEC(_DWORD *a1);
-void *__cdecl sub_8068062(_DWORD *a1);
-void *__cdecl sub_80680CC(_DWORD *a1);
-void *__cdecl sub_8068146(_DWORD *a1);
+int __cdecl MSG_ReadByte(_DWORD *a1);
+int __cdecl MSG_ReadShort(_DWORD *a1);
+int __cdecl MSG_ReadLong(_DWORD *a1);
+unsigned __int64 __cdecl MSG_ReadLong64(_DWORD *a1);
+void *__cdecl MSG_ReadCommandString(_DWORD *a1);
+void *__cdecl MSG_ReadBigString(_DWORD *a1);
+void *__cdecl MSG_ReadStringLine(_DWORD *a1);
 long double __cdecl sub_80681C8(_DWORD *a1);
-void *__cdecl sub_80681EC(_DWORD *a1, void *dest, size_t n);
+void *__cdecl MSG_ReadData(_DWORD *a1, void *dest, size_t n);
 _DWORD *__cdecl sub_806825C(_DWORD *a1, int a2, int a3, int a4, int a5);
 int __cdecl sub_80682A0(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80682E8(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_806830C(_DWORD *a1, int a2, int a3);
 _DWORD *__cdecl sub_80683AE(_DWORD *a1, __int16 a2, __int16 a3, __int16 a4);
 int __cdecl sub_80683EC(_DWORD *a1, __int16 a2, int a3);
-_BYTE *__cdecl sub_8068424(char *s, _BYTE *a2, int a3);
-void __cdecl sub_80684E6(int a1, void *s);
+_BYTE *__cdecl MSG_WriteReliableCommandToBuffer(char *s, _BYTE *a2, int a3);
+void __cdecl MSG_SetDefaultUserCmd(int a1, void *s);
 int __cdecl sub_8068660(int a1, int a2);
 _BYTE *__cdecl sub_80686A6(char a1, _BYTE *a2, _BYTE *a3);
-_BYTE *__cdecl sub_8068ADE(_DWORD *a1, int a2, int a3, int a4);
-int *__cdecl sub_8068E1C(_DWORD *a1, int a2, int a3, int a4);
-_DWORD *__cdecl sub_8069142(_DWORD *a1, int a2, int a3, int a4, int a5, int a6);
-_DWORD *__cdecl sub_80691FC(_DWORD *a1, int *a2, int *a3, int a4, int a5, int a6, int a7, int a8);
-_DWORD *__cdecl sub_806938C(_DWORD *a1, int *a2, int *a3, int a4);
-_DWORD *__cdecl sub_80693DA(_DWORD *a1, int *a2, int *a3, int a4);
-_DWORD *__cdecl sub_8069428(_DWORD *a1, int *a2, int *a3, int a4);
-void __cdecl sub_80694A0(_DWORD *a1, int a2, int a3, const char **a4, int a5);
-int __cdecl sub_80697D8(_DWORD *a1, int a2, int a3, int a4, int a5);
-int __cdecl sub_806988A(_DWORD *a1, int src, int dest, int a4, int a5, int a6, const char **a7);
-int __cdecl sub_80699C8(_DWORD *a1, void *src, void *dest, int a4);
-int __cdecl sub_8069A0E(_DWORD *a1, void *src, void *dest, int a4);
-int __cdecl sub_8069A54(_DWORD *a1, char *src, void *dest, int a4);
-int __cdecl sub_8069AC4(_DWORD *a1, int a2, int a3, int a4);
-void *__cdecl sub_8069C10(_DWORD *a1, int a2, int a3, int a4);
-_DWORD *__cdecl sub_8069D40(_DWORD *a1, char *a2, _DWORD *a3);
-void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3);
+_BYTE *__cdecl MSG_ReadDeltaUsercmdKey(_DWORD *a1, int a2, int a3, int a4);
+int *__cdecl MSG_WriteDeltaField(_DWORD *a1, int a2, int a3, int a4);
+_DWORD *__cdecl MSG_WriteDeltaObjective(_DWORD *a1, int a2, int a3, int a4, int a5, int a6);
+_DWORD *__cdecl MSG_WriteDeltaStruct(_DWORD *a1, int *a2, int *a3, int a4, int a5, int a6, int a7, int a8);
+_DWORD *__cdecl MSG_WriteDeltaEntity(_DWORD *a1, int *a2, int *a3, int a4);
+_DWORD *__cdecl MSG_WriteDeltaArchivedEntity(_DWORD *a1, int *a2, int *a3, int a4);
+_DWORD *__cdecl MSG_WriteDeltaClient(_DWORD *a1, int *a2, int *a3, int a4);
+void __cdecl MSG_ReadDeltaField(_DWORD *a1, int a2, int a3, const char **a4, int a5);
+int __cdecl MSG_ReadDeltaObjective(_DWORD *a1, int a2, int a3, int a4, int a5);
+int __cdecl MSG_ReadDeltaStruct(_DWORD *a1, int src, int dest, int a4, int a5, int a6, const char **a7);
+int __cdecl MSG_ReadDeltaEntity(_DWORD *a1, void *src, void *dest, int a4);
+int __cdecl MSG_ReadDeltaArchivedEntity(_DWORD *a1, void *src, void *dest, int a4);
+int __cdecl MSG_ReadDeltaClient(_DWORD *a1, char *src, void *dest, int a4);
+int __cdecl MSG_WriteDeltaHudElems(_DWORD *a1, int a2, int a3, int a4);
+void *__cdecl MSG_ReadDeltaHudElems(_DWORD *a1, int a2, int a3, int a4);
+_DWORD *__cdecl MSG_WriteDeltaPlayerstate(_DWORD *a1, char *a2, _DWORD *a3);
+void *__cdecl MSG_ReadDeltaPlayerstate(_DWORD *a1, char *a2, char *a3);
 int *sub_806AC6A();
-int *sub_806ACDE();
+int *MSG_initHuffman();
 int __cdecl sub_806ACF6(__int16 a1);
 int __cdecl sub_806AD0A(int a1);
 char *__cdecl NET_AdrToString(int a1, int a2, int a3, int a4, int a5);
-void **__cdecl sub_806AE1A(void **a1);
+void **__cdecl NetProf_PrepProfiling(void **a1);
 int __cdecl sub_806AF0A(int a1, int a2, int a3);
 void __cdecl sub_806AF90(int a1, int a2, int a3);
 void __cdecl sub_806B012(int a1, int a2, int a3);
@@ -751,7 +751,7 @@ void sub_806B3D2();
 void **__cdecl sub_806B510(void *a1, void **s, void *a3, void *a4, void *a5, void *a6, void *a7, void *a8);
 _BOOL4 __cdecl sub_806B58C(int a1);
 _BOOL4 __cdecl sub_806B7AC(int a1, int n, void *src);
-int __cdecl sub_806B9CA(int a1, _DWORD *a2);
+int __cdecl Netchan_Process(int a1, _DWORD *a2);
 int __cdecl sub_806BE8E(int a1, int a2);
 _BOOL4 __cdecl sub_806BF64(char a1, int a2, int a3, int a4, int a5, char a6);
 int __cdecl sub_806BF92(int a1, int a2);
@@ -762,7 +762,7 @@ int __cdecl sub_806C0FA(int a1, _DWORD *s, int a3);
 int __cdecl sub_806C240(int a1, _DWORD *s, int a3);
 int __cdecl sub_806C262(int a1, size_t n, void *src, int a4, int a5, unsigned __int16 a6);
 int __cdecl sub_806C32C(int a1, size_t n, _DWORD *src, int a4, int a5, int a6, int a7, int a8);
-_BOOL4 __cdecl sub_806C40C(int a1, int a2, int a3, int a4, int a5, int a6, char *s);
+_BOOL4 __cdecl NET_OutOfBandPrint(int a1, int a2, int a3, int a4, int a5, int a6, char *s);
 _BOOL4 __cdecl sub_806C57E(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
 int __cdecl sub_806C69C(int a1, int a2, int a3, int a4, int a5, int a6, void *src, size_t n);
 int __cdecl sub_806C750(char *s1, _DWORD *s);
@@ -1046,7 +1046,7 @@ int __cdecl sub_8077C92(int, int, char *s, size_t maxlen); // idb
 int __cdecl sub_8077D5A(unsigned int a1);
 void __cdecl sub_8077DBA(int a1, const char *a2, int a3);
 int __cdecl sub_8077EF6(int, int, char *s, size_t maxlen); // idb
-char *sub_8077FFE(int a1, char *format, ...);
+char *CompileError(int a1, char *format, ...);
 void __noreturn sub_80780F6(const char *a1, char *format, ...);
 void __cdecl sub_807818C(int a1, const char *a2, int a3, const char *a4);
 void __cdecl sub_8078282(const char *a1, int a2, const char *a3, void *a4);
@@ -1403,10 +1403,10 @@ void *__cdecl sub_80871C1(size_t size);
 void *__cdecl sub_80871D4(void *ptr, size_t size);
 void __cdecl sub_80871EE(void *ptr);
 int sub_8087201();
-int __cdecl sub_808724F(_DWORD *a1, char a2);
+int __cdecl ScriptParse(_DWORD *a1, char a2);
 int sub_80872FC();
-int sub_8087306();
-char *sub_808AA30();
+int yyparse();
+char *SV_GetPlayerByName();
 char *sub_808AB48();
 void *__cdecl sub_808AC6A(char *s);
 // void __usercall sub_808AC7E(long double a1@<st0>);
@@ -1476,7 +1476,7 @@ void __cdecl sub_808F1DC(float *, float *);
 // int __usercall sub_808F288@<eax>(long double a1@<st0>, int a2, _DWORD *a3);
 // int __usercall sub_808F488@<eax>(long double a1@<st0>, char *a2, int *a3);
 // void __usercall sub_808F510(long double a1@<st0>, int a2, _DWORD *a3, int a4);
-// void __usercall sub_808F82A(long double a1@<st0>, int a2, _DWORD *a3);
+// void __usercall SV_ExecuteClientMessage(long double a1@<st0>, int a2, _DWORD *a3);
 // int __usercall sub_808FAC6@<eax>(long double a1@<st0>);
 int __cdecl sub_808FD2A(_BYTE *a1, _BYTE *a2, int a3);
 int __cdecl sub_808FDE4(int a1);
@@ -1521,17 +1521,17 @@ _BOOL4 __cdecl sub_80909EE(char *s);
 void *sub_8090A48();
 _BOOL4 __cdecl sub_8090A5A(int *a1);
 int sub_8090A82();
-void sub_8090A96();
+void Com_FreeWeaponInfoMemory();
 int __cdecl sub_8090AAA(char *dest, int); // idb
 int __cdecl sub_8090AFE(int a1);
 int __cdecl sub_8090B42(int a1);
 int __cdecl sub_8090B5E(int a1);
 // void __usercall SV_ShutdownGameProgs(long double a1@<st0>);
 // void __usercall SV_SetGametype(long double a1@<st0>);
-// void __usercall sub_8090CD2(long double a1@<st0>, int a2, int a3);
-// void __usercall sub_8090D6A(long double a1@<st0>, int a2);
-// void __usercall sub_8090D9C(long double a1@<st0>, int a2);
-int CL_ForwardCommandToServer();
+// void __usercall SV_InitGameVM(long double a1@<st0>, int a2, int a3);
+// void __usercall SV_RestartGameProgs(long double a1@<st0>, int a2);
+// void __usercall SV_InitGameProgs(long double a1@<st0>, int a2);
+int SV_GameCommand();
 float *__cdecl sub_8090DE8(float *a1, float *a2, float *a3);
 float *__cdecl sub_8090E14(float *a1, float a2, float *a3);
 int __cdecl sub_8090E3A(_DWORD *a1, _DWORD *a2);
@@ -1553,7 +1553,7 @@ void sub_8091A70();
 void sub_8091AB2();
 _WORD *sub_8091B5A();
 int sub_8091B68();
-// void __usercall sub_8091C02(long double a1@<st0>, char *a2);
+// void __usercall SV_SpawnServer(long double a1@<st0>, char *a2);
 _BOOL4 sub_809215C();
 // char *__usercall SV_Init@<eax>(long double a1@<st0>);
 // int *__usercall sub_80927DA@<eax>(long double a1@<st0>, const char *a2);
@@ -1565,7 +1565,7 @@ int __cdecl sub_8092AB6(_BYTE *a1, _BYTE *a2);
 int __cdecl sub_8092B3C(int a1, char *a2);
 int __cdecl sub_8092C6C(int a1);
 _DWORD *__cdecl sub_8092D5C(_DWORD *a1, int a2, char *s);
-int sub_809301C(_DWORD *a1, int a2, char *format, ...);
+int SV_SendServerCommand(_DWORD *a1, int a2, char *format, ...);
 int __cdecl sub_809315A(char a1, int a2, int a3, int a4, int a5, _DWORD *a6);
 int __cdecl sub_8093288(int a1, int a2, int a3, int a4, int a5);
 int __cdecl sub_80936D4(int a1, int a2, int a3, int a4, int a5);
@@ -1591,7 +1591,7 @@ int __cdecl sub_8095454(int a1, _BYTE *a2, int a3);
 int __cdecl sub_80954DE(int a1, _BYTE *a2, int a3);
 _BOOL4 __cdecl sub_809558C(int a1);
 _BOOL4 __cdecl sub_80955A2(int a1, _BYTE *src, int n);
-int __cdecl sub_80955EA(int a1);
+int __cdecl SV_Netchan_AddOOBProfilePacket(int a1);
 int __cdecl sub_8095626(size_t n, _DWORD *src, int a3, int a4, int a5, int a6, int a7);
 int sub_8095696();
 int __cdecl sub_8095742(int a1);
@@ -1615,14 +1615,14 @@ int __cdecl sub_8097BD0(int a1, int a2, int a3);
 int __cdecl sub_8097EDA(int a1, int *a2, _DWORD *a3, void *a4);
 int __cdecl sub_809822C(char *a1);
 int __cdecl sub_80988F4(int a1, int a2);
-// int __usercall sub_80989C6@<eax>(long double a1@<st0>, int a2, int a3);
+// int __usercall SV_SendMessageToClient@<eax>(long double a1@<st0>, int a2, int a3);
 // int __usercall sub_8098C0E@<eax>(long double a1@<st0>, int a2);
-int sub_8098E3A();
+int SV_ArchiveSnapshot();
 // void __usercall sub_8099AF2(long double a1@<st0>);
 long double __cdecl sub_8099D74(float a1, float a2, float a3);
 int __cdecl sub_8099D8A(_DWORD *a1);
 int __cdecl sub_8099DB4(_DWORD *a1, _DWORD *a2);
-int __cdecl MSG_WriteByte(int a1, _DWORD *a2);
+int __cdecl sub_8099DE4(int a1, _DWORD *a2);
 int __cdecl sub_8099EC6(int a1);
 int __cdecl sub_809A000(int a1);
 int __cdecl sub_809A01E(int a1, int a2);
@@ -1875,10 +1875,10 @@ void *__cdecl sub_80A92AC(size_t size);
 void *__cdecl sub_80A92C0(size_t size);
 void *__cdecl Z_MallocInternal(size_t size);
 void *__cdecl sub_80A9324(size_t size);
-void *__cdecl sub_80A934E(size_t size);
-void *__cdecl sub_80A9362(size_t size);
-char *__cdecl CopyString(char *src);
-char *__cdecl sub_80A93E4(char **a1, char *src);
+void *__cdecl VirtualAlloc(size_t size);
+void *__cdecl Z_VirtualAllocInternal(size_t size);
+char *__cdecl CopyStringInternal(char *src);
+char *__cdecl ReplaceStringInternal(char **a1, char *src);
 void sub_80A945A();
 void sub_80A9530();
 // void __usercall Com_InitHunkMemory(long double a1@<st0>);
@@ -1931,7 +1931,7 @@ int __cdecl sub_80AAA06(char *a1, int a2);
 char *__cdecl sub_80AAA84(_DWORD *a1, char *s);
 void sub_80AABBA();
 void __cdecl sub_80AAD12(char *src, char *s2, int a3);
-int __cdecl sub_80AAEDC(int a1);
+int __cdecl Com_UnloadSoundAliases(int a1);
 int __cdecl sub_80AAF4A(char *a1);
 int __cdecl sub_80AAF92(int a1);
 int __cdecl sub_80AB0E2(char *a1);
@@ -1954,7 +1954,7 @@ void __cdecl sub_80AB93E(char *a1, char *s2, const char *a3, char *s, int a5, in
 int __cdecl sub_80ABEF8(int a1);
 int __cdecl sub_80AC1A8(_DWORD *a1);
 void sub_80AC22C();
-_DWORD *__cdecl sub_80AC246(int a1);
+_DWORD *__cdecl Com_LoadSoundAliasFile(int a1);
 void sub_80AC576();
 _DWORD *__cdecl sub_80AC582(char *s1, char *s2, char *src);
 int __cdecl sub_80AC880(int a1, int a2);
@@ -2084,7 +2084,7 @@ void __cdecl sub_80B2792(char *src, char *a2);
 void __cdecl sub_80B27EC(char *src, int a2, int a3);
 void __cdecl sub_80B2854(char *src, int a2, int a3, int a4);
 void __cdecl sub_80B28CA(char *src, int a2, int a3, int a4, int a5);
-// void __usercall sub_80B294E(long double a1@<st0>, char *src, char *a3);
+// void __usercall Dvar_SetStringByName(long double a1@<st0>, char *src, char *a3);
 // void __usercall sub_80B2998(long double a1@<st0>, char *src, unsigned __int8 a3, unsigned __int8 a4, unsigned __int8 a5, unsigned __int8 a6);
 // char *__usercall sub_80B2A6A@<eax>(long double a1@<st0>, char *src, char *a3, int a4);
 // char *__usercall sub_80B2AC2@<eax>(long double a1@<st0>, char *src, char *a3);
@@ -2201,7 +2201,7 @@ _BYTE *__cdecl sub_80B577E(_BYTE *a1);
 char *__cdecl I_strncat(char *s, int a2, char *src);
 int __cdecl sub_80B5814(_BYTE *a1);
 char *__cdecl sub_80B587C(char *a1);
-int __cdecl sub_80B5904(char a1);
+int __cdecl I_CleanChar(char a1);
 int Com_sprintf(char *s, size_t maxlen, char *format, ...);
 _BOOL4 __cdecl sub_80B5970(unsigned int a1);
 char *va(char *format, ...);
@@ -2471,7 +2471,7 @@ int __cdecl sub_80C30F2(char *src, int a2, int (__cdecl *a3)(size_t));
 int __cdecl sub_80C311C(char *s2); // idb
 int __cdecl sub_80C3138(char *src, int (__cdecl *a2)(int));
 int *__cdecl sub_80C3172(_DWORD *a1, const void *a2);
-int __cdecl sub_80C3264(char *s2, int (__cdecl *a2)(int), int (__cdecl *a3)(int));
+int __cdecl XModelPrecache(char *s2, int (__cdecl *a2)(int), int (__cdecl *a3)(int));
 int __cdecl sub_80C3314(int a1);
 int __cdecl sub_80C3324(__int16 **a1, int a2);
 int __cdecl sub_80C337C(int a1, _DWORD *a2, _DWORD *a3);
@@ -3144,7 +3144,7 @@ int __cdecl sub_80F6954(int a1);
 // int __usercall sub_80F69B4@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4);
 // void __usercall sub_80F6D74(long double a1@<st0>, int a2);
 int __cdecl sub_80F6ED0(int a1, float *a2, int a3);
-int *__cdecl sub_80F721C(int *a1, int a2);
+int *__cdecl G_BroadcastVoice(int *a1, int a2);
 float *__cdecl sub_80F736E(float *a1, float *a2, float *a3);
 int __cdecl sub_80F739A(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_80F73CA(float *a1, float a2, float *a3, float *a4);
@@ -3380,7 +3380,7 @@ long double __cdecl sub_8105F82(float *a1, float *a2);
 long double __cdecl sub_8105FB6(float *a1);
 int __cdecl sub_8105FEA(int a1);
 // char *__usercall sub_8106014@<eax>(long double a1@<st0>);
-int sub_810695E();
+int G_GetSavePersist();
 int __cdecl sub_8106968(int a1);
 long double sub_8106976();
 int __cdecl sub_810698A(int a1);
@@ -3393,7 +3393,7 @@ int *sub_8106AAC();
 int *sub_8106B36();
 void *__cdecl sub_8106BF2(size_t a1);
 // int __usercall sub_8106C06@<eax>(long double a1@<st0>, int a2, unsigned int seed, int a4, int a5);
-// unsigned int *__usercall sub_8107058@<eax>(long double a1@<st0>, int a2);
+// unsigned int *__usercall G_ShutdownGame@<eax>(long double a1@<st0>, int a2);
 int sub_8107186();
 int __cdecl sub_81071FE(_DWORD *a1, _DWORD *a2);
 void sub_8107356();
@@ -3709,7 +3709,7 @@ int __cdecl sub_8115A18(_DWORD *a1);
 int __cdecl sub_8115A46(_DWORD *a1);
 _DWORD *__cdecl sub_8115AA2(_DWORD *a1);
 int __cdecl sub_8115AC2(int *a1);
-int sub_8115AE2();
+int Scr_ParseGameTypeList();
 int __cdecl sub_8115DD2(char *a1);
 _BOOL4 __cdecl sub_8115E3C(char *a1);
 int sub_8115E66();
@@ -4428,11 +4428,11 @@ void __cdecl sub_812F3F0(int a1, float *a2, _DWORD *a3);
 void __cdecl sub_812F41A(int a1, float *a2, _DWORD *a3, _DWORD *a4);
 void __cdecl sub_812F44C(int a1, float *a2, _DWORD *a3, int *a4);
 int __cdecl sub_812F47E(char a1);
-int sub_812F498();
-int sub_812F4AC();
-void __cdecl sub_812F4C0(int a1, float a2);
-int __cdecl sub_812F4EE(int a1);
-int __cdecl sub_812F528(int a1);
+int FX_FreeSystem();
+int FX_FreeActive();
+void __cdecl FX_AdjustCamera(int a1, float a2);
+int __cdecl FX_AdjustTime(int a1);
+int __cdecl FX_WarpTime(int a1);
 void __cdecl sub_812F544(int);
 char *__cdecl sub_812F560(char **a1, char a2, char a3);
 void *__cdecl sub_812F7FC(_DWORD *a1, int a2);
@@ -4490,7 +4490,7 @@ int __cdecl sub_8130F78(int a1, unsigned __int8 a2);
 size_t __cdecl sub_8130F90(float *a1);
 void *__cdecl sub_8131042(void *a1);
 int sub_8131180();
-int __cdecl sub_813127A(char a1);
+int __cdecl FX_Free(char a1);
 int sub_81312E4();
 int sub_813130E();
 void sub_8131328();
@@ -13417,10 +13417,10 @@ char byte_81E3D00; // idb
 _UNKNOWN unk_81E5D00; // weak
 _UNKNOWN unk_81E6100; // weak
 int dword_81E6144; // weak
-char byte_81E6860[28700]; // weak
+char msgHuff[28700]; // weak
 _DWORD dword_81ED87C[2]; // weak
 int dword_81ED884; // weak
-int dword_81F4898; // weak
+int msgInit; // weak
 _UNKNOWN unk_81F48A0; // weak
 char byte_81F4C9F; // weak
 _UNKNOWN unk_81F4CA0; // weak
@@ -13598,7 +13598,7 @@ int dword_83DB9D8; // weak
 _UNKNOWN unk_83DB9E0; // weak
 int dword_83DF9E8; // weak
 int dword_83DF9EC; // weak
-int dword_83DFA00; // weak
+int gameInitialized; // weak
 _UNKNOWN unk_83DFA8F; // weak
 int dword_841FA80; // weak
 int dword_841FA84; // weak
@@ -13685,7 +13685,7 @@ int dword_848B168; // weak
 float flt_848B16C; // weak
 int dword_848B170; // weak
 char byte_848B174[64]; // idb
-int dword_848B1B4; // weak
+int sv_fps; // weak
 int dword_848B1B8; // weak
 int dword_848B1BC; // weak
 int dword_848B1C0; // weak
@@ -13695,7 +13695,7 @@ int dword_848B1CC; // weak
 int dword_848B1D0; // weak
 int dword_848B1D4; // weak
 int dword_848B1D8; // weak
-int dword_848B1DC; // weak
+int sv_padPackets; // weak
 int dword_848B1E0; // weak
 int dword_848B1E4; // weak
 int dword_848B1E8; // weak
@@ -18351,7 +18351,7 @@ int sub_8051F6A()
 char *__usercall sub_8051F7E@<eax>(long double a1@<st0>, char *s)
 {
   sub_8054B6C(a1, s, 1);
-  return sub_80583FA();
+  return CM_LoadStaticModels();
 }
 
 //----- (08051F9E) --------------------------------------------------------
@@ -21306,7 +21306,7 @@ void *__cdecl sub_8057F58(size_t a1)
 //----- (08057F6C) --------------------------------------------------------
 int __cdecl sub_8057F6C(char *s2)
 {
-  return sub_80C3264(s2, (int (__cdecl *)(int))sub_8057F44, (int (__cdecl *)(int))sub_8057F58);
+  return XModelPrecache(s2, (int (__cdecl *)(int))sub_8057F44, (int (__cdecl *)(int))sub_8057F58);
 }
 
 //----- (08057F90) --------------------------------------------------------
@@ -21431,7 +21431,7 @@ int __cdecl sub_80582EC(int a1, char *a2, float *a3, float *a4, float *a5)
 // 80582EC: using guessed type char *arg_4;
 
 //----- (080583FA) --------------------------------------------------------
-char *sub_80583FA()
+char *CM_LoadStaticModels()
 {
   char *result; // eax
   int v1; // [esp+28h] [ebp-110h]
@@ -25652,7 +25652,7 @@ void __cdecl Cmd_AddCommand(char *s1, int a2)
   else
   {
     v2 = Z_MallocInternal(0x14u);
-    v2[1] = CopyString(s1);
+    v2[1] = CopyStringInternal(s1);
     v2[4] = a2;
     *v2 = dword_819E900;
     dword_819E900 = (int)v2;
@@ -25771,7 +25771,7 @@ int __usercall Cmd_ExecuteString@<eax>(long double a1@<st0>, char *a2)
     {
       result = com_sv_running;
       if ( *(_BYTE *)(com_sv_running + 8) )
-        return CL_ForwardCommandToServer();
+        return SV_GameCommand();
     }
   }
   return result;
@@ -25896,7 +25896,7 @@ int Com_EndRedirect()
 // 81A1C9C: using guessed type int (__cdecl *dword_81A1C9C)(_DWORD);
 
 //----- (080609A2) --------------------------------------------------------
-void CL_SwitchToLocalClient()
+void sub_80609A2()
 {
   ;
 }
@@ -26452,7 +26452,7 @@ int __usercall Com_EventLoop@<eax>(long double a1@<st0>)
       ptr = v8;
       if ( v4 != 4 )
         break;
-      CL_SwitchToLocalClient();
+      sub_80609A2();
       Cbuf_AddText((char *)ptr);
       Z_FreeInternal(ptr);
       Cbuf_AddText("\n");
@@ -26473,7 +26473,7 @@ int __usercall Com_EventLoop@<eax>(long double a1@<st0>)
       Z_FreeInternal(ptr);
       if ( *(_BYTE *)(com_sv_running + 8) )
       {
-        CL_SwitchToLocalClient();
+        sub_80609A2();
         sub_80941AE(a1, s, v12, v13, v14, v15, v16);
       }
     }
@@ -26488,7 +26488,7 @@ LABEL_7:
     Com_Error(0, (char *)&byte_813BF00, *(_DWORD *)v19);
   while ( sub_806C240(1, &s, (int)v16) )
   {
-    CL_SwitchToLocalClient();
+    sub_80609A2();
     if ( *(_BYTE *)(com_sv_running + 8) )
       sub_80941AE(a1, s, v12, v13, v14, v15, v16);
   }
@@ -26758,10 +26758,10 @@ void __usercall Com_Init_Try_Block_Function(long double a1@<st0>, char *a2)
   Com_InitDvars(a1);
   for ( i = 0; i <= 0; ++i )
   {
-    CL_SwitchToLocalClient();
+    sub_80609A2();
     Com_InitPlayerProfiles(a1);
   }
-  CL_SwitchToLocalClient();
+  sub_80609A2();
   Cbuf_Execute(a1);
   sub_806283E();
   Com_StartupVariable(a1, 0);
@@ -27028,7 +27028,7 @@ void __usercall Com_Frame_Try_Block_Function(long double a1@<st0>)
   Cbuf_Execute(a1);
   com_lastFrameTime = com_frameTime;
   v3 = Com_ModifyMsec(v2);
-  CL_SwitchToLocalClient();
+  sub_80609A2();
   SV_Frame(a1, v3);
 }
 // 819EF10: using guessed type int com_maxfps;
@@ -27044,7 +27044,7 @@ void sub_80624CC()
 }
 
 //----- (080624D2) --------------------------------------------------------
-int sub_80624D2()
+int Com_ResetFrametime()
 {
   int result; // eax
 
@@ -28896,7 +28896,7 @@ void *__cdecl FS_PureServerSetLoadedIwds(char *a1, char *a2)
   {
     v4 = i;
     v5 = Cmd_Argv(i);
-    ptr[v4] = CopyString(v5);
+    ptr[v4] = CopyStringInternal(v5);
   }
   if ( v10 != v9 )
     Com_Error(1, "iwd sum/name mismatch");
@@ -28972,7 +28972,7 @@ int __cdecl sub_8065AD2(char *a1, char *a2)
     for ( j = 0; j < v5; ++j )
     {
       v3 = Cmd_Argv(j);
-      (&dword_8492F40)[j] = CopyString(v3);
+      (&dword_8492F40)[j] = CopyStringInternal(v3);
     }
   }
   else if ( v6 )
@@ -29178,7 +29178,7 @@ void __cdecl sub_8065FA6(int a1, int a2)
 }
 
 //----- (0806610E) --------------------------------------------------------
-void __cdecl sub_806610E(_DWORD *a1, unsigned __int8 a2)
+void __cdecl Huff_addRef(_DWORD *a1, unsigned __int8 a2)
 {
   int v2; // ecx
   _DWORD *v3; // [esp+8h] [ebp-10h]
@@ -29274,7 +29274,7 @@ int __cdecl sub_8066394(_DWORD *a1, _DWORD *a2, int a3)
 }
 
 //----- (080663F6) --------------------------------------------------------
-int __cdecl sub_80663F6(_DWORD *a1, _DWORD *a2, int a3, int *a4)
+int __cdecl Huff_offsetReceive(_DWORD *a1, _DWORD *a2, int a3, int *a4)
 {
   int result; // eax
 
@@ -29337,7 +29337,7 @@ int *__cdecl sub_80664CC(int a1, int a2, int a3)
 }
 
 //----- (08066550) --------------------------------------------------------
-int __cdecl sub_8066550(int a1, int a2, int a3, int *a4)
+int __cdecl Huff_offsetTransmit(int a1, int a2, int a3, int *a4)
 {
   int result; // eax
 
@@ -29414,7 +29414,7 @@ int __cdecl sub_806658E(_DWORD *a1, int a2)
         }
       }
       *((_BYTE *)src + i) = v16[0];
-      sub_806610E(s, v16[0]);
+      Huff_addRef(s, v16[0]);
     }
     a1[3] = n + a2;
     Com_Memcpy((void *)(a1[1] + a2), src, n);
@@ -29478,7 +29478,7 @@ int __cdecl sub_8066838(int a1, int a2)
     {
       v12 = *(unsigned __int8 *)(v10 + i);
       sub_80664CC((int)s, v12, (int)src);
-      sub_806610E(s, v12);
+      Huff_addRef(s, v12);
     }
     dword_81E6144 += 8;
     *(_DWORD *)(a1 + 12) = a2 + (dword_81E6144 >> 3);
@@ -29497,7 +29497,7 @@ int __cdecl sub_8066838(int a1, int a2)
 // 8066838: using guessed type int var_48[7];
 
 //----- (08066A70) --------------------------------------------------------
-int __cdecl sub_8066A70(char *s)
+int __cdecl Huff_Init(char *s)
 {
   int v1; // eax
   int v2; // edx
@@ -29805,18 +29805,18 @@ int __cdecl MSG_Init(void *s, int a2, int a3)
 {
   int result; // eax
 
-  if ( !dword_81F4898 )
-    sub_806ACDE();
+  if ( !msgInit )
+    MSG_initHuffman();
   memset(s, 0, 0x18u);
   *((_DWORD *)s + 1) = a2;
   result = a3;
   *((_DWORD *)s + 2) = a3;
   return result;
 }
-// 81F4898: using guessed type int dword_81F4898;
+// 81F4898: using guessed type int msgInit;
 
 //----- (0806775C) --------------------------------------------------------
-_DWORD *__cdecl sub_806775C(_DWORD *a1)
+_DWORD *__cdecl MSG_BeginReading(_DWORD *a1)
 {
   _DWORD *result; // eax
 
@@ -29828,7 +29828,7 @@ _DWORD *__cdecl sub_806775C(_DWORD *a1)
 }
 
 //----- (080677A2) --------------------------------------------------------
-int __cdecl sub_80677A2(_DWORD *a1, int a2, int a3)
+int __cdecl MSG_WriteBits(_DWORD *a1, int a2, int a3)
 {
   int result; // eax
   int v4; // [esp+0h] [ebp-10h]
@@ -29861,7 +29861,7 @@ int __cdecl sub_80677A2(_DWORD *a1, int a2, int a3)
 }
 
 //----- (08067868) --------------------------------------------------------
-_DWORD *__cdecl sub_8067868(_DWORD *a1)
+_DWORD *__cdecl MSG_WriteBit0(_DWORD *a1)
 {
   _DWORD *result; // eax
 
@@ -29884,7 +29884,7 @@ _DWORD *__cdecl sub_8067868(_DWORD *a1)
 }
 
 //----- (080678C6) --------------------------------------------------------
-_DWORD *__cdecl sub_80678C6(_DWORD *a1)
+_DWORD *__cdecl MSG_WriteBit1(_DWORD *a1)
 {
   _DWORD *result; // eax
   int v2; // [esp+0h] [ebp-10h]
@@ -29910,7 +29910,7 @@ _DWORD *__cdecl sub_80678C6(_DWORD *a1)
 }
 
 //----- (08067960) --------------------------------------------------------
-int __cdecl sub_8067960(_DWORD *a1, int a2)
+int __cdecl MSG_ReadBits(_DWORD *a1, int a2)
 {
   int i; // [esp+4h] [ebp-Ch]
   int v5; // [esp+8h] [ebp-8h]
@@ -29935,7 +29935,7 @@ int __cdecl sub_8067960(_DWORD *a1, int a2)
 }
 
 //----- (08067A0E) --------------------------------------------------------
-int __cdecl sub_8067A0E(_DWORD *a1)
+int __cdecl MSG_ReadBit(_DWORD *a1)
 {
   int v3; // [esp+4h] [ebp-8h]
 
@@ -29952,7 +29952,7 @@ int __cdecl sub_8067A0E(_DWORD *a1)
 }
 
 //----- (08067A8E) --------------------------------------------------------
-int __cdecl sub_8067A8E(unsigned __int8 *a1, int a2, int a3)
+int __cdecl MSG_WriteBitsCompress(unsigned __int8 *a1, int a2, int a3)
 {
   int v4; // [esp+10h] [ebp-8h] BYREF
   int v5; // [esp+14h] [ebp-4h]
@@ -29961,7 +29961,7 @@ int __cdecl sub_8067A8E(unsigned __int8 *a1, int a2, int a3)
   v5 = a3;
   while ( v5 )
   {
-    sub_8066550((int)byte_81E6860, *a1, a2, &v4);
+    Huff_offsetTransmit((int)msgHuff, *a1, a2, &v4);
     --v5;
     ++a1;
   }
@@ -29969,7 +29969,7 @@ int __cdecl sub_8067A8E(unsigned __int8 *a1, int a2, int a3)
 }
 
 //----- (08067AE2) --------------------------------------------------------
-_BYTE *__cdecl sub_8067AE2(int a1, _BYTE *a2, int a3)
+_BYTE *__cdecl MSG_ReadBitsCompress(int a1, _BYTE *a2, int a3)
 {
   _BYTE *v4; // [esp+14h] [ebp-14h]
   int v5; // [esp+1Ch] [ebp-Ch] BYREF
@@ -29981,7 +29981,7 @@ _BYTE *__cdecl sub_8067AE2(int a1, _BYTE *a2, int a3)
   v5 = 0;
   while ( v5 < v6 )
   {
-    sub_80663F6((_DWORD *)dword_81ED884, &v7, a1, &v5);
+    Huff_offsetReceive((_DWORD *)dword_81ED884, &v7, a1, &v5);
     *v4++ = v7;
   }
   return (_BYTE *)(v4 - a2);
@@ -29989,7 +29989,7 @@ _BYTE *__cdecl sub_8067AE2(int a1, _BYTE *a2, int a3)
 // 81ED884: using guessed type int dword_81ED884;
 
 //----- (08067B4C) --------------------------------------------------------
-_DWORD *__cdecl sub_8067B4C(_DWORD *a1, char a2)
+_DWORD *__cdecl MSG_WriteByte(_DWORD *a1, char a2)
 {
   _DWORD *result; // eax
 
@@ -30008,7 +30008,7 @@ _DWORD *__cdecl sub_8067B4C(_DWORD *a1, char a2)
 }
 
 //----- (08067B84) --------------------------------------------------------
-_DWORD *__cdecl sub_8067B84(_DWORD *a1, void *src, size_t n)
+_DWORD *__cdecl MSG_WriteData(_DWORD *a1, void *src, size_t n)
 {
   _DWORD *result; // eax
   _DWORD *v4; // [esp+14h] [ebp-4h]
@@ -30029,7 +30029,7 @@ _DWORD *__cdecl sub_8067B84(_DWORD *a1, void *src, size_t n)
 }
 
 //----- (08067BDA) --------------------------------------------------------
-_DWORD *__cdecl sub_8067BDA(_DWORD *a1, __int16 a2)
+_DWORD *__cdecl MSG_WriteShort(_DWORD *a1, __int16 a2)
 {
   _DWORD *result; // eax
   int v3; // [esp+4h] [ebp-4h]
@@ -30050,7 +30050,7 @@ _DWORD *__cdecl sub_8067BDA(_DWORD *a1, __int16 a2)
 }
 
 //----- (08067C2A) --------------------------------------------------------
-_DWORD *__cdecl sub_8067C2A(_DWORD *a1, int a2)
+_DWORD *__cdecl MSG_WriteLong(_DWORD *a1, int a2)
 {
   _DWORD *result; // eax
   int v3; // [esp+4h] [ebp-4h]
@@ -30071,7 +30071,7 @@ _DWORD *__cdecl sub_8067C2A(_DWORD *a1, int a2)
 }
 
 //----- (08067C78) --------------------------------------------------------
-_DWORD *__cdecl sub_8067C78(_DWORD *a1, int a2, int a3)
+_DWORD *__cdecl MSG_ReadString(_DWORD *a1, int a2, int a3)
 {
   int v3; // eax
   int v4; // edx
@@ -30116,21 +30116,21 @@ _DWORD *__cdecl MSG_WriteString(_DWORD *a1, char *s)
     for ( i = 0; i < v6; ++i )
     {
       v3 = &src[i];
-      *v3 = sub_80B5904(s[i]);
+      *v3 = I_CleanChar(s[i]);
     }
     src[i] = 0;
-    return sub_8067B84(a1, src, v6 + 1);
+    return MSG_WriteData(a1, src, v6 + 1);
   }
   else
   {
     Com_Printf("MSG_WriteString: MAX_STRING_CHARS");
-    return sub_8067B84(a1, &unk_813CD62, 1u);
+    return MSG_WriteData(a1, &unk_813CD62, 1u);
   }
 }
 // 8067CE4: using guessed type char src[1032];
 
 //----- (08067D96) --------------------------------------------------------
-_DWORD *__cdecl sub_8067D96(_DWORD *a1, char *s)
+_DWORD *__cdecl MSG_WriteBigString(_DWORD *a1, char *s)
 {
   char *v3; // ebx
   char src[8200]; // [esp+10h] [ebp-2018h] BYREF
@@ -30144,14 +30144,14 @@ _DWORD *__cdecl sub_8067D96(_DWORD *a1, char *s)
     for ( i = 0; i < v6; ++i )
     {
       v3 = &src[i];
-      *v3 = sub_80B5904(src[i]);
+      *v3 = I_CleanChar(src[i]);
     }
-    return sub_8067B84(a1, src, v6 + 1);
+    return MSG_WriteData(a1, src, v6 + 1);
   }
   else
   {
     Com_Printf("MSG_WriteString: BIG_INFO_STRING");
-    return sub_8067B84(a1, &unk_813CD62, 1u);
+    return MSG_WriteData(a1, &unk_813CD62, 1u);
   }
 }
 // 8067D96: using guessed type char src[8200];
@@ -30159,11 +30159,11 @@ _DWORD *__cdecl sub_8067D96(_DWORD *a1, char *s)
 //----- (08067EA6) --------------------------------------------------------
 _DWORD *__cdecl sub_8067EA6(_DWORD *a1, float a2)
 {
-  return sub_8067BDA(a1, (int)(a2 * 182.04445));
+  return MSG_WriteShort(a1, (int)(a2 * 182.04445));
 }
 
 //----- (08067EE8) --------------------------------------------------------
-int __cdecl sub_8067EE8(_DWORD *a1)
+int __cdecl MSG_ReadByte(_DWORD *a1)
 {
   if ( a1[4] >= a1[3] )
   {
@@ -30177,7 +30177,7 @@ int __cdecl sub_8067EE8(_DWORD *a1)
 }
 
 //----- (08067F32) --------------------------------------------------------
-int __cdecl sub_8067F32(_DWORD *a1)
+int __cdecl MSG_ReadShort(_DWORD *a1)
 {
   __int16 v1; // ax
   int v4; // [esp+10h] [ebp-8h]
@@ -30197,7 +30197,7 @@ int __cdecl sub_8067F32(_DWORD *a1)
 }
 
 //----- (08067F90) --------------------------------------------------------
-int __cdecl sub_8067F90(_DWORD *a1)
+int __cdecl MSG_ReadLong(_DWORD *a1)
 {
   int v3; // [esp+10h] [ebp-8h]
   int v4; // [esp+14h] [ebp-4h]
@@ -30217,7 +30217,7 @@ int __cdecl sub_8067F90(_DWORD *a1)
 }
 
 //----- (08067FEC) --------------------------------------------------------
-unsigned __int64 __cdecl sub_8067FEC(_DWORD *a1)
+unsigned __int64 __cdecl MSG_ReadLong64(_DWORD *a1)
 {
   int *v1; // eax
   unsigned int v2; // edx
@@ -30241,18 +30241,18 @@ unsigned __int64 __cdecl sub_8067FEC(_DWORD *a1)
 // 806803B: variable 'v2' is possibly undefined
 
 //----- (08068062) --------------------------------------------------------
-void *__cdecl sub_8068062(_DWORD *a1)
+void *__cdecl MSG_ReadCommandString(_DWORD *a1)
 {
   int v2; // [esp+Ch] [ebp-Ch]
   unsigned int i; // [esp+10h] [ebp-8h]
 
   for ( i = 0; ; ++i )
   {
-    v2 = sub_8067EE8(a1);
+    v2 = MSG_ReadByte(a1);
     if ( v2 == -1 )
       v2 = 0;
     if ( i <= 0x3FF )
-      *(_BYTE *)(i + 136267936) = sub_80B5904(v2);
+      *(_BYTE *)(i + 136267936) = I_CleanChar(v2);
     if ( !v2 )
       break;
   }
@@ -30262,14 +30262,14 @@ void *__cdecl sub_8068062(_DWORD *a1)
 // 81F4C9F: using guessed type char byte_81F4C9F;
 
 //----- (080680CC) --------------------------------------------------------
-void *__cdecl sub_80680CC(_DWORD *a1)
+void *__cdecl MSG_ReadBigString(_DWORD *a1)
 {
   int v2; // [esp+Ch] [ebp-Ch]
   unsigned int i; // [esp+10h] [ebp-8h]
 
   for ( i = 0; ; ++i )
   {
-    v2 = sub_8067EE8(a1);
+    v2 = MSG_ReadByte(a1);
     if ( v2 == 37 )
     {
       v2 = 46;
@@ -30279,7 +30279,7 @@ void *__cdecl sub_80680CC(_DWORD *a1)
       v2 = 0;
     }
     if ( i <= 0x1FFF )
-      *(_BYTE *)(i + 136268960) = sub_80B5904(v2);
+      *(_BYTE *)(i + 136268960) = I_CleanChar(v2);
     if ( !v2 )
       break;
   }
@@ -30289,14 +30289,14 @@ void *__cdecl sub_80680CC(_DWORD *a1)
 // 81F6C9F: using guessed type char byte_81F6C9F;
 
 //----- (08068146) --------------------------------------------------------
-void *__cdecl sub_8068146(_DWORD *a1)
+void *__cdecl MSG_ReadStringLine(_DWORD *a1)
 {
   int v2; // [esp+Ch] [ebp-Ch]
   unsigned int i; // [esp+10h] [ebp-8h]
 
   for ( i = 0; ; ++i )
   {
-    v2 = sub_8067EE8(a1);
+    v2 = MSG_ReadByte(a1);
     if ( v2 == 37 )
     {
       v2 = 46;
@@ -30306,7 +30306,7 @@ void *__cdecl sub_8068146(_DWORD *a1)
       v2 = 0;
     }
     if ( i <= 0x3FF )
-      *(_BYTE *)(i + 136277152) = sub_80B5904(v2);
+      *(_BYTE *)(i + 136277152) = I_CleanChar(v2);
     if ( !v2 )
       break;
   }
@@ -30318,11 +30318,11 @@ void *__cdecl sub_8068146(_DWORD *a1)
 //----- (080681C8) --------------------------------------------------------
 long double __cdecl sub_80681C8(_DWORD *a1)
 {
-  return (long double)sub_8067F32(a1) * 0.0054931641;
+  return (long double)MSG_ReadShort(a1) * 0.0054931641;
 }
 
 //----- (080681EC) --------------------------------------------------------
-void *__cdecl sub_80681EC(_DWORD *a1, void *dest, size_t n)
+void *__cdecl MSG_ReadData(_DWORD *a1, void *dest, size_t n)
 {
   void *result; // eax
   int v4; // [esp+14h] [ebp-4h]
@@ -30346,16 +30346,16 @@ void *__cdecl sub_80681EC(_DWORD *a1, void *dest, size_t n)
 _DWORD *__cdecl sub_806825C(_DWORD *a1, int a2, int a3, int a4, int a5)
 {
   if ( a3 == a4 )
-    return sub_8067868(a1);
-  sub_80678C6(a1);
-  return (_DWORD *)sub_80677A2(a1, a4 ^ a2, a5);
+    return MSG_WriteBit0(a1);
+  MSG_WriteBit1(a1);
+  return (_DWORD *)MSG_WriteBits(a1, a4 ^ a2, a5);
 }
 
 //----- (080682A0) --------------------------------------------------------
 int __cdecl sub_80682A0(_DWORD *a1, int a2, int a3, int a4)
 {
-  if ( sub_8067A0E(a1) )
-    return a2 & dword_815A4E0[a4] ^ sub_8067960(a1, a4);
+  if ( MSG_ReadBit(a1) )
+    return a2 & dword_815A4E0[a4] ^ MSG_ReadBits(a1, a4);
   else
     return a3;
 }
@@ -30364,13 +30364,13 @@ int __cdecl sub_80682A0(_DWORD *a1, int a2, int a3, int a4)
 //----- (080682E8) --------------------------------------------------------
 int __cdecl sub_80682E8(_DWORD *a1, int a2, int a3, int a4)
 {
-  return sub_80677A2(a1, a3 ^ a2, a4);
+  return MSG_WriteBits(a1, a3 ^ a2, a4);
 }
 
 //----- (0806830C) --------------------------------------------------------
 int __cdecl sub_806830C(_DWORD *a1, int a2, int a3)
 {
-  return a2 & dword_815A4E0[a3] ^ sub_8067960(a1, a3);
+  return a2 & dword_815A4E0[a3] ^ MSG_ReadBits(a1, a3);
 }
 // 815A4E0: using guessed type int dword_815A4E0[40];
 
@@ -30378,22 +30378,22 @@ int __cdecl sub_806830C(_DWORD *a1, int a2, int a3)
 _DWORD *__cdecl sub_80683AE(_DWORD *a1, __int16 a2, __int16 a3, __int16 a4)
 {
   if ( a3 == a4 )
-    return sub_8067868(a1);
-  sub_80678C6(a1);
-  return sub_8067BDA(a1, a4 ^ a2);
+    return MSG_WriteBit0(a1);
+  MSG_WriteBit1(a1);
+  return MSG_WriteShort(a1, a4 ^ a2);
 }
 
 //----- (080683EC) --------------------------------------------------------
 int __cdecl sub_80683EC(_DWORD *a1, __int16 a2, int a3)
 {
-  if ( sub_8067A0E(a1) )
-    return (__int16)(sub_8067F32(a1) ^ a2);
+  if ( MSG_ReadBit(a1) )
+    return (__int16)(MSG_ReadShort(a1) ^ a2);
   else
     return a3;
 }
 
 //----- (08068424) --------------------------------------------------------
-_BYTE *__cdecl sub_8068424(char *s, _BYTE *a2, int a3)
+_BYTE *__cdecl MSG_WriteReliableCommandToBuffer(char *s, _BYTE *a2, int a3)
 {
   _BYTE *result; // eax
   _BYTE *v4; // [esp+1Ch] [ebp-Ch]
@@ -30408,7 +30408,7 @@ _BYTE *__cdecl sub_8068424(char *s, _BYTE *a2, int a3)
   v4 = a2;
   for ( i = 0; i < a3 && s[i]; ++i )
   {
-    *v4 = sub_80B5904(s[i]);
+    *v4 = I_CleanChar(s[i]);
     if ( *v4 == 37 )
       *v4 = 46;
     ++v4;
@@ -30427,7 +30427,7 @@ _BYTE *__cdecl sub_8068424(char *s, _BYTE *a2, int a3)
 }
 
 //----- (080684E6) --------------------------------------------------------
-void __cdecl sub_80684E6(int a1, void *s)
+void __cdecl MSG_SetDefaultUserCmd(int a1, void *s)
 {
   int i; // [esp+1Ch] [ebp-Ch]
 
@@ -30517,7 +30517,7 @@ _BYTE *__cdecl sub_80686A6(char a1, _BYTE *a2, _BYTE *a3)
 }
 
 //----- (08068ADE) --------------------------------------------------------
-_BYTE *__cdecl sub_8068ADE(_DWORD *a1, int a2, int a3, int a4)
+_BYTE *__cdecl MSG_ReadDeltaUsercmdKey(_DWORD *a1, int a2, int a3, int a4)
 {
   _BYTE *result; // eax
   int v5; // [esp+18h] [ebp-10h]
@@ -30534,10 +30534,10 @@ _BYTE *__cdecl sub_8068ADE(_DWORD *a1, int a2, int a3, int a4)
   *(_DWORD *)(a4 + 16) = *(_DWORD *)(a3 + 16);
   *(_DWORD *)(a4 + 20) = *(_DWORD *)(a3 + 20);
   *(_DWORD *)(a4 + 24) = *(_DWORD *)(a3 + 24);
-  if ( sub_8067A0E(a1) )
-    *(_DWORD *)a4 = *(_DWORD *)a3 + sub_8067EE8(a1);
+  if ( MSG_ReadBit(a1) )
+    *(_DWORD *)a4 = *(_DWORD *)a3 + MSG_ReadByte(a1);
   else
-    *(_DWORD *)a4 = sub_8067F90(a1);
+    *(_DWORD *)a4 = MSG_ReadLong(a1);
   result = (_BYTE *)sub_806830C(a1, a2, 1);
   if ( result )
   {
@@ -30573,7 +30573,7 @@ _BYTE *__cdecl sub_8068ADE(_DWORD *a1, int a2, int a3, int a4)
 }
 
 //----- (08068E1C) --------------------------------------------------------
-int *__cdecl sub_8068E1C(_DWORD *a1, int a2, int a3, int a4)
+int *__cdecl MSG_WriteDeltaField(_DWORD *a1, int a2, int a3, int a4)
 {
   int *result; // eax
   int v5; // [esp+14h] [ebp-24h]
@@ -30588,25 +30588,25 @@ int *__cdecl sub_8068E1C(_DWORD *a1, int a2, int a3, int a4)
   v12 = (_DWORD *)(a2 + *(_DWORD *)(a4 + 4));
   v11 = (float *)(a3 + *(_DWORD *)(a4 + 4));
   if ( *v12 == *(_DWORD *)v11 )
-    return sub_8067868(a1);
-  sub_80678C6(a1);
+    return MSG_WriteBit0(a1);
+  MSG_WriteBit1(a1);
   if ( !*(_DWORD *)(a4 + 8) )
   {
     v9 = *v11;
     v10 = (int)v9;
     if ( v9 != 0.0 )
     {
-      sub_80678C6(a1);
+      MSG_WriteBit1(a1);
       if ( (long double)v10 == v9 && (unsigned int)(v10 + 4096) <= 0x1FFF )
       {
-        sub_8067868(a1);
+        MSG_WriteBit0(a1);
         v10 += 4096;
-        sub_80677A2(a1, v10, 5);
-        return sub_8067B4C(a1, v10 >> 5);
+        MSG_WriteBits(a1, v10, 5);
+        return MSG_WriteByte(a1, v10 >> 5);
       }
       goto LABEL_9;
     }
-    return sub_8067868(a1);
+    return MSG_WriteBit0(a1);
   }
   if ( *(_DWORD *)(a4 + 8) != -99 )
   {
@@ -30614,14 +30614,14 @@ int *__cdecl sub_8068E1C(_DWORD *a1, int a2, int a3, int a4)
     {
       if ( *(_DWORD *)v11 )
       {
-        sub_80678C6(a1);
+        MSG_WriteBit1(a1);
         return sub_8067EA6(a1, *v11);
       }
-      return sub_8067868(a1);
+      return MSG_WriteBit0(a1);
     }
     if ( *(_DWORD *)v11 )
     {
-      sub_80678C6(a1);
+      MSG_WriteBit1(a1);
       v8 = *(_DWORD *)v11;
       v5 = *(_DWORD *)(a4 + 8);
       if ( v5 < 0 )
@@ -30631,41 +30631,41 @@ int *__cdecl sub_8068E1C(_DWORD *a1, int a2, int a3, int a4)
       v6 = result;
       if ( (v5 & 7) != 0 )
       {
-        sub_80677A2(a1, v8, (int)result);
+        MSG_WriteBits(a1, v8, (int)result);
         v7 -= (int)v6;
         result = &v8;
         v8 >>= (char)v6;
       }
       while ( v7 )
       {
-        sub_8067B4C(a1, v8);
+        MSG_WriteByte(a1, v8);
         v8 >>= 8;
         result = &v7;
         v7 -= 8;
       }
       return result;
     }
-    return sub_8067868(a1);
+    return MSG_WriteBit0(a1);
   }
   v9 = *v11;
   v10 = (int)v9;
   if ( v9 == 0.0 )
-    return sub_8067868(a1);
-  sub_80678C6(a1);
+    return MSG_WriteBit0(a1);
+  MSG_WriteBit1(a1);
   if ( (long double)v10 != v9 || (unsigned int)(v10 + 512) > 0x3FF )
   {
 LABEL_9:
-    sub_80678C6(a1);
-    return sub_8067C2A(a1, *(_DWORD *)v11);
+    MSG_WriteBit1(a1);
+    return MSG_WriteLong(a1, *(_DWORD *)v11);
   }
-  sub_8067868(a1);
+  MSG_WriteBit0(a1);
   v10 += 512;
-  sub_80677A2(a1, v10, 2);
-  return sub_8067B4C(a1, v10 >> 2);
+  MSG_WriteBits(a1, v10, 2);
+  return MSG_WriteByte(a1, v10 >> 2);
 }
 
 //----- (08069142) --------------------------------------------------------
-_DWORD *__cdecl sub_8069142(_DWORD *a1, int a2, int a3, int a4, int a5, int a6)
+_DWORD *__cdecl MSG_WriteDeltaObjective(_DWORD *a1, int a2, int a3, int a4, int a5, int a6)
 {
   _DWORD *result; // eax
   int j; // [esp+24h] [ebp-4h]
@@ -30674,13 +30674,13 @@ _DWORD *__cdecl sub_8069142(_DWORD *a1, int a2, int a3, int a4, int a5, int a6)
   if ( a4 )
   {
 LABEL_7:
-    sub_80678C6(a1);
+    MSG_WriteBit1(a1);
     for ( i = 0; ; ++i )
     {
       result = (_DWORD *)i;
       if ( i >= a5 )
         break;
-      sub_8068E1C(a1, a2, a3, a6 + 12 * i);
+      MSG_WriteDeltaField(a1, a2, a3, a6 + 12 * i);
     }
   }
   else
@@ -30690,13 +30690,13 @@ LABEL_7:
       if ( *(_DWORD *)(a2 + *(_DWORD *)(a6 + 12 * j + 4)) != *(_DWORD *)(a3 + *(_DWORD *)(a6 + 12 * j + 4)) )
         goto LABEL_7;
     }
-    return sub_8067868(a1);
+    return MSG_WriteBit0(a1);
   }
   return result;
 }
 
 //----- (080691FC) --------------------------------------------------------
-_DWORD *__cdecl sub_80691FC(_DWORD *a1, int *a2, int *a3, int a4, int a5, int a6, int a7, int a8)
+_DWORD *__cdecl MSG_WriteDeltaStruct(_DWORD *a1, int *a2, int *a3, int a4, int a5, int a6, int a7, int a8)
 {
   _DWORD *result; // eax
   int i; // [esp+1Ch] [ebp-Ch]
@@ -30721,56 +30721,56 @@ _DWORD *__cdecl sub_80691FC(_DWORD *a1, int *a2, int *a3, int a4, int a5, int a6
     if ( v11 )
     {
       if ( a8 )
-        sub_80678C6(a1);
-      sub_80677A2(a1, *a3, a6);
-      sub_8067868(a1);
-      sub_80678C6(a1);
-      sub_8067B4C(a1, (char)v11);
+        MSG_WriteBit1(a1);
+      MSG_WriteBits(a1, *a3, a6);
+      MSG_WriteBit0(a1);
+      MSG_WriteBit1(a1);
+      MSG_WriteByte(a1, (char)v11);
       v13 = 0;
       for ( j = a7; ; j += 12 )
       {
         result = v13;
         if ( (int)v13 >= (int)v11 )
           break;
-        sub_8068E1C(a1, (int)a2, (int)a3, j);
+        MSG_WriteDeltaField(a1, (int)a2, (int)a3, j);
         v13 = (_DWORD *)((char *)v13 + 1);
       }
     }
     else if ( a4 )
     {
       if ( a8 )
-        sub_80678C6(a1);
-      sub_80677A2(a1, *a3, a6);
-      sub_8067868(a1);
-      return sub_8067868(a1);
+        MSG_WriteBit1(a1);
+      MSG_WriteBits(a1, *a3, a6);
+      MSG_WriteBit0(a1);
+      return MSG_WriteBit0(a1);
     }
   }
   else
   {
     if ( a8 )
-      sub_80678C6(a1);
-    sub_80677A2(a1, *a2, a6);
-    return sub_80678C6(a1);
+      MSG_WriteBit1(a1);
+    MSG_WriteBits(a1, *a2, a6);
+    return MSG_WriteBit1(a1);
   }
   return result;
 }
 
 //----- (0806938C) --------------------------------------------------------
-_DWORD *__cdecl sub_806938C(_DWORD *a1, int *a2, int *a3, int a4)
+_DWORD *__cdecl MSG_WriteDeltaEntity(_DWORD *a1, int *a2, int *a3, int a4)
 {
-  return sub_80691FC(a1, a2, a3, a4, 59, 10, (int)&off_813D120, 0);
+  return MSG_WriteDeltaStruct(a1, a2, a3, a4, 59, 10, (int)&off_813D120, 0);
 }
 // 813D120: using guessed type char *off_813D120;
 
 //----- (080693DA) --------------------------------------------------------
-_DWORD *__cdecl sub_80693DA(_DWORD *a1, int *a2, int *a3, int a4)
+_DWORD *__cdecl MSG_WriteDeltaArchivedEntity(_DWORD *a1, int *a2, int *a3, int a4)
 {
-  return sub_80691FC(a1, a2, a3, a4, 68, 10, (int)&off_813D460, 0);
+  return MSG_WriteDeltaStruct(a1, a2, a3, a4, 68, 10, (int)&off_813D460, 0);
 }
 // 813D460: using guessed type char *off_813D460;
 
 //----- (08069428) --------------------------------------------------------
-_DWORD *__cdecl sub_8069428(_DWORD *a1, int *a2, int *a3, int a4)
+_DWORD *__cdecl MSG_WriteDeltaClient(_DWORD *a1, int *a2, int *a3, int a4)
 {
   char s[108]; // [esp+20h] [ebp-78h] BYREF
   int v6; // [esp+8Ch] [ebp-Ch]
@@ -30781,12 +30781,12 @@ _DWORD *__cdecl sub_8069428(_DWORD *a1, int *a2, int *a3, int a4)
     a2 = (int *)s;
     memset(s, 0, 0x5Cu);
   }
-  return sub_80691FC(a1, a2, a3, a4, v6, 6, (int)&off_813D8E0, 1);
+  return MSG_WriteDeltaStruct(a1, a2, a3, a4, v6, 6, (int)&off_813D8E0, 1);
 }
 // 813D8E0: using guessed type char *off_813D8E0;
 
 //----- (080694A0) --------------------------------------------------------
-void __cdecl sub_80694A0(_DWORD *a1, int a2, int a3, const char **a4, int a5)
+void __cdecl MSG_ReadDeltaField(_DWORD *a1, int a2, int a3, const char **a4, int a5)
 {
   int v5; // [esp+10h] [ebp-28h]
   int v6; // [esp+14h] [ebp-24h]
@@ -30801,7 +30801,7 @@ void __cdecl sub_80694A0(_DWORD *a1, int a2, int a3, const char **a4, int a5)
 
   v14 = (float *)&a4[1][a2];
   v13 = (float *)&a4[1][a3];
-  if ( !sub_8067A0E(a1) )
+  if ( !MSG_ReadBit(a1) )
   {
     *v13 = *v14;
     return;
@@ -30810,19 +30810,19 @@ void __cdecl sub_80694A0(_DWORD *a1, int a2, int a3, const char **a4, int a5)
   {
     if ( a4[2] == (const char *)-99 )
     {
-      if ( sub_8067A0E(a1) )
+      if ( MSG_ReadBit(a1) )
       {
-        if ( sub_8067A0E(a1) )
+        if ( MSG_ReadBit(a1) )
         {
-          *(_DWORD *)v13 = sub_8067F90(a1);
+          *(_DWORD *)v13 = MSG_ReadLong(a1);
           if ( a5 )
 LABEL_10:
             Com_Printf("%s:%f ", *a4, *v13);
         }
         else
         {
-          v12 = sub_8067960(a1, 2);
-          v11 = 4 * sub_8067EE8(a1) + v12 - 512;
+          v12 = MSG_ReadBits(a1, 2);
+          v11 = 4 * MSG_ReadByte(a1) + v12 - 512;
           *v13 = (float)v11;
           if ( a5 )
 LABEL_8:
@@ -30836,24 +30836,24 @@ LABEL_8:
     }
     else if ( a4[2] == (const char *)-100 )
     {
-      if ( sub_8067A0E(a1) )
+      if ( MSG_ReadBit(a1) )
         *v13 = sub_80681C8(a1);
       else
         *v13 = 0.0;
     }
-    else if ( sub_8067A0E(a1) )
+    else if ( MSG_ReadBit(a1) )
     {
       v9 = (unsigned int)a4[2] >> 31;
       v6 = (int)a4[2];
       if ( v6 < 0 )
         v6 = -v6;
       if ( (v6 & 7) != 0 )
-        v5 = sub_8067960(a1, v6 & 7);
+        v5 = MSG_ReadBits(a1, v6 & 7);
       else
         v5 = 0;
       v8 = v5;
       for ( i = v6 & 7; i < v6; i += 8 )
-        v8 |= sub_8067EE8(a1) << i;
+        v8 |= MSG_ReadByte(a1) << i;
       if ( v9 && ((v8 >> (v6 - 1)) & 1) != 0 )
         v8 |= ~((1 << v6) - 1);
       *(_DWORD *)v13 = v8;
@@ -30867,41 +30867,41 @@ LABEL_8:
   }
   else
   {
-    if ( !sub_8067A0E(a1) )
+    if ( !MSG_ReadBit(a1) )
     {
       *v13 = 0.0;
       return;
     }
-    if ( !sub_8067A0E(a1) )
+    if ( !MSG_ReadBit(a1) )
     {
-      v10 = sub_8067960(a1, 5);
-      v11 = 32 * sub_8067EE8(a1) + v10 - 4096;
+      v10 = MSG_ReadBits(a1, 5);
+      v11 = 32 * MSG_ReadByte(a1) + v10 - 4096;
       *v13 = (float)v11;
       if ( !a5 )
         return;
       goto LABEL_8;
     }
-    *(_DWORD *)v13 = sub_8067F90(a1);
+    *(_DWORD *)v13 = MSG_ReadLong(a1);
     if ( a5 )
       goto LABEL_10;
   }
 }
 
 //----- (080697D8) --------------------------------------------------------
-int __cdecl sub_80697D8(_DWORD *a1, int a2, int a3, int a4, int a5)
+int __cdecl MSG_ReadDeltaObjective(_DWORD *a1, int a2, int a3, int a4, int a5)
 {
   int result; // eax
   int i; // [esp+24h] [ebp-4h]
   int j; // [esp+24h] [ebp-4h]
 
-  if ( sub_8067A0E(a1) )
+  if ( MSG_ReadBit(a1) )
   {
     for ( i = 0; ; ++i )
     {
       result = i;
       if ( i >= a4 )
         break;
-      sub_80694A0(a1, a2, a3, (const char **)(a5 + 12 * i), 0);
+      MSG_ReadDeltaField(a1, a2, a3, (const char **)(a5 + 12 * i), 0);
     }
   }
   else
@@ -30918,7 +30918,7 @@ int __cdecl sub_80697D8(_DWORD *a1, int a2, int a3, int a4, int a5)
 }
 
 //----- (0806988A) --------------------------------------------------------
-int __cdecl sub_806988A(_DWORD *a1, int src, int dest, int a4, int a5, int a6, const char **a7)
+int __cdecl MSG_ReadDeltaStruct(_DWORD *a1, int src, int dest, int a4, int a5, int a6, const char **a7)
 {
   const char **v9; // [esp+2Ch] [ebp-Ch]
   const char **v10; // [esp+2Ch] [ebp-Ch]
@@ -30926,11 +30926,11 @@ int __cdecl sub_806988A(_DWORD *a1, int src, int dest, int a4, int a5, int a6, c
   int v12; // [esp+34h] [ebp-4h]
   int v13; // [esp+34h] [ebp-4h]
 
-  if ( sub_8067A0E(a1) == 1 )
+  if ( MSG_ReadBit(a1) == 1 )
     return 1;
-  if ( sub_8067A0E(a1) )
+  if ( MSG_ReadBit(a1) )
   {
-    v11 = sub_8067EE8(a1);
+    v11 = MSG_ReadByte(a1);
     if ( v11 <= a5 )
     {
       *(_DWORD *)dest = a4;
@@ -30938,7 +30938,7 @@ int __cdecl sub_806988A(_DWORD *a1, int src, int dest, int a4, int a5, int a6, c
       v9 = a7;
       while ( v12 < v11 )
       {
-        sub_80694A0(a1, src, dest, v9, 0);
+        MSG_ReadDeltaField(a1, src, dest, v9, 0);
         ++v12;
         v9 += 3;
       }
@@ -30966,21 +30966,21 @@ int __cdecl sub_806988A(_DWORD *a1, int src, int dest, int a4, int a5, int a6, c
 }
 
 //----- (080699C8) --------------------------------------------------------
-int __cdecl sub_80699C8(_DWORD *a1, void *src, void *dest, int a4)
+int __cdecl MSG_ReadDeltaEntity(_DWORD *a1, void *src, void *dest, int a4)
 {
-  return sub_806988A(a1, (int)src, (int)dest, a4, 59, 10, (const char **)&off_813D120);
+  return MSG_ReadDeltaStruct(a1, (int)src, (int)dest, a4, 59, 10, (const char **)&off_813D120);
 }
 // 813D120: using guessed type char *off_813D120;
 
 //----- (08069A0E) --------------------------------------------------------
-int __cdecl sub_8069A0E(_DWORD *a1, void *src, void *dest, int a4)
+int __cdecl MSG_ReadDeltaArchivedEntity(_DWORD *a1, void *src, void *dest, int a4)
 {
-  return sub_806988A(a1, (int)src, (int)dest, a4, 68, 10, (const char **)&off_813D460);
+  return MSG_ReadDeltaStruct(a1, (int)src, (int)dest, a4, 68, 10, (const char **)&off_813D460);
 }
 // 813D460: using guessed type char *off_813D460;
 
 //----- (08069A54) --------------------------------------------------------
-int __cdecl sub_8069A54(_DWORD *a1, char *src, void *dest, int a4)
+int __cdecl MSG_ReadDeltaClient(_DWORD *a1, char *src, void *dest, int a4)
 {
   char s[108]; // [esp+20h] [ebp-78h] BYREF
   int v6; // [esp+8Ch] [ebp-Ch]
@@ -30991,12 +30991,12 @@ int __cdecl sub_8069A54(_DWORD *a1, char *src, void *dest, int a4)
     src = s;
     memset(s, 0, 0x5Cu);
   }
-  return sub_806988A(a1, (int)src, (int)dest, a4, v6, 6, (const char **)&off_813D8E0);
+  return MSG_ReadDeltaStruct(a1, (int)src, (int)dest, a4, v6, 6, (const char **)&off_813D8E0);
 }
 // 813D8E0: using guessed type char *off_813D8E0;
 
 //----- (08069AC4) --------------------------------------------------------
-int __cdecl sub_8069AC4(_DWORD *a1, int a2, int a3, int a4)
+int __cdecl MSG_WriteDeltaHudElems(_DWORD *a1, int a2, int a3, int a4)
 {
   int result; // eax
   int v5; // [esp+18h] [ebp-10h]
@@ -31007,7 +31007,7 @@ int __cdecl sub_8069AC4(_DWORD *a1, int a2, int a3, int a4)
 
   for ( i = 0; i < a4 && *(_DWORD *)(a3 + (i << 7)); ++i )
     ;
-  sub_80677A2(a1, i, 5);
+  MSG_WriteBits(a1, i, 5);
   for ( j = 0; ; ++j )
   {
     result = j;
@@ -31019,28 +31019,28 @@ int __cdecl sub_8069AC4(_DWORD *a1, int a2, int a3, int a4)
       if ( *(_DWORD *)(dword_815A5E4[3 * k] + a2 + (j << 7)) != *(_DWORD *)(dword_815A5E4[3 * k] + a3 + (j << 7)) )
         v5 = k;
     }
-    sub_80677A2(a1, v5, 5);
+    MSG_WriteBits(a1, v5, 5);
     for ( m = 0; m <= v5; ++m )
-      sub_8068E1C(a1, a2 + (j << 7), a3 + (j << 7), 12 * m + 135636448);
+      MSG_WriteDeltaField(a1, a2 + (j << 7), a3 + (j << 7), 12 * m + 135636448);
   }
   return result;
 }
 // 815A5E4: using guessed type int dword_815A5E4[95];
 
 //----- (08069C10) --------------------------------------------------------
-void *__cdecl sub_8069C10(_DWORD *a1, int a2, int a3, int a4)
+void *__cdecl MSG_ReadDeltaHudElems(_DWORD *a1, int a2, int a3, int a4)
 {
   int v5; // [esp+14h] [ebp-14h]
   int v6; // [esp+18h] [ebp-10h]
   unsigned int j; // [esp+1Ch] [ebp-Ch]
   int i; // [esp+20h] [ebp-8h]
 
-  v6 = sub_8067960(a1, 5);
+  v6 = MSG_ReadBits(a1, 5);
   for ( i = 0; i < v6; ++i )
   {
-    v5 = sub_8067960(a1, 5);
+    v5 = MSG_ReadBits(a1, 5);
     for ( j = 0; (int)j <= v5; ++j )
-      sub_80694A0(a1, a2 + (i << 7), a3 + (i << 7), (const char **)(12 * j + 135636448), 0);
+      MSG_ReadDeltaField(a1, a2 + (i << 7), a3 + (i << 7), (const char **)(12 * j + 135636448), 0);
     while ( j <= 0x1F )
     {
       *(_DWORD *)(dword_815A5E4[3 * j] + a3 + (i << 7)) = *(_DWORD *)(dword_815A5E4[3 * j] + a2 + (i << 7));
@@ -31052,7 +31052,7 @@ void *__cdecl sub_8069C10(_DWORD *a1, int a2, int a3, int a4)
 // 815A5E4: using guessed type int dword_815A5E4[95];
 
 //----- (08069D40) --------------------------------------------------------
-_DWORD *__cdecl sub_8069D40(_DWORD *a1, char *a2, _DWORD *a3)
+_DWORD *__cdecl MSG_WriteDeltaPlayerstate(_DWORD *a1, char *a2, _DWORD *a3)
 {
   int v4; // [esp+20h] [ebp-2718h]
   int v5; // [esp+28h] [ebp-2710h]
@@ -31086,7 +31086,7 @@ _DWORD *__cdecl sub_8069D40(_DWORD *a1, char *a2, _DWORD *a3)
     ++i;
     v11 += 3;
   }
-  sub_8067B4C(a1, v17);
+  MSG_WriteByte(a1, v17);
   i = 0;
   v12 = &off_813DE80;
   while ( i < v17 )
@@ -31094,7 +31094,7 @@ _DWORD *__cdecl sub_8069D40(_DWORD *a1, char *a2, _DWORD *a3)
     v10 = (float *)&v12[1][(_DWORD)a3];
     if ( *(_DWORD *)&v12[1][(_DWORD)a2] == *(_DWORD *)v10 )
       goto LABEL_11;
-    sub_80678C6(a1);
+    MSG_WriteBit1(a1);
     if ( v12[2] )
     {
       if ( v12[2] == (char *)-100 )
@@ -31102,10 +31102,10 @@ _DWORD *__cdecl sub_8069D40(_DWORD *a1, char *a2, _DWORD *a3)
         if ( !*(_DWORD *)v10 )
         {
 LABEL_11:
-          sub_8067868(a1);
+          MSG_WriteBit0(a1);
           goto LABEL_26;
         }
-        sub_80678C6(a1);
+        MSG_WriteBit1(a1);
         sub_8067EA6(a1, *v10);
       }
       else
@@ -31118,13 +31118,13 @@ LABEL_11:
         v5 = v4 & 7;
         if ( (v4 & 7) != 0 )
         {
-          sub_80677A2(a1, SLODWORD(v7), v5);
+          MSG_WriteBits(a1, SLODWORD(v7), v5);
           v6 = v4 - v5;
           SLODWORD(v7) >>= v5;
         }
         while ( v6 )
         {
-          sub_8067B4C(a1, SLOBYTE(v7));
+          MSG_WriteByte(a1, SLOBYTE(v7));
           SLODWORD(v7) >>= 8;
           v6 -= 8;
         }
@@ -31135,15 +31135,15 @@ LABEL_11:
       v8 = (int)*v10;
       if ( (long double)v8 == *v10 && (unsigned int)(v8 + 4096) <= 0x1FFF )
       {
-        sub_8067868(a1);
+        MSG_WriteBit0(a1);
         v9 = v8 + 4096;
-        sub_80677A2(a1, v9, 5);
-        sub_8067B4C(a1, v9 >> 5);
+        MSG_WriteBits(a1, v9, 5);
+        MSG_WriteByte(a1, v9 >> 5);
       }
       else
       {
-        sub_80678C6(a1);
-        sub_8067C2A(a1, *(_DWORD *)v10);
+        MSG_WriteBit1(a1);
+        MSG_WriteLong(a1, *(_DWORD *)v10);
       }
     }
 LABEL_26:
@@ -31158,24 +31158,24 @@ LABEL_26:
   }
   if ( v15 )
   {
-    sub_80678C6(a1);
-    sub_80677A2(a1, v15, 6);
+    MSG_WriteBit1(a1);
+    MSG_WriteBits(a1, v15, 6);
     if ( (v15 & 1) != 0 )
-      sub_8067BDA(a1, a3[75]);
+      MSG_WriteShort(a1, a3[75]);
     if ( (v15 & 2) != 0 )
-      sub_8067BDA(a1, a3[76]);
+      MSG_WriteShort(a1, a3[76]);
     if ( (v15 & 4) != 0 )
-      sub_8067BDA(a1, a3[77]);
+      MSG_WriteShort(a1, a3[77]);
     if ( (v15 & 8) != 0 )
-      sub_80677A2(a1, a3[78], 6);
+      MSG_WriteBits(a1, a3[78], 6);
     if ( (v15 & 0x10) != 0 )
-      sub_8067BDA(a1, a3[79]);
+      MSG_WriteShort(a1, a3[79]);
     if ( (v15 & 0x20) != 0 )
-      sub_8067B4C(a1, a3[80]);
+      MSG_WriteByte(a1, a3[80]);
   }
   else
   {
-    sub_8067868(a1);
+    MSG_WriteBit0(a1);
   }
   for ( j = 0; j <= 3; ++j )
   {
@@ -31188,28 +31188,28 @@ LABEL_26:
   }
   if ( v14[0] || v14[1] || v14[2] || v14[3] )
   {
-    sub_80678C6(a1);
+    MSG_WriteBit1(a1);
     for ( j = 0; j <= 3; ++j )
     {
       if ( v14[j] )
       {
-        sub_80678C6(a1);
-        sub_8067BDA(a1, v14[j]);
+        MSG_WriteBit1(a1);
+        MSG_WriteShort(a1, v14[j]);
         for ( i = 0; i <= 15; ++i )
         {
           if ( ((v14[j] >> i) & 1) != 0 )
-            sub_8067BDA(a1, a3[16 * j + 81 + i]);
+            MSG_WriteShort(a1, a3[16 * j + 81 + i]);
         }
       }
       else
       {
-        sub_8067868(a1);
+        MSG_WriteBit0(a1);
       }
     }
   }
   else
   {
-    sub_8067868(a1);
+    MSG_WriteBit0(a1);
   }
   for ( j = 0; j <= 3; ++j )
   {
@@ -31221,43 +31221,43 @@ LABEL_26:
     }
     if ( v13 )
     {
-      sub_80678C6(a1);
-      sub_8067BDA(a1, v13);
+      MSG_WriteBit1(a1);
+      MSG_WriteShort(a1, v13);
       for ( i = 0; i <= 15; ++i )
       {
         if ( ((v13 >> i) & 1) != 0 )
-          sub_8067BDA(a1, a3[16 * j + 209 + i]);
+          MSG_WriteShort(a1, a3[16 * j + 209 + i]);
       }
     }
     else
     {
-      sub_8067868(a1);
+      MSG_WriteBit0(a1);
     }
   }
   if ( !memcmp(a2 + 1508, a3 + 377, 0x1C0u) )
   {
-    sub_8067868(a1);
+    MSG_WriteBit0(a1);
   }
   else
   {
-    sub_80678C6(a1);
+    MSG_WriteBit1(a1);
     for ( i = 0; i <= 15; ++i )
     {
-      sub_80677A2(a1, a3[7 * i + 377], 3);
-      sub_8069142(a1, (int)&a2[28 * i + 1508], (int)&a3[7 * i + 377], 0, 6, (int)&off_815A580);
+      MSG_WriteBits(a1, a3[7 * i + 377], 3);
+      MSG_WriteDeltaObjective(a1, (int)&a2[28 * i + 1508], (int)&a3[7 * i + 377], 0, 6, (int)&off_815A580);
     }
   }
   if ( !memcmp(a2 + 1960, a3 + 490, 0x1F00u) )
-    return sub_8067868(a1);
-  sub_80678C6(a1);
-  sub_8069AC4(a1, (int)(a2 + 5928), (int)(a3 + 1482), 31);
-  return (_DWORD *)sub_8069AC4(a1, (int)(a2 + 1960), (int)(a3 + 490), 31);
+    return MSG_WriteBit0(a1);
+  MSG_WriteBit1(a1);
+  MSG_WriteDeltaHudElems(a1, (int)(a2 + 5928), (int)(a3 + 1482), 31);
+  return (_DWORD *)MSG_WriteDeltaHudElems(a1, (int)(a2 + 1960), (int)(a3 + 490), 31);
 }
 // 813DE80: using guessed type char *off_813DE80;
 // 815A580: using guessed type char *off_815A580;
 
 //----- (0806A608) --------------------------------------------------------
-void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3)
+void *__cdecl MSG_ReadDeltaPlayerstate(_DWORD *a1, char *a2, char *a3)
 {
   int v3; // edx
   int v4; // eax
@@ -31305,20 +31305,20 @@ void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3)
   qmemcpy(v15, v14, 4 * (v13 >> 2));
   v23 = 0;
   v24 = 105;
-  v27 = sub_8067EE8(a1);
+  v27 = MSG_ReadByte(a1);
   j = 0;
   v25 = &off_813DE80;
   while ( j < v27 )
   {
     v22 = (float *)&v25[1][(_DWORD)a2];
     v21 = (float *)&v25[1][(_DWORD)a3];
-    if ( sub_8067A0E(a1) )
+    if ( MSG_ReadBit(a1) )
     {
       if ( v25[2] )
       {
         if ( v25[2] == (char *)-100 )
         {
-          if ( sub_8067A0E(a1) )
+          if ( MSG_ReadBit(a1) )
           {
             v5 = sub_80681C8(a1);
             *v21 = v5;
@@ -31337,13 +31337,13 @@ void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3)
           v26 = v12;
           v18 = v12 & 7;
           if ( (v12 & 7) != 0 )
-            v11 = sub_8067960(a1, v18);
+            v11 = MSG_ReadBits(a1, v18);
           else
             v11 = 0;
           v17 = v11;
           for ( i = v18; i < v26; i += 8 )
           {
-            v6 = sub_8067EE8(a1);
+            v6 = MSG_ReadByte(a1);
             v17 |= v6 << i;
           }
           if ( v19 && ((v17 >> (v26 - 1)) & 1) != 0 )
@@ -31353,17 +31353,17 @@ void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3)
             Com_Printf("%s:%i ", *v25, *(_DWORD *)v21);
         }
       }
-      else if ( sub_8067A0E(a1) )
+      else if ( MSG_ReadBit(a1) )
       {
-        v4 = sub_8067F90(a1);
+        v4 = MSG_ReadLong(a1);
         *(_DWORD *)v21 = v4;
         if ( v23 )
           Com_Printf("%s:%f ", *v25, *v21);
       }
       else
       {
-        v20 = sub_8067960(a1, 5);
-        v3 = 32 * sub_8067EE8(a1);
+        v20 = MSG_ReadBits(a1, 5);
+        v3 = 32 * MSG_ReadByte(a1);
         v20 += v3;
         v20 -= 4096;
         *v21 = (float)v20;
@@ -31388,35 +31388,35 @@ void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3)
     ++j;
     v25 += 3;
   }
-  if ( sub_8067A0E(a1) )
+  if ( MSG_ReadBit(a1) )
   {
-    v26 = sub_8067960(a1, 6);
+    v26 = MSG_ReadBits(a1, 6);
     if ( (v26 & 1) != 0 )
-      *((_DWORD *)a3 + 75) = sub_8067F32(a1);
+      *((_DWORD *)a3 + 75) = MSG_ReadShort(a1);
     if ( (v26 & 2) != 0 )
-      *((_DWORD *)a3 + 76) = sub_8067F32(a1);
+      *((_DWORD *)a3 + 76) = MSG_ReadShort(a1);
     if ( (v26 & 4) != 0 )
-      *((_DWORD *)a3 + 77) = sub_8067F32(a1);
+      *((_DWORD *)a3 + 77) = MSG_ReadShort(a1);
     if ( (v26 & 8) != 0 )
-      *((_DWORD *)a3 + 78) = sub_8067960(a1, 6);
+      *((_DWORD *)a3 + 78) = MSG_ReadBits(a1, 6);
     if ( (v26 & 0x10) != 0 )
-      *((_DWORD *)a3 + 79) = sub_8067F32(a1);
+      *((_DWORD *)a3 + 79) = MSG_ReadShort(a1);
     if ( (v26 & 0x20) != 0 )
-      *((_DWORD *)a3 + 80) = sub_8067EE8(a1);
+      *((_DWORD *)a3 + 80) = MSG_ReadByte(a1);
   }
-  if ( sub_8067A0E(a1) )
+  if ( MSG_ReadBit(a1) )
   {
     for ( i = 0; i <= 3; ++i )
     {
-      if ( sub_8067A0E(a1) )
+      if ( MSG_ReadBit(a1) )
       {
-        v26 = sub_8067F32(a1);
+        v26 = MSG_ReadShort(a1);
         for ( j = 0; j <= 15; ++j )
         {
           if ( ((v26 >> j) & 1) != 0 )
           {
             v7 = j + 16 * i;
-            *(_DWORD *)&a3[4 * v7 + 324] = sub_8067F32(a1);
+            *(_DWORD *)&a3[4 * v7 + 324] = MSG_ReadShort(a1);
           }
         }
       }
@@ -31424,33 +31424,33 @@ void *__cdecl sub_806A608(_DWORD *a1, char *a2, char *a3)
   }
   for ( i = 0; i <= 3; ++i )
   {
-    if ( sub_8067A0E(a1) )
+    if ( MSG_ReadBit(a1) )
     {
-      v26 = sub_8067F32(a1);
+      v26 = MSG_ReadShort(a1);
       for ( j = 0; j <= 15; ++j )
       {
         if ( ((v26 >> j) & 1) != 0 )
         {
           v8 = j + 16 * i;
-          *(_DWORD *)&a3[4 * v8 + 836] = sub_8067F32(a1);
+          *(_DWORD *)&a3[4 * v8 + 836] = MSG_ReadShort(a1);
         }
       }
     }
   }
-  if ( sub_8067A0E(a1) )
+  if ( MSG_ReadBit(a1) )
   {
     for ( j = 0; j <= 15; ++j )
     {
       v9 = (int *)&a3[28 * j + 1508];
-      *v9 = sub_8067960(a1, 3);
-      sub_80697D8(a1, (int)&a2[28 * j + 1508], (int)&a3[28 * j + 1508], 6, (int)&off_815A580);
+      *v9 = MSG_ReadBits(a1, 3);
+      MSG_ReadDeltaObjective(a1, (int)&a2[28 * j + 1508], (int)&a3[28 * j + 1508], 6, (int)&off_815A580);
     }
   }
-  result = (void *)sub_8067A0E(a1);
+  result = (void *)MSG_ReadBit(a1);
   if ( result )
   {
-    sub_8069C10(a1, (int)(a2 + 5928), (int)(a3 + 5928), 31);
-    return sub_8069C10(a1, (int)(a2 + 1960), (int)(a3 + 1960), 31);
+    MSG_ReadDeltaHudElems(a1, (int)(a2 + 5928), (int)(a3 + 5928), 31);
+    return MSG_ReadDeltaHudElems(a1, (int)(a2 + 1960), (int)(a3 + 1960), 31);
   }
   return result;
 }
@@ -31464,13 +31464,13 @@ int *sub_806AC6A()
   int j; // [esp+10h] [ebp-8h]
   int i; // [esp+14h] [ebp-4h] BYREF
 
-  result = (int *)sub_8066A70(byte_81E6860);
+  result = (int *)Huff_Init(msgHuff);
   for ( i = 0; i <= 255; ++i )
   {
     for ( j = 0; j < dword_815A760[i]; ++j )
     {
-      sub_806610E(byte_81E6860, i);
-      sub_806610E(dword_81ED87C, i);
+      Huff_addRef(msgHuff, i);
+      Huff_addRef(dword_81ED87C, i);
     }
     result = &i;
   }
@@ -31480,12 +31480,12 @@ int *sub_806AC6A()
 // 81ED87C: using guessed type _DWORD dword_81ED87C[2];
 
 //----- (0806ACDE) --------------------------------------------------------
-int *sub_806ACDE()
+int *MSG_initHuffman()
 {
-  dword_81F4898 = 1;
+  msgInit = 1;
   return sub_806AC6A();
 }
-// 81F4898: using guessed type int dword_81F4898;
+// 81F4898: using guessed type int msgInit;
 
 //----- (0806ACF6) --------------------------------------------------------
 int __cdecl sub_806ACF6(__int16 a1)
@@ -31534,7 +31534,7 @@ char *__cdecl NET_AdrToString(int a1, int a2, int a3, int a4, int a5)
 }
 
 //----- (0806AE1A) --------------------------------------------------------
-void **__cdecl sub_806AE1A(void **a1)
+void **__cdecl NetProf_PrepProfiling(void **a1)
 {
   void **result; // eax
 
@@ -31773,7 +31773,7 @@ void **__cdecl sub_806B510(void *a1, void **s, void *a3, void *a4, void *a5, voi
   s[9] = a8;
   s[3] = 0;
   *s = (void *)1;
-  return sub_806AE1A(s + 8207);
+  return NetProf_PrepProfiling(s + 8207);
 }
 
 //----- (0806B58C) --------------------------------------------------------
@@ -31786,17 +31786,17 @@ _BOOL4 __cdecl sub_806B58C(int a1)
   int s[3]; // [esp+5B0h] [ebp-28h] BYREF
   size_t v7; // [esp+5BCh] [ebp-1Ch]
 
-  sub_806AE1A((void **)(a1 + 32828));
+  NetProf_PrepProfiling((void **)(a1 + 32828));
   MSG_Init(s, (int)v5, 1400);
-  sub_8067C2A(s, *(_DWORD *)a1 | 0x80000000);
+  MSG_WriteLong(s, *(_DWORD *)a1 | 0x80000000);
   if ( *(int *)(a1 + 4) <= 0 )
-    sub_8067BDA(s, *(_DWORD *)(a1 + 36));
+    MSG_WriteShort(s, *(_DWORD *)(a1 + 36));
   n = 1300;
   if ( *(_DWORD *)(a1 + 16436) + 1300 > *(_DWORD *)(a1 + 16440) )
     n = *(_DWORD *)(a1 + 16440) - *(_DWORD *)(a1 + 16436);
-  sub_8067BDA(s, *(_DWORD *)(a1 + 16436));
-  sub_8067BDA(s, n);
-  sub_8067B84(s, (void *)(a1 + *(_DWORD *)(a1 + 16436) + 16444), n);
+  MSG_WriteShort(s, *(_DWORD *)(a1 + 16436));
+  MSG_WriteShort(s, n);
+  MSG_WriteData(s, (void *)(a1 + *(_DWORD *)(a1 + 16436) + 16444), n);
   v3 = (unsigned __int8)sub_806C32C(
                           *(_DWORD *)(a1 + 4),
                           v7,
@@ -31844,15 +31844,15 @@ _BOOL4 __cdecl sub_806B7AC(int a1, int n, void *src)
   *(_DWORD *)(a1 + 16436) = 0;
   if ( n <= 1299 )
   {
-    sub_806AE1A((void **)(a1 + 32828));
+    NetProf_PrepProfiling((void **)(a1 + 32828));
     MSG_Init(s, (int)v7, 1400);
-    sub_8067C2A(s, *(_DWORD *)a1);
+    MSG_WriteLong(s, *(_DWORD *)a1);
     ++*(_DWORD *)a1;
     if ( *(int *)(a1 + 4) <= 0 )
-      sub_8067BDA(s, *(_DWORD *)(a1 + 36));
+      MSG_WriteShort(s, *(_DWORD *)(a1 + 36));
     if ( *(_BYTE *)(dword_81F7108 + 8) )
       Com_Printf("Adding %i byte payload to packet\n", n);
-    sub_8067B84(s, src, n);
+    MSG_WriteData(s, src, n);
     if ( *(_BYTE *)(dword_81F7108 + 8) )
       Com_Printf("Sending %i byte packet\n", v9);
     v6 = (unsigned __int8)sub_806C32C(
@@ -31892,7 +31892,7 @@ _BOOL4 __cdecl sub_806B7AC(int a1, int n, void *src)
 // 806B7AC: using guessed type int var_5A8[352];
 
 //----- (0806B9CA) --------------------------------------------------------
-int __cdecl sub_806B9CA(int a1, _DWORD *a2)
+int __cdecl Netchan_Process(int a1, _DWORD *a2)
 {
   int v2; // eax
   char *v3; // ebx
@@ -31907,9 +31907,9 @@ int __cdecl sub_806B9CA(int a1, _DWORD *a2)
   int v14; // [esp+28h] [ebp-10h]
   int v15; // [esp+30h] [ebp-8h]
 
-  sub_806AE1A((void **)(a1 + 32828));
-  sub_806775C(a2);
-  v15 = sub_8067F90(a2);
+  NetProf_PrepProfiling((void **)(a1 + 32828));
+  MSG_BeginReading(a2);
+  v15 = MSG_ReadLong(a2);
   if ( (v15 & 0x80000000) != 0 )
   {
     v15 &= ~0x80000000;
@@ -31920,11 +31920,11 @@ int __cdecl sub_806B9CA(int a1, _DWORD *a2)
     v12 = 0;
   }
   if ( *(_DWORD *)(a1 + 4) == 1 )
-    sub_8067F32(a2);
+    MSG_ReadShort(a2);
   if ( v12 )
   {
-    v14 = sub_8067F32(a2);
-    n = sub_8067F32(a2);
+    v14 = MSG_ReadShort(a2);
+    n = MSG_ReadShort(a2);
   }
   else
   {
@@ -32025,8 +32025,8 @@ LABEL_42:
     memcpy((void *)(a2[1] + 4), (const void *)(a1 + 48), *(_DWORD *)(a1 + 44));
     a2[3] = *(_DWORD *)(a1 + 44) + 4;
     *(_DWORD *)(a1 + 44) = 0;
-    sub_806775C(a2);
-    sub_8067F90(a2);
+    MSG_BeginReading(a2);
+    MSG_ReadLong(a2);
     goto LABEL_42;
   }
   if ( *(_BYTE *)(dword_81F7104 + 8) || *(_BYTE *)(dword_81F7100 + 8) )
@@ -32204,7 +32204,7 @@ int __cdecl sub_806C32C(int a1, size_t n, _DWORD *src, int a4, int a5, int a6, i
 // 806C32C: using guessed type int arg_14;
 
 //----- (0806C40C) --------------------------------------------------------
-_BOOL4 __cdecl sub_806C40C(int a1, int a2, int a3, int a4, int a5, int a6, char *s)
+_BOOL4 __cdecl NET_OutOfBandPrint(int a1, int a2, int a3, int a4, int a5, int a6, char *s)
 {
   size_t v7; // eax
   size_t v8; // eax
@@ -32229,7 +32229,7 @@ _BOOL4 __cdecl sub_806C40C(int a1, int a2, int a3, int a4, int a5, int a6, char 
     n = strlen(v12);
     v14 = (unsigned __int8)sub_806C32C(a1, n, v12, a2, a3, a4, a5, a6);
     if ( a1 == 1 )
-      sub_80955EA(n);
+      SV_Netchan_AddOOBProfilePacket(n);
     v9 = v14 > 0;
     LargeLocalDealloc(v13);
     return v9;
@@ -32269,7 +32269,7 @@ _BOOL4 __cdecl sub_806C57E(int a1, int a2, int a3, int a4, int a5, int a6, int a
   n = a8 + 4;
   v12 = (unsigned __int8)sub_806C32C(a1, a8 + 4, v10, a2, a3, a4, a5, a6);
   if ( a1 == 1 )
-    sub_80955EA(n);
+    SV_Netchan_AddOOBProfilePacket(n);
   v8 = v12 > 0;
   LargeLocalDealloc(v11);
   return v8;
@@ -32288,7 +32288,7 @@ int __cdecl sub_806C69C(int a1, int a2, int a3, int a4, int a5, int a6, void *sr
   memcpy(&v10, src, n);
   result = sub_806C32C(a1, n + 4, &v9, a2, a3, a4, a5, a6);
   if ( a1 == 1 )
-    return sub_80955EA(n + 4);
+    return SV_Netchan_AddOOBProfilePacket(n + 4);
   return result;
 }
 // 806C69C: using guessed type int arg_C;
@@ -32385,7 +32385,7 @@ char *__cdecl sub_806C926(const char *a1)
 
   v2 = sub_80B4072();
   sub_80B3A3C();
-  return sub_8077FFE(v2 - dword_8202220, "%s", a1);
+  return CompileError(v2 - dword_8202220, "%s", a1);
 }
 // 8202220: using guessed type int dword_8202220;
 
@@ -32462,7 +32462,7 @@ char *__cdecl sub_806CA94(_DWORD *a1, unsigned int a2, int a3)
   if ( dword_8202448 )
     return (char *)sub_806CA12(a1, a2, dword_8202448);
   else
-    return sub_8077FFE(a3, "#using_animtree was not specified");
+    return CompileError(a3, "#using_animtree was not specified");
 }
 // 8202448: using guessed type int dword_8202448;
 
@@ -32848,7 +32848,7 @@ char *__cdecl sub_806D55A(char *a1, int a2)
   char *result; // eax
 
   if ( !(unsigned __int8)sub_8075828(a1) )
-    return sub_8077FFE(a2, "bad anim tree name");
+    return CompileError(a2, "bad anim tree name");
   result = (char *)sub_806D43C(a1, &dword_8202854, 1);
   dword_8202448 = (int)result;
   return result;
@@ -33454,7 +33454,7 @@ void __cdecl sub_806E2B4(int a1)
   if ( dword_8202854 )
     sub_806E09C(dword_8202854, a1);
   else
-    sub_8077FFE(a1, "#using_animtree was not specified");
+    CompileError(a1, "#using_animtree was not specified");
 }
 // 8202854: using guessed type int dword_8202854;
 
@@ -33510,13 +33510,13 @@ LABEL_13:
   if ( !a3 || byte_82028B0 )
   {
     v4 = (const char *)sub_8078896(a1);
-    sub_8077FFE(a2, "uninitialised variable '%s'", v4);
+    CompileError(a2, "uninitialised variable '%s'", v4);
     return 0;
   }
   else
   {
 LABEL_16:
-    sub_8077FFE(a2, "unreachable code");
+    CompileError(a2, "unreachable code");
     return 0;
   }
 }
@@ -33914,7 +33914,7 @@ char *__cdecl sub_806EEC6(int *a1)
   int v2; // ecx
 
   if ( dword_8202A40 > 31 )
-    return sub_8077FFE(a1[2], "VALUE_STACK_SIZE exceeded");
+    return CompileError(a1[2], "VALUE_STACK_SIZE exceeded");
   v2 = 3 * dword_8202A40;
   dword_82028BC[v2] = *a1;
   dword_82028C0[v2] = a1[1];
@@ -34141,7 +34141,7 @@ char *__cdecl sub_806F58C(int a1, int a2)
   int v7; // [esp+24h] [ebp-4h]
 
   if ( byte_8202A64 )
-    return sub_8077FFE(a2, "$ can only be used in the script debugger");
+    return CompileError(a2, "$ can only be used in the script debugger");
   v4 = sub_8078896(a1);
   if ( *(_BYTE *)v4 == 116 )
   {
@@ -34158,14 +34158,14 @@ char *__cdecl sub_806F58C(int a1, int a2)
         }
       }
     }
-    return sub_8077FFE(a2, "bad expression");
+    return CompileError(a2, "bad expression");
   }
   v7 = sub_807F6F2(*(_BYTE *)v4);
   if ( v7 < 0 )
-    return sub_8077FFE(a2, "bad expression");
+    return CompileError(a2, "bad expression");
   v6 = atoi((const char *)(v4 + 1));
   if ( !v6 && *(_BYTE *)(v4 + 1) != 48 )
-    return sub_8077FFE(a2, "bad expression");
+    return CompileError(a2, "bad expression");
   sub_806DAD8(129, 1, 0);
   sub_806DF0E(v7);
   return (char *)sub_806DF0E(v6);
@@ -34230,9 +34230,9 @@ void __cdecl sub_806F83E(int *a1, int a2)
     if ( v2 == 53 )
     {
       if ( byte_8202A64 )
-        sub_8077FFE(a1[2], "self field can only be used in the script debugger");
+        CompileError(a1[2], "self field can only be used in the script debugger");
       else
-        sub_8077FFE(a1[2], "self field in assignment expression not currently supported");
+        CompileError(a1[2], "self field in assignment expression not currently supported");
     }
     else if ( v2 == 79 )
     {
@@ -34385,7 +34385,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
       v19 = sub_807BB34(v16, a1[2]);
       if ( !v19 || sub_807DF7C(v19) != 1 )
       {
-        sub_8077FFE(a2, "unknown function");
+        CompileError(a2, "unknown function");
         return;
       }
     }
@@ -34403,7 +34403,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
       v12 = v7;
       if ( v7 == 13 )
       {
-        sub_8077FFE(a2, "unknown function");
+        CompileError(a2, "unknown function");
         return;
       }
       if ( v11 )
@@ -34411,7 +34411,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
         if ( v12 == 7 || dword_8202A68 )
           sub_806E004(v11);
         else
-          sub_8077FFE(a2, "normal script cannot reference a function in a /# ... #/ comment");
+          CompileError(a2, "normal script cannot reference a function in a /# ... #/ comment");
         return;
       }
     }
@@ -34736,7 +34736,7 @@ char *__cdecl sub_80704FA(_DWORD *a1, int *a2, char a3, int a4)
   {
     if ( v13 == 1 && (sub_807035E(&v13, (unsigned int *)&v11), v13 == 1) && !v18 )
     {
-      return sub_8077FFE(v15, "return value of developer command can not be accessed if not in a /# ... #/ comment");
+      return CompileError(v15, "return value of developer command can not be accessed if not in a /# ... #/ comment");
     }
     else
     {
@@ -34754,7 +34754,7 @@ char *__cdecl sub_80704FA(_DWORD *a1, int *a2, char a3, int a4)
       }
       else
       {
-        return sub_8077FFE(v15, "parameter count exceeds 256");
+        return CompileError(v15, "parameter count exceeds 256");
       }
     }
   }
@@ -34819,7 +34819,7 @@ char *__cdecl sub_807071E(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a
   {
     if ( v15 == 1 && (sub_807035E(&v15, (unsigned int *)&v13), v15 == 1) && !v20 )
     {
-      return sub_8077FFE(v17, "return value of developer command can not be accessed if not in a /# ... #/ comment");
+      return CompileError(v17, "return value of developer command can not be accessed if not in a /# ... #/ comment");
     }
     else
     {
@@ -34839,7 +34839,7 @@ char *__cdecl sub_807071E(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a
       }
       else
       {
-        return sub_8077FFE(v17, "parameter count exceeds 256");
+        return CompileError(v17, "parameter count exceeds 256");
       }
     }
   }
@@ -34962,12 +34962,12 @@ int __cdecl sub_8070B86(int a1, int a2, int a3, int a4)
     {
       v10 = sub_8077D5A(v12);
       v4 = (const char *)sub_8078896(a2);
-      sub_8077FFE(a3, "function '%s' already defined in '%s'", v4, *((const char **)dword_8283ED4 + 6 * v10 + 1));
+      CompileError(a3, "function '%s' already defined in '%s'", v4, *((const char **)dword_8283ED4 + 6 * v10 + 1));
     }
     else
     {
       v5 = (const char *)sub_8078896(a2);
-      sub_8077FFE(a3, "function '%s' already defined", v5);
+      CompileError(a3, "function '%s' already defined", v5);
     }
     return 0;
   }
@@ -35041,7 +35041,7 @@ char *__cdecl sub_8070DF8(int a1, char **a2)
     else
     {
       if ( v3 != 6 )
-        return sub_8077FFE(*(_DWORD *)(a1 + 12 * i + 8), "type %s is not a float", *(const char **)&off_815ABC0[4 * v3]);
+        return CompileError(*(_DWORD *)(a1 + 12 * i + 8), "type %s is not a float", *(const char **)&off_815ABC0[4 * v3]);
       v5[2 - i] = (float)*(int *)(a1 + 12 * i);
     }
   }
@@ -35122,7 +35122,7 @@ int __cdecl sub_8070FC0(int *a1, int a2, int a3, int a4)
   }
   else
   {
-    sub_8077FFE(a2, "expression list must have 1 or 3 parameters");
+    CompileError(a2, "expression list must have 1 or 3 parameters");
     return 0;
   }
 }
@@ -35140,7 +35140,7 @@ char *__cdecl sub_807112A(int a1, int a2, int a3)
   if ( v4 )
     return sub_8071E6A(**v4, (int)(*v4)[1], a3);
   else
-    return sub_8077FFE(a2, "not an object");
+    return CompileError(a2, "not an object");
 }
 
 //----- (08071180) --------------------------------------------------------
@@ -35329,7 +35329,7 @@ int __cdecl sub_80716CE(int a1, int a2, int a3, int a4, _DWORD *a5)
   sub_807DDD2(a3, v9, v8);
   if ( *(_DWORD *)dword_8394010 )
   {
-    sub_8077FFE(a4, "%s", *(const char **)dword_8394010);
+    CompileError(a4, "%s", *(const char **)dword_8394010);
     return 0;
   }
   else
@@ -35366,7 +35366,7 @@ LABEL_7:
   sub_807DDD2(a3, v10, v9);
   if ( *(_DWORD *)dword_8394010 )
   {
-    sub_8077FFE(a4, "%s", *(const char **)dword_8394010);
+    CompileError(a4, "%s", *(const char **)dword_8394010);
     return 0;
   }
   else
@@ -35476,9 +35476,9 @@ void __cdecl sub_8071BA0(int *a1, int a2)
     if ( v2 == 53 || v2 == 79 )
     {
       if ( byte_8202A64 )
-        sub_8077FFE(a1[2], "$ and self field can only be used in the script debugger");
+        CompileError(a1[2], "$ and self field can only be used in the script debugger");
       else
-        sub_8077FFE(a1[2], "not an lvalue");
+        CompileError(a1[2], "not an lvalue");
     }
   }
   else if ( v2 == 4 )
@@ -35518,7 +35518,7 @@ void __cdecl sub_8071D0A(_DWORD *a1, int a2, int a3)
   }
   else
   {
-    sub_8077FFE(a2, "not an lvalue");
+    CompileError(a2, "not an lvalue");
   }
 }
 // 8071BA0: using guessed type _DWORD __cdecl sub_8071BA0(_DWORD, _DWORD);
@@ -35560,7 +35560,7 @@ void __cdecl sub_8071D92(_DWORD *a1, int a2, int a3)
       sub_807112A(a1[1], a2, a3);
       break;
     default:
-      sub_8077FFE(a2, "not an object");
+      CompileError(a2, "not an object");
       break;
   }
 }
@@ -35572,7 +35572,7 @@ char *__cdecl sub_8071E6A(_DWORD *a1, int a2, int a3)
   if ( *a1 == 6 )
     return (char *)sub_8071D92(a1[1], a1[2], a3);
   else
-    return sub_8077FFE(a2, "not an object");
+    return CompileError(a2, "not an object");
 }
 // 8071D92: using guessed type _DWORD __cdecl sub_8071D92(_DWORD, _DWORD, _DWORD);
 
@@ -35645,9 +35645,9 @@ int __cdecl sub_8071F86(int a1, int a2, int a3)
     if ( v4 == 53 || v4 == 79 )
     {
       if ( byte_8202A64 )
-        sub_8077FFE(*(_DWORD *)(a1 + 8), "$ and self field can only be used in the script debugger");
+        CompileError(*(_DWORD *)(a1 + 8), "$ and self field can only be used in the script debugger");
       else
-        sub_8077FFE(*(_DWORD *)(a1 + 8), "not an lvalue");
+        CompileError(*(_DWORD *)(a1 + 8), "not an lvalue");
     }
     return 1;
   }
@@ -35949,7 +35949,7 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
     {
       sub_807CC38((float *)&v14);
       if ( !v14 )
-        sub_8077FFE(a3, "conditional expression cannot be always false");
+        CompileError(a3, "conditional expression cannot be always false");
       v16 = 1;
     }
     else
@@ -36158,7 +36158,7 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
       {
         sub_807CC38((float *)&v19);
         if ( !v19 )
-          sub_8077FFE(a5, "conditional expression cannot be always false");
+          CompileError(a5, "conditional expression cannot be always false");
         v21 = 1;
       }
       else
@@ -36549,7 +36549,7 @@ void __cdecl sub_80738A8(_DWORD *a1, int a2)
     else
     {
       v2 = va("case index %d out of range", a1[1]);
-      sub_8077FFE(a2, v2);
+      CompileError(a2, v2);
     }
   }
   else if ( *a1 == 11 )
@@ -36560,7 +36560,7 @@ void __cdecl sub_80738A8(_DWORD *a1, int a2)
   }
   else
   {
-    sub_8077FFE(a2, "case expression must be an int or string");
+    CompileError(a2, "case expression must be an int or string");
   }
 }
 
@@ -36622,7 +36622,7 @@ char *__cdecl sub_8073980(int a1, char a2, int a3, int a4)
     else
     {
       if ( !dword_82028A4 )
-        return sub_8077FFE(a3, "missing case statement");
+        return CompileError(a3, "missing case statement");
       v5 = 0;
       if ( v14 && (unsigned __int8)sub_807384C((int)v12) )
         v5 = 1;
@@ -36802,7 +36802,7 @@ char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
       for ( i = (_DWORD *)dword_8202888; i; i = (_DWORD *)i[3] )
       {
         if ( *i == *base )
-          return sub_8077FFE(i[2], "duplicate case expression");
+          return CompileError(i[2], "duplicate case expression");
       }
     }
     --nmemb;
@@ -36850,7 +36850,7 @@ char *__cdecl sub_807407E(int a1, _DWORD *a2)
   char *v3; // [esp+10h] [ebp-8h]
 
   if ( !byte_820288C || *a2 )
-    return sub_8077FFE(a1, "illegal break statement");
+    return CompileError(a1, "illegal break statement");
   sub_80726C0(a2);
   sub_806E53A(a2, dword_82028A4);
   *a2 = 2;
@@ -36877,7 +36877,7 @@ char *__cdecl sub_8074158(int a1, _DWORD *a2)
   char *v3; // [esp+10h] [ebp-8h]
 
   if ( !byte_8202894 || *a2 )
-    return sub_8077FFE(a1, "illegal continue statement");
+    return CompileError(a1, "illegal continue statement");
   sub_807270E(a2);
   sub_806E53A(a2, (int)a2);
   *a2 = 1;
@@ -37023,10 +37023,10 @@ void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
       sub_8073DBC(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a2, a3, (int)a4);
       break;
     case 0x3D:
-      sub_8077FFE(*(_DWORD *)(a1 + 8), "illegal case statement");
+      CompileError(*(_DWORD *)(a1 + 8), "illegal case statement");
       break;
     case 0x3E:
-      sub_8077FFE(*(_DWORD *)(a1 + 4), "illegal default statement");
+      CompileError(*(_DWORD *)(a1 + 4), "illegal default statement");
       break;
     case 0x3F:
       sub_807407E(*(_DWORD *)(a1 + 4), a4);
@@ -37165,7 +37165,7 @@ char *__cdecl sub_8074B7C(int a1, int a2, int a3, int *a4)
   int v6; // [esp+14h] [ebp-4h]
 
   if ( dword_8202A68 )
-    return sub_8077FFE(a2, "cannot recurse /#");
+    return CompileError(a2, "cannot recurse /#");
   v6 = dword_839403C;
   sub_806EA5A(a3, (_DWORD *)*a4);
   if ( byte_839400B )
@@ -37219,7 +37219,7 @@ char *__cdecl sub_8074CD2(char **a1)
   {
     if ( byte_820287D )
     {
-      return sub_8077FFE((int)a1[1], "cannot recurse /#");
+      return CompileError((int)a1[1], "cannot recurse /#");
     }
     else
     {
@@ -37235,7 +37235,7 @@ char *__cdecl sub_8074CD2(char **a1)
       if ( byte_820287D )
         byte_820287D = 0;
       else
-        return sub_8077FFE((int)a1[1], "#/ has no matching /#");
+        return CompileError((int)a1[1], "#/ has no matching /#");
     }
   }
   else if ( v3 == 68 && (!byte_820287D || byte_839400B) )
@@ -37271,7 +37271,7 @@ int __cdecl sub_8074DEE(int a1, int a2, int a3, int a4, _DWORD *a5)
   sub_8076D92(-2, 0);
   result = dword_8202874 + 32 * dword_8202878;
   if ( result > 2047 )
-    return (int)sub_8077FFE(a3, "function exceeds operand stack size");
+    return (int)CompileError(a3, "function exceeds operand stack size");
   return result;
 }
 // 820286C: using guessed type int dword_820286C;
@@ -37401,7 +37401,7 @@ char *__cdecl sub_80751B4(int a1)
     {
       if ( byte_820287D )
       {
-        return sub_8077FFE(*(_DWORD *)(a1 + 8), "cannot put #using_animtree inside /# ... #/ comment");
+        return CompileError(*(_DWORD *)(a1 + 8), "cannot put #using_animtree inside /# ... #/ comment");
       }
       else
       {
@@ -37434,7 +37434,7 @@ int *__cdecl sub_80752BA(int a1)
   for ( i = *(_DWORD *)(*(_DWORD *)a1 + 4); i; i = *(_DWORD *)(i + 4) )
     sub_8074CD2(*(char ***)i);
   if ( byte_820287D )
-    sub_8077FFE(dword_8202880, "/# has no matching #/");
+    CompileError(dword_8202880, "/# has no matching #/");
   byte_8202884 = 1;
   byte_8202885 = 1;
   result = *(int **)(*(_DWORD *)a1 + 4);
@@ -37532,7 +37532,7 @@ char *__cdecl sub_80753DE(int *a1, int a2, int a3)
     if ( !v19 )
     {
       v4 = (const char *)sub_8078896(v22);
-      return sub_8077FFE(*(_DWORD *)(v21 + 4), "Could not find script '%s'", v4);
+      return CompileError(*(_DWORD *)(v21 + 4), "Could not find script '%s'", v4);
     }
     sub_80796A2(v22);
     if ( *(_BYTE *)(v21 + 2) )
@@ -37543,7 +37543,7 @@ char *__cdecl sub_80753DE(int *a1, int a2, int a3)
         if ( !*((_BYTE *)v20 + 2) )
           break;
         if ( *v20 == v22 )
-          return sub_8077FFE(*((_DWORD *)v20 + 1), "Duplicate #include");
+          return CompileError(*((_DWORD *)v20 + 1), "Duplicate #include");
       }
       *(_BYTE *)(v21 + 2) = 0;
       for ( k = sub_807C9CE(v19); k; k = sub_807C9CE(k) )
@@ -37889,7 +37889,7 @@ int __cdecl sub_8075C54(char *a1)
       *(_DWORD *)dword_8283EDC = s;
       dword_8202A5C = (int)"+";
       dword_8202A60 = (int)v16;
-      sub_808724F(&v15, 0);
+      ScriptParse(&v15, 0);
       v4 = sub_807C0A8(dword_8202A4C, v14);
       v9 = sub_807CA86(v4);
       sub_80753DE(v15, v9, v10);
@@ -38469,7 +38469,7 @@ void *sub_8076A72()
 {
   dword_8283E24 = 0;
   *(_DWORD *)dword_8283E28 = 0;
-  return sub_80A9362(0x2000u);
+  return Z_VirtualAllocInternal(0x2000u);
 }
 // 8283E24: using guessed type int dword_8283E24;
 
@@ -39130,7 +39130,7 @@ int __cdecl sub_8077EF6(int a1, int a2, char *s, size_t maxlen)
 // 8394048: using guessed type int dword_8394048;
 
 //----- (08077FFE) --------------------------------------------------------
-char *sub_8077FFE(int a1, char *format, ...)
+char *CompileError(int a1, char *format, ...)
 {
   char *result; // eax
   char s[1036]; // [esp+10h] [ebp-418h] BYREF
@@ -47818,7 +47818,7 @@ LABEL_18:
       a1 = v8 + 1;
     }
   }
-  sub_8077FFE(dword_83DB9BC, "max string length exceeded: \"%s\"", a1);
+  CompileError(dword_83DB9BC, "max string length exceeded: \"%s\"", a1);
   return 0;
 }
 // 83DB9C0: using guessed type char byte_83DB9C0;
@@ -48380,7 +48380,7 @@ LABEL_21:
         dword_89BEB30 = dword_83DB9B8;
         dword_83DB9BC = dword_83DB9B8;
         dword_83DB9B8 += size;
-        sub_8077FFE(dword_83DB9BC, "bad token '%s'", ptr);
+        CompileError(dword_83DB9BC, "bad token '%s'", ptr);
         return 257;
       case 93:
         dword_89BEB30 = dword_83DB9B8;
@@ -48865,18 +48865,18 @@ int sub_8087201()
   if ( dword_89BFAE0 )
   {
     if ( dword_89BFAE0 != 257 )
-      sub_8077FFE(dword_83DB9BC, "bad syntax");
+      CompileError(dword_83DB9BC, "bad syntax");
   }
   else
   {
-    sub_8077FFE(dword_83DB9BC, "unexpected end of file found");
+    CompileError(dword_83DB9BC, "unexpected end of file found");
   }
   return 0;
 }
 // 89BFAE0: using guessed type int dword_89BFAE0;
 
 //----- (0808724F) --------------------------------------------------------
-int __cdecl sub_808724F(_DWORD *a1, char a2)
+int __cdecl ScriptParse(_DWORD *a1, char a2)
 {
   int result; // eax
   _DWORD s[15]; // [esp+10h] [ebp-48h] BYREF
@@ -48895,7 +48895,7 @@ int __cdecl sub_808724F(_DWORD *a1, char a2)
   sub_8086F30(s, 0);
   dword_83DB9A0 = (int)s;
   dword_83DB9A8 = 3;
-  sub_8087306();
+  yyparse();
   result = dword_83DB9B4;
   *a1 = dword_83DB9B4;
   return result;
@@ -48914,7 +48914,7 @@ int sub_80872FC()
 }
 
 //----- (08087306) --------------------------------------------------------
-int sub_8087306()
+int yyparse()
 {
   int v0; // ecx
   int v1; // edx
@@ -50138,7 +50138,7 @@ LABEL_164:
 // 8087306: using guessed type int var_C[3];
 
 //----- (0808AA30) --------------------------------------------------------
-char *sub_808AA30()
+char *SV_GetPlayerByName()
 {
   char dest[68]; // [esp+20h] [ebp-58h] BYREF
   char v3[4]; // [esp+64h] [ebp-14h]
@@ -50260,7 +50260,7 @@ void __usercall sub_808AC7E(long double a1@<st0>)
       v6 = SV_Cmd_Argv(0);
       v2 = I_stricmp(v6, "devmap") == 0;
       FS_ConvertPath(dest);
-      sub_8091C02(a1, dest);
+      SV_SpawnServer(a1, dest);
       Dvar_SetBool(dword_848B208, v2);
     }
   }
@@ -50282,7 +50282,7 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
   {
     SV_SetGametype(a1);
     I_strncpyz(byte_848B174, *(char **)(dword_848B1F4 + 8), 64);
-    v4 = sub_810695E();
+    v4 = G_GetSavePersist();
     if ( !*(_BYTE *)(dword_848B1CC + 7) && !strcasecmp(byte_848B174, *(const char **)(dword_848B1F4 + 8)) && a2 )
     {
       if ( com_frameTime != dword_842BC88 )
@@ -50295,7 +50295,7 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
         dword_842BC88 = com_frameTime;
         dword_842BC80 = 1;
         dword_842BC84 = 1;
-        sub_8090D6A(a1, v4);
+        SV_RestartGameProgs(a1, v4);
         for ( v8[0] = 0; v8[0] <= 2; ++v8[0] )
         {
           dword_841FB04 += 100;
@@ -50333,7 +50333,7 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
       v2 = (char *)sub_80B0D96("mapname");
       I_strncpyz(dest, v2, 64);
       FS_ConvertPath(dest);
-      sub_8091C02(a1, dest);
+      SV_SpawnServer(a1, dest);
     }
   }
   else
@@ -50458,7 +50458,7 @@ int __usercall sub_808B24C@<eax>(long double a1@<st0>, int a2, char *dest, int a
 
   if ( *(_DWORD *)(a2 + 452036) == 2 )
   {
-    sub_809301C(0, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
+    SV_SendServerCommand(0, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
     return 0;
   }
   else
@@ -50488,7 +50488,7 @@ int __usercall sub_808B2F2@<eax>(long double a1@<st0>, char *dest, int a3)
   {
     if ( SV_Cmd_Argc() == 2 )
     {
-      v7 = sub_808AA30();
+      v7 = SV_GetPlayerByName();
       if ( v7 )
       {
         return sub_808B24C(a1, (int)v7, dest, a3);
@@ -50584,7 +50584,7 @@ void __usercall sub_808B4DE(long double a1@<st0>)
   {
     if ( SV_Cmd_Argc() == 2 )
     {
-      v1 = sub_808AA30();
+      v1 = SV_GetPlayerByName();
       if ( v1 )
         sub_808C4FA(a1, (int)v1);
     }
@@ -50766,7 +50766,7 @@ void sub_808B8DC()
         s[v0 - 1] = 0;
       }
       I_strncat(dest, 1024, s);
-      sub_809301C(0, 0, aC_2, 104, dest);
+      SV_SendServerCommand(0, 0, aC_2, 104, dest);
     }
   }
   else
@@ -50805,7 +50805,7 @@ void sub_808B9A2()
             s[v1 - 1] = 0;
           }
           I_strncat(dest, 1024, s);
-          sub_809301C(v3, 0, aC_2, 104, dest);
+          SV_SendServerCommand(v3, 0, aC_2, 104, dest);
         }
       }
     }
@@ -50854,7 +50854,7 @@ void sub_808BB2E()
   {
     if ( SV_Cmd_Argc() == 2 )
     {
-      v0 = sub_808AA30();
+      v0 = SV_GetPlayerByName();
       if ( v0 )
       {
         Com_Printf("userinfo\n");
@@ -51000,7 +51000,7 @@ void __usercall sub_808BE54(long double a1@<st0>, int a2, int a3, int a4, int a5
   {
     v11[7] = dword_841FB04;
     v7 = va("challengeResponse %i", v11[5]);
-    sub_806C40C(1, a2, a3, a4, a5, a6, v7);
+    NET_OutOfBandPrint(1, a2, a3, a4, a5, a6, v7);
     return;
   }
   if ( !(_BYTE)dword_842BB74 && dword_842BB70 != 1 )
@@ -51031,7 +51031,7 @@ void __usercall sub_808BE54(long double a1@<st0>, int a2, int a3, int a4, int a5
     Com_DPrintf("authorize server timed out\n");
     v11[7] = dword_841FB04;
     v10 = va("challengeResponse %i", v11[5]);
-    sub_806C40C(1, *v11, v11[1], v11[2], v11[3], v11[4], v10);
+    NET_OutOfBandPrint(1, *v11, v11[1], v11[2], v11[3], v11[4], v10);
   }
 }
 // 81F7114: using guessed type int dword_81F7114;
@@ -51070,7 +51070,7 @@ void __usercall sub_808C21C(long double a1@<st0>, int a2, int a3, int a4, int a5
            HIBYTE(a3),
            dest,
            v10);
-    sub_806C40C(1, dword_842BB70, dword_842BB74, *(int *)&dword_842BB78, dword_842BB7C, dword_842BB80, v8);
+    NET_OutOfBandPrint(1, dword_842BB70, dword_842BB74, *(int *)&dword_842BB78, dword_842BB7C, dword_842BB80, v8);
   }
 }
 
@@ -51169,7 +51169,7 @@ void __usercall sub_808C4FA(long double a1@<st0>, int a2)
 
   if ( *(_DWORD *)(a2 + 452036) == 2 )
   {
-    sub_809301C(0, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
+    SV_SendServerCommand(0, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
   }
   else if ( *(_DWORD *)(a2 + 484852) )
   {
@@ -51280,7 +51280,7 @@ void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5)
       if ( sub_808C3D0(dword_841FB88[12 * i]) )
       {
         Com_Printf("rejected connection from permanently banned GUID %i\n", dword_841FB88[12 * i]);
-        sub_806C40C(
+        NET_OutOfBandPrint(
           1,
           dword_841FB5C[12 * i],
           dword_841FB60[12 * i],
@@ -51293,7 +51293,7 @@ void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5)
       else if ( sub_808C34C(dword_841FB88[12 * i]) )
       {
         Com_Printf("rejected connection from temporarily banned GUID %i\n", dword_841FB88[12 * i]);
-        sub_806C40C(
+        NET_OutOfBandPrint(
           1,
           dword_841FB5C[12 * i],
           dword_841FB60[12 * i],
@@ -51314,7 +51314,7 @@ void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5)
       if ( v9 && *v9 )
       {
         sprintf(s, "error\n%s", v9);
-        sub_806C40C(
+        NET_OutOfBandPrint(
           1,
           dword_841FB5C[12 * i],
           dword_841FB60[12 * i],
@@ -51325,7 +51325,7 @@ void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5)
       }
       else
       {
-        sub_806C40C(
+        NET_OutOfBandPrint(
           1,
           dword_841FB5C[12 * i],
           dword_841FB60[12 * i],
@@ -51341,7 +51341,7 @@ void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5)
     {
       if ( !I_stricmp(v9, "CLIENT_UNKNOWN_TO_AUTH") || !I_stricmp(v9, "BAD_CDKEY") )
       {
-        sub_806C40C(
+        NET_OutOfBandPrint(
           1,
           dword_841FB5C[12 * i],
           dword_841FB60[12 * i],
@@ -51356,7 +51356,7 @@ LABEL_30:
       if ( I_stricmp(v9, "INVALID_CDKEY") )
       {
         I_stricmp(v9, "BANNED_CDKEY");
-        sub_806C40C(
+        NET_OutOfBandPrint(
           1,
           dword_841FB5C[12 * i],
           dword_841FB60[12 * i],
@@ -51367,7 +51367,7 @@ LABEL_30:
         goto LABEL_30;
       }
     }
-    sub_806C40C(
+    NET_OutOfBandPrint(
       1,
       dword_841FB5C[12 * i],
       dword_841FB60[12 * i],
@@ -51381,7 +51381,7 @@ LABEL_30:
   {
 LABEL_11:
     v6 = va("challengeResponse %i", dword_841FB70[12 * i]);
-    sub_806C40C(
+    NET_OutOfBandPrint(
       1,
       dword_841FB5C[12 * i],
       dword_841FB60[12 * i],
@@ -51391,7 +51391,7 @@ LABEL_11:
       v6);
     return;
   }
-  sub_806C40C(
+  NET_OutOfBandPrint(
     1,
     dword_841FB5C[12 * i],
     dword_841FB60[12 * i],
@@ -51483,7 +51483,7 @@ void __usercall sub_808D0E6(long double a1@<st0>, void *a2, void *a3, void *a4, 
   if ( v24 != 115 )
   {
     v8 = va(aErrorExeServer_0, "1.0");
-    sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, v8);
+    NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, v8);
     Com_DPrintf("    rejected connect from protocol version %i (should be %i)\n", v24, 115);
     return;
   }
@@ -51528,7 +51528,7 @@ void __usercall sub_808D0E6(long double a1@<st0>, void *a2, void *a3, void *a4, 
   }
   if ( i == 1024 )
   {
-    sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_BAD_CHALLENGE");
+    NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_BAD_CHALLENGE");
     return;
   }
   if ( dword_841FB80[12 * i] )
@@ -51547,7 +51547,7 @@ void __usercall sub_808D0E6(long double a1@<st0>, void *a2, void *a3, void *a4, 
     goto LABEL_32;
   if ( *(_DWORD *)(dword_848B1EC + 8) && v17 < *(_DWORD *)(dword_848B1EC + 8) )
   {
-    sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_ERR_HIGH_PING_ONLY");
+    NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_ERR_HIGH_PING_ONLY");
     Com_DPrintf("Client %i rejected on a too low ping\n", i);
     return;
   }
@@ -51597,7 +51597,7 @@ LABEL_32:
     }
     if ( !s )
     {
-      sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_SERVERISFULL");
+      NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_SERVERISFULL");
       Com_DPrintf("Rejected a connection.\n");
       return;
     }
@@ -51618,7 +51618,7 @@ LABEL_55:
     if ( v19 )
     {
       v14 = va("error\n%s", v19);
-      sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, v14);
+      NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, v14);
       Com_DPrintf("Game rejected a connection: %s.\n", v19);
       sub_8094586((int)s);
     }
@@ -51635,7 +51635,7 @@ LABEL_55:
       s[33605] = dword_841FB04;
       sub_808EEFE((int)s);
       dword_841FB80[12 * j] = 0;
-      sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "connectResponse");
+      NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "connectResponse");
       s[33287] = -1;
       v18 = 0;
       v34 = 0;
@@ -51653,7 +51653,7 @@ LABEL_55:
   }
   else
   {
-    sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_ERR_LOW_PING_ONLY");
+    NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "error\nEXE_ERR_LOW_PING_ONLY");
     Com_DPrintf("Client %i rejected on a too high ping: %i\n", i, v17);
   }
 }
@@ -51729,10 +51729,10 @@ void __usercall sub_808DC8C(long double a1@<st0>, int a2, char *a3)
       }
     }
     if ( I_stricmp(a3, "EXE_DISCONNECTED") )
-      sub_809301C(0, 0, aC_3, 101, a2 + 134216, a3);
+      SV_SendServerCommand(0, 0, aC_3, 101, a2 + 134216, a3);
     Com_Printf("%i:%s %s\n", -1653759219 * ((a2 - (int)dword_841FB0C) >> 2), (const char *)(a2 + 134216), a3);
-    sub_809301C(0, 1, "%c %d", 74, -1653759219 * ((a2 - (int)dword_841FB0C) >> 2));
-    sub_809301C((_DWORD *)a2, 1, "%c \"%s\"", 119, a3);
+    SV_SendServerCommand(0, 1, "%c %d", 74, -1653759219 * ((a2 - (int)dword_841FB0C) >> 2));
+    SV_SendServerCommand((_DWORD *)a2, 1, "%c \"%s\"", 119, a3);
     for ( j = 0; j < *(_DWORD *)(dword_848B1CC + 8) && *((int *)dword_841FB0C + 123845 * j) <= 1; ++j )
       ;
     if ( j == *(_DWORD *)(dword_848B1CC + 8) )
@@ -51781,17 +51781,17 @@ int __usercall sub_808DECA@<eax>(long double a1@<st0>, int a2)
   *(_DWORD *)(a2 + 452016) = 0;
   *(_DWORD *)(a2 + 133148) = *(_DWORD *)(a2 + 452020);
   MSG_Init(v5, (int)v3, 0x4000);
-  sub_8067C2A(v5, *(_DWORD *)(a2 + 133184));
+  MSG_WriteLong(v5, *(_DWORD *)(a2 + 133184));
   sub_80966D6(a2, v5);
-  sub_8067B4C(v5, 1);
-  sub_8067C2A(v5, *(_DWORD *)(a2 + 133132));
+  MSG_WriteByte(v5, 1);
+  MSG_WriteLong(v5, *(_DWORD *)(a2 + 133132));
   for ( i = 0; i <= 2047; ++i )
   {
     if ( *(&dword_842C098)[i] )
     {
-      sub_8067B4C(v5, 2);
-      sub_8067BDA(v5, i);
-      sub_8067D96(v5, (&dword_842C098)[i]);
+      MSG_WriteByte(v5, 2);
+      MSG_WriteShort(v5, i);
+      MSG_WriteBigString(v5, (&dword_842C098)[i]);
     }
   }
   memset(s, 0, 0xF0u);
@@ -51800,16 +51800,16 @@ int __usercall sub_808DECA@<eax>(long double a1@<st0>, int a2)
     v8 = (int *)(372 * i + 138600604);
     if ( *((_DWORD *)&unk_842E09C + 93 * i) )
     {
-      sub_8067B4C(v5, 3);
-      sub_806938C(v5, s, v8, 1);
+      MSG_WriteByte(v5, 3);
+      MSG_WriteDeltaEntity(v5, s, v8, 1);
     }
   }
-  sub_8067B4C(v5, 7);
-  sub_8067C2A(v5, -1653759219 * ((a2 - (int)dword_841FB0C) >> 2));
-  sub_8067C2A(v5, dword_842BC8C);
-  sub_8067B4C(v5, 7);
+  MSG_WriteByte(v5, 7);
+  MSG_WriteLong(v5, -1653759219 * ((a2 - (int)dword_841FB0C) >> 2));
+  MSG_WriteLong(v5, dword_842BC8C);
+  MSG_WriteByte(v5, 7);
   Com_DPrintf("Sending %i bytes in gamestate to client: %i\n", v6[0], -1653759219 * ((a2 - (int)dword_841FB0C) >> 2));
-  sub_80989C6(a1, (int)v5, a2);
+  SV_SendMessageToClient(a1, (int)v5, a2);
   return LargeLocalDealloc(v4);
 }
 // 842BC8C: using guessed type int dword_842BC8C;
@@ -52015,13 +52015,13 @@ LABEL_15:
           *(_DWORD *)(a1 + 134332) = *(_DWORD *)(a1 + 134324);
         }
         v8 = *(_DWORD *)(a1 + 134332) % 8;
-        sub_8067B4C(a2, 5);
-        sub_8067BDA(a2, *(_DWORD *)(a1 + 134332));
+        MSG_WriteByte(a2, 5);
+        MSG_WriteShort(a2, *(_DWORD *)(a1 + 134332));
         if ( !*(_DWORD *)(a1 + 134332) )
-          sub_8067C2A(a2, *(_DWORD *)(a1 + 134316));
-        sub_8067BDA(a2, *(_DWORD *)(a1 + 4 * v8 + 134368));
+          MSG_WriteLong(a2, *(_DWORD *)(a1 + 134316));
+        MSG_WriteShort(a2, *(_DWORD *)(a1 + 4 * v8 + 134368));
         if ( *(_DWORD *)(a1 + 4 * v8 + 134368) )
-          sub_8067B84(a2, *(void **)(a1 + 4 * v8 + 134336), *(_DWORD *)(a1 + 4 * v8 + 134368));
+          MSG_WriteData(a2, *(void **)(a1 + 4 * v8 + 134336), *(_DWORD *)(a1 + 4 * v8 + 134368));
         Com_DPrintf(
           "clientDownload: %d : writing block %d\n",
           -1653759219 * ((a1 - (int)dword_841FB0C) >> 2),
@@ -52080,9 +52080,9 @@ LABEL_15:
         else
           Com_sprintf(s, 0x400u, aExeAutodlServe_0, a1 + 134248);
       }
-      sub_8067B4C(a2, 5);
-      sub_8067BDA(a2, 0);
-      sub_8067C2A(a2, -1);
+      MSG_WriteByte(a2, 5);
+      MSG_WriteShort(a2, 0);
+      MSG_WriteLong(a2, -1);
       MSG_WriteString(a2, s);
       result = a1 + 134248;
       *(_BYTE *)(a1 + 134248) = 0;
@@ -52366,8 +52366,8 @@ int __usercall sub_808F288@<eax>(long double a1@<st0>, int a2, _DWORD *a3)
 
   v7 = 1;
   v6 = 1;
-  v9 = sub_8067F90(a3);
-  v8 = (char *)sub_8068062(a3);
+  v9 = MSG_ReadLong(a3);
+  v8 = (char *)MSG_ReadCommandString(a3);
   if ( *(_DWORD *)(a2 + 133184) >= v9 )
     return 1;
   if ( *(_BYTE *)(dword_848B210 + 8) )
@@ -52444,7 +52444,7 @@ void __usercall sub_808F510(long double a1@<st0>, int a2, _DWORD *a3, int a4)
     *(_DWORD *)(a2 + 134408) = -1;
   if ( *(_DWORD *)(a2 + 133132) - *(_DWORD *)(a2 + 133136) <= 127 )
   {
-    v9 = sub_8067EE8(a3);
+    v9 = MSG_ReadByte(a3);
     if ( v9 > 0 )
     {
       if ( v9 <= 32 )
@@ -52453,12 +52453,12 @@ void __usercall sub_808F510(long double a1@<st0>, int a2, _DWORD *a3, int a4)
         v10 = *(_DWORD *)(a2 + 133144) ^ dword_842BC8C;
         v10 ^= sub_80AA70C(a2 + 1032 * (*(_DWORD *)(a2 + 133136) & 0x7F) + 1036, 32);
         v4 = sub_808FE02(-1653759219 * ((a2 - (int)dword_841FB0C) >> 2));
-        sub_80684E6(v4, s);
+        MSG_SetDefaultUserCmd(v4, s);
         v5 = s;
         for ( i = 0; i < v9; ++i )
         {
           v6 = &v7[7 * i];
-          sub_8068ADE(a3, v10, (int)v5, (int)v6);
+          MSG_ReadDeltaUsercmdKey(a3, v10, (int)v5, (int)v6);
           if ( !sub_80E97F0(v4, *((unsigned __int8 *)v6 + 8)) )
             *((_BYTE *)v6 + 8) = *(_BYTE *)(v4 + 212);
           if ( !sub_80E97F0(v4, *((unsigned __int8 *)v6 + 9)) )
@@ -52504,19 +52504,19 @@ void __usercall sub_808F510(long double a1@<st0>, int a2, _DWORD *a3, int a4)
 // 808F510: using guessed type int var_3B8[224];
 
 //----- (0808F82A) --------------------------------------------------------
-void __usercall sub_808F82A(long double a1@<st0>, int a2, _DWORD *a3)
+void __usercall SV_ExecuteClientMessage(long double a1@<st0>, int a2, _DWORD *a3)
 {
   _BYTE v3[16384]; // [esp+20h] [ebp-4038h] BYREF
   _DWORD s[11]; // [esp+4020h] [ebp-38h] BYREF
   _DWORD v5[3]; // [esp+404Ch] [ebp-Ch]
 
   MSG_Init(s, (int)v3, 0x4000);
-  s[3] = sub_8067AE2(a3[1] + a3[4], v3, a3[3] - a3[4]);
+  s[3] = MSG_ReadBitsCompress(a3[1] + a3[4], v3, a3[3] - a3[4]);
   if ( *(_DWORD *)(a2 + 484864) == dword_841FA88 || *(_BYTE *)(a2 + 134248) )
   {
     while ( 1 )
     {
-      v5[0] = sub_8067960(s, 3);
+      v5[0] = MSG_ReadBits(s, 3);
       if ( v5[0] != 2 )
         break;
       if ( !sub_808F288(a1, a2, s) || *(_DWORD *)a2 == 1 )
@@ -52684,12 +52684,12 @@ int __cdecl sub_808FE96(int a1, int a2, const char *a3)
   int result; // eax
 
   if ( a1 == -1 )
-    return sub_809301C(0, a2, "%s", a3);
+    return SV_SendServerCommand(0, a2, "%s", a3);
   if ( a1 >= 0 )
   {
     result = a1;
     if ( a1 < *(_DWORD *)(dword_848B1CC + 8) )
-      return sub_809301C((_DWORD *)dword_841FB0C + 123845 * a1, a2, "%s", a3);
+      return SV_SendServerCommand((_DWORD *)dword_841FB0C + 123845 * a1, a2, "%s", a3);
   }
   return result;
 }
@@ -52923,7 +52923,7 @@ int __cdecl sub_8090534(char *s1)
 {
   if ( !(unsigned __int8)sub_80C3820(s1) )
     Com_Error(1, (char *)&byte_8143EDA, s1);
-  return sub_80C3264(s1 + 7, (int (__cdecl *)(int))sub_809050C, (int (__cdecl *)(int))sub_8090520);
+  return XModelPrecache(s1 + 7, (int (__cdecl *)(int))sub_809050C, (int (__cdecl *)(int))sub_8090520);
 }
 
 //----- (08090584) --------------------------------------------------------
@@ -53191,7 +53191,7 @@ int sub_8090A82()
 }
 
 //----- (08090A96) --------------------------------------------------------
-void sub_8090A96()
+void Com_FreeWeaponInfoMemory()
 {
   sub_8062684(1);
 }
@@ -53237,15 +53237,15 @@ int __cdecl sub_8090B5E(int a1)
 void __usercall SV_ShutdownGameProgs(long double a1@<st0>)
 {
   dword_842BC80 = 0;
-  sub_80AAEDC(2);
-  if ( dword_83DFA00 )
+  Com_UnloadSoundAliases(2);
+  if ( gameInitialized )
   {
-    sub_8107058(a1, 1);
-    sub_8090A96();
-    dword_83DFA00 = 0;
+    G_ShutdownGame(a1, 1);
+    Com_FreeWeaponInfoMemory();
+    gameInitialized = 0;
   }
 }
-// 83DFA00: using guessed type int dword_83DFA00;
+// 83DFA00: using guessed type int gameInitialized;
 // 842BC80: using guessed type int dword_842BC80;
 
 //----- (08090BE6) --------------------------------------------------------
@@ -53256,7 +53256,7 @@ void __usercall SV_SetGametype(long double a1@<st0>)
   char *i; // [esp+5Ch] [ebp-Ch]
 
   Dvar_RegisterString(a1, "g_gametype", "dm", 4132);
-  if ( *(_BYTE *)(com_sv_running + 8) && sub_810695E() )
+  if ( *(_BYTE *)(com_sv_running + 8) && G_GetSavePersist() )
     I_strncpyz(dest, byte_848B174, 64);
   else
     I_strncpyz(dest, *(char **)(dword_848B1F4 + 8), 64);
@@ -53275,7 +53275,7 @@ void __usercall SV_SetGametype(long double a1@<st0>)
 // 819EF14: using guessed type int com_sv_running;
 
 //----- (08090CD2) --------------------------------------------------------
-void __usercall sub_8090CD2(long double a1@<st0>, int a2, int a3)
+void __usercall SV_InitGameVM(long double a1@<st0>, int a2, int a3)
 {
   int v3; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -53296,24 +53296,24 @@ void __usercall sub_8090CD2(long double a1@<st0>, int a2, int a3)
 // 8494204: using guessed type int com_dedicated;
 
 //----- (08090D6A) --------------------------------------------------------
-void __usercall sub_8090D6A(long double a1@<st0>, int a2)
+void __usercall SV_RestartGameProgs(long double a1@<st0>, int a2)
 {
-  sub_8107058(a1, 0);
+  G_ShutdownGame(a1, 0);
   com_fixedConsolePosition = 0;
-  sub_8090CD2(a1, 1, a2);
+  SV_InitGameVM(a1, 1, a2);
 }
 // 819EF54: using guessed type int com_fixedConsolePosition;
 
 //----- (08090D9C) --------------------------------------------------------
-void __usercall sub_8090D9C(long double a1@<st0>, int a2)
+void __usercall SV_InitGameProgs(long double a1@<st0>, int a2)
 {
-  dword_83DFA00 = 1;
-  sub_8090CD2(a1, 0, a2);
+  gameInitialized = 1;
+  SV_InitGameVM(a1, 0, a2);
 }
-// 83DFA00: using guessed type int dword_83DFA00;
+// 83DFA00: using guessed type int gameInitialized;
 
 //----- (08090DC2) --------------------------------------------------------
-int CL_ForwardCommandToServer()
+int SV_GameCommand()
 {
   if ( dword_842BC80 == 2 )
     return sub_8119AD4();
@@ -53380,7 +53380,7 @@ int __cdecl SV_SetConfigstring(unsigned int a1, char *s1)
     result = strcmp(s1, (&dword_842C098)[a1]);
     if ( result )
     {
-      sub_80A93E4((char **)(4 * a1 + 138592408), s1);
+      ReplaceStringInternal((char **)(4 * a1 + 138592408), s1);
       result = sub_809215C();
       if ( (_BYTE)result || dword_842BC84 )
       {
@@ -53398,7 +53398,7 @@ int __cdecl SV_SetConfigstring(unsigned int a1, char *s1)
           {
             if ( v11 <= v8 )
             {
-              sub_809301C((_DWORD *)i, 1, "%c %i %s", 100, a1, s1);
+              SV_SendServerCommand((_DWORD *)i, 1, "%c %i %s", 100, a1, s1);
             }
             else
             {
@@ -53417,7 +53417,7 @@ int __cdecl SV_SetConfigstring(unsigned int a1, char *s1)
                   v4 = 120;
                 }
                 I_strncpyz(s, &s1[v6], v8 + 1);
-                sub_809301C((_DWORD *)i, 1, "%c %i %s", v4, a1, s);
+                SV_SendServerCommand((_DWORD *)i, 1, "%c %i %s", v4, a1, s);
                 v6 += v8;
               }
             }
@@ -53575,7 +53575,7 @@ void __usercall sub_80914E6(long double a1@<st0>)
   if ( dword_841FB00 )
     Com_Error(0, (char *)&byte_814414D);
   sub_809147E(a1, (char *)1);
-  dword_841FB0C = sub_80A9362(495380 * *(_DWORD *)(dword_848B1CC + 8));
+  dword_841FB0C = Z_VirtualAllocInternal(495380 * *(_DWORD *)(dword_848B1CC + 8));
   if ( !dword_841FB0C )
     Com_Error(0, (char *)&byte_8144180);
   if ( *(_DWORD *)(com_dedicated + 8) )
@@ -53649,7 +53649,7 @@ int __usercall sub_80915D0@<eax>(long double a1@<st0>)
       }
     }
     sub_80A9268(dword_841FB0C);
-    dword_841FB0C = sub_80A9362(495380 * *(_DWORD *)(dword_848B1CC + 8));
+    dword_841FB0C = Z_VirtualAllocInternal(495380 * *(_DWORD *)(dword_848B1CC + 8));
     if ( !dword_841FB0C )
       Com_Error(0, (char *)&byte_8144180);
     sub_80AA83E(dword_841FB0C, 0, 495380 * *(_DWORD *)(dword_848B1CC + 8));
@@ -53846,7 +53846,7 @@ int sub_8091B68()
 // 85178A8: using guessed type int dvar_modifiedFlags;
 
 //----- (08091C02) --------------------------------------------------------
-void __usercall sub_8091C02(long double a1@<st0>, char *a2)
+void __usercall SV_SpawnServer(long double a1@<st0>, char *a2)
 {
   int v2; // eax
   int v3; // ebx
@@ -53866,11 +53866,11 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
   int v17; // [esp+78h] [ebp-10h] BYREF
   int i; // [esp+7Ch] [ebp-Ch]
 
-  sub_8115AE2();
+  Scr_ParseGameTypeList();
   SV_SetGametype(a1);
   if ( *(_BYTE *)(com_sv_running + 8) )
   {
-    v15 = sub_810695E();
+    v15 = G_GetSavePersist();
     i = 0;
     v16 = (int *)dword_841FB0C;
     while ( i < *(_DWORD *)(dword_848B1CC + 8) )
@@ -53878,7 +53878,7 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
       if ( *v16 > 2 )
       {
         Com_sprintf(s, 0x40u, "loadingnewmap\n%s\n%s", a2, *(const char **)(dword_848B1F4 + 8));
-        sub_806C40C(1, v16[113009], v16[113010], v16[113011], v16[113012], v16[113013], s);
+        NET_OutOfBandPrint(1, v16[113009], v16[113010], v16[113011], v16[113012], v16[113013], s);
       }
       ++i;
       v16 += 123845;
@@ -53889,13 +53889,13 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
   {
     v15 = 0;
   }
-  sub_80B294E(a1, "mapname", a2);
+  Dvar_SetStringByName(a1, "mapname", a2);
   SV_ShutdownGameProgs(a1);
   Com_Printf("------ Server Initialization ------\n");
   Com_Printf("Server: %s\n", a2);
   sub_8091998();
   if ( *(_DWORD *)(com_dedicated + 8) )
-    sub_812F498();
+    FX_FreeSystem();
   FS_Shutdown();
   FS_ClearIwdReferences();
   Com_Restart(a1);
@@ -53916,7 +53916,7 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
   for ( i = 0; i <= 2047; ++i )
   {
     v6 = i;
-    (&dword_842C098)[v6] = CopyString((char *)&byte_8143FC3);
+    (&dword_842C098)[v6] = CopyStringInternal((char *)&byte_8143FC3);
   }
   sub_8091B5A();
   dword_841FB20 = (int)Hunk_AllocInternal(240 * dword_841FB10);
@@ -53942,7 +53942,7 @@ void __usercall sub_8091C02(long double a1@<st0>, char *a2)
   v8 = sub_80A139C();
   Com_sprintf(s, 0x40u, "maps/mp/%s.%s", a2, v8);
   sub_80AAD12(s, "all_mp", 2);
-  sub_8090D9C(a1, v15);
+  SV_InitGameProgs(a1, v15);
   if ( *(_DWORD *)(com_dedicated + 8) )
   {
     sub_812F47E(0);
@@ -54045,12 +54045,12 @@ char *__usercall SV_Init@<eax>(long double a1@<st0>)
   dword_848B240 = (int)Dvar_RegisterString(a1, "sv_referencedIwdNames", (char *)&byte_8143FC3, 4168);
   dword_848B1C0 = (int)Dvar_RegisterString(a1, "rcon_password", (char *)&byte_8143FC3, 4096);
   dword_848B1C4 = (int)Dvar_RegisterString(a1, "sv_privatePassword", (char *)&byte_8143FC3, 4096);
-  dword_848B1B4 = (int)Dvar_RegisterInt(a1, "sv_fps", (char *)0x14, 10, 1000, 4096);
+  sv_fps = (int)Dvar_RegisterInt(a1, "sv_fps", (char *)0x14, 10, 1000, 4096);
   dword_848B1B8 = (int)Dvar_RegisterInt(a1, "sv_timeout", (char *)0xF0, 0, 1800, 4096);
   dword_848B1BC = (int)Dvar_RegisterInt(a1, "sv_zombietime", (char *)2, 0, 1800, 4096);
   dword_848B1C8 = (int)Dvar_RegisterBool(a1, "sv_allowDownload", 1, 4097);
   dword_848B1D8 = (int)Dvar_RegisterInt(a1, "sv_reconnectlimit", (char *)3, 0, 1800, 4097);
-  dword_848B1DC = (int)Dvar_RegisterInt(a1, "sv_padPackets", 0, 0, 0x7FFFFFFF, 4096);
+  sv_padPackets = (int)Dvar_RegisterInt(a1, "sv_padPackets", 0, 0, 0x7FFFFFFF, 4096);
   *((_BYTE *)off_815A498 + 221) = 0;
   dword_848B244 = (int)Dvar_RegisterString(a1, "sv_allowedClan1", (char *)&byte_8143FC3, 4096);
   dword_848B248 = (int)Dvar_RegisterString(a1, "sv_allowedClan2", (char *)&byte_8143FC3, 4096);
@@ -54068,7 +54068,7 @@ char *__usercall SV_Init@<eax>(long double a1@<st0>)
 }
 // 815A498: using guessed type void *off_815A498;
 // 819EF30: using guessed type int dword_819EF30;
-// 848B1B4: using guessed type int dword_848B1B4;
+// 848B1B4: using guessed type int sv_fps;
 // 848B1B8: using guessed type int dword_848B1B8;
 // 848B1BC: using guessed type int dword_848B1BC;
 // 848B1C0: using guessed type int dword_848B1C0;
@@ -54078,7 +54078,7 @@ char *__usercall SV_Init@<eax>(long double a1@<st0>)
 // 848B1D0: using guessed type int dword_848B1D0;
 // 848B1D4: using guessed type int dword_848B1D4;
 // 848B1D8: using guessed type int dword_848B1D8;
-// 848B1DC: using guessed type int dword_848B1DC;
+// 848B1DC: using guessed type int sv_padPackets;
 // 848B1E0: using guessed type int dword_848B1E0;
 // 848B1E4: using guessed type int dword_848B1E4;
 // 848B1E8: using guessed type int dword_848B1E8;
@@ -54119,8 +54119,8 @@ int *__usercall sub_80927DA@<eax>(long double a1@<st0>, const char *a2)
       {
         if ( v3[113009] != 2 )
         {
-          sub_809301C(v3, 0, "%c \"%s\"", 101, a2);
-          sub_809301C(v3, 1, "%c \"%s\"", 119, a2);
+          SV_SendServerCommand(v3, 0, "%c \"%s\"", 101, a2);
+          SV_SendServerCommand(v3, 1, "%c \"%s\"", 119, a2);
         }
         v3[33606] = -1;
         sub_8098C0E(a1, (int)v3);
@@ -54176,7 +54176,7 @@ void __usercall SV_Shutdown(long double a1@<st0>, const char *a2)
     sub_8091AB2();
     memset(&dword_841FB00, 0, 0xC108u);
     if ( *(_DWORD *)(com_dedicated + 8) )
-      sub_812F498();
+      FX_FreeSystem();
     Dvar_SetBool(com_sv_running, 0);
     Com_Printf("---------------------------\n");
     if ( v2 )
@@ -54391,13 +54391,13 @@ _DWORD *__cdecl sub_8092D5C(_DWORD *a1, int a2, char *s)
         for ( j = a1[33284] + 1; j <= a1[33283]; ++j )
           Com_Printf("cmd %5d: %8d: %s\n", j, a1[258 * (j & 0x7F) + 515], (const char *)&a1[258 * (j & 0x7F) + 259]);
         Com_Printf("cmd %5d: %8d: %s\n", j, dword_841FB04, s);
-        sub_806C40C(1, a1[113009], a1[113010], a1[113011], a1[113012], a1[113013], "disconnect");
+        NET_OutOfBandPrint(1, a1[113009], a1[113010], a1[113011], a1[113012], a1[113013], "disconnect");
         sub_808DEA6(a1, "EXE_SERVERCOMMANDOVERFLOW");
         a2 = 1;
         s = va("%c \"EXE_SERVERCOMMANDOVERFLOW\"", 119);
       }
       v10 = a1[33283] & 0x7F;
-      sub_8068424(s, &a1[258 * v10 + 259], 1024);
+      MSG_WriteReliableCommandToBuffer(s, &a1[258 * v10 + 259], 1024);
       a1[258 * v10 + 515] = dword_841FB04;
       result = (_DWORD *)a2;
       a1[258 * v10 + 516] = a2;
@@ -54407,7 +54407,7 @@ _DWORD *__cdecl sub_8092D5C(_DWORD *a1, int a2, char *s)
 }
 
 //----- (0809301C) --------------------------------------------------------
-int sub_809301C(_DWORD *a1, int a2, char *format, ...)
+int SV_SendServerCommand(_DWORD *a1, int a2, char *format, ...)
 {
   const char *v4; // eax
   int v5; // [esp+14h] [ebp-34h]
@@ -54456,7 +54456,7 @@ int __cdecl sub_809315A(char a1, int a2, int a3, int a4, int a5, _DWORD *a6)
   int v8; // [esp+30h] [ebp-8h]
   _WORD *i; // [esp+34h] [ebp-4h]
 
-  v7 = sub_8067F32(a6);
+  v7 = MSG_ReadShort(a6);
   v8 = 0;
   for ( i = dword_841FB0C; ; i += 247690 )
   {
@@ -54533,7 +54533,7 @@ int __cdecl sub_8093288(int a1, int a2, int a3, int a4, int a5)
     if ( *(int *)v23 > 1 )
     {
       v22 = sub_808FE02(i);
-      if ( dword_83DFA00 )
+      if ( gameInitialized )
       {
         v11 = sub_810698A(-1653759219 * ((v23 - (int)dword_841FB0C) >> 2));
         Com_sprintf(s, 0x400u, "%i %i \"%s\"\n", v11, *(_DWORD *)(v23 + 452004), (const char *)(v23 + 134216));
@@ -54580,10 +54580,10 @@ int __cdecl sub_8093288(int a1, int a2, int a3, int a4, int a5)
   v9 = va("%i", *(_DWORD *)v13);
   sub_80B5FF6(dest, "mod", (int)v9);
   Com_sprintf(v18, 0x2000u, "statusResponse\n%s\n%s", dest, v25);
-  sub_806C40C(1, a1, a2, a3, a4, a5, v18);
+  NET_OutOfBandPrint(1, a1, a2, a3, a4, a5, v18);
   return LargeLocalDealloc(v26);
 }
-// 83DFA00: using guessed type int dword_83DFA00;
+// 83DFA00: using guessed type int gameInitialized;
 // 848B1CC: using guessed type int dword_848B1CC;
 // 848B200: using guessed type int dword_848B200;
 // 8093288: using guessed type int var_418[4];
@@ -54638,7 +54638,7 @@ int __cdecl sub_80936D4(int a1, int a2, int a3, int a4, int a5)
     }
   }
   v9 = va("gameCompleteStatus\n%s\n%s", dest, v18);
-  sub_806C40C(1, a1, a2, a3, a4, a5, v9);
+  NET_OutOfBandPrint(1, a1, a2, a3, a4, a5, v9);
   return LargeLocalDealloc(v19);
 }
 // 848B1CC: using guessed type int dword_848B1CC;
@@ -54774,7 +54774,7 @@ LABEL_43:
   sub_80B5FF6(src, "voice", (int)v18);
   I_strncpyz(dest, "infoResponse\n", 1024);
   I_strncat(dest, 1024, src);
-  return sub_806C40C(1, a1, a2, a3, a4, a5, dest);
+  return NET_OutOfBandPrint(1, a1, a2, a3, a4, a5, dest);
 }
 // 848B1CC: using guessed type int dword_848B1CC;
 // 848B1D0: using guessed type int dword_848B1D0;
@@ -54796,10 +54796,10 @@ void __usercall sub_8093F1E(long double a1@<st0>, void *a2, void *a3, void *a4, 
   char *v8; // [esp+20h] [ebp-8h]
   char *v9; // [esp+24h] [ebp-4h]
 
-  sub_806775C(a7);
-  sub_8067F90(a7);
-  sub_80955EA(a7[3]);
-  v9 = (char *)sub_8068146(a7);
+  MSG_BeginReading(a7);
+  MSG_ReadLong(a7);
+  SV_Netchan_AddOOBProfilePacket(a7[3]);
+  v9 = (char *)MSG_ReadStringLine(a7);
   SV_Cmd_TokenizeString(v9);
   v8 = SV_Cmd_Argv(0);
   if ( *(_BYTE *)(dword_848B214 + 8) )
@@ -54870,15 +54870,15 @@ void __usercall sub_80941AE(long double a1@<st0>, void *a2, void *a3, void *a4, 
   else
   {
     sub_80905C8();
-    sub_806775C(a7);
-    sub_8067F90(a7);
-    v7 = (unsigned __int16)sub_8067F32(a7);
+    MSG_BeginReading(a7);
+    MSG_ReadLong(a7);
+    v7 = (unsigned __int16)MSG_ReadShort(a7);
     v9 = 0;
     for ( i = dword_841FB0C; ; i += 123845 )
     {
       if ( v9 >= *(_DWORD *)(dword_848B1CC + 8) )
       {
-        sub_806C40C(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "disconnect");
+        NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "disconnect");
         return;
       }
       if ( *i && sub_806BF64((char)a2, (int)a3, (int)a4, (int)a5, (int)a6, i[113009]) && i[113014] == v7 )
@@ -54890,20 +54890,20 @@ void __usercall sub_80941AE(long double a1@<st0>, void *a2, void *a3, void *a4, 
       Com_Printf("SV_ReadPackets: fixing up a translated port\n");
       *((_WORD *)i + 226022) = (_WORD)a4;
     }
-    if ( sub_806B9CA((int)(i + 113005), a7) )
+    if ( Netchan_Process((int)(i + 113005), a7) )
     {
-      i[121216] = sub_8067EE8(a7);
-      i[33286] = sub_8067F90(a7);
+      i[121216] = MSG_ReadByte(a7);
+      i[33286] = MSG_ReadLong(a7);
       if ( (int)i[33286] >= 0 )
       {
-        i[33284] = sub_8067F90(a7);
+        i[33284] = MSG_ReadLong(a7);
         if ( i[33283] - i[33284] <= 127 )
         {
           sub_80954DE((int)i, (_BYTE *)(a7[1] + a7[4]), a7[3] - a7[4]);
           if ( *i != 1 )
           {
             i[33604] = dword_841FB04;
-            sub_808F82A(a1, (int)i, a7);
+            SV_ExecuteClientMessage(a1, (int)i, a7);
             dword_855A4E0 = 0;
           }
         }
@@ -55182,7 +55182,7 @@ void __usercall SV_Frame(long double a1@<st0>, int a2)
   {
     if ( !sub_80946DA() )
     {
-      v13 = 1000 / *(_DWORD *)(dword_848B1B4 + 8);
+      v13 = 1000 / *(_DWORD *)(sv_fps + 8);
       dword_842BC90 += a2;
       if ( dword_842BC90 >= v13 )
       {
@@ -55229,11 +55229,11 @@ void __usercall SV_Frame(long double a1@<st0>, int a2)
                           sub_807F9F2(0);
                           if ( dword_842BC90 < v13 )
                             break;
-                          sub_8098E3A();
+                          SV_ArchiveSnapshot();
                         }
                         sub_80945AC(a1);
                         sub_8099AF2(a1);
-                        sub_8098E3A();
+                        SV_ArchiveSnapshot();
                         sub_8094F02("COD-2");
                       }
                       else
@@ -55315,7 +55315,7 @@ void __usercall SV_Frame(long double a1@<st0>, int a2)
 // 841FB40: using guessed type int dword_841FB40;
 // 841FB44: using guessed type int dword_841FB44;
 // 842BC90: using guessed type int dword_842BC90;
-// 848B1B4: using guessed type int dword_848B1B4;
+// 848B1B4: using guessed type int sv_fps;
 // 848B1E0: using guessed type int dword_848B1E0;
 // 85178A8: using guessed type int dvar_modifiedFlags;
 
@@ -55371,7 +55371,7 @@ void __cdecl sub_8094F02(const char *a1)
       {
         Com_Printf("Sending heartbeat to cod2master.activision.com\n");
         v1 = va("heartbeat %s\n", a1);
-        sub_806C40C(1, *v2, v2[1], v2[2], v2[3], v2[4], v1);
+        NET_OutOfBandPrint(1, *v2, v2[1], v2[2], v2[3], v2[4], v1);
       }
     }
     if ( dword_841FB04 >= dword_841FB58 )
@@ -55425,13 +55425,13 @@ _BOOL4 __cdecl sub_809507C(char *s)
     v3 = s[1294];
     s[1294] = 0;
     Com_sprintf(v2, 0x514u, "print\n%s", s);
-    sub_806C40C(1, dword_842BB5C, dword_842BB60, *(int *)&dword_842BB64, dword_842BB68, dword_842BB6C, v2);
+    NET_OutOfBandPrint(1, dword_842BB5C, dword_842BB60, *(int *)&dword_842BB64, dword_842BB68, dword_842BB6C, v2);
     v4 -= 1294;
     s += 1294;
     *s = v3;
   }
   Com_sprintf(v2, 0x514u, "print\n%s", s);
-  return sub_806C40C(1, dword_842BB5C, dword_842BB60, *(int *)&dword_842BB64, dword_842BB68, dword_842BB6C, v2);
+  return NET_OutOfBandPrint(1, dword_842BB5C, dword_842BB60, *(int *)&dword_842BB64, dword_842BB68, dword_842BB6C, v2);
 }
 
 //----- (080951B4) --------------------------------------------------------
@@ -55585,14 +55585,14 @@ _BOOL4 __cdecl sub_80955A2(int a1, _BYTE *src, int n)
 }
 
 //----- (080955EA) --------------------------------------------------------
-int __cdecl sub_80955EA(int a1)
+int __cdecl SV_Netchan_AddOOBProfilePacket(int a1)
 {
   int result; // eax
 
   result = dword_81F710C;
   if ( *(_DWORD *)(dword_81F710C + 8) )
   {
-    sub_806AE1A((void **)&dword_842BB84);
+    NetProf_PrepProfiling((void **)&dword_842BB84);
     return sub_806AF0A(dword_842BB84, a1, 0);
   }
   return result;
@@ -55605,9 +55605,9 @@ int __cdecl sub_8095626(size_t n, _DWORD *src, int a3, int a4, int a5, int a6, i
 {
   if ( *src != -1 )
     Com_Printf("SV_Netchan_SendOOBPacket used to send non-OOB packet.\n");
-  sub_806AE1A((void **)&dword_842BB84);
+  NetProf_PrepProfiling((void **)&dword_842BB84);
   sub_806C32C(1, n, src, a3, a4, a5, a6, a7);
-  return sub_80955EA(n);
+  return SV_Netchan_AddOOBProfilePacket(n);
 }
 // 842BB84: using guessed type int dword_842BB84;
 // 8095626: using guessed type int arg_10;
@@ -56003,7 +56003,7 @@ int __cdecl sub_809612C(int a1, int a2, int a3, int a4, int a5, _DWORD *a6)
     }
     if ( v7 == v8 )
     {
-      sub_806938C(a6, v12, v11, 0);
+      MSG_WriteDeltaEntity(a6, v12, v11, 0);
       ++v10;
       ++v9;
     }
@@ -56011,17 +56011,17 @@ int __cdecl sub_809612C(int a1, int a2, int a3, int a4, int a5, _DWORD *a6)
     {
       if ( v7 > v8 )
       {
-        sub_806938C(a6, v12, 0, 1);
+        MSG_WriteDeltaEntity(a6, v12, 0, 1);
         ++v10;
       }
     }
     else
     {
-      sub_806938C(a6, (int *)(372 * v7 + 138600604), v11, 1);
+      MSG_WriteDeltaEntity(a6, (int *)(372 * v7 + 138600604), v11, 1);
       ++v9;
     }
   }
-  return sub_80677A2(a6, 1023, 10);
+  return MSG_WriteBits(a6, 1023, 10);
 }
 // 841FB10: using guessed type int dword_841FB10;
 // 841FB20: using guessed type int dword_841FB20;
@@ -56062,7 +56062,7 @@ _DWORD *__cdecl sub_80962A0(int a1, int a2, int a3, int a4, int a5, _DWORD *a6)
     }
     if ( v7 == v8 )
     {
-      sub_8069428(a6, v12, v11, 0);
+      MSG_WriteDeltaClient(a6, v12, v11, 0);
       ++v10;
       ++v9;
     }
@@ -56070,17 +56070,17 @@ _DWORD *__cdecl sub_80962A0(int a1, int a2, int a3, int a4, int a5, _DWORD *a6)
     {
       if ( v7 > v8 )
       {
-        sub_8069428(a6, v12, 0, 1);
+        MSG_WriteDeltaClient(a6, v12, 0, 1);
         ++v10;
       }
     }
     else
     {
-      sub_8069428(a6, 0, v11, 1);
+      MSG_WriteDeltaClient(a6, 0, v11, 1);
       ++v9;
     }
   }
-  return sub_8067868(a6);
+  return MSG_WriteBit0(a6);
 }
 // 841FB14: using guessed type int dword_841FB14;
 // 841FB24: using guessed type int dword_841FB24;
@@ -56123,9 +56123,9 @@ int __cdecl sub_80963EC(int a1, _DWORD *a2)
     v8 = 0;
     LOBYTE(v7) = 0;
   }
-  sub_8067B4C(a2, 6);
-  sub_8067C2A(a2, dword_841FB04);
-  sub_8067B4C(a2, v7);
+  MSG_WriteByte(a2, 6);
+  MSG_WriteLong(a2, dword_841FB04);
+  MSG_WriteByte(a2, v7);
   v5 = dword_841FB08;
   if ( *(_DWORD *)(a1 + 134428) )
     v5 = dword_841FB08 | 1;
@@ -56139,10 +56139,10 @@ int __cdecl sub_80963EC(int a1, _DWORD *a2)
   }
   if ( !*(_DWORD *)(a1 + 4) )
     v5 |= 2u;
-  sub_8067B4C(a2, v5);
+  MSG_WriteByte(a2, v5);
   if ( v8 )
   {
-    sub_8069D40(a2, (char *)v8, v9);
+    MSG_WriteDeltaPlayerstate(a2, (char *)v8, v9);
     v4 = *(_DWORD *)(v8 + 9900);
     v3 = *(_DWORD *)(v8 + 9908);
     sub_809612C(
@@ -56155,7 +56155,7 @@ int __cdecl sub_80963EC(int a1, _DWORD *a2)
   }
   else
   {
-    sub_8069D40(a2, 0, v9);
+    MSG_WriteDeltaPlayerstate(a2, 0, v9);
     v4 = 0;
     v3 = 0;
     sub_809612C(-1653759219 * ((a1 - (int)dword_841FB0C) >> 2), 0, 0, v9[2474], v9[2476], a2);
@@ -56164,16 +56164,16 @@ int __cdecl sub_80963EC(int a1, _DWORD *a2)
   for ( i = 0; ; ++i )
   {
     result = i;
-    if ( i >= *(_DWORD *)(dword_848B1DC + 8) )
+    if ( i >= *(_DWORD *)(sv_padPackets + 8) )
       break;
-    sub_8067B4C(a2, 0);
+    MSG_WriteByte(a2, 0);
   }
   return result;
 }
 // 841FB08: using guessed type int dword_841FB08;
 // 841FB10: using guessed type int dword_841FB10;
 // 841FB18: using guessed type int dword_841FB18;
-// 848B1DC: using guessed type int dword_848B1DC;
+// 848B1DC: using guessed type int sv_padPackets;
 
 //----- (080966D6) --------------------------------------------------------
 int __cdecl sub_80966D6(int a1, _DWORD *a2)
@@ -56185,8 +56185,8 @@ int __cdecl sub_80966D6(int a1, _DWORD *a2)
     Com_Printf("Client %s has the following un-ack'd reliable commands:\n", (const char *)(a1 + 134216));
   for ( i = *(_DWORD *)(a1 + 133136) + 1; i <= *(_DWORD *)(a1 + 133132); ++i )
   {
-    sub_8067B4C(a2, 4);
-    sub_8067C2A(a2, i);
+    MSG_WriteByte(a2, 4);
+    MSG_WriteLong(a2, i);
     MSG_WriteString(a2, (char *)(a1 + 1032 * (i & 0x7F) + 1036));
     if ( *(_BYTE *)(dword_848B1FC + 8) )
       Com_Printf("%i: %s\n", i - *(_DWORD *)(a1 + 133136) - 1, (const char *)(a1 + 1032 * (i & 0x7F) + 1036));
@@ -56206,8 +56206,8 @@ int __cdecl sub_80967E4(_DWORD *a1, _DWORD *a2, signed int a3)
 
   for ( i = a1[33284] + 1; i <= a1[33283] && (int)(a2[3] + strlen((const char *)&a1[258 * (i & 0x7F) + 259]) + 6) < a3; ++i )
   {
-    sub_8067B4C(a2, 4);
-    sub_8067C2A(a2, i);
+    MSG_WriteByte(a2, 4);
+    MSG_WriteLong(a2, i);
     MSG_WriteString(a2, (char *)&a1[258 * (i & 0x7F) + 259]);
   }
   v5 = i - 1;
@@ -56466,7 +56466,7 @@ LABEL_12:
   {
     memcpy(dest, (char *)dword_841FB34 + v20, n);
   }
-  if ( sub_8067A0E(&s) )
+  if ( MSG_ReadBit(&s) )
   {
     v28 = (char *)dword_841FB50 + 28 * (dword_841FB44 % 512);
     *v28 = a1;
@@ -56476,31 +56476,31 @@ LABEL_12:
     v28[5] = dword_841FB40;
     v28[6] = 0;
     v4 = v28;
-    v4[1] = sub_8067F90(&s);
-    while ( sub_8067A0E(&s) )
+    v4[1] = MSG_ReadLong(&s);
+    while ( MSG_ReadBit(&s) )
     {
-      v22 = sub_8067960(&s, 6);
+      v22 = MSG_ReadBits(&s, 6);
       if ( v14 > (int)n )
         Com_Error(1, (char *)&byte_8145200);
       v25 = (int)dword_841FB4C + 9992 * (dword_841FB40 % 4096);
-      sub_8069A54(&s, 0, (void *)(v25 + 4), v22);
+      MSG_ReadDeltaClient(&s, 0, (void *)(v25 + 4), v22);
       v3 = (int *)v25;
-      *v3 = sub_8067A0E(&s);
+      *v3 = MSG_ReadBit(&s);
       if ( *(_DWORD *)v25 )
-        sub_806A608(&s, 0, (char *)(v25 + 96));
+        MSG_ReadDeltaPlayerstate(&s, 0, (char *)(v25 + 96));
       if ( ++dword_841FB40 > 2147483645 )
         Com_Error(0, (char *)&byte_8145240);
       ++v28[4];
     }
     while ( 1 )
     {
-      v22 = sub_8067960(&s, 10);
+      v22 = MSG_ReadBits(&s, 10);
       if ( v22 == 1023 )
         break;
       if ( v14 > (int)n )
         Com_Error(1, (char *)&byte_8145200);
       v26 = (char *)dword_841FB48 + 276 * (dword_841FB3C % 0x4000);
-      sub_8069A0E(&s, (void *)(372 * v22 + 138600604), v26, v22);
+      MSG_ReadDeltaArchivedEntity(&s, (void *)(372 * v22 + 138600604), v26, v22);
       if ( ++dword_841FB3C > 2147483645 )
         Com_Error(0, (char *)&byte_8145280);
       ++v28[2];
@@ -56509,7 +56509,7 @@ LABEL_12:
       Com_Error(0, (char *)&byte_81452C0);
     goto LABEL_68;
   }
-  v17 = sub_8067F90(&s);
+  v17 = MSG_ReadLong(&s);
   if ( v17 >= dword_841FB2C - 1200 )
   {
     v21 = (char *)dword_841FB30 + 8 * (v17 % 1200);
@@ -56526,7 +56526,7 @@ LABEL_12:
         v28[5] = dword_841FB40;
         v28[6] = 1;
         v7 = v28;
-        v7[1] = sub_8067F90(&s);
+        v7[1] = MSG_ReadLong(&s);
         v16 = 0;
         v24 = 0;
         if ( *(int *)(v27 + 16) > 0 )
@@ -56538,9 +56538,9 @@ LABEL_12:
         {
           v15 = 99999;
         }
-        while ( sub_8067A0E(&s) )
+        while ( MSG_ReadBit(&s) )
         {
-          v22 = sub_8067960(&s, 6);
+          v22 = MSG_ReadBits(&s, 6);
           if ( v14 > (int)n )
             Com_Error(1, (char *)&byte_8145200);
           while ( v15 < v22 )
@@ -56558,11 +56558,11 @@ LABEL_12:
           if ( v15 == v22 )
           {
             v25 = (int)dword_841FB4C + 9992 * (dword_841FB40 % 4096);
-            sub_8069A54(&s, (char *)(v24 + 4), (void *)(v25 + 4), v22);
+            MSG_ReadDeltaClient(&s, (char *)(v24 + 4), (void *)(v25 + 4), v22);
             v6 = (int *)v25;
-            *v6 = sub_8067A0E(&s);
+            *v6 = MSG_ReadBit(&s);
             if ( *(_DWORD *)v25 )
-              sub_806A608(&s, (char *)(v24 + 96), (char *)(v25 + 96));
+              MSG_ReadDeltaPlayerstate(&s, (char *)(v24 + 96), (char *)(v25 + 96));
             if ( ++dword_841FB40 > 2147483645 )
               Com_Error(0, (char *)&byte_8145240);
             ++v28[4];
@@ -56579,11 +56579,11 @@ LABEL_12:
           else
           {
             v25 = (int)dword_841FB4C + 9992 * (dword_841FB40 % 4096);
-            sub_8069A54(&s, 0, (void *)(v25 + 4), v22);
+            MSG_ReadDeltaClient(&s, 0, (void *)(v25 + 4), v22);
             v5 = (int *)v25;
-            *v5 = sub_8067A0E(&s);
+            *v5 = MSG_ReadBit(&s);
             if ( *(_DWORD *)v25 )
-              sub_806A608(&s, 0, (char *)(v25 + 96));
+              MSG_ReadDeltaPlayerstate(&s, 0, (char *)(v25 + 96));
             if ( ++dword_841FB40 > 2147483645 )
               Com_Error(0, (char *)&byte_8145240);
             ++v28[4];
@@ -56591,13 +56591,13 @@ LABEL_12:
         }
         while ( 1 )
         {
-          v22 = sub_8067960(&s, 10);
+          v22 = MSG_ReadBits(&s, 10);
           if ( v22 == 1023 )
             break;
           if ( v14 > (int)n )
             Com_Error(1, (char *)&byte_8145200);
           v26 = (char *)dword_841FB48 + 276 * (dword_841FB3C % 0x4000);
-          sub_8069A0E(&s, (void *)(372 * v22 + 138600604), v26, v22);
+          MSG_ReadDeltaArchivedEntity(&s, (void *)(372 * v22 + 138600604), v26, v22);
           if ( ++dword_841FB3C > 2147483645 )
             Com_Error(0, (char *)&byte_8145280);
           ++v28[2];
@@ -56630,17 +56630,17 @@ _DWORD *__cdecl sub_8097A28(int *a1)
     return 0;
   if ( *a1 <= 0 )
     return 0;
-  v1 = *(_DWORD *)(dword_848B1B4 + 8) * *a1 / 1000;
+  v1 = *(_DWORD *)(sv_fps + 8) * *a1 / 1000;
   v5 = dword_841FB2C - v1;
   if ( dword_841FB2C - v1 < dword_841FB2C - 1200 )
   {
     v5 = dword_841FB2C - 1200;
-    *a1 = 1000 * (dword_841FB2C - (dword_841FB2C - 1200)) / *(_DWORD *)(dword_848B1B4 + 8);
+    *a1 = 1000 * (dword_841FB2C - (dword_841FB2C - 1200)) / *(_DWORD *)(sv_fps + 8);
   }
   if ( v5 < 0 )
   {
     v5 = 0;
-    *a1 = 1000 * dword_841FB2C / *(_DWORD *)(dword_848B1B4 + 8);
+    *a1 = 1000 * dword_841FB2C / *(_DWORD *)(sv_fps + 8);
   }
   while ( v5 < dword_841FB2C )
   {
@@ -56654,7 +56654,7 @@ _DWORD *__cdecl sub_8097A28(int *a1)
 }
 // 841FB28: using guessed type int dword_841FB28;
 // 841FB2C: using guessed type int dword_841FB2C;
-// 848B1B4: using guessed type int dword_848B1B4;
+// 848B1B4: using guessed type int sv_fps;
 
 //----- (08097B54) --------------------------------------------------------
 int __cdecl sub_8097B54(int a1, _DWORD *a2, void *a3)
@@ -56687,7 +56687,7 @@ int __cdecl sub_8097BD0(int a1, int a2, int a3)
   float v19; // [esp+2788h] [ebp-10h]
   int j; // [esp+278Ch] [ebp-Ch]
 
-  v8 = 1000 / *(_DWORD *)(dword_848B1B4 + 8);
+  v8 = 1000 / *(_DWORD *)(sv_fps + 8);
   v7 = v8 * (dword_841FB04 / v8);
   v18 = v8 * (dword_815D6E0 + (v7 - a2) / v8);
   v17 = v8 * (dword_815D6E4 + (v7 - a2) / v8);
@@ -56742,7 +56742,7 @@ int __cdecl sub_8097BD0(int a1, int a2, int a3)
 }
 // 815D6E0: using guessed type int dword_815D6E0;
 // 815D6E4: using guessed type int dword_815D6E4;
-// 848B1B4: using guessed type int dword_848B1B4;
+// 848B1B4: using guessed type int sv_fps;
 // 8097BD0: using guessed type _DWORD var_26F8[5];
 // 8097BD0: using guessed type float dest[4];
 // 8097BD0: using guessed type float var_38[4];
@@ -57006,7 +57006,7 @@ int __cdecl sub_80988F4(int a1, int a2)
 // 848B1F8: using guessed type int dword_848B1F8;
 
 //----- (080989C6) --------------------------------------------------------
-int __usercall sub_80989C6@<eax>(long double a1@<st0>, int a2, int a3)
+int __usercall SV_SendMessageToClient@<eax>(long double a1@<st0>, int a2, int a3)
 {
   char *dest; // [esp+2Ch] [ebp-2Ch]
   int v5[6]; // [esp+30h] [ebp-28h] BYREF
@@ -57016,7 +57016,7 @@ int __usercall sub_80989C6@<eax>(long double a1@<st0>, int a2, int a3)
   LargeLocal(v5, 0x4000);
   dest = LargeLocalGetBuf(v5);
   memcpy(dest, *(const void **)(a2 + 4), 4u);
-  n = sub_8067A8E((unsigned __int8 *)(*(_DWORD *)(a2 + 4) + 4), (int)(dest + 4), *(_DWORD *)(a2 + 12) - 4) + 4;
+  n = MSG_WriteBitsCompress((unsigned __int8 *)(*(_DWORD *)(a2 + 4) + 4), (int)(dest + 4), *(_DWORD *)(a2 + 12) - 4) + 4;
   if ( *(_DWORD *)(a3 + 8) )
     sub_808DC8C(a1, a3, *(char **)(a3 + 8));
   *(_DWORD *)(a3 + 9924 * (*(_DWORD *)(a3 + 452020) & 0x1F) + 144356) = n;
@@ -57062,7 +57062,7 @@ int __usercall sub_8098C0E@<eax>(long double a1@<st0>, int a2)
   if ( *(_DWORD *)a2 == 4 || *(_DWORD *)a2 == 1 )
     sub_809822C((char *)a2);
   MSG_Init(s, (int)v3, 0x20000);
-  sub_8067C2A(s, *(_DWORD *)(a2 + 133184));
+  MSG_WriteLong(s, *(_DWORD *)(a2 + 133184));
   if ( *(_DWORD *)a2 == 4 || *(_DWORD *)a2 == 1 )
   {
     sub_80966D6(a2, s);
@@ -57070,7 +57070,7 @@ int __usercall sub_8098C0E@<eax>(long double a1@<st0>, int a2)
   }
   if ( *(_DWORD *)a2 != 1 )
     sub_808E544(a2, s);
-  sub_8067B4C(s, 7);
+  MSG_WriteByte(s, 7);
   if ( s[0] )
   {
     Com_Printf("WARNING: msg overflowed for %s, trying to recover\n", (const char *)(a2 + 134216));
@@ -57078,14 +57078,14 @@ int __usercall sub_8098C0E@<eax>(long double a1@<st0>, int a2)
     {
       sub_80968B8(a2);
       MSG_Init(s, (int)v3, 0x20000);
-      sub_8067C2A(s, *(_DWORD *)(a2 + 133184));
+      MSG_WriteLong(s, *(_DWORD *)(a2 + 133184));
       sub_80967E4((_DWORD *)a2, s, 0x20000);
-      sub_8067B4C(s, 7);
+      MSG_WriteByte(s, 7);
     }
     if ( s[0] )
     {
       Com_Printf("WARNING: client disconnected for msg overflow: %s\n", (const char *)(a2 + 134216));
-      sub_806C40C(
+      NET_OutOfBandPrint(
         1,
         *(_DWORD *)(a2 + 452036),
         *(_DWORD *)(a2 + 452040),
@@ -57096,13 +57096,13 @@ int __usercall sub_8098C0E@<eax>(long double a1@<st0>, int a2)
       sub_808DC8C(a1, a2, "EXE_SERVERMESSAGEOVERFLOW");
     }
   }
-  sub_80989C6(a1, (int)s, a2);
+  SV_SendMessageToClient(a1, (int)s, a2);
   return LargeLocalDealloc(v4);
 }
 // 8098C0E: using guessed type int var_38[4];
 
 //----- (08098E3A) --------------------------------------------------------
-int sub_8098E3A()
+int SV_ArchiveSnapshot()
 {
   int *v0; // eax
   int *v1; // eax
@@ -57146,7 +57146,7 @@ int sub_8098E3A()
     v17 = dword_841FB44 - 512;
     if ( dword_841FB44 - 512 < 0 )
       v17 = 0;
-    v16 = dword_841FB2C - *(_DWORD *)(dword_848B1B4 + 8);
+    v16 = dword_841FB2C - *(_DWORD *)(sv_fps + 8);
     for ( i = dword_841FB44 - 1; i >= v17; --i )
     {
       v18 = (int *)((char *)dword_841FB50 + 28 * (i % 512));
@@ -57154,9 +57154,9 @@ int sub_8098E3A()
       {
         if ( v18[3] >= dword_841FB3C - 0x4000 && v18[5] >= dword_841FB40 - 4096 )
         {
-          sub_8067868(&s);
-          sub_8067C2A(&s, *v18);
-          sub_8067C2A(&s, dword_841FB04);
+          MSG_WriteBit0(&s);
+          MSG_WriteLong(&s, *v18);
+          MSG_WriteLong(&s, dword_841FB04);
           v13 = *(_DWORD *)(dword_848B1CC + 8);
           v12 = v18[4];
           v15 = 0;
@@ -57178,15 +57178,15 @@ int sub_8098E3A()
               if ( v11 == v9 )
               {
                 v0 = (int *)sub_81069E2(v11);
-                sub_8069428(&s, (int *)(v15 + 4), v0, 1);
+                MSG_WriteDeltaClient(&s, (int *)(v15 + 4), v0, 1);
                 if ( sub_80F4696(v11, v19) )
                 {
-                  sub_80678C6(&s);
-                  sub_8069D40(&s, (char *)(v15 + 96), v19);
+                  MSG_WriteBit1(&s);
+                  MSG_WriteDeltaPlayerstate(&s, (char *)(v15 + 96), v19);
                 }
                 else
                 {
-                  sub_8067868(&s);
+                  MSG_WriteBit0(&s);
                 }
                 ++v10;
                 ++v11;
@@ -57199,15 +57199,15 @@ int sub_8098E3A()
               else
               {
                 v1 = (int *)sub_81069E2(v11);
-                sub_8069428(&s, 0, v1, 1);
+                MSG_WriteDeltaClient(&s, 0, v1, 1);
                 if ( sub_80F4696(v11, v19) )
                 {
-                  sub_80678C6(&s);
-                  sub_8069D40(&s, 0, v19);
+                  MSG_WriteBit1(&s);
+                  MSG_WriteDeltaPlayerstate(&s, 0, v19);
                 }
                 else
                 {
-                  sub_8067868(&s);
+                  MSG_WriteBit0(&s);
                 }
                 ++v11;
               }
@@ -57217,7 +57217,7 @@ int sub_8098E3A()
               ++v11;
             }
           }
-          sub_8067868(&s);
+          MSG_WriteBit0(&s);
           for ( j = 0; j < dword_848B0A4; ++j )
           {
             v32 = (_DWORD *)sub_808FDE4(j);
@@ -57235,7 +57235,7 @@ int sub_8098E3A()
                 v29 = v32[62];
                 sub_8099DB4(v32 + 72, v30);
                 sub_8099DB4(v32 + 75, v31);
-                sub_80693DA(&s, (int *)(372 * *v32 + 138600604), v26, 1);
+                MSG_WriteDeltaArchivedEntity(&s, (int *)(372 * *v32 + 138600604), v26, 1);
               }
             }
           }
@@ -57244,8 +57244,8 @@ int sub_8098E3A()
         break;
       }
     }
-    sub_80678C6(&s);
-    sub_8067C2A(&s, dword_841FB04);
+    MSG_WriteBit1(&s);
+    MSG_WriteLong(&s, dword_841FB04);
     v18 = (int *)((char *)dword_841FB50 + 28 * (dword_841FB44 % 512));
     *v18 = dword_841FB2C;
     v18[2] = 0;
@@ -57262,17 +57262,17 @@ int sub_8098E3A()
       {
         v15 = (int)dword_841FB4C + 9992 * (dword_841FB40 % 4096);
         qmemcpy((void *)(v15 + 4), (const void *)sub_81069E2(i), 0x5Cu);
-        sub_8069428(&s, 0, (int *)(v15 + 4), 1);
+        MSG_WriteDeltaClient(&s, 0, (int *)(v15 + 4), 1);
         v3 = (int *)v15;
         *v3 = sub_80F4696(i, (_DWORD *)(v15 + 96));
         if ( *(_DWORD *)v15 )
         {
-          sub_80678C6(&s);
-          sub_8069D40(&s, 0, (_DWORD *)(v15 + 96));
+          MSG_WriteBit1(&s);
+          MSG_WriteDeltaPlayerstate(&s, 0, (_DWORD *)(v15 + 96));
         }
         else
         {
-          sub_8067868(&s);
+          MSG_WriteBit0(&s);
         }
         if ( ++dword_841FB40 > 2147483645 )
           Com_Error(0, (char *)&byte_8145240);
@@ -57281,7 +57281,7 @@ int sub_8098E3A()
       ++i;
       v23 += 123845;
     }
-    sub_8067868(&s);
+    MSG_WriteBit0(&s);
     for ( j = 0; j < dword_848B0A4; ++j )
     {
       v32 = (_DWORD *)sub_808FDE4(j);
@@ -57300,7 +57300,7 @@ int sub_8098E3A()
           *(_DWORD *)(*(_DWORD *)v14 + 248) = v32[62];
           sub_8099DB4(v32 + 72, (_DWORD *)(*(_DWORD *)v14 + 252));
           sub_8099DB4(v32 + 75, (_DWORD *)(*(_DWORD *)v14 + 264));
-          sub_80693DA(&s, (int *)(372 * *v32 + 138600604), *(int **)v14, 1);
+          MSG_WriteDeltaArchivedEntity(&s, (int *)(372 * *v32 + 138600604), *(int **)v14, 1);
           if ( ++dword_841FB3C > 2147483645 )
             Com_Error(0, (char *)&byte_8145280);
           ++v18[2];
@@ -57310,7 +57310,7 @@ int sub_8098E3A()
     if ( ++dword_841FB44 > 2147483645 )
       Com_Error(0, (char *)&byte_81452C0);
 LABEL_70:
-    sub_80677A2(&s, 1023, 10);
+    MSG_WriteBits(&s, 1023, 10);
     if ( s )
     {
       Com_DPrintf("SV_ArchiveSnapshot: ignoring snapshot because it overflowed.\n");
@@ -57346,7 +57346,7 @@ LABEL_70:
 // 841FB44: using guessed type int dword_841FB44;
 // 842BC80: using guessed type int dword_842BC80;
 // 848B0A4: using guessed type int dword_848B0A4;
-// 848B1B4: using guessed type int dword_848B1B4;
+// 848B1B4: using guessed type int sv_fps;
 // 848B1CC: using guessed type int dword_848B1CC;
 // 8098E3A: using guessed type int var_2878[4];
 // 8098E3A: using guessed type _DWORD var_2818[2478];
@@ -57478,20 +57478,20 @@ int __cdecl sub_8099DB4(_DWORD *a1, _DWORD *a2)
 }
 
 //----- (08099DE4) --------------------------------------------------------
-int __cdecl MSG_WriteByte(int a1, _DWORD *a2)
+int __cdecl sub_8099DE4(int a1, _DWORD *a2)
 {
   int result; // eax
   int i; // [esp+14h] [ebp-4h]
 
-  sub_8067B4C(a2, *(_DWORD *)(a1 + 495308));
+  MSG_WriteByte(a2, *(_DWORD *)(a1 + 495308));
   for ( i = 0; ; ++i )
   {
     result = i;
     if ( i >= *(_DWORD *)(a1 + 495308) )
       break;
-    sub_8067B4C(a2, *(_BYTE *)(a1 + 261 * i + 484868));
-    sub_8067B4C(a2, *(_DWORD *)(a1 + 261 * i + 485125));
-    sub_8067B84(a2, (void *)(a1 + 261 * i + 484869), *(_DWORD *)(a1 + 261 * i + 485125));
+    MSG_WriteByte(a2, *(_BYTE *)(a1 + 261 * i + 484868));
+    MSG_WriteByte(a2, *(_DWORD *)(a1 + 261 * i + 485125));
+    MSG_WriteData(a2, (void *)(a1 + 261 * i + 484869), *(_DWORD *)(a1 + 261 * i + 485125));
   }
   return result;
 }
@@ -57509,7 +57509,7 @@ int __cdecl sub_8099EC6(int a1)
   {
     MSG_Init(s, (int)v2, 0x20000);
     MSG_WriteString(s, "v");
-    MSG_WriteByte(a1, s);
+    sub_8099DE4(a1, s);
     if ( s[0] )
     {
       Com_Printf("WARNING: voice msg overflowed for %s\n", (const char *)(a1 + 134216));
@@ -57574,17 +57574,17 @@ void __cdecl sub_809A112(int a1, _DWORD *a2)
 
   if ( *(_BYTE *)(dword_848B22C + 8) )
   {
-    v3 = sub_8067EE8(a2);
+    v3 = MSG_ReadByte(a2);
     for ( i = 0; i < v3; ++i )
     {
-      n = sub_8067EE8(a2);
+      n = MSG_ReadByte(a2);
       if ( (int)n <= 0 || (int)n > 256 )
       {
         Com_Printf("Received invalid voice packet of size %i from %s\n", n, (const char *)(a1 + 134216));
         return;
       }
-      sub_80681EC(a2, v5, n);
-      sub_80F721C(*(int **)(a1 + 134212), (int)&v4);
+      MSG_ReadData(a2, v5, n);
+      G_BroadcastVoice(*(int **)(a1 + 134212), (int)&v4);
     }
   }
 }
@@ -57604,16 +57604,16 @@ void __cdecl sub_809A1EA(int a1, _DWORD *a2)
   if ( *(_BYTE *)(dword_848B22C + 8) )
   {
     v2 = -1653759219 * ((a1 - (int)dword_841FB0C) >> 2);
-    v5 = sub_8067EE8(a2);
+    v5 = MSG_ReadByte(a2);
     for ( i = 0; i < v5; ++i )
     {
-      n = sub_8067F32(a2);
+      n = MSG_ReadShort(a2);
       if ( (int)n <= 0 || (int)n > 256 )
       {
         Com_Printf("Received invalid voice packet of size %i from %s\n", n, (const char *)(a1 + 134216));
         return;
       }
-      sub_80681EC(a2, v7, n);
+      MSG_ReadData(a2, v7, n);
       for ( j = 0; j <= 63; ++j )
       {
         if ( j != v2 && *((int *)dword_841FB0C + 123845 * j) > 1 && !(unsigned __int8)sub_809A01E(j, v2) )
@@ -59817,7 +59817,7 @@ int __cdecl sub_809F12A(char *src, int a2, int a3)
     if ( !I_stricmp(src, *(char **)(a2 + 4 * i)) )
       return a3;
   }
-  *(_DWORD *)(a2 + 4 * a3) = CopyString(src);
+  *(_DWORD *)(a2 + 4 * a3) = CopyStringInternal(src);
   return a3 + 1;
 }
 
@@ -63257,24 +63257,24 @@ void *__cdecl sub_80A9324(size_t size)
 // 80A9290: using guessed type void __cdecl __noreturn sub_80A9290(_DWORD);
 
 //----- (080A934E) --------------------------------------------------------
-void *__cdecl sub_80A934E(size_t size)
+void *__cdecl VirtualAlloc(size_t size)
 {
   return malloc(size);
 }
 
 //----- (080A9362) --------------------------------------------------------
-void *__cdecl sub_80A9362(size_t size)
+void *__cdecl Z_VirtualAllocInternal(size_t size)
 {
   void *v2; // [esp+14h] [ebp-4h]
 
-  v2 = sub_80A934E(size);
+  v2 = VirtualAlloc(size);
   if ( !v2 )
     sub_80D1DA6("universal/com_memory.cpp", 536);
   return v2;
 }
 
 //----- (080A93B0) --------------------------------------------------------
-char *__cdecl CopyString(char *src)
+char *__cdecl CopyStringInternal(char *src)
 {
   size_t v1; // eax
   char *dest; // [esp+14h] [ebp-4h]
@@ -63286,7 +63286,7 @@ char *__cdecl CopyString(char *src)
 }
 
 //----- (080A93E4) --------------------------------------------------------
-char *__cdecl sub_80A93E4(char **a1, char *src)
+char *__cdecl ReplaceStringInternal(char **a1, char *src)
 {
   size_t v3; // [esp+10h] [ebp-8h]
   char *s; // [esp+14h] [ebp-4h]
@@ -64246,7 +64246,7 @@ void __cdecl sub_80AAD12(char *src, char *s2, int a3)
 // 851630C: using guessed type int dword_851630C;
 
 //----- (080AAEDC) --------------------------------------------------------
-int __cdecl sub_80AAEDC(int a1)
+int __cdecl Com_UnloadSoundAliases(int a1)
 {
   int result; // eax
 
@@ -64975,7 +64975,7 @@ void sub_80AC22C()
 // 8516BE4: using guessed type int dword_8516BE4;
 
 //----- (080AC246) --------------------------------------------------------
-_DWORD *__cdecl sub_80AC246(int a1)
+_DWORD *__cdecl Com_LoadSoundAliasFile(int a1)
 {
   int i; // [esp+2Ch] [ebp-206Ch]
   unsigned int n; // [esp+30h] [ebp-2068h]
@@ -65081,7 +65081,7 @@ _DWORD *__cdecl sub_80AC582(char *s1, char *s2, char *src)
         Cmd_AddCommand("snd_refreshVolumeModGroups", (int)sub_80AC576);
         byte_8517469 = 1;
       }
-      sub_80AC246((int)&unk_8516BE8);
+      Com_LoadSoundAliasFile((int)&unk_8516BE8);
       byte_8517468 = 1;
     }
     sub_80B396A(v7);
@@ -66393,7 +66393,7 @@ void __cdecl sub_80AF06A(int a1)
 //----- (080AF080) --------------------------------------------------------
 char *__cdecl sub_80AF080(char *src)
 {
-  return CopyString(src);
+  return CopyStringInternal(src);
 }
 
 //----- (080AF094) --------------------------------------------------------
@@ -66424,7 +66424,7 @@ char *__cdecl sub_80AF0A8(char *s)
     {
       return (char *)&a0123456789[*s - 48];
     }
-    return CopyString(s);
+    return CopyStringInternal(s);
   }
   return (char *)&unk_8147CE0;
 }
@@ -68399,7 +68399,7 @@ void __cdecl sub_80B28CA(char *src, int a2, int a3, int a4, int a5)
 }
 
 //----- (080B294E) --------------------------------------------------------
-void __usercall sub_80B294E(long double a1@<st0>, char *src, char *a3)
+void __usercall Dvar_SetStringByName(long double a1@<st0>, char *src, char *a3)
 {
   int v3; // [esp+14h] [ebp-4h]
 
@@ -70405,7 +70405,7 @@ char *__cdecl sub_80B587C(char *a1)
 }
 
 //----- (080B5904) --------------------------------------------------------
-int __cdecl sub_80B5904(char a1)
+int __cdecl I_CleanChar(char a1)
 {
   if ( a1 == -110 )
     return 39;
@@ -77404,7 +77404,7 @@ int *__cdecl sub_80C3172(_DWORD *a1, const void *a2)
 }
 
 //----- (080C3264) --------------------------------------------------------
-int __cdecl sub_80C3264(char *s2, int (__cdecl *a2)(int), int (__cdecl *a3)(int))
+int __cdecl XModelPrecache(char *s2, int (__cdecl *a2)(int), int (__cdecl *a3)(int))
 {
   int v5; // [esp+20h] [ebp-8h]
   int v6; // [esp+20h] [ebp-8h]
@@ -84328,7 +84328,7 @@ DIR *__cdecl Sys_ListFilteredFiles(const char *a1, const char *a2, int a3, int a
             return (DIR *)closedir(dirp);
           Com_sprintf(filename, 0x100u, "%s/%s", a2, v7->d_name);
           if ( (unsigned __int8)sub_80AA618(a3, (int)filename, 0) )
-            *(_DWORD *)(a4 + 4 * (*a5)++) = CopyString(filename);
+            *(_DWORD *)(a4 + 4 * (*a5)++) = CopyStringInternal(filename);
         }
       }
       return (DIR *)closedir(dirp);
@@ -84408,7 +84408,7 @@ _DWORD *__cdecl Sys_ListFiles(char *name, char *s, int a3, _DWORD *a4, int a5)
             if ( v16 == 4095 )
               break;
             v9 = v16;
-            v14[v9] = (int)CopyString(v20->d_name);
+            v14[v9] = (int)CopyStringInternal(v20->d_name);
             ++v16;
           }
         }
@@ -100560,7 +100560,7 @@ int __cdecl sub_80F6ED0(int a1, float *a2, int a3)
 }
 
 //----- (080F721C) --------------------------------------------------------
-int *__cdecl sub_80F721C(int *a1, int a2)
+int *__cdecl G_BroadcastVoice(int *a1, int a2)
 {
   int *result; // eax
   int *v3; // [esp+10h] [ebp-8h]
@@ -102462,7 +102462,7 @@ void __cdecl sub_80FA820(int a1)
     v13 = 0;
     while ( v13 <= 0x1FFF && s[v13] )
     {
-      v4 = sub_80B5904(s[v13]);
+      v4 = I_CleanChar(s[v13]);
       *v8 = v4;
       if ( *v8 == 34 )
         *v8 = 39;
@@ -108237,7 +108237,7 @@ char *__usercall sub_8106014@<eax>(long double a1@<st0>)
 // 8793E58: using guessed type int dword_8793E58;
 
 //----- (0810695E) --------------------------------------------------------
-int sub_810695E()
+int G_GetSavePersist()
 {
   return dword_859D154;
 }
@@ -108514,7 +108514,7 @@ int __usercall sub_8106C06@<eax>(long double a1@<st0>, int a2, unsigned int seed
 // 879D83C: using guessed type int dword_879D83C[2449];
 
 //----- (08107058) --------------------------------------------------------
-unsigned int *__usercall sub_8107058@<eax>(long double a1@<st0>, int a2)
+unsigned int *__usercall G_ShutdownGame@<eax>(long double a1@<st0>, int a2)
 {
   unsigned int *result; // eax
   int i; // [esp+14h] [ebp-4h] BYREF
@@ -112137,7 +112137,7 @@ void __usercall sub_810E9BE(long double a1@<st0>)
   v14 = 0;
   while ( v14 <= 0x1FFF && s[v14] )
   {
-    v3 = sub_80B5904(s[v14]);
+    v3 = I_CleanChar(s[v14]);
     *v11 = v3;
     if ( *v11 == 34 )
       *v11 = 39;
@@ -115644,7 +115644,7 @@ char *__usercall sub_8114772@<eax>(long double a1@<st0>)
   v13 = 0;
   while ( v13 <= 0x3FE && s[v13] )
   {
-    v4 = sub_80B5904(s[v13]);
+    v4 = I_CleanChar(s[v13]);
     *v10 = v4;
     if ( *v10 == 34 )
       *v10 = 39;
@@ -116400,7 +116400,7 @@ int __cdecl sub_8115AC2(int *a1)
 }
 
 //----- (08115AE2) --------------------------------------------------------
-int sub_8115AE2()
+int Scr_ParseGameTypeList()
 {
   char *v0; // eax
   char *v1; // eax
@@ -120792,7 +120792,7 @@ int __cdecl sub_811D7E6(int a1, char *s)
   if ( *(_BYTE *)(dword_8793E4C + 8) )
   {
     memset(s, 0, 0x340u);
-    result = 1000 / *(_DWORD *)(dword_848B1B4 + 8);
+    result = 1000 / *(_DWORD *)(sv_fps + 8);
     if ( dword_859B5EC - a1 > result )
     {
       for ( i = 0; ; ++i )
@@ -120817,7 +120817,7 @@ int __cdecl sub_811D7E6(int a1, char *s)
   }
   return result;
 }
-// 848B1B4: using guessed type int dword_848B1B4;
+// 848B1B4: using guessed type int sv_fps;
 // 859B400: using guessed type int dword_859B400;
 // 859B5E4: using guessed type int dword_859B5E4;
 // 8793E4C: using guessed type int dword_8793E4C;
@@ -123118,7 +123118,7 @@ void *__cdecl sub_81221F2(size_t a1)
 //----- (08122206) --------------------------------------------------------
 int __cdecl sub_8122206(char *s2)
 {
-  return sub_80C3264(s2, (int (__cdecl *)(int))sub_81221F2, (int (__cdecl *)(int))sub_81221F2);
+  return XModelPrecache(s2, (int (__cdecl *)(int))sub_81221F2, (int (__cdecl *)(int))sub_81221F2);
 }
 
 //----- (0812222A) --------------------------------------------------------
@@ -129834,19 +129834,19 @@ int __cdecl sub_812F47E(char a1)
 }
 
 //----- (0812F498) --------------------------------------------------------
-int sub_812F498()
+int FX_FreeSystem()
 {
-  return sub_813127A(1);
+  return FX_Free(1);
 }
 
 //----- (0812F4AC) --------------------------------------------------------
-int sub_812F4AC()
+int FX_FreeActive()
 {
-  return sub_813127A(0);
+  return FX_Free(0);
 }
 
 //----- (0812F4C0) --------------------------------------------------------
-void __cdecl sub_812F4C0(int a1, float a2)
+void __cdecl FX_AdjustCamera(int a1, float a2)
 {
   sub_812AAD2(off_8168620, a1, a2);
   dword_89A2828 = 1;
@@ -129854,7 +129854,7 @@ void __cdecl sub_812F4C0(int a1, float a2)
 // 89A2828: using guessed type int dword_89A2828;
 
 //----- (0812F4EE) --------------------------------------------------------
-int __cdecl sub_812F4EE(int a1)
+int __cdecl FX_AdjustTime(int a1)
 {
   int result; // eax
 
@@ -129872,7 +129872,7 @@ int __cdecl sub_812F4EE(int a1)
 // 89B63B0: using guessed type int dword_89B63B0;
 
 //----- (0812F528) --------------------------------------------------------
-int __cdecl sub_812F528(int a1)
+int __cdecl FX_WarpTime(int a1)
 {
   return sub_812A776((int *)off_8168620, a1);
 }
@@ -130903,7 +130903,7 @@ int sub_8131180()
 // 89B63CC: using guessed type int dword_89B63CC;
 
 //----- (0813127A) --------------------------------------------------------
-int __cdecl sub_813127A(char a1)
+int __cdecl FX_Free(char a1)
 {
   int result; // eax
 
@@ -130958,7 +130958,7 @@ int __cdecl sub_8131338(char a1)
     dword_89B63CC = 0;
     dword_89A9D80 = 0;
   }
-  sub_813127A(1);
+  FX_Free(1);
   byte_8168610 = a1;
   ptr = sub_81355C8();
   sub_81287D0((int)ptr);
@@ -131367,7 +131367,7 @@ int __cdecl sub_8131CD8(int a1)
   int i; // [esp+BCh] [ebp-Ch]
 
   sub_8120708((int)v15);
-  sub_813127A(0);
+  FX_Free(0);
   sub_812074C((int)v15, a1);
   sub_812ADDE(off_8168620, (int)v15);
   sub_8129558((int)dword_89A2814, v15);

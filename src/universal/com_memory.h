@@ -4,6 +4,7 @@
 
 #define Com_Memset memset
 #define Com_Memcpy memcpy
+#define Com_Memcmp memcmp
 
 #define MIN_DEDICATED_COMHUNKMEGS 1
 #define MIN_COMHUNKMEGS 80

@@ -37,6 +37,9 @@ extern vec3_t vec3_origin;
 
 #define SnapVector( v ) {v[0] = (int)v[0]; v[1] = (int)v[1]; v[2] = (int)v[2];}
 
+#define	ANGLE2SHORT(x)	((int)((x)*65536.0f/360.0f) & 65535)
+#define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+
 float Q_fabs( float f );
 
 /*

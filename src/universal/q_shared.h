@@ -3,30 +3,17 @@
 #define PRODUCT_VERSION "1.0"
 #define GAME_STRING "CoD2 MP"
 
-// this is the define for determining if we have an asm version of a C function
-#if (defined _M_IX86 || defined __i386__) && !defined __sun__  && !defined __LCC__
-#define id386	1
-#else
-#define id386	0
-#endif
-
-#if (defined(powerc) || defined(powerpc) || defined(ppc) || defined(__ppc) || defined(__ppc__)) && !defined(C_ONLY)
-#define idppc	1
-#if defined(__VEC__)
-#define idppc_altivec 1
-#else
-#define idppc_altivec 0
-#endif
-#else
-#define idppc	0
-#define idppc_altivec 0
-#endif
+// for windows fastcall option
+#define	QDECL
 
 //======================= WIN32 DEFINES =================================
 
 #ifdef WIN32
 
 #define	MAC_STATIC
+
+#undef QDECL
+#define	QDECL	__cdecl
 
 // buildstring will be incorporated into the version string
 #ifdef NDEBUG
@@ -47,51 +34,31 @@
 
 #endif
 
-//======================= MAC OS X DEFINES =====================
+//======================= MAC OS X SERVER DEFINES =====================
 
-#if defined(MACOS_X)
+#if defined(__MACH__) && defined(__APPLE__)
 
 #define MAC_STATIC
-#define __declspec(x)
-#define stricmp strcasecmp
 
 #ifdef __ppc__
-#define CPUSTRING	"MacOSX-ppc"
+#define CPUSTRING	"MacOSXS-ppc"
 #elif defined __i386__
-#define CPUSTRING	"MacOSX-i386"
+#define CPUSTRING	"MacOSXS-i386"
 #else
-#define CPUSTRING	"MacOSX-other"
+#define CPUSTRING	"MacOSXS-other"
 #endif
 
 #define	PATH_SEP	'/'
 
-#define __rlwimi(out, in, shift, maskBegin, maskEnd) asm("rlwimi %0,%1,%2,%3,%4" : "=r" (out) : "r" (in), "i" (shift), "i" (maskBegin), "i" (maskEnd))
-#define __dcbt(addr, offset) asm("dcbt %0,%1" : : "b" (addr), "r" (offset))
+#define	GAME_HARD_LINKED
+#define	CGAME_HARD_LINKED
+#define	UI_HARD_LINKED
+#define _alloca alloca
 
-static inline unsigned int __lwbrx(register void *addr, register int offset)
-{
-	register unsigned int word;
-
-	asm("lwbrx %0,%2,%1" : "=r" (word) : "r" (addr), "b" (offset));
-	return word;
-}
-
-static inline unsigned short __lhbrx(register void *addr, register int offset)
-{
-	register unsigned short halfword;
-
-	asm("lhbrx %0,%2,%1" : "=r" (halfword) : "r" (addr), "b" (offset));
-	return halfword;
-}
-
-static inline float __fctiw(register float f)
-{
-	register float fi;
-
-	asm("fctiw %0,%1" : "=f" (fi) : "f" (f));
-
-	return fi;
-}
+#undef ALIGN_ON
+#undef ALIGN_OFF
+#define	ALIGN_ON		#pragma align(16)
+#define	ALIGN_OFF		#pragma align()
 
 #endif
 
@@ -99,15 +66,26 @@ static inline float __fctiw(register float f)
 
 #ifdef __MACOS__
 
-#include <MacTypes.h>
+#define	MAC_STATIC static
+
+#define	CPUSTRING	"MacOS-PPC"
+
+#define	PATH_SEP ':'
+
+#endif
+
+#ifdef __MRC__
+
 #define	MAC_STATIC
 
 #define	CPUSTRING	"MacOS-PPC"
 
 #define	PATH_SEP ':'
 
-void Sys_PumpEvents( void );
+#undef QDECL
+#define	QDECL	__cdecl
 
+#define _alloca alloca
 #endif
 
 //======================= LINUX DEFINES =================================
@@ -141,36 +119,15 @@ void Sys_PumpEvents( void );
 
 #endif
 
-//======================= FreeBSD DEFINES =====================
-#ifdef __FreeBSD__ // rb010123
-
-#define stricmp strcasecmp
-
-#define MAC_STATIC
-
-#ifdef __i386__
-#define CPUSTRING       "freebsd-i386"
-#elif defined __axp__
-#define CPUSTRING       "freebsd-alpha"
-#else
-#define CPUSTRING       "freebsd-other"
-#endif
-
-#define	PATH_SEP '/'
-
-#endif
-
 //=============================================================
 
 #define qboolean int
 #define qtrue 1
 #define qfalse 0
 
-typedef unsigned char byte;
-typedef unsigned int long DWORD;
-typedef unsigned short WORD;
-typedef unsigned char byte;
+#include "../misc/hexrays_defs.h"
 
+typedef unsigned char byte;
 typedef int	fileHandle_t;
 typedef int	clipHandle_t;
 
@@ -315,3 +272,5 @@ void Info_SetValueForKey( char *s, const char *key, const char *value );
 void Info_SetValueForKey_Big( char *s, const char *key, const char *value );
 const char *Info_ValueForKey( const char *s, const char *key );
 void Info_NextPair( const char **head, char *key, char *value );
+char *I_CleanStr(char *string);
+char I_CleanChar(char character);

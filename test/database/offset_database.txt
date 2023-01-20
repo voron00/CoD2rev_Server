@@ -1,11 +1,12 @@
 // All known offsets from the binary will be dumped here.
 
+
+
 // =================================== Functions ===================================
 
-// Main
-SetJump(0x080D2990, (DWORD)main);
 
-// Sys
+
+SetJump(0x080D2990, (DWORD)main);
 SetJump(0x080D2930, (DWORD)Sys_ParseArgs);
 SetJump(0x080D2742, (DWORD)Sys_OpenURL);
 SetJump(0x080D26D2, (DWORD)Sys_StartProcess);
@@ -44,8 +45,6 @@ SetJump(0x080D3F0E, (DWORD)Sys_Cwd);
 SetJump(0x080D40F0, (DWORD)Sys_GetCurrentUser);
 SetJump(0x080D416A, (DWORD)Sys_DirectoryHasContents);
 SetJump(0x080D2262, (DWORD)Sys_GetEvent);
-
-// Cmd
 SetJump(0x0806080A, (DWORD)Cmd_Init);
 SetJump(0x0805FA96, (DWORD)Cbuf_Init);
 SetJump(0x0805FC38, (DWORD)Cbuf_ExecuteText);
@@ -76,11 +75,7 @@ SetJump(0x08060048, (DWORD)Cmd_ArgvBuffer);
 SetJump(0x080600A0, (DWORD)Cmd_Args);
 SetJump(0x0805FCB2, (DWORD)Cbuf_ExecuteInternal);
 SetJump(0x0805FE0A, (DWORD)Cmd_ExecFromDisk);
-
-// TTY
 SetJump(0x080D117E, (DWORD)tty_FlushIn);
-
-// Misc
 SetJump(0x080B537E, (DWORD)Swap_Init);
 SetJump(0x08121C48, (DWORD)FxMem_Init);
 SetJump(0x08051C18, (DWORD)getBuildNumber);
@@ -99,8 +94,6 @@ SetJump(0x08136CB4, (DWORD)Language_IsAsian);
 SetJump(0x080B4D14, (DWORD)ColorIndex);
 SetJump(0x080611E6, (DWORD)Info_Print);
 SetJump(0x08062590, (DWORD)Field_Clear);
-
-// Common
 SetJump(0x08060B2C, (DWORD)Com_Printf);
 SetJump(0x08060B7C, (DWORD)Com_DPrintf);
 SetJump(0x080B5932, (DWORD)Com_sprintf);
@@ -157,22 +150,14 @@ SetJump(0x08061498, (DWORD)Com_GetEvent);
 SetJump(0x0806191E, (DWORD)Com_Error_f);
 SetJump(0x080619C8, (DWORD)Com_Crash_f);
 SetJump(0x0806195A, (DWORD)Com_Freeze_f);
-
-// Xanim
 SetJump(0x080B6F34, (DWORD)DObjShutdown);
 SetJump(0x080BA21E, (DWORD)XAnimShutdown);
 SetJump(0x080BA0EC, (DWORD)XAnimInit);
 SetJump(0x080B6EE8, (DWORD)DObjInit);
 SetJump(0x0806C918, (DWORD)SetAnimCheck);
-
-// Clipmap
 SetJump(0x080B3A76, (DWORD)CM_Cleanup);
 SetJump(0x08052006, (DWORD)CM_Shutdown);
-
-// BG
 SetJump(0x080D4624, (DWORD)BG_AnimParseError);
-
-// Filesystem
 SetJump(0x080A0F3E, (DWORD)FS_InitFilesystem);
 SetJump(0x080A0892, (DWORD)FS_Shutdown);
 SetJump(0x080A07DE, (DWORD)FS_ShutdownServerIwdNames);
@@ -247,8 +232,6 @@ SetJump(0x0809D498, (DWORD)FS_PureIgnoreFiles);
 SetJump(0x0809F7B2, (DWORD)FS_ListFiles);
 SetJump(0x0809E454, (DWORD)FS_Write);
 SetJump(0x080A1380, (DWORD)FS_Flush);
-
-// Unzip
 SetJump(0x080CF97D, (DWORD)unzOpen);
 SetJump(0x080D08B2, (DWORD)unzOpenCurrentFile);
 SetJump(0x080CFCB5, (DWORD)unzGetGlobalInfo);
@@ -256,8 +239,6 @@ SetJump(0x080D0281, (DWORD)unzGoToFirstFile);
 SetJump(0x080D0235, (DWORD)unzGetCurrentFileInfo);
 SetJump(0x080D0449, (DWORD)unzSetCurrentFileInfoPosition);
 SetJump(0x080D0329, (DWORD)unzGoToNextFile);
-
-// NET
 SetJump(0x080D33EC, (DWORD)NET_Init);
 SetJump(0x080D3654, (DWORD)NET_Sleep);
 SetJump(0x080D2B64, (DWORD)NetadrToSockadr);
@@ -268,20 +249,15 @@ SetJump(0x080D313E, (DWORD)NET_GetLocalAddress);
 SetJump(0x080D30D2, (DWORD)Sys_ShowIP);
 SetJump(0x080D330E, (DWORD)NET_OpenIP);
 SetJump(0x080D3438, (DWORD)NET_IPSocket);
-
-// Netchan
 SetJump(0x0806B3FE, (DWORD)Netchan_Init);
-
-// Shared
+SetJump(0x080955EA, (DWORD)SV_Netchan_AddOOBProfilePacket);
 SetJump(0x080B54DE, (DWORD)I_strncpyz);
 SetJump(0x080B5620, (DWORD)I_stricmp);
 SetJump(0x080B55B0, (DWORD)I_strncmp);
 SetJump(0x080B59CE, (DWORD)va);
 SetJump(0x080D4122, (DWORD)strlwr);
-SetJump(0x080A93B0, (DWORD)CopyString);
+SetJump(0x080A93B0, (DWORD)CopyStringInternal);
 SetJump(0x080B57C0, (DWORD)I_strncat);
-
-// Dvars
 SetJump(0x080B2BD0, (DWORD)Dvar_Init);
 SetJump(0x080B1DD2, (DWORD)Dvar_RegisterString);
 SetJump(0x080B2560, (DWORD)Dvar_SetString);
@@ -321,13 +297,9 @@ SetJump(0x08062C80, (DWORD)Dvar_GetCombinedString);
 SetJump(0x080B2AE4, (DWORD)Dvar_SetCommand);
 SetJump(0x080AFBB2, (DWORD)Dvar_DisplayableResetValue);
 SetJump(0x080B0AF8, (DWORD)Dvar_ClearModified);
-
-// Stringed
 SetJump(0x08135D1A, (DWORD)SEH_InitLanguage);
 SetJump(0x08135DDC, (DWORD)SEH_UpdateLanguageInfo);
 SetJump(0x08135FCA, (DWORD)SEH_StringEd_SetLanguageStrings);
-
-// Memory
 SetJump(0x080AA256, (DWORD)LargeLocalReset);
 SetJump(0x08060C0E, (DWORD)Hunk_ClearTempMemory);
 SetJump(0x08060918, (DWORD)Hunk_ClearTempMemoryHigh);
@@ -343,25 +315,78 @@ SetJump(0x080AA1F6, (DWORD)LargeLocal);
 SetJump(0x080AA240, (DWORD)LargeLocalGetBuf);
 SetJump(0x080AA22A, (DWORD)LargeLocalDealloc);
 
-// MSG
 SetJump(0x08067718, (DWORD)MSG_Init);
+SetJump(0x0806ACDE, (DWORD)MSG_initHuffman);
+SetJump(0x0806775C, (DWORD)MSG_BeginReading);
+SetJump(0x080677A2, (DWORD)MSG_WriteBits);
+SetJump(0x08067868, (DWORD)MSG_WriteBit0);
+SetJump(0x080678C6, (DWORD)MSG_WriteBit1);
+SetJump(0x08067960, (DWORD)MSG_ReadBits);
+SetJump(0x08067A0E, (DWORD)MSG_ReadBit);
+SetJump(0x08067A8E, (DWORD)MSG_WriteBitsCompress);
+SetJump(0x08067AE2, (DWORD)MSG_ReadBitsCompress);
+SetJump(0x08067B4C, (DWORD)MSG_WriteByte);
+SetJump(0x08067B84, (DWORD)MSG_WriteData);
+SetJump(0x08067C2A, (DWORD)MSG_WriteLong);
+SetJump(0x08067BDA, (DWORD)MSG_WriteShort);
+SetJump(0x08067EE8, (DWORD)MSG_ReadByte);
+SetJump(0x08067F90, (DWORD)MSG_ReadLong);
+SetJump(0x080681EC, (DWORD)MSG_ReadData);
+SetJump(0x08068424, (DWORD)MSG_WriteReliableCommandToBuffer);
+SetJump(0x080684E6, (DWORD)MSG_SetDefaultUserCmd);
+SetJump(0x08067C78, (DWORD)MSG_ReadString);
 SetJump(0x08067CE4, (DWORD)MSG_WriteString);
-SetJump(0x08099DE4, (DWORD)MSG_WriteByte);
+SetJump(0x08067D96, (DWORD)MSG_WriteBigString);
+SetJump(0x08067F32, (DWORD)MSG_ReadShort);
+SetJump(0x08068146, (DWORD)MSG_ReadStringLine);
+SetJump(0x080691FC, (DWORD)MSG_WriteDeltaStruct);
+SetJump(0x08069428, (DWORD)MSG_WriteDeltaClient);
+SetJump(0x080693DA, (DWORD)MSG_WriteDeltaArchivedEntity);
+SetJump(0x0806938C, (DWORD)MSG_WriteDeltaEntity);
+SetJump(0x0806988A, (DWORD)MSG_ReadDeltaStruct);
+SetJump(0x08069A54, (DWORD)MSG_ReadDeltaClient);
+SetJump(0x08069A0E, (DWORD)MSG_ReadDeltaArchivedEntity);
+SetJump(0x080699C8, (DWORD)MSG_ReadDeltaEntity);
+SetJump(0x080694A0, (DWORD)MSG_ReadDeltaField);
+SetJump(0x08069C10, (DWORD)MSG_ReadDeltaHudElems);
+SetJump(0x08069AC4, (DWORD)MSG_WriteDeltaHudElems);
+SetJump(0x08069D40, (DWORD)MSG_WriteDeltaPlayerstate);
+SetJump(0x0806A608, (DWORD)MSG_ReadDeltaPlayerstate);
+SetJump(0x08067FEC, (DWORD)MSG_ReadLong64);
+SetJump(0x080680CC, (DWORD)MSG_ReadBigString);
+SetJump(0x08068062, (DWORD)MSG_ReadCommandString);
+SetJump(0x08068ADE, (DWORD)MSG_ReadDeltaUsercmdKey);
+SetJump(0x08068E1C, (DWORD)MSG_WriteDeltaField);
+SetJump(0x08069142, (DWORD)MSG_WriteDeltaObjective);
+SetJump(0x080697D8, (DWORD)MSG_ReadDeltaObjective);
 
-// Client
-SetJump(0x080609A2, (DWORD)CL_SwitchToLocalClient);
-SetJump(0x08090DC2, (DWORD)CL_ForwardCommandToServer);
+SetJump(0x0806830C, (DWORD)MSG_ReadKey);
+SetJump(0x080683EC, (DWORD)MSG_ReadDeltaKeyShort);
+SetJump(0x08068660, (DWORD)MSG_ReadForwardRightMoveMask);
+SetJump(0x080682A0, (DWORD)MSG_ReadDeltaKey);
+SetJump(0x080686A6, (DWORD)MSG_ClampForwardRightmove);
+SetJump(0x08067EA6, (DWORD)MSG_WriteAngle16);
+SetJump(0x080681C8, (DWORD)MSG_ReadAngle16);
 
-// Server
+SetJump(0x08066A70, (DWORD)Huff_Init);
+SetJump(0x0806610E, (DWORD)Huff_addRef);
+SetJump(0x080663F6, (DWORD)Huff_offsetReceive);
+SetJump(0x08066550, (DWORD)Huff_offsetTransmit);
+
+
 SetJump(0x08092906, (DWORD)SV_Shutdown);
+SetJump(0x080B5904, (DWORD)I_CleanChar);
+SetJump(0x080F721C, (DWORD)G_BroadcastVoice);
+SetJump(0x0806B9CA, (DWORD)Netchan_Process);
+SetJump(0x0806AE1A, (DWORD)NetProf_PrepProfiling);
+SetJump(0x080989C6, (DWORD)SV_SendMessageToClient);
+SetJump(0x0808F82A, (DWORD)SV_ExecuteClientMessage);
 SetJump(0x08090BA2, (DWORD)SV_ShutdownGameProgs);
 SetJump(0x0809216E, (DWORD)SV_Init);
 SetJump(0x080949DE, (DWORD)SV_Frame);
 SetJump(0x0808BBDC, (DWORD)SV_AddOperatorCommands);
 SetJump(0x08090BE6, (DWORD)SV_SetGametype);
 SetJump(0x08090E6C, (DWORD)SV_SetConfigstring);
-
-// Script Runtime (Scr)
 SetJump(0x0807F9DC, (DWORD)Scr_Abort);
 SetJump(0x0807F9B2, (DWORD)Scr_Shutdown);
 SetJump(0x0807F91E, (DWORD)Scr_Init);
@@ -374,10 +399,50 @@ SetJump(0x08084B88, (DWORD)Scr_AddUndefined);
 SetJump(0x08084CBE, (DWORD)Scr_AddVector);
 SetJump(0x08118CC0, (DWORD)Scr_AddEntity);
 SetJump(0x08118E4E, (DWORD)Scr_Notify);
+SetJump(0x080AC246, (DWORD)Com_LoadSoundAliasFile);
+SetJump(0x08091C02, (DWORD)SV_SpawnServer);
+SetJump(0x08115AE2, (DWORD)Scr_ParseGameTypeList);
+SetJump(0x0810695E, (DWORD)G_GetSavePersist);
+SetJump(0x0806C40C, (DWORD)NET_OutOfBandPrint);
+SetJump(0x080B294E, (DWORD)Dvar_SetStringByName);
+SetJump(0x0812F498, (DWORD)FX_FreeSystem);
+SetJump(0x0812F4AC, (DWORD)FX_FreeActive);
+SetJump(0x0813127A, (DWORD)FX_Free);
+SetJump(0x0812F4C0, (DWORD)FX_AdjustCamera);
+SetJump(0x0812F4EE, (DWORD)FX_AdjustTime);
+SetJump(0x0812F528, (DWORD)FX_WarpTime);
+SetJump(0x080C3264, (DWORD)XModelPrecache);
+SetJump(0x0808724F, (DWORD)ScriptParse);
+SetJump(0x08087306, (DWORD)yyparse);
+SetJump(0x08077FFE, (DWORD)CompileError);
+SetJump(0x0808AA30, (DWORD)SV_GetPlayerByName);
+SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
+SetJump(0x080624D2, (DWORD)Com_ResetFrametime);
+SetJump(0x080AAEDC, (DWORD)Com_UnloadSoundAliases);
+SetJump(0x08107058, (DWORD)G_ShutdownGame);
+SetJump(0x08090A96, (DWORD)Com_FreeWeaponInfoMemory);
+SetJump(0x08090D6A, (DWORD)SV_RestartGameProgs);
+SetJump(0x08090CD2, (DWORD)SV_InitGameVM);
+SetJump(0x08090D9C, (DWORD)SV_InitGameProgs);
+SetJump(0x08090DC2, (DWORD)SV_GameCommand);
+SetJump(0x0809301C, (DWORD)SV_SendServerCommand);
+SetJump(0x080A93E4, (DWORD)ReplaceStringInternal);
+SetJump(0x080A9362, (DWORD)Z_VirtualAllocInternal);
+SetJump(0x080A934E, (DWORD)VirtualAlloc);
+SetJump(0x08098E3A, (DWORD)SV_ArchiveSnapshot);
+
+
 
 // ================================== Variables ==================================
 
+
+
+SetDword(0x081F4898, (DWORD)msgInit);
+SetDword(0x0815A4E0, (DWORD)kbitmask);
+SetDword(0x081E6860, (DWORD)msgHuff);
 SetDword(0x0819EF50, (DWORD)com_errorEntered);
+SetDword(0x0848B1DC, (DWORD)sv_padPackets);
+SetDword(0x0848B1B4, (DWORD)sv_fps);
 SetDword(0x085501C4, (DWORD)saved_euid);
 SetDword(0x085178A8, (DWORD)dvar_modifiedFlags);
 SetDword(0x0819EF48, (DWORD)com_codeTimeScale);
@@ -444,3 +509,4 @@ SetDword(0x08168644, (DWORD)g_languages);
 SetDword(0x0848B7F4, (DWORD)fs_checksumFeed);
 SetDword(0x0819EF40, (DWORD)com_frameTime);
 SetDword(0x0819EF44, (DWORD)com_lastFrameTime);
+SetDword(0x083DFA00, (DWORD)gameInitialized);

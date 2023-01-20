@@ -1,4 +1,4 @@
-#include "server.h"
+#include "../qcommon/qcommon.h"
 
 serverStatic_t svs;
 server_t sv;

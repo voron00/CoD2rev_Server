@@ -1,4 +1,4 @@
-#include "server.h"
+#include "../qcommon/qcommon.h"
 
 void SV_PacketEvent( netadr_t from, msg_t *msg )
 {

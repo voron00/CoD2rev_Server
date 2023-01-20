@@ -25,7 +25,7 @@ static int cmd_argc;
 static char *cmd_argv[MAX_STRING_TOKENS];        // points into cmd_tokenized
 static char cmd_tokenized[BIG_INFO_STRING + MAX_STRING_TOKENS];         // will have 0 bytes inserted
 static char cmd_cmd[BIG_INFO_STRING];         // the original command we received (no token processing)
-static cmd_function_t  *cmd_functions;      // possible commands to execute
+static cmd_function_t *cmd_functions;      // possible commands to execute
 
 /*
 ============
@@ -149,7 +149,6 @@ void Cmd_ExecuteString( const char *text )
 	{
 		return;
 	}
-
 #ifndef DEDICATED
 	// check client game commands
 	if ( com_cl_running && com_cl_running->current.integer && CL_GameCommand() )
@@ -157,20 +156,17 @@ void Cmd_ExecuteString( const char *text )
 		return;
 	}
 #endif
-
 	// check server game commands
 	if ( com_sv_running && com_sv_running->current.integer && SV_GameCommand() )
 	{
 		return;
 	}
-
 #ifndef DEDICATED
 	// check ui commands
 	if ( com_cl_running && com_cl_running->current.integer && UI_GameCommand() )
 	{
 		return;
 	}
-
 	// send it as a server command if we are connected
 	// this will usually result in a chat message
 	CL_ForwardCommandToServer( text );

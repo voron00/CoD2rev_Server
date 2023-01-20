@@ -1,5 +1,11 @@
 #pragma once
 
+#define MAX_HUDELEMENTS 31
+#define MAX_HUDELEMS_ARCHIVAL MAX_HUDELEMENTS
+#define MAX_HUDELEMS_CURRENT MAX_HUDELEMENTS
+#define MAX_STATS 6
+#define MAX_OBJECTIVES 16
+
 typedef struct gclient_s gclient_t;
 typedef struct gentity_s gentity_t;
 typedef int scr_entref_t;
@@ -139,6 +145,25 @@ typedef struct objective_s
 	int icon;
 } objective_t;
 
+typedef enum
+{
+	HE_TYPE_FREE = 0x0,
+	HE_TYPE_TEXT = 0x1,
+	HE_TYPE_VALUE = 0x2,
+	HE_TYPE_PLAYERNAME = 0x3,
+	HE_TYPE_MAPNAME = 0x4,
+	HE_TYPE_GAMETYPE = 0x5,
+	HE_TYPE_MATERIAL = 0x6,
+	HE_TYPE_TIMER_DOWN = 0x7,
+	HE_TYPE_TIMER_UP = 0x8,
+	HE_TYPE_TENTHS_TIMER_DOWN = 0x9,
+	HE_TYPE_TENTHS_TIMER_UP = 0xA,
+	HE_TYPE_CLOCK_DOWN = 0xB,
+	HE_TYPE_CLOCK_UP = 0xC,
+	HE_TYPE_WAYPOINT = 0xD,
+	HE_TYPE_COUNT = 0xE,
+} he_type_t;
+
 typedef struct
 {
 	char r;
@@ -191,8 +216,8 @@ typedef struct hudelem_s
 
 typedef struct hudElemState_s
 {
-	hudelem_t current[31];
-	hudelem_t archival[31];
+	hudelem_t current[MAX_HUDELEMS_CURRENT];
+	hudelem_t archival[MAX_HUDELEMS_ARCHIVAL];
 } hudElemState_t;
 
 typedef struct
@@ -261,8 +286,7 @@ typedef struct playerState_s
 	int damageYaw;
 	int damagePitch;
 	int damageCount;
-	int stats[3];
-	int persistant[3];
+	int stats[MAX_STATS];
 	int ammo[128];
 	int ammoclip[128];
 	int weapons[2];
@@ -293,7 +317,7 @@ typedef struct playerState_s
 	int shellshockIndex;
 	int shellshockTime;
 	int shellshockDuration;
-	objective_t objective[16];
+	objective_t objective[MAX_OBJECTIVES];
 	int deltaTime;
 	hudElemState_t hud;
 } playerState_t;

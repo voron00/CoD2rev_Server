@@ -1,6 +1,4 @@
 #include "../qcommon/qcommon.h"
-#include "../universal/com_files.h"
-#include "../universal/dvar.h"
 #include "stringed_public.h"
 
 dvar_t* loc_language;

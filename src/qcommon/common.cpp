@@ -5,7 +5,6 @@
 
 #include "../clientscript/clientscript_public.h"
 #include "../universal/universal_public.h"
-#include "../server/server.h"
 #include "../sound/sound_public.h"
 #include "../xanim/xanim_public.h"
 

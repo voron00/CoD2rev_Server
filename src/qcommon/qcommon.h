@@ -216,6 +216,8 @@ typedef enum
 	MSG_NORDPRINT
 } msgtype_t;
 
+typedef void (*xcommand_t)(void);
+
 #define PORT_SERVER 28960
 #define	PORT_ANY -1
 
@@ -265,11 +267,20 @@ typedef struct
 	huff_t decompressor;
 } huffman_t;
 
-typedef void (*xcommand_t)(void);
+typedef struct NetField
+{
+	const char *name;
+	int offset;
+	int bits;
+} netField_t;
+
+#include "../game/g_shared.h"
+#include "../server/server.h"
 
 void Huff_Compress( msg_t *buf, int offset );
 void Huff_Decompress( msg_t *buf, int offset );
 void Huff_Init( huffman_t *huff );
+void MSG_initHuffman();
 void Huff_addRef( huff_t* huff, byte ch );
 int  Huff_Receive( node_t *node, int *ch, byte *fin );
 void Huff_transmit( huff_t *huff, int ch, byte *fout );
@@ -280,29 +291,60 @@ int  Huff_getBit( byte *fout, int *offset );
 
 void MSG_Init( msg_t *buf, byte *data, int length );
 void MSG_BeginReading( msg_t *msg );
-int MSG_ReadBits( msg_t *msg, int bits );
-int MSG_ReadBitsCompress(const byte* input, int readsize, byte* outputBuf, int outputBufSize);
+void MSG_WriteBits(msg_t *msg, int bits, int bitcount);
+void MSG_WriteBit0( msg_t* msg );
+void MSG_WriteBit1(msg_t *msg);
+int MSG_ReadBits(msg_t *msg, int bits);
+int MSG_ReadBit(msg_t *msg);
 int MSG_WriteBitsCompress( const byte *datasrc, byte *buffdest, int bytecount);
+int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize);
+void MSG_WriteByte( msg_t *msg, int c );
+void MSG_WriteData(msg_t *buf, const void *data, int length);
+void MSG_WriteShort( msg_t *msg, int c );
+void MSG_WriteLong( msg_t *msg, int c );
+void MSG_WriteLong64( msg_t *msg, int c );
+char *MSG_ReadString( msg_t *msg );
+void MSG_WriteString( msg_t *sb, const char *s );
+void MSG_WriteBigString( msg_t *sb, const char *s );
 int MSG_ReadByte( msg_t *msg );
 int MSG_ReadShort( msg_t *msg );
 int MSG_ReadLong( msg_t *msg );
-char *MSG_ReadString( msg_t *msg );
+int MSG_ReadLong64( msg_t *msg );
+void MSG_ReadData(msg_t *msg, void *data, int len);
+char *MSG_ReadCommandString( msg_t *msg );
+char *MSG_ReadCommandString( msg_t *msg );
 char *MSG_ReadBigString( msg_t *msg );
-void MSG_WriteByte( msg_t *sb, int c );
-void MSG_WriteShort( msg_t *sb, int c );
-void MSG_WriteLong( msg_t *sb, int c );
-void MSG_WriteString( msg_t *sb, const char *s );
-void MSG_WriteBigString( msg_t *sb, const char *s );
-void MSG_WriteData( msg_t *buf, const void *data, int length );
+char *MSG_ReadStringLine( msg_t *msg );
+void MSG_WriteReliableCommandToBuffer(const char *source, char *destination, int length);
+void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *ucmd);
+void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to);
+void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const netField_t *field);
+void MSG_WriteDeltaStruct(msg_t *msg, const byte *from, const byte *to, qboolean force, int numFields, int indexBits, netField_t *stateFields, qboolean bChangeBit);
+void MSG_WriteDeltaObjective(msg_t *msg,objective_t *from,objective_t *to, int lcfield, int numFields, netField_t *objFields);
+void MSG_WriteDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, qboolean force);
+void MSG_WriteDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int flags);
+void MSG_WriteDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, qboolean force);
+void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t *field, qboolean print);
+void MSG_ReadDeltaObjective(msg_t *msg, objective_t *from, objective_t *to, int numFields, netField_t *objFields);
+void MSG_ReadDeltaStruct(msg_t *msg, const void *from, void *to, unsigned int number, int numFields, int indexBits, netField_t *stateFields);
+void MSG_ReadDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, int number);
+void MSG_ReadDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int number);
+void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int number);
+void MSG_WriteDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count);
+void MSG_ReadDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count);
+void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to);
+void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to);
+
 unsigned int Com_BlockChecksum( void *buffer, int length );
 unsigned int Com_BlockChecksumKey( void *buffer, int length, int key );
+
 void Com_StartupVariable( const char *match );
 void Com_PrintMessage( conChannel_t channel, const char *fmt, ... );
 void Com_Printf( const char *fmt, ...);
 void Com_DPrintf( const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
-qboolean Com_SafeMode( void );
 void Com_WriteConfigToFile(const char *contents);
+qboolean Com_SafeMode( void );
 
 void Com_LoadBsp(const char *filename);
 void Com_UnloadBsp();
