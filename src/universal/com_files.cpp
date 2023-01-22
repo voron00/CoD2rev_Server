@@ -1664,6 +1664,11 @@ void FS_FreeFile(void* buffer)
 	Hunk_FreeTempMemory(buffer);
 }
 
+void FS_ResetFiles()
+{
+	fs_loadStack = 0;
+}
+
 int FS_ReadFile(const char* qpath, void** buffer)
 {
 	char* buf;

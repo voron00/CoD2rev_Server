@@ -1120,23 +1120,3 @@ int Com_ParseIntOnLine(const char **buf_p)
 	token = Com_ParseOnLine(buf_p);
 	return atoi(token);
 }
-
-/*
-==============
-Com_Parse1DMatrix
-==============
-*/
-void Com_Parse1DMatrix(const char **buf_p, int x, float *m)
-{
-	const char* token;
-	int i;
-
-	Com_MatchToken(buf_p, "(", 0);
-	for (i = 0; i < x; ++i)
-	{
-		token = Com_Parse(buf_p);
-		m[i] = atof(token);
-	}
-	Com_MatchToken(buf_p, ")", 0);
-}
-

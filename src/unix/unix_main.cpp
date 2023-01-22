@@ -352,43 +352,43 @@ void Sys_Init(void)
 
 #if defined __linux__
 #if defined __i386__
-  Dvar_SetCommand( "arch", "linux i386" );
+  Dvar_RegisterString( "arch", "linux i386", DVAR_ROM );
 #elif defined __alpha__
-  Dvar_SetCommand( "arch", "linux alpha" );
+  Dvar_RegisterString( "arch", "linux alpha", DVAR_ROM );
 #elif defined __sparc__
-  Dvar_SetCommand( "arch", "linux sparc" );
+  Dvar_RegisterString( "arch", "linux sparc", DVAR_ROM );
 #elif defined __FreeBSD__
 
 #if defined __i386__ // FreeBSD
-  Dvar_SetCommand( "arch", "freebsd i386" );
+  Dvar_RegisterString( "arch", "freebsd i386", DVAR_ROM );
 #elif defined __alpha__
-  Dvar_SetCommand( "arch", "freebsd alpha" );
+  Dvar_RegisterString( "arch", "freebsd alpha", DVAR_ROM );
 #else
-  Dvar_SetCommand( "arch", "freebsd unknown" );
+  Dvar_RegisterString( "arch", "freebsd unknown", DVAR_ROM );
 #endif // FreeBSD
 
 #else
-  Dvar_SetCommand( "arch", "linux unknown" );
+  Dvar_RegisterString( "arch", "linux unknown", DVAR_ROM );
 #endif
 #elif defined __sun__
 #if defined __i386__
-  Dvar_SetCommand( "arch", "solaris x86" );
+  Dvar_RegisterString( "arch", "solaris x86", DVAR_ROM );
 #elif defined __sparc__
-  Dvar_SetCommand( "arch", "solaris sparc" );
+  Dvar_RegisterString( "arch", "solaris sparc", DVAR_ROM );
 #else
-  Dvar_SetCommand( "arch", "solaris unknown" );
+  Dvar_RegisterString( "arch", "solaris unknown", DVAR_ROM );
 #endif
 #elif defined __sgi__
 #if defined __mips__
-  Dvar_SetCommand( "arch", "sgi mips" );
+  Dvar_RegisterString( "arch", "sgi mips", DVAR_ROM );
 #else
-  Dvar_SetCommand( "arch", "sgi unknown" );
+  Dvar_RegisterString( "arch", "sgi unknown", DVAR_ROM );
 #endif
 #else
-  Dvar_SetCommand( "arch", "unknown" );
+  Dvar_RegisterString( "arch", "unknown", DVAR_ROM );
 #endif
 
-  Dvar_SetCommand( "username", Sys_GetCurrentUser() );
+  Dvar_RegisterString( "username", Sys_GetCurrentUser(), DVAR_ROM );
 
 #ifdef GLWIMP
   IN_Init();

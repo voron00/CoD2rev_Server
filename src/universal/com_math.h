@@ -1,5 +1,7 @@
 #pragma once
 
+#include "math.h"
+
 typedef float vec_t;
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
@@ -117,3 +119,8 @@ inline int I_min(int x, int y)
 int VectorCompare(const vec3_t v1, const vec3_t v2);
 int Vector2Compare(const vec2_t v1, const vec2_t v2);
 int Vector4Compare(const vec4_t v1, const vec4_t v2);
+vec_t VectorLength( const vec3_t v );
+vec_t Vec2Length( const vec2_t v );
+vec_t VectorLengthSquared( const vec3_t v );
+vec_t Vec4LengthSq( const vec4_t v);
+void VectorInverse( vec3_t v );

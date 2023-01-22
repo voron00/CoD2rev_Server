@@ -102,6 +102,7 @@ typedef struct client_s
 	byte			mutedClients[MAX_CLIENTS];
 	byte			hasVoip;
 } client_t;
+static_assert((sizeof(client_t) == 0x78F14), "ERROR: client_t size is invalid!");
 
 typedef struct archivedSnapshot_s
 {
@@ -127,7 +128,7 @@ typedef struct cachedSnapshot_s
 	int usesDelta;
 } cachedSnapshot_t;
 
-typedef struct
+typedef struct archivedEntityShared_s
 {
 	int svFlags;
 	int clientMask[2];
@@ -177,7 +178,8 @@ typedef struct
 	netadr_t authorizeAddress;
 	netProfileInfo_t *netProfilingBuf;
 	tempban_t bans[16];
-} serverStatic_t; // possibly more stuff here
+} serverStatic_t;
+static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is invalid!");
 
 typedef enum
 {
@@ -205,7 +207,7 @@ typedef struct svEntity_s
 	int	linkcontents;
 	float linkmin[2];
 	float linkmax[2];
-} svEntity_t;
+} svEntity_t;  // Not yet verified !!!
 
 typedef struct
 {
@@ -236,7 +238,7 @@ typedef struct
 	float ucompAve;
 	int	ucompNum;
 	char gametype[MAX_QPATH];
-} server_t;
+} server_t; // Not yet verified !!!
 
 extern server_t sv;
 extern serverStatic_t svs;

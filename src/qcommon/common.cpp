@@ -5,7 +5,6 @@
 
 #include "../clientscript/clientscript_public.h"
 #include "../universal/universal_public.h"
-#include "../sound/sound_public.h"
 #include "../xanim/xanim_public.h"
 
 dvar_t *com_dedicated;
@@ -511,7 +510,6 @@ void Com_Restart()
 	DObjShutdown();
 	XAnimShutdown();
 	CM_Shutdown();
-	SND_ShutdownChannels();
 	Hunk_Clear();
 	Scr_Init();
 	Scr_Settings(com_logfile->current.integer || com_developer->current.integer, com_developer_script->current.integer, com_developer->current.integer);
@@ -527,7 +525,6 @@ void Com_Close()
 	DObjShutdown();
 	XAnimShutdown();
 	CM_Shutdown();
-	SND_ShutdownChannels();
 	Hunk_Clear();
 	Scr_Shutdown();
 }
@@ -599,10 +596,10 @@ void Com_ErrorCleanup( void )
 		Scr_Abort();
 	}
 
-	SND_ErrorCleanup();
 	Com_CleanupBsp();
 	CM_Cleanup();
 	Com_ResetParseSessions();
+	FS_ResetFiles();
 
 	if ( com_errorType == ERR_DROP )
 		Cbuf_Init();
@@ -937,29 +934,6 @@ static void Com_Crash_f( void )
 	* ( int * ) 0 = 0x12345678;
 }
 
-void Com_StartHunkUsers()
-{
-	jmp_buf* abortframe = (jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR);
-
-	if (setjmp(*abortframe))
-		Sys_Error("Error during initialization");
-
-#ifndef DEDICATED
-	UI_SetMap("", "");
-	CL_StartHunkUsers();
-#endif
-	Com_EventLoop();
-#ifndef DEDICATED
-	if ( com_dedicated )
-	{
-		if ( !com_dedicated->current.integer )
-		{
-			UI_SetActiveMenu(1);
-		}
-	}
-#endif
-}
-
 int Com_ModifyMsec( int msec )
 {
 	int clampTime;
@@ -1081,10 +1055,7 @@ void Com_Frame( void )
 	}
 
 	if ( com_errorEntered )
-	{
 		Com_ErrorCleanup();
-		Com_StartHunkUsers();
-	}
 }
 
 void Com_SetCinematic()

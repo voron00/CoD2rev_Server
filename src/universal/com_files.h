@@ -122,3 +122,5 @@ int FS_LoadStack();
 void FS_ShutdownServerIwdNames();
 void FS_ShutdownServerReferencedIwds();
 int FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames);
+int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
+void FS_ResetFiles();

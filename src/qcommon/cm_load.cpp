@@ -2,13 +2,9 @@
 #include "cm_local.h"
 #include "sys_thread.h"
 
-static clipMap_t cm;
+clipMap_t cm;
+clipMapExtra_t cme;
 
-/*
-==============
-CM_InitThreadData
-==============
-*/
 void CM_InitThreadData(int threadContext)
 {
 	TraceThreadInfo *traceThreadInfo;
@@ -31,12 +27,55 @@ void CM_InitThreadData(int threadContext)
 	memcpy(box_model, &cm.box_model, sizeof(cmodel_t));
 }
 
-/*
-==============
-CM_Shutdown
-==============
-*/
+void* CM_Hunk_Alloc(size_t size)
+{
+	return Hunk_Alloc(size);
+}
+
+void CM_Hunk_CheckTempMemoryHighClear()
+{
+	;
+}
+
+void CM_Hunk_ClearTempMemoryHigh()
+{
+	Hunk_ClearTempMemoryHighInternal();
+}
+
+void* CM_Hunk_AllocateTempMemoryHigh(int size)
+{
+	return Hunk_AllocateTempMemoryHighInternal(size);
+}
+
+void CM_InitAllThreadData()
+{
+	CM_InitThreadData(THREAD_CONTEXT_MAIN);
+}
+
+void CM_LoadMapData(const char *name)
+{
+	CM_LoadMapFromBsp(name, 1);
+	CM_LoadStaticModels();
+}
+
+void CM_LoadMap(const char *name, int *checksum)
+{
+	if ( !name || !*name )
+	{
+		Com_Error(ERR_DROP, "CM_LoadMap: NULL name");
+	}
+
+	CM_LoadMapData(name);
+	CM_InitAllThreadData();
+	*checksum = cm.checksum;
+}
+
 void CM_Shutdown()
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	Com_Memset(&cm, 0, sizeof(clipMap_t));
+}
+
+void CM_Cleanup(void)
+{
+	cme.header = 0;
 }

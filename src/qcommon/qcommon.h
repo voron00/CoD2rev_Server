@@ -350,8 +350,6 @@ void Com_LoadBsp(const char *filename);
 void Com_UnloadBsp();
 void Com_CleanupBsp();
 
-void CM_Cleanup();
-
 void Com_ShutdownDObj();
 void Com_InitDObj();
 
@@ -367,5 +365,17 @@ void Com_Quit_f( void );
 
 qboolean SV_GameCommand();
 
+#include "cm_local.h"
 void CM_InitThreadData(int threadContext);
+void CM_LoadMapFromBsp(const char *name, bool usePvs);
+void* CM_Hunk_Alloc(size_t size);
+void CM_Hunk_CheckTempMemoryHighClear();
+void CM_Hunk_ClearTempMemoryHigh();
+void* CM_Hunk_AllocateTempMemoryHigh(int size);
+byte* Com_GetBspLump(int type, unsigned int elemSize, unsigned int *count);
+bool Com_BspHasLump(int type);
+void CM_LoadMapFromBsp(const char *name, bool usePvs);
+void CM_LoadStaticModels();
+void CM_Cleanup(void);
 void CM_Shutdown();
+void CM_TraceCapsuleThroughCapsule(traceWork_s *tw, trace_t *trace);

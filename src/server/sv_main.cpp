@@ -7,7 +7,7 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 
 void SV_Frame(int msec)
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	//UNIMPLEMENTED(__FUNCTION__);
 }
 
 void SV_Shutdown( const char* finalmsg )

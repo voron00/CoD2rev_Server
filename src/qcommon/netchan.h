@@ -11,7 +11,32 @@ typedef struct
 	int cmdType;
 } reliableCommands_t;
 
-typedef void netProfileInfo_t;
+struct netProfilePacket_t
+{
+	int iTime;
+	int iSize;
+	int bFragment;
+};
+
+struct netProfileStream_t
+{
+	netProfilePacket_t packets[60];
+	int iCurrPacket;
+	int iBytesPerSecond;
+	int iLastBPSCalcTime;
+	int iCountedPackets;
+	int iCountedFragments;
+	int iFragmentPercentage;
+	int iLargestPacket;
+	int iSmallestPacket;
+};
+
+typedef struct netProfileInfo_s
+{
+	netProfileStream_t send;
+	netProfileStream_t recieve;
+} netProfileInfo_t;
+static_assert((sizeof(netProfileInfo_t) == 0x5E0), "ERROR: netProfileInfo_t size is invalid!");
 
 typedef struct
 {
@@ -28,15 +53,11 @@ typedef struct
 	int			unsentFragmentStart;
 	int			unsentLength;
 	byte		unsentBuffer[MAX_MSGLEN];
-	netProfileInfo_t *netProfile;
+	netProfileInfo_t *prof;
 } netchan_t;
+static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
 
-const char *NET_AdrToString( netadr_t a );
-
-qboolean NET_GetLoopPacket( netsrc_t sock, netadr_t *net_from, msg_t *net_message );
-void NET_SendLoopPacket( netsrc_t sock, int length, const void *data, netadr_t to );
-void Netchan_Init( unsigned short port );
-void Netchan_Setup( netsrc_t sock, netchan_t *chan, netadr_t adr, unsigned int qport );
-qboolean Netchan_Process( netchan_t *chan, msg_t *msg );
-qboolean Netchan_TransmitNextFragment( netchan_t *chan );
-qboolean Netchan_Transmit( netchan_t *chan, int length, const byte *data );
+qboolean NET_GetLoopPacket(int sock, netadr_t *net_from, msg_t *net_message);
+void NET_SendLoopPacket(int sock, int length, const void *data, netadr_t to);
+const char  *NET_AdrToString( netadr_t a );
+void Netchan_Init(uint16_t port);

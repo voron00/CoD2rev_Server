@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 #include "../qcommon/cmd.h"
 
-#define SYSCON_DEFAULT_WIDTH    540
+#define SYSCON_DEFAULT_WIDTH    620
 #define SYSCON_DEFAULT_HEIGHT   450
 
 #define CLIENT_WINDOW_TITLE "CoD2"
@@ -53,15 +53,22 @@ typedef struct
 	HWND hWnd;
 	HWND hwndBuffer;
 
+#if 0
 	HWND hwndButtonClear;
 	HWND hwndButtonCopy;
 	HWND hwndButtonQuit;
+#endif
 
 	HWND hwndErrorBox;
 	HWND hwndErrorText;
 
+	HBITMAP codLogo;
+	HWND codLogoWindow;
+
+#if 0
 	HBITMAP hbmLogo;
 	HBITMAP hbmClearBitmap;
+#endif
 
 	HBRUSH hbrEditBackground;
 
@@ -69,8 +76,6 @@ typedef struct
 	HFONT hfButtonFont;
 
 	HWND hwndInputLine;
-
-	char errorString[80];
 
 	char consoleText[512], returnedText[512];
 	int visLevel;
@@ -86,13 +91,14 @@ static WinConData s_wcd;
 static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam ) {
 
 	static qboolean s_timePolarity;
-	int cx, cy;
-	float sx; /*, sy*/
-	float x, y, w, h;
+	//int cx, cy;
+	//float sx; /*, sy*/
+	//float x, y, w, h;
 
 	switch ( uMsg )
 	{
 	case WM_SIZE:
+#if 0
 		// NERVE - SMF
 		cx = LOWORD( lParam );
 		cy = HIWORD( lParam );
@@ -102,7 +108,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		if ( cy < SYSCON_DEFAULT_HEIGHT )
 			cy = SYSCON_DEFAULT_HEIGHT;
 */
-		sx = (float)cx / SYSCON_DEFAULT_WIDTH;
+		//sx = (float)cx / SYSCON_DEFAULT_WIDTH;
 		//sy = (float)cy / SYSCON_DEFAULT_HEIGHT;
 
 		x = 8;
@@ -129,6 +135,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		s_wcd.windowWidth = cx;
 		s_wcd.windowHeight = cy;
 		// -NERVE - SMF
+#endif
 		break;
 	case WM_ACTIVATE:
 		if ( LOWORD( wParam ) != WA_INACTIVE ) {
@@ -141,8 +148,8 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		return 0;
 	case WM_CTLCOLORSTATIC:
 		if ( ( HWND ) lParam == s_wcd.hwndBuffer ) {
-			SetBkColor( ( HDC ) wParam, RGB( 0, 0, 0 ) );
-			SetTextColor( ( HDC ) wParam, RGB( 0xff, 0xff, 0xff ) );
+			SetBkColor( ( HDC ) wParam, RGB( 0xff, 0xff, 0xff ) );
+			SetTextColor( ( HDC ) wParam, RGB( 0, 0, 0 ) );
 
 #if 0   // this draws a background in the edit box, but there are issues with this
 			if ( ( hdcScaled = CreateCompatibleDC( ( HDC ) wParam ) ) != 0 ) {
@@ -179,7 +186,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	case WM_CREATE:
 //		s_wcd.hbmLogo = LoadBitmap( g_wv.hInstance, MAKEINTRESOURCE( IDB_BITMAP1 ) );
 //		s_wcd.hbmClearBitmap = LoadBitmap( g_wv.hInstance, MAKEINTRESOURCE( IDB_BITMAP2 ) );
-		s_wcd.hbrEditBackground = CreateSolidBrush( RGB( 0, 0, 0 ) );
+		s_wcd.hbrEditBackground = CreateSolidBrush( RGB( 0xff, 0xff, 0xff ) );
 		SetTimer( hWnd, 1, 1000, NULL );
 		break;
 	case WM_ERASEBKGND:
@@ -276,12 +283,12 @@ void Sys_CreateConsole( void ) {
 	HDC hDC;
 	WNDCLASS wc;
 	RECT rect;
-	const char *DEDCLASS = CLIENT_WINDOW_TITLE " Console";
+	const char *DEDCLASS = CLIENT_WINDOW_TITLE " WinConsole";
 	const char *WINDOWNAME = CLIENT_WINDOW_TITLE " Console";
 
 	int nHeight;
 	int swidth, sheight;
-	int DEDSTYLE = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_SIZEBOX;
+	int DEDSTYLE = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX;
 
 	memset( &wc, 0, sizeof( wc ) );
 
@@ -314,7 +321,7 @@ void Sys_CreateConsole( void ) {
 	s_wcd.windowWidth = rect.right - rect.left + 1;
 	s_wcd.windowHeight = rect.bottom - rect.top + 1;
 
-	s_wcd.hWnd = CreateWindowEx( 0,
+	s_wcd.hWnd = CreateWindowExA( 0,
 								 DEDCLASS,
 								 WINDOWNAME,
 								 DEDSTYLE,
@@ -356,11 +363,11 @@ void Sys_CreateConsole( void ) {
 	//
 	s_wcd.hwndInputLine = CreateWindow( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER |
 										ES_LEFT | ES_AUTOHSCROLL,
-										6, 400, 528, 20,
+										6, 400, 608, 20,
 										s_wcd.hWnd,
 										( HMENU ) INPUT_ID,         // child window ID
 										g_wv.hInstance, NULL );
-
+#if 0
 	//
 	// create the buttons
 	//
@@ -384,14 +391,22 @@ void Sys_CreateConsole( void ) {
 										 ( HMENU ) QUIT_ID,         // child window ID
 										 g_wv.hInstance, NULL );
 	SendMessageA( s_wcd.hwndButtonQuit, WM_SETTEXT, 0, ( LPARAM ) "quit" );
+#endif
 
+      s_wcd.codLogo = LoadBitmapA(g_wv.hInstance, MAKEINTRESOURCEA(IDB_BITMAP1));
+
+      if (  s_wcd.codLogo )
+      {
+        s_wcd.codLogoWindow = CreateWindowExA(0, "Static", 0, 0x5000000E, 5, 5, 0, 0, s_wcd.hWnd, ( HMENU )INPUT_ID, g_wv.hInstance, 0);
+        SendMessageA(s_wcd.codLogoWindow, 0x172u, 0, ( LPARAM )s_wcd.codLogo);
+      }
 
 	//
 	// create the scrollbuffer
 	//
 	s_wcd.hwndBuffer = CreateWindow( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER |
 									 ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY,
-									 6, 6, 526, 390,
+									 6, 70, 606, 324,
 									 s_wcd.hWnd,
 									 ( HMENU ) EDIT_ID,             // child window ID
 									 g_wv.hInstance, NULL );

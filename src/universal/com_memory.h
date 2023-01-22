@@ -7,6 +7,7 @@
 #define Com_Memcmp memcmp
 
 #define MIN_DEDICATED_COMHUNKMEGS 1
+
 #define MIN_COMHUNKMEGS 80
 #define DEF_COMHUNKMEGS 160
 #define MAX_COMHUNKMEGS 160
@@ -40,20 +41,45 @@ struct fileData_s
 
 void *Z_TryMallocInternal( int size );
 void *Z_MallocInternal( int size );
+void *Z_MallocGarbageInternal( int size );
 void Z_FreeInternal( void *ptr );
 char* CopyStringInternal(const char *in);
 void FreeStringInternal(char *str);
-void *Hunk_Alloc( int size );
-void* Hunk_AllocateTempMemory(int size);
-void Hunk_ClearTempMemory();
-void Hunk_ClearTempMemoryHigh();
+void* Hunk_AllocAlignInternal(size_t size, int aligment);
+void *Hunk_AllocInternal( int size );
+void* Hunk_AllocateTempMemoryInternal(int size);
+void* Hunk_AllocateTempMemoryHighInternal(int size);
+void* Hunk_AllocLowAlignInternal(size_t size, int aligment);
+void* Hunk_AllocLowInternal(size_t n);
+void Hunk_ConvertTempToPermLowInternal();
+void* Hunk_ReallocateTempMemoryInternal(int size);
 void Hunk_FreeTempMemory(void* buf);
+void Hunk_ClearData();
+void Hunk_ClearTempMemoryInternal();
+void Hunk_ClearTempMemoryHighInternal();
+void Hunk_ClearHigh(int memory);
+void Hunk_ClearLow(int memory);
 void Hunk_Clear();
+int Hunk_SetMark();
+void Hunk_ClearTempMemoryHigh();
+void Hunk_ClearTempMemory();
+void Hunk_Shutdown();
+void* TempMalloc(int size);
+void TempMemoryReset();
+void Hunk_UserCreate();
+void Hunk_UserDestroy();
 void Com_InitHunkMemory( void );
 
 #define Z_Malloc Z_MallocInternal
 #define S_Malloc Z_MallocInternal
+#define Z_MallocGarbage Z_MallocGarbageInternal
 #define Z_Free Z_FreeInternal
+
+#define Hunk_Alloc Hunk_AllocInternal
+#define Hunk_AllocateTempMemory Hunk_AllocateTempMemoryInternal
+
+#define TempMallocAlign TempMalloc
+#define TempMallocAlignStrict TempMallocAlign
 
 #define CopyString CopyStringInternal
 #define FreeString FreeStringInternal

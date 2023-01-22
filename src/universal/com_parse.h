@@ -47,10 +47,6 @@ struct ParseThreadInfo
 	char line[1024];
 };
 
-char *Com_ParseCSV(const char **data_p, int allowLineBreaks);
-char *Com_ParseExt(const char **data_p, int allowLineBreaks);
-char *Com_Parse(const char **data_p);
-
 ParseThreadInfo *Com_GetParseThreadInfo();
 void Com_InitParse();
 void Com_InitParseInfo(parseInfo_t* pi);
@@ -89,4 +85,3 @@ float Com_ParseFloat(const char **buf_p);
 float Com_ParseFloatOnLine(const char **buf_p);
 int Com_ParseInt(const char **buf_p);
 int Com_ParseIntOnLine(const char **buf_p);
-void Com_Parse1DMatrix(const char **buf_p, int x, float *m);

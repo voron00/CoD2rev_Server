@@ -1144,3 +1144,8 @@ char I_CleanChar(char character)
 		return character;
 	}
 }
+
+bool Com_ValidXModelName(const char *name)
+{
+	return !I_strnicmp(name, "xmodel", 6) && name[6] == 47;
+}

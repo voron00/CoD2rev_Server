@@ -1,6 +1,7 @@
 #include "sys_patch.h"
 
 #include "../../src/qcommon/qcommon.h"
+#include "../../src/qcommon/cm_local.h"
 
 void Sys_RedirectFunctions()
 {

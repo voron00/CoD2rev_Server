@@ -5,13 +5,18 @@
 #define HUNK_MAGIC  0x89537892
 #define HUNK_FREE_MAGIC 0x89537893
 
+#define FILEDATA_HASH_SIZE 1024
+
 hunkUsed_t hunk_low, hunk_high;
 
 byte *s_hunkData = NULL;
+byte *s_origHunkData = NULL;
 int s_hunkTotal;
 
 fileData_s* com_hunkData;
-fileData_s* com_fileDataHashTable[1024];
+fileData_s* com_fileDataHashTable[FILEDATA_HASH_SIZE];
+
+int currentPos;
 
 void *Z_TryMallocInternal( int size )
 {
@@ -32,6 +37,17 @@ void *Z_MallocInternal( int size )
 	if (!buf)
 		Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
 	Com_Memset(buf, 0, size);
+
+	return buf;
+}
+
+void *Z_MallocGarbageInternal( int size )
+{
+	void *buf;
+
+	buf = malloc(size);
+	if (!buf)
+		Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
 
 	return buf;
 }
@@ -57,32 +73,52 @@ void FreeStringInternal(char *str)
 		Z_FreeInternal(str);
 }
 
-void *Hunk_AllocAlignInternal(int size, int alignment)
+void *Hunk_FindDataForFileInternal(int type, const char *name, int hash)
 {
-	byte* buf;
+	fileData_s* searchFileData;
 
-	hunk_high.permanent += size;
-	hunk_high.permanent = ~alignment & (alignment + hunk_high.permanent);
-	hunk_high.temp = hunk_high.permanent;
-
-	if (hunk_high.permanent + hunk_low.temp > s_hunkTotal)
+	for (searchFileData = com_fileDataHashTable[hash]; searchFileData; searchFileData = searchFileData->next)
 	{
-		Com_Error(ERR_DROP, "Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
-		          size, s_hunkTotal / 0x100000, hunk_low.temp / 0x100000, hunk_high.temp / 0x100000);
+		if (searchFileData->type == type && !I_stricmp(searchFileData->name, name))
+		{
+			return searchFileData->data;
+		}
 	}
 
+	return 0;
+}
+
+void* Hunk_AllocAlignInternal(size_t size, int aligment)
+{
+	byte *buf;
+
+	hunk_high.permanent += size;
+	hunk_high.permanent = (aligment - 1 + hunk_high.permanent) & ~(aligment - 1);
 	buf = &s_hunkData[s_hunkTotal - hunk_high.permanent];
-	memset(buf, 0, size);
+	hunk_high.temp = hunk_high.permanent;
+
+	if ( hunk_low.temp + hunk_high.permanent > s_hunkTotal )
+	{
+		Com_Error(
+		    ERR_DROP,
+		    "\x15Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+		    size,
+		    s_hunkTotal / 0x100000,
+		    hunk_low.temp / 0x100000,
+		    hunk_high.temp / 0x100000);
+	}
+
+	Com_Memset(buf, 0, size);
 
 	return buf;
 }
 
-void *Hunk_Alloc( int size )
+void *Hunk_AllocInternal( int size )
 {
 	return Hunk_AllocAlignInternal( size, 32 );
 }
 
-void* Hunk_AllocateTempMemory(int size)
+void* Hunk_AllocateTempMemoryInternal(int size)
 {
 	hunkHeader_t* hdr;
 	unsigned char* buf;
@@ -90,7 +126,7 @@ void* Hunk_AllocateTempMemory(int size)
 
 	if (!s_hunkData)
 	{
-		return Z_Malloc(size);
+		return Z_MallocInternal(size);
 	}
 
 	size += 16;
@@ -104,7 +140,7 @@ void* Hunk_AllocateTempMemory(int size)
 	{
 		Com_Error(
 		    ERR_DROP,
-		    "\x15" "Hunk_AllocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %iMB), needs %i more hunk bytes",
+		    "\x15Hunk_AllocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %i MB), needs %i more hunk bytes",
 		    size,
 		    s_hunkTotal / 0x100000,
 		    hunk_low.temp / 0x100000,
@@ -119,6 +155,79 @@ void* Hunk_AllocateTempMemory(int size)
 	hdr->size = hunk_low.temp - prev_temp;
 
 	return (void*)buf;
+}
+
+void* Hunk_AllocateTempMemoryHighInternal(int size)
+{
+	hunk_high.temp += size;
+	hunk_high.temp = (hunk_high.temp + 15) & ~15;
+
+	if (hunk_low.temp + hunk_high.temp > s_hunkTotal)
+	{
+		Com_Error(
+		    ERR_DROP,
+		    "\x15Hunk_AllocateTempMemoryHigh: failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+		    size,
+		    s_hunkTotal / 0x100000,
+		    hunk_low.temp / 0x100000,
+		    hunk_high.temp / 0x100000);
+	}
+
+	return &s_hunkData[s_hunkTotal - hunk_high.temp];
+}
+
+void* Hunk_AllocLowAlignInternal(size_t size, int aligment)
+{
+	byte *buf;
+
+	hunk_low.permanent = (aligment - 1 + hunk_low.permanent) & ~(aligment - 1);
+	buf = &s_hunkData[hunk_low.permanent];
+	hunk_low.permanent += size;
+	hunk_low.temp = hunk_low.permanent;
+
+	if ( hunk_low.permanent + hunk_high.temp > s_hunkTotal )
+	{
+		Com_Error(
+		    ERR_DROP,
+		    "\x15Hunk_AllocLowAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+		    size,
+		    s_hunkTotal / 0x100000,
+		    hunk_low.temp / 0x100000,
+		    hunk_high.temp / 0x100000);
+	}
+
+	Com_Memset(buf, 0, size);
+
+	return buf;
+}
+
+void Hunk_ConvertTempToPermLowInternal()
+{
+	hunk_low.permanent = hunk_low.temp;
+}
+
+void* Hunk_AllocLowInternal(size_t n)
+{
+	return Hunk_AllocLowAlignInternal(n, 32);
+}
+
+void* Hunk_ReallocateTempMemoryInternal(int size)
+{
+	hunk_low.temp = (hunk_low.permanent + 31) & ~31;
+	hunk_low.temp += size;
+
+	if ( hunk_low.temp + hunk_high.temp > s_hunkTotal )
+	{
+		Com_Error(
+		    ERR_DROP,
+		    "\x15Hunk_ReallocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+		    size,
+		    s_hunkTotal / 0x100000,
+		    hunk_low.temp / 0x100000,
+		    hunk_high.temp / 0x100000);
+	}
+
+	return &s_hunkData[(hunk_low.permanent + 31) & ~31];
 }
 
 void Hunk_FreeTempMemory(void* buf)
@@ -139,7 +248,7 @@ void Hunk_FreeTempMemory(void* buf)
 	}
 	else
 	{
-		Z_Free(buf);
+		Z_FreeInternal(buf);
 	}
 }
 
@@ -151,6 +260,7 @@ void Hunk_ClearDataFor(fileData_s **pFileData, unsigned char *low, unsigned char
 	while (*pFileData)
 	{
 		fileData = *pFileData;
+
 		if (*pFileData >= (fileData_s*)low && fileData < (fileData_s*)high)
 		{
 			*pFileData = fileData->next;
@@ -158,14 +268,17 @@ void Hunk_ClearDataFor(fileData_s **pFileData, unsigned char *low, unsigned char
 
 			switch (fileData->type)
 			{
-			case 2:
-				XAnimFreeList((struct XAnim_s*)data);
-				break;
-			case 4:
+			case 3:
 				XModelPartsFree((struct XModelPartsLoad*)data);
 				break;
-			case 6:
+			case 4:
+				XModelFree((struct XModel*)data);
+				break;
+			case 5:
 				XAnimFree((struct XAnimParts*)data);
+				break;
+			case 6:
+				XAnimFreeList((struct XAnim_s*)data);
 				break;
 			}
 		}
@@ -185,11 +298,37 @@ void Hunk_ClearData()
 	low = &s_hunkData[hunk_low.permanent];
 	high = &s_hunkData[s_hunkTotal - hunk_high.permanent];
 
-	for (hash = 0; hash < 0x400; ++hash)
+	for (hash = 0; hash < FILEDATA_HASH_SIZE; ++hash)
 	{
 		Hunk_ClearDataFor(com_fileDataHashTable + hash, low, high);
 	}
+
 	Hunk_ClearDataFor(&com_hunkData, low, high);
+}
+
+void Hunk_ClearTempMemoryInternal()
+{
+	if ( s_hunkData )
+		hunk_low.temp = hunk_low.permanent;
+}
+
+void Hunk_ClearTempMemoryHighInternal()
+{
+	hunk_high.temp = hunk_high.permanent;
+}
+
+void Hunk_ClearHigh(int memory)
+{
+	hunk_high.temp = memory;
+	hunk_high.permanent = memory;
+	Hunk_ClearData();
+}
+
+void Hunk_ClearLow(int memory)
+{
+	hunk_low.temp = memory;
+	hunk_low.permanent = memory;
+	Hunk_ClearData();
 }
 
 void Hunk_Clear()
@@ -201,16 +340,63 @@ void Hunk_Clear()
 	Hunk_ClearData();
 }
 
-void Hunk_ClearTempMemory()
+int Hunk_SetMark()
 {
-	hunk_low.permanent = 0;
-	hunk_high.permanent = 0;
+	return hunk_high.permanent;
 }
 
 void Hunk_ClearTempMemoryHigh()
 {
-	hunk_low.temp = 0;
-	hunk_high.temp = 0;
+	;
+}
+
+void Hunk_ClearTempMemory()
+{
+	Hunk_ClearTempMemoryInternal();
+	Hunk_ClearTempMemoryHighInternal();
+}
+
+void Hunk_Shutdown()
+{
+	Z_FreeInternal(s_origHunkData);
+	s_hunkData = 0;
+	s_origHunkData = 0;
+	s_hunkTotal = 0;
+	Com_Memset(&hunk_low, 0, sizeof(hunk_low));
+	Com_Memset(&hunk_high, 0, sizeof(hunk_high));
+}
+
+void* TempMalloc(int size)
+{
+	int pos;
+	byte *buf;
+
+	pos = currentPos + size;
+	buf = (byte*)Hunk_ReallocateTempMemoryInternal(currentPos + size) + currentPos;
+	currentPos = pos;
+
+	return buf;
+}
+
+void* TempMemorySetPos(int pos)
+{
+	currentPos -= (int)TempMalloc(0) - pos;
+	return Hunk_ReallocateTempMemoryInternal(currentPos);
+}
+
+void TempMemoryReset()
+{
+	currentPos = 0;
+}
+
+void Hunk_UserCreate()
+{
+	;
+}
+
+void Hunk_UserDestroy()
+{
+	Hunk_ClearTempMemoryInternal();
 }
 
 void Com_Meminfo_f(void)
@@ -254,15 +440,14 @@ void Com_InitHunkMemory( void )
 		s_hunkTotal = com_hunkMegs->current.integer * 1024 * 1024;
 	}
 
-	s_hunkData = (byte *)malloc( s_hunkTotal + 31 );
+	s_hunkData = (byte *)malloc( s_hunkTotal );
 
 	if ( !s_hunkData )
 	{
-		Com_Error( ERR_FATAL, "Hunk data failed to allocate %i megs", s_hunkTotal / ( 1024 * 1024 ) );
+		Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
 	}
 
-	// cacheline align
-	s_hunkData = ( byte * )( ( (int)s_hunkData + 31 ) & ~31 );
+	s_origHunkData = s_hunkData;
 
 	Hunk_Clear();
 

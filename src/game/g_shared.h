@@ -361,7 +361,7 @@ typedef struct
 	int enterTime;
 	int voteCount;
 	int teamVoteCount;
-	float unknown;
+	float moveSpeedScaleMultiplier;
 	int viewmodelIndex;
 	int noSpectate;
 	int teamInfo;
@@ -417,6 +417,7 @@ struct gclient_s
 	int lastServerTime;
 	int lastActivateTime;
 };
+static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
 
 struct turretInfo_s
 {
@@ -540,8 +541,8 @@ struct gentity_s
 	int framenum;
 	gentity_s *parent;
 	int nextthink;
-	int healthPoints;
-	int reservedHealth;
+	int health;
+	int maxHealth;
 	int damage;
 	int count;
 	int unknown;
@@ -560,6 +561,7 @@ struct gentity_s
 	int useCount;
 	gentity_s *nextFree;
 };
+static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
 
 typedef struct
 {
@@ -612,7 +614,6 @@ typedef struct
 	int currentEntityThink;
 	void *openScriptIOFileHandles[1];
 	char *openScriptIOFileBuffers[1];
-} level_locals_t; // possibly more stuff here
-
-static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
-static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
+	com_parse_mark_t currentScriptIOLineMark[1];
+} level_locals_t;
+static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");

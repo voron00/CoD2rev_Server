@@ -274,3 +274,4 @@ const char *Info_ValueForKey( const char *s, const char *key );
 void Info_NextPair( const char **head, char *key, char *value );
 char *I_CleanStr(char *string);
 char I_CleanChar(char character);
+bool Com_ValidXModelName(const char *name);

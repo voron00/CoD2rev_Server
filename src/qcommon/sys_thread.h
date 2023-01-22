@@ -26,16 +26,6 @@ struct va_info_t
 	int index;
 };
 
-typedef struct TraceThreadInfo
-{
-	int global;
-	int *edges;
-	int *verts;
-	int *partitions;
-	cbrush_t *box_brush;
-	cmodel_t *box_model;
-} TraceThreadInfo;
-
 extern va_info_t va_info[NUMTHREADS];
 extern jmp_buf g_com_error[NUMTHREADS];
 extern TraceThreadInfo g_traceThreadInfo[NUMTHREADS];

@@ -11,24 +11,28 @@ dvar_t *dvar_cheats;
 static qboolean isDvarSystemActive;
 qboolean isLoadingAutoExecGlobalFlag;
 
-static long generateHashValue(const char *fname)
+static long generateHashValue( const char *fname )
 {
-	int	i;
+	int i;
 	long hash;
 	char letter;
+
+	if ( !fname )
+	{
+		Com_Error( ERR_DROP, "null name in generateHashValue" );
+	}
 
 	hash = 0;
 	i = 0;
 
-	while (fname[i] != '\0')
+	while ( fname[i] != '\0' )
 	{
-		letter = tolower(fname[i]);
-		hash += (long)(letter) * (i + 119);
+		letter = tolower( fname[i] );
+		hash += (long)( letter ) * ( i + 119 );
 		i++;
 	}
 
-	hash &= (FILE_HASH_SIZE - 1);
-
+	hash &= ( FILE_HASH_SIZE - 1 );
 	return hash;
 }
 
@@ -1808,107 +1812,120 @@ void Dvar_RegisterFloat_f(void)
 		Com_Printf("USAGE: %s <name> <default> <min> <max>\n", Cmd_Argv(0));
 }
 
+qboolean Dvar_ToggleSimple(dvar_t *dvar)
+{
+	switch (dvar->type)
+	{
+	case DVAR_TYPE_BOOL:
+		Dvar_SetBoolFromSource(dvar, !dvar->current.boolean, DVAR_SOURCE_EXTERNAL);
+		return qtrue;
+
+	case DVAR_TYPE_FLOAT:
+		if (dvar->domain.decimal.min > 0.0 || dvar->domain.decimal.max < 1.0)
+		{
+			if (dvar->current.decimal == dvar->domain.decimal.min)
+				Dvar_SetFloatFromSource(dvar, dvar->domain.decimal.max, DVAR_SOURCE_EXTERNAL);
+			else
+				Dvar_SetFloatFromSource(dvar, dvar->domain.decimal.min, DVAR_SOURCE_EXTERNAL);
+		}
+		else if (dvar->current.decimal == 0.0)
+			Dvar_SetFloatFromSource(dvar, 1, DVAR_SOURCE_EXTERNAL);
+		else
+			Dvar_SetFloatFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
+		return qtrue;
+
+	case DVAR_TYPE_VEC2:
+	case DVAR_TYPE_VEC3:
+	case DVAR_TYPE_VEC4:
+	case DVAR_TYPE_STRING:
+	case DVAR_TYPE_COLOR:
+		Com_Printf("'toggle' with no arguments makes no sense for dvar '%s'\n", dvar->name);
+		return qfalse;
+
+	case DVAR_TYPE_INT:
+		if (dvar->domain.integer.min > 0 || dvar->domain.integer.max <= 0)
+		{
+			if (dvar->current.integer == dvar->domain.integer.min)
+				Dvar_SetIntFromSource(dvar, dvar->domain.integer.max, DVAR_SOURCE_EXTERNAL);
+			else
+				Dvar_SetIntFromSource(dvar, dvar->domain.integer.min, DVAR_SOURCE_EXTERNAL);
+		}
+		else if (dvar->current.integer)
+			Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
+		else
+			Dvar_SetIntFromSource(dvar, 1, DVAR_SOURCE_EXTERNAL);
+		return qtrue;
+
+	case DVAR_TYPE_ENUM:
+		if (dvar->current.integer >= dvar->domain.enumeration.stringCount - 1)
+			Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
+		else
+			Dvar_SetIntFromSource(dvar, dvar->current.integer + 1, DVAR_SOURCE_EXTERNAL);
+		return qtrue;
+
+	default:
+		return qfalse;
+	}
+}
+
 qboolean Dvar_ToggleInternal()
 {
-	dvar_t *dvar;
+	const char* string;
+	int argIndex;
+	const char* argString;
+	const char* dvarName;
+	dvar_t* dvar;
+	const char* enumString;
 
-	if (Cmd_Argc() > 1)
-	{
-		const char *name = Cmd_Argv(1);
-		dvar = Dvar_FindVar(name);
-
-		if (dvar != NULL)
-		{
-			if (Cmd_Argc() == 2)
-			{
-				switch(dvar->type)
-				{
-				case DVAR_TYPE_BOOL:
-					Dvar_SetBoolFromSource(dvar, dvar->current.boolean == 0, DVAR_SOURCE_EXTERNAL);
-					return qtrue;
-
-				case DVAR_TYPE_FLOAT:
-					if (dvar->domain.decimal.min > 0.0 || dvar->domain.decimal.max < 1.0)
-					{
-						if (dvar->current.decimal == dvar->domain.decimal.min)
-							Dvar_SetFloatFromSource(dvar, dvar->domain.decimal.max, DVAR_SOURCE_EXTERNAL);
-						else
-							Dvar_SetFloatFromSource(dvar, dvar->domain.decimal.min, DVAR_SOURCE_EXTERNAL);
-					}
-					else if (dvar->current.decimal == 0.0)
-						Dvar_SetFloatFromSource(dvar, 1, DVAR_SOURCE_EXTERNAL);
-					else
-						Dvar_SetFloatFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
-					return qtrue;
-
-				case DVAR_TYPE_VEC2:
-				case DVAR_TYPE_VEC3:
-				case DVAR_TYPE_VEC4:
-				case DVAR_TYPE_STRING:
-				case DVAR_TYPE_COLOR:
-					Com_Printf("'toggle' with no arguments makes no sense for dvar '%s'\n", dvar->name);
-					return qfalse;
-
-				case DVAR_TYPE_INT:
-					if (dvar->domain.integer.min > 0 || dvar->domain.integer.max <= 0)
-					{
-						if (dvar->current.integer == dvar->domain.integer.min)
-							Dvar_SetIntFromSource(dvar, dvar->domain.integer.max, DVAR_SOURCE_EXTERNAL);
-						else
-							Dvar_SetIntFromSource(dvar, dvar->domain.integer.min, DVAR_SOURCE_EXTERNAL);
-					}
-					else if (dvar->current.integer)
-						Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
-					else
-						Dvar_SetIntFromSource(dvar, 1, DVAR_SOURCE_EXTERNAL);
-					return qtrue;
-
-				case DVAR_TYPE_ENUM:
-					if (dvar->current.integer >= dvar->domain.enumeration.stringCount - 1)
-						Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
-					else
-						Dvar_SetIntFromSource(dvar, dvar->current.integer + 1, DVAR_SOURCE_EXTERNAL);
-					return qtrue;
-				}
-			}
-			else
-			{
-				const char *value = Dvar_DisplayableValue(dvar);
-
-				for (int i = 2; i + 1 < Cmd_Argc(); i++)
-				{
-					const char *argstr = Cmd_Argv(i);
-
-					if (dvar->type == DVAR_TYPE_ENUM)
-					{
-						const char *enumstr = Dvar_IndexStringToEnumString(dvar, argstr);
-
-						if (*enumstr)
-							argstr = enumstr;
-
-						if (!strcasecmp(value, argstr))
-						{
-							const char *dvar_value = Cmd_Argv(i);
-							Dvar_SetCommand(name, dvar_value);
-							return qtrue;
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			Com_Printf("toggle failed: dvar '%s' not found.\n", name);
-			return qfalse;
-		}
-	}
-	else
+	if (Cmd_Argc() < 2)
 	{
 		Com_Printf("USAGE: %s <variable> <optional value sequence>\n", Cmd_Argv(0));
 		return qfalse;
 	}
 
-	return qtrue;
+	dvarName = Cmd_Argv(1);
+	dvar = Dvar_FindVar(dvarName);
+	if (!dvar)
+	{
+		Com_Printf("toggle failed: dvar '%s' not found.\n", dvarName);
+		return qfalse;
+	}
+
+	if (Cmd_Argc() != 2)
+	{
+		string = Dvar_DisplayableValue(dvar);
+		for (argIndex = 2; argIndex + 1 < Cmd_Argc(); ++argIndex)
+		{
+			argString = Cmd_Argv(argIndex);
+			if (dvar->type == DVAR_TYPE_ENUM)
+			{
+				enumString = Dvar_IndexStringToEnumString(dvar, argString);
+				if (strlen(enumString))
+				{
+					argString = (char*)enumString;
+				}
+			}
+			if (!I_stricmp(string, argString))
+			{
+				Dvar_SetCommand(dvarName, Cmd_Argv(argIndex + 1));
+				return qtrue;
+			}
+		}
+
+		argString = Cmd_Argv(2);
+		if (dvar->type == DVAR_TYPE_ENUM)
+		{
+			enumString = Dvar_IndexStringToEnumString(dvar, argString);
+			if (strlen(enumString))
+			{
+				argString = (char*)enumString;
+			}
+		}
+		Dvar_SetCommand(dvarName, argString);
+		return qtrue;
+	}
+
+	return Dvar_ToggleSimple(dvar);
 }
 
 void Dvar_Toggle_f(void)
@@ -2035,7 +2052,7 @@ void Com_DvarDump(conChannel_t channel)
 	const char *match;
 	int	i = 0;
 	int count = 0;
-	char message[2048];
+	char message[8196];
 	char summary[128];
 
 	if ( Cmd_Argc() <= 1 )
@@ -2183,6 +2200,50 @@ void Dvar_AddCommands()
 	Cmd_AddCommand("dvar_int", Dvar_RegisterInt_f);
 	Cmd_AddCommand("dvar_float", Dvar_RegisterFloat_f);
 	Cmd_AddCommand("setu", Dvar_SetU_f);
+}
+
+void Dvar_Shutdown()
+{
+	int dvarIter;
+	dvar_t* dvar;
+
+	isDvarSystemActive = 0;
+
+	for (dvarIter = 0; dvarIter < dvarCount; ++dvarIter)
+	{
+		dvar = &dvarPool[dvarIter];
+
+		if (dvar->type == DVAR_TYPE_STRING)
+		{
+			if (Dvar_ShouldFreeCurrentString(dvar))
+			{
+				Dvar_FreeString(&dvar->current);
+			}
+			dvar->current.integer = 0;
+
+			if (Dvar_ShouldFreeResetString(dvar))
+			{
+				Dvar_FreeString(&dvar->reset);
+			}
+			dvar->reset.integer = 0;
+
+			if (Dvar_ShouldFreeLatchedString(dvar))
+			{
+				Dvar_FreeString(&dvar->latched);
+			}
+			dvar->latched.integer = 0;
+		}
+
+		if (dvar->flags & DVAR_EXTERNAL)
+		{
+			FreeString((char *)dvar->name);
+		}
+	}
+
+	dvarCount = 0;
+	dvar_cheats = NULL;
+	dvar_modifiedFlags = 0;
+	Com_Memset(dvarHashTable, 0, sizeof(dvarHashTable));
 }
 
 void Dvar_Init()

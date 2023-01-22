@@ -948,32 +948,32 @@ void Sys_Init( void ) {
 
 	if ( g_wv.osversion.dwPlatformId == VER_PLATFORM_WIN32_NT )
 	{
-		Dvar_SetCommand( "arch", "winnt" );
+		Dvar_RegisterString( "arch", "winnt", DVAR_ROM );
 	}
 	else if ( g_wv.osversion.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
 	{
 		if ( LOWORD( g_wv.osversion.dwBuildNumber ) >= WIN98_BUILD_NUMBER )
 		{
-			Dvar_SetCommand( "arch", "win98" );
+			Dvar_RegisterString( "arch", "win98", DVAR_ROM );
 		}
 		else if ( LOWORD( g_wv.osversion.dwBuildNumber ) >= OSR2_BUILD_NUMBER )
 		{
-			Dvar_SetCommand( "arch", "win95 osr2.x" );
+			Dvar_RegisterString( "arch", "win95 osr2.x", DVAR_ROM );
 		}
 		else
 		{
-			Dvar_SetCommand( "arch", "win95" );
+			Dvar_RegisterString( "arch", "win95", DVAR_ROM );
 		}
 	}
 	else
 	{
-		Dvar_SetCommand( "arch", "unknown Windows variant" );
+		Dvar_RegisterString( "arch", "unknown Windows variant", DVAR_ROM );
 	}
 #if 0
 	//
 	// figure out our CPU
 	//
-	Dvar_RegisterString( "sys_cpustring", "detect", 0 );
+	Dvar_RegisterString( "sys_cpustring", "detect", DVAR_NOFLAG );
 	if ( !Q_stricmp( Dvar_GetString( "sys_cpustring"), "detect" ) )
 	{
 		Com_Printf( "...detecting CPU, found " );
@@ -983,25 +983,25 @@ void Sys_Init( void ) {
 		switch ( cpuid )
 		{
 		case CPUID_GENERIC:
-			Dvar_SetCommand( "sys_cpustring", "generic" );
+			Dvar_RegisterString( "sys_cpustring", "generic", DVAR_ROM );
 			break;
 		case CPUID_INTEL_UNSUPPORTED:
-			Dvar_SetCommand( "sys_cpustring", "x86 (pre-Pentium)" );
+			Dvar_RegisterString( "sys_cpustring", "x86 (pre-Pentium)", DVAR_ROM );
 			break;
 		case CPUID_INTEL_PENTIUM:
-			Dvar_SetCommand( "sys_cpustring", "x86 (P5/PPro, non-MMX)" );
+			Dvar_RegisterString( "sys_cpustring", "x86 (P5/PPro, non-MMX)", DVAR_ROM );
 			break;
 		case CPUID_INTEL_MMX:
-			Dvar_SetCommand( "sys_cpustring", "x86 (P5/Pentium2, MMX)" );
+			Dvar_RegisterString( "sys_cpustring", "x86 (P5/Pentium2, MMX)", DVAR_ROM );
 			break;
 		case CPUID_INTEL_KATMAI:
-			Dvar_SetCommand( "sys_cpustring", "Intel Pentium III" );
+			Dvar_RegisterString( "sys_cpustring", "Intel Pentium III", DVAR_ROM );
 			break;
 		case CPUID_AMD_3DNOW:
-			Dvar_SetCommand( "sys_cpustring", "AMD w/ 3DNow!" );
+			Dvar_RegisterString( "sys_cpustring", "AMD w/ 3DNow!", DVAR_ROM );
 			break;
 		case CPUID_AXP:
-			Dvar_SetCommand( "sys_cpustring", "Alpha AXP" );
+			Dvar_RegisterString( "sys_cpustring", "Alpha AXP", DVAR_ROM );
 			break;
 		default:
 			Com_Error( ERR_FATAL, "Unknown cpu type %d\n", cpuid );
@@ -1044,7 +1044,7 @@ void Sys_Init( void ) {
 	Dvar_RegisterInt( "sys_cpuid", cpuid, 0, 0x7FFFFFFF, DVAR_LATCH );
 	Com_Printf( "%s\n", Dvar_GetString( "sys_cpustring" ) );
 #endif
-	Dvar_SetCommand( "username", Sys_GetCurrentUser() );
+	Dvar_RegisterString( "username", Sys_GetCurrentUser(), DVAR_ROM );
 
 #ifndef DEDICATED
 	IN_Init();		// FIXME: not in dedicated?
