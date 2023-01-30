@@ -1,8 +1,13 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
+#ifdef TESTING_LIBRARY
+#define cm (*((clipMap_t*)( 0x08185BE0 )))
+#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
+#else
 extern clipMap_t cm;
 extern clipMapExtra_t cme;
+#endif
 
 struct dbrush_t
 {
@@ -791,7 +796,6 @@ void CMod_LoadBrushRelated(bool usePvs)
 	CMod_LoadCollisionAabbTrees();
 	CMod_LoadLeafs(usePvs);
 	CMod_LoadSubmodels();
-	Hunk_UserCreate();
 	TempMemoryReset();
 	cm.leafbrushNodes = ((cLeafBrushNode_s*)TempMalloc(0) - 1);
 	CMod_LoadLeafBrushNodes();
@@ -803,7 +807,7 @@ void CMod_LoadBrushRelated(bool usePvs)
 	leafbrushNodes = (cLeafBrushNode_s *)CM_Hunk_Alloc(sizeof(cLeafBrushNode_s) * (leafbrushNodesCount + 1));
 	Com_Memcpy(&leafbrushNodes[1], cm.leafbrushNodes, sizeof(cLeafBrushNode_s) * leafbrushNodesCount);
 	cm.leafbrushNodes = leafbrushNodes;
-	Hunk_UserDestroy();
+	Hunk_ClearTempMemoryInternal();
 }
 
 struct dplane_t

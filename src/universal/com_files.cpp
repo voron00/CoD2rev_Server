@@ -155,7 +155,7 @@ bool FS_SanitizeFilename(const char *filename, char *sanitizedName)
 	return 1;
 }
 
-static long FS_HashFileName( const char *fname, int hashSize )
+long FS_HashFileName( const char *fname, int hashSize )
 {
 	int i;
 	long hash;
@@ -2097,7 +2097,321 @@ char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const ch
 
 	return listCopy;
 }
+
+int FS_GetModList(char *listbuf, int bufsize)
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return 0;
+}
+
+int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listbuf, int bufsize)
+{
+	char** fileNames;
+	int nLen;
+	int nTotal;
+	int i;
+	int fileCount;
+
+	*listbuf = 0;
+	fileCount = 0;
+	nTotal = 0;
+	if (!I_stricmp(path, "$modlist"))
+	{
+		return FS_GetModList(listbuf, bufsize);
+	}
+
+	fileNames = FS_ListFilteredFiles(fs_searchpaths, path, extension, 0, behavior, &fileCount);
+	for (i = 0; i < fileCount; ++i)
+	{
+		nLen = strlen(fileNames[i]) + 1;
+		if (nTotal + nLen + 1 >= bufsize)
+		{
+			fileCount = i;
+			break;
+		}
+
+		strcpy(listbuf, fileNames[i]);
+		listbuf += nLen;
+		nTotal += nLen;
+	}
+
+	FS_FreeFileList(fileNames);
+	return fileCount;
+}
 #pragma GCC pop_options
+
+int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp )
+{
+	char ospath[MAX_OSPATH];
+	fileHandle_t f = 0;
+
+	FS_CheckFileSystemStarted();
+
+	f = FS_HandleForFile(FS_THREAD_MAIN);
+	fsh[f].zipFile = qfalse;
+
+	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
+
+	// search homepath
+	FS_BuildOSPath( fs_homepath->current.string, filename, "", ospath );
+	// remove trailing slash
+	ospath[strlen( ospath ) - 1] = '\0';
+
+	if ( fs_debug->current.integer )
+	{
+		Com_Printf( "FS_SV_FOpenFileRead (fs_homepath): %s\n", ospath );
+	}
+
+	fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
+	fsh[f].handleSync = qfalse;
+
+	if ( !fsh[f].handleFiles.file.o )
+	{
+		// NOTE TTimo on non *nix systems, fs_homepath == fs_basepath, might want to avoid
+		if ( Q_stricmp( fs_homepath->current.string,fs_basepath->current.string ) )
+		{
+			// search basepath
+			FS_BuildOSPath( fs_basepath->current.string, filename, "", ospath );
+			ospath[strlen( ospath ) - 1] = '\0';
+
+			if ( fs_debug->current.integer )
+			{
+				Com_Printf( "FS_SV_FOpenFileRead (fs_basepath): %s\n", ospath );
+			}
+
+			fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
+			fsh[f].handleSync = qfalse;
+
+			if ( !fsh[f].handleFiles.file.o )
+			{
+				f = 0;
+			}
+		}
+	}
+
+	if ( !fsh[f].handleFiles.file.o )
+	{
+		// search cd path
+		FS_BuildOSPath( fs_cdpath->current.string, filename, "", ospath );
+		ospath[strlen( ospath ) - 1] = '\0';
+
+		if ( fs_debug->current.integer )
+		{
+			Com_Printf( "FS_SV_FOpenFileRead (fs_cdpath) : %s\n", ospath );
+		}
+
+		fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
+		fsh[f].handleSync = qfalse;
+
+		if ( !fsh[f].handleFiles.file.o )
+		{
+			f = 0;
+		}
+	}
+
+	*fp = f;
+
+	if ( f )
+	{
+		return FS_filelength( f );
+	}
+
+	return 0;
+}
+
+fileHandle_t FS_SV_FOpenFileWrite( const char *filename )
+{
+	char ospath[MAX_OSPATH];
+	fileHandle_t f;
+
+	if ( !fs_searchpaths )
+	{
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+	}
+
+	FS_BuildOSPath( fs_homepath->current.string, filename, "", ospath );
+	ospath[strlen( ospath ) - 1] = '\0';
+
+	f = FS_HandleForFile(FS_THREAD_MAIN);
+	fsh[f].zipFile = qfalse;
+
+	if ( fs_debug->current.integer )
+	{
+		Com_Printf( "FS_SV_FOpenFileWrite: %s\n", ospath );
+	}
+
+	if ( FS_CreatePath( ospath ) )
+	{
+		return 0;
+	}
+
+	Com_DPrintf( "writing to: %s\n", ospath );
+	fsh[f].handleFiles.file.o = fopen( ospath, "wb" );
+
+	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
+
+	fsh[f].handleSync = qfalse;
+
+	if ( !fsh[f].handleFiles.file.o )
+	{
+		f = 0;
+	}
+
+	return f;
+}
+
+qboolean FS_iwIwd(char *iwd, const char *base)
+{
+	char *localized;
+	char dest[76];
+	int i;
+
+	for ( i = 0; i < NUM_IW_IWDS; ++i )
+	{
+		if ( !FS_FilenameCompare(iwd, va("%s/iw_%02d", base, i)) )
+			return qtrue;
+	}
+
+	localized = strstr(iwd, "localized_");
+
+	if ( localized )
+	{
+		strcpy(dest, iwd);
+		dest[localized - iwd + 10] = 0;
+
+		if ( !FS_FilenameCompare(dest, va("%s/localized_", base)) )
+		{
+			strcpy(dest, localized + 10);
+			I_strlwr(dest);
+
+			for ( i = 0; i < NUM_IW_IWDS; ++i )
+			{
+				if ( strstr(dest, va("_iw%02d", i)) )
+					return qtrue;
+			}
+		}
+	}
+
+	return qfalse;
+}
+
+const char *FS_LoadedIwdNames()
+{
+	static char info[BIG_INFO_STRING];
+	searchpath_t *search;
+
+	info[0] = 0;
+
+	for ( search = fs_searchpaths; search; search = search->next )
+	{
+		if ( search->iwd && !search->localized )
+		{
+			if ( *info )
+			{
+				I_strncat( info, sizeof( info ), " " );
+			}
+
+			I_strncat( info, sizeof( info ), search->iwd->iwdBasename );
+		}
+	}
+
+	return info;
+}
+
+const char *FS_ReferencedIwdNames()
+{
+	static char info[BIG_INFO_STRING];
+	searchpath_t *search;
+
+	info[0] = 0;
+
+	// we want to return ALL iwd's from the fs_game path
+	// and referenced one's from base
+	for ( search = fs_searchpaths ; search ; search = search->next )
+	{
+		// is the element a iwd file?
+		if ( search->iwd )
+		{
+			if ( *info )
+			{
+				I_strncat( info, sizeof( info ), " " );
+			}
+
+			if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
+			{
+				I_strncat( info, sizeof( info ), search->iwd->iwdGamename );
+				I_strncat( info, sizeof( info ), "/" );
+				I_strncat( info, sizeof( info ), search->iwd->iwdBasename );
+			}
+		}
+	}
+
+	return info;
+}
+
+const char *FS_ReferencedIwdChecksums()
+{
+	static char info[BIG_INFO_STRING];
+	searchpath_t *search;
+
+	info[0] = 0;
+
+	for ( search = fs_searchpaths ; search ; search = search->next )
+	{
+		if ( !search->iwd )
+			continue;
+
+		// is the element a iwd file and has it been referenced based on flag?
+		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
+		{
+			I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
+		}
+	}
+
+	return info;
+}
+
+const char *FS_LoadedIwdChecksums()
+{
+	static char info[BIG_INFO_STRING];
+	searchpath_t *search;
+
+	info[0] = 0;
+
+	for ( search = fs_searchpaths; search; search = search->next )
+	{
+		if ( search->iwd )
+		{
+			if ( !search->localized )
+			{
+				I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
+			}
+		}
+	}
+
+	return info;
+}
+
+const char *FS_LoadedIwdPureChecksums()
+{
+	static char info[BIG_INFO_STRING];
+	searchpath_t *search;
+
+	info[0] = 0;
+
+	for ( search = fs_searchpaths; search; search = search->next )
+	{
+		if ( search->iwd )
+		{
+			if ( !search->localized )
+			{
+				I_strncat( info, sizeof( info ), va( "%i ", search->iwd->pure_checksum ) );
+			}
+		}
+	}
+
+	return info;
+}
 
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles)
 {

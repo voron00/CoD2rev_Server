@@ -1,9 +1,18 @@
-#include <pthread.h>
 #include "qcommon.h"
 #include "sys_thread.h"
 #include "../universal/universal_public.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
+#ifdef _WIN32
+typedef DWORD threadid_t;
+#else
 typedef pthread_t threadid_t;
+#endif
 
 threadid_t threadId[NUMTHREADS];
 threadid_t mainthread;
@@ -33,14 +42,20 @@ void Sys_SetValue(int key, void* value)
 
 threadid_t Sys_GetCurrentThreadId()
 {
-	threadid_t thread = pthread_self();
-	return thread;
+#ifdef _WIN32
+	return GetCurrentThreadId();
+#else
+	return pthread_self();
+#endif
 }
 
 qboolean Sys_ThreadisSame(threadid_t threadid)
 {
-	threadid_t thread = pthread_self();
-	return pthread_equal(threadid, thread) != 0;
+#ifdef _WIN32
+	return threadid == GetCurrentThreadId();
+#else
+	return pthread_equal(threadid, pthread_self()) != 0;
+#endif
 }
 
 qboolean Sys_IsMainThread(void)

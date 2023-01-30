@@ -8,7 +8,6 @@
 
 typedef struct gclient_s gclient_t;
 typedef struct gentity_s gentity_t;
-typedef int scr_entref_t;
 
 typedef struct
 {
@@ -342,7 +341,7 @@ typedef struct
 
 typedef struct
 {
-	sessionState_t state;
+	sessionState_t sessionState;
 	int forceSpectatorClient;
 	int statusIcon;
 	int archiveTime;
@@ -365,7 +364,7 @@ typedef struct
 	int viewmodelIndex;
 	int noSpectate;
 	int teamInfo;
-	clientState_t clState;
+	clientState_t state;
 	int psOffsetTime;
 } clientSession_t;
 
@@ -617,3 +616,54 @@ typedef struct
 	com_parse_mark_t currentScriptIOLineMark[1];
 } level_locals_t;
 static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
+
+typedef struct game_hudelem_s
+{
+	hudelem_s elem;
+	int clientNum;
+	int team;
+	int archived;
+} game_hudelem_t;
+
+typedef struct game_hudelem_field_s
+{
+	const char *name;
+	unsigned int constId;
+	int ofs;
+	int size;
+	byte type;
+	void (*setter)(game_hudelem_s *, int);
+	void (*getter)(game_hudelem_s *, int);
+} game_hudelem_field_t;
+
+void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
+void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
+void HudElem_SetFont(game_hudelem_t *hud, int offset);
+void HudElem_SetAlignX(game_hudelem_t *hud, int offset);
+void HudElem_SetAlignY(game_hudelem_t *hud, int offset);
+void HudElem_SetHorzAlign(game_hudelem_t *hud, int offset);
+void HudElem_SetVertAlign(game_hudelem_t *hud, int offset);
+void HudElem_SetColor(game_hudelem_t *hud, int offset);
+void HudElem_SetAlpha(game_hudelem_t *hud, int offset);
+void HudElem_SetLocalizedString(game_hudelem_t *hud, int offset);
+void HudElem_SetBoolean(game_hudelem_t *hud, int offset);
+void HudElem_AddString(game_hudelem_t *hud, const game_hudelem_field_t *field, const char **names);
+void HudElem_GetFont(game_hudelem_t *hud, int offset);
+void HudElem_GetAlignX(game_hudelem_t *hud, int offset);
+void HudElem_GetAlignY(game_hudelem_t *hud, int offset);
+void HudElem_GetHorzAlign(game_hudelem_t *hud, int offset);
+void HudElem_GetVertAlign(game_hudelem_t *hud, int offset);
+void HudElem_GetColor(game_hudelem_t *hud, int offset);
+void HudElem_GetAlpha(game_hudelem_t *hud, int offset);
+void HudElem_ClearTypeSettings(game_hudelem_t *hud);
+void HudElem_SetDefaults(game_hudelem_t *hud);
+void Scr_AddHudElem(game_hudelem_t *hud);
+void GScr_NewHudElem();
+
+void Scr_LocalizationError(int iParm, const char *pszErrorMessage);
+void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, unsigned int stringLimit);
+void CalculateRanks();
+const char* G_ModelName(int modelIndex);
+int G_LocalizedStringIndex(const char *string);
+gentity_t* Scr_GetEntity(unsigned int index);
+void Scr_AddEntity(gentity_t *ent);

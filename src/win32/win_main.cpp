@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/cmd.h"
 #include "../qcommon/netchan.h"
 #include "../qcommon/sys_thread.h"
+#include "../universal/universal_public.h"
 
 #define	CD_BASEDIR	"quake3"
 #define	CD_EXE		"quake3.exe"
@@ -157,6 +158,9 @@ Sys_Quit
 */
 void Sys_Quit( void ) {
 	timeEndPeriod( 1 );
+	Dvar_Shutdown();
+	Cmd_Shutdown();
+	Hunk_Shutdown();
 #ifndef DEDICATED
 	IN_Shutdown();
 #endif

@@ -10,9 +10,10 @@
 
 enum DvarSetSource
 {
-	DVAR_SOURCE_INTERNAL = 0,
-	DVAR_SOURCE_EXTERNAL = 1,
-	DVAR_SOURCE_SCRIPT = 2
+	DVAR_SOURCE_INTERNAL = 0x0,
+	DVAR_SOURCE_EXTERNAL = 0x1,
+	DVAR_SOURCE_SCRIPT = 0x2,
+	DVAR_SOURCE_DEVGUI = 0x3,
 };
 
 enum DvarType : char
@@ -51,7 +52,7 @@ typedef struct
 {
 	union
 	{
-		byte boolean;
+		bool boolean;
 		int integer;
 		float decimal;
 		vec2_t vec2;
@@ -67,13 +68,13 @@ typedef struct dvar_s
 	const char *name;
 	unsigned short flags;
 	DvarType type;
-	byte modified;
+	bool modified;
 	DvarValue current;
 	DvarValue latched;
 	DvarValue reset;
 	DvarLimits domain;
-	struct dvar_s *next;
-	struct dvar_s *hashNext;
+	dvar_s *next;
+	dvar_s *hashNext;
 } dvar_t;
 
 #define DVAR_NOFLAG				0				// 0x0000
@@ -148,21 +149,25 @@ void Dvar_SetBool(dvar_t *dvar, bool value);
 void Dvar_SetInt(dvar_t *dvar, int value);
 void Dvar_SetFloat(dvar_t *dvar, float value);
 void Dvar_SetString(dvar_t *dvar, const char *value);
+void Dvar_SetIntByName(const char *dvarName, int value);
 qboolean Dvar_GetBool(const char *dvarName);
 int Dvar_GetInt(const char *dvarName);
 float Dvar_GetFloat(const char *dvarName);
 const char* Dvar_GetString(const char *dvarName);
 const char* Dvar_GetVariantString(const char *dvarName);
-void Dvar_CommandCompletion( void(*callback)(const char *s) );
+void Dvar_ForEach( void(*callback)(const char *s) );
 void Dvar_SetInAutoExec(qboolean inAutoExec);
 void Dvar_WriteVariables(fileHandle_t f);
 void Dvar_WriteDefaults(fileHandle_t f);
-void Dvar_SetIntByName(const char *dvarName, int value);
 void Dvar_ClearModified(dvar_t* var);
-qboolean Dvar_Command();
+char *Dvar_InfoString(unsigned short bit);
+char *Dvar_InfoString_Big(unsigned short bit);
 void Dvar_Set_f(void);
+void Dvar_SetA_f(void);
 void Dvar_SetS_f(void);
 void Dvar_SetU_f(void);
-void Dvar_SetA_f(void);
+qboolean Dvar_Command();
 void Dvar_AddCommands();
+void Dvar_Shutdown();
+int Dvar_IsSystemActive();
 void Dvar_Init();

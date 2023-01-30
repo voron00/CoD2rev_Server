@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #define MAX_SUBMODELS 1024
+#define CAPSULE_MODEL_HANDLE 1023
 
 // plane types are used to speed some tests
 // 0-2 are axial planes
@@ -287,7 +288,7 @@ struct TraceExtents
 
 typedef struct TraceThreadInfo
 {
-	int global;
+	int checkcount;
 	int *edges;
 	int *verts;
 	int *partitions;
@@ -308,10 +309,8 @@ typedef struct traceWork_s
 	vec3_t size;
 	vec3_t bounds[2];
 	int contents;
-	byte isPoint;
-	byte axialCullOnly;
-	uint16_t pad;
-	float radius;
+	qboolean isPoint;
+	qboolean axialCullOnly;
 	float offsetZ;
 	vec3_t radiusOffset;
 	float boundingRadius;
@@ -319,17 +318,18 @@ typedef struct traceWork_s
 } traceWork_t;
 static_assert((sizeof(traceWork_t) == 0xB8), "ERROR: traceWork_t size is invalid!");
 
-struct trace_t
+typedef struct
 {
 	float fraction;
 	vec3_t normal;
 	int surfaceFlags;
 	int contents;
 	const char *material;
-	int entityNum;
+	unsigned short entityNum;
+	unsigned short entityClassNum;
 	byte walkable;
 	byte padding;
 	byte allsolid;
 	byte startsolid;
-};
+} trace_t;
 static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");

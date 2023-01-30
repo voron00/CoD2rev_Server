@@ -1,11 +1,5 @@
 #include "com_memory.h"
-#include "../qcommon/cmd.h"
-#include "../xanim/xanim_public.h"
-
-#define HUNK_MAGIC  0x89537892
-#define HUNK_FREE_MAGIC 0x89537893
-
-#define FILEDATA_HASH_SIZE 1024
+#include "com_files.h"
 
 hunkUsed_t hunk_low, hunk_high;
 
@@ -13,8 +7,8 @@ byte *s_hunkData = NULL;
 byte *s_origHunkData = NULL;
 int s_hunkTotal;
 
-fileData_s* com_hunkData;
-fileData_s* com_fileDataHashTable[FILEDATA_HASH_SIZE];
+fileData_t* com_hunkData;
+fileData_t* com_fileDataHashTable[FILEDATA_HASH_SIZE];
 
 int currentPos;
 
@@ -67,6 +61,29 @@ char* CopyStringInternal(const char *in)
 	return copy;
 }
 
+void ReplaceStringInternal(char **string, char *replacement)
+{
+	size_t length;
+	char *str;
+
+	length = I_strlen(replacement);
+	str = *string;
+
+	if ( *string && strlen(str) < length )
+	{
+		Z_FreeInternal(str);
+		str = 0;
+	}
+
+	if ( !str )
+	{
+		str = (char *)Z_MallocInternal(length + 1);
+		*string = str;
+	}
+
+	strcpy(str, replacement);
+}
+
 void FreeStringInternal(char *str)
 {
 	if (str)
@@ -75,7 +92,7 @@ void FreeStringInternal(char *str)
 
 void *Hunk_FindDataForFileInternal(int type, const char *name, int hash)
 {
-	fileData_s* searchFileData;
+	fileData_t* searchFileData;
 
 	for (searchFileData = com_fileDataHashTable[hash]; searchFileData; searchFileData = searchFileData->next)
 	{
@@ -86,6 +103,58 @@ void *Hunk_FindDataForFileInternal(int type, const char *name, int hash)
 	}
 
 	return 0;
+}
+
+void* Hunk_FindDataForFile(int type, const char *name)
+{
+	return Hunk_FindDataForFileInternal(type, name, FS_HashFileName(name, FILEDATA_HASH_SIZE));
+}
+
+void Hunk_OverrideDataForFile(int type, const char *name, void *data)
+{
+	fileData_t *i;
+
+	for ( i = com_fileDataHashTable[FS_HashFileName(name, FILEDATA_HASH_SIZE)]; i; i = i->next )
+	{
+		if ( i->type == type && !strcasecmp(i->name, name) )
+		{
+			i->data = data;
+			return;
+		}
+	}
+}
+
+void Hunk_AddData(unsigned char type, void *data, int (*alloc)(int))
+{
+	fileData_t *fileData;
+
+	fileData = (fileData_t *)alloc(sizeof(fileData_t) - 1);
+	fileData->data = data;
+	fileData->type = type;
+	fileData->next = com_hunkData;
+	com_hunkData = fileData;
+}
+
+const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*alloc)(int))
+{
+	size_t length;
+	fileData_s *fileData;
+	int hash;
+
+	hash = FS_HashFileName(name, FILEDATA_HASH_SIZE);
+	length = I_strlen((char *)name) + sizeof(fileData_t);
+	fileData = (fileData_s *)alloc(length);
+	fileData->data = data;
+	fileData->type = type;
+	strcpy(fileData->name, name);
+	fileData->next = com_fileDataHashTable[hash];
+	com_fileDataHashTable[hash] = fileData;
+	return fileData->name;
+}
+
+qboolean Hunk_DataOnHunk(void *data)
+{
+	return data >= s_hunkData && data < &s_hunkData[s_hunkTotal];
 }
 
 void* Hunk_AllocAlignInternal(size_t size, int aligment)
@@ -252,32 +321,32 @@ void Hunk_FreeTempMemory(void* buf)
 	}
 }
 
-void Hunk_ClearDataFor(fileData_s **pFileData, unsigned char *low, unsigned char *high)
+void Hunk_ClearDataFor(fileData_t **pFileData, unsigned char *low, unsigned char *high)
 {
 	void* data;
-	fileData_s* fileData;
+	fileData_t* fileData;
 
 	while (*pFileData)
 	{
 		fileData = *pFileData;
 
-		if (*pFileData >= (fileData_s*)low && fileData < (fileData_s*)high)
+		if (*pFileData >= (fileData_t*)low && fileData < (fileData_t*)high)
 		{
 			*pFileData = fileData->next;
 			data = fileData->data;
 
 			switch (fileData->type)
 			{
-			case 3:
+			case FILEDATA_XMODELPARTS:
 				XModelPartsFree((struct XModelPartsLoad*)data);
 				break;
-			case 4:
+			case FILEDATA_XMODEL:
 				XModelFree((struct XModel*)data);
 				break;
-			case 5:
+			case FILEDATA_XANIM:
 				XAnimFree((struct XAnimParts*)data);
 				break;
-			case 6:
+			case FILEDATA_XANIMLIST:
 				XAnimFreeList((struct XAnim_s*)data);
 				break;
 			}
@@ -304,6 +373,28 @@ void Hunk_ClearData()
 	}
 
 	Hunk_ClearDataFor(&com_hunkData, low, high);
+}
+
+void DB_EnumXAssetsFor(fileData_s *fileData, int fileDataType, void (*func)(XAssetHeader, void *), void *inData)
+{
+	while ( fileData )
+	{
+		if ( fileData->type == fileDataType && fileData->type == FILEDATA_XMODEL )
+			((void (*)(void *, void *))func)(fileData->data, inData);
+
+		fileData = fileData->next;
+	}
+}
+
+void DB_EnumXAssets(XAssetType type, void (*func)(XAssetHeader, void *), void *inData, bool includeOverride)
+{
+	unsigned int i;
+
+	if ( type == ASSET_TYPE_XMODEL )
+	{
+		for ( i = 0; i < FILEDATA_HASH_SIZE; ++i )
+			DB_EnumXAssetsFor(com_fileDataHashTable[i], FILEDATA_XMODEL, func, inData);
+	}
 }
 
 void Hunk_ClearTempMemoryInternal()
@@ -389,14 +480,35 @@ void TempMemoryReset()
 	currentPos = 0;
 }
 
-void Hunk_UserCreate()
+// VoroN: CoD2 doesn't have Hunk users, so these are just a wrappers for copmatibility with CoD4x code and assembly
+// VoroN: These should NOT be used in the actual code.
+HunkUser* QDECL Hunk_UserCreate(int size, const char *name, byte flaga, byte flagb, int type)
 {
-	;
+	return NULL;
 }
 
-void Hunk_UserDestroy()
+void* QDECL Hunk_UserAlloc(HunkUser *user, int size, int aligment)
 {
-	Hunk_ClearTempMemoryInternal();
+	return Hunk_AllocateTempMemoryHighInternal(size);
+}
+
+void QDECL Hunk_UserDestroy(HunkUser *user)
+{
+	Hunk_ClearTempMemoryHighInternal();
+}
+
+int Hunk_HideTempMemory()
+{
+	int permanent;
+
+	permanent = hunk_low.permanent;
+	hunk_low.permanent = hunk_low.temp;
+	return permanent;
+}
+
+void Hunk_ShowTempMemory(int memory)
+{
+	hunk_low.permanent = memory;
 }
 
 void Com_Meminfo_f(void)

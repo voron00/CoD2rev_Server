@@ -2,29 +2,43 @@
 #include "cm_local.h"
 #include "sys_thread.h"
 
+#ifdef TESTING_LIBRARY
+#define cm (*((clipMap_t*)( 0x08185BE0 )))
+#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
+#else
 clipMap_t cm;
 clipMapExtra_t cme;
+#endif
 
 void CM_InitThreadData(int threadContext)
 {
-	TraceThreadInfo *traceThreadInfo;
-	cbrush_t *box_brush;
-	cmodel_t *box_model;
+	TraceThreadInfo *tti;
 
-	traceThreadInfo = &g_traceThreadInfo[threadContext];
+	tti = &g_traceThreadInfo[threadContext];
+	tti->checkcount = 0;
+	tti->partitions = (int *)Hunk_Alloc(sizeof(int16_t) * cm.partitionCount);
+	tti->edges = (int *)Hunk_Alloc(sizeof(int32_t) * cm.edgeCount);
+	tti->verts = (int *)Hunk_Alloc(sizeof(int32_t) * cm.vertCount);
+	tti->box_brush = (cbrush_t *)Hunk_Alloc(sizeof(cbrush_t));
+	Com_Memcpy(tti->box_brush, cm.box_brush, sizeof(cbrush_t));
+	tti->box_model = (cmodel_t *)Hunk_Alloc(sizeof(cmodel_t));
+	Com_Memcpy(tti->box_model, &cm.box_model, sizeof(cmodel_t));
+}
 
-	traceThreadInfo->global = 0;
-	traceThreadInfo->partitions = (int *)Hunk_Alloc(2 * cm.partitionCount);
-	traceThreadInfo->edges = (int *)Hunk_Alloc(4 * cm.edgeCount);
-	traceThreadInfo->verts = (int *)Hunk_Alloc(4 * cm.vertCount);
+clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule)
+{
+	TraceThreadInfo* tti = (TraceThreadInfo *)Sys_GetValue(THREAD_VALUE_TRACE);
 
-	box_brush = (cbrush_t *)Hunk_Alloc(sizeof(cbrush_t));
-	traceThreadInfo->box_brush = box_brush;
-	memcpy(box_brush, &cm.box_brush, sizeof(cbrush_t));
+	cmodel_t* box_model = tti->box_model;
+	cbrush_t* box_brush = tti->box_brush;
 
-	box_model = (cmodel_t *)Hunk_Alloc(sizeof(cmodel_t));
-	traceThreadInfo->box_model = box_model;
-	memcpy(box_model, &cm.box_model, sizeof(cmodel_t));
+	VectorCopy( mins, box_model->mins );
+	VectorCopy( maxs, box_model->maxs );
+
+	VectorCopy( mins, box_brush->mins );
+	VectorCopy( maxs, box_brush->maxs );
+
+	return CAPSULE_MODEL_HANDLE;
 }
 
 void* CM_Hunk_Alloc(size_t size)

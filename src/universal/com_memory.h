@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../qcommon/qcommon.h"
+#include "../xanim/xanim_public.h"
 
 #define Com_Memset memset
 #define Com_Memcpy memcpy
@@ -10,10 +11,12 @@
 
 #define MIN_COMHUNKMEGS 80
 #define DEF_COMHUNKMEGS 160
-#define MAX_COMHUNKMEGS 160
+#define MAX_COMHUNKMEGS 512
 
 #define HUNK_MAGIC  0x89537892
 #define HUNK_FREE_MAGIC 0x89537893
+
+#define FILEDATA_HASH_SIZE 1024
 
 typedef struct
 {
@@ -31,12 +34,41 @@ extern byte *s_hunkData;
 extern hunkUsed_t hunk_low, hunk_high;
 extern int s_hunkTotal;
 
-struct fileData_s
+#pragma pack(push)
+#pragma pack(1)
+typedef struct fileData_s
 {
 	void *data;
 	fileData_s *next;
 	unsigned char type;
 	char name[1];
+} fileData_t;
+#pragma pack(pop)
+
+enum filedata_type_t
+{
+	FILEDATA_AITYPE,
+	FILEDATA_XMODELPIECES,
+	FILEDATA_XMODELSURFS,
+	FILEDATA_XMODELPARTS,
+	FILEDATA_XMODEL,
+	FILEDATA_XANIM,
+	FILEDATA_XANIMLIST,
+	FILEDATA_STRINGTABLE,
+	FILEDATA_VEHICLEDEF
+};
+
+struct HunkUser
+{
+	struct HunkUser *current;
+	struct HunkUser *next;
+	int maxSize;
+	int end;
+	int pos;
+	const char *name;
+	byte flags[2];
+	int type;
+	char buf[1];
 };
 
 void *Z_TryMallocInternal( int size );
@@ -44,6 +76,12 @@ void *Z_MallocInternal( int size );
 void *Z_MallocGarbageInternal( int size );
 void Z_FreeInternal( void *ptr );
 char* CopyStringInternal(const char *in);
+void* Hunk_FindDataForFile(int type, const char *name);
+void Hunk_OverrideDataForFile(int type, const char *name, void *data);
+void Hunk_AddData(unsigned char type, void *data, int (*alloc)(int));
+const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*alloc)(int));
+qboolean Hunk_DataOnHunk(void *data);
+void ReplaceStringInternal(char **string, char *replacement);
 void FreeStringInternal(char *str);
 void* Hunk_AllocAlignInternal(size_t size, int aligment);
 void *Hunk_AllocInternal( int size );
@@ -55,6 +93,7 @@ void Hunk_ConvertTempToPermLowInternal();
 void* Hunk_ReallocateTempMemoryInternal(int size);
 void Hunk_FreeTempMemory(void* buf);
 void Hunk_ClearData();
+void DB_EnumXAssets(XAssetType type, void (*func)(XAssetHeader, void *), void *inData, bool includeOverride);
 void Hunk_ClearTempMemoryInternal();
 void Hunk_ClearTempMemoryHighInternal();
 void Hunk_ClearHigh(int memory);
@@ -66,9 +105,21 @@ void Hunk_ClearTempMemory();
 void Hunk_Shutdown();
 void* TempMalloc(int size);
 void TempMemoryReset();
-void Hunk_UserCreate();
-void Hunk_UserDestroy();
+int Hunk_HideTempMemory();
+void Hunk_ShowTempMemory(int memory);
 void Com_InitHunkMemory( void );
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+HunkUser* QDECL Hunk_UserCreate(int size, const char *name, byte flaga, byte flagb, int type);
+void* QDECL Hunk_UserAlloc(HunkUser *user, int size, int aligment);
+void QDECL Hunk_UserDestroy(HunkUser *user);
+
+#ifdef __cplusplus
+}
+#endif
 
 #define Z_Malloc Z_MallocInternal
 #define S_Malloc Z_MallocInternal
@@ -82,6 +133,7 @@ void Com_InitHunkMemory( void );
 #define TempMallocAlignStrict TempMallocAlign
 
 #define CopyString CopyStringInternal
+#define ReplaceString ReplaceStringInternal
 #define FreeString FreeStringInternal
 
 struct LargeLocal

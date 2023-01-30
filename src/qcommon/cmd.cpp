@@ -16,8 +16,10 @@ byte		cmd_text_buf[MAX_CMD_BUFFER];
 
 typedef struct cmd_function_s
 {
-	struct cmd_function_s   *next;
-	char                    *name;
+	cmd_function_s *next;
+	char *name;
+	const char *autoCompleteDir;
+	const char *autoCompleteExt;
 	xcommand_t function;
 } cmd_function_t;
 
@@ -53,10 +55,58 @@ const char *Cmd_Argv( int arg )
 
 /*
 ============
-Cmd_CommandCompletion
+Cmd_Args
+Returns a single string containing argv(1) to argv(argc()-1)
 ============
 */
-void Cmd_CommandCompletion( void(*callback)(const char *s) )
+char *Cmd_Args( void )
+{
+	static char cmd_args[MAX_STRING_CHARS];
+	int i;
+
+	cmd_args[0] = 0;
+	for ( i = 1 ; i < cmd_argc ; i++ )
+	{
+		strcat( cmd_args, cmd_argv[i] );
+		if ( i != cmd_argc - 1 )
+		{
+			strcat( cmd_args, " " );
+		}
+	}
+
+	return cmd_args;
+}
+
+/*
+============
+Cmd_ArgsBuffer
+The interpreted versions use this because
+they can't have pointers returned to them
+============
+*/
+void Cmd_ArgsBuffer( char *buffer, int bufferLength )
+{
+	Q_strncpyz( buffer, Cmd_Args(), bufferLength );
+}
+
+/*
+============
+Cmd_ArgvBuffer
+The interpreted versions use this because
+they can't have pointers returned to them
+============
+*/
+void Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength )
+{
+	Q_strncpyz( buffer, Cmd_Argv( arg ), bufferLength );
+}
+
+/*
+============
+Cmd_ForEach
+============
+*/
+void Cmd_ForEach( void(*callback)(const char *s) )
 {
 	cmd_function_t	*cmd;
 
@@ -643,6 +693,30 @@ void Cbuf_Init( void )
 	cmd_text.data = cmd_text_buf;
 	cmd_text.maxsize = MAX_CMD_BUFFER;
 	cmd_text.cursize = 0;
+}
+
+/*
+==============
+Cmd_SetAutoComplete
+==============
+*/
+void Cmd_SetAutoComplete(const char *cmdName, const char *dir, const char *ext)
+{
+	cmd_function_t* cmd;
+
+	cmd = Cmd_FindCommand(cmdName);
+	cmd->autoCompleteDir = dir;
+	cmd->autoCompleteExt = ext;
+}
+
+/*
+==============
+Cmd_Shutdown
+==============
+*/
+void Cmd_Shutdown()
+{
+	cmd_functions = NULL;
 }
 
 /*

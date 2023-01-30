@@ -144,8 +144,8 @@ void Field_CompleteCommand( field_t *field )
 		return;
 	}
 
-	Cmd_CommandCompletion( FindMatches );
-	Dvar_CommandCompletion( FindMatches );
+	Cmd_ForEach( FindMatches );
+	Dvar_ForEach( FindMatches );
 
 	if ( matchCount == 0 )
 	{
@@ -177,8 +177,8 @@ void Field_CompleteCommand( field_t *field )
 	Com_Printf( "]%s\n", completionField->buffer );
 
 	// run through again, printing matches
-	Cmd_CommandCompletion( PrintMatches );
-	Dvar_CommandCompletion( PrintMatches );
+	Cmd_ForEach( PrintMatches );
+	Dvar_ForEach( PrintMatches );
 }
 
 void Com_StartupVariable( const char *match )
@@ -363,10 +363,13 @@ void Com_PrintMessage( conChannel_t channel, const char *fmt, ... )
 
 	if ( rd_buffer )
 	{
-		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
+		if (channel != CON_CHANNEL_LOGFILEONLY)
 		{
-			rd_flush(rd_buffer);
-			*rd_buffer = 0;
+			if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
+			{
+				rd_flush(rd_buffer);
+				*rd_buffer = 0;
+			}
 		}
 		Q_strcat(rd_buffer, rd_buffersize, msg);
 		// TTimo nooo .. that would defeat the purpose
@@ -383,8 +386,11 @@ void Com_PrintMessage( conChannel_t channel, const char *fmt, ... )
 	}
 #endif
 
-	// echo to dedicated console and early console
-	Sys_Print( msg );
+	if ( channel != CON_CHANNEL_LOGFILEONLY )
+	{
+		// echo to dedicated console and early console
+		Sys_Print( msg );
+	}
 
 	// logfile
 	if ( com_logfile && com_logfile->current.integer )
@@ -479,17 +485,27 @@ void Com_Error(errorParm_t code, const char *format, ...)
 	Q_vsnprintf(com_errorMessage, 0x1000, format, argptr);
 	va_end (argptr);
 
-	if ( code != ERR_SCRIPT && code != ERR_LOCALIZATION )
+	if ( code == ERR_SCRIPT || code == ERR_LOCALIZATION )
 	{
-		if ( code == ERR_SCRIPT_DROP )
-			code = ERR_FATAL;
-		else
-			com_fixedConsolePosition = 0;
+		code = ERR_DROP;
+	}
+	else if ( code == ERR_SCRIPT_DROP )
+	{
+		code = ERR_DROP;
 	}
 	else
 	{
-		code = ERR_FATAL;
+		com_fixedConsolePosition = 0;
 	}
+
+// !!! REMOVE ME WHEN COMPLETE
+#ifdef TESTING_LIBRARY
+	if (code == ERR_FATAL)
+		Sys_Error("%s", com_errorMessage);
+	else
+		Com_Printf("!!! ERROR !!! %s\n", com_errorMessage);
+	return;
+#endif
 
 	com_errorType = code;
 	abortframe = (jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR);
@@ -503,6 +519,16 @@ void Com_SetErrorMessage(const char *errorMessage)
 	Dvar_SetString(ui_errorMessage, errorMessage);
 }
 
+void UpdateScrSettings()
+{
+	qboolean developer = 0;
+
+	if ( com_developer->current.integer || com_logfile->current.integer )
+		developer = 1;
+
+	Scr_Settings(developer, com_developer_script->current.boolean, com_developer->current.integer);
+}
+
 void Com_Restart()
 {
 	SV_ShutdownGameProgs();
@@ -512,7 +538,7 @@ void Com_Restart()
 	CM_Shutdown();
 	Hunk_Clear();
 	Scr_Init();
-	Scr_Settings(com_logfile->current.integer || com_developer->current.integer, com_developer_script->current.integer, com_developer->current.integer);
+	UpdateScrSettings();
 	com_fixedConsolePosition = 0;
 	XAnimInit();
 	DObjInit();
@@ -1182,7 +1208,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	Sys_Init();
 	Netchan_Init(Com_Milliseconds());
 	Scr_Init();
-	Scr_Settings(com_logfile->current.integer || com_developer->current.integer, com_developer_script->current.integer, com_developer->current.integer);
+	UpdateScrSettings();
 	XAnimInit();
 	DObjInit();
 	SV_Init();

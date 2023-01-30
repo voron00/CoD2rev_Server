@@ -120,13 +120,11 @@ typedef enum
 
 typedef struct
 {
-	netadrtype_t type;
+	int type;
 	byte ip[4];
 	unsigned short port;
 	byte ipx[10];
 } netadr_t;
-
-qboolean Sys_SendPacket( int length, const void *data, netadr_t to );
 
 void NET_Init( void );
 void NET_Shutdown( void );
@@ -134,43 +132,14 @@ void NET_Restart( void );
 void NET_Config( qboolean enableNetworking );
 void NET_Sleep(int msec);
 
-typedef enum
+enum conChannel_t
 {
 	CON_CHANNEL_DONT_FILTER = 0x0,
 	CON_CHANNEL_ERROR = 0x1,
 	CON_CHANNEL_GAMENOTIFY = 0x2,
 	CON_CHANNEL_BOLDGAME = 0x3,
-	CON_CHANNEL_SUBTITLE = 0x4,
-	CON_CHANNEL_OBITUARY = 0x5,
-	CON_CHANNEL_LOGFILEONLY = 0x6,
-	CON_CHANNEL_CONSOLEONLY = 0x7,
-	CON_CHANNEL_GFX = 0x8,
-	CON_CHANNEL_SOUND = 0x9,
-	CON_CHANNEL_FILES = 0xA,
-	CON_CHANNEL_DEVGUI = 0xB,
-	CON_CHANNEL_PROFILE = 0xC,
-	CON_CHANNEL_UI = 0xD,
-	CON_CHANNEL_CLIENT = 0xE,
-	CON_CHANNEL_SERVER = 0xF,
-	CON_CHANNEL_SYSTEM = 0x10,
-	CON_CHANNEL_PLAYERWEAP = 0x11,
-	CON_CHANNEL_AI = 0x12,
-	CON_CHANNEL_ANIM = 0x13,
-	CON_CHANNEL_PHYS = 0x14,
-	CON_CHANNEL_FX = 0x15,
-	CON_CHANNEL_LEADERBOARDS = 0x16,
-	CON_CHANNEL_LIVE = 0x17,
-	CON_CHANNEL_PARSERSCRIPT = 0x18,
-	CON_CHANNEL_SCRIPT = 0x19,
-	CON_CHANNEL_SPAWNSYSTEM = 0x1A,
-	CON_CHANNEL_COOPINFO = 0x1B,
-	CON_CHANNEL_SERVERDEMO = 0x1C,
-	CON_CHANNEL_DDL = 0x1D,
-	CON_CHANNEL_NETWORK = 0x1E,
-	CON_CHANNEL_SCHEDULER = 0x1F,
-	CON_FIRST_DEBUG_CHANNEL = 0x1F,
-	CON_BUILTIN_CHANNEL_COUNT = 0x20
-} conChannel_t;
+	CON_CHANNEL_LOGFILEONLY = 0x4,
+};
 
 // Edit fields and command line history/completion
 #define	MAX_EDIT_LINE	256
@@ -277,6 +246,10 @@ typedef struct NetField
 #include "../game/g_shared.h"
 #include "../server/server.h"
 
+qboolean Sys_SendPacket( int length, const void *data, netadr_t to );
+qboolean Sys_GetPacket ( netadr_t *net_from, msg_t *net_message );
+qboolean Sys_StringToAdr( const char *s, netadr_t *a );
+
 void Huff_Compress( msg_t *buf, int offset );
 void Huff_Decompress( msg_t *buf, int offset );
 void Huff_Init( huffman_t *huff );
@@ -338,6 +311,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 unsigned int Com_BlockChecksum( void *buffer, int length );
 unsigned int Com_BlockChecksumKey( void *buffer, int length, int key );
 
+void Com_InitDvars();
 void Com_StartupVariable( const char *match );
 void Com_PrintMessage( conChannel_t channel, const char *fmt, ... );
 void Com_Printf( const char *fmt, ...);
@@ -379,3 +353,4 @@ void CM_LoadStaticModels();
 void CM_Cleanup(void);
 void CM_Shutdown();
 void CM_TraceCapsuleThroughCapsule(traceWork_s *tw, trace_t *trace);
+clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule);

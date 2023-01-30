@@ -207,7 +207,8 @@ typedef struct svEntity_s
 	int	linkcontents;
 	float linkmin[2];
 	float linkmax[2];
-} svEntity_t;  // Not yet verified !!!
+} svEntity_t;
+static_assert((sizeof(svEntity_t) == 0x174), "ERROR: svEntity_t size is invalid!");
 
 typedef struct
 {
@@ -216,8 +217,8 @@ typedef struct
 	int start_frameTime;
 	int	checksumFeed;
 	int timeResidual;
-	int unk; // ?
-	struct cmodel_s *models[MAX_MODELS]; // ?
+	char *mLocalSubBSPEntityParsePoint;
+	struct cmodel_s *models[MAX_MODELS];
 	char *configstrings[MAX_CONFIGSTRINGS];
 	svEntity_t svEntities[MAX_GENTITIES];
 	char *entityParsePoint;
@@ -238,15 +239,27 @@ typedef struct
 	float ucompAve;
 	int	ucompNum;
 	char gametype[MAX_QPATH];
-} server_t; // Not yet verified !!!
-
-extern server_t sv;
-extern serverStatic_t svs;
+} server_t;
+static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
 
 extern dvar_t *nextmap;
+extern dvar_t *sv_maxclients;
 
 void SV_Init();
 void SV_PacketEvent( netadr_t from, msg_t *msg );
 void SV_Frame(int msec);
 void SV_Shutdown( const char* finalmsg );
 void SV_ShutdownGameProgs();
+void SV_Netchan_AddOOBProfilePacket(int iLength);
+void SV_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to);
+qboolean SV_Netchan_TransmitNextFragment(netchan_t *chan);
+void SV_Netchan_UpdateProfileStats();
+void SV_Netchan_PrintProfileStats(qboolean format);
+void SV_AddServerCommand(client_t *client, int type, const char *cmd);
+void SV_DelayDropClient(client_t *client, const char *dropmsg);
+char *SV_ExpandNewlines( char *in );
+void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... );
+void SV_SetConfig(int start, int max, unsigned short bit);
+void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value);
+void SV_SetConfigstring(unsigned int index, const char *val);
+const char* SV_GetConfigstringConst(int index);

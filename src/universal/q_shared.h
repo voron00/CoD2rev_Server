@@ -126,6 +126,7 @@
 #define qfalse 0
 
 #include "../misc/hexrays_defs.h"
+#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
 typedef unsigned char byte;
 typedef int	fileHandle_t;
@@ -242,6 +243,7 @@ void Com_StripExtension(const char *in, char *out);
 
 #define I_strcmp strcmp
 #define I_strcpy strcpy
+#define I_strlen strlen
 
 #define Q_isprint I_isprint
 #define Q_islower I_islower
@@ -261,6 +263,7 @@ void Com_StripExtension(const char *in, char *out);
 #define Q_strncat I_strncat
 #define Q_strcmp I_strcmp
 #define Q_strcpy I_strcpy
+#define Q_strlen I_strlen
 
 int Q_vsnprintf(char *str, size_t size, const char *format, va_list args);
 #define I_vsnprintf Q_vsnprintf
@@ -272,6 +275,7 @@ void Info_SetValueForKey( char *s, const char *key, const char *value );
 void Info_SetValueForKey_Big( char *s, const char *key, const char *value );
 const char *Info_ValueForKey( const char *s, const char *key );
 void Info_NextPair( const char **head, char *key, char *value );
+qboolean I_IsEqualUnitWSpace(char *cmp1, char *cmp2);
 char *I_CleanStr(char *string);
 char I_CleanChar(char character);
 bool Com_ValidXModelName(const char *name);
