@@ -114,7 +114,7 @@ struct VariableValueInternal
 typedef struct scrVarPub_s
 {
 	const char *fieldBuffer;
-	int HunkMemoryMark;
+	int canonicalStrMark;
 	uint16_t canonicalStrCount;
 	byte developer;
 	byte developer_script;
@@ -215,7 +215,7 @@ static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid
 
 struct scr_animtree_t
 {
-	struct XAnim_s *anims;
+	XAnim_s *anims;
 };
 
 typedef struct scrAnimPub_s

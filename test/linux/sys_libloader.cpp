@@ -2,11 +2,199 @@
 
 #include "../../src/qcommon/qcommon.h"
 #include "../../src/qcommon/cm_local.h"
+#include "../../src/server/server.h"
 #include "../../src/qcommon/sys_thread.h"
 #include "../../src/clientscript/clientscript_public.h"
 
+#define cm_original (*((clipMap_t*)( 0x08185BE0 )))
+#define cme_original (*((clipMapExtra_t*)( 0x08185CF4 )))
+
+extern clipMap_t cm;
+extern clipMapExtra_t cme;
+
+unsigned __int16 * gecrap(cLeafBrushNodeLeaf_t *val)
+{
+	return val->brushes;
+}
+
+#if 0
+void test()
+{
+	static int loaded = 0;
+
+	if (loaded)
+		return;
+
+	loaded = 1;
+
+	Sys_InitMainThread();
+	Dvar_Init();
+	Swap_Init();
+	FS_InitFilesystem();
+	Com_InitHunkMemory();
+	Com_LoadBsp("maps/mp/mp_toujane.d3dbsp");
+	CM_LoadMapFromBsp("maps/mp/mp_toujane.d3dbsp", 1);
+	CM_LoadStaticModels();
+
+	//printf("%i\n", Com_Memcmp(&cm, &cm_original, sizeof(clipMap_t)));
+
+
+	assert(cm_original.numStaticModels == cm.numStaticModels);
+
+
+
+	//printf("%i\n", cm_original.numStaticModels);
+	//printf("%i\n", cm.numStaticModels);
+
+	/*
+	for (unsigned int i = 0; i <  cm_original.numStaticModels; i++)
+	{
+		//bool result = Com_Memcmp(&cm.staticModelList[i], &cm_original.staticModelList[i], sizeof(cStaticModel_t));
+		//assert(result == 0);
+		printf("(%f %f %f) (%f %f %f)\n", cm.staticModelList[i].absmax[0], cm.staticModelList[i].absmax[1], cm.staticModelList[i].absmax[2],
+										  cm_original.staticModelList[i].absmax[0], cm_original.staticModelList[i].absmax[1], cm_original.staticModelList[i].absmax[2]);
+	}
+	*/
+
+	assert(cm_original.numMaterials == cm.numMaterials);
+
+	for (unsigned int i = 0; i <  cm_original.numMaterials; i++)
+	{
+		bool result = Com_Memcmp(&cm.materials[i], &cm_original.materials[i], sizeof(dmaterial_t));
+		assert(result == 0);
+
+	}
+
+	assert(cm_original.numBrushSides == cm.numBrushSides);
+
+	for (unsigned int i = 0; i <  cm_original.numBrushSides; i++)
+	{
+		//bool result = Com_Memcmp(&cm.brushsides[i], &cm_original.brushsides[i], sizeof(cbrushside_t));
+		//assert(result == 0);
+		//printf("%i %i\n", cm.brushsides[i].materialNum, cm_original.brushsides[i].materialNum);
+		//bool result = Com_Memcmp(&cm.brushsides[i].plane, &cm_original.brushsides[i].plane, sizeof(cplane_t));
+		//assert(result == 0);
+		//printf("(%f %f %f) (%f %f %f)\n", cm.brushsides[i].plane->normal[0], cm.brushsides[i].plane->normal[1], cm.brushsides[i].plane->normal[2],
+		//								  cm_original.brushsides[i].plane->normal[0], cm_original.brushsides[i].plane->normal[1], cm_original.brushsides[i].plane->normal[2]);
+		//printf("%i %i\n", cm.brushsides[i].plane->signbits, cm_original.brushsides[i].plane->signbits);
+	}
+
+	assert(cm_original.numNodes == cm.numNodes);
+
+	for (unsigned int i = 0; i <  cm_original.numNodes; i++)
+	{
+		//bool result = Com_Memcmp(&cm.brushsides[i], &cm_original.brushsides[i], sizeof(cbrushside_t));
+		//assert(result == 0);
+		//printf("%i %i\n", cm.nodes[i].children[0], cm_original.nodes[i].children[0]);
+		//bool result = Com_Memcmp(&cm.nodes[i].plane, &cm_original.nodes[i].plane, sizeof(cplane_t));
+		//assert(result == 0);
+		//printf("(%f %f %f) (%f %f %f)\n", cm.nodes[i].plane->normal[0], cm.nodes[i].plane->normal[1], cm.nodes[i].plane->normal[2],
+		//	  cm_original.nodes[i].plane->normal[0], cm_original.nodes[i].plane->normal[1], cm_original.nodes[i].plane->normal[2]);
+		//printf("%i %i\n", cm.nodes[i].plane->signbits, cm_original.nodes[i].plane->signbits);
+	}
+
+	assert(cm_original.leafbrushNodesCount == cm.leafbrushNodesCount);
+
+	for (unsigned int i = 0; i <  cm_original.leafbrushNodesCount; i++)
+	{
+		assert(cm_original.leafbrushNodes->leafBrushCount == cm.leafbrushNodes->leafBrushCount);
+		//bool result = Com_Memcmp(&cm.leafbrushNodes[i], &cm_original.leafbrushNodes[i], sizeof(cLeafBrushNode_t));
+		//assert(result == 0);
+
+		/*
+		//for (unsigned int j = 0; j <  cm_original.leafbrushNodes->leafBrushCount; j++)
+		{
+			uint16_t *brush = gecrap(&cm_original.leafbrushNodes[i].data.leaf);
+
+			printf("%u \n", brush[0]);
+		}
+		*/
+		uint16_t *brush = cm_original.leafbrushNodes[i].data.leaf.brushes;
+		uint16_t *brush2 = cm.leafbrushNodes[i].data.leaf.brushes;
+		printf("%p %p\n", brush, brush2);
+		//bool result = Com_Memcmp(&cm.nodes[i].plane, &cm_original.nodes[i].plane, sizeof(cplane_t));
+		//assert(result == 0);
+		//printf("(%f %f %f) (%f %f %f)\n", cm.nodes[i].plane->normal[0], cm.nodes[i].plane->normal[1], cm.nodes[i].plane->normal[2],
+		//	  cm_original.nodes[i].plane->normal[0], cm_original.nodes[i].plane->normal[1], cm_original.nodes[i].plane->normal[2]);
+		//printf("%i %i\n", cm.nodes[i].plane->signbits, cm_original.nodes[i].plane->signbits);
+	}
+}
+#endif
+
+extern void CMod_LoadBrushes();
+extern void CMod_LoadLeafBrushes();
+extern void CMod_LoadCollisionAabbTrees();
+extern void CMod_LoadLeafs(bool usePvs);
+extern void CMod_LoadSubmodels();
+extern int CMod_GetLeafTerrainContents(cLeaf_s *leaf);
+extern cLeafBrushNode_s* CMod_AllocLeafBrushNode();
+extern double CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist);
+extern cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs);
+extern void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf);
+extern void CMod_LoadLeafBrushNodes();
+extern void CMod_LoadSubmodelBrushNodes();
+extern void CM_InitBoxHull();
+extern void CMod_LoadBrushRelated(bool usePvs);
+extern void CMod_LoadPlanes();
+extern void CMod_LoadMaterials();
+extern void CMod_LoadNodes();
+extern void CMod_LoadLeafSurfaces();
+extern void CMod_LoadCollisionVerts();
+extern void CMod_LoadCollisionEdges();
+extern void CMod_LoadCollisionTriangles();
+extern void CMod_LoadCollisionBorders();
+extern void CMod_LoadCollisionPartitions();
+
+void CMod_LoadLeafs_wrap(int a1, bool usePvs)
+{
+	 CMod_LoadLeafs(usePvs);
+}
+
+
+void CMod_LoadBrushRelated_wrap(int a1, bool usePvs)
+{
+	 CMod_LoadLeafs(usePvs);
+}
+
 void Sys_RedirectFunctions()
 {
+	/*
+	SetJump(0x080534B8, (DWORD)CMod_LoadBrushes);
+	SetJump(0x08053D34, (DWORD)CMod_LoadLeafBrushes);
+	SetJump(0x0805474E, (DWORD)CMod_LoadCollisionAabbTrees);
+	SetJump(0x080538BC, (DWORD)CMod_LoadLeafs_wrap);
+	SetJump(0x08052768, (DWORD)CMod_LoadSubmodels);
+	SetJump(0x0805319E, (DWORD)CMod_GetLeafTerrainContents);
+	//SetJump(0x08052728, (DWORD)CMod_AllocLeafBrushNode);
+	SetJump(0x080529AE, (DWORD)CMod_GetPartitionScore);
+	//SetJump(0x08052B12, (DWORD)CMod_PartionLeafBrushes_r);
+	//SetJump(0x08052FD4, (DWORD)CMod_PartionLeafBrushes);
+	//SetJump(0x08053A80, (DWORD)CMod_LoadLeafBrushNodes);
+	SetJump(0x08053200, (DWORD)CMod_LoadSubmodelBrushNodes);
+	SetJump(0x08054D08, (DWORD)CM_InitBoxHull);
+	//SetJump(0x08054A26, (DWORD)CMod_LoadBrushRelated_wrap);
+	SetJump(0x08053B7E, (DWORD)CMod_LoadPlanes);
+	SetJump(0x080525E0, (DWORD)CMod_LoadMaterials);
+	SetJump(0x08053354, (DWORD)CMod_LoadNodes);
+	SetJump(0x08053E0E, (DWORD)CMod_LoadLeafSurfaces);
+	SetJump(0x08053EC2, (DWORD)CMod_LoadCollisionVerts);
+	SetJump(0x08053FC0, (DWORD)CMod_LoadCollisionEdges);
+	SetJump(0x08054220, (DWORD)CMod_LoadCollisionTriangles);
+	SetJump(0x0805448C, (DWORD)CMod_LoadCollisionBorders);
+	SetJump(0x0805461E, (DWORD)CMod_LoadCollisionPartitions);
+	*/
+	
+	// SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
+
+	//SetJump(0x08094F02, (DWORD)test);
+
+
+	//SetJump(0x080C501A, (DWORD)XModelGetStaticBounds);
+
+	SetJump(0x08051C90, (DWORD)Com_LoadBsp);
+	SetJump(0x08051E5C, (DWORD)Com_UnloadBsp);
+	SetJump(0x08051F9E, (DWORD)CM_LoadMap);
+
 	// Don't hook that for now, just init
 	Swap_Init();
 
@@ -455,7 +643,7 @@ void Sys_RedirectFunctions()
 	SetJump(0x080846F8, (DWORD)Scr_GetVector);
 	SetJump(0x0810E290, (DWORD)Scr_ConstructMessageString);
 	SetJump(0x0807E1F6, (DWORD)Scr_AddClassField);
-	
+
 	//SetJump(0x0808724F, (DWORD)ScriptParse);
 	SetJump(0x0810125C, (DWORD)HudElem_SetColor);
 }

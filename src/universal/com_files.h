@@ -113,14 +113,24 @@ int FS_LanguageHasAssets(int iLanguage);
 void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char* ospath);
 int FS_Seek(int f, int offset, int origin);
 int FS_Read(void *buffer, int len, int h);
-int FS_ReadFile(const char* qpath, void** buffer);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int QDECL FS_ReadFile(const char* qpath, void** buffer);
+void QDECL FS_FreeFile(void* buffer);
+
+#ifdef __cplusplus
+}
+#endif
+
 int FS_FOpenTextFileWrite(const char* filename);
 int FS_FOpenFileWrite( const char *filename );
 int FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void FS_Printf( fileHandle_t h, const char *fmt, ... );
 void FS_Flush(int f);
 int FS_Write(const void *buffer, int len, int h);
-void FS_FreeFile(void* buffer);
 void FS_CopyFile(char *fromOSPath, char *toOSPath);
 void FS_FCloseFile( fileHandle_t f );
 void FS_Shutdown();

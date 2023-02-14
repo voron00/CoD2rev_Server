@@ -389,7 +389,7 @@ void I_strncat( char *dest, int size, const char *src )
 	I_strncpyz( dest + l1, src, size - l1 );
 }
 
-int Com_sprintf(char *dest, size_t size, const char *format, ...)
+int QDECL Com_sprintf(char *dest, size_t size, const char *format, ...)
 {
 	int result;
 	va_list va;

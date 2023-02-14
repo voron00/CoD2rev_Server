@@ -227,7 +227,17 @@ char *I_strlwr( char *s1 );
 char *I_strupr( char *s1 );
 void I_strcat( char *dest, int size, const char *src );
 void I_strncat( char *dest, int size, const char *src );
-int Com_sprintf(char *dest, size_t size, const char *format, ...);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int QDECL Com_sprintf(char *dest, size_t size, const char *format, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
 void Com_DefaultExtension( char *path, int maxSize, const char *extension );
 const char *Com_StringContains( const char *str1, const char *str2, int casesensitive);
 int Com_Filter( const char *filter, const char *name, int casesensitive);

@@ -1,4 +1,5 @@
 #pragma once
+#include "../xanim/xanim_public.h"
 
 #include <stdint.h>
 
@@ -69,7 +70,7 @@ static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!"
 typedef struct cStaticModel_s
 {
 	uint16_t writable;
-	struct XModel *xmodel;
+	XModel *xmodel;
 	vec3_t origin;
 	vec3_t invScaledAxis[3];
 	vec3_t absmin;

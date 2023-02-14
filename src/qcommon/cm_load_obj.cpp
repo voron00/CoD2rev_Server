@@ -42,7 +42,7 @@ void CMod_LoadBrushes()
 	inBrush = (dbrush_t *)Com_GetBspLump(LUMP_BRUSHES, sizeof(dbrush_t), &brushcount);
 	inSides = (dbrushside_t *)Com_GetBspLump(LUMP_BRUSHSIDES, sizeof(dbrushside_t), &numinsides);
 
-	unsigned int outnumsides = (unsigned int)numinsides - 6 * brushcount;
+	unsigned int outnumsides = numinsides - 6 * brushcount;
 
 	if ( outnumsides < 0 )
 		Com_Error(ERR_DROP, "CMod_LoadBrushes: bad side count");
@@ -304,7 +304,7 @@ void CMod_LoadSubmodels()
 		Com_Error(ERR_DROP, "Map with no brush models (should at least have the world model)");
 	}
 
-	cm.cmodels = (cmodel_t *)CM_Hunk_Alloc(72 * count);
+	cm.cmodels = (cmodel_t *)CM_Hunk_Alloc(sizeof(cmodel_t) * count);
 	cm.numSubModels = count;
 
 	if ( count > MAX_SUBMODELS - 1 )
@@ -374,12 +374,14 @@ int CMod_GetLeafTerrainContents(cLeaf_s *leaf)
 	return contents;
 }
 
-cLeafBrushNode_s* CMod_AllocLeafBrushNode()
+cLeafBrushNode_s *CMod_AllocLeafBrushNode()
 {
-	cLeafBrushNode_s *result = (cLeafBrushNode_s *)TempMalloc(sizeof(cLeafBrushNode_s));
-	Com_Memset(result, 0, sizeof(cLeafBrushNode_s));
-	result->data.children.dist = -3.4028235e38;
-	return result;
+	cLeafBrushNode_s *node;
+
+	node = (cLeafBrushNode_s *)TempMalloc(sizeof(cLeafBrushNode_s));
+	memset(node, 0, sizeof(cLeafBrushNode_s));
+	node->data.children.dist = -3.4028235e38;
+	return node;
 }
 
 double CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist)
@@ -434,7 +436,7 @@ double CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axi
 		bc = leftBrushCount;
 	}
 
-	*dist = (float)(min + max) * 0.5;
+	*dist = (min + max) * 0.5;
 
 	if ( bc <= 0 )
 	{
@@ -507,9 +509,9 @@ cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafB
 
 	if ( axis >= 0 )
 	{
-		len = 2 * numLeafBrushes;
+		len = sizeof(uint16_t) * numLeafBrushes;
 		leafBrushesCopy = (uint16_t *)CM_Hunk_AllocateTempMemoryHigh(sizeof(uint16_t) * numLeafBrushes);
-		Com_Memcpy((char *)leafBrushesCopy, (char *)leafBrushes, len);
+		Com_Memcpy(leafBrushesCopy, leafBrushes, len);
 		numLeafBrushesChild = 0;
 
 		for ( k = 0; k < numLeafBrushes; ++k )
@@ -589,7 +591,7 @@ LABEL_27:
 					continue;
 				}
 
-				if ( (float)((float)(dist - b->maxs[axis]) - range) < 0.0 )
+				if ( ((dist - b->maxs[axis]) - range) < 0.0 )
 				{
 					range = dist - b->maxs[axis];
 				}
@@ -601,7 +603,7 @@ LABEL_27:
 					continue;
 				}
 
-				if ( (float)((float)(b->mins[axis] - dist) - range) < 0.0 )
+				if ( ((b->mins[axis] - dist) - range) < 0.0 )
 				{
 					range = b->mins[axis] - dist;
 				}
@@ -759,7 +761,7 @@ void CMod_LoadSubmodelBrushNodes()
 
 void CM_InitBoxHull()
 {
-	cLeafBrushNode_s *nlbn;
+	cLeafBrushNode_s *node;
 
 	cm.box_brush = &cm.brushes[cm.numBrushes];
 	cm.box_brush->numsides = 0;
@@ -779,10 +781,10 @@ void CM_InitBoxHull()
 	cm.box_brush->axialMaterialNum[1][0] = -1;
 	cm.box_brush->axialMaterialNum[1][1] = -1;
 	cm.box_brush->axialMaterialNum[1][2] = -1;
-	nlbn = CMod_AllocLeafBrushNode();
-	cm.box_model.leaf.leafBrushNode = nlbn - cm.leafbrushNodes;
-	nlbn->leafBrushCount = 1;
-	nlbn->data.leaf.brushes = &cm.leafbrushes[cm.numLeafBrushes];
+	node = CMod_AllocLeafBrushNode();
+	cm.box_model.leaf.leafBrushNode = node - cm.leafbrushNodes;
+	node->leafBrushCount = 1;
+	node->data.leaf.brushes = &cm.leafbrushes[cm.numLeafBrushes];
 	cm.leafbrushes[cm.numLeafBrushes] = cm.numBrushes;
 }
 
@@ -967,12 +969,11 @@ void CMod_LoadCollisionEdges()
 	for (edgeIter = 0, out = cm.edges ; edgeIter < count; ++in, ++out, ++edgeIter )
 	{
 		VectorCopy(in->position, out->position);
-
 		VectorCopy(in->normal[0], out->normal[0]);
 		VectorCopy(in->normal[1], out->normal[1]);
 		VectorCopy(in->normal[2], out->normal[2]);
 
-		VectorScale(in->normal[2], 0.994948f, out->normal[2]);
+		VectorScale(out->normal[2], 1.0 / in->dist, out->normal[2]);
 	}
 }
 
@@ -992,7 +993,6 @@ void CMod_LoadCollisionTriangles()
 	for (triIter = 0, out = cm.triIndices ; triIter < count; ++in, ++out, ++triIter )
 	{
 		VectorCopy(in->position, out->position);
-
 		VectorCopy(in->normal[0], out->normal[0]);
 		VectorCopy(in->normal[1], out->normal[1]);
 		VectorCopy(in->normal[2], out->normal[2]);

@@ -5,7 +5,7 @@
 XAnimFree
 ==============
 */
-void XAnimFree(struct XAnimParts *parts)
+void XAnimFree(XAnimParts *parts)
 {
 	UNIMPLEMENTED(__FUNCTION__);
 }
@@ -15,7 +15,7 @@ void XAnimFree(struct XAnimParts *parts)
 XAnimFreeList
 ==============
 */
-void XAnimFreeList(struct XAnim_s *anims)
+void XAnimFreeList(XAnim_s *anims)
 {
 	UNIMPLEMENTED(__FUNCTION__);
 }

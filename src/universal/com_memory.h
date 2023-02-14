@@ -93,7 +93,7 @@ void Hunk_ConvertTempToPermLowInternal();
 void* Hunk_ReallocateTempMemoryInternal(int size);
 void Hunk_FreeTempMemory(void* buf);
 void Hunk_ClearData();
-void DB_EnumXAssets(XAssetType type, void (*func)(XAssetHeader, void *), void *inData, bool includeOverride);
+void DB_EnumXAssets(XAssetType type, void (*func)(struct XAssetHeader, void *), void *inData, bool includeOverride);
 void Hunk_ClearTempMemoryInternal();
 void Hunk_ClearTempMemoryHighInternal();
 void Hunk_ClearHigh(int memory);

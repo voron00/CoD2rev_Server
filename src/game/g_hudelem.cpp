@@ -49,7 +49,7 @@ const char *g_he_horzalign[] =
 
 const char *g_he_aligny[] = { "top", "middle", "bottom" };
 const char *g_he_alignx[] = { "left", "center", "right" };
-const char *g_he_font[] = { "default", "bigfixed", "smallfixed", };
+const char *g_he_font[] =   { "default", "bigfixed", "smallfixed", };
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount)
 {

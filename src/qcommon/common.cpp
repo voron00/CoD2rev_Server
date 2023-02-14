@@ -1,5 +1,4 @@
 #include "qcommon.h"
-#include "cm_local.h"
 #include "cmd.h"
 #include "sys_thread.h"
 
@@ -426,7 +425,7 @@ void Com_PrintMessage( conChannel_t channel, const char *fmt, ... )
 	}
 }
 
-void Com_Printf( const char *fmt, ...)
+void QDECL Com_Printf( const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
@@ -438,7 +437,7 @@ void Com_Printf( const char *fmt, ...)
 	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, "%s", msg);
 }
 
-void Com_DPrintf( const char *fmt, ...)
+void QDECL Com_DPrintf( const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];

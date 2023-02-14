@@ -13,7 +13,7 @@ struct BspHeader
 	unsigned int ident;
 	unsigned int version;
 	unsigned int chunkCount;
-	struct BspChunk chunks[MAX_BSP_CHUNCKS];
+	BspChunk chunks[MAX_BSP_CHUNCKS];
 };
 
 typedef struct comBspGlob_s
@@ -24,7 +24,11 @@ typedef struct comBspGlob_s
 } comBspGlob_t;
 static_assert((sizeof(comBspGlob_t) == 0xC), "ERROR: comBspGlob_t size is invalid!");
 
+#ifdef TESTING_LIBRARY
+#define comBspGlob (*((comBspGlob_t*)( 0x08185BC8 )))
+#else
 comBspGlob_t comBspGlob;
+#endif
 
 qboolean Com_IsBspLoaded()
 {

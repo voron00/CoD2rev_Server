@@ -41,7 +41,7 @@ clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule)
 	return CAPSULE_MODEL_HANDLE;
 }
 
-void* CM_Hunk_Alloc(size_t size)
+void* CM_Hunk_Alloc(int size)
 {
 	return Hunk_Alloc(size);
 }

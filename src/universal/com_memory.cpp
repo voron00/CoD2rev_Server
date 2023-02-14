@@ -338,16 +338,16 @@ void Hunk_ClearDataFor(fileData_t **pFileData, unsigned char *low, unsigned char
 			switch (fileData->type)
 			{
 			case FILEDATA_XMODELPARTS:
-				XModelPartsFree((struct XModelPartsLoad*)data);
+				XModelPartsFree((XModelParts *)data);
 				break;
 			case FILEDATA_XMODEL:
-				XModelFree((struct XModel*)data);
+				XModelFree((XModel *)data);
 				break;
 			case FILEDATA_XANIM:
-				XAnimFree((struct XAnimParts*)data);
+				XAnimFree((XAnimParts *)data);
 				break;
 			case FILEDATA_XANIMLIST:
-				XAnimFreeList((struct XAnim_s*)data);
+				XAnimFreeList((XAnim *)data);
 				break;
 			}
 		}
@@ -375,7 +375,7 @@ void Hunk_ClearData()
 	Hunk_ClearDataFor(&com_hunkData, low, high);
 }
 
-void DB_EnumXAssetsFor(fileData_s *fileData, int fileDataType, void (*func)(XAssetHeader, void *), void *inData)
+void DB_EnumXAssetsFor(fileData_s *fileData, int fileDataType, void (*func)(struct XAssetHeader, void *), void *inData)
 {
 	while ( fileData )
 	{
@@ -386,7 +386,7 @@ void DB_EnumXAssetsFor(fileData_s *fileData, int fileDataType, void (*func)(XAss
 	}
 }
 
-void DB_EnumXAssets(XAssetType type, void (*func)(XAssetHeader, void *), void *inData, bool includeOverride)
+void DB_EnumXAssets(XAssetType type, void (*func)(struct XAssetHeader, void *), void *inData, bool includeOverride)
 {
 	unsigned int i;
 

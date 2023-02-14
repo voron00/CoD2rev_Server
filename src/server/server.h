@@ -20,7 +20,7 @@ typedef struct
 	int guid;
 } challenge_t;
 
-enum
+enum clientConnectState_t
 {
 	CS_FREE,
 	CS_ZOMBIE,
@@ -45,7 +45,7 @@ typedef struct
 #pragma pack(1)
 typedef struct
 {
-	char num;
+	byte num;
 	char data[256];
 	int dataLen;
 } voices_t;

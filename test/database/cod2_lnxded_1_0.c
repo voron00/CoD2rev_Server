@@ -281,7 +281,7 @@ int CM_InitAllThreadData();
 void *CM_Shutdown();
 int __cdecl sub_805202A(int a1, int a2);
 void __cdecl CM_SaveLump(int a1, char *a2, int a3, int *a4);
-void *sub_80524EA();
+void *CM_EntityString();
 int __cdecl sub_80524F4(int a1);
 int __cdecl sub_8052518(int a1, _DWORD *a2, _DWORD *a3);
 void *__cdecl CM_Hunk_Alloc(size_t a1);
@@ -602,7 +602,7 @@ int __cdecl Com_GetServerDObj(int a1);
 int sub_80628E4();
 int __cdecl sub_8062988(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
 int *sub_8062A0C();
-int __cdecl sub_8062A66(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
+int __cdecl Com_ServerDObjCreate(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
 int __cdecl sub_8062AEC(int a1);
 int __cdecl Com_SafeServerDObjFree(int a1);
 void *Com_InitDObj();
@@ -992,14 +992,14 @@ int __cdecl RemoveRefToValue(_DWORD *a1);
 _BOOL4 __cdecl Scr_IsInOpcodeMemory(int a1);
 int __cdecl sub_8075828(_BYTE *a1);
 int __cdecl sub_8075874(char *a1, char *s);
-void *sub_80759A6();
+void *Scr_AllocStrings();
 unsigned int *sub_80759D2();
-int __cdecl sub_80759F2(int a1);
-int __cdecl sub_8075A60(char *s2);
+int __cdecl Scr_GetCanonicalStringIndex(int a1);
+int __cdecl SL_GetCanonicalString(char *s2);
 void Scr_BeginLoadScripts();
 int sub_8075B54();
-int __cdecl sub_8075B72(int a1);
-int __cdecl sub_8075BBE(int a1, int a2);
+int __cdecl Scr_AllocAnims(int a1);
+int __cdecl Scr_ScanFile(int a1, int a2);
 int __cdecl Scr_LoadScript(char *a1);
 int sub_8075E10();
 int sub_8075E1E();
@@ -1078,8 +1078,8 @@ unsigned int __cdecl GetHashCode(char *a1, unsigned int a2);
 unsigned int SL_Init();
 void SL_CheckInit();
 void SL_Shutdown();
-int __cdecl sub_8078AE8(char *s2, size_t n);
-int __cdecl sub_8078CC6(char *s2);
+int __cdecl SL_FindStringOfLen(char *s2, size_t n);
+int __cdecl SL_FindString(char *s2);
 int __cdecl sub_8078CEA(char *s); // idb
 int __cdecl SL_AddUserInternal(int a1, unsigned __int8 a2);
 int __cdecl SL_GetStringOfLen(char *s2, unsigned __int8 a2, size_t n);
@@ -1089,7 +1089,7 @@ int __cdecl sub_80792E6(const char *a1, unsigned __int8 a2, size_t n);
 int __cdecl sub_807939E(char *s, unsigned __int8 a2);
 int __cdecl sub_80793D2(char *s, unsigned __int8 a2);
 int __cdecl SL_ConvertToLowercase(int a1, unsigned __int8 a2);
-int __cdecl sub_80794D8(int a1, unsigned __int8 a2);
+int __cdecl SL_TransferRefToUser(int a1, unsigned __int8 a2);
 int __cdecl SL_AddRefToString(int a1);
 int __cdecl SL_FreeString(int a1, int a2, unsigned int a3);
 int __cdecl SL_RemoveRefToString(int a1);
@@ -1097,10 +1097,10 @@ int __cdecl SL_FreeEntry(int a1);
 int __cdecl SL_RemoveRefToStringOfLen(int a1, unsigned int a2);
 int __cdecl Scr_SetString(_WORD *a1, int a2);
 int __cdecl sub_80797CA(_WORD *a1, char *s);
-int __cdecl sub_8079808(char *s); // idb
-int __cdecl sub_8079824(float); // idb
-int __cdecl sub_807986A(int a1);
-int __cdecl sub_80798B0(float *a1);
+int __cdecl Scr_AllocString(char *s); // idb
+int __cdecl SL_GetStringForFloat(float); // idb
+int __cdecl SL_GetStringForInt(int a1);
+int __cdecl SL_GetStringForVector(float *a1);
 void __cdecl sub_8079910(unsigned __int8 a1);
 void sub_80799B6();
 void SL_ShutdownSystem();
@@ -1187,7 +1187,7 @@ int __cdecl RemoveNextVariable(int a1);
 int __cdecl RemoveObjectVariable(int a1, int a2);
 int __cdecl sub_807C248(int a1, int a2);
 int __cdecl RemoveArrayVariable(int a1, int a2);
-int __cdecl sub_807C290(int a1, int a2);
+int __cdecl SafeRemoveVariable(int a1, int a2);
 int __cdecl sub_807C2F6(int a1, int a2);
 int __cdecl sub_807C45C(int a1, int *a2);
 int __cdecl SetNewVariableValue(int a1, int *a2);
@@ -1241,9 +1241,9 @@ int __cdecl GetVarType(int a1);
 void __cdecl Scr_FreeEntityNum(int a1, int a2);
 int sub_807E04A();
 unsigned int *sub_807E0C6();
-int __cdecl sub_807E13C(int a1);
+int __cdecl Scr_SetClassMap(int a1);
 int __cdecl sub_807E182(int a1);
-int __cdecl sub_807E1F6(int a1, char *s2, unsigned __int16 a3);
+int __cdecl Scr_AddClassField(int a1, char *s2, unsigned __int16 a3);
 int __cdecl sub_807E2EA(int a1, int a2);
 int __cdecl sub_807E346(int a1, int a2);
 int __cdecl Scr_GetEntityId(int a1, int a2);
@@ -1306,7 +1306,7 @@ int __cdecl VM_Notify(int a1, int a2, int *a3);
 int __cdecl sub_8083426(int a1, int a2, int a3, int a4);
 int __cdecl sub_80834DC(int a1);
 int __cdecl sub_8083640(int a1);
-unsigned int __cdecl sub_80836CA(int a1);
+unsigned int __cdecl VM_Resume(int a1);
 int IncInParam();
 int __cdecl VM_Execute(int a1, char *a2, int a3);
 int __cdecl Scr_ExecThread(int a1, int a2);
@@ -1315,7 +1315,7 @@ int __cdecl sub_8083AAC(int a1, int a2);
 int __cdecl sub_8083B14(int a1, int a2, int a3, int a4);
 int __cdecl Scr_FreeThread(unsigned __int16 a1);
 int __cdecl sub_8083BAA(char *a1, int a2);
-void sub_8083C5C();
+void Scr_RunCurrentThreadsInternal();
 int __cdecl sub_8083CBA(int a1, int a2, int a3, char a4, int a5);
 int __cdecl sub_8083D82(int a1, int *a2, int a3);
 int sub_8083E96();
@@ -1328,10 +1328,10 @@ long double __cdecl Scr_GetFloat(unsigned int a1);
 int __cdecl Scr_GetConstString(unsigned int a1);
 int __cdecl sub_8084434(unsigned int a1);
 int __cdecl Scr_GetString(unsigned int a1);
-int __cdecl sub_8084586(unsigned int a1);
+int __cdecl Scr_GetConstStringIncludeNull(unsigned int a1);
 int __cdecl sub_80845C8(unsigned int a1);
 int __cdecl sub_80845E4(unsigned int a1);
-int __cdecl sub_808464E(unsigned int a1);
+int __cdecl Scr_GetConstIString(unsigned int a1);
 int __cdecl Scr_GetIString(unsigned int a1);
 void __cdecl Scr_GetVector(unsigned int a1, _DWORD *a2);
 int __cdecl Scr_GetFunc(unsigned int a1);
@@ -1366,7 +1366,7 @@ int __cdecl sub_8084E4E(int a1, int a2, int a3, int a4);
 int __cdecl sub_8084F28(int a1, int a2);
 int __cdecl sub_8084F6A(int a1, int a2, int a3);
 int sub_8084F9A();
-void sub_8084FD2();
+void Scr_RunCurrentThreads();
 int Scr_ResetTimeout();
 int __cdecl sub_80850EE(float); // idb
 int __cdecl sub_8085124(_DWORD *a1, _DWORD *a2);
@@ -1501,9 +1501,9 @@ int __cdecl SV_XModelGet(char *s1); // idb
 void __cdecl SV_DObjDumpInfo(int *a1);
 unsigned int sub_80905C8();
 int __cdecl sub_80905FA(int a1);
-int __cdecl sub_8090666(int *a1, int a2);
+int __cdecl SV_DObjCreateSkelForBones(int *a1, int a2);
 int __cdecl sub_80906EE(int *a1, int a2);
-int __cdecl sub_8090776(int *a1, float a2, int a3);
+int __cdecl SV_DObjUpdateServerTime(int *a1, float a2, int a3);
 _DWORD **__cdecl sub_80907BC(int *a1, float a2);
 int __cdecl sub_80907EE(int *a1, int a2, int a3);
 int __cdecl sub_8090820(int *a1, int a2);
@@ -1516,9 +1516,9 @@ int __cdecl sub_8090928(int *a1);
 int __cdecl sub_809094C(int *a1, int a2, int a3);
 int __cdecl sub_809097E(int *a1, int a2, int a3);
 int __cdecl sub_80909B0(int *a1);
-void sub_80909E8();
+void SV_XModelDebugBoxes();
 _BOOL4 __cdecl SV_MapExists(char *s);
-void *sub_8090A48();
+void *SV_ResetEntityParsePoint();
 _BOOL4 __cdecl SV_DObjExists(int *a1);
 int SV_SetWeaponInfoMemory();
 void Com_FreeWeaponInfoMemory();
@@ -1612,7 +1612,7 @@ _DWORD *__cdecl SV_GetCachedSnapshotInternal(int a1);
 _DWORD *__cdecl SV_GetCachedSnapshot(int *a1);
 int __cdecl sub_8097B54(int a1, _DWORD *a2, void *a3);
 int __cdecl sub_8097BD0(int a1, int a2, int a3);
-int __cdecl sub_8097EDA(int a1, int *a2, _DWORD *a3, void *a4);
+int __cdecl SV_GetArchivedClientInfo(int a1, int *a2, _DWORD *a3, void *a4);
 int __cdecl SV_BuildClientSnapshot(char *a1);
 int __cdecl SV_RateMsec(int a1, int a2);
 // int __usercall SV_SendMessageToClient@<eax>(long double a1@<st0>, int a2, int a3);
@@ -1833,7 +1833,7 @@ int __cdecl sub_80A84C6(_DWORD *a1, int a2, _DWORD *a3);
 float *__cdecl sub_80A8610(float *a1, int a2, float *a3, float *a4);
 float *__cdecl sub_80A8664(float *a1, float a2, float a3);
 void __cdecl sub_80A86CC(float, float *);
-int __cdecl sub_80A8712(int a1);
+int __cdecl Rand_Init(int a1);
 long double __cdecl sub_80A8720(float a1, float a2);
 int __cdecl sub_80A8776(int a1, int a2);
 float *__cdecl sub_80A87D8(float *a1, float *a2);
@@ -2232,19 +2232,19 @@ const char *__cdecl sub_80B6EB2(int a1);
 int DObjInit();
 int DObjShutdown();
 void DObjAbort();
-void __cdecl sub_80B6F74(int a1);
+void __cdecl DObjDumpInfo(int a1);
 int __cdecl sub_80B712C(int a1, int a2);
 int __cdecl DObjCreateDuplicateParts(int a1);
 int __cdecl sub_80B73C0(int a1, int a2, int a3);
 int *__cdecl sub_80B75A8(int a1, int a2);
-int __cdecl sub_80B7796(int a1, int a2);
+int __cdecl DObjSkelAreBonesUpToDate(int a1, int a2);
 int __cdecl sub_80B77C2(int a1, int a2);
 int *__cdecl sub_80B7822(int a1, int a2);
 _DWORD *__cdecl sub_80B7D70(_DWORD *a1, int a2);
 int __cdecl sub_80B7DFC(int a1);
-int __cdecl sub_80B7EFC(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 a5);
+int __cdecl DObjCreate(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 a5);
 _DWORD *__cdecl sub_80B812E(const void *a1, int a2, int a3);
-int __cdecl sub_80B819E(int a1);
+int __cdecl DObjFree(int a1);
 int __cdecl sub_80B821A(unsigned __int8 *a1, _DWORD *a2, _WORD *a3, _DWORD *a4, _WORD *a5);
 int __cdecl sub_80B8380(int a1);
 _BOOL4 __cdecl DObjSkelExists(int a1, int a2);
@@ -2301,7 +2301,7 @@ int __cdecl sub_80BA2FA(const void *a1, int (__cdecl *a2)(int));
 unsigned __int16 *__cdecl sub_80BA3AE(char *src, int (__cdecl *a2)(int));
 char *__cdecl sub_80BA4D8(int a1, int a2, char *s);
 char *__cdecl sub_80BA57A(int a1, int a2, char *s, __int16 a4, unsigned int a5, __int16 a6);
-char **__cdecl sub_80BA626(char *s, int a2, int (__cdecl *a3)(int));
+char **__cdecl XAnimCreateAnims(char *s, int a2, int (__cdecl *a3)(int));
 int __cdecl sub_80BA6D0(int a1, int (__cdecl *a2)(int, int));
 int __cdecl XAnimFreeList(int a1);
 int __cdecl sub_80BA7BC(int a1);
@@ -2314,7 +2314,7 @@ __int16 *__cdecl sub_80BAB16(unsigned __int16 *a1, float a2, float *a3);
 __int16 *__cdecl sub_80BAB6C(unsigned __int16 *a1, float a2, float *a3);
 float *__cdecl sub_80BABCE(unsigned __int16 *a1, float a2, float *a3);
 int __cdecl sub_80BAC36(int, int, float, int, int); // idb
-int __cdecl sub_80BAD76(int a1, _DWORD *a2, int a3);
+int __cdecl XanimClearInfo(int a1, _DWORD *a2, int a3);
 __int16 *__cdecl sub_80BADE6(unsigned __int16 *a1, float *a2);
 int __cdecl sub_80BAE2E(int a1, int a2);
 int __cdecl sub_80BAE6E(unsigned __int16 *a1, _DWORD *a2);
@@ -2354,7 +2354,7 @@ int __cdecl sub_80BCE1C(int a1, int a2, int a3);
 long double __cdecl sub_80BCE56(_DWORD *a1, float *a2, unsigned __int16 *a3, int a4, int a5, float a6);
 long double __cdecl sub_80BCF74(_DWORD *a1, int a2, float a3);
 void __cdecl sub_80BD2FC(int a1, float *a2, int a3, float a4);
-void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, unsigned __int8 a6, int a7, int a8);
+void __cdecl XAnimCalc(int a1, int a2, float a3, int a4, unsigned __int8 a5, unsigned __int8 a6, int a7, int a8);
 void __cdecl sub_80BDE00(int *a1, int a2, int a3);
 void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned __int8 a5, _DWORD *a6);
 long double __cdecl sub_80BE760(int a1, int a2);
@@ -2371,8 +2371,8 @@ int __cdecl sub_80BEA18(int a1);
 int *__cdecl sub_80BEA24(int *a1, int *a2, float a3);
 _DWORD **__cdecl sub_80BEA94(_DWORD **a1, float a2);
 void __cdecl sub_80BEAEE(_DWORD **a1, float a2);
-int __cdecl sub_80BEB76(_DWORD **a1, float a2, int a3);
-int __cdecl sub_80BEC88(int a1, int a2);
+int __cdecl DObjUpdateServerInfo(_DWORD **a1, float a2, int a3);
+int __cdecl DObjCalcAnim(int a1, int a2);
 void __cdecl sub_80BEEE4(int **a1);
 int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5);
 int __cdecl sub_80BEFE2(int a1, int a2, _DWORD *a3, _DWORD *a4);
@@ -3093,14 +3093,14 @@ int __cdecl sub_80F34E0(_DWORD *a1, int a2, int a3);
 // int __usercall sub_80F35DA@<eax>(long double a1@<st0>, int *a2, int **a3);
 // int __usercall sub_80F3EA4@<eax>(long double a1@<st0>, int a2);
 // int __usercall sub_80F3F74@<eax>(long double a1@<st0>, int *a2);
-int __cdecl sub_80F40C4(int a1);
-_DWORD *__cdecl sub_80F41C2(int a1);
-int __cdecl sub_80F467C(int a1, char a2);
+int __cdecl ClientIntermission(int a1);
+_DWORD *__cdecl SpectatorClientEndFrame(int a1);
+int __cdecl CanSpectateTeam(int a1, char a2);
 int __cdecl sub_80F4696(int a1, _DWORD *a2);
 int __cdecl sub_80F474A(int a1);
 int __cdecl sub_80F4B46(int *a1, int a2);
 int __cdecl sub_80F4BA4(int a1);
-// int __usercall sub_80F4DBE@<eax>(long double a1@<st0>, int a2);
+// int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2);
 float *__cdecl sub_80F53E0(int a1, int a2);
 float *__cdecl sub_80F543C(float *a1, float *a2, float *a3);
 float *__cdecl sub_80F5468(float *a1, float a2, float *a3);
@@ -3137,11 +3137,11 @@ int __cdecl Scr_GetClientField(int a1, int a2);
 // int __usercall sub_80F5E80@<eax>(long double a1@<st0>, int a2, _DWORD *a3);
 void __cdecl sub_80F61BE(int a1, float *a2);
 void __cdecl sub_80F63A0(int a1, int a2, float *a3, float *a4);
-char *__cdecl sub_80F63D4(char *a1, char *a2, int a3);
+char *__cdecl ClientCleanName(char *a1, char *a2, int a3);
 int __cdecl ClientUserinfoChanged(int a1);
 // const char *__usercall ClientConnect@<eax>(long double a1@<st0>, int a2, __int16 a3);
 int __cdecl sub_80F6954(int a1);
-// int __usercall sub_80F69B4@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4);
+// int __usercall ClientSpawn@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4);
 // void __usercall ClientDisconnect(long double a1@<st0>, int a2);
 int __cdecl sub_80F6ED0(int a1, float *a2, int a3);
 int *__cdecl G_BroadcastVoice(int *a1, int a2);
@@ -3230,8 +3230,8 @@ int __cdecl Cmd_Noclip_f(int a1);
 int __cdecl Cmd_UFO_f(int a1);
 int __cdecl sub_80FCA4C(int *a1);
 _DWORD *__cdecl sub_80FCAE6(char *a1);
-int __cdecl sub_80FCD40(int a1, int a2);
-_BOOL4 __cdecl sub_80FCEA8(int a1);
+int __cdecl Cmd_FollowCycle_f(int a1, int a2);
+_BOOL4 __cdecl G_IsPlaying(int a1);
 void __cdecl sub_80FCEC4(int a1, int a2, int a3, int a4, int a5, int a6);
 void __cdecl G_Say(int *a1, int a2, int a3, char *src);
 void __cdecl sub_80FD38E(int *a1, int a2, int a3);
@@ -3283,9 +3283,9 @@ float *__cdecl sub_8100D2C(float *a1, float a2, float *a3, float *a4);
 _DWORD *__cdecl HudElem_ClearTypeSettings(_DWORD *a1);
 _DWORD *__cdecl HudElem_SetDefaults(_DWORD *a1);
 int __cdecl HudElem_Alloc(int a1, int a2);
-_DWORD *__cdecl sub_8100F68(_DWORD *a1);
-int *__cdecl sub_8100F84(_DWORD *a1);
-void *sub_8100FE6();
+_DWORD *__cdecl HudElem_Free(_DWORD *a1);
+int *__cdecl HudElem_ClientDisconnect(_DWORD *a1);
+void *HudElem_DestroyAll();
 void __cdecl HudElem_SetEnumString(int a1, int a2, int a3, int a4);
 int __cdecl HudElem_AddString(int a1, int a2, int a3);
 int *__cdecl HudElem_SetLocalizedString(int a1, int a2);
@@ -3306,12 +3306,12 @@ int __cdecl HudElem_GetHorzAlign(int a1, int a2);
 void __cdecl HudElem_SetVertAlign(int a1, int a2);
 int __cdecl HudElem_GetVertAlign(int a1, int a2);
 int __cdecl Scr_GetHudElemField(int a1, int a2);
-int __cdecl sub_8101716(int a1, int a2);
+int __cdecl Scr_SetHudElemField(int a1, int a2);
 __int16 **__cdecl Scr_FreeHudElemConstStrings(int a1);
 int GScr_NewHudElem();
 int GScr_NewClientHudElem();
 int GScr_NewTeamHudElem();
-char **sub_810193A();
+char **GScr_AddFieldsForHudElems();
 int __cdecl sub_8101988(int a1);
 int __cdecl HECmd_SetText(int a1);
 void __cdecl HECmd_SetPlayerNameString(int a1);
@@ -3334,7 +3334,7 @@ int __cdecl HECmd_MoveOverTime(int a1);
 _DWORD *__cdecl HECmd_Reset(int a1);
 _DWORD *__cdecl HECmd_Destroy(int a1);
 int (__cdecl *__cdecl HudElem_GetMethod(char **a1))(int);
-int **__cdecl sub_81023F2(_DWORD *a1, int a2, unsigned __int8 a3);
+int **__cdecl HudElem_UpdateClient(_DWORD *a1, int a2, unsigned __int8 a3);
 void __cdecl sub_810255C(float, float);
 void __cdecl sub_8102580(float, float);
 int __cdecl sub_81025A4(float); // idb
@@ -3354,8 +3354,8 @@ int __cdecl sub_8103F44(int, int, float, int); // idb
 float *__cdecl sub_810404E(int a1, int a2, int a3);
 int __cdecl FinishSpawningItem(_DWORD *a1);
 void *ClearRegisteredItems();
-int sub_8104A30();
-int sub_8104AEC();
+int SaveRegisteredWeapons();
+int SaveRegisteredItems();
 int __cdecl sub_8104C84(int a1, int a2);
 int __cdecl G_RegisterWeapon(int a1);
 int __cdecl IsItemRegistered(int a1);
@@ -3406,7 +3406,7 @@ int __cdecl sub_81079C8(int a1);
 void sub_8107A40();
 int __cdecl sub_8107A7C(int a1);
 // void __usercall sub_8107AC4(long double a1@<st0>, int *s);
-// void __usercall sub_8107CA2(long double a1@<st0>, int a2);
+// void __usercall G_RunFrame(long double a1@<st0>, int a2);
 void __cdecl G_TraceCapsule(float *s, float *a2, float *a3, float *a4, float *a5, int a6, int a7);
 int __cdecl G_TraceCapsuleComplete(float *a1, float *a2, float *a3, float *a4, int a5, int a6);
 void __cdecl G_LocationalTrace(float *s, float *a2, float *a3, int a4, int a5, int a6);
@@ -3491,7 +3491,7 @@ unsigned int __cdecl sub_810DC22(_DWORD *a1);
 float *__cdecl sub_810DC60(float *a1, float *a2, float *a3);
 float *__cdecl sub_810DCA4(float *a1, float *a2, float *a3);
 long double __cdecl sub_810DCE8(float *a1, float *a2);
-int __cdecl sub_810DD1C(char *s); // idb
+int __cdecl GScr_AllocString(char *s); // idb
 void sub_810DD38();
 int __cdecl Scr_GetFunctionHandle(char *a1, char *s, int a3);
 int GScr_LoadGameTypeScript();
@@ -3508,8 +3508,8 @@ int ScrCmd_GetClanDescription();
 int ScrCmd_GetClanURL();
 int print();
 void println();
-void __cdecl __noreturn sub_810E202(int a1, char *format);
-void __cdecl sub_810E21E(int a1, const char *a2, int a3);
+void __cdecl __noreturn Scr_LocalizationError(int a1, char *format);
+void __cdecl Scr_ValidateLocalizedStringRef(int a1, const char *a2, int a3);
 int __cdecl Scr_ConstructMessageString(signed int a1, signed int a2, const char *a3, int a4, int a5);
 int __cdecl sub_810E5D8(int a1, const char *a2);
 int iprintln();
@@ -3713,7 +3713,7 @@ int Scr_ParseGameTypeList();
 int __cdecl sub_8115DD2(char *a1);
 _BOOL4 __cdecl Scr_IsValidGameType(char *a1);
 int sub_8115E66();
-int sub_8115E94();
+int Scr_StartupGameType();
 int __cdecl Scr_PlayerConnect(int *a1);
 int __cdecl sub_8115EF6(int *a1);
 int __cdecl Scr_PlayerDamage(int *a1, int *a2, int *a3, int a4, int a5, unsigned int a6, int a7, _DWORD *a8, _DWORD *a9, int a10, int a11);
@@ -3766,7 +3766,7 @@ float *__cdecl sub_8117E62(float *a1, float a2, float *a3);
 float *__cdecl sub_8117E9A(float *a1, float a2, float *a3, float *a4);
 void __cdecl sub_8117EEE(float *);
 long double __cdecl sub_8117F2C(float a1);
-int __cdecl sub_8117F4C(char *s1, int a2, _DWORD *a3);
+int __cdecl G_SpawnString(char *s1, int a2, _DWORD *a3);
 int __cdecl sub_8117F76(char *s1, int a2, float *a3);
 int __cdecl sub_8117FB2(char *s1, int a2, int *a3);
 int __cdecl sub_8117FEC(char *s1, int a2, _DWORD *a3);
@@ -3781,10 +3781,10 @@ int __cdecl sub_8118504(int *a1, int *a2);
 int __cdecl sub_811852A(char *s1); // idb
 // void __usercall G_CallSpawn(long double a1@<st0>);
 // int __usercall G_CallSpawnEntity@<eax>(long double a1@<st0>, int a2);
-char **sub_81187B8();
+char **GScr_AddFieldsForEntity();
 int GScr_AddFieldsForRadiant();
 int __cdecl sub_8118822(int a1, int a2);
-int __cdecl sub_81188EE(int a1, int a2, int a3);
+int __cdecl Scr_SetGenericField(int a1, int a2, int a3);
 int __cdecl sub_81189D2(int a1, int a2, int a3);
 char *__cdecl Scr_GetEntityField(int a1, int a2);
 int __cdecl Scr_GetGenericField(int a1, int a2, int a3);
@@ -3817,8 +3817,8 @@ int Svcmd_EntityList_f();
 int __cdecl sub_81199B4(char *nptr); // idb
 int ConsoleCommand();
 _BOOL4 __cdecl sub_8119C40(int a1, int a2);
-int __cdecl sub_8119CB8(int a1);
-int sub_8119EF2();
+int __cdecl TeamplayInfoMessage(int a1);
+int CheckTeamStatus();
 float *__cdecl sub_8119F76(float *a1, float a2, float *a3, float *a4);
 int __cdecl sub_8119FCC(int *a1, int *a2);
 int __cdecl sub_811A074(int a1);
@@ -3850,7 +3850,7 @@ int __cdecl G_ModelIndex(char *s2); // idb
 int __cdecl SV_XModelForIndex(int a1);
 int __cdecl G_XModelBad(int a1);
 const char *__cdecl G_ModelName(int a1);
-int __cdecl sub_811B13C(char *s2); // idb
+int __cdecl G_TagIndex(char *s2); // idb
 int __cdecl G_EffectIndex(char *s2); // idb
 int __cdecl G_ShellShockIndex(char *s2); // idb
 int __cdecl sub_811B1D8(char *s2); // idb
@@ -3872,8 +3872,8 @@ float *__cdecl sub_811BC88(int a1, int a2);
 void __cdecl sub_811BD52(int a1, int a2);
 int __cdecl sub_811BE86(_DWORD *a1);
 int __cdecl sub_811BEEE(int *a1);
-int __cdecl sub_811BF04(int *a1, int a2);
-int *__cdecl sub_811BF30(int a1);
+int __cdecl G_DObjUpdateServerTime(int *a1, int a2);
+int *__cdecl G_DObjCalcPose(int a1);
 int *__cdecl sub_811BFC4(int a1, int a2);
 int __cdecl sub_811C056(int *a1, int a2);
 int __cdecl sub_811C0B2(int a1, int a2, float *a3);
@@ -3885,7 +3885,7 @@ int __cdecl G_InitGentity(int a1);
 int G_PrintEntities();
 _BOOL4 __cdecl sub_811C4F8(int a1);
 int G_Spawn();
-// int *__usercall sub_811C614@<eax>(long double a1@<st0>);
+// int *__usercall G_SpawnPlayerClone@<eax>(long double a1@<st0>);
 int *__cdecl sub_811C6AE(int *a1);
 int __cdecl sub_811C830(_DWORD *a1);
 // int __usercall sub_811C87C@<eax>(long double a1@<st0>);
@@ -3928,7 +3928,7 @@ float *__cdecl sub_811E56A(int a1);
 int __cdecl sub_811E586(_DWORD *a1);
 __int16 __cdecl sub_811E5E0(int a1);
 int __cdecl sub_811E696(int a1, int a2);
-void sub_811E8E4();
+void G_SetupWeaponDef();
 int __cdecl G_GetWeaponIndexForName(char *s1); // idb
 int __cdecl sub_811E97A(int a1, int a2);
 int __cdecl sub_811E9B4(int a1, int a2);
@@ -3959,7 +3959,7 @@ float *__cdecl sub_811FF72(float *a1, float a2, float *a3);
 float *__cdecl sub_811FFAA(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_811FFFE(float *a1, float *a2);
 long double __cdecl sub_8120032(float *a1);
-int sub_8120068();
+int GScr_LoadConsts();
 int __cdecl sub_8120708(int a1);
 int __cdecl sub_812074C(int a1, int a2);
 int __cdecl sub_8120794(int a1, int a2);
@@ -13814,11 +13814,11 @@ _UNKNOWN unk_85230E0; // weak
 int dword_8523110; // weak
 char isDvarSystemActive; // weak
 char isLoadingAutoExecGlobalFlag; // weak
-int loc_language; // weak
-int loc_forceEnglish; // weak
-int loc_translate; // weak
-int loc_warnings; // weak
-int loc_warningsAsErrors; // weak
+int iloc_language; // weak
+int iloc_forceEnglish; // weak
+int iloc_translate; // weak
+int iloc_warnings; // weak
+int iloc_warningsAsErrors; // weak
 _UNKNOWN unk_8523A1C; // weak
 _UNKNOWN unk_8523A40; // weak
 int (__cdecl *dword_8527A40)(_DWORD); // weak
@@ -18492,7 +18492,7 @@ void __cdecl CM_SaveLump(int a1, char *a2, int a3, int *a4)
 }
 
 //----- (080524EA) --------------------------------------------------------
-void *sub_80524EA()
+void *CM_EntityString()
 {
   return dword_8185C78;
 }
@@ -27314,7 +27314,7 @@ int __cdecl sub_8062988(__int16 ***a1, unsigned __int16 a2, int a3, int a4)
 
   v5 = sub_80628E4();
   word_81D4600[a4] = v5;
-  result = sub_80B7EFC(a1, a2, a3, 100 * v5 + 135929216, 0);
+  result = DObjCreate(a1, a2, a3, 100 * v5 + 135929216, 0);
   if ( !dword_81D4580 )
     Com_Error(1, (char *)&byte_813C2EC);
   return result;
@@ -27340,14 +27340,14 @@ int *sub_8062A0C()
 // 81D4600: using guessed type __int16 word_81D4600[1152];
 
 //----- (08062A66) --------------------------------------------------------
-int __cdecl sub_8062A66(__int16 ***a1, unsigned __int16 a2, int a3, int a4)
+int __cdecl Com_ServerDObjCreate(__int16 ***a1, unsigned __int16 a2, int a3, int a4)
 {
   int result; // eax
   int v5; // [esp+20h] [ebp-8h]
 
   v5 = sub_80628E4();
   word_81D4F00[a4] = v5;
-  result = sub_80B7EFC(a1, a2, a3, 100 * v5 + 135929216, a4 + 1);
+  result = DObjCreate(a1, a2, a3, 100 * v5 + 135929216, a4 + 1);
   if ( !dword_81D4580 )
     Com_Error(1, (char *)&byte_813C2EC);
   return result;
@@ -27367,7 +27367,7 @@ int __cdecl sub_8062AEC(int a1)
     word_81D4600[a1] = 0;
     *(_BYTE *)(result + 136134016) = 0;
     ++dword_81D4580;
-    return sub_80B819E(100 * result + 135929216);
+    return DObjFree(100 * result + 135929216);
   }
   return result;
 }
@@ -27385,7 +27385,7 @@ int __cdecl Com_SafeServerDObjFree(int a1)
     word_81D4F00[a1] = 0;
     *(_BYTE *)(result + 136134016) = 0;
     ++dword_81D4580;
-    return sub_80B819E(100 * result + 135929216);
+    return DObjFree(100 * result + 135929216);
   }
   return result;
 }
@@ -32917,7 +32917,7 @@ int __cdecl sub_806D668(int a1, int (__cdecl *a2)(int), int a3)
       }
       v14 = sub_806CEF0(dword_8202444);
       v7 = (char *)SL_ConvertToString(v13);
-      v12 = sub_80BA626(v7, v14, a2);
+      v12 = XAnimCreateAnims(v7, v14, a2);
       v11 = SL_GetString_("root", 0);
       sub_806CF7E(v16, 0, v13, v11, a1);
       SL_RemoveRefToString(v11);
@@ -33011,7 +33011,7 @@ int __cdecl sub_806DA0A(int a1)
   if ( byte_820287C )
     SL_AddRefToString(a1);
   v2 = (_WORD *)dword_8202860;
-  result = sub_80759F2(a1);
+  result = Scr_GetCanonicalStringIndex(a1);
   *v2 = result;
   return result;
 }
@@ -33041,7 +33041,7 @@ int __cdecl sub_806DA94(int a1, unsigned __int8 a2)
     return sub_806D9EC(a1);
   if ( byte_820287C )
     SL_AddRefToString(a1);
-  return sub_80794D8(a1, a2);
+  return SL_TransferRefToUser(a1, a2);
 }
 // 820287C: using guessed type char byte_820287C;
 // 8202A68: using guessed type int dword_8202A68;
@@ -37692,7 +37692,7 @@ int __cdecl sub_8075874(char *a1, char *s)
 // 8394048: using guessed type int dword_8394048;
 
 //----- (080759A6) --------------------------------------------------------
-void *sub_80759A6()
+void *Scr_AllocStrings()
 {
   void *result; // eax
 
@@ -37716,9 +37716,9 @@ unsigned int *sub_80759D2()
 // 8394004: using guessed type int dword_8394004;
 
 //----- (080759F2) --------------------------------------------------------
-int __cdecl sub_80759F2(int a1)
+int __cdecl Scr_GetCanonicalStringIndex(int a1)
 {
-  sub_80794D8(a1, 2u);
+  SL_TransferRefToUser(a1, 2u);
   if ( *(_WORD *)(dword_8202A58 + 2 * a1) )
     return *(unsigned __int16 *)(dword_8202A58 + 2 * a1);
   *(_WORD *)(dword_8202A58 + 2 * a1) = ++word_8394008;
@@ -37728,16 +37728,16 @@ int __cdecl sub_80759F2(int a1)
 // 8394008: using guessed type __int16 word_8394008;
 
 //----- (08075A60) --------------------------------------------------------
-int __cdecl sub_8075A60(char *s2)
+int __cdecl SL_GetCanonicalString(char *s2)
 {
   int v1; // edx
   int v2; // eax
 
-  v1 = 2 * sub_8078CC6(s2);
+  v1 = 2 * SL_FindString(s2);
   if ( *(_WORD *)(dword_8202A58 + v1) )
     return *(unsigned __int16 *)(dword_8202A58 + v1);
   v2 = SL_GetString_(s2, 0);
-  return sub_80759F2(v2);
+  return Scr_GetCanonicalStringIndex(v2);
 }
 // 8202A58: using guessed type int dword_8202A58;
 
@@ -37753,12 +37753,12 @@ void Scr_BeginLoadScripts()
   dword_8394048 = (int)Hunk_AllocLowInternal(0);
   dword_8202A70 = 0;
   dword_839404C = 0;
-  sub_80759A6();
+  Scr_AllocStrings();
   dword_8394000 = 0;
   dword_8202A40 = 0;
   Scr_ClearErrorMessage();
   dword_8202A74 = 0;
-  sub_8075B72(1);
+  Scr_AllocAnims(1);
   TempMemoryReset();
 }
 // 8202A40: using guessed type int dword_8202A40;
@@ -37788,7 +37788,7 @@ int sub_8075B54()
 // 8202A64: using guessed type char byte_8202A64;
 
 //----- (08075B72) --------------------------------------------------------
-int __cdecl sub_8075B72(int a1)
+int __cdecl Scr_AllocAnims(int a1)
 {
   int result; // eax
 
@@ -37808,7 +37808,7 @@ int __cdecl sub_8075B72(int a1)
 // 8202A68: using guessed type int dword_8202A68;
 
 //----- (08075BBE) --------------------------------------------------------
-int __cdecl sub_8075BBE(int a1, int a2)
+int __cdecl Scr_ScanFile(int a1, int a2)
 {
   char v2; // al
   int i; // [esp+0h] [ebp-8h]
@@ -39572,7 +39572,7 @@ void SL_Shutdown()
 // 8293F00: using guessed type char byte_8293F00;
 
 //----- (08078AE8) --------------------------------------------------------
-int __cdecl sub_8078AE8(char *s2, size_t n)
+int __cdecl SL_FindStringOfLen(char *s2, size_t n)
 {
   int v4; // [esp+18h] [ebp-20h]
   int v5; // [esp+20h] [ebp-18h]
@@ -39615,12 +39615,12 @@ int __cdecl sub_8078AE8(char *s2, size_t n)
 // 8283F00: using guessed type __int16 word_8283F00[];
 
 //----- (08078CC6) --------------------------------------------------------
-int __cdecl sub_8078CC6(char *s2)
+int __cdecl SL_FindString(char *s2)
 {
   size_t v1; // eax
 
   v1 = I_strlen(s2);
-  return sub_8078AE8(s2, v1 + 1);
+  return SL_FindStringOfLen(s2, v1 + 1);
 }
 
 //----- (08078CEA) --------------------------------------------------------
@@ -39635,7 +39635,7 @@ int __cdecl sub_8078CEA(char *s)
     return 0;
   for ( i = 0; i < n; ++i )
     s2[i] = tolower(s[i]);
-  return sub_8078AE8(s2, n);
+  return SL_FindStringOfLen(s2, n);
 }
 // 8078CEA: using guessed type char s2[8200];
 
@@ -39829,7 +39829,7 @@ int __cdecl SL_ConvertToLowercase(int a1, unsigned __int8 a2)
 // 80793F4: using guessed type char s2[8200];
 
 //----- (080794D8) --------------------------------------------------------
-int __cdecl sub_80794D8(int a1, unsigned __int8 a2)
+int __cdecl SL_TransferRefToUser(int a1, unsigned __int8 a2)
 {
   int result; // eax
   int v3; // [esp+4h] [ebp-4h]
@@ -39987,13 +39987,13 @@ int __cdecl sub_80797CA(_WORD *a1, char *s)
 }
 
 //----- (08079808) --------------------------------------------------------
-int __cdecl sub_8079808(char *s)
+int __cdecl Scr_AllocString(char *s)
 {
   return SL_GetString(s, 1u);
 }
 
 //----- (08079824) --------------------------------------------------------
-int __cdecl sub_8079824(float a1)
+int __cdecl SL_GetStringForFloat(float a1)
 {
   char s[136]; // [esp+10h] [ebp-88h] BYREF
 
@@ -40002,7 +40002,7 @@ int __cdecl sub_8079824(float a1)
 }
 
 //----- (0807986A) --------------------------------------------------------
-int __cdecl sub_807986A(int a1)
+int __cdecl SL_GetStringForInt(int a1)
 {
   char s[136]; // [esp+10h] [ebp-88h] BYREF
 
@@ -40011,7 +40011,7 @@ int __cdecl sub_807986A(int a1)
 }
 
 //----- (080798B0) --------------------------------------------------------
-int __cdecl sub_80798B0(float *a1)
+int __cdecl SL_GetStringForVector(float *a1)
 {
   char s[136]; // [esp+20h] [ebp-88h] BYREF
 
@@ -41523,7 +41523,7 @@ int __cdecl RemoveObjectVariable(int a1, int a2)
 //----- (0807C248) --------------------------------------------------------
 int __cdecl sub_807C248(int a1, int a2)
 {
-  return sub_807C290(a1, (a2 + 0x800000) & 0xFFFFFF);
+  return SafeRemoveVariable(a1, (a2 + 0x800000) & 0xFFFFFF);
 }
 
 //----- (0807C26C) --------------------------------------------------------
@@ -41533,7 +41533,7 @@ int __cdecl RemoveArrayVariable(int a1, int a2)
 }
 
 //----- (0807C290) --------------------------------------------------------
-int __cdecl sub_807C290(int a1, int a2)
+int __cdecl SafeRemoveVariable(int a1, int a2)
 {
   int result; // eax
   int v3; // [esp+10h] [ebp-8h]
@@ -41984,16 +41984,16 @@ int __cdecl Scr_CastString(int *a1)
       return 1;
     case 6:
       a1[1] = 2;
-      *a1 = sub_807986A(*a1);
+      *a1 = SL_GetStringForInt(*a1);
       return 1;
     case 5:
       a1[1] = 2;
-      *a1 = sub_8079824(*(float *)a1);
+      *a1 = SL_GetStringForFloat(*(float *)a1);
       return 1;
     case 4:
       a1[1] = 2;
       v3 = *a1;
-      *a1 = sub_80798B0((float *)*a1);
+      *a1 = SL_GetStringForVector((float *)*a1);
       RemoveRefToVector(v3);
       return 1;
     default:
@@ -42197,7 +42197,7 @@ void __cdecl sub_807D1D4(int *a1, int a2)
         if ( v4 == 5 )
         {
           *(_DWORD *)(a2 + 4) = 2;
-          *(_DWORD *)a2 = sub_8079824(*(float *)a2);
+          *(_DWORD *)a2 = SL_GetStringForFloat(*(float *)a2);
           return;
         }
         if ( v4 > 5 )
@@ -42205,7 +42205,7 @@ void __cdecl sub_807D1D4(int *a1, int a2)
           if ( v4 == 6 )
           {
             *(_DWORD *)(a2 + 4) = 2;
-            *(_DWORD *)a2 = sub_807986A(*(_DWORD *)a2);
+            *(_DWORD *)a2 = SL_GetStringForInt(*(_DWORD *)a2);
             return;
           }
         }
@@ -42213,7 +42213,7 @@ void __cdecl sub_807D1D4(int *a1, int a2)
         {
           *(_DWORD *)(a2 + 4) = 2;
           v2 = *(float *)a2;
-          *(_DWORD *)a2 = sub_80798B0(*(float **)a2);
+          *(_DWORD *)a2 = SL_GetStringForVector(*(float **)a2);
           RemoveRefToVector(SLODWORD(v2));
           return;
         }
@@ -42237,7 +42237,7 @@ LABEL_31:
       if ( v5 == 5 )
       {
         a1[1] = 2;
-        *a1 = sub_8079824(*(float *)a1);
+        *a1 = SL_GetStringForFloat(*(float *)a1);
         return;
       }
       if ( v5 > 5 )
@@ -42245,7 +42245,7 @@ LABEL_31:
         if ( v5 == 6 )
         {
           a1[1] = 2;
-          *a1 = sub_807986A(*a1);
+          *a1 = SL_GetStringForInt(*a1);
           return;
         }
       }
@@ -42253,7 +42253,7 @@ LABEL_31:
       {
         a1[1] = 2;
         v3 = *a1;
-        *a1 = sub_80798B0((float *)*a1);
+        *a1 = SL_GetStringForVector((float *)*a1);
         RemoveRefToVector(v3);
         return;
       }
@@ -42793,7 +42793,7 @@ unsigned int *sub_807E0C6()
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807E13C) --------------------------------------------------------
-int __cdecl sub_807E13C(int a1)
+int __cdecl Scr_SetClassMap(int a1)
 {
   int result; // eax
 
@@ -42825,7 +42825,7 @@ int __cdecl sub_807E182(int a1)
 // 8394038: using guessed type char byte_8394038;
 
 //----- (0807E1F6) --------------------------------------------------------
-int __cdecl sub_807E1F6(int a1, char *s2, unsigned __int16 a3)
+int __cdecl Scr_AddClassField(int a1, char *s2, unsigned __int16 a3)
 {
   int v3; // eax
   int result; // eax
@@ -42836,7 +42836,7 @@ int __cdecl sub_807E1F6(int a1, char *s2, unsigned __int16 a3)
   int v9; // [esp+24h] [ebp-4h]
 
   v5 = (unsigned __int16)word_815AB80[6 * a1];
-  v3 = sub_8075A60(s2);
+  v3 = SL_GetCanonicalString(s2);
   v7 = &word_8294000[8 * GetNewArrayVariable(v5, v3)];
   *((_DWORD *)v7 + 2) &= 0xFFFFFFE0;
   *((_DWORD *)v7 + 2) |= 6u;
@@ -43251,7 +43251,7 @@ LABEL_11:
     else if ( a2[1] == 2 )
     {
       SL_RemoveRefToString(*a2);
-      sub_807C290(v9, *a2);
+      SafeRemoveVariable(v9, *a2);
     }
     else
     {
@@ -43519,7 +43519,7 @@ int __cdecl Scr_AddFieldsForFile(char *src)
       v5 = &s1[i];
       *v5 = tolower(s1[i]);
     }
-    v11 = sub_8075A60(s1);
+    v11 = SL_GetCanonicalString(s1);
     if ( sub_807F168(s1, &v8) )
       Com_Error(1, (char *)&byte_8140128, s1, src);
     v10 = v17 + 3;
@@ -46434,7 +46434,7 @@ int __cdecl sub_8083640(int a1)
 }
 
 //----- (080836CA) --------------------------------------------------------
-unsigned int __cdecl sub_80836CA(int a1)
+unsigned int __cdecl VM_Resume(int a1)
 {
   int v1; // eax
   unsigned int result; // eax
@@ -46690,7 +46690,7 @@ int __cdecl sub_8083BAA(char *a1, int a2)
 // 83D7618: using guessed type int dword_83D7618;
 
 //----- (08083C5C) --------------------------------------------------------
-void sub_8083C5C()
+void Scr_RunCurrentThreadsInternal()
 {
   int v0; // eax
   int v1; // [esp+14h] [ebp-4h]
@@ -46701,8 +46701,8 @@ void sub_8083C5C()
     if ( v1 )
     {
       v0 = FindObject(v1);
-      sub_80836CA(v0);
-      sub_807C290(dword_839401C, dword_8394018);
+      VM_Resume(v0);
+      SafeRemoveVariable(dword_839401C, dword_8394018);
     }
   }
 }
@@ -47068,7 +47068,7 @@ int __cdecl Scr_GetString(unsigned int a1)
 }
 
 //----- (08084586) --------------------------------------------------------
-int __cdecl sub_8084586(unsigned int a1)
+int __cdecl Scr_GetConstStringIncludeNull(unsigned int a1)
 {
   if ( a1 >= dword_83D761C || *(_DWORD *)(dword_83D7610 - 8 * a1 + 4) )
     return Scr_GetConstString(a1);
@@ -47110,7 +47110,7 @@ int __cdecl sub_80845E4(unsigned int a1)
 // 83D761C: using guessed type int dword_83D761C;
 
 //----- (0808464E) --------------------------------------------------------
-int __cdecl sub_808464E(unsigned int a1)
+int __cdecl Scr_GetConstIString(unsigned int a1)
 {
   char *v1; // eax
   char *v2; // eax
@@ -47140,7 +47140,7 @@ int __cdecl Scr_GetIString(unsigned int a1)
 {
   int v1; // eax
 
-  v1 = sub_808464E(a1);
+  v1 = Scr_GetConstIString(a1);
   return SL_ConvertToString(v1);
 }
 
@@ -47629,7 +47629,7 @@ int sub_8084F9A()
 {
   int result; // eax
 
-  sub_8084FD2();
+  Scr_RunCurrentThreads();
   result = sub_807E04A();
   ++dword_8394018;
   dword_8394018 &= 0xFFFFFFu;
@@ -47638,9 +47638,9 @@ int sub_8084F9A()
 // 8394018: using guessed type int dword_8394018;
 
 //----- (08084FD2) --------------------------------------------------------
-void sub_8084FD2()
+void Scr_RunCurrentThreads()
 {
-  sub_8083C5C();
+  Scr_RunCurrentThreadsInternal();
 }
 
 //----- (08084FE0) --------------------------------------------------------
@@ -48525,7 +48525,7 @@ int yy_get_next_buffer()
       }
       if ( j > 0x2000 )
         j = 0x2000;
-      dword_83DB9CC = sub_8075BBE(*(_DWORD *)(dword_83DB9A0 + 4) + v4, j);
+      dword_83DB9CC = Scr_ScanFile(*(_DWORD *)(dword_83DB9A0 + 4) + v4, j);
       *(_DWORD *)(dword_83DB9A0 + 16) = dword_83DB9CC;
     }
     if ( dword_83DB9CC )
@@ -52935,7 +52935,7 @@ void __cdecl SV_DObjDumpInfo(int *a1)
   {
     v1 = Com_GetServerDObj(*a1);
     if ( v1 )
-      sub_80B6F74(v1);
+      DObjDumpInfo(v1);
     else
       Com_Printf("no model.\n");
   }
@@ -52986,7 +52986,7 @@ int __cdecl sub_80905FA(int a1)
 // 848B0B4: using guessed type int dword_848B0B4;
 
 //----- (08090666) --------------------------------------------------------
-int __cdecl sub_8090666(int *a1, int a2)
+int __cdecl SV_DObjCreateSkelForBones(int *a1, int a2)
 {
   int v4; // [esp+1Ch] [ebp-Ch]
   int v5; // [esp+20h] [ebp-8h]
@@ -52994,7 +52994,7 @@ int __cdecl sub_8090666(int *a1, int a2)
 
   v6 = Com_GetServerDObj(*a1);
   if ( DObjSkelExists(v6, dword_848B0B0) )
-    return sub_80B7796(v6, a2);
+    return DObjSkelAreBonesUpToDate(v6, a2);
   v5 = sub_80B8380(v6);
   v4 = sub_80905FA(v5);
   sub_80B8424(v6, v4, (int *)dword_848B0B0);
@@ -53020,13 +53020,13 @@ int __cdecl sub_80906EE(int *a1, int a2)
 // 848B0B0: using guessed type int dword_848B0B0;
 
 //----- (08090776) --------------------------------------------------------
-int __cdecl sub_8090776(int *a1, float a2, int a3)
+int __cdecl SV_DObjUpdateServerTime(int *a1, float a2, int a3)
 {
   _DWORD **v5; // [esp+14h] [ebp-4h]
 
   v5 = (_DWORD **)Com_GetServerDObj(*a1);
   if ( v5 )
-    return sub_80BEB76(v5, a2, a3);
+    return DObjUpdateServerInfo(v5, a2, a3);
   else
     return 0;
 }
@@ -53057,7 +53057,7 @@ int __cdecl sub_8090820(int *a1, int a2)
   int v3; // [esp+14h] [ebp-4h]
 
   v3 = Com_GetServerDObj(*a1);
-  return sub_80BEC88(v3, a2);
+  return DObjCalcAnim(v3, a2);
 }
 
 //----- (0809084A) --------------------------------------------------------
@@ -53149,7 +53149,7 @@ int __cdecl sub_80909B0(int *a1)
 }
 
 //----- (080909E8) --------------------------------------------------------
-void sub_80909E8()
+void SV_XModelDebugBoxes()
 {
   ;
 }
@@ -53168,11 +53168,11 @@ _BOOL4 __cdecl SV_MapExists(char *s)
 }
 
 //----- (08090A48) --------------------------------------------------------
-void *sub_8090A48()
+void *SV_ResetEntityParsePoint()
 {
   void *result; // eax
 
-  result = sub_80524EA();
+  result = CM_EntityString();
   dword_848B098 = (int)result;
   return result;
 }
@@ -53281,7 +53281,7 @@ void __usercall SV_InitGameVM(long double a1@<st0>, int a2, int a3)
   int i; // [esp+14h] [ebp-4h]
 
   sub_8131328();
-  dword_848B098 = (int)sub_80524EA();
+  dword_848B098 = (int)CM_EntityString();
   sub_80D1D86();
   v3 = sub_80D37B0();
   G_InitGame(a1, dword_841FB04, v3, a2, a3);
@@ -55067,7 +55067,7 @@ int SV_CheckPaused()
 void __usercall sub_8094780(long double a1@<st0>)
 {
   sub_80905C8();
-  sub_8107CA2(a1, dword_841FB04);
+  G_RunFrame(a1, dword_841FB04);
 }
 
 //----- (0809479A) --------------------------------------------------------
@@ -56696,7 +56696,7 @@ int __cdecl sub_8097BD0(int a1, int a2, int a3)
   v6 = v18;
   for ( i = 0; i <= 9; ++i )
   {
-    if ( sub_8097EDA(a1, &v6, v11, v10) )
+    if ( SV_GetArchivedClientInfo(a1, &v6, v11, v10) )
     {
       v14 = 1;
       v18 = v6;
@@ -56708,7 +56708,7 @@ int __cdecl sub_8097BD0(int a1, int a2, int a3)
   v6 = v17;
   for ( i = 0; i <= 9; ++i )
   {
-    if ( sub_8097EDA(a1, &v6, v11, v10) )
+    if ( SV_GetArchivedClientInfo(a1, &v6, v11, v10) )
     {
       v13 = 1;
       v17 = v6;
@@ -56748,7 +56748,7 @@ int __cdecl sub_8097BD0(int a1, int a2, int a3)
 // 8097BD0: using guessed type float var_38[4];
 
 //----- (08097EDA) --------------------------------------------------------
-int __cdecl sub_8097EDA(int a1, int *a2, _DWORD *a3, void *a4)
+int __cdecl SV_GetArchivedClientInfo(int a1, int *a2, _DWORD *a3, void *a4)
 {
   unsigned int v5; // [esp+14h] [ebp-34h]
   _DWORD *v6; // [esp+18h] [ebp-30h]
@@ -57887,7 +57887,7 @@ void __cdecl sub_809AD2C(int a1, int a2, int a3)
 LABEL_14:
           if ( !sub_805D6DC(a1, (int)v11, (int)v10, *(float *)a3) )
           {
-            sub_811BF30(v16);
+            G_DObjCalcPose(v16);
             sub_80A7146((float *)(v16 + 324), (int)v3);
             sub_80A5194((float *)a1, v3, v7);
             sub_80A5194((float *)(a1 + 12), v3, v6);
@@ -58044,7 +58044,7 @@ int __cdecl sub_809B30E(_DWORD *a1, int a2)
       CM_CalcTraceExtents((int)v12);
       if ( sub_805D6DC((int)v12, (int)v10, (int)v9, 1.0) )
         return 0;
-      sub_811BF30(v17);
+      G_DObjCalcPose(v17);
       sub_80A7146((float *)(v17 + 324), (int)v4);
       sub_80A5194(v12, v4, v7);
       sub_80A5194(v13, v4, v6);
@@ -62738,7 +62738,7 @@ void __cdecl sub_80A86CC(float a1, float *a2)
 // 80A86CC: using guessed type float var_28[4];
 
 //----- (080A8712) --------------------------------------------------------
-int __cdecl sub_80A8712(int a1)
+int __cdecl Rand_Init(int a1)
 {
   int result; // eax
 
@@ -71027,7 +71027,7 @@ void DObjAbort()
 // 8527A68: using guessed type int dword_8527A68;
 
 //----- (080B6F74) --------------------------------------------------------
-void __cdecl sub_80B6F74(int a1)
+void __cdecl DObjDumpInfo(int a1)
 {
   const char *v1; // eax
   const char *v2; // ebx
@@ -71328,7 +71328,7 @@ LABEL_21:
 // 80B75A8: using guessed type int var_58[8];
 
 //----- (080B7796) --------------------------------------------------------
-int __cdecl sub_80B7796(int a1, int a2)
+int __cdecl DObjSkelAreBonesUpToDate(int a1, int a2)
 {
   return (*(int *)(*(_DWORD *)(a1 + 4) + 4 * (a2 >> 5) + 32) >> (a2 & 0x1F)) & 1;
 }
@@ -71573,7 +71573,7 @@ int __cdecl sub_80B7DFC(int a1)
 // 80B7DFC: using guessed type float var_28[6];
 
 //----- (080B7EFC) --------------------------------------------------------
-int __cdecl sub_80B7EFC(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 a5)
+int __cdecl DObjCreate(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 a5)
 {
   int v7; // [esp+20h] [ebp-38h]
   int v8; // [esp+30h] [ebp-28h]
@@ -71608,7 +71608,7 @@ int __cdecl sub_80B7EFC(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 
       {
         if ( *s2 )
         {
-          v9 = sub_8078CC6(s2);
+          v9 = SL_FindString(s2);
           if ( v9 )
           {
             for ( j = 0; j < v7; ++j )
@@ -71655,7 +71655,7 @@ _DWORD *__cdecl sub_80B812E(const void *a1, int a2, int a3)
 // 8527A68: using guessed type int dword_8527A68;
 
 //----- (080B819E) --------------------------------------------------------
-int __cdecl sub_80B819E(int a1)
+int __cdecl DObjFree(int a1)
 {
   int result; // eax
   int v2; // eax
@@ -72834,7 +72834,7 @@ char *__cdecl sub_80BA57A(int a1, int a2, char *s, __int16 a4, unsigned int a5, 
 }
 
 //----- (080BA626) --------------------------------------------------------
-char **__cdecl sub_80BA626(char *s, int a2, int (__cdecl *a3)(int))
+char **__cdecl XAnimCreateAnims(char *s, int a2, int (__cdecl *a3)(int))
 {
   size_t v3; // eax
   char *dest; // [esp+1Ch] [ebp-Ch]
@@ -73077,7 +73077,7 @@ int __cdecl sub_80BAC36(int a1, int a2, float a3, int a4, int a5)
 }
 
 //----- (080BAD76) --------------------------------------------------------
-int __cdecl sub_80BAD76(int a1, _DWORD *a2, int a3)
+int __cdecl XanimClearInfo(int a1, _DWORD *a2, int a3)
 {
   int result; // eax
   int i; // [esp+4h] [ebp-4h]
@@ -74426,7 +74426,7 @@ LABEL_4:
 }
 
 //----- (080BD62C) --------------------------------------------------------
-void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, unsigned __int8 a6, int a7, int a8)
+void __cdecl XAnimCalc(int a1, int a2, float a3, int a4, unsigned __int8 a5, unsigned __int8 a6, int a7, int a8)
 {
   int v8; // ebx
   int v9; // ebx
@@ -74469,7 +74469,7 @@ void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, u
       if ( i >= v27 )
       {
         if ( a5 )
-          sub_80BAD76(a1, (_DWORD *)a4, a7);
+          XanimClearInfo(a1, (_DWORD *)a4, a7);
         return;
       }
       v20 = *((_WORD *)v17 + i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18) + 4);
@@ -74484,7 +74484,7 @@ void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, u
     {
       if ( j >= v27 )
       {
-        sub_80BD62C(a1, i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18), a3, a4, a5, a6, a7, a8);
+        XAnimCalc(a1, i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18), a3, a4, a5, a6, a7, a8);
         return;
       }
       v21 = *((_WORD *)v17 + j + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18) + 4);
@@ -74498,7 +74498,7 @@ void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, u
     if ( a5 )
     {
       v26 = (float *)a4;
-      sub_80BD62C(a1, i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18), v35, a4, 1, 1, a7, a8);
+      XAnimCalc(a1, i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18), v35, a4, 1, 1, a7, a8);
     }
     else
     {
@@ -74509,9 +74509,9 @@ void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, u
         Com_Printf("MAX_CALC_ANIM_BUFFER exceeded\n");
         return;
       }
-      sub_80BD62C(a1, i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18), v35, (int)v26, 1, 1, a7, a8);
+      XAnimCalc(a1, i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18), v35, (int)v26, 1, 1, a7, a8);
     }
-    sub_80BD62C(a1, j + v19[3], v36, (int)v26, 0, 1, a7, a8);
+    XAnimCalc(a1, j + v19[3], v36, (int)v26, 0, 1, a7, a8);
     for ( k = j + 1; k < v27; ++k )
     {
       v22 = *((_WORD *)v17 + k + v19[3] + 4);
@@ -74519,7 +74519,7 @@ void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, u
       {
         v37 = *(float *)&dword_8527AA0[10 * v22];
         if ( v37 != 0.0 )
-          sub_80BD62C(a1, k + v19[3], v37, (int)v26, 0, 1, a7, a8);
+          XAnimCalc(a1, k + v19[3], v37, (int)v26, 0, 1, a7, a8);
       }
     }
     if ( a6 )
@@ -74587,7 +74587,7 @@ void __cdecl sub_80BD62C(int a1, int a2, float a3, int a4, unsigned __int8 a5, u
   else
   {
     if ( a5 )
-      sub_80BAD76(a1, (_DWORD *)a4, a7);
+      XanimClearInfo(a1, (_DWORD *)a4, a7);
     v18 = (_BYTE *)(*(_DWORD *)(a1 + 12) + 2 * *(_DWORD *)(*v17 + 4));
     if ( *(_WORD *)(*(_DWORD *)(a1 + 12) + 2 * a2) )
     {
@@ -75066,7 +75066,7 @@ void __cdecl sub_80BEAEE(_DWORD **a1, float a2)
 // 80BEAEE: using guessed type _BYTE var_A[10];
 
 //----- (080BEB76) --------------------------------------------------------
-int __cdecl sub_80BEB76(_DWORD **a1, float a2, int a3)
+int __cdecl DObjUpdateServerInfo(_DWORD **a1, float a2, int a3)
 {
   float v5; // [esp+20h] [ebp-8h]
   float v6; // [esp+24h] [ebp-4h]
@@ -75095,7 +75095,7 @@ int __cdecl sub_80BEB76(_DWORD **a1, float a2, int a3)
 }
 
 //----- (080BEC88) --------------------------------------------------------
-int __cdecl sub_80BEC88(int a1, int a2)
+int __cdecl DObjCalcAnim(int a1, int a2)
 {
   int result; // eax
   int v3[4103]; // [esp+20h] [ebp-4068h] BYREF
@@ -75131,7 +75131,7 @@ int __cdecl sub_80BEC88(int a1, int a2)
     if ( *(_DWORD *)a1 )
     {
       v4 |= 0x80000000;
-      sub_80BD62C(a1, 0, 1.0, v11, 1u, 0, (int)v3, 0);
+      XAnimCalc(a1, 0, 1.0, v11, 1u, 0, (int)v3, 0);
     }
     v7 = 0;
     for ( j = 0; ; ++j )
@@ -87668,7 +87668,7 @@ void __cdecl sub_80DB380(int (__cdecl *a1)(int))
 
   if ( !dword_857606C )
   {
-    dword_857606C = (int)sub_80BA626("PLAYER_MANTLE", 11, a1);
+    dword_857606C = (int)XAnimCreateAnims("PLAYER_MANTLE", 11, a1);
     sub_80BA57A(dword_857606C, 0, off_81648C0, 1, 0xAu, 0);
     for ( i = 1; i <= 10; ++i )
     {
@@ -98450,21 +98450,21 @@ int __cdecl sub_80F275E(int a1, int **a2)
   v3[2544] = v3[2543];
   v3[2543] = v3[2483];
   v3[2546] |= v3[2543] & ~v3[2544];
-  if ( v3[2475] < 0 && sub_80F467C((int)v3, 4) && v3[2538] >= 0 && (v3[2543] & 4) != (v3[2544] & 4) )
+  if ( v3[2475] < 0 && CanSpectateTeam((int)v3, 4) && v3[2538] >= 0 && (v3[2543] & 4) != (v3[2544] & 4) )
     sub_80FCAE6((char *)a1);
   if ( (v3[2543] & 1) != 0 && ((*((_BYTE *)v3 + 10176) ^ 1) & 1) != 0 )
   {
-    sub_80FCD40(a1, 1);
+    Cmd_FollowCycle_f(a1, 1);
   }
   else if ( (v3[2543] & 0x1000) != 0 && (v3[2544] & 0x1000) == 0 )
   {
-    sub_80FCD40(a1, -1);
+    Cmd_FollowCycle_f(a1, -1);
   }
   result = v3[3] & 0x400000;
   if ( !result )
   {
     v3[1] = 4;
-    if ( sub_80F467C((int)v3, 4) )
+    if ( CanSpectateTeam((int)v3, 4) )
       v3[20] = 400;
     else
       v3[20] = 0;
@@ -99069,7 +99069,7 @@ int __usercall sub_80F3F74@<eax>(long double a1@<st0>, int *a2)
 // 8793DC0: using guessed type int g_synchronousClients;
 
 //----- (080F40C4) --------------------------------------------------------
-int __cdecl sub_80F40C4(int a1)
+int __cdecl ClientIntermission(int a1)
 {
   char *v1; // eax
   char *v2; // eax
@@ -99093,7 +99093,7 @@ int __cdecl sub_80F40C4(int a1)
 }
 
 //----- (080F41C2) --------------------------------------------------------
-_DWORD *__cdecl sub_80F41C2(int a1)
+_DWORD *__cdecl SpectatorClientEndFrame(int a1)
 {
   _DWORD *result; // eax
   unsigned int v2; // edx
@@ -99122,14 +99122,14 @@ _DWORD *__cdecl sub_80F41C2(int a1)
   if ( (int)v7[2475] < 0 )
   {
 LABEL_10:
-    if ( (int)v7[2538] < 0 && !sub_80F467C((int)v7, 4) )
-      sub_80FCD40(a1, 1);
+    if ( (int)v7[2538] < 0 && !CanSpectateTeam((int)v7, 4) )
+      Cmd_FollowCycle_f(a1, 1);
     v12 = v7[2538];
-    if ( v12 < 0 || (v6 = v7[2477] + v7[2537], !sub_8097EDA(v12, &v6, &v10, v8)) || !sub_80F467C((int)v7, v9) )
+    if ( v12 < 0 || (v6 = v7[2477] + v7[2537], !SV_GetArchivedClientInfo(v12, &v6, &v10, v8)) || !CanSpectateTeam((int)v7, v9) )
     {
       sub_80FCAE6((char *)a1);
       v7[3] &= ~0x2000000u;
-      if ( sub_80F467C((int)v7, 2) || sub_80F467C((int)v7, 1) || sub_80F467C((int)v7, 0) )
+      if ( CanSpectateTeam((int)v7, 2) || CanSpectateTeam((int)v7, 1) || CanSpectateTeam((int)v7, 0) )
       {
         result = v7;
         v7[3] |= 0x1000000u;
@@ -99151,9 +99151,9 @@ LABEL_10:
       if ( (int)v7[2477] < 0 )
         v7[2477] = 0;
       v6 = v7[2477] - v7[2537];
-      if ( sub_8097EDA(v7[2475], &v6, &v10, v8) )
+      if ( SV_GetArchivedClientInfo(v7[2475], &v6, &v10, v8) )
       {
-        if ( sub_80F467C((int)v7, v9) )
+        if ( CanSpectateTeam((int)v7, v9) )
           break;
       }
       if ( !v7[2477] )
@@ -99177,14 +99177,14 @@ LABEL_10:
     v3 = 9892;
   }
   qmemcpy(v5, v4, 4 * (v3 >> 2));
-  sub_81023F2(v7, *(_DWORD *)a1, 2u);
+  HudElem_UpdateClient(v7, *(_DWORD *)a1, 2u);
   v7[40] = v13;
   v7[3] &= ~0x800000u;
   v7[3] |= 0x400000u;
   if ( (int)v7[2475] < 0 )
   {
     v7[3] |= 0x1000000u;
-    if ( sub_80F467C((int)v7, 4) )
+    if ( CanSpectateTeam((int)v7, 4) )
     {
       result = v7;
       v2 = v7[3] | 0x2000000;
@@ -99206,7 +99206,7 @@ LABEL_10:
 // 80F41C2: using guessed type char var_2728[4];
 
 //----- (080F467C) --------------------------------------------------------
-int __cdecl sub_80F467C(int a1, char a2)
+int __cdecl CanSpectateTeam(int a1, char a2)
 {
   return ((unsigned __int8)(*(int *)(a1 + 10048) >> a2) ^ 1) & 1;
 }
@@ -99365,7 +99365,7 @@ int __cdecl sub_80F4BA4(int a1)
         I_strncpyz((char *)(v8 + (i << 6) + 128), s2a, 64);
       }
       src = (char *)SL_ConvertToString(*(unsigned __int16 *)(a1 + 2 * i + 536));
-      *(_DWORD *)(v2 + 4 * i + 10092) = sub_811B13C(src);
+      *(_DWORD *)(v2 + 4 * i + 10092) = G_TagIndex(src);
       if ( strcmp((const char *)(v8 + (i << 6) + 512), src) )
       {
         v3 = 1;
@@ -99384,7 +99384,7 @@ int __cdecl sub_80F4BA4(int a1)
 }
 
 //----- (080F4DBE) --------------------------------------------------------
-int __usercall sub_80F4DBE@<eax>(long double a1@<st0>, int a2)
+int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
 {
   int result; // eax
   unsigned int v3; // edx
@@ -99408,13 +99408,13 @@ int __usercall sub_80F4DBE@<eax>(long double a1@<st0>, int a2)
   {
     if ( *(_DWORD *)(v10 + 9896) == 3 )
     {
-      sub_80F40C4(a2);
+      ClientIntermission(a2);
       result = *(_DWORD *)(a2 + 344);
       *(_DWORD *)(result + 10184) = 0;
     }
     else if ( *(_DWORD *)(v10 + 9896) == 2 )
     {
-      sub_80F41C2(a2);
+      SpectatorClientEndFrame(a2);
       result = *(_DWORD *)(a2 + 344);
       *(_DWORD *)(result + 10184) = 0;
     }
@@ -99510,8 +99510,8 @@ int __usercall sub_80F4DBE@<eax>(long double a1@<st0>, int a2)
         {
           if ( SV_DObjExists((int *)a2) )
           {
-            sub_811BF30(a2);
-            sub_80909E8();
+            G_DObjCalcPose(a2);
+            SV_XModelDebugBoxes();
           }
         }
         result = *(_DWORD *)(a2 + 344);
@@ -99527,7 +99527,7 @@ int __usercall sub_80F4DBE@<eax>(long double a1@<st0>, int a2)
     {
       sub_80F552A((_DWORD *)(v10 + 20), v9);
       sub_80F5506(v8, 0, *(_DWORD *)(v10 + 236), 0);
-      sub_80F69B4(a1, a2, v9, v8);
+      ClientSpawn(a1, a2, v9, v8);
       result = *(_DWORD *)(a2 + 344);
       *(_DWORD *)(result + 10184) = 0;
     }
@@ -100027,7 +100027,7 @@ char **sub_80F5D66()
     result = i;
     if ( !*i )
       break;
-    sub_807E1F6(0, *i, (-13107 * (i - &off_8150B80)) | 0xC000);
+    Scr_AddClassField(0, *i, (-13107 * (i - &off_8150B80)) | 0xC000);
   }
   return result;
 }
@@ -100042,7 +100042,7 @@ int __cdecl sub_80F5DBC(int a1, int a2)
   if ( v3[3] )
     return ((int (__cdecl *)(int, char **))v3[3])(a1, v3);
   else
-    return sub_81188EE(a1, (int)v3[2], (int)v3[1]);
+    return Scr_SetGenericField(a1, (int)v3[2], (int)v3[1]);
 }
 // 8150B80: using guessed type char *off_8150B80;
 
@@ -100164,7 +100164,7 @@ void __cdecl sub_80F63A0(int a1, int a2, float *a3, float *a4)
 }
 
 //----- (080F63D4) --------------------------------------------------------
-char *__cdecl sub_80F63D4(char *a1, char *a2, int a3)
+char *__cdecl ClientCleanName(char *a1, char *a2, int a3)
 {
   char *v3; // eax
   char *v4; // eax
@@ -100259,13 +100259,13 @@ int __cdecl ClientUserinfoChanged(int a1)
   if ( *(_DWORD *)(v4 + 9924) == 2 && dword_859B614 )
   {
     nptr = Info_ValueForKey(dest, "name");
-    sub_80F63D4(nptr, (char *)(v4 + 9992), 32);
+    ClientCleanName(nptr, (char *)(v4 + 9992), 32);
   }
   else
   {
     I_strncpyz(v5, (char *)(v4 + 10116), 1024);
     nptr = Info_ValueForKey(dest, "name");
-    sub_80F63D4(nptr, (char *)(v4 + 10116), 32);
+    ClientCleanName(nptr, (char *)(v4 + 10116), 32);
     I_strncpyz((char *)(v4 + 9992), (char *)(v4 + 10116), 32);
   }
   *((_DWORD *)&unk_8652644 + 302 * a1) = a1;
@@ -100347,7 +100347,7 @@ int __cdecl sub_80F6954(int a1)
 // 87A230C: using guessed type __int16 word_87A230C;
 
 //----- (080F69B4) --------------------------------------------------------
-int __usercall sub_80F69B4@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4)
+int __usercall ClientSpawn@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4)
 {
   int v5; // [esp+1Ch] [ebp-11Ch]
   char v6[256]; // [esp+20h] [ebp-118h] BYREF
@@ -100403,12 +100403,12 @@ int __usercall sub_80F69B4@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWOR
   *((_DWORD *)s + 2600) = dword_859B5EC;
   *((_DWORD *)s + 2482) = dword_859B5EC;
   *(_DWORD *)s = dword_859B5EC - 100;
-  sub_80F4DBE(a2);
+  ClientEndFrame(a2);
   sub_80F35DA(a1, (int *)a2, (int **)s + 2482);
   dword_859B420 = 0;
   return sub_80DD59E((int)s, a2, 1, 1u);
 }
-// 80F4DBE: using guessed type _DWORD __cdecl sub_80F4DBE(_DWORD);
+// 80F4DBE: using guessed type _DWORD __cdecl ClientEndFrame(_DWORD);
 // 8167700: using guessed type _DWORD dword_8167700[3];
 // 816770C: using guessed type _DWORD dword_816770C[3];
 // 859B400: using guessed type int dword_859B400;
@@ -100441,7 +100441,7 @@ void __usercall ClientDisconnect(long double a1@<st0>, int a2)
       sub_80FCAE6((char *)(560 * i + 140924032));
     }
   }
-  sub_8100F84(s);
+  HudElem_ClientDisconnect(s);
   if ( Scr_IsSystemActive() )
     sub_8115EF6(s);
   G_FreeEntity(a1, s);
@@ -102307,7 +102307,7 @@ int __usercall PlayerCmd_spawn@<eax>(long double a1@<st0>, int a2)
   }
   Scr_GetVector(0, v6);
   Scr_GetVector(1u, v5);
-  return sub_80F69B4(a1, (int)v4, v6, v5);
+  return ClientSpawn(a1, (int)v4, v6, v5);
 }
 // 80FA3B8: using guessed type _DWORD var_18[6];
 // 80FA3B8: using guessed type _DWORD var_28[4];
@@ -102370,7 +102370,7 @@ int __usercall PlayerCmd_ClonePlayer@<eax>(long double a1@<st0>, int a2)
   }
   v12 = Scr_GetInt(0);
   v10 = (_DWORD *)v4[86];
-  v11 = sub_811C614(a1);
+  v11 = G_SpawnPlayerClone(a1);
   v11[36] = v10[51];
   v11[2] = v10[40] & 0xFFFFFFFD | v11[2] & 2 | 0xA0000;
   sub_811CF36(v11, v10 + 5);
@@ -103819,7 +103819,7 @@ _DWORD *__cdecl sub_80FCAE6(char *a1)
 // 80FCAE6: using guessed type float s[12];
 
 //----- (080FCD40) --------------------------------------------------------
-int __cdecl sub_80FCD40(int a1, int a2)
+int __cdecl Cmd_FollowCycle_f(int a1, int a2)
 {
   char v4[96]; // [esp+20h] [ebp-2728h] BYREF
   int v5[2478]; // [esp+80h] [ebp-26C8h] BYREF
@@ -103843,7 +103843,7 @@ int __cdecl sub_80FCD40(int a1, int a2)
       v7 = 0;
     if ( v7 < 0 )
       v7 = dword_859B5E4 - 1;
-    if ( sub_8097EDA(v7, (int *)(*(_DWORD *)(a1 + 344) + 9908), v5, v4) && sub_80F467C(*(_DWORD *)(a1 + 344), v4[4]) )
+    if ( SV_GetArchivedClientInfo(v7, (int *)(*(_DWORD *)(a1 + 344) + 9908), v5, v4) && CanSpectateTeam(*(_DWORD *)(a1 + 344), v4[4]) )
     {
       *(_DWORD *)(*(_DWORD *)(a1 + 344) + 10152) = v7;
       *(_DWORD *)(*(_DWORD *)(a1 + 344) + 9896) = 2;
@@ -103857,7 +103857,7 @@ int __cdecl sub_80FCD40(int a1, int a2)
 // 80FCD40: using guessed type int var_26C8[2478];
 
 //----- (080FCEA8) --------------------------------------------------------
-_BOOL4 __cdecl sub_80FCEA8(int a1)
+_BOOL4 __cdecl G_IsPlaying(int a1)
 {
   return *(_DWORD *)(*(_DWORD *)(a1 + 344) + 9896) == 0;
 }
@@ -103872,7 +103872,7 @@ void __cdecl sub_80FCEC4(int a1, int a2, int a3, int a4, int a5, int a6)
     && *(_DWORD *)(a2 + 344)
     && *(_DWORD *)(*(_DWORD *)(a2 + 344) + 9924) == 2
     && (a3 != 1 || sub_8119C40(a1, a2))
-    && (*(_BYTE *)(g_deadChat + 8) || sub_80FCEA8(a1) || !sub_80FCEA8(a2)) )
+    && (*(_BYTE *)(g_deadChat + 8) || G_IsPlaying(a1) || !G_IsPlaying(a2)) )
   {
     if ( a3 == 1 )
       v6 = va(aC_4, 105, a5, 94, a4, a6);
@@ -104534,12 +104534,12 @@ void __usercall ClientCommand(long double a1@<st0>, int a2)
                                   }
                                   else
                                   {
-                                    sub_80FCD40((int)v4, -1);
+                                    Cmd_FollowCycle_f((int)v4, -1);
                                   }
                                 }
                                 else
                                 {
-                                  sub_80FCD40((int)v4, 1);
+                                  Cmd_FollowCycle_f((int)v4, 1);
                                 }
                               }
                               else
@@ -104688,7 +104688,7 @@ _BOOL4 sub_80FEEDA()
     v5[3 * i + 1] = 4 * i;
     v5[3 * i + 2] = 6;
     v0 = i;
-    word_8577FC0[v0] = sub_8079808((&off_8167740)[i]);
+    word_8577FC0[v0] = Scr_AllocString((&off_8167740)[i]);
   }
   dword_8577FA8 = 0;
   v3 = FS_FOpenFileByMode(src, &v2, 0);
@@ -105584,7 +105584,7 @@ int __cdecl HudElem_Alloc(int a1, int a2)
 // 8578084: using guessed type int dword_8578084[35807];
 
 //----- (08100F68) --------------------------------------------------------
-_DWORD *__cdecl sub_8100F68(_DWORD *a1)
+_DWORD *__cdecl HudElem_Free(_DWORD *a1)
 {
   _DWORD *result; // eax
 
@@ -105595,7 +105595,7 @@ _DWORD *__cdecl sub_8100F68(_DWORD *a1)
 }
 
 //----- (08100F84) --------------------------------------------------------
-int *__cdecl sub_8100F84(_DWORD *a1)
+int *__cdecl HudElem_ClientDisconnect(_DWORD *a1)
 {
   int *result; // eax
   unsigned int i; // [esp+4h] [ebp-4h] BYREF
@@ -105605,7 +105605,7 @@ int *__cdecl sub_8100F84(_DWORD *a1)
     if ( dword_8578000[35 * i] )
     {
       if ( dword_8578080[35 * i] == *a1 )
-        sub_8100F68((_DWORD *)(140 * i + 139952128));
+        HudElem_Free((_DWORD *)(140 * i + 139952128));
     }
     result = (int *)&i;
   }
@@ -105615,14 +105615,14 @@ int *__cdecl sub_8100F84(_DWORD *a1)
 // 8578080: using guessed type int dword_8578080[];
 
 //----- (08100FE6) --------------------------------------------------------
-void *sub_8100FE6()
+void *HudElem_DestroyAll()
 {
   unsigned int i; // [esp+14h] [ebp-4h]
 
   for ( i = 0; i <= 0x3FF; ++i )
   {
     if ( dword_8578000[35 * i] )
-      sub_8100F68((_DWORD *)(140 * i + 139952128));
+      HudElem_Free((_DWORD *)(140 * i + 139952128));
   }
   return memset(dword_8578000, 0, 0x23000u);
 }
@@ -105872,7 +105872,7 @@ int __cdecl Scr_GetHudElemField(int a1, int a2)
 // 8578000: using guessed type int dword_8578000[];
 
 //----- (08101716) --------------------------------------------------------
-int __cdecl sub_8101716(int a1, int a2)
+int __cdecl Scr_SetHudElemField(int a1, int a2)
 {
   int *v3; // [esp+10h] [ebp-8h]
   __int16 **v4; // [esp+14h] [ebp-4h]
@@ -105882,7 +105882,7 @@ int __cdecl sub_8101716(int a1, int a2)
   if ( v4[5] )
     return ((int (__cdecl *)(int *, int))v4[5])(v3, a2);
   else
-    return sub_81188EE((int)v3, (int)v4[2], (int)v4[1]);
+    return Scr_SetGenericField((int)v3, (int)v4[2], (int)v4[1]);
 }
 // 8152E40: using guessed type __int16 *off_8152E40;
 // 8578000: using guessed type int dword_8578000[];
@@ -105970,7 +105970,7 @@ int GScr_NewTeamHudElem()
 // 87A22E8: using guessed type __int16 word_87A22E8;
 
 //----- (0810193A) --------------------------------------------------------
-char **sub_810193A()
+char **GScr_AddFieldsForHudElems()
 {
   char **result; // eax
   char **i; // [esp+14h] [ebp-4h]
@@ -105980,7 +105980,7 @@ char **sub_810193A()
     result = i;
     if ( !*i )
       break;
-    sub_807E1F6(1, *i, 28087 * (((char *)i - (char *)&off_8152E40) >> 2));
+    Scr_AddClassField(1, *i, 28087 * (((char *)i - (char *)&off_8152E40) >> 2));
   }
   return result;
 }
@@ -106440,7 +106440,7 @@ _DWORD *__cdecl HECmd_Destroy(int a1)
   _DWORD *v2; // [esp+4h] [ebp-4h]
 
   v2 = (_DWORD *)sub_8101988(a1);
-  return sub_8100F68(v2);
+  return HudElem_Free(v2);
 }
 
 //----- (0810236E) --------------------------------------------------------
@@ -106464,7 +106464,7 @@ int (__cdecl *__cdecl HudElem_GetMethod(char **a1))(int)
 // 81530E4: using guessed type int (__cdecl *off_81530E4[55])(int);
 
 //----- (081023F2) --------------------------------------------------------
-int **__cdecl sub_81023F2(_DWORD *a1, int a2, unsigned __int8 a3)
+int **__cdecl HudElem_UpdateClient(_DWORD *a1, int a2, unsigned __int8 a3)
 {
   int **result; // eax
   int *v4; // [esp+Ch] [ebp-1Ch] BYREF
@@ -107513,7 +107513,7 @@ void *ClearRegisteredItems()
 // 859B000: using guessed type int dword_859B000;
 
 //----- (08104A30) --------------------------------------------------------
-int sub_8104A30()
+int SaveRegisteredWeapons()
 {
   char **v1; // [esp+18h] [ebp-2010h]
   int i; // [esp+1Ch] [ebp-200Ch]
@@ -107534,7 +107534,7 @@ int sub_8104A30()
 // 859E9FC: using guessed type int dword_859E9FC;
 
 //----- (08104AEC) --------------------------------------------------------
-int sub_8104AEC()
+int SaveRegisteredItems()
 {
   char v1; // [esp+13h] [ebp-135h]
   char *v2; // [esp+14h] [ebp-134h]
@@ -108325,7 +108325,7 @@ int __usercall sub_81069FC@<eax>(long double a1@<st0>)
 //----- (08106A7C) --------------------------------------------------------
 int __cdecl G_CreateDObj(__int16 ***a1, unsigned __int16 a2, int a3, int a4)
 {
-  return sub_8062A66(a1, a2, a3, a4);
+  return Com_ServerDObjCreate(a1, a2, a3, a4);
 }
 
 //----- (08106AAC) --------------------------------------------------------
@@ -108410,8 +108410,8 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
   *(_DWORD *)dword_859B5F8 = a2;
   dword_859EA04 = -1;
   srand(seed);
-  sub_80A8712(seed);
-  sub_811E8E4();
+  Rand_Init(seed);
+  G_SetupWeaponDef();
   if ( !a4 || !a5 )
     G_RegisterDvars(a1);
   G_ProcessIPBans();
@@ -108458,7 +108458,7 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
     sub_80D9B7E();
     sub_8106AAC();
   }
-  sub_8120068();
+  GScr_LoadConsts();
   SV_GetConfigstring(0x16u, s1, 1024);
   Info_SetValueForKey(s1, "winner", (int)"0");
   SV_SetConfigstring(0x16u, s1);
@@ -108486,13 +108486,13 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
   G_LoadStructs();
   sub_8115E66();
   sub_810DD38();
-  sub_8115E94();
+  Scr_StartupGameType();
   for ( j = 0; j <= 7; ++j )
     dword_879D83C[306 * j] = -1;
   dword_855A4E0 = 0;
   dword_859B41C = 0;
-  sub_8104A30();
-  return sub_8104AEC();
+  SaveRegisteredWeapons();
+  return SaveRegisteredItems();
 }
 // 859B400: using guessed type int dword_859B400;
 // 859B404: using guessed type int dword_859B404;
@@ -108528,7 +108528,7 @@ unsigned int *__usercall G_ShutdownGame@<eax>(long double a1@<st0>, int a2)
   }
   dword_855A4E0 = 0;
   sub_81069FC(a1);
-  sub_8100FE6();
+  HudElem_DestroyAll();
   if ( Scr_IsSystemActive() && !dword_859D154 )
     sub_808DC2C();
   result = sub_8083EDA(1, dword_859D154 == 0);
@@ -108820,7 +108820,7 @@ int sub_8107962()
     if ( i >= dword_859B5E4 )
       break;
     if ( *(_BYTE *)(dword_859B404 + 560 * i + 252) )
-      sub_81023F2(*(_DWORD **)(dword_859B404 + 560 * i + 344), *(_DWORD *)(dword_859B404 + 560 * i), 3u);
+      HudElem_UpdateClient(*(_DWORD **)(dword_859B404 + 560 * i + 344), *(_DWORD *)(dword_859B404 + 560 * i), 3u);
   }
   return result;
 }
@@ -108877,10 +108877,10 @@ int __cdecl sub_8107A7C(int a1)
     result = *(_DWORD *)(a1 + 372) & 0x2000;
     if ( result )
       break;
-    result = sub_811BF04((int *)a1, 1);
+    result = G_DObjUpdateServerTime((int *)a1, 1);
     if ( !result )
       break;
-    sub_8084FD2();
+    Scr_RunCurrentThreads();
   }
   return result;
 }
@@ -108963,7 +108963,7 @@ LABEL_24:
 // 859B5E8: using guessed type int dword_859B5E8;
 
 //----- (08107CA2) --------------------------------------------------------
-void __usercall sub_8107CA2(long double a1@<st0>, int a2)
+void __usercall G_RunFrame(long double a1@<st0>, int a2)
 {
   int v2; // ecx
   int v3; // edx
@@ -109035,7 +109035,7 @@ void __usercall sub_8107CA2(long double a1@<st0>, int a2)
       *(_DWORD *)(v2 + 4) = dword_859DDEC[v3];
       *(_DWORD *)(v2 + 8) = dword_859DDF0[v3];
     }
-    sub_8084FD2();
+    Scr_RunCurrentThreads();
   }
   while ( *(_DWORD *)&v9[1] );
   v11 = (int *)&unk_8665480;
@@ -109068,11 +109068,11 @@ void __usercall sub_8107CA2(long double a1@<st0>, int a2)
   while ( v12[0] < dword_859B5E4 )
   {
     if ( *((_BYTE *)v11 + 252) )
-      sub_80F4DBE(a1, (int)v11);
+      ClientEndFrame(a1, (int)v11);
     ++v12[0];
     v11 += 140;
   }
-  sub_8119EF2();
+  CheckTeamStatus();
   if ( *(_BYTE *)(g_oldVoting + 8) )
     CheckVote();
   sub_8107186();
@@ -109086,9 +109086,9 @@ void __usercall sub_8107CA2(long double a1@<st0>, int a2)
     Dvar_SetBool(g_listEntity, 0);
   }
   if ( dword_859E9FC )
-    sub_8104A30();
+    SaveRegisteredWeapons();
   if ( dword_859EA00 )
-    sub_8104AEC();
+    SaveRegisteredItems();
   sub_8107A40();
   dword_855A4E0 = 0;
 }
@@ -110145,7 +110145,7 @@ int __cdecl sub_810A7F2(int a1)
 {
   char v2[4]; // [esp+14h] [ebp-4h] BYREF
 
-  if ( !sub_8117F4C("weaponinfo", (int)&unk_8153CDC, v2) )
+  if ( !G_SpawnString("weaponinfo", (int)&unk_8153CDC, v2) )
     Com_Error(1, (char *)&byte_8153D40);
   return G_SpawnTurret(a1, *(char **)v2);
 }
@@ -111444,7 +111444,7 @@ int __cdecl sub_810D9B8(int a1)
   *(_BYTE *)(a1 + 242) = 1;
   *(_BYTE *)(a1 + 358) = 18;
   *(_DWORD *)(a1 + 220) = 2;
-  if ( sub_8117F4C("cursorhint", (int)&unk_8153DE0, &s1) )
+  if ( G_SpawnString("cursorhint", (int)&unk_8153DE0, &s1) )
   {
     if ( I_stricmp(s1, "HINT_INHERIT") )
     {
@@ -111463,7 +111463,7 @@ int __cdecl sub_810D9B8(int a1)
     }
   }
   *(_DWORD *)(a1 + 216) = 255;
-  result = sub_8117F4C("hintstring", (int)&unk_8153DE0, &s1);
+  result = G_SpawnString("hintstring", (int)&unk_8153DE0, &s1);
   if ( result )
   {
     for ( i = 0; (int)i <= 31; ++i )
@@ -111569,9 +111569,9 @@ long double __cdecl sub_810DCE8(float *a1, float *a2)
 }
 
 //----- (0810DD1C) --------------------------------------------------------
-int __cdecl sub_810DD1C(char *s)
+int __cdecl GScr_AllocString(char *s)
 {
-  return sub_8079808(s);
+  return Scr_AllocString(s);
 }
 
 //----- (0810DD38) --------------------------------------------------------
@@ -111646,9 +111646,9 @@ int sub_810DF4E()
   int i; // [esp+4h] [ebp-4h]
 
   for ( i = 0; i <= 3; ++i )
-    sub_807E13C(i);
-  sub_81187B8();
-  sub_810193A();
+    Scr_SetClassMap(i);
+  GScr_AddFieldsForEntity();
+  GScr_AddFieldsForHudElems();
   return GScr_AddFieldsForRadiant();
 }
 
@@ -111788,13 +111788,13 @@ void println()
 // 8793E30: using guessed type int g_no_script_spam;
 
 //----- (0810E202) --------------------------------------------------------
-void __cdecl __noreturn sub_810E202(int a1, char *format)
+void __cdecl __noreturn Scr_LocalizationError(int a1, char *format)
 {
   Com_Error(6, format);
 }
 
 //----- (0810E21E) --------------------------------------------------------
-void __cdecl sub_810E21E(int a1, const char *a2, int a3)
+void __cdecl Scr_ValidateLocalizedStringRef(int a1, const char *a2, int a3)
 {
   char *v3; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -111843,7 +111843,7 @@ int __cdecl Scr_ConstructMessageString(signed int a1, signed int a2, const char 
     {
       s = (const char *)Scr_GetIString(a1);
       v15 = strlen(s);
-      sub_810E21E(a1, s, v15);
+      Scr_ValidateLocalizedStringRef(a1, s, v15);
       if ( v16 + v15 + 1 >= a5 )
       {
         v5 = va("%s is too long. Max length is %i\n", a3, a5);
@@ -111882,10 +111882,10 @@ int __cdecl Scr_ConstructMessageString(signed int a1, signed int a2, const char 
         }
         if ( (*(_WORD *)(_ctype_b + 2 * s[i]) & 0x400) != 0 )
         {
-          if ( *(_BYTE *)(loc_warningsAsErrors + 8) )
+          if ( *(_BYTE *)(iloc_warningsAsErrors + 8) )
           {
             v8 = va("non-localized %s strings are not allowed to have letters in them: \"%s\"", a3, s);
-            sub_810E202(a1, v8);
+            Scr_LocalizationError(a1, v8);
           }
           Com_Printf(
             "^3WARNING: Non-localized %s string is not allowed to have letters in it. Must be changed over to a localized"
@@ -111919,7 +111919,7 @@ int __cdecl Scr_ConstructMessageString(signed int a1, signed int a2, const char 
   return result;
 }
 // 8185A64: using guessed type int _ctype_b;
-// 8523150: using guessed type int loc_warningsAsErrors;
+// 8523150: using guessed type int iloc_warningsAsErrors;
 // 810E290: using guessed type const char *arg_8;
 
 //----- (0810E5D8) --------------------------------------------------------
@@ -116512,7 +116512,7 @@ int sub_8115E66()
 // 879C788: using guessed type int dword_879C788;
 
 //----- (08115E94) --------------------------------------------------------
-int sub_8115E94()
+int Scr_StartupGameType()
 {
   unsigned __int16 v1; // [esp+16h] [ebp-2h]
 
@@ -117629,7 +117629,7 @@ long double __cdecl sub_8117F2C(float a1)
 }
 
 //----- (08117F4C) --------------------------------------------------------
-int __cdecl sub_8117F4C(char *s1, int a2, _DWORD *a3)
+int __cdecl G_SpawnString(char *s1, int a2, _DWORD *a3)
 {
   return G_SpawnStringInternal((int)&byte_859C748, s1, a2, a3);
 }
@@ -117641,7 +117641,7 @@ int __cdecl sub_8117F76(char *s1, int a2, float *a3)
   int v4; // [esp+1Ch] [ebp-Ch]
   char *nptr; // [esp+20h] [ebp-8h] BYREF
 
-  v4 = sub_8117F4C(s1, a2, &nptr);
+  v4 = G_SpawnString(s1, a2, &nptr);
   *a3 = atof(nptr);
   return v4;
 }
@@ -117652,7 +117652,7 @@ int __cdecl sub_8117FB2(char *s1, int a2, int *a3)
   int v4; // [esp+10h] [ebp-8h]
   char *nptr; // [esp+14h] [ebp-4h] BYREF
 
-  v4 = sub_8117F4C(s1, a2, &nptr);
+  v4 = G_SpawnString(s1, a2, &nptr);
   *a3 = atoi(nptr);
   return v4;
 }
@@ -117663,7 +117663,7 @@ int __cdecl sub_8117FEC(char *s1, int a2, _DWORD *a3)
   int v4; // [esp+20h] [ebp-8h]
   char *s; // [esp+24h] [ebp-4h] BYREF
 
-  v4 = sub_8117F4C(s1, a2, &s);
+  v4 = G_SpawnString(s1, a2, &s);
   sub_81193A8(a3);
   sscanf(s, "%f %f %f", a3, a3 + 1, a3 + 2);
   return v4;
@@ -117890,7 +117890,7 @@ void __usercall G_CallSpawn(long double a1@<st0>)
   int v3; // [esp+20h] [ebp-8h]
   char **i; // [esp+24h] [ebp-4h]
 
-  sub_8117F4C("classname", (int)&byte_8157544, &s2);
+  G_SpawnString("classname", (int)&byte_8157544, &s2);
   if ( s2 )
   {
     v3 = sub_811852A(s2);
@@ -117969,12 +117969,12 @@ int __usercall G_CallSpawnEntity@<eax>(long double a1@<st0>, int a2)
 // 8168560: using guessed type char *off_8168560;
 
 //----- (081187B8) --------------------------------------------------------
-char **sub_81187B8()
+char **GScr_AddFieldsForEntity()
 {
   char **i; // [esp+14h] [ebp-4h]
 
   for ( i = &off_8157780; *i; i += 4 )
-    sub_807E1F6(0, *i, ((char *)i - (char *)&off_8157780) >> 4);
+    Scr_AddClassField(0, *i, ((char *)i - (char *)&off_8157780) >> 4);
   return sub_80F5D66();
 }
 // 8157780: using guessed type char *off_8157780;
@@ -118010,14 +118010,14 @@ int __cdecl sub_8118822(int a1, int a2)
     if ( v5[3] )
       ((void (__cdecl *)(char *, int))v5[3])(v4, a2);
     else
-      sub_81188EE((int)v4, (int)v5[2], (int)v5[1]);
+      Scr_SetGenericField((int)v4, (int)v5[2], (int)v5[1]);
     return 1;
   }
 }
 // 8157780: using guessed type char *off_8157780;
 
 //----- (081188EE) --------------------------------------------------------
-int __cdecl sub_81188EE(int a1, int a2, int a3)
+int __cdecl Scr_SetGenericField(int a1, int a2, int a3)
 {
   int result; // eax
   int v4; // eax
@@ -118039,7 +118039,7 @@ int __cdecl sub_81188EE(int a1, int a2, int a3)
       *(float *)(a1 + a3) = v5;
       break;
     case 3:
-      v4 = sub_8084586(0);
+      v4 = Scr_GetConstStringIncludeNull(0);
       result = Scr_SetString((_WORD *)(a1 + a3), v4);
       break;
     case 4:
@@ -118070,7 +118070,7 @@ int __cdecl sub_81189D2(int a1, int a2, int a3)
   if ( !a1 )
     return sub_8118822(a2, a3);
   if ( a1 == 1 )
-    sub_8101716(a2, a3);
+    Scr_SetHudElemField(a2, a3);
   return 1;
 }
 
@@ -118399,13 +118399,13 @@ int SP_worldspawn()
   float v3; // [esp+10h] [ebp-8h]
   char *nptr; // [esp+14h] [ebp-4h] BYREF
 
-  sub_8117F4C("classname", (int)&byte_8157544, &nptr);
+  G_SpawnString("classname", (int)&byte_8157544, &nptr);
   if ( I_stricmp(nptr, "worldspawn") )
     Com_Error(1, (char *)&byte_81576A0);
   SV_SetConfigstring(2u, "cod");
   v0 = va("%i", *(_DWORD *)dword_859B5F8);
   SV_SetConfigstring(0xDu, v0);
-  sub_8117F4C("ambienttrack", (int)&byte_8157544, &nptr);
+  G_SpawnString("ambienttrack", (int)&byte_8157544, &nptr);
   if ( *nptr )
   {
     v1 = va("n\\%s", nptr);
@@ -118415,18 +118415,18 @@ int SP_worldspawn()
   {
     SV_SetConfigstring(3u, (char *)&byte_8157544);
   }
-  sub_8117F4C("message", (int)&byte_8157544, &nptr);
+  G_SpawnString("message", (int)&byte_8157544, &nptr);
   SV_SetConfigstring(4u, nptr);
   SV_SetConfigstring(0xEu, *(char **)(g_motd + 8));
-  sub_8117F4C("gravity", (int)"800", &nptr);
+  G_SpawnString("gravity", (int)"800", &nptr);
   v3 = atof(nptr);
   Dvar_SetFloat(g_gravity, (char *)LODWORD(v3));
-  sub_8117F4C("northyaw", (int)&byte_8157544, &nptr);
+  G_SpawnString("northyaw", (int)&byte_8157544, &nptr);
   if ( *nptr )
     SV_SetConfigstring(0xBu, nptr);
   else
     SV_SetConfigstring(0xBu, "0");
-  sub_8117F4C("spawnflags", (int)"0", &nptr);
+  G_SpawnString("spawnflags", (int)"0", &nptr);
   dword_86F1190 = atoi(nptr);
   dword_86F1020 = 1022;
   result = Scr_SetString(word_86F1188, (unsigned __int16)word_87A2300);
@@ -118470,11 +118470,11 @@ void *G_LoadStructs()
   Scr_FreeThread(v2);
   while ( G_ParseSpawnVars((int)&byte_859C748) )
   {
-    sub_8117F4C("classname", (int)&byte_8157544, &s2);
+    G_SpawnString("classname", (int)&byte_8157544, &s2);
     if ( !strcmp("script_struct", s2) )
       sub_8118398();
   }
-  return sub_8090A48();
+  return SV_ResetEntityParsePoint();
 }
 // 859C748: using guessed type char byte_859C748;
 // 879D830: using guessed type int dword_879D830;
@@ -118837,7 +118837,7 @@ _BOOL4 __cdecl sub_8119C40(int a1, int a2)
 }
 
 //----- (08119CB8) --------------------------------------------------------
-int __cdecl sub_8119CB8(int a1)
+int __cdecl TeamplayInfoMessage(int a1)
 {
   int result; // eax
   float s[7]; // [esp+30h] [ebp-78h] BYREF
@@ -118874,7 +118874,7 @@ int __cdecl sub_8119CB8(int a1)
   v9 = v3;
   if ( v3 <= 0x3Fu
     && dword_86655D8[140 * v9]
-    && (!sub_80FCEA8(a1) || *(_DWORD *)(dword_86655D8[140 * v9] + 10060) == *(_DWORD *)(*(_DWORD *)(a1 + 344) + 10060)) )
+    && (!G_IsPlaying(a1) || *(_DWORD *)(dword_86655D8[140 * v9] + 10060) == *(_DWORD *)(*(_DWORD *)(a1 + 344) + 10060)) )
   {
     v8 = dword_8665614[140 * v9];
   }
@@ -118894,7 +118894,7 @@ int __cdecl sub_8119CB8(int a1)
 // 8119CB8: using guessed type float s[7];
 
 //----- (08119EF2) --------------------------------------------------------
-int sub_8119EF2()
+int CheckTeamStatus()
 {
   int result; // eax
   char *v1; // [esp+10h] [ebp-8h]
@@ -118913,7 +118913,7 @@ int sub_8119EF2()
       if ( v1[252] )
       {
         if ( (*(_DWORD *)(*((_DWORD *)v1 + 86) + 12) & 0x400000) == 0 )
-          sub_8119CB8((int)v1);
+          TeamplayInfoMessage((int)v1);
       }
     }
   }
@@ -119152,7 +119152,7 @@ int __cdecl SP_trigger_hurt(int a1)
   int v2; // [esp+14h] [ebp-4h] BYREF
 
   sub_811A074(a1);
-  sub_8117F4C("sound", (int)"world_hurt_me", &v2);
+  G_SpawnString("sound", (int)"world_hurt_me", &v2);
   if ( !*(_DWORD *)(a1 + 412) )
     *(_DWORD *)(a1 + 412) = 5;
   *(_DWORD *)(a1 + 284) = 1079771144;
@@ -119502,7 +119502,7 @@ const char *__cdecl G_ModelName(int a1)
 }
 
 //----- (0811B13C) --------------------------------------------------------
-int __cdecl sub_811B13C(char *s2)
+int __cdecl G_TagIndex(char *s2)
 {
   return G_FindConfigstringIndex(s2, 110, 32, 1, 0);
 }
@@ -119560,7 +119560,7 @@ _DWORD *__usercall sub_811B20E@<eax>(long double a1@<st0>, int a2)
           v6[3 * v4++] = ((int)*(unsigned __int8 *)(a2 + 357) >> i) & 1;
         }
       }
-      sub_8062A66(v5, v4, 0, *(_DWORD *)a2);
+      Com_ServerDObjCreate(v5, v4, 0, *(_DWORD *)a2);
       return sub_811BAF4(a1, a2, 1);
     }
     else
@@ -119943,17 +119943,17 @@ int __cdecl sub_811BEEE(int *a1)
 }
 
 //----- (0811BF04) --------------------------------------------------------
-int __cdecl sub_811BF04(int *a1, int a2)
+int __cdecl G_DObjUpdateServerTime(int *a1, int a2)
 {
   float v3; // [esp+4h] [ebp-14h]
 
   v3 = (long double)dword_859B5F4 * 0.001;
-  return sub_8090776(a1, v3, a2);
+  return SV_DObjUpdateServerTime(a1, v3, a2);
 }
 // 859B5F4: using guessed type int dword_859B5F4;
 
 //----- (0811BF30) --------------------------------------------------------
-int *__cdecl sub_811BF30(int a1)
+int *__cdecl G_DObjCalcPose(int a1)
 {
   int *result; // eax
   char s[28]; // [esp+10h] [ebp-28h] BYREF
@@ -119980,7 +119980,7 @@ int *__cdecl sub_811BFC4(int a1, int a2)
   char v3[28]; // [esp+10h] [ebp-28h] BYREF
   void (__cdecl *v4)(int, char *); // [esp+2Ch] [ebp-Ch]
 
-  result = (int *)sub_8090666((int *)a1, a2);
+  result = (int *)SV_DObjCreateSkelForBones((int *)a1, a2);
   if ( !result )
   {
     sub_80907EE((int *)a1, a2, (int)v3);
@@ -120214,7 +120214,7 @@ int G_Spawn()
 // 859B414: using guessed type int dword_859B414;
 
 //----- (0811C614) --------------------------------------------------------
-int *__usercall sub_811C614@<eax>(long double a1@<st0>)
+int *__usercall G_SpawnPlayerClone@<eax>(long double a1@<st0>)
 {
   int v2; // [esp+10h] [ebp-8h]
   int *s; // [esp+14h] [ebp-4h]
@@ -121243,7 +121243,7 @@ int __cdecl sub_811E696(int a1, int a2)
 }
 
 //----- (0811E8E4) --------------------------------------------------------
-void sub_811E8E4()
+void G_SetupWeaponDef()
 {
   Com_DPrintf("----------------------\n");
   Com_DPrintf("Game: G_SetupWeaponDef\n");
@@ -121918,100 +121918,100 @@ long double __cdecl sub_8120032(float *a1)
 }
 
 //----- (08120068) --------------------------------------------------------
-int sub_8120068()
+int GScr_LoadConsts()
 {
   int result; // eax
 
-  word_87A22A0 = sub_810DD1C((char *)&byte_8157DD0);
-  word_87A22A2 = sub_810DD1C("allies");
-  word_87A22A4 = sub_810DD1C("axis");
-  word_87A22A6 = sub_810DD1C("current");
-  word_87A22A8 = sub_810DD1C("damage");
-  word_87A22AA = sub_810DD1C("death");
-  word_87A22AC = sub_810DD1C("dlight");
-  word_87A22AE = sub_810DD1C("done");
-  word_87A22B0 = sub_810DD1C("empty");
-  word_87A22B2 = sub_810DD1C("entity");
-  word_87A22B4 = sub_810DD1C("failed");
-  word_87A22B6 = sub_810DD1C("fraction");
-  word_87A22B8 = sub_810DD1C("goal");
-  word_87A22BA = sub_810DD1C("grenade");
-  word_87A22BC = sub_810DD1C("info_notnull");
-  word_87A22BE = sub_810DD1C("invisible");
-  word_87A22C0 = sub_810DD1C("key1");
-  word_87A22C2 = sub_810DD1C("key2");
-  word_87A22C4 = sub_810DD1C("killanimscript");
-  word_87A22C6 = sub_810DD1C("left");
-  word_87A22C8 = sub_810DD1C("movedone");
-  word_87A22CA = sub_810DD1C("noclass");
-  word_87A22CC = sub_810DD1C("normal");
-  word_87A22CE = sub_810DD1C("pistol");
-  word_87A22D0 = sub_810DD1C("plane_waypoint");
-  word_87A22D2 = sub_810DD1C("player");
-  word_87A22D4 = sub_810DD1C("position");
-  word_87A22D6 = sub_810DD1C("primary");
-  word_87A22D8 = sub_810DD1C("primaryb");
-  word_87A22DA = sub_810DD1C("prone");
-  word_87A22DC = sub_810DD1C("right");
-  word_87A22DE = sub_810DD1C("rocket");
-  word_87A22E0 = sub_810DD1C("rotatedone");
-  word_87A22E2 = sub_810DD1C("script_brushmodel");
-  word_87A22E4 = sub_810DD1C("script_model");
-  word_87A22E6 = sub_810DD1C("script_origin");
-  word_87A22E8 = sub_810DD1C("spectator");
-  word_87A22EA = sub_810DD1C("stand");
-  word_87A22EC = sub_810DD1C("surfacetype");
-  word_87A22EE = sub_810DD1C("target_script_trigger");
-  word_87A22F0 = sub_810DD1C("tempEntity");
-  word_87A22F2 = sub_810DD1C("touch");
-  word_87A22F4 = sub_810DD1C("trigger");
-  word_87A22F6 = sub_810DD1C("trigger_use");
-  word_87A22F8 = sub_810DD1C("trigger_use_touch");
-  word_87A22FA = sub_810DD1C("trigger_damage");
-  word_87A22FC = sub_810DD1C("trigger_lookat");
-  word_87A22FE = sub_810DD1C("truck_cam");
-  word_87A2300 = sub_810DD1C("worldspawn");
-  word_87A2302 = sub_810DD1C("binocular_enter");
-  word_87A2304 = sub_810DD1C("binocular_exit");
-  word_87A2306 = sub_810DD1C("binocular_fire");
-  word_87A2308 = sub_810DD1C("binocular_release");
-  word_87A230A = sub_810DD1C("binocular_drop");
-  word_87A230C = sub_810DD1C("begin");
-  word_87A230E = sub_810DD1C("intermission");
-  word_87A2310 = sub_810DD1C("menuresponse");
-  word_87A2312 = sub_810DD1C("playing");
-  word_87A2314 = sub_810DD1C("none");
-  word_87A2316 = sub_810DD1C("dead");
-  word_87A2318 = sub_810DD1C("auto_change");
-  word_87A231A = sub_810DD1C("manual_change");
-  word_87A231C = sub_810DD1C("freelook");
-  word_87A231E = sub_810DD1C("call_vote");
-  word_87A2320 = sub_810DD1C("vote");
-  word_87A2322 = sub_810DD1C("snd_enveffectsprio_level");
-  word_87A2324 = sub_810DD1C("snd_enveffectsprio_shellshock");
-  word_87A2326 = sub_810DD1C("snd_channelvolprio_holdbreath");
-  word_87A2328 = sub_810DD1C("snd_channelvolprio_pain");
-  word_87A232A = sub_810DD1C("snd_channelvolprio_shellshock");
-  word_87A232C = sub_810DD1C("tag_flash");
-  word_87A232E = sub_810DD1C("tag_flash_11");
-  word_87A2330 = sub_810DD1C("tag_flash_2");
-  word_87A2332 = sub_810DD1C("tag_flash_22");
-  word_87A2334 = sub_810DD1C("tag_brass");
-  word_87A2336 = sub_810DD1C("j_head");
-  word_87A2338 = sub_810DD1C("tag_weapon");
-  word_87A233A = sub_810DD1C("tag_player");
-  word_87A233C = sub_810DD1C("tag_camera");
-  word_87A233E = sub_810DD1C("tag_aim");
-  word_87A2340 = sub_810DD1C("tag_aim_animated");
-  word_87A2342 = sub_810DD1C("tag_origin");
-  word_87A2344 = sub_810DD1C("tag_butt");
-  word_87A2346 = sub_810DD1C("tag_weapon_right");
-  word_87A2348 = sub_810DD1C("back_low");
-  word_87A234A = sub_810DD1C("back_mid");
-  word_87A234C = sub_810DD1C("back_up");
-  word_87A234E = sub_810DD1C("neck");
-  word_87A2350 = sub_810DD1C("head");
-  result = sub_810DD1C("pelvis");
+  word_87A22A0 = GScr_AllocString((char *)&byte_8157DD0);
+  word_87A22A2 = GScr_AllocString("allies");
+  word_87A22A4 = GScr_AllocString("axis");
+  word_87A22A6 = GScr_AllocString("current");
+  word_87A22A8 = GScr_AllocString("damage");
+  word_87A22AA = GScr_AllocString("death");
+  word_87A22AC = GScr_AllocString("dlight");
+  word_87A22AE = GScr_AllocString("done");
+  word_87A22B0 = GScr_AllocString("empty");
+  word_87A22B2 = GScr_AllocString("entity");
+  word_87A22B4 = GScr_AllocString("failed");
+  word_87A22B6 = GScr_AllocString("fraction");
+  word_87A22B8 = GScr_AllocString("goal");
+  word_87A22BA = GScr_AllocString("grenade");
+  word_87A22BC = GScr_AllocString("info_notnull");
+  word_87A22BE = GScr_AllocString("invisible");
+  word_87A22C0 = GScr_AllocString("key1");
+  word_87A22C2 = GScr_AllocString("key2");
+  word_87A22C4 = GScr_AllocString("killanimscript");
+  word_87A22C6 = GScr_AllocString("left");
+  word_87A22C8 = GScr_AllocString("movedone");
+  word_87A22CA = GScr_AllocString("noclass");
+  word_87A22CC = GScr_AllocString("normal");
+  word_87A22CE = GScr_AllocString("pistol");
+  word_87A22D0 = GScr_AllocString("plane_waypoint");
+  word_87A22D2 = GScr_AllocString("player");
+  word_87A22D4 = GScr_AllocString("position");
+  word_87A22D6 = GScr_AllocString("primary");
+  word_87A22D8 = GScr_AllocString("primaryb");
+  word_87A22DA = GScr_AllocString("prone");
+  word_87A22DC = GScr_AllocString("right");
+  word_87A22DE = GScr_AllocString("rocket");
+  word_87A22E0 = GScr_AllocString("rotatedone");
+  word_87A22E2 = GScr_AllocString("script_brushmodel");
+  word_87A22E4 = GScr_AllocString("script_model");
+  word_87A22E6 = GScr_AllocString("script_origin");
+  word_87A22E8 = GScr_AllocString("spectator");
+  word_87A22EA = GScr_AllocString("stand");
+  word_87A22EC = GScr_AllocString("surfacetype");
+  word_87A22EE = GScr_AllocString("target_script_trigger");
+  word_87A22F0 = GScr_AllocString("tempEntity");
+  word_87A22F2 = GScr_AllocString("touch");
+  word_87A22F4 = GScr_AllocString("trigger");
+  word_87A22F6 = GScr_AllocString("trigger_use");
+  word_87A22F8 = GScr_AllocString("trigger_use_touch");
+  word_87A22FA = GScr_AllocString("trigger_damage");
+  word_87A22FC = GScr_AllocString("trigger_lookat");
+  word_87A22FE = GScr_AllocString("truck_cam");
+  word_87A2300 = GScr_AllocString("worldspawn");
+  word_87A2302 = GScr_AllocString("binocular_enter");
+  word_87A2304 = GScr_AllocString("binocular_exit");
+  word_87A2306 = GScr_AllocString("binocular_fire");
+  word_87A2308 = GScr_AllocString("binocular_release");
+  word_87A230A = GScr_AllocString("binocular_drop");
+  word_87A230C = GScr_AllocString("begin");
+  word_87A230E = GScr_AllocString("intermission");
+  word_87A2310 = GScr_AllocString("menuresponse");
+  word_87A2312 = GScr_AllocString("playing");
+  word_87A2314 = GScr_AllocString("none");
+  word_87A2316 = GScr_AllocString("dead");
+  word_87A2318 = GScr_AllocString("auto_change");
+  word_87A231A = GScr_AllocString("manual_change");
+  word_87A231C = GScr_AllocString("freelook");
+  word_87A231E = GScr_AllocString("call_vote");
+  word_87A2320 = GScr_AllocString("vote");
+  word_87A2322 = GScr_AllocString("snd_enveffectsprio_level");
+  word_87A2324 = GScr_AllocString("snd_enveffectsprio_shellshock");
+  word_87A2326 = GScr_AllocString("snd_channelvolprio_holdbreath");
+  word_87A2328 = GScr_AllocString("snd_channelvolprio_pain");
+  word_87A232A = GScr_AllocString("snd_channelvolprio_shellshock");
+  word_87A232C = GScr_AllocString("tag_flash");
+  word_87A232E = GScr_AllocString("tag_flash_11");
+  word_87A2330 = GScr_AllocString("tag_flash_2");
+  word_87A2332 = GScr_AllocString("tag_flash_22");
+  word_87A2334 = GScr_AllocString("tag_brass");
+  word_87A2336 = GScr_AllocString("j_head");
+  word_87A2338 = GScr_AllocString("tag_weapon");
+  word_87A233A = GScr_AllocString("tag_player");
+  word_87A233C = GScr_AllocString("tag_camera");
+  word_87A233E = GScr_AllocString("tag_aim");
+  word_87A2340 = GScr_AllocString("tag_aim_animated");
+  word_87A2342 = GScr_AllocString("tag_origin");
+  word_87A2344 = GScr_AllocString("tag_butt");
+  word_87A2346 = GScr_AllocString("tag_weapon_right");
+  word_87A2348 = GScr_AllocString("back_low");
+  word_87A234A = GScr_AllocString("back_mid");
+  word_87A234C = GScr_AllocString("back_up");
+  word_87A234E = GScr_AllocString("neck");
+  word_87A2350 = GScr_AllocString("head");
+  result = GScr_AllocString("pelvis");
   word_87A2352 = result;
   return result;
 }
@@ -126655,7 +126655,7 @@ void __cdecl sub_8128ACC(int *a1, int a2, float *a3, _DWORD *a4, int *a5)
   v17 = 0;
   v15 = 0.0;
   *a1 = sub_812AE78(off_8168620);
-  sub_80A8712(*a1);
+  Rand_Init(*a1);
   if ( !a2 )
   {
     sub_812ADC6(off_8168620, 1);
@@ -132736,7 +132736,7 @@ int sub_8134AAE()
       {
         v2 = *(_DWORD *)i;
         v1 = *(_DWORD *)(*(_DWORD *)i + 4 * *(_DWORD *)(i + 4) + 8);
-        sub_80A8712(*(_DWORD *)(i + 68));
+        Rand_Init(*(_DWORD *)(i + 68));
         *v3 = *(_DWORD *)(i + 76);
         --*((_DWORD *)dword_89A2814 + 2);
         if ( *(int *)(i + 12) < 0 )
@@ -133757,35 +133757,35 @@ unsigned int Language_UpdateCurrentAsian()
 {
   unsigned int result; // eax
 
-  result = *(_DWORD *)(loc_language + 8) - 8;
+  result = *(_DWORD *)(iloc_language + 8) - 8;
   g_currentAsian = result <= 4;
   return result;
 }
-// 8523140: using guessed type int loc_language;
+// 8523140: using guessed type int iloc_language;
 // 89BD5A0: using guessed type int g_currentAsian;
 
 //----- (08135D0C) --------------------------------------------------------
 int sub_8135D0C()
 {
-  return *(_DWORD *)(loc_language + 8);
+  return *(_DWORD *)(iloc_language + 8);
 }
-// 8523140: using guessed type int loc_language;
+// 8523140: using guessed type int iloc_language;
 
 //----- (08135D1A) --------------------------------------------------------
 unsigned int __usercall SEH_InitLanguage@<eax>(long double a1@<st0>)
 {
-  loc_language = (int)Dvar_RegisterInt(a1, "loc_language", 0, 0, 13, 4129);
-  loc_forceEnglish = (int)Dvar_RegisterBool(a1, "loc_forceEnglish", 0, 4129);
-  loc_translate = (int)Dvar_RegisterBool(a1, "loc_translate", 1, 4128);
-  loc_warnings = (int)Dvar_RegisterBool(a1, "loc_warnings", 0, 4096);
-  loc_warningsAsErrors = (int)Dvar_RegisterBool(a1, "loc_warningsAsErrors", 0, 4096);
+  iloc_language = (int)Dvar_RegisterInt(a1, "loc_language", 0, 0, 13, 4129);
+  iloc_forceEnglish = (int)Dvar_RegisterBool(a1, "loc_forceEnglish", 0, 4129);
+  iloc_translate = (int)Dvar_RegisterBool(a1, "loc_translate", 1, 4128);
+  iloc_warnings = (int)Dvar_RegisterBool(a1, "loc_warnings", 0, 4096);
+  iloc_warningsAsErrors = (int)Dvar_RegisterBool(a1, "loc_warningsAsErrors", 0, 4096);
   return Language_UpdateCurrentAsian();
 }
-// 8523140: using guessed type int loc_language;
-// 8523144: using guessed type int loc_forceEnglish;
-// 8523148: using guessed type int loc_translate;
-// 852314C: using guessed type int loc_warnings;
-// 8523150: using guessed type int loc_warningsAsErrors;
+// 8523140: using guessed type int iloc_language;
+// 8523144: using guessed type int iloc_forceEnglish;
+// 8523148: using guessed type int iloc_translate;
+// 852314C: using guessed type int iloc_warnings;
+// 8523150: using guessed type int iloc_warningsAsErrors;
 
 //----- (08135DDC) --------------------------------------------------------
 int __usercall SEH_UpdateLanguageInfo@<eax>(long double a1@<st0>)
@@ -133795,8 +133795,8 @@ int __usercall SEH_UpdateLanguageInfo@<eax>(long double a1@<st0>)
   int i; // [esp+24h] [ebp-4h]
   signed int j; // [esp+24h] [ebp-4h]
 
-  Dvar_RegisterInt(a1, *(char **)loc_language, 0, 0, 13, 4129);
-  Dvar_RegisterBool(a1, *(char **)loc_forceEnglish, 0, 4129);
+  Dvar_RegisterInt(a1, *(char **)iloc_language, 0, 0, 13, 4129);
+  Dvar_RegisterBool(a1, *(char **)iloc_forceEnglish, 0, 4129);
   Language_UpdateCurrentAsian();
   v2 = 0;
   for ( i = 0; i <= 13; ++i )
@@ -133813,25 +133813,25 @@ int __usercall SEH_UpdateLanguageInfo@<eax>(long double a1@<st0>)
   }
   if ( v2 <= 0 )
     Com_Printf("^1ERROR: No languages available because no localized assets were found\n");
-  result = SEH_StringEd_SetLanguageStrings(*(_DWORD *)(loc_language + 8));
+  result = SEH_StringEd_SetLanguageStrings(*(_DWORD *)(iloc_language + 8));
   if ( !result )
   {
     for ( j = 0; j <= 13; ++j )
     {
-      Dvar_SetInt(loc_language, (char *)j);
+      Dvar_SetInt(iloc_language, (char *)j);
       Language_UpdateCurrentAsian();
       result = SEH_StringEd_SetLanguageStrings(j);
       if ( result )
         return result;
     }
-    Dvar_SetInt(loc_language, 0);
+    Dvar_SetInt(iloc_language, 0);
     return Language_UpdateCurrentAsian();
   }
   return result;
 }
 // 8168644: using guessed type int g_languages[];
-// 8523140: using guessed type int loc_language;
-// 8523144: using guessed type int loc_forceEnglish;
+// 8523140: using guessed type int iloc_language;
+// 8523144: using guessed type int iloc_forceEnglish;
 
 //----- (08135FAE) --------------------------------------------------------
 int sub_8135FAE()
@@ -133854,12 +133854,12 @@ int __cdecl SEH_StringEd_SetLanguageStrings(unsigned int a1)
 
   if ( !g_languages[2 * a1] )
     return 0;
-  v5 = sub_81383EC(*(_BYTE *)(loc_forceEnglish + 8));
+  v5 = sub_81383EC(*(_BYTE *)(iloc_forceEnglish + 8));
   if ( !v5 )
     return 1;
-  if ( !*(_BYTE *)(fs_ignoreLocalized + 8) && *(_BYTE *)(loc_warnings + 8) )
+  if ( !*(_BYTE *)(fs_ignoreLocalized + 8) && *(_BYTE *)(iloc_warnings + 8) )
   {
-    if ( *(_BYTE *)(loc_warningsAsErrors + 8) )
+    if ( *(_BYTE *)(iloc_warningsAsErrors + 8) )
     {
       v1 = sub_8136D72(a1);
       Com_Error(6, "Could not load localization strings for %s: %s", v1, v5);
@@ -133871,20 +133871,20 @@ int __cdecl SEH_StringEd_SetLanguageStrings(unsigned int a1)
 }
 // 8168644: using guessed type int g_languages[];
 // 848B7E4: using guessed type int fs_ignoreLocalized;
-// 8523144: using guessed type int loc_forceEnglish;
-// 852314C: using guessed type int loc_warnings;
-// 8523150: using guessed type int loc_warningsAsErrors;
+// 8523144: using guessed type int iloc_forceEnglish;
+// 852314C: using guessed type int iloc_warnings;
+// 8523150: using guessed type int iloc_warningsAsErrors;
 
 //----- (0813608C) --------------------------------------------------------
 int __cdecl sub_813608C(_BYTE *a1)
 {
-  if ( !loc_translate || !*(_BYTE *)(loc_translate + 8) )
+  if ( !iloc_translate || !*(_BYTE *)(iloc_translate + 8) )
     return (int)a1;
   if ( *a1 && a1[1] )
     return sub_813821E((int)a1);
   return (int)a1;
 }
-// 8523148: using guessed type int loc_translate;
+// 8523148: using guessed type int iloc_translate;
 
 //----- (081360E2) --------------------------------------------------------
 char *__cdecl sub_81360E2(char *src)
@@ -133894,9 +133894,9 @@ char *__cdecl sub_81360E2(char *src)
   v2 = sub_813608C(src);
   if ( !v2 )
   {
-    if ( *(_BYTE *)(loc_warnings + 8) )
+    if ( *(_BYTE *)(iloc_warnings + 8) )
     {
-      if ( *(_BYTE *)(loc_warningsAsErrors + 8) )
+      if ( *(_BYTE *)(iloc_warningsAsErrors + 8) )
         Com_Error(6, "Could not translate exe string \"%s\"", src);
       Com_Printf("^3WARNING: Could not translate exe string \"%s\"\n", src);
       strcpy(byte_89BD5C0, "^1UNLOCALIZED(^7");
@@ -133911,8 +133911,8 @@ char *__cdecl sub_81360E2(char *src)
   }
   return (char *)v2;
 }
-// 852314C: using guessed type int loc_warnings;
-// 8523150: using guessed type int loc_warningsAsErrors;
+// 852314C: using guessed type int iloc_warnings;
+// 8523150: using guessed type int iloc_warningsAsErrors;
 
 //----- (081361BE) --------------------------------------------------------
 int __cdecl sub_81361BE(char *dest, _BYTE *a2, const char *a3, int a4)
@@ -133922,9 +133922,9 @@ int __cdecl sub_81361BE(char *dest, _BYTE *a2, const char *a3, int a4)
   src = (const char *)sub_813608C(a2);
   if ( src )
     goto LABEL_12;
-  if ( loc_warnings && *(_BYTE *)(loc_warnings + 8) )
+  if ( iloc_warnings && *(_BYTE *)(iloc_warnings + 8) )
   {
-    if ( loc_warningsAsErrors && *(_BYTE *)(loc_warningsAsErrors + 8) && a4 != 1 )
+    if ( iloc_warningsAsErrors && *(_BYTE *)(iloc_warningsAsErrors + 8) && a4 != 1 )
       Com_Error(6, "Could not translate part of %s: \"%s\"", a3, a2);
     Com_Printf("^3WARNING: Could not translate part of %s: \"%s\"\n", a3, a2);
     src = va("^1UNLOCALIZED(^7%s^1)^7", a2);
@@ -133939,8 +133939,8 @@ LABEL_12:
   strcpy(dest, src);
   return 1;
 }
-// 852314C: using guessed type int loc_warnings;
-// 8523150: using guessed type int loc_warningsAsErrors;
+// 852314C: using guessed type int iloc_warnings;
+// 8523150: using guessed type int iloc_warningsAsErrors;
 // 81361BE: using guessed type _BYTE *arg_4;
 // 81361BE: using guessed type const char *arg_8;
 
@@ -133992,10 +133992,10 @@ int __cdecl sub_81362A4(const char *a1, const char *a2, int a3)
         }
         if ( v18 + v17 > 0x3FF )
         {
-          if ( loc_warnings
-            && *(_BYTE *)(loc_warnings + 8)
-            && loc_warningsAsErrors
-            && *(_BYTE *)(loc_warningsAsErrors + 8)
+          if ( iloc_warnings
+            && *(_BYTE *)(iloc_warnings + 8)
+            && iloc_warningsAsErrors
+            && *(_BYTE *)(iloc_warningsAsErrors + 8)
             && a3 != 1 )
           {
             Com_Error(1, "%s too long when translated: \"%s\"", a2, a1);
@@ -134081,8 +134081,8 @@ int __cdecl sub_81362A4(const char *a1, const char *a2, int a3)
   return v16;
 }
 // 8185A64: using guessed type int _ctype_b;
-// 852314C: using guessed type int loc_warnings;
-// 8523150: using guessed type int loc_warningsAsErrors;
+// 852314C: using guessed type int iloc_warnings;
+// 8523150: using guessed type int iloc_warningsAsErrors;
 // 89BD9C0: using guessed type int dword_89BD9C0;
 // 81362A4: using guessed type const char *arg_4;
 

@@ -12,7 +12,9 @@ typedef int fixed4_t;
 typedef int fixed8_t;
 typedef int fixed16_t;
 
+extern vec2_t vec2_origin;
 extern vec3_t vec3_origin;
+extern vec4_t vec4_origin;
 
 #define Vector2Copy(a,b) ((b)[0]=(a)[0],(b)[1]=(a)[1])
 
@@ -43,6 +45,11 @@ extern vec3_t vec3_origin;
 #define	SHORT2ANGLE(x)	((x)*(360.0/65536))
 
 float Q_fabs( float f );
+
+// angle indexes
+#define PITCH               0       // up / down
+#define YAW                 1       // left / right
+#define ROLL                2       // fall over
 
 /*
 ==============
@@ -124,3 +131,8 @@ vec_t Vec2Length( const vec2_t v );
 vec_t VectorLengthSquared( const vec3_t v );
 vec_t Vec4LengthSq( const vec4_t v);
 void VectorInverse( vec3_t v );
+void MatrixTransformVector(const float *in1, const float *in2, float *out);
+void MatrixInverse(const float *in, float *out);
+void MatrixMultiply( float in1[3][3], float in2[3][3], float out[3][3] );
+void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
+void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );

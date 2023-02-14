@@ -311,14 +311,22 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 unsigned int Com_BlockChecksum( void *buffer, int length );
 unsigned int Com_BlockChecksumKey( void *buffer, int length, int key );
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Com_InitDvars();
 void Com_StartupVariable( const char *match );
 void Com_PrintMessage( conChannel_t channel, const char *fmt, ... );
-void Com_Printf( const char *fmt, ...);
-void Com_DPrintf( const char *fmt, ...);
+void QDECL Com_Printf( const char *fmt, ...);
+void QDECL Com_DPrintf( const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
 void Com_WriteConfigToFile(const char *contents);
 qboolean Com_SafeMode( void );
+
+#ifdef __cplusplus
+}
+#endif
 
 void Com_LoadBsp(const char *filename);
 void Com_UnloadBsp();
@@ -339,18 +347,20 @@ void Com_Quit_f( void );
 
 qboolean SV_GameCommand();
 
-#include "cm_local.h"
 void CM_InitThreadData(int threadContext);
 void CM_LoadMapFromBsp(const char *name, bool usePvs);
-void* CM_Hunk_Alloc(size_t size);
+void* CM_Hunk_Alloc(int size);
 void CM_Hunk_CheckTempMemoryHighClear();
 void CM_Hunk_ClearTempMemoryHigh();
 void* CM_Hunk_AllocateTempMemoryHigh(int size);
 byte* Com_GetBspLump(int type, unsigned int elemSize, unsigned int *count);
 bool Com_BspHasLump(int type);
 void CM_LoadMapFromBsp(const char *name, bool usePvs);
+void CM_LoadMap(const char *name, int *checksum);
 void CM_LoadStaticModels();
 void CM_Cleanup(void);
 void CM_Shutdown();
-void CM_TraceCapsuleThroughCapsule(traceWork_s *tw, trace_t *trace);
 clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule);
+
+#include "../xanim/xanim_public.h"
+XModel* CM_XModelPrecache(const char *name);
