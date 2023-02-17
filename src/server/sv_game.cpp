@@ -24,6 +24,11 @@ qboolean SV_GameCommand()
 	return qfalse;
 }
 
+qboolean SV_MapExists(const char *name)
+{
+	return FS_ReadFile(va("maps/mp/%s.%s", SV_GetMapBaseName(name), GetBspExtension()), 0) >= 0;
+}
+
 void SV_GameSendServerCommand(int clientnum, int svscmd_type, const char *text)
 {
 	if ( clientnum == -1 )

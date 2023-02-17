@@ -263,3 +263,6 @@ void SV_SetConfig(int start, int max, unsigned short bit);
 void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value);
 void SV_SetConfigstring(unsigned int index, const char *val);
 const char* SV_GetConfigstringConst(int index);
+
+qboolean SV_MapExists(const char *name);
+const char *SV_GetMapBaseName(const char *mapname);

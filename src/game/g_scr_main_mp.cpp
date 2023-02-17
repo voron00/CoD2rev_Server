@@ -2,6 +2,27 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
+#ifdef TESTING_LIBRARY
+#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
+#else
+scr_data_t g_scr_data;
+#endif
+
+char* Scr_GetGameTypeNameForScript(const char *pszGameTypeScript)
+{
+	int i;
+
+	for ( i = 0; i < g_scr_data.gametype.iNumGameTypes; ++i )
+	{
+		if ( !Q_stricmp(g_scr_data.gametype.list[i].pszScript, pszGameTypeScript) )
+		{
+			return g_scr_data.gametype.list[i].pszName;
+		}
+	}
+
+	return 0;
+}
+
 void Scr_ValidateLocalizedStringRef(int parmIndex, const char *token, int tokenLen)
 {
 	int charIter;

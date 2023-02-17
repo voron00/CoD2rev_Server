@@ -83,12 +83,12 @@ const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*
 qboolean Hunk_DataOnHunk(void *data);
 void ReplaceStringInternal(char **string, char *replacement);
 void FreeStringInternal(char *str);
-void* Hunk_AllocAlignInternal(size_t size, int aligment);
+void* Hunk_AllocAlignInternal(int size, int aligment);
 void *Hunk_AllocInternal( int size );
 void* Hunk_AllocateTempMemoryInternal(int size);
 void* Hunk_AllocateTempMemoryHighInternal(int size);
-void* Hunk_AllocLowAlignInternal(size_t size, int aligment);
-void* Hunk_AllocLowInternal(size_t n);
+void* Hunk_AllocLowAlignInternal(int size, int aligment);
+void* Hunk_AllocLowInternal(int n);
 void Hunk_ConvertTempToPermLowInternal();
 void* Hunk_ReallocateTempMemoryInternal(int size);
 void Hunk_FreeTempMemory(void* buf);

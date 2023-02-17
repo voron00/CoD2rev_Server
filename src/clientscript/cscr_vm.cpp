@@ -74,6 +74,12 @@ void Scr_Error(const char *error)
 	Scr_ErrorInternal();
 }
 
+void Scr_ObjectError(const char *error)
+{
+	scrVarPub.error_index = -1;
+	Scr_Error(error);
+}
+
 void Scr_ParamError(int paramNum, const char *error)
 {
 	scrVarPub.error_index = paramNum + 1;
@@ -87,6 +93,11 @@ int Scr_GetType(unsigned int param)
 
 	Scr_Error(va("parameter %d does not exist", param + 1));
 	return 0;
+}
+
+unsigned int Scr_GetNumParam()
+{
+	return scrVmPub.outparamcount;
 }
 
 void Scr_ClearOutParams()

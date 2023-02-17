@@ -156,6 +156,7 @@ const char *FS_ReferencedIwdNames();
 const char *FS_ReferencedIwdChecksums();
 const char *FS_LoadedIwdChecksums();
 const char *FS_LoadedIwdPureChecksums();
+char *FS_GetMapBaseName(const char *mapname);
 void FS_Startup(const char *gameName);
 void FS_ClearIwdReferences();
 void FS_Restart(int checksumFeed);

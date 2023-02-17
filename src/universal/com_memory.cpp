@@ -63,7 +63,7 @@ char* CopyStringInternal(const char *in)
 
 void ReplaceStringInternal(char **string, char *replacement)
 {
-	size_t length;
+	unsigned int length;
 	char *str;
 
 	length = I_strlen(replacement);
@@ -137,7 +137,7 @@ void Hunk_AddData(unsigned char type, void *data, int (*alloc)(int))
 
 const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*alloc)(int))
 {
-	size_t length;
+	unsigned int length;
 	fileData_s *fileData;
 	int hash;
 
@@ -157,7 +157,7 @@ qboolean Hunk_DataOnHunk(void *data)
 	return data >= s_hunkData && data < &s_hunkData[s_hunkTotal];
 }
 
-void* Hunk_AllocAlignInternal(size_t size, int aligment)
+void* Hunk_AllocAlignInternal(int size, int aligment)
 {
 	byte *buf;
 
@@ -245,7 +245,7 @@ void* Hunk_AllocateTempMemoryHighInternal(int size)
 	return &s_hunkData[s_hunkTotal - hunk_high.temp];
 }
 
-void* Hunk_AllocLowAlignInternal(size_t size, int aligment)
+void* Hunk_AllocLowAlignInternal(int size, int aligment)
 {
 	byte *buf;
 
@@ -275,7 +275,7 @@ void Hunk_ConvertTempToPermLowInternal()
 	hunk_low.permanent = hunk_low.temp;
 }
 
-void* Hunk_AllocLowInternal(size_t n)
+void* Hunk_AllocLowInternal(int n)
 {
 	return Hunk_AllocLowAlignInternal(n, 32);
 }

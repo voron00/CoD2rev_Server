@@ -163,6 +163,13 @@ typedef enum
 	HE_TYPE_COUNT
 } he_type_t;
 
+enum hudelem_update_t
+{
+	HUDELEM_UPDATE_ARCHIVAL = 0x1,
+	HUDELEM_UPDATE_CURRENT = 0x2,
+	HUDELEM_UPDATE_ARCHIVAL_AND_CURRENT = 0x3,
+};
+
 typedef struct
 {
 	char r;
@@ -505,12 +512,12 @@ struct missile_ent_t
 	int timeOfBirth;
 	float travelDist;
 	vec3_t surfaceNormal;
-	enum team_s team;
+	int team;
 	vec3_t curvature;
 	int targetEntNum;
 	vec3_t targetOffset;
-	enum MissileStage stage;
-	enum MissileFlightMode flightMode;
+	int stage;
+	int flightMode;
 };
 
 struct gentity_s
@@ -631,10 +638,58 @@ typedef struct game_hudelem_field_s
 	unsigned int constId;
 	int ofs;
 	int size;
-	byte type;
+	byte shift;
 	void (*setter)(game_hudelem_s *, int);
 	void (*getter)(game_hudelem_s *, int);
 } game_hudelem_field_t;
+
+enum g_class_num_t
+{
+	CLASS_NUM_ENTITY,
+	CLASS_NUM_HUDELEM,
+	CLASS_NUM_PATHNODE,
+	CLASS_NUM_VEHICLENODE,
+	CLASS_NUM_COUNT
+};
+
+struct scr_entref_t
+{
+	uint16_t entnum;
+	uint16_t classnum;
+};
+
+struct gameTypeScript_t
+{
+	char pszScript[64];
+	char pszName[64];
+	int bTeamBased;
+};
+
+struct scr_gametype_data_t
+{
+	int main;
+	int startupgametype;
+	int playerconnect;
+	int playerdisconnect;
+	int playerdamage;
+	int playerkilled;
+	int votecalled;
+	int playervote;
+	int iNumGameTypes;
+	gameTypeScript_t list[32];
+};
+
+#include "bg_public.h"
+typedef struct
+{
+	int levelscript;
+	int gametypescript;
+	scr_gametype_data_t gametype;
+	int deletestruct;
+	int initstructs;
+	int createstruct;
+	corpseInfo_t playerCorpseInfo[8];
+} scr_data_t;
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
@@ -657,13 +712,50 @@ void HudElem_GetColor(game_hudelem_t *hud, int offset);
 void HudElem_GetAlpha(game_hudelem_t *hud, int offset);
 void HudElem_ClearTypeSettings(game_hudelem_t *hud);
 void HudElem_SetDefaults(game_hudelem_t *hud);
-void Scr_AddHudElem(game_hudelem_t *hud);
+void HudElem_UpdateClient(gclient_s *client, int clientNum, byte which);
+void HudElem_DestroyAll();
+void HudElem_ClientDisconnect(gentity_t *ent);
+void HudElem_Free(game_hudelem_t *hud);
+game_hudelem_t *HudElem_Alloc(int clientNum, int teamNum);
+void Scr_GetHudElemField(int entnum, int offset);
+void Scr_SetHudElemField(int entnum, int offset);
+void Scr_FreeHudElemConstStrings(game_hudelem_s *hud);
+void GScr_AddFieldsForHudElems();
 void GScr_NewHudElem();
+
+void HECmd_SetText(scr_entref_t entRef);
+void HECmd_SetPlayerNameString(scr_entref_t entRef);
+void HECmd_SetGameTypeString(scr_entref_t entRef);
+void HECmd_SetMapNameString(scr_entref_t entRef);
+void HECmd_SetShader(scr_entref_t entRef);
+void HECmd_SetTimer(scr_entref_t entRef);
+void HECmd_SetTimerUp(scr_entref_t entRef);
+void HECmd_SetTenthsTimer(scr_entref_t entRef);
+void HECmd_SetTenthsTimerUp(scr_entref_t entRef);
+void HECmd_SetClock(scr_entref_t entRef);
+void HECmd_SetClockUp(scr_entref_t entRef);
+void HECmd_SetValue(scr_entref_t entRef);
+void HECmd_SetWaypoint(scr_entref_t entRef);
+void HECmd_FadeOverTime(scr_entref_t entRef);
+void HECmd_ScaleOverTime(scr_entref_t entRef);
+void HECmd_MoveOverTime(scr_entref_t entRef);
+void HECmd_Reset(scr_entref_t entRef);
+void HECmd_Destroy(scr_entref_t entRef);
+
+void (*HudElem_GetMethod(const char **pName))(scr_entref_t);
 
 void Scr_LocalizationError(int iParm, const char *pszErrorMessage);
 void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, unsigned int stringLimit);
 void CalculateRanks();
 const char* G_ModelName(int modelIndex);
 int G_LocalizedStringIndex(const char *string);
+int G_ShaderIndex(const char *string);
+
+gentity_t* Scr_EntityForRef(scr_entref_t entref);
+game_hudelem_t* Scr_HudElemForRef(scr_entref_t entref);
 gentity_t* Scr_GetEntity(unsigned int index);
 void Scr_AddEntity(gentity_t *ent);
+void Scr_AddHudElem(game_hudelem_t *hud);
+void Scr_FreeHudElem(game_hudelem_s *hud);
+
+char* Scr_GetGameTypeNameForScript(const char *pszGameTypeScript);

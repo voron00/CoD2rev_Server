@@ -126,10 +126,11 @@ typedef struct
 	char *dataByte;
 	XAnimIndices indices;
 	XAnimNotifyInfo *notify;
-	XAnimDeltaPart *deltaPart;
+	XAnimDeltaPart *deltaPart; // !!! Not verified, but server don't use these.
 	const char *name;
 	bool isDefault;
-} XAnimParts; // !!! Size not confirmed
+} XAnimParts;
+static_assert((sizeof(XAnimParts) == 44), "ERROR: XAnimParts size is invalid!");
 
 struct DObjAnimMat
 {
@@ -169,9 +170,10 @@ static_assert((sizeof(XAnim) == 0x14), "ERROR: XAnim size is invalid!");
 typedef struct XAnimTree_s
 {
 	XAnim_s *anims;
-	uint16_t children;
+	uint16_t parent;
 	uint16_t pad;
-} XAnimTree;
+	uint16_t children;
+} XAnimTree; // !!! Size not confirmed
 
 struct XBoneInfo
 {
@@ -280,6 +282,36 @@ typedef struct DObj_s
 	XModel *models[1];
 } DObj; // !!! Size not confirmed
 
+struct XAnimState
+{
+	float time;
+	float oldTime;
+	int16_t cycleCount;
+	int16_t oldCycleCount;
+	float goalTime;
+	float goalWeight;
+	float weight;
+	float rate;
+};
+
+union XAnimInfoUnion
+{
+	XAnimParts *parts;
+	XAnimParent animParent;
+};
+
+typedef struct
+{
+	uint16_t notifyChild;
+	int16_t notifyIndex;
+	uint16_t notifyName;
+	uint16_t notifyType;
+	uint16_t prev;
+	uint16_t next;
+	XAnimState state;
+} XAnimInfo;
+static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
+
 void DObjInit();
 void DObjShutdown();
 
@@ -296,6 +328,8 @@ XModel* QDECL XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*Allo
 XModelParts* QDECL XModelPartsLoad(XModel *model, const char *partName, void *(*Alloc)(int));
 XModelParts* QDECL XModelPartsLoadFile(XModel *model, const char *partName, void *(*Alloc)(int));
 
+XAnimParts* QDECL XAnimLoadFile(const char *name, void *(*Alloc)(int));
+
 #ifdef __cplusplus
 }
 #endif
@@ -305,5 +339,6 @@ XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 
 qboolean XModelGetStaticBounds(const XModel *model, const float *axis, float *mins, float *maxs);
 
+XAnimParts* XAnimPrecache(const char *name, void *(*Alloc)(int));
 void XAnimInit();
 void XAnimShutdown();

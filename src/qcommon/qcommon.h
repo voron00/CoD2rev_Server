@@ -328,6 +328,7 @@ qboolean Com_SafeMode( void );
 }
 #endif
 
+const char *GetBspExtension();
 void Com_LoadBsp(const char *filename);
 void Com_UnloadBsp();
 void Com_CleanupBsp();

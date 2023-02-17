@@ -644,8 +644,25 @@ void Sys_RedirectFunctions()
 	SetJump(0x0810E290, (DWORD)Scr_ConstructMessageString);
 	SetJump(0x0807E1F6, (DWORD)Scr_AddClassField);
 
-	//SetJump(0x0808724F, (DWORD)ScriptParse);
-	SetJump(0x0810125C, (DWORD)HudElem_SetColor);
+	// ALL referenced Hud elem stuff
+	SetJump(0x0810169E, (DWORD)Scr_GetHudElemField);
+	SetJump(0x08101716, (DWORD)Scr_SetHudElemField);
+	SetJump(0x0810178E, (DWORD)Scr_FreeHudElemConstStrings);
+	SetJump(0x0810193A, (DWORD)GScr_AddFieldsForHudElems);
+	
+	SetJump(0x08100EDA, (DWORD)HudElem_Alloc);
+	SetJump(0x08100F84, (DWORD)HudElem_ClientDisconnect);
+	SetJump(0x08100FE6, (DWORD)HudElem_DestroyAll);
+	SetJump(0x081023F2, (DWORD)HudElem_UpdateClient);
+	SetJump(0x08118D3A, (DWORD)Scr_FreeHudElem);
+	SetJump(0x08118D6E, (DWORD)Scr_AddHudElem);
+	
+	SetJump(0x0810236E, (DWORD)HudElem_GetMethod);
+	
+	
+	
+	extern void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth);
+	SetJump(0x080BDE00, (DWORD)XAnimDisplay);
 }
 
 class cCallOfDuty2Pro

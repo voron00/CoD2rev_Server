@@ -377,13 +377,13 @@ float *__cdecl sub_8057EBC(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_8057F10(float *a1, float *a2);
 void *__cdecl sub_8057F44(size_t a1);
 void *__cdecl sub_8057F58(size_t a1);
-int __cdecl sub_8057F6C(char *s2);
+int __cdecl CM_XModelPrecache(char *s2);
 int __cdecl sub_8057F90(int a1, int a2, float *a3, float *a4, int a5);
 unsigned int __cdecl sub_805809A(int a1, float *a2, float *a3, int a4);
 int __cdecl sub_8058162(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058192(float *a1, float *a2, float *a3);
-float *__cdecl sub_80581D8(int a1, float *a2, float *a3, float *a4);
-int __cdecl sub_80582EC(int a1, char *a2, float *a3, float *a4, float *a5);
+float *__cdecl CM_SetModelData(int a1, float *a2, float *a3, float *a4);
+int __cdecl CM_LoadModel(int a1, char *a2, float *a3, float *a4, float *a5);
 char *CM_LoadStaticModels();
 int __cdecl sub_80588E0(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058910(float *a1, float *a2, float *a3);
@@ -462,11 +462,11 @@ long double __cdecl sub_805D89A(float a1, float a2, float a3);
 int __cdecl sub_805D8C4(float *a1, float *a2);
 __int64 sub_805D9A8();
 int sub_805DA8E();
-int __cdecl sub_805DAA0(unsigned __int16 *a1);
+int __cdecl CM_UnlinkEntity(unsigned __int16 *a1);
 int __cdecl sub_805DCC8(unsigned __int16 *a1, unsigned __int16 a2);
 int __cdecl sub_805DD50(_WORD *a1, unsigned __int16 a2);
-int __cdecl sub_805DDD0(int a1, float *a2, float *a3);
-int __cdecl sub_805E18C(int a1, _DWORD *a2, _DWORD *a3, int a4);
+int __cdecl CM_SortNode(int a1, float *a2, float *a3);
+int __cdecl CM_LinkEntity(int a1, _DWORD *a2, _DWORD *a3, int a4);
 int __cdecl sub_805E3D8(int a1);
 int sub_805E51A();
 void __cdecl sub_805E56A(unsigned __int16 a1, int a2);
@@ -772,7 +772,7 @@ void *sub_806C8EA();
 int __cdecl SetAnimCheck(int a1);
 char *__cdecl sub_806C926(const char *a1);
 int sub_806C95E();
-int __cdecl sub_806CA12(_DWORD *a1, unsigned int a2, int a3);
+int __cdecl Scr_FindAnimInternal(_DWORD *a1, unsigned int a2, int a3);
 char *__cdecl sub_806CA94(_DWORD *a1, unsigned int a2, int a3);
 int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5);
 _DWORD *__cdecl sub_806CE74(int a1, int a2, int a3);
@@ -783,10 +783,10 @@ int __cdecl Scr_GetAnims(int a1);
 int __cdecl sub_806D084(int, int, int, int, char *s, int, int, int); // idb
 int __cdecl sub_806D2DC(int a1, int a2);
 int __cdecl sub_806D3B4(int a1);
-int __cdecl sub_806D43C(char *a1, int *a2, int a3);
+int __cdecl Scr_UsingTreeInternal(char *a1, int *a2, int a3);
 char *__cdecl sub_806D55A(char *a1, int a2);
 _BOOL4 __cdecl sub_806D5A6(const char *a1, int a2, int a3);
-int __cdecl sub_806D668(int a1, int (__cdecl *a2)(int), int a3);
+int __cdecl Scr_LoadAnimTreeAtIndex(int a1, int (__cdecl *a2)(int), int a3);
 // _DWORD *__userpurge sub_806D8CE@<eax>(_DWORD *a1, char *a2);
 int __cdecl Scr_FindAnim(char *a1, char *s, _DWORD *a3, int a4);
 int __cdecl sub_806D9EC(int a1);
@@ -1003,7 +1003,7 @@ int __cdecl Scr_ScanFile(int a1, int a2);
 int __cdecl Scr_LoadScript(char *a1);
 int sub_8075E10();
 int sub_8075E1E();
-int __cdecl sub_8075ECE(int (__cdecl *a1)(int), int a2);
+int __cdecl Scr_PrecacheAnimTrees(int (__cdecl *a1)(int), int a2);
 void *sub_8075F0E();
 void sub_8075F74();
 int __cdecl MT_GetSubTreeSize(int a1);
@@ -1085,8 +1085,8 @@ int __cdecl SL_AddUserInternal(int a1, unsigned __int8 a2);
 int __cdecl SL_GetStringOfLen(char *s2, unsigned __int8 a2, size_t n);
 int __cdecl SL_GetString_(char *s, unsigned __int8 a2);
 int __cdecl SL_GetString(char *s, unsigned __int8 a2);
-int __cdecl sub_80792E6(const char *a1, unsigned __int8 a2, size_t n);
-int __cdecl sub_807939E(char *s, unsigned __int8 a2);
+int __cdecl SL_GetLowercaseStringOfLen(const char *a1, unsigned __int8 a2, size_t n);
+int __cdecl SL_GetLowercaseString_(char *s, unsigned __int8 a2);
 int __cdecl sub_80793D2(char *s, unsigned __int8 a2);
 int __cdecl SL_ConvertToLowercase(int a1, unsigned __int8 a2);
 int __cdecl SL_TransferRefToUser(int a1, unsigned __int8 a2);
@@ -1189,7 +1189,7 @@ int __cdecl sub_807C248(int a1, int a2);
 int __cdecl RemoveArrayVariable(int a1, int a2);
 int __cdecl SafeRemoveVariable(int a1, int a2);
 int __cdecl sub_807C2F6(int a1, int a2);
-int __cdecl sub_807C45C(int a1, int *a2);
+int __cdecl SetVariableValue(int a1, int *a2);
 int __cdecl SetNewVariableValue(int a1, int *a2);
 __int16 *__cdecl GetVariableValueAddress(int a1);
 int __cdecl sub_807C51C(int a1, unsigned int a2, int *a3);
@@ -1326,7 +1326,7 @@ int __cdecl Scr_GetInt(unsigned int a1);
 // _DWORD *__userpurge Scr_GetAnimTree@<eax>(_DWORD *a1, unsigned int a2);
 long double __cdecl Scr_GetFloat(unsigned int a1);
 int __cdecl Scr_GetConstString(unsigned int a1);
-int __cdecl sub_8084434(unsigned int a1);
+int __cdecl Scr_GetConstLowercaseString(unsigned int a1);
 int __cdecl Scr_GetString(unsigned int a1);
 int __cdecl Scr_GetConstStringIncludeNull(unsigned int a1);
 int __cdecl sub_80845C8(unsigned int a1);
@@ -1481,8 +1481,8 @@ void __cdecl sub_808F1DC(float *, float *);
 int __cdecl sub_808FD2A(_BYTE *a1, _BYTE *a2, int a3);
 int __cdecl SV_GentityNum(int a1);
 int __cdecl SV_GameClientNum(int a1);
-int __cdecl sub_808FE20(_DWORD *a1);
-int __cdecl sub_808FE68(int a1);
+int __cdecl SV_SvEntityForGentity(_DWORD *a1);
+int __cdecl SV_GEntityForSvEntity(int a1);
 int __cdecl SV_GameSendServerCommand(int a1, int a2, const char *a3);
 // void __usercall sub_808FF0A(long double a1@<st0>, int a2, char *a3);
 int __cdecl SV_SetBrushModel(int a1);
@@ -1495,8 +1495,8 @@ _DWORD *__cdecl sub_8090470(size_t size);
 void __cdecl sub_8090484(_DWORD *ptr);
 int __cdecl sub_8090498(int a1, int a2, int a3, int a4, int a5);
 int __cdecl sub_80904C6(int a1, _DWORD *a2);
-void *__cdecl sub_809050C(size_t a1);
-void *__cdecl sub_8090520(size_t a1);
+void *__cdecl SV_AllocXModelPrecache(size_t a1);
+void *__cdecl SV_AllocXModelPrecacheColl(size_t a1);
 int __cdecl SV_XModelGet(char *s1); // idb
 void __cdecl SV_DObjDumpInfo(int *a1);
 unsigned int sub_80905C8();
@@ -1781,9 +1781,9 @@ void *__cdecl sub_80A345E(void *dest);
 float *__cdecl sub_80A358E(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A3C8E(float *a1, float *a2, float *a3);
 int __cdecl sub_80A442E(_DWORD *a1, _DWORD *a2);
-float *__cdecl sub_80A45BE(float *a1, float *a2);
+float *__cdecl MatrixInverse(float *a1, float *a2);
 float *__cdecl sub_80A47DE(int a1, int a2);
-float *__cdecl sub_80A4E52(float *a1, float *a2, float *a3);
+float *__cdecl MatrixTransformVector(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A5028(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A50D2(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A5194(float *a1, float *a2, float *a3);
@@ -1820,7 +1820,7 @@ void __cdecl sub_80A6B48(float *a1, float *a2, float *a3, float *a4);
 void __cdecl sub_80A6CC8(int a1, int a2, int a3, int a4);
 int __cdecl sub_80A6FE6(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_80A70C0(float *a1, float a2, float a3, float a4, float *a5);
-float *__cdecl sub_80A7146(float *a1, int a2);
+float *__cdecl AnglesToAxis(float *a1, int a2);
 float *__cdecl sub_80A718E(float a1, int a2);
 int __cdecl sub_80A71F4(int a1, int a2);
 int __cdecl sub_80A7338(int a1, int a2);
@@ -1924,7 +1924,7 @@ int __cdecl sub_80AA70C(int a1, int a2);
 void *__cdecl Com_Memcpy(void *dest, void *src, size_t n);
 void *__cdecl Com_Memset(void *s, int c, size_t n);
 int __cdecl sub_80AA860(_BYTE *a1);
-int __cdecl sub_80AA8AA(char *a1);
+int __cdecl Com_FindSoundAlias(char *a1);
 int __cdecl sub_80AA91A(char **a1);
 int __cdecl SND_GetAliasWithOffset(char *a1, int a2);
 int __cdecl sub_80AAA06(char *a1, int a2);
@@ -1953,10 +1953,10 @@ char *__cdecl sub_80AB8F4(char *haystack, char *a2);
 void __cdecl Com_LoadSoundAliasField(char *a1, char *s2, const char *a3, char *s, int a5, int a6, int a7);
 int __cdecl sub_80ABEF8(int a1);
 int __cdecl sub_80AC1A8(_DWORD *a1);
-void sub_80AC22C();
-_DWORD *__cdecl Com_LoadSoundAliasFile(int a1);
+void Com_InitSoundAlias();
+_DWORD *__cdecl Com_LoadSoundAliasFileInternal(int a1);
 void sub_80AC576();
-_DWORD *__cdecl sub_80AC582(char *s1, char *s2, char *src);
+_DWORD *__cdecl Com_LoadSoundAliasFile(char *s1, char *s2, char *src);
 int __cdecl sub_80AC880(int a1, int a2);
 int __cdecl sub_80AC8A0(int a1, _DWORD *a2, int (__cdecl *a3)(char *, char *), unsigned __int8 a4);
 int __cdecl sub_80ACAF4(int a1, int a2);
@@ -2233,7 +2233,7 @@ int DObjInit();
 int DObjShutdown();
 void DObjAbort();
 void __cdecl DObjDumpInfo(int a1);
-int __cdecl sub_80B712C(int a1, int a2);
+int __cdecl DObjGetBoneIndex(int a1, int a2);
 int __cdecl DObjCreateDuplicateParts(int a1);
 int __cdecl sub_80B73C0(int a1, int a2, int a3);
 int *__cdecl sub_80B75A8(int a1, int a2);
@@ -2246,7 +2246,7 @@ int __cdecl DObjCreate(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 a
 _DWORD *__cdecl sub_80B812E(const void *a1, int a2, int a3);
 int __cdecl DObjFree(int a1);
 int __cdecl sub_80B821A(unsigned __int8 *a1, _DWORD *a2, _WORD *a3, _DWORD *a4, _WORD *a5);
-int __cdecl sub_80B8380(int a1);
+int __cdecl DObjGetAllocSkelSize(int a1);
 _BOOL4 __cdecl DObjSkelExists(int a1, int a2);
 int __cdecl sub_80B840A(int a1);
 int *__cdecl sub_80B8424(int a1, int a2, int *a3);
@@ -2258,7 +2258,7 @@ int __cdecl sub_80B8616(int a1, int a2, int a3);
 const char *__cdecl sub_80B8768(int a1, int a2, int a3, int a4);
 int __cdecl sub_80B87BE(int, int, void *s, int); // idb
 int __cdecl sub_80B8AF6(int a1, int a2);
-int __cdecl sub_80B8B16(int a1, int a2);
+int __cdecl DObjInfoGetBoneName(int a1, int a2);
 int __cdecl sub_80B8BB6(int a1);
 int __cdecl sub_80B8BC0(int a1);
 int __cdecl sub_80B8C0C(int a1);
@@ -2296,11 +2296,11 @@ bool XAnimInit();
 int XAnimShutdown();
 void XAnimAbort();
 int __cdecl XAnimFree(int a1);
-int __cdecl sub_80BA2DE(char *s2); // idb
+int __cdecl XAnimFindData(char *s2); // idb
 int __cdecl sub_80BA2FA(const void *a1, int (__cdecl *a2)(int));
-unsigned __int16 *__cdecl sub_80BA3AE(char *src, int (__cdecl *a2)(int));
-char *__cdecl sub_80BA4D8(int a1, int a2, char *s);
-char *__cdecl sub_80BA57A(int a1, int a2, char *s, __int16 a4, unsigned int a5, __int16 a6);
+unsigned __int16 *__cdecl XAnimPrecache(char *src, int (__cdecl *a2)(int));
+char *__cdecl XAnimCreate(int a1, int a2, char *s);
+char *__cdecl XAnimBlend(int a1, int a2, char *s, __int16 a4, unsigned int a5, __int16 a6);
 char **__cdecl XAnimCreateAnims(char *s, int a2, int (__cdecl *a3)(int));
 int __cdecl sub_80BA6D0(int a1, int (__cdecl *a2)(int, int));
 int __cdecl XAnimFreeList(int a1);
@@ -2334,7 +2334,7 @@ float *__cdecl sub_80BB642(unsigned __int16 **a1, float a2, int a3, float *a4);
 float *__cdecl sub_80BB682(unsigned __int16 *a1, float a2, int a3, float *a4);
 void __cdecl sub_80BB77C(float *a1, float *a2);
 float *__cdecl sub_80BB82A(int a1, float a2, float a3, float a4, float *a5, int a6);
-float *__cdecl sub_80BB9A8(unsigned __int16 *a1, float a2, float a3, float *a4);
+float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, float *a4);
 int __cdecl sub_80BBA2E(int a1);
 int __cdecl sub_80BBA62(int a1, int a2);
 long double __cdecl sub_80BBAD0(_DWORD *a1, int a2);
@@ -2377,7 +2377,7 @@ void __cdecl sub_80BEEE4(int **a1);
 int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5);
 int __cdecl sub_80BEFE2(int a1, int a2, _DWORD *a3, _DWORD *a4);
 int __cdecl XAnimGetRelDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5, float a6);
-int __cdecl sub_80BF1A4(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5);
+int __cdecl XAnimGetAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5);
 int __cdecl sub_80BF2AE(int a1, int a2);
 int __cdecl sub_80BF346(int a1, int a2, float a3);
 int __cdecl sub_80BF3FE(_DWORD *a1, int a2, float a3);
@@ -2454,26 +2454,26 @@ int __cdecl sub_80C1886(int a1, char **a2, unsigned __int16 *a3, int (__cdecl *a
 unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int));
 long double __cdecl sub_80C2C4E(float a1);
 int __cdecl sub_80C2C6E(_DWORD *a1, _DWORD *a2);
-int __cdecl sub_80C2C9E(const void **a1);
+int __cdecl XModelDataReadShort(const void **a1);
 int __cdecl sub_80C2CD4(const void **a1);
-long double __cdecl sub_80C2D0A(const void **a1);
+long double __cdecl XModelDataReadFloat(const void **a1);
 int __cdecl XModelBad(int a1);
 int __cdecl XModelPartsFree(__int16 *a1);
 int *__cdecl XModelFree(int a1);
-void *sub_80C2E74();
-_DWORD *sub_80C2EF2();
-_DWORD *__cdecl sub_80C2F0E(int a1);
-int __cdecl sub_80C306A(int (__cdecl *a1)(int));
-int __cdecl sub_80C3090(char *s2); // idb
-int __cdecl sub_80C30AC(char *src, int a2, int (__cdecl *a3)(size_t));
-int __cdecl sub_80C30D6(char *s2); // idb
-int __cdecl sub_80C30F2(char *src, int a2, int (__cdecl *a3)(size_t));
-int __cdecl sub_80C311C(char *s2); // idb
-int __cdecl sub_80C3138(char *src, int (__cdecl *a2)(int));
+void *SetDefaultModelPart();
+_DWORD *SetDefaultSurface();
+_DWORD *__cdecl SetDefaultModel(int a1);
+int __cdecl AllocDefaultModel(int (__cdecl *a1)(int));
+int __cdecl XModelPartsFindData(char *s2); // idb
+int __cdecl XModelPartsSetData(char *src, int a2, int (__cdecl *a3)(size_t));
+int __cdecl XModelSurfsFindData(char *s2); // idb
+int __cdecl XModelSurfsSetData(char *src, int a2, int (__cdecl *a3)(size_t));
+int __cdecl XModelFindData(char *s2); // idb
+int __cdecl XModelLoadDefaultModel(char *src, int (__cdecl *a2)(int));
 int *__cdecl sub_80C3172(_DWORD *a1, const void *a2);
 int __cdecl XModelPrecache(char *s2, int (__cdecl *a2)(int), int (__cdecl *a3)(int));
-int __cdecl sub_80C3314(int a1);
-int __cdecl sub_80C3324(__int16 **a1, int a2);
+int __cdecl XModelBoneNames(int a1);
+int __cdecl XModelGetBoneIndex(__int16 **a1, int a2);
 int __cdecl sub_80C337C(int a1, _DWORD *a2, _DWORD *a3);
 int __cdecl sub_80C33CA(int a1);
 int __cdecl sub_80C33FE(int a1, int a2, int a3, float *a4, float *a5, int a6);
@@ -2488,17 +2488,17 @@ float *__cdecl sub_80C3A0A(float *a1, float *a2, float *a3);
 float *__cdecl sub_80C3AB4(float *a1, float *a2, float *a3);
 int __cdecl sub_80C3B60(const void **a1, __int16 *a2);
 void *__cdecl sub_80C3C42(__int16 *a1);
-__int16 *__cdecl sub_80C3DE8(int a1, const char *a2, int (__cdecl *a3)(int));
-int __cdecl sub_80C4280(const char *a1, const void **a2, int a3);
-_DWORD *__cdecl sub_80C43F4(const void **a1, _DWORD *a2, int (__cdecl *a3)(int));
-__int16 *__cdecl sub_80C468A(int a1, char *s2, int (__cdecl *a3)(int));
-int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3)(int));
+__int16 *__cdecl XModelPartsLoadFile(int a1, const char *a2, int (__cdecl *a3)(int));
+int __cdecl XModelIsValidModelFile(const char *a1, const void **a2, int a3);
+_DWORD *__cdecl XModelLoadCollision(const void **a1, _DWORD *a2, int (__cdecl *a3)(int));
+__int16 *__cdecl XModelPartsLoad(int a1, char *s2, int (__cdecl *a3)(int));
+int __cdecl XModelLoadFile(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3)(int));
 int sub_80C4E50();
-int sub_80C4E5A();
-int __cdecl sub_80C4E74(int a1, char *s2, int (__cdecl *a3)(size_t));
-int __cdecl sub_80C4F0E(int a1, int (__cdecl *a2)(size_t));
+int XModelReadSurface();
+int __cdecl XModelLoadSurface(int a1, char *s2, int (__cdecl *a3)(size_t));
+int __cdecl XModelLoadSurfaces(int a1, int (__cdecl *a2)(size_t));
 int __cdecl XModelLoad(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3)(int));
-int __cdecl sub_80C501A(int a1, float *a2, _DWORD *a3, _DWORD *a4);
+int __cdecl XModelGetStaticBounds(int a1, float *a2, _DWORD *a3, _DWORD *a4);
 long double __cdecl sub_80C51F0(float a1);
 int __cdecl sub_80C5210(_DWORD *a1);
 int __cdecl sub_80C523A(_DWORD *a1, int a2, int a3, int a4);
@@ -2506,12 +2506,12 @@ int __cdecl sub_80C525E(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_80C528E(float *a1, float *a2, float *a3);
 float *__cdecl sub_80C52D2(float *a1, float *a2, float *a3);
 long double __cdecl sub_80C532E(float *a1);
-int __cdecl sub_80C53E0(const void **a1);
+int __cdecl XModelDataReadInt(const void **a1);
 int __cdecl sub_80C5414(int a1);
-const char *__cdecl sub_80C5432(int a1, int a2, int a3);
+const char *__cdecl XModelGetSurfaceName(int a1, int a2, int a3);
 int __cdecl sub_80C5482(int a1, _DWORD *a2, int a3, _DWORD *a4);
 int __cdecl sub_80C54C2(int a1);
-int __cdecl sub_80C54CE(__int16 **a1);
+int __cdecl XModelNumBones(__int16 **a1);
 int __cdecl sub_80C54DC(_DWORD *a1);
 long double __cdecl sub_80C5506(int a1);
 int __cdecl sub_80C5556(int, float); // idb
@@ -2675,28 +2675,28 @@ void sub_80D4590();
 int __cdecl BG_StringHashValue_Lwr(int a1);
 void __noreturn BG_AnimParseError(char *format, ...);
 int __cdecl BG_AnimationIndexForString(char *src); // idb
-int __cdecl sub_80D4832(char *a1);
-int __cdecl sub_80D48C6(char *a1, int *a2, int a3);
+int __cdecl BG_AnimationForString(char *a1);
+int __cdecl BG_IndexForString(char *a1, int *a2, int a3);
 char *__cdecl sub_80D4970(char *s, int a2, unsigned int a3, _DWORD *a4);
 int __cdecl sub_80D49D8(int a1, int a2);
 int sub_80D4A08();
-unsigned __int16 *__cdecl sub_80D4A32(unsigned int a1);
+unsigned __int16 *__cdecl BG_GetAnim(unsigned int a1);
 void *__cdecl sub_80D4ABE(int a1);
 void *sub_80D4BC2();
 void *__cdecl sub_80D4ED4(char **a1, int *a2, int a3, _DWORD *s);
-int __cdecl sub_80D5250(char **a1, _DWORD *a2);
-size_t __cdecl sub_80D5424(char **a1, _DWORD *a2, int a3);
-_DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3);
+int __cdecl BG_ParseConditions(char **a1, _DWORD *a2);
+size_t __cdecl BG_ParseCommands(char **a1, _DWORD *a2, int a3);
+_DWORD *__cdecl BG_AnimParseAnimScript(int a1, int a2, int a3);
 int __cdecl sub_80D688A(int a1, _DWORD *a2);
 _DWORD *__cdecl sub_80D6944(int a1, _DWORD *a2);
 int __cdecl sub_80D69B2(_DWORD *a1, int a2, int a3, int a4, int a5, int a6, int a7);
 int __cdecl sub_80D6B7C(_DWORD *a1, char *src, int a3, int a4, int a5, int a6);
 int __cdecl sub_80D6BC4(_DWORD *a1, __int16 *a2, int a3, int a4, int a5);
-int __cdecl sub_80D6D82(_DWORD *a1, int a2, int a3, int a4);
+int __cdecl BG_AnimScriptAnimation(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80D6EDC(_DWORD *a1, int a2, int a3);
 int __cdecl BG_AnimScriptEvent(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80D70AA(int a1, unsigned int a2);
-int __cdecl sub_80D70E2(int a1, int a2, int a3, int a4);
+int __cdecl BG_UpdateConditionValue(int a1, int a2, int a3, int a4);
 unsigned int __cdecl sub_80D7180(int a1, int a2, int a3);
 int __cdecl sub_80D72B8(int a1, unsigned int a2);
 int __cdecl sub_80D72F8(int *a1);
@@ -2754,7 +2754,7 @@ float *__cdecl sub_80DA7A6(float *a1, float a2, float *a3);
 float *__cdecl sub_80DA7DE(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_80DA832(float *a1, float *a2);
 // char *__usercall Mantle_RegisterDvars@<eax>(long double a1@<st0>);
-void *__cdecl sub_80DA9B8(size_t n);
+void *__cdecl MantleXAnimPrecacheAlloc(size_t n);
 void __cdecl Mantle_DebugPrint(const char *a1);
 int __cdecl sub_80DA9FC(int a1);
 int __cdecl sub_80DAA36(int a1);
@@ -2764,7 +2764,7 @@ int __cdecl sub_80DAC38(float, float); // idb
 int __cdecl sub_80DACB8(int **a1, int a2);
 int __cdecl sub_80DAE2E(int a1, int a2, int a3);
 int __cdecl sub_80DAF36(int *a1, int a2, int a3, float a4);
-void __cdecl sub_80DB380(int (__cdecl *a1)(int));
+void __cdecl Mantle_CreateAnims(int (__cdecl *a1)(int));
 void sub_80DB6CA();
 int __cdecl sub_80DB6DA(int *a1, _DWORD *a2, float *s, unsigned int *a4);
 void __cdecl Mantle_Check(int *a1, _DWORD *a2);
@@ -2772,7 +2772,7 @@ int __cdecl sub_80DBB3C(int a1, int a2, int a3);
 // void __usercall sub_80DBD56(long double a1@<st0>, int a2);
 int __cdecl sub_80DBE96(int a1);
 _BOOL4 __cdecl sub_80DBEB0(int a1);
-long double __cdecl sub_80DBF16(float a1);
+long double __cdecl Mantle_Fabs(float a1);
 int __cdecl sub_80DBF30(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80DBF54(_DWORD *a1, _DWORD *a2);
 unsigned int __cdecl sub_80DBF84(_DWORD *a1, unsigned int *a2);
@@ -2790,7 +2790,7 @@ float *__cdecl BG_EvaluateTrajectory(int a1, int a2, int a3);
 float *__cdecl sub_80DD224(float *a1, int a2, int a3);
 // int __usercall sub_80DD452@<eax>(long double a1@<st0>, _DWORD *a2, float *a3, _DWORD *a4);
 int __cdecl BG_AddPredictableEventToPlayerstate(int a1, unsigned __int8 a2, int a3);
-int __cdecl sub_80DD59E(int a1, int a2, int a3, unsigned __int8 a4);
+int __cdecl BG_PlayerStateToEntityState(int a1, int a2, int a3, unsigned __int8 a4);
 int __cdecl sub_80DDAD0(int a1, float *a2, int a3, int a4, float a5, _DWORD *a6, float *a7, float *a8, int a9, int a10, int a11, unsigned __int8 a12, int a13, float a14);
 int __cdecl sub_80DE734(int a1, float *a2, int a3, int a4, float a5, _DWORD *a6, float *a7, float *a8, int a9, int a10, int a11, unsigned __int8 a12, int a13, float a14);
 int __cdecl sub_80DE918(_DWORD *a1);
@@ -3082,15 +3082,15 @@ int __cdecl sub_80F20C8(int a1);
 int __cdecl sub_80F2350(int a1);
 int __cdecl sub_80F2362(int a1, int a2);
 int __cdecl sub_80F24C6(int a1);
-int __cdecl sub_80F275E(int a1, int **a2);
+int __cdecl SpectatorThink(int a1, int **a2);
 // int __usercall sub_80F29CA@<eax>(long double a1@<st0>, int a2);
 int __cdecl sub_80F2B22(int a1);
 int __cdecl sub_80F2B86(int *a1, int a2);
 int __cdecl sub_80F2EC0(int a1, int a2);
 int __cdecl sub_80F2F2E(int a1);
-void __cdecl sub_80F2FA4(int a1, int a2, int a3, int a4);
+void __cdecl G_PlayerStateToEntityStateExtrapolate(int a1, int a2, int a3, int a4);
 int __cdecl sub_80F34E0(_DWORD *a1, int a2, int a3);
-// int __usercall sub_80F35DA@<eax>(long double a1@<st0>, int *a2, int **a3);
+// int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3);
 // int __usercall sub_80F3EA4@<eax>(long double a1@<st0>, int a2);
 // int __usercall sub_80F3F74@<eax>(long double a1@<st0>, int *a2);
 int __cdecl ClientIntermission(int a1);
@@ -3312,7 +3312,7 @@ int GScr_NewHudElem();
 int GScr_NewClientHudElem();
 int GScr_NewTeamHudElem();
 char **GScr_AddFieldsForHudElems();
-int __cdecl sub_8101988(int a1);
+int __cdecl Scr_HudElemForRef(int a1);
 int __cdecl HECmd_SetText(int a1);
 void __cdecl HECmd_SetPlayerNameString(int a1);
 void __cdecl HECmd_SetGameTypeString(int a1);
@@ -3873,8 +3873,8 @@ void __cdecl sub_811BD52(int a1, int a2);
 int __cdecl sub_811BE86(_DWORD *a1);
 int __cdecl sub_811BEEE(int *a1);
 int __cdecl G_DObjUpdateServerTime(int *a1, int a2);
-int *__cdecl G_DObjCalcPose(int a1);
-int *__cdecl sub_811BFC4(int a1, int a2);
+int *__cdecl SV_DObjCalcPose(int a1);
+int *__cdecl G_DObjCalcPose(int a1, int a2);
 int __cdecl sub_811C056(int *a1, int a2);
 int __cdecl sub_811C0B2(int a1, int a2, float *a3);
 int __cdecl sub_811C16A(int a1, int a2, float *a3);
@@ -3898,7 +3898,7 @@ int __cdecl G_AddPredictableEvent(int a1, int a2, unsigned __int8 a3);
 int __cdecl G_AddEvent(_DWORD *a1, int a2, int a3);
 int __cdecl sub_811CE66(_DWORD *a1, int a2);
 int __cdecl sub_811CE9E(_DWORD *a1, int a2);
-int __cdecl sub_811CEFE(int a1, char **a2);
+int __cdecl G_AnimScriptSound(int a1, char **a2);
 int __cdecl sub_811CF36(_DWORD *a1, _DWORD *a2);
 int __cdecl sub_811CF96(_DWORD *a1, _DWORD *a2);
 _BOOL4 __cdecl sub_811CFF6(int a1, int a2);
@@ -21304,7 +21304,7 @@ void *__cdecl sub_8057F58(size_t a1)
 }
 
 //----- (08057F6C) --------------------------------------------------------
-int __cdecl sub_8057F6C(char *s2)
+int __cdecl CM_XModelPrecache(char *s2)
 {
   return XModelPrecache(s2, (int (__cdecl *)(int))sub_8057F44, (int (__cdecl *)(int))sub_8057F58);
 }
@@ -21320,9 +21320,9 @@ int __cdecl sub_8057F90(int a1, int a2, float *a3, float *a4, int a5)
   int v10; // [esp+6Ch] [ebp-Ch]
 
   sub_8058192(a3, (float *)(a1 + 8), v7);
-  sub_80A4E52(v7, (float *)(a1 + 20), v8);
+  MatrixTransformVector(v7, (float *)(a1 + 20), v8);
   sub_8058192(a4, (float *)(a1 + 8), v7);
-  sub_80A4E52(v7, (float *)(a1 + 20), v9);
+  MatrixTransformVector(v7, (float *)(a1 + 20), v9);
   v10 = sub_80C54DC(*(_DWORD **)(a1 + 4));
   result = sub_80C33FE(*(_DWORD *)(a1 + 4), a2, v10, v8, v9, a5);
   if ( result >= 0 )
@@ -21349,9 +21349,9 @@ unsigned int __cdecl sub_805809A(int a1, float *a2, float *a3, int a4)
   int v9; // [esp+8Ch] [ebp-Ch]
 
   sub_8058192(a2, (float *)(a1 + 8), v6);
-  sub_80A4E52(v6, (float *)(a1 + 20), v7);
+  MatrixTransformVector(v6, (float *)(a1 + 20), v7);
   sub_8058192(a3, (float *)(a1 + 8), v6);
-  sub_80A4E52(v6, (float *)(a1 + 20), v8);
+  MatrixTransformVector(v6, (float *)(a1 + 20), v8);
   v5[0] = 1065353216;
   v9 = sub_80C54DC(*(_DWORD **)(a1 + 4));
   return (unsigned int)sub_80C33FE(*(_DWORD *)(a1 + 4), (int)v5, v9, v7, v8, a4) >> 31;
@@ -21386,7 +21386,7 @@ float *__cdecl sub_8058192(float *a1, float *a2, float *a3)
 }
 
 //----- (080581D8) --------------------------------------------------------
-float *__cdecl sub_80581D8(int a1, float *a2, float *a3, float *a4)
+float *__cdecl CM_SetModelData(int a1, float *a2, float *a3, float *a4)
 {
   float *result; // eax
   int v5[3]; // [esp+10h] [ebp-38h] BYREF
@@ -21394,12 +21394,12 @@ float *__cdecl sub_80581D8(int a1, float *a2, float *a3, float *a4)
   float v7[8]; // [esp+28h] [ebp-20h] BYREF
 
   sub_80588E0(a2, (_DWORD *)(a1 + 8));
-  sub_80A7146(a3, (int)v5);
+  AnglesToAxis(a3, (int)v5);
   sub_8058954((float *)v5, *a4, (float *)v5);
   sub_8058954(v6, a4[1], v6);
   sub_8058954(v7, a4[2], v7);
-  sub_80A45BE((float *)v5, (float *)(a1 + 20));
-  result = (float *)sub_80C501A(*(_DWORD *)(a1 + 4), (float *)v5, (_DWORD *)(a1 + 56), (_DWORD *)(a1 + 68));
+  MatrixInverse((float *)v5, (float *)(a1 + 20));
+  result = (float *)XModelGetStaticBounds(*(_DWORD *)(a1 + 4), (float *)v5, (_DWORD *)(a1 + 56), (_DWORD *)(a1 + 68));
   if ( result )
   {
     sub_8058910((float *)(a1 + 56), a2, (float *)(a1 + 56));
@@ -21409,7 +21409,7 @@ float *__cdecl sub_80581D8(int a1, float *a2, float *a3, float *a4)
 }
 
 //----- (080582EC) --------------------------------------------------------
-int __cdecl sub_80582EC(int a1, char *a2, float *a3, float *a4, float *a5)
+int __cdecl CM_LoadModel(int a1, char *a2, float *a3, float *a4, float *a5)
 {
   int v5; // eax
 
@@ -21421,11 +21421,11 @@ int __cdecl sub_80582EC(int a1, char *a2, float *a3, float *a4, float *a5)
     Com_Error(1, (char *)&byte_813B9C0, a2);
   if ( a5[2] == 0.0 )
     Com_Error(1, (char *)&byte_813BA00, a2);
-  v5 = sub_8057F6C(a2);
+  v5 = CM_XModelPrecache(a2);
   if ( !v5 )
     return 0;
   *(_DWORD *)(a1 + 4) = v5;
-  sub_80581D8(a1, a3, a4, a5);
+  CM_SetModelData(a1, a3, a4, a5);
   return 1;
 }
 // 80582EC: using guessed type char *arg_4;
@@ -21559,7 +21559,7 @@ char *CM_LoadStaticModels()
       }
       if ( v3 && (unsigned __int8)Com_ValidXModelName(v15) )
       {
-        if ( (unsigned __int8)sub_80582EC(dword_8185BE8 + 80 * v1, v16, (float *)&v10, (float *)&v7, (float *)&v4) )
+        if ( (unsigned __int8)CM_LoadModel(dword_8185BE8 + 80 * v1, v16, (float *)&v10, (float *)&v7, (float *)&v4) )
           ++v1;
         else
           --dword_8185BE4;
@@ -24150,7 +24150,7 @@ int sub_805DA8E()
 }
 
 //----- (0805DAA0) --------------------------------------------------------
-int __cdecl sub_805DAA0(unsigned __int16 *a1)
+int __cdecl CM_UnlinkEntity(unsigned __int16 *a1)
 {
   int result; // eax
   int j; // eax
@@ -24209,7 +24209,7 @@ int __cdecl sub_805DAA0(unsigned __int16 *a1)
       if ( *(_WORD *)(v7 + 8) )
       {
         v9 = 372 * *(unsigned __int16 *)(v7 + 8) + 138600228;
-        for ( j = sub_808FE68(v9); ; j = sub_808FE68(v9) )
+        for ( j = SV_GEntityForSvEntity(v9); ; j = SV_GEntityForSvEntity(v9) )
         {
           v4 |= *(_DWORD *)(j + 284);
           if ( !*(_WORD *)(v9 + 2) )
@@ -24274,7 +24274,7 @@ int __cdecl sub_805DD50(_WORD *a1, unsigned __int16 a2)
 // 8185BE8: using guessed type int dword_8185BE8;
 
 //----- (0805DDD0) --------------------------------------------------------
-int __cdecl sub_805DDD0(int a1, float *a2, float *a3)
+int __cdecl CM_SortNode(int a1, float *a2, float *a3)
 {
   int result; // eax
   unsigned __int16 v4; // [esp+Eh] [ebp-2Ah]
@@ -24321,7 +24321,7 @@ int __cdecl sub_805DDD0(int a1, float *a2, float *a3)
 LABEL_13:
         v5 = *((_WORD *)&unk_842DF26 + 186 * v5);
         sub_805DCC8(v13, v6);
-        dword_8185DA0[6 * v6] |= *(_DWORD *)(sub_808FE68((int)v13) + 284);
+        dword_8185DA0[6 * v6] |= *(_DWORD *)(SV_GEntityForSvEntity((int)v13) + 284);
         if ( v9 )
           *(_WORD *)(v9 + 2) = v5;
         else
@@ -24403,7 +24403,7 @@ LABEL_26:
 // 8185DAE: using guessed type __int16 word_8185DAE[];
 
 //----- (0805E18C) --------------------------------------------------------
-int __cdecl sub_805E18C(int a1, _DWORD *a2, _DWORD *a3, int a4)
+int __cdecl CM_LinkEntity(int a1, _DWORD *a2, _DWORD *a3, int a4)
 {
   int v5; // [esp+1Ch] [ebp-2Ch]
   int v6; // [esp+20h] [ebp-28h]
@@ -24417,7 +24417,7 @@ int __cdecl sub_805E18C(int a1, _DWORD *a2, _DWORD *a3, int a4)
   v5 = CM_ClipHandleToModel(a4);
   v6 = *(_DWORD *)(v5 + 32) | *(_DWORD *)(v5 + 36);
   if ( !*(_QWORD *)(v5 + 32) )
-    return sub_805DAA0((unsigned __int16 *)a1);
+    return CM_UnlinkEntity((unsigned __int16 *)a1);
   while ( 1 )
   {
     sub_805F99C(flt_8185D80, v9);
@@ -24454,14 +24454,14 @@ LABEL_13:
       break;
     if ( i == *(_WORD *)a1 && (*(_DWORD *)(a1 + 352) & ~v6) == 0 )
       goto LABEL_18;
-    sub_805DAA0((unsigned __int16 *)a1);
+    CM_UnlinkEntity((unsigned __int16 *)a1);
   }
   sub_805DCC8((unsigned __int16 *)a1, i);
 LABEL_18:
   *(_DWORD *)(a1 + 352) = v6;
   sub_805F99C(a2, (_DWORD *)(a1 + 356));
   sub_805F99C(a3, (_DWORD *)(a1 + 364));
-  return sub_805DDD0(i, v9, v8);
+  return CM_SortNode(i, v9, v8);
 }
 // 8185D80: using guessed type float flt_8185D80[3];
 // 8185D8C: using guessed type float flt_8185D8C[3];
@@ -24506,7 +24506,7 @@ int __cdecl sub_805E3D8(int a1)
   }
 LABEL_8:
   sub_805DD50((_WORD *)a1, i);
-  return sub_805DDD0(i, v4, v3);
+  return CM_SortNode(i, v4, v3);
 }
 // 8185D80: using guessed type float flt_8185D80[3];
 // 8185D8C: using guessed type float flt_8185D8C[3];
@@ -24546,7 +24546,7 @@ void __cdecl sub_805E56A(unsigned __int16 a1, int a2)
   {
     for ( i = *((_WORD *)&unk_8185DA4 + 12 * a1); i; i = *((_WORD *)&unk_842DF26 + 186 * i) )
     {
-      v3 = sub_808FE68(372 * i + 138600228);
+      v3 = SV_GEntityForSvEntity(372 * i + 138600228);
       if ( (*(_DWORD *)(v3 + 284) & *(_DWORD *)(a2 + 24)) != 0
         && *(float *)(v3 + 288) <= (long double)**(float **)(a2 + 8)
         && **(float **)(a2 + 4) <= (long double)*(float *)(v3 + 300)
@@ -32427,7 +32427,7 @@ LABEL_16:
 // 8202224: using guessed type int dword_8202224;
 
 //----- (0806CA12) --------------------------------------------------------
-int __cdecl sub_806CA12(_DWORD *a1, unsigned int a2, int a3)
+int __cdecl Scr_FindAnimInternal(_DWORD *a1, unsigned int a2, int a3)
 {
   int result; // eax
   __int16 *v4; // eax
@@ -32451,7 +32451,7 @@ int __cdecl sub_806CA12(_DWORD *a1, unsigned int a2, int a3)
     *a1 = 0;
     v8[1] = 7;
     v8[0] = (int)a1;
-    return sub_807C45C(v7, v8);
+    return SetVariableValue(v7, v8);
   }
   return result;
 }
@@ -32460,7 +32460,7 @@ int __cdecl sub_806CA12(_DWORD *a1, unsigned int a2, int a3)
 char *__cdecl sub_806CA94(_DWORD *a1, unsigned int a2, int a3)
 {
   if ( dword_8202448 )
-    return (char *)sub_806CA12(a1, a2, dword_8202448);
+    return (char *)Scr_FindAnimInternal(a1, a2, dword_8202448);
   else
     return CompileError(a3, "#using_animtree was not specified");
 }
@@ -32509,7 +32509,7 @@ int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5)
           break;
         if ( v11 )
           RemoveVariable(a1, v15);
-        v15 = sub_807939E(v17, 2u);
+        v15 = SL_GetLowercaseString_(v17, 2u);
         if ( FindVariable(a1, v15) )
           sub_806C926("duplicate animation");
         v16 = GetVariable(a1, v15);
@@ -32550,7 +32550,7 @@ int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5)
       {
         v14[0] = v12;
         v5 = GetArrayVariable(v13, 0);
-        sub_807C45C(v5, v14);
+        SetVariableValue(v5, v14);
       }
       else
       {
@@ -32708,7 +32708,7 @@ int __cdecl sub_806D084(int a1, int a2, int a3, int a4, char *s, int a6, int a7,
   dword_839403C += v14;
   dword_839403C *= 31;
   dword_839403C += v12;
-  sub_80BA57A(a3, a6, s, a4, v14, v12);
+  XAnimBlend(a3, a6, s, a4, v14, v12);
   v19 = a4;
   v18 = v14 + a4;
   for ( j = FindNextSibling(a1); j; j = FindNextSibling(j) )
@@ -32728,7 +32728,7 @@ int __cdecl sub_806D084(int a1, int a2, int a3, int a4, char *s, int a6, int a7,
         dword_839403C *= 31;
         dword_839403C += v19;
         v10 = (char *)SL_ConvertToString(v15);
-        sub_80BA4D8(a3, v19, v10);
+        XAnimCreate(a3, v19, v10);
       }
       ++v19;
     }
@@ -32790,7 +32790,7 @@ int __cdecl sub_806D3B4(int a1)
       else
       {
         v3 = (char *)SL_ConvertToString(v4);
-        sub_80BA3AE(v3, (int (__cdecl *)(int))sub_806CED4);
+        XAnimPrecache(v3, (int (__cdecl *)(int))sub_806CED4);
       }
     }
     result = FindNextSibling(i);
@@ -32799,7 +32799,7 @@ int __cdecl sub_806D3B4(int a1)
 }
 
 //----- (0806D43C) --------------------------------------------------------
-int __cdecl sub_806D43C(char *a1, int *a2, int a3)
+int __cdecl Scr_UsingTreeInternal(char *a1, int *a2, int a3)
 {
   int v3; // eax
   int i; // [esp+14h] [ebp-14h]
@@ -32849,7 +32849,7 @@ char *__cdecl sub_806D55A(char *a1, int a2)
 
   if ( !(unsigned __int8)sub_8075828(a1) )
     return CompileError(a2, "bad anim tree name");
-  result = (char *)sub_806D43C(a1, &dword_8202854, 1);
+  result = (char *)Scr_UsingTreeInternal(a1, &dword_8202854, 1);
   dword_8202448 = (int)result;
   return result;
 }
@@ -32879,7 +32879,7 @@ _BOOL4 __cdecl sub_806D5A6(const char *a1, int a2, int a3)
 }
 
 //----- (0806D668) --------------------------------------------------------
-int __cdecl sub_806D668(int a1, int (__cdecl *a2)(int), int a3)
+int __cdecl Scr_LoadAnimTreeAtIndex(int a1, int (__cdecl *a2)(int), int a3)
 {
   int result; // eax
   const char *v4; // eax
@@ -32930,7 +32930,7 @@ int __cdecl sub_806D668(int a1, int (__cdecl *a2)(int), int a3)
       v17[1] = 7;
       v17[0] = (int)v12;
       v8 = GetVariable(v10, 1u);
-      sub_807C45C(v8, v17);
+      SetVariableValue(v8, v17);
       sub_80C006C(v12);
       result = (int)v12;
       dword_820244C[128 * a3 + a1] = (int)v12;
@@ -32982,9 +32982,9 @@ int __cdecl Scr_FindAnim(char *a1, char *s, _DWORD *a3, int a4)
   int v6; // [esp+10h] [ebp-8h] BYREF
   int v7; // [esp+14h] [ebp-4h]
 
-  v7 = sub_807939E(s, 0);
-  v4 = sub_806D43C(a1, &v6, a4);
-  sub_806CA12(a3, v7, v4);
+  v7 = SL_GetLowercaseString_(s, 0);
+  v4 = Scr_UsingTreeInternal(a1, &v6, a4);
+  Scr_FindAnimInternal(a3, v7, v4);
   return SL_RemoveRefToString(v7);
 }
 
@@ -34434,7 +34434,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
     v22 = 7;
   SetNewVariableValue(v17, &v21);
   ++v23;
-  sub_807C45C(v18, &v23);
+  SetVariableValue(v18, &v23);
   sub_8076D92(a2, 0);
 }
 // 8202860: using guessed type int dword_8202860;
@@ -34730,7 +34730,7 @@ char *__cdecl EmitCall(_DWORD *a1, int *a2, char a3, int a4)
     v10 = GetNewVariable(dword_8202A50, v16);
     v9 = sub_80703E6(v13);
     v8 = v12;
-    sub_807C45C(v10, &v8);
+    SetVariableValue(v10, &v8);
   }
   if ( v12 )
   {
@@ -34813,7 +34813,7 @@ char *__cdecl EmitMethod(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a6
     v12 = GetNewVariable(dword_8202A54, v18);
     v11 = sub_80703E6(v15);
     v10 = v14;
-    sub_807C45C(v12, (int *)&v10);
+    SetVariableValue(v12, (int *)&v10);
   }
   if ( v14 )
   {
@@ -34927,7 +34927,7 @@ int __cdecl sub_8070AA8(int a1)
       v5[0] = v2;
       v5[1] = v3;
       if ( v3 == 13 )
-        sub_807C45C(i, v4);
+        SetVariableValue(i, v4);
       else
         sub_807098C(v7, v5, 1);
     }
@@ -37579,7 +37579,7 @@ char *__cdecl ScriptCompile(int *a1, int a2, int a3)
   }
   sub_8070AA8(a2);
   v16[1] = 6;
-  return (char *)sub_807C45C(a3, v16);
+  return (char *)SetVariableValue(a3, v16);
 }
 // 8075C54: using guessed type _DWORD __cdecl Scr_LoadScript(_DWORD);
 // 8202854: using guessed type int dword_8202854;
@@ -37945,7 +37945,7 @@ int sub_8075E1E()
 // 8202A64: using guessed type char byte_8202A64;
 
 //----- (08075ECE) --------------------------------------------------------
-int __cdecl sub_8075ECE(int (__cdecl *a1)(int), int a2)
+int __cdecl Scr_PrecacheAnimTrees(int (__cdecl *a1)(int), int a2)
 {
   int result; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -37955,7 +37955,7 @@ int __cdecl sub_8075ECE(int (__cdecl *a1)(int), int a2)
     result = i;
     if ( i > dword_820284C[a2] )
       break;
-    sub_806D668(i, a1, a2);
+    Scr_LoadAnimTreeAtIndex(i, a1, a2);
   }
   return result;
 }
@@ -39778,7 +39778,7 @@ int __cdecl SL_GetString(char *s, unsigned __int8 a2)
 }
 
 //----- (080792E6) --------------------------------------------------------
-int __cdecl sub_80792E6(const char *a1, unsigned __int8 a2, size_t n)
+int __cdecl SL_GetLowercaseStringOfLen(const char *a1, unsigned __int8 a2, size_t n)
 {
   size_t i; // [esp+1Ch] [ebp-200Ch]
   char s2[8200]; // [esp+20h] [ebp-2008h] BYREF
@@ -39793,18 +39793,18 @@ int __cdecl sub_80792E6(const char *a1, unsigned __int8 a2, size_t n)
 // 80792E6: using guessed type char s2[8200];
 
 //----- (0807939E) --------------------------------------------------------
-int __cdecl sub_807939E(char *s, unsigned __int8 a2)
+int __cdecl SL_GetLowercaseString_(char *s, unsigned __int8 a2)
 {
   size_t v2; // eax
 
   v2 = I_strlen(s);
-  return sub_80792E6(s, a2, v2 + 1);
+  return SL_GetLowercaseStringOfLen(s, a2, v2 + 1);
 }
 
 //----- (080793D2) --------------------------------------------------------
 int __cdecl sub_80793D2(char *s, unsigned __int8 a2)
 {
-  return sub_807939E(s, a2);
+  return SL_GetLowercaseString_(s, a2);
 }
 
 //----- (080793F4) --------------------------------------------------------
@@ -41595,7 +41595,7 @@ int __cdecl sub_807C2F6(int a1, int a2)
 // 829400E: using guessed type __int16 word_829400E[524281];
 
 //----- (0807C45C) --------------------------------------------------------
-int __cdecl sub_807C45C(int a1, int *a2)
+int __cdecl SetVariableValue(int a1, int *a2)
 {
   int result; // eax
   __int16 *v3; // [esp+14h] [ebp-4h]
@@ -41678,7 +41678,7 @@ int __cdecl sub_807C628(int a1, int *a2)
   if ( a1 == 65534 )
     return sub_807C51C(dword_8394040, dword_8394044, a2);
   else
-    return sub_807C45C(a1, a2);
+    return SetVariableValue(a1, a2);
 }
 // 8394040: using guessed type int dword_8394040;
 // 8394044: using guessed type int dword_8394044;
@@ -42103,7 +42103,7 @@ int __cdecl sub_807CFFA(int a1, int *a2)
   {
     v5[1] = 1;
     v5[0] = *a2;
-    sub_807C45C(a1, v5);
+    SetVariableValue(a1, v5);
     return v5[0];
   }
   else
@@ -43280,7 +43280,7 @@ int __cdecl sub_807ED9A(int a1)
 
   v2[1] = 1;
   v2[0] = Scr_AllocArray();
-  return sub_807C45C(a1, v2);
+  return SetVariableValue(a1, v2);
 }
 
 //----- (0807EDC4) --------------------------------------------------------
@@ -43663,7 +43663,7 @@ int __cdecl sub_807F74E(int a1, char *s)
     SL_RemoveRefToString(v6);
     v5[1] = 6;
     v5[0] = 0;
-    sub_807C45C(v4, v5);
+    SetVariableValue(v4, v5);
     return 1;
   }
 }
@@ -44425,14 +44425,14 @@ LABEL_81:
       case 56:
         v60 = sub_80851E6((_WORD **)&a1);
         v61 = GetVariable(dword_8394024, v60);
-        sub_807C45C(v61, a4);
+        SetVariableValue(v61, a4);
         goto LABEL_3;
       case 57:
         goto LABEL_85;
       case 58:
         v62 = sub_80851E6((_WORD **)&a1);
         v63 = GetVariable(dword_839402C, v62);
-        sub_807C45C(v63, a4);
+        SetVariableValue(v63, a4);
         goto LABEL_3;
       case 59:
         v131 = (unsigned __int16)sub_80851E6((_WORD **)&a1);
@@ -44441,12 +44441,12 @@ LABEL_81:
         goto LABEL_85;
       case 60:
 LABEL_70:
-        sub_807C45C(*(_DWORD *)dword_83D7600, a4);
+        SetVariableValue(*(_DWORD *)dword_83D7600, a4);
         goto LABEL_3;
       case 61:
 LABEL_72:
         v58 = sub_808516A(a1);
-        sub_807C45C(v58, a4);
+        SetVariableValue(v58, a4);
         ++a1;
         goto LABEL_3;
       case 62:
@@ -47020,7 +47020,7 @@ LABEL_5:
 // 83D761C: using guessed type int dword_83D761C;
 
 //----- (08084434) --------------------------------------------------------
-int __cdecl sub_8084434(unsigned int a1)
+int __cdecl Scr_GetConstLowercaseString(unsigned int a1)
 {
   char *v1; // eax
   int v4; // [esp+20h] [ebp-2018h]
@@ -52664,7 +52664,7 @@ int __cdecl SV_GameClientNum(int a1)
 // 848B0AC: using guessed type int dword_848B0AC;
 
 //----- (0808FE20) --------------------------------------------------------
-int __cdecl sub_808FE20(_DWORD *a1)
+int __cdecl SV_SvEntityForGentity(_DWORD *a1)
 {
   if ( !a1 || *a1 >= 0x400u )
     Com_Error(1, (char *)&byte_8143DA0);
@@ -52672,7 +52672,7 @@ int __cdecl sub_808FE20(_DWORD *a1)
 }
 
 //----- (0808FE68) --------------------------------------------------------
-int __cdecl sub_808FE68(int a1)
+int __cdecl SV_GEntityForSvEntity(int a1)
 {
   return SV_GentityNum(1062196213 * ((a1 + -(int)&dword_842BC80 - 9240) >> 2));
 }
@@ -52740,7 +52740,7 @@ _BOOL4 __cdecl sub_808FFBC(float *a1, int a2)
     return 0;
   if ( (*(_BYTE *)(v11 + 242) & 0x18) != 0 )
     return 1;
-  v10 = sub_808FE20((_DWORD *)v11);
+  v10 = SV_SvEntityForGentity((_DWORD *)v11);
   v8 = sub_8058A2C(a1);
   if ( !*(_DWORD *)(v10 + 280) )
     return 0;
@@ -52907,13 +52907,13 @@ int __cdecl sub_80904C6(int a1, _DWORD *a2)
 }
 
 //----- (0809050C) --------------------------------------------------------
-void *__cdecl sub_809050C(size_t a1)
+void *__cdecl SV_AllocXModelPrecache(size_t a1)
 {
   return Hunk_AllocInternal(a1);
 }
 
 //----- (08090520) --------------------------------------------------------
-void *__cdecl sub_8090520(size_t a1)
+void *__cdecl SV_AllocXModelPrecacheColl(size_t a1)
 {
   return Hunk_AllocInternal(a1);
 }
@@ -52923,7 +52923,7 @@ int __cdecl SV_XModelGet(char *s1)
 {
   if ( !(unsigned __int8)Com_ValidXModelName(s1) )
     Com_Error(1, (char *)&byte_8143EDA, s1);
-  return XModelPrecache(s1 + 7, (int (__cdecl *)(int))sub_809050C, (int (__cdecl *)(int))sub_8090520);
+  return XModelPrecache(s1 + 7, (int (__cdecl *)(int))SV_AllocXModelPrecache, (int (__cdecl *)(int))SV_AllocXModelPrecacheColl);
 }
 
 //----- (08090584) --------------------------------------------------------
@@ -52995,7 +52995,7 @@ int __cdecl SV_DObjCreateSkelForBones(int *a1, int a2)
   v6 = Com_GetServerDObj(*a1);
   if ( DObjSkelExists(v6, dword_848B0B0) )
     return DObjSkelAreBonesUpToDate(v6, a2);
-  v5 = sub_80B8380(v6);
+  v5 = DObjGetAllocSkelSize(v6);
   v4 = sub_80905FA(v5);
   sub_80B8424(v6, v4, (int *)dword_848B0B0);
   return 0;
@@ -53012,7 +53012,7 @@ int __cdecl sub_80906EE(int *a1, int a2)
   v6 = Com_GetServerDObj(*a1);
   if ( DObjSkelExists(v6, dword_848B0B0) )
     return sub_80B77C2(v6, a2);
-  v5 = sub_80B8380(v6);
+  v5 = DObjGetAllocSkelSize(v6);
   v4 = sub_80905FA(v5);
   sub_80B8424(v6, v4, (int *)dword_848B0B0);
   return 0;
@@ -56309,7 +56309,7 @@ int __cdecl sub_80969BC(float *a1, int a2, _DWORD *a3)
         }
         if ( (*(_BYTE *)(v9 + 242) & 0x18) != 0 )
           goto LABEL_30;
-        v8 = sub_808FE20((_DWORD *)v9);
+        v8 = SV_SvEntityForGentity((_DWORD *)v9);
         if ( *(_DWORD *)(v8 + 280) )
         {
           v7 = 0;
@@ -57225,7 +57225,7 @@ int SV_ArchiveSnapshot()
             {
               if ( v32[64]
                 || (*((_BYTE *)v32 + 242) & 1) == 0
-                && ((v25 = sub_808FE20(v32), (*((_BYTE *)v32 + 242) & 0x18) != 0) || *(_DWORD *)(v25 + 280)) )
+                && ((v25 = SV_SvEntityForGentity(v32), (*((_BYTE *)v32 + 242) & 0x18) != 0) || *(_DWORD *)(v25 + 280)) )
               {
                 qmemcpy(v26, v32, sizeof(v26));
                 v27 = *((unsigned __int8 *)v32 + 242);
@@ -57289,7 +57289,7 @@ int SV_ArchiveSnapshot()
       {
         if ( v32[64]
           || (*((_BYTE *)v32 + 242) & 1) == 0
-          && ((v25 = sub_808FE20(v32), (*((_BYTE *)v32 + 242) & 0x18) != 0) || *(_DWORD *)(v25 + 280)) )
+          && ((v25 = SV_SvEntityForGentity(v32), (*((_BYTE *)v32 + 242) & 0x18) != 0) || *(_DWORD *)(v25 + 280)) )
         {
           *(_DWORD *)v14 = (char *)dword_841FB48 + 276 * (dword_841FB3C % 0x4000);
           qmemcpy(*(void **)v14, v32, 0xF0u);
@@ -57641,9 +57641,9 @@ int __cdecl SV_UnlinkEntity(int a1)
 {
   unsigned __int16 *v2; // [esp+4h] [ebp-4h]
 
-  v2 = (unsigned __int16 *)sub_808FE20((_DWORD *)a1);
+  v2 = (unsigned __int16 *)SV_SvEntityForGentity((_DWORD *)a1);
   *(_BYTE *)(a1 + 240) = 0;
-  return sub_805DAA0(v2);
+  return CM_UnlinkEntity(v2);
 }
 
 //----- (0809A3E6) --------------------------------------------------------
@@ -57686,7 +57686,7 @@ int __cdecl SV_LinkEntity(int a1)
   int v20; // [esp+7Ch] [ebp-20Ch]
   int v21[130]; // [esp+80h] [ebp-208h] BYREF
 
-  v12 = (unsigned __int16 *)sub_808FE20((_DWORD *)a1);
+  v12 = (unsigned __int16 *)SV_SvEntityForGentity((_DWORD *)a1);
   if ( *(_BYTE *)(a1 + 241) )
   {
     *(_DWORD *)(a1 + 156) = 0xFFFFFF;
@@ -57760,7 +57760,7 @@ int __cdecl SV_LinkEntity(int a1)
   {
     v19 = sub_8058B66((_DWORD *)(a1 + 288), (_DWORD *)(a1 + 300), (int)v21, 128, &v15);
     if ( !v19 )
-      return sub_805DAA0(v12);
+      return CM_UnlinkEntity(v12);
     for ( k = 0; k < v19; ++k )
     {
       v20 = sub_80524F4(v21[k]);
@@ -57778,11 +57778,11 @@ int __cdecl SV_LinkEntity(int a1)
   }
   *(_BYTE *)(a1 + 240) = 1;
   if ( !*(_DWORD *)(a1 + 284) )
-    return sub_805DAA0(v12);
+    return CM_UnlinkEntity(v12);
   v8 = sub_809A368(a1);
   v11 = Com_GetServerDObj(*(_DWORD *)a1);
   if ( !v11 || (*(_BYTE *)(a1 + 242) & 6) == 0 )
-    return sub_805E18C((int)v12, (_DWORD *)(a1 + 288), (_DWORD *)(a1 + 300), v8);
+    return CM_LinkEntity((int)v12, (_DWORD *)(a1 + 288), (_DWORD *)(a1 + 300), v8);
   if ( (*(_BYTE *)(a1 + 242) & 2) != 0 )
   {
     sub_809C2CA(v14, flt_815D6E8, v10);
@@ -57794,7 +57794,7 @@ int __cdecl SV_LinkEntity(int a1)
     sub_809C2CA(v14, v10, v10);
     sub_809C2CA(v14, v9, v9);
   }
-  return sub_805E18C((int)v12, v10, v9, v8);
+  return CM_LinkEntity((int)v12, v10, v9, v8);
 }
 // 815D6E8: using guessed type float flt_815D6E8[3];
 // 815D6F4: using guessed type float flt_815D6F4[489];
@@ -57887,8 +57887,8 @@ void __cdecl sub_809AD2C(int a1, int a2, int a3)
 LABEL_14:
           if ( !sub_805D6DC(a1, (int)v11, (int)v10, *(float *)a3) )
           {
-            G_DObjCalcPose(v16);
-            sub_80A7146((float *)(v16 + 324), (int)v3);
+            SV_DObjCalcPose(v16);
+            AnglesToAxis((float *)(v16 + 324), (int)v3);
             sub_80A5194((float *)a1, v3, v7);
             sub_80A5194((float *)(a1 + 12), v3, v6);
             v8[0] = *(_DWORD *)a3;
@@ -57901,7 +57901,7 @@ LABEL_14:
               *(_DWORD *)a3 = v8[0];
               *(_DWORD *)(a3 + 16) = v8[1];
               *(float *)(a3 + 30) = v9[3];
-              sub_80A4E52(v9, v3, (float *)(a3 + 4));
+              MatrixTransformVector(v9, v3, (float *)(a3 + 4));
 LABEL_26:
               *(_WORD *)(a3 + 28) = *(_WORD *)v16;
               *(_DWORD *)(a3 + 20) = *(_DWORD *)(v16 + 284);
@@ -58044,8 +58044,8 @@ int __cdecl sub_809B30E(_DWORD *a1, int a2)
       CM_CalcTraceExtents((int)v12);
       if ( sub_805D6DC((int)v12, (int)v10, (int)v9, 1.0) )
         return 0;
-      G_DObjCalcPose(v17);
-      sub_80A7146((float *)(v17 + 324), (int)v4);
+      SV_DObjCalcPose(v17);
+      AnglesToAxis((float *)(v17 + 324), (int)v4);
       sub_80A5194(v12, v4, v7);
       sub_80A5194(v13, v4, v6);
       v8[0] = 1.0;
@@ -58341,7 +58341,7 @@ void __cdecl sub_809C0CE(_DWORD *s, _DWORD *a2, _DWORD *a3, int a4, int a5, int 
   _DWORD *v9; // [esp+5Ch] [ebp-Ch]
 
   v9 = (_DWORD *)SV_GentityNum(a4);
-  v8 = sub_808FE20(v9);
+  v8 = SV_SvEntityForGentity(v9);
   memset(s, 0, 0x24u);
   *s = 1065353216;
   *((_WORD *)s + 14) = 1023;
@@ -61729,7 +61729,7 @@ int __cdecl sub_80A442E(_DWORD *a1, _DWORD *a2)
 }
 
 //----- (080A45BE) --------------------------------------------------------
-float *__cdecl sub_80A45BE(float *a1, float *a2)
+float *__cdecl MatrixInverse(float *a1, float *a2)
 {
   float *result; // eax
   float v3; // [esp+0h] [ebp-4h]
@@ -61759,13 +61759,13 @@ float *__cdecl sub_80A47DE(int a1, int a2)
 
   sub_80A442E((_DWORD *)a1, (_DWORD *)a2);
   sub_80A8DE8(flt_8145E68, (float *)(a1 + 36), v3);
-  return sub_80A4E52(v3, (float *)a2, (float *)(a2 + 36));
+  return MatrixTransformVector(v3, (float *)a2, (float *)(a2 + 36));
 }
 // 8145E68: using guessed type float flt_8145E68[3];
 // 80A47DE: using guessed type float var_18[6];
 
 //----- (080A4E52) --------------------------------------------------------
-float *__cdecl sub_80A4E52(float *a1, float *a2, float *a3)
+float *__cdecl MatrixTransformVector(float *a1, float *a2, float *a3)
 {
   float *result; // eax
 
@@ -62394,7 +62394,7 @@ float *__cdecl sub_80A70C0(float *a1, float a2, float a3, float a4, float *a5)
 }
 
 //----- (080A7146) --------------------------------------------------------
-float *__cdecl sub_80A7146(float *a1, int a2)
+float *__cdecl AnglesToAxis(float *a1, int a2)
 {
   float v3[6]; // [esp+10h] [ebp-18h] BYREF
 
@@ -64040,7 +64040,7 @@ int __cdecl sub_80AA860(_BYTE *a1)
 }
 
 //----- (080AA8AA) --------------------------------------------------------
-int __cdecl sub_80AA8AA(char *a1)
+int __cdecl Com_FindSoundAlias(char *a1)
 {
   int i; // [esp+10h] [ebp-8h]
 
@@ -64062,7 +64062,7 @@ int __cdecl sub_80AA91A(char **a1)
   char **v4; // [esp+10h] [ebp-8h]
   int v5; // [esp+14h] [ebp-4h]
 
-  v5 = sub_80AA8AA(*a1);
+  v5 = Com_FindSoundAlias(*a1);
   v4 = *(char ***)(v5 + 4);
   for ( i = 0; i < *(_DWORD *)(v5 + 8); ++i )
   {
@@ -64080,7 +64080,7 @@ int __cdecl SND_GetAliasWithOffset(char *a1, int a2)
   int v5; // [esp+20h] [ebp-8h]
   int v6; // [esp+24h] [ebp-4h]
 
-  v6 = sub_80AA8AA(a1);
+  v6 = Com_FindSoundAlias(a1);
   v5 = *(_DWORD *)(v6 + 4);
   for ( i = 0; i < *(_DWORD *)(v6 + 8); ++i )
   {
@@ -64221,9 +64221,9 @@ void __cdecl Com_LoadSoundAliases(char *src, char *s2, int a3)
       return;
     }
     v3 = Hunk_HideTempMemory();
-    sub_80AC22C();
+    Com_InitSoundAlias();
     for ( i = 0; i < v6; ++i )
-      sub_80AC582(dest, s2, *((char **)ptr + i));
+      Com_LoadSoundAliasFile(dest, s2, *((char **)ptr + i));
     sub_80ACE9A(16 * a3 + 139551432, (_DWORD *)(8 * a3 + 139551480));
     Hunk_ClearTempMemoryInternal();
     Hunk_ShowTempMemory(v3);
@@ -64273,7 +64273,7 @@ int __cdecl sub_80AAF4A(char *a1)
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_80AA8AA(a1);
+  v3 = Com_FindSoundAlias(a1);
   if ( v3 )
     return *(_DWORD *)v3;
   else
@@ -64334,7 +64334,7 @@ int __cdecl sub_80AB0E2(char *a1)
 {
   int v2; // [esp+4h] [ebp-4h]
 
-  v2 = sub_80AA8AA(a1);
+  v2 = Com_FindSoundAlias(a1);
   return sub_80AAF92(v2);
 }
 
@@ -64966,7 +64966,7 @@ int __cdecl sub_80AC1A8(_DWORD *a1)
 // 8516BE4: using guessed type int dword_8516BE4;
 
 //----- (080AC22C) --------------------------------------------------------
-void sub_80AC22C()
+void Com_InitSoundAlias()
 {
   dword_8516BE0 = 0;
   dword_8516BE4 = 0;
@@ -64975,7 +64975,7 @@ void sub_80AC22C()
 // 8516BE4: using guessed type int dword_8516BE4;
 
 //----- (080AC246) --------------------------------------------------------
-_DWORD *__cdecl Com_LoadSoundAliasFile(int a1)
+_DWORD *__cdecl Com_LoadSoundAliasFileInternal(int a1)
 {
   int i; // [esp+2Ch] [ebp-206Ch]
   unsigned int n; // [esp+30h] [ebp-2068h]
@@ -65055,7 +65055,7 @@ void sub_80AC576()
 // 8517468: using guessed type char byte_8517468;
 
 //----- (080AC582) --------------------------------------------------------
-_DWORD *__cdecl sub_80AC582(char *s1, char *s2, char *src)
+_DWORD *__cdecl Com_LoadSoundAliasFile(char *s1, char *s2, char *src)
 {
   _DWORD *result; // eax
   int v4; // [esp+28h] [ebp-5F0h]
@@ -65081,7 +65081,7 @@ _DWORD *__cdecl sub_80AC582(char *s1, char *s2, char *src)
         Cmd_AddCommand("snd_refreshVolumeModGroups", (int)sub_80AC576);
         byte_8517469 = 1;
       }
-      Com_LoadSoundAliasFile((int)&unk_8516BE8);
+      Com_LoadSoundAliasFileInternal((int)&unk_8516BE8);
       byte_8517468 = 1;
     }
     Com_BeginParseSession(v7);
@@ -71055,7 +71055,7 @@ void __cdecl DObjDumpInfo(int a1)
     v8 = *(unsigned __int8 *)(a1 + 25);
     for ( j = 0; j < v8; ++j )
     {
-      v1 = (const char *)sub_80B8B16(a1, j);
+      v1 = (const char *)DObjInfoGetBoneName(a1, j);
       Com_Printf("Bone %d: '%s'\n", j, v1);
     }
     if ( *(_WORD *)(a1 + 16) )
@@ -71063,8 +71063,8 @@ void __cdecl DObjDumpInfo(int a1)
       Com_Printf("\nPart duplicates:\n");
       for ( k = (unsigned __int8 *)(SL_ConvertToString(*(unsigned __int16 *)(a1 + 16)) + 16); *k; k += 2 )
       {
-        v2 = (const char *)sub_80B8B16(a1, k[1] - 1);
-        v3 = (const char *)sub_80B8B16(a1, *k - 1);
+        v2 = (const char *)DObjInfoGetBoneName(a1, k[1] - 1);
+        v3 = (const char *)DObjInfoGetBoneName(a1, *k - 1);
         Com_Printf("%d ('%s') -> %d ('%s')\n", *k - 1, v3, k[1] - 1, v2);
       }
     }
@@ -71081,7 +71081,7 @@ void __cdecl DObjDumpInfo(int a1)
 }
 
 //----- (080B712C) --------------------------------------------------------
-int __cdecl sub_80B712C(int a1, int a2)
+int __cdecl DObjGetBoneIndex(int a1, int a2)
 {
   int v4; // [esp+14h] [ebp-14h]
   __int16 **v5; // [esp+18h] [ebp-10h]
@@ -71094,7 +71094,7 @@ int __cdecl sub_80B712C(int a1, int a2)
   for ( i = 0; i < v8; ++i )
   {
     v5 = *(__int16 ***)(a1 + 4 * i + 28);
-    v4 = sub_80C3324(v5, a2);
+    v4 = XModelGetBoneIndex(v5, a2);
     if ( v4 >= 0 )
       return v6 + v4;
     v6 += **v5;
@@ -71141,7 +71141,7 @@ int __cdecl DObjCreateDuplicateParts(int a1)
       v14 = -1;
       for ( i = 0; i < v12; ++i )
       {
-        v14 = sub_80B712C(a1, v10[i]);
+        v14 = DObjGetBoneIndex(a1, v10[i]);
         if ( v14 != v16 + i )
         {
           if ( !i )
@@ -71613,7 +71613,7 @@ int __cdecl DObjCreate(__int16 ***a1, unsigned int a2, int a3, int a4, __int16 a
           {
             for ( j = 0; j < v7; ++j )
             {
-              v8 = sub_80C3324(*(__int16 ***)(a4 + 4 * j + 28), v9);
+              v8 = XModelGetBoneIndex(*(__int16 ***)(a4 + 4 * j + 28), v9);
               if ( v8 >= 0 )
               {
                 *(_BYTE *)(v7 + a4 + 60) = *(_BYTE *)(j + a4 + 68) + v8;
@@ -71714,7 +71714,7 @@ int __cdecl sub_80B821A(unsigned __int8 *a1, _DWORD *a2, _WORD *a3, _DWORD *a4, 
         if ( a1[i + 60] >= a1[j + 68] )
         {
           v8 = a1[i + 60] - a1[j + 68];
-          v7 = sub_80C3314(*(_DWORD *)&a1[4 * j + 28]);
+          v7 = XModelBoneNames(*(_DWORD *)&a1[4 * j + 28]);
           a2[1] = SL_ConvertToString(*(unsigned __int16 *)(v7 + 2 * v8));
           break;
         }
@@ -71726,7 +71726,7 @@ int __cdecl sub_80B821A(unsigned __int8 *a1, _DWORD *a2, _WORD *a3, _DWORD *a4, 
 }
 
 //----- (080B8380) --------------------------------------------------------
-int __cdecl sub_80B8380(int a1)
+int __cdecl DObjGetAllocSkelSize(int a1)
 {
   return 32 * *(unsigned __int8 *)(a1 + 25) + 48;
 }
@@ -71928,11 +71928,11 @@ int __cdecl sub_80B87BE(int a1, int a2, void *s, int a4)
 //----- (080B8AF6) --------------------------------------------------------
 int __cdecl sub_80B8AF6(int a1, int a2)
 {
-  return sub_80B712C(a1, a2);
+  return DObjGetBoneIndex(a1, a2);
 }
 
 //----- (080B8B16) --------------------------------------------------------
-int __cdecl sub_80B8B16(int a1, int a2)
+int __cdecl DObjInfoGetBoneName(int a1, int a2)
 {
   int v4; // [esp+24h] [ebp-14h]
   __int16 **v5; // [esp+28h] [ebp-10h]
@@ -72720,7 +72720,7 @@ int __cdecl XAnimFree(int a1)
 }
 
 //----- (080BA2DE) --------------------------------------------------------
-int __cdecl sub_80BA2DE(char *s2)
+int __cdecl XAnimFindData(char *s2)
 {
   return Hunk_FindDataForFile(5, s2);
 }
@@ -72753,20 +72753,20 @@ int __cdecl sub_80BA2FA(const void *a1, int (__cdecl *a2)(int))
 }
 
 //----- (080BA3AE) --------------------------------------------------------
-unsigned __int16 *__cdecl sub_80BA3AE(char *src, int (__cdecl *a2)(int))
+unsigned __int16 *__cdecl XAnimPrecache(char *src, int (__cdecl *a2)(int))
 {
   unsigned __int16 *v4; // [esp+1Ch] [ebp-Ch]
   int v5; // [esp+20h] [ebp-8h]
   unsigned __int16 *v6; // [esp+20h] [ebp-8h]
 
-  v5 = sub_80BA2DE(src);
+  v5 = XAnimFindData(src);
   if ( v5 )
     return (unsigned __int16 *)v5;
   v6 = sub_80C19AE(src, a2);
   if ( !v6 )
   {
     Com_Printf("^3WARNING: Couldn't find xanim '%s', using default xanim '%s' instead\n", src, "void");
-    v4 = (unsigned __int16 *)sub_80BA2DE("void");
+    v4 = (unsigned __int16 *)XAnimFindData("void");
     if ( !v4 )
     {
       v4 = sub_80C19AE("void", a2);
@@ -72782,14 +72782,14 @@ unsigned __int16 *__cdecl sub_80BA3AE(char *src, int (__cdecl *a2)(int))
 }
 
 //----- (080BA4D8) --------------------------------------------------------
-char *__cdecl sub_80BA4D8(int a1, int a2, char *s)
+char *__cdecl XAnimCreate(int a1, int a2, char *s)
 {
   char *result; // eax
   size_t v4; // eax
   char *dest; // [esp+Ch] [ebp-Ch]
   int v6; // [esp+14h] [ebp-4h]
 
-  v6 = sub_80BA2DE(s);
+  v6 = XAnimFindData(s);
   if ( !v6 )
     Com_Error(1, (char *)&byte_8148EA0, s);
   *(_WORD *)(a1 + 8 * a2 + 12) = 0;
@@ -72807,7 +72807,7 @@ char *__cdecl sub_80BA4D8(int a1, int a2, char *s)
 }
 
 //----- (080BA57A) --------------------------------------------------------
-char *__cdecl sub_80BA57A(int a1, int a2, char *s, __int16 a4, unsigned int a5, __int16 a6)
+char *__cdecl XAnimBlend(int a1, int a2, char *s, __int16 a4, unsigned int a5, __int16 a6)
 {
   _WORD *v6; // eax
   char *result; // eax
@@ -73503,7 +73503,7 @@ float *__cdecl sub_80BB82A(int a1, float a2, float a3, float a4, float *a5, int 
 }
 
 //----- (080BB9A8) --------------------------------------------------------
-float *__cdecl sub_80BB9A8(unsigned __int16 *a1, float a2, float a3, float *a4)
+float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, float *a4)
 {
   float v5; // [esp+4h] [ebp-34h]
   int v6[6]; // [esp+10h] [ebp-28h] BYREF
@@ -74885,7 +74885,7 @@ void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned 
       if ( v17 )
       {
         if ( *(_BYTE *)(a1 + 6) )
-          sub_80BB9A8((unsigned __int16 *)v15, a3, *((float *)&unk_8527A80 + 10 * v17 + 3), (float *)a6);
+          XAnim_CalcDeltaForTime((unsigned __int16 *)v15, a3, *((float *)&unk_8527A80 + 10 * v17 + 3), (float *)a6);
         else
           sub_80BB82A(
             v15,
@@ -75268,7 +75268,7 @@ int __cdecl XAnimGetRelDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5, f
 }
 
 //----- (080BF1A4) --------------------------------------------------------
-int __cdecl sub_80BF1A4(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5)
+int __cdecl XAnimGetAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5)
 {
   int v6; // [esp+14h] [ebp-34h]
   int v7[3]; // [esp+20h] [ebp-28h] BYREF
@@ -75285,7 +75285,7 @@ int __cdecl sub_80BF1A4(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5)
     sub_80C0F86(v7);
     v7[2] = 0;
     sub_80C1040(v8);
-    sub_80BB9A8((unsigned __int16 *)v6, 1.0, a5, (float *)v7);
+    XAnim_CalcDeltaForTime((unsigned __int16 *)v6, 1.0, a5, (float *)v7);
     if ( *(float *)v7 == 0.0 && *(float *)&v7[1] == 0.0 )
     {
       *a3 = 0;
@@ -75747,8 +75747,8 @@ int __cdecl sub_80BFD86(_DWORD *a1, int a2, unsigned __int8 a3)
         v5 = XAnimGetAnimDebugName((int)a1, a2);
         Com_Error(1, (char *)&byte_81491E0, v5, *a1);
       }
-      sub_80BA3AE("void_loop", (int (__cdecl *)(int))sub_80BFD6A);
-      a1[2 * a2 + 4] = sub_80BA2DE("void_loop");
+      XAnimPrecache("void_loop", (int (__cdecl *)(int))sub_80BFD6A);
+      a1[2 * a2 + 4] = XAnimFindData("void_loop");
       result = (int)&a1[2 * a2 + 3];
       if ( !a1[2 * a2 + 4] )
         Com_Error(1, (char *)&byte_8149140, "void_loop");
@@ -76606,9 +76606,9 @@ int __cdecl sub_80C1718(const void **a1, __int16 *a2)
   int v5; // [esp+10h] [ebp-28h]
   int v6; // [esp+1Ch] [ebp-1Ch]
 
-  *a2 = sub_80C2C9E(a1);
-  a2[1] = sub_80C2C9E(a1);
-  a2[2] = sub_80C2C9E(a1);
+  *a2 = XModelDataReadShort(a1);
+  a2[1] = XModelDataReadShort(a1);
+  a2[2] = XModelDataReadShort(a1);
   v6 = 1073676289 - (a2[2] * a2[2] + a2[1] * a2[1] + *a2 * *a2);
   if ( v6 <= 0 )
   {
@@ -76634,7 +76634,7 @@ int __cdecl sub_80C17FA(const void **a1, __int16 *a2)
   int v5; // [esp+10h] [ebp-18h]
   int v6; // [esp+1Ch] [ebp-Ch]
 
-  *a2 = sub_80C2C9E(a1);
+  *a2 = XModelDataReadShort(a1);
   v6 = 1073676289 - *a2 * *a2;
   if ( v6 <= 0 )
   {
@@ -76776,11 +76776,11 @@ unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int))
       if ( v78 )
       {
         src = v70;
-        v63 = sub_80C2C9E((const void **)&src);
+        v63 = XModelDataReadShort((const void **)&src);
         if ( v63 == 14 )
         {
-          v74 = sub_80C2C9E((const void **)&src);
-          v75 = sub_80C2C9E((const void **)&src);
+          v74 = XModelDataReadShort((const void **)&src);
+          v75 = XModelDataReadShort((const void **)&src);
           if ( v75 )
             v32 = a2(2 * v75);
           else
@@ -76790,7 +76790,7 @@ unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int))
           src = (char *)src + 1;
           v61 = v62 & 1;
           v60 = (v62 & 2) != 0;
-          v64 = sub_80C2C9E((const void **)&src);
+          v64 = XModelDataReadShort((const void **)&src);
           v76 = (unsigned __int16 *)a2(44);
           v76[7] = v75;
           *((_DWORD *)v76 + 4) = v77;
@@ -76875,9 +76875,9 @@ unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int))
             {
               if ( v58 == 1 )
               {
-                v52 = sub_80C2D0A((const void **)&src);
-                v53 = sub_80C2D0A((const void **)&src);
-                v54 = sub_80C2D0A((const void **)&src);
+                v52 = XModelDataReadFloat((const void **)&src);
+                v53 = XModelDataReadFloat((const void **)&src);
+                v54 = XModelDataReadFloat((const void **)&src);
                 v6 = v71;
                 *v6 = a2(16);
                 **v71 = 0;
@@ -76912,11 +76912,11 @@ unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int))
                 *((_DWORD *)v9 + 1) = a2(12 * v58);
                 for ( k = 0; k < v58; ++k )
                 {
-                  v10 = sub_80C2D0A((const void **)&src);
+                  v10 = XModelDataReadFloat((const void **)&src);
                   *(float *)(*((_DWORD *)*v71 + 1) + 12 * k) = v10;
-                  v11 = sub_80C2D0A((const void **)&src);
+                  v11 = XModelDataReadFloat((const void **)&src);
                   *(float *)(*((_DWORD *)*v71 + 1) + 12 * k + 4) = v11;
-                  v12 = sub_80C2D0A((const void **)&src);
+                  v12 = XModelDataReadFloat((const void **)&src);
                   *(float *)(*((_DWORD *)*v71 + 1) + 12 * k + 8) = v12;
                 }
               }
@@ -77085,9 +77085,9 @@ unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int))
             {
               if ( v58 == 1 )
               {
-                v52 = sub_80C2D0A((const void **)&src);
-                v53 = sub_80C2D0A((const void **)&src);
-                v54 = sub_80C2D0A((const void **)&src);
+                v52 = XModelDataReadFloat((const void **)&src);
+                v53 = XModelDataReadFloat((const void **)&src);
+                v54 = XModelDataReadFloat((const void **)&src);
                 v22 = v72;
                 *v22 = a2(16);
                 *(_WORD *)*v72 = 0;
@@ -77122,11 +77122,11 @@ unsigned __int16 *__cdecl sub_80C19AE(const char *a1, int (__cdecl *a2)(int))
                 *(_DWORD *)(v25 + 4) = a2(12 * v58);
                 for ( nn = 0; nn < v58; ++nn )
                 {
-                  v26 = sub_80C2D0A((const void **)&src);
+                  v26 = XModelDataReadFloat((const void **)&src);
                   *(float *)(*(_DWORD *)(*v72 + 4) + 12 * nn) = v26;
-                  v27 = sub_80C2D0A((const void **)&src);
+                  v27 = XModelDataReadFloat((const void **)&src);
                   *(float *)(*(_DWORD *)(*v72 + 4) + 12 * nn + 4) = v27;
-                  v28 = sub_80C2D0A((const void **)&src);
+                  v28 = XModelDataReadFloat((const void **)&src);
                   *(float *)(*(_DWORD *)(*v72 + 4) + 12 * nn + 8) = v28;
                 }
               }
@@ -77187,7 +77187,7 @@ int __cdecl sub_80C2C6E(_DWORD *a1, _DWORD *a2)
 }
 
 //----- (080C2C9E) --------------------------------------------------------
-int __cdecl sub_80C2C9E(const void **a1)
+int __cdecl XModelDataReadShort(const void **a1)
 {
   __int16 dest; // [esp+16h] [ebp-2h] BYREF
 
@@ -77207,7 +77207,7 @@ int __cdecl sub_80C2CD4(const void **a1)
 }
 
 //----- (080C2D0A) --------------------------------------------------------
-long double __cdecl sub_80C2D0A(const void **a1)
+long double __cdecl XModelDataReadFloat(const void **a1)
 {
   float dest; // [esp+14h] [ebp-4h] BYREF
 
@@ -77267,7 +77267,7 @@ int *__cdecl XModelFree(int a1)
 }
 
 //----- (080C2E74) --------------------------------------------------------
-void *sub_80C2E74()
+void *SetDefaultModelPart()
 {
   dword_85500C4[0] = word_85500C0;
   *((_DWORD *)&unk_85500CC + 1) = dword_85500C4;
@@ -77285,7 +77285,7 @@ void *sub_80C2E74()
 // 855016C: using guessed type char byte_855016C;
 
 //----- (080C2EF2) --------------------------------------------------------
-_DWORD *sub_80C2EF2()
+_DWORD *SetDefaultSurface()
 {
   dword_8550130[0] = 0;
   return dword_8550130;
@@ -77293,13 +77293,13 @@ _DWORD *sub_80C2EF2()
 // 8550130: using guessed type _DWORD dword_8550130[5];
 
 //----- (080C2F0E) --------------------------------------------------------
-_DWORD *__cdecl sub_80C2F0E(int a1)
+_DWORD *__cdecl SetDefaultModel(int a1)
 {
   _DWORD *result; // eax
   int i; // [esp+10h] [ebp-8h]
 
   *(_BYTE *)(a1 + 141) = 1;
-  *(_DWORD *)a1 = sub_80C2E74();
+  *(_DWORD *)a1 = SetDefaultModelPart();
   for ( i = 0; i <= 3; ++i )
   {
     *(_DWORD *)(a1 + 20 * i + 20) = 0;
@@ -77309,7 +77309,7 @@ _DWORD *__cdecl sub_80C2F0E(int a1)
     *(_DWORD *)(a1 + 20 * i + 16) = &word_855016E;
     word_855016E = 0;
   }
-  *(_DWORD *)(a1 + 20) = sub_80C2EF2();
+  *(_DWORD *)(a1 + 20) = SetDefaultSurface();
   *(_WORD *)(a1 + 124) = 1;
   *(_WORD *)(a1 + 126) = 0;
   *(_DWORD *)(a1 + 136) = "DEFAULT";
@@ -77327,51 +77327,51 @@ _DWORD *__cdecl sub_80C2F0E(int a1)
 // 855016E: using guessed type __int16 word_855016E;
 
 //----- (080C306A) --------------------------------------------------------
-int __cdecl sub_80C306A(int (__cdecl *a1)(int))
+int __cdecl AllocDefaultModel(int (__cdecl *a1)(int))
 {
   int v2; // [esp+4h] [ebp-4h]
 
   v2 = a1(144);
-  sub_80C2F0E(v2);
+  SetDefaultModel(v2);
   return v2;
 }
 
 //----- (080C3090) --------------------------------------------------------
-int __cdecl sub_80C3090(char *s2)
+int __cdecl XModelPartsFindData(char *s2)
 {
   return Hunk_FindDataForFile(3, s2);
 }
 
 //----- (080C30AC) --------------------------------------------------------
-int __cdecl sub_80C30AC(char *src, int a2, int (__cdecl *a3)(size_t))
+int __cdecl XModelPartsSetData(char *src, int a2, int (__cdecl *a3)(size_t))
 {
   return Hunk_SetDataForFile(3, src, a2, a3);
 }
 
 //----- (080C30D6) --------------------------------------------------------
-int __cdecl sub_80C30D6(char *s2)
+int __cdecl XModelSurfsFindData(char *s2)
 {
   return Hunk_FindDataForFile(2, s2);
 }
 
 //----- (080C30F2) --------------------------------------------------------
-int __cdecl sub_80C30F2(char *src, int a2, int (__cdecl *a3)(size_t))
+int __cdecl XModelSurfsSetData(char *src, int a2, int (__cdecl *a3)(size_t))
 {
   return Hunk_SetDataForFile(2, src, a2, a3);
 }
 
 //----- (080C311C) --------------------------------------------------------
-int __cdecl sub_80C311C(char *s2)
+int __cdecl XModelFindData(char *s2)
 {
   return Hunk_FindDataForFile(4, s2);
 }
 
 //----- (080C3138) --------------------------------------------------------
-int __cdecl sub_80C3138(char *src, int (__cdecl *a2)(int))
+int __cdecl XModelLoadDefaultModel(char *src, int (__cdecl *a2)(int))
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_80C306A(a2);
+  v3 = AllocDefaultModel(a2);
   Hunk_SetDataForFile(4, src, v3, (int (__cdecl *)(size_t))a2);
   return v3;
 }
@@ -77421,18 +77421,18 @@ int __cdecl XModelPrecache(char *s2, int (__cdecl *a2)(int), int (__cdecl *a3)(i
   else
   {
     Com_Printf("^1ERROR: Cannot find xmodel '%s'.\n", s2);
-    return sub_80C3138(s2, a2);
+    return XModelLoadDefaultModel(s2, a2);
   }
 }
 
 //----- (080C3314) --------------------------------------------------------
-int __cdecl sub_80C3314(int a1)
+int __cdecl XModelBoneNames(int a1)
 {
   return **(_DWORD **)(*(_DWORD *)a1 + 4);
 }
 
 //----- (080C3324) --------------------------------------------------------
-int __cdecl sub_80C3324(__int16 **a1, int a2)
+int __cdecl XModelGetBoneIndex(__int16 **a1, int a2)
 {
   int i; // [esp+10h] [ebp-4h]
 
@@ -77486,7 +77486,7 @@ int __cdecl sub_80C33FE(int a1, int a2, int a3, float *a4, float *a5, int a6)
   int v34; // [esp+10Ch] [ebp-Ch]
 
   v27 = -1;
-  v33 = sub_80C54CE((__int16 **)a1);
+  v33 = XModelNumBones((__int16 **)a1);
   for ( i = 0; i < *(_DWORD *)(a1 + 88); ++i )
   {
     v26 = (_DWORD *)(*(_DWORD *)(a1 + 84) + 44 * i);
@@ -77662,9 +77662,9 @@ int __cdecl sub_80C3B60(const void **a1, __int16 *a2)
   int v5; // [esp+10h] [ebp-28h]
   int v6; // [esp+1Ch] [ebp-1Ch]
 
-  *a2 = sub_80C2C9E(a1);
-  a2[1] = sub_80C2C9E(a1);
-  a2[2] = sub_80C2C9E(a1);
+  *a2 = XModelDataReadShort(a1);
+  a2[1] = XModelDataReadShort(a1);
+  a2[2] = XModelDataReadShort(a1);
   v6 = 1073676289 - (a2[2] * a2[2] + a2[1] * a2[1] + *a2 * *a2);
   if ( v6 <= 0 )
   {
@@ -77730,7 +77730,7 @@ void *__cdecl sub_80C3C42(__int16 *a1)
 }
 
 //----- (080C3DE8) --------------------------------------------------------
-__int16 *__cdecl sub_80C3DE8(int a1, const char *a2, int (__cdecl *a3)(int))
+__int16 *__cdecl XModelPartsLoadFile(int a1, const char *a2, int (__cdecl *a3)(int))
 {
   __int16 *v3; // ebx
   __int16 *v4; // ebx
@@ -77762,11 +77762,11 @@ __int16 *__cdecl sub_80C3DE8(int a1, const char *a2, int (__cdecl *a3)(int))
       if ( v8 )
       {
         src = v23;
-        v10 = sub_80C2C9E((const void **)&src);
+        v10 = XModelDataReadShort((const void **)&src);
         if ( v10 == 20 )
         {
-          v16 = sub_80C2C9E((const void **)&src);
-          v17 = sub_80C2C9E((const void **)&src);
+          v16 = XModelDataReadShort((const void **)&src);
+          v17 = XModelDataReadShort((const void **)&src);
           v18 = v17 + v16;
           v20 = a3(2 * (__int16)(v17 + v16));
           *(_DWORD *)(a1 + 132) += 2 * (__int16)(v17 + v16);
@@ -77806,9 +77806,9 @@ __int16 *__cdecl sub_80C3DE8(int a1, const char *a2, int (__cdecl *a3)(int))
               v11 = *(_BYTE *)src;
               src = (char *)src + 1;
               *v19 = v14 - v11;
-              *v13 = sub_80C2D0A((const void **)&src);
-              v13[1] = sub_80C2D0A((const void **)&src);
-              v13[2] = sub_80C2D0A((const void **)&src);
+              *v13 = XModelDataReadFloat((const void **)&src);
+              v13[1] = XModelDataReadFloat((const void **)&src);
+              v13[2] = XModelDataReadFloat((const void **)&src);
               sub_80C3B60((const void **)&src, v9);
               ++v14;
               v9 += 4;
@@ -77863,29 +77863,29 @@ __int16 *__cdecl sub_80C3DE8(int a1, const char *a2, int (__cdecl *a3)(int))
 // 80C3DE8: using guessed type const char *arg_4;
 
 //----- (080C4280) --------------------------------------------------------
-int __cdecl sub_80C4280(const char *a1, const void **a2, int a3)
+int __cdecl XModelIsValidModelFile(const char *a1, const void **a2, int a3)
 {
   __int16 v5; // [esp+1Ah] [ebp-Eh]
   int i; // [esp+1Ch] [ebp-Ch]
 
-  v5 = sub_80C2C9E(a2);
+  v5 = XModelDataReadShort(a2);
   if ( v5 == 20 )
   {
     *(_BYTE *)(a3 + 4140) = *(_BYTE *)*a2;
     *a2 = (char *)*a2 + 1;
-    *(float *)(a3 + 4112) = sub_80C2D0A(a2);
-    *(float *)(a3 + 4116) = sub_80C2D0A(a2);
-    *(float *)(a3 + 4120) = sub_80C2D0A(a2);
-    *(float *)(a3 + 4124) = sub_80C2D0A(a2);
-    *(float *)(a3 + 4128) = sub_80C2D0A(a2);
-    *(float *)(a3 + 4132) = sub_80C2D0A(a2);
+    *(float *)(a3 + 4112) = XModelDataReadFloat(a2);
+    *(float *)(a3 + 4116) = XModelDataReadFloat(a2);
+    *(float *)(a3 + 4120) = XModelDataReadFloat(a2);
+    *(float *)(a3 + 4124) = XModelDataReadFloat(a2);
+    *(float *)(a3 + 4128) = XModelDataReadFloat(a2);
+    *(float *)(a3 + 4132) = XModelDataReadFloat(a2);
     for ( i = 0; i <= 3; ++i )
     {
-      *(float *)(a3 + 1028 * i + 1024) = sub_80C2D0A(a2);
+      *(float *)(a3 + 1028 * i + 1024) = XModelDataReadFloat(a2);
       strcpy((char *)(a3 + 1028 * i), (const char *)*a2);
       *a2 = (char *)*a2 + strlen((const char *)*a2) + 1;
     }
-    *(_DWORD *)(a3 + 4136) = sub_80C53E0(a2);
+    *(_DWORD *)(a3 + 4136) = XModelDataReadInt(a2);
     return 1;
   }
   else
@@ -77897,7 +77897,7 @@ int __cdecl sub_80C4280(const char *a1, const void **a2, int a3)
 // 80C4280: using guessed type const char *arg_0;
 
 //----- (080C43F4) --------------------------------------------------------
-_DWORD *__cdecl sub_80C43F4(const void **a1, _DWORD *a2, int (__cdecl *a3)(int))
+_DWORD *__cdecl XModelLoadCollision(const void **a1, _DWORD *a2, int (__cdecl *a3)(int))
 {
   _DWORD *result; // eax
   int j; // [esp+4h] [ebp-14h]
@@ -77905,7 +77905,7 @@ _DWORD *__cdecl sub_80C43F4(const void **a1, _DWORD *a2, int (__cdecl *a3)(int))
   float *v6; // [esp+Ch] [ebp-Ch]
   int v7; // [esp+10h] [ebp-8h]
 
-  a2[22] = sub_80C53E0(a1);
+  a2[22] = XModelDataReadInt(a1);
   result = a2;
   if ( a2[22] )
   {
@@ -77916,33 +77916,33 @@ _DWORD *__cdecl sub_80C43F4(const void **a1, _DWORD *a2, int (__cdecl *a3)(int))
       if ( i >= a2[22] )
         break;
       v7 = a2[21] + 44 * i;
-      *(_DWORD *)(v7 + 4) = sub_80C53E0(a1);
+      *(_DWORD *)(v7 + 4) = XModelDataReadInt(a1);
       *(_DWORD *)v7 = a3(48 * *(_DWORD *)(v7 + 4));
       for ( j = 0; j < *(_DWORD *)(v7 + 4); ++j )
       {
         v6 = (float *)(*(_DWORD *)v7 + 48 * j);
-        *v6 = sub_80C2D0A(a1);
-        v6[1] = sub_80C2D0A(a1);
-        v6[2] = sub_80C2D0A(a1);
-        v6[3] = sub_80C2D0A(a1);
-        v6[4] = sub_80C2D0A(a1);
-        v6[5] = sub_80C2D0A(a1);
-        v6[6] = sub_80C2D0A(a1);
-        v6[7] = sub_80C2D0A(a1);
-        v6[8] = sub_80C2D0A(a1);
-        v6[9] = sub_80C2D0A(a1);
-        v6[10] = sub_80C2D0A(a1);
-        v6[11] = sub_80C2D0A(a1);
+        *v6 = XModelDataReadFloat(a1);
+        v6[1] = XModelDataReadFloat(a1);
+        v6[2] = XModelDataReadFloat(a1);
+        v6[3] = XModelDataReadFloat(a1);
+        v6[4] = XModelDataReadFloat(a1);
+        v6[5] = XModelDataReadFloat(a1);
+        v6[6] = XModelDataReadFloat(a1);
+        v6[7] = XModelDataReadFloat(a1);
+        v6[8] = XModelDataReadFloat(a1);
+        v6[9] = XModelDataReadFloat(a1);
+        v6[10] = XModelDataReadFloat(a1);
+        v6[11] = XModelDataReadFloat(a1);
       }
-      *(float *)(v7 + 8) = sub_80C2D0A(a1) - 0.001;
-      *(float *)(v7 + 12) = sub_80C2D0A(a1) - 0.001;
-      *(float *)(v7 + 16) = sub_80C2D0A(a1) - 0.001;
-      *(float *)(v7 + 20) = sub_80C2D0A(a1) + 0.001;
-      *(float *)(v7 + 24) = sub_80C2D0A(a1) + 0.001;
-      *(float *)(v7 + 28) = sub_80C2D0A(a1) + 0.001;
-      *(_DWORD *)(v7 + 32) = sub_80C53E0(a1);
-      *(_DWORD *)(v7 + 36) = sub_80C53E0(a1) & 0xDFFFFFFB;
-      *(_DWORD *)(v7 + 40) = sub_80C53E0(a1);
+      *(float *)(v7 + 8) = XModelDataReadFloat(a1) - 0.001;
+      *(float *)(v7 + 12) = XModelDataReadFloat(a1) - 0.001;
+      *(float *)(v7 + 16) = XModelDataReadFloat(a1) - 0.001;
+      *(float *)(v7 + 20) = XModelDataReadFloat(a1) + 0.001;
+      *(float *)(v7 + 24) = XModelDataReadFloat(a1) + 0.001;
+      *(float *)(v7 + 28) = XModelDataReadFloat(a1) + 0.001;
+      *(_DWORD *)(v7 + 32) = XModelDataReadInt(a1);
+      *(_DWORD *)(v7 + 36) = XModelDataReadInt(a1) & 0xDFFFFFFB;
+      *(_DWORD *)(v7 + 40) = XModelDataReadInt(a1);
       a2[23] |= *(_DWORD *)(v7 + 36);
     }
   }
@@ -77950,18 +77950,18 @@ _DWORD *__cdecl sub_80C43F4(const void **a1, _DWORD *a2, int (__cdecl *a3)(int))
 }
 
 //----- (080C468A) --------------------------------------------------------
-__int16 *__cdecl sub_80C468A(int a1, char *s2, int (__cdecl *a3)(int))
+__int16 *__cdecl XModelPartsLoad(int a1, char *s2, int (__cdecl *a3)(int))
 {
   int v5; // [esp+14h] [ebp-4h]
   __int16 *v6; // [esp+14h] [ebp-4h]
 
-  v5 = sub_80C3090(s2);
+  v5 = XModelPartsFindData(s2);
   if ( v5 )
     return (__int16 *)v5;
-  v6 = sub_80C3DE8(a1, s2, a3);
+  v6 = XModelPartsLoadFile(a1, s2, a3);
   if ( v6 )
   {
-    sub_80C30AC(s2, (int)v6, (int (__cdecl *)(size_t))a3);
+    XModelPartsSetData(s2, (int)v6, (int (__cdecl *)(size_t))a3);
     return v6;
   }
   else
@@ -77972,7 +77972,7 @@ __int16 *__cdecl sub_80C468A(int a1, char *s2, int (__cdecl *a3)(int))
 }
 
 //----- (080C470E) --------------------------------------------------------
-int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3)(int))
+int __cdecl XModelLoadFile(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3)(int))
 {
   int v3; // ebx
   int v4; // esi
@@ -78021,7 +78021,7 @@ int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3
       if ( v20 )
       {
         v36[0] = v30;
-        if ( (unsigned __int8)sub_80C4280(a1, v36, (int)v38) )
+        if ( (unsigned __int8)XModelIsValidModelFile(a1, v36, (int)v38) )
         {
           v34 = 0;
           for ( i = 0; i <= 3; ++i )
@@ -78033,7 +78033,7 @@ int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3
           v21 = v34 + 144;
           v37 = a2(v34 + 144);
           *(_DWORD *)(v37 + 132) = v21;
-          sub_80C43F4(v36, (_DWORD *)v37, a3);
+          XModelLoadCollision(v36, (_DWORD *)v37, a3);
           dest = (char *)(v37 + 144);
           *(_WORD *)(v37 + 124) = 0;
           for ( i = 0; i <= 3; ++i )
@@ -78045,7 +78045,7 @@ int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3
               ++*(_WORD *)(v37 + 124);
               v4 = v37;
               v5 = 20 * i;
-              *(_WORD *)(v4 + v5 + 12) = sub_80C2C9E(v36);
+              *(_WORD *)(v4 + v5 + 12) = XModelDataReadShort(v36);
               v22 = 2 * *(__int16 *)(v37 + 20 * i + 12);
               v6 = (_DWORD *)(v37 + 20 * i + 16);
               *v6 = a2(v22);
@@ -78068,7 +78068,7 @@ int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3
             dest = &dest[(_DWORD)v36[i + 1]];
           }
           v10 = (__int16 **)v37;
-          *v10 = sub_80C468A(v37, *(char **)(v37 + 8), a2);
+          *v10 = XModelPartsLoad(v37, *(char **)(v37 + 8), a2);
           if ( *(_DWORD *)v37 )
           {
             v28 = **(__int16 **)v37;
@@ -78077,18 +78077,18 @@ int __cdecl sub_80C470E(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3
             for ( i = 0; i < v28; ++i )
             {
               v27 = (float *)(v23 + 40 * i);
-              v11 = sub_80C2D0A(v36);
+              v11 = XModelDataReadFloat(v36);
               *v27 = v11;
-              v12 = sub_80C2D0A(v36);
+              v12 = XModelDataReadFloat(v36);
               v27[1] = v12;
-              v13 = sub_80C2D0A(v36);
+              v13 = XModelDataReadFloat(v36);
               v27[2] = v13;
               v26 = (float *)(v23 + 40 * i + 12);
-              v14 = sub_80C2D0A(v36);
+              v14 = XModelDataReadFloat(v36);
               *v26 = v14;
-              v15 = sub_80C2D0A(v36);
+              v15 = XModelDataReadFloat(v36);
               v26[1] = v15;
-              v16 = sub_80C2D0A(v36);
+              v16 = XModelDataReadFloat(v36);
               v26[2] = v16;
               v25 = (float *)(v23 + 40 * i + 24);
               sub_80C52D2(v27, v26, v25);
@@ -78149,24 +78149,24 @@ int sub_80C4E50()
 }
 
 //----- (080C4E5A) --------------------------------------------------------
-int sub_80C4E5A()
+int XModelReadSurface()
 {
   return 0;
 }
 
 //----- (080C4E74) --------------------------------------------------------
-int __cdecl sub_80C4E74(int a1, char *s2, int (__cdecl *a3)(size_t))
+int __cdecl XModelLoadSurface(int a1, char *s2, int (__cdecl *a3)(size_t))
 {
   int v5; // [esp+20h] [ebp-8h]
   int v6; // [esp+20h] [ebp-8h]
 
-  v5 = sub_80C30D6(s2);
+  v5 = XModelSurfsFindData(s2);
   if ( v5 )
     return v5;
-  v6 = sub_80C4E5A();
+  v6 = XModelReadSurface();
   if ( v6 )
   {
-    sub_80C30F2(s2, v6, a3);
+    XModelSurfsSetData(s2, v6, a3);
     return v6;
   }
   else
@@ -78177,13 +78177,13 @@ int __cdecl sub_80C4E74(int a1, char *s2, int (__cdecl *a3)(size_t))
 }
 
 //----- (080C4F0E) --------------------------------------------------------
-int __cdecl sub_80C4F0E(int a1, int (__cdecl *a2)(size_t))
+int __cdecl XModelLoadSurfaces(int a1, int (__cdecl *a2)(size_t))
 {
   int i; // [esp+20h] [ebp-8h]
 
   for ( i = 0; i <= 3 && **(_BYTE **)(a1 + 20 * i + 8); ++i )
   {
-    *(_DWORD *)(a1 + 20 * i + 20) = sub_80C4E74(a1, *(char **)(a1 + 20 * i + 8), a2);
+    *(_DWORD *)(a1 + 20 * i + 20) = XModelLoadSurface(a1, *(char **)(a1 + 20 * i + 8), a2);
     if ( !*(_DWORD *)(a1 + 20 * i + 20) )
       return 0;
   }
@@ -78195,17 +78195,17 @@ int __cdecl XModelLoad(const char *a1, int (__cdecl *a2)(int), int (__cdecl *a3)
 {
   int v5; // [esp+14h] [ebp-4h]
 
-  v5 = sub_80C470E(a1, a2, a3);
+  v5 = XModelLoadFile(a1, a2, a3);
   if ( !v5 )
     return 0;
-  if ( !(unsigned __int8)sub_80C4E50() || (unsigned __int8)sub_80C4F0E(v5, (int (__cdecl *)(size_t))a2) )
+  if ( !(unsigned __int8)sub_80C4E50() || (unsigned __int8)XModelLoadSurfaces(v5, (int (__cdecl *)(size_t))a2) )
     return v5;
   XModelFree(v5);
   return 0;
 }
 
 //----- (080C501A) --------------------------------------------------------
-int __cdecl sub_80C501A(int a1, float *a2, _DWORD *a3, _DWORD *a4)
+int __cdecl XModelGetStaticBounds(int a1, float *a2, _DWORD *a3, _DWORD *a4)
 {
   float v5; // [esp+10h] [ebp-48h]
   float v6; // [esp+14h] [ebp-44h]
@@ -78241,7 +78241,7 @@ int __cdecl sub_80C501A(int a1, float *a2, _DWORD *a3, _DWORD *a4)
       else
         v5 = v14[7];
       v10[2] = v5;
-      sub_80A4E52(v10, a2, v9);
+      MatrixTransformVector(v10, a2, v9);
       for ( k = 0; k <= 2; ++k )
       {
         if ( *(float *)&a3[k] > (long double)v9[k] )
@@ -78328,7 +78328,7 @@ long double __cdecl sub_80C532E(float *a1)
 }
 
 //----- (080C53E0) --------------------------------------------------------
-int __cdecl sub_80C53E0(const void **a1)
+int __cdecl XModelDataReadInt(const void **a1)
 {
   int dest; // [esp+14h] [ebp-4h] BYREF
 
@@ -78344,7 +78344,7 @@ int __cdecl sub_80C5414(int a1)
 }
 
 //----- (080C5432) --------------------------------------------------------
-const char *__cdecl sub_80C5432(int a1, int a2, int a3)
+const char *__cdecl XModelGetSurfaceName(int a1, int a2, int a3)
 {
   unsigned __int16 v5; // [esp+16h] [ebp-2h]
 
@@ -78370,7 +78370,7 @@ int __cdecl sub_80C54C2(int a1)
 }
 
 //----- (080C54CE) --------------------------------------------------------
-int __cdecl sub_80C54CE(__int16 **a1)
+int __cdecl XModelNumBones(__int16 **a1)
 {
   return **a1;
 }
@@ -84795,7 +84795,7 @@ int __cdecl BG_AnimationIndexForString(char *src)
 // 855D56C: using guessed type int dword_855D56C;
 
 //----- (080D4832) --------------------------------------------------------
-int __cdecl sub_80D4832(char *a1)
+int __cdecl BG_AnimationForString(char *a1)
 {
   int i; // [esp+1Ch] [ebp-Ch]
   int v3; // [esp+20h] [ebp-8h]
@@ -84816,7 +84816,7 @@ int __cdecl sub_80D4832(char *a1)
 // 855A4E4: using guessed type int dword_855A4E4;
 
 //----- (080D48C6) --------------------------------------------------------
-int __cdecl sub_80D48C6(char *a1, int *a2, int a3)
+int __cdecl BG_IndexForString(char *a1, int *a2, int a3)
 {
   int v6; // [esp+1Ch] [ebp-Ch]
   int v7; // [esp+20h] [ebp-8h]
@@ -84873,7 +84873,7 @@ int sub_80D4A08()
 // 8575C40: using guessed type int dword_8575C40[];
 
 //----- (080D4A32) --------------------------------------------------------
-unsigned __int16 *__cdecl sub_80D4A32(unsigned int a1)
+unsigned __int16 *__cdecl BG_GetAnim(unsigned int a1)
 {
   unsigned __int16 *v3; // [esp+20h] [ebp-8h]
   int v4; // [esp+24h] [ebp-4h]
@@ -84958,7 +84958,7 @@ void *sub_80D4BC2()
   v13 = 1;
   while ( v13 < v12 )
   {
-    v6 = sub_80D4A32(v13);
+    v6 = BG_GetAnim(v13);
     if ( v6 )
     {
       if ( sub_80C00CA(v9, v13) )
@@ -85009,7 +85009,7 @@ void *sub_80D4BC2()
     ++v13;
     dest += 96;
   }
-  sub_80D5B94(dword_855A4E4, 0, 0);
+  BG_AnimParseAnimScript(dword_855A4E4, 0, 0);
   return sub_80D4ABE(dword_855A4E4);
 }
 // 80D4CCE: conditional instruction was optimized away because %var_3C.4!=0
@@ -85069,10 +85069,10 @@ void *__cdecl sub_80D4ED4(char **a1, int *a2, int a3, _DWORD *s)
           {
             if ( I_stricmp(v8, "all") )
             {
-              v11 = sub_80D48C6(v8, (int *)((a3 << 7) + 139840608), 1);
+              v11 = BG_IndexForString(v8, (int *)((a3 << 7) + 139840608), 1);
               if ( v11 < 0 )
               {
-                v11 = sub_80D48C6(v8, a2, 0);
+                v11 = BG_IndexForString(v8, a2, 0);
                 sub_80D9EAA((int)&v9, v11);
               }
               else
@@ -85130,7 +85130,7 @@ void *__cdecl sub_80D4ED4(char **a1, int *a2, int a3, _DWORD *s)
 // 855D0E4: using guessed type int dword_855D0E4[287];
 
 //----- (080D5250) --------------------------------------------------------
-int __cdecl sub_80D5250(char **a1, _DWORD *a2)
+int __cdecl BG_ParseConditions(char **a1, _DWORD *a2)
 {
   int v3; // [esp+1Ch] [ebp-1Ch]
   char *v4; // [esp+24h] [ebp-14h]
@@ -85146,7 +85146,7 @@ int __cdecl sub_80D5250(char **a1, _DWORD *a2)
       break;
     if ( !I_stricmp(v4, "default") )
       return 1;
-    v7 = sub_80D48C6(v4, (int *)&off_8164760, 0);
+    v7 = BG_IndexForString(v4, (int *)&off_8164760, 0);
     v3 = dword_81647C0[2 * v7];
     if ( v3 )
     {
@@ -85159,7 +85159,7 @@ int __cdecl sub_80D5250(char **a1, _DWORD *a2)
             BG_AnimParseError("BG_ParseConditions: expected condition value, found end of line");
           if ( v5[strlen(v5) - 1] == 44 )
             v5[strlen(v5) - 1] = 0;
-          s[0] = sub_80D48C6(v5, (int *)off_81647C4[2 * v7], 0);
+          s[0] = BG_IndexForString(v5, (int *)off_81647C4[2 * v7], 0);
         }
         else
         {
@@ -85184,7 +85184,7 @@ int __cdecl sub_80D5250(char **a1, _DWORD *a2)
 // 81647C4: using guessed type int off_81647C4[17];
 
 //----- (080D5424) --------------------------------------------------------
-size_t __cdecl sub_80D5424(char **a1, _DWORD *a2, int a3)
+size_t __cdecl BG_ParseCommands(char **a1, _DWORD *a2, int a3)
 {
   size_t result; // eax
   int v4; // esi
@@ -85227,7 +85227,7 @@ size_t __cdecl sub_80D5424(char **a1, _DWORD *a2, int a3)
       v12 = &a2[4 * a2[28]++ + 29];
       memset(v12, 0, sizeof(_DWORD));
     }
-    *((_WORD *)v12 + v11) = sub_80D48C6(v8, (int *)&off_8164620, 1);
+    *((_WORD *)v12 + v11) = BG_IndexForString(v8, (int *)&off_8164620, 1);
     if ( *((__int16 *)v12 + v11) <= 0 )
     {
       *a1 -= strlen(v8);
@@ -85365,7 +85365,7 @@ LABEL_65:
 // 855D568: using guessed type int dword_855D568;
 
 //----- (080D5B94) --------------------------------------------------------
-_DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
+_DWORD *__cdecl BG_AnimParseAnimScript(int a1, int a2, int a3)
 {
   int v3; // ebx
   int v4; // ebx
@@ -85434,7 +85434,7 @@ _DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
     v35 = Com_Parse((char **)v36);
     if ( !v35 || !*v35 )
       break;
-    v25 = sub_80D48C6(v35, (int *)&off_8164820, 1);
+    v25 = BG_IndexForString(v35, (int *)&off_8164820, 1);
     if ( v25 < 0 )
     {
       switch ( v34 )
@@ -85445,7 +85445,7 @@ _DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
             v35 = Com_ParseOnLine((char **)v36);
             if ( !v35 || !*v35 )
               BG_AnimParseError("BG_AnimParseAnimScript: expected condition type string");
-            v23 = sub_80D48C6(v35, (int *)&off_8164760, 0);
+            v23 = BG_IndexForString(v35, (int *)&off_8164760, 0);
             if ( dword_81647C0[2 * v23] )
               BG_AnimParseError("BG_AnimParseAnimScript: can not make a define of type '%s'", v35);
             v35 = Com_ParseOnLine((char **)v36);
@@ -85479,7 +85479,7 @@ _DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
                 if ( v27 == 1 && v29 < 0 )
                 {
                   v6 = v27;
-                  *(&v28 + v6) = sub_80D48C6(v35, (int *)&off_8164420, 0);
+                  *(&v28 + v6) = BG_IndexForString(v35, (int *)&off_8164420, 0);
                   if ( v34 == 1 )
                   {
                     s = (void *)(516 * v29 + a1 + 21156 * v28 + 49156);
@@ -85500,7 +85500,7 @@ _DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
                     BG_AnimParseError("BG_AnimParseAnimScript: internal error");
                   memset(v32, 0, 0xF4u);
                   v9 = v27;
-                  *(&v28 + v9) = sub_80D5250((char **)v36, v32);
+                  *(&v28 + v9) = BG_ParseConditions((char **)v36, v32);
                   if ( *(int *)s > 127 )
                     BG_AnimParseError("BG_AnimParseAnimScript: exceeded maximum items per script (%i)", 128);
                   if ( *(int *)(a1 + 736176) > 2047 )
@@ -85522,7 +85522,7 @@ _DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
               if ( !v35 )
                 BG_AnimParseError("BG_AnimParseAnimScript: expected state type");
               v5 = v27;
-              *(&v28 + v5) = sub_80D48C6(v35, (int *)&off_81643E0, 0);
+              *(&v28 + v5) = BG_IndexForString(v35, (int *)&off_81643E0, 0);
               v35 = Com_Parse((char **)v36);
               if ( !v35 || I_stricmp(v35, "{") )
                 BG_AnimParseError("BG_AnimParseAnimScript: expected '{'");
@@ -85563,7 +85563,7 @@ _DWORD *__cdecl sub_80D5B94(int a1, int a2, int a3)
                     BG_AnimParseError("BG_AnimParseAnimScript: internal error");
                   memset(v32, 0, 0xF4u);
                   v16 = v27;
-                  *(&v28 + v16) = sub_80D5250((char **)v36, v32);
+                  *(&v28 + v16) = BG_ParseConditions((char **)v36, v32);
                   if ( *(int *)s > 127 )
                     BG_AnimParseError("BG_AnimParseAnimScript: exceeded maximum items per script (%i)", 128);
                   if ( *(int *)(a1 + 736176) > 2047 )
@@ -85583,7 +85583,7 @@ LABEL_71:
                   if ( I_strncmp((char *)v36[0], v35, v18) )
                     BG_AnimParseError("BG_AnimParseAnimScript: internal error");
 LABEL_75:
-                  sub_80D5424((char **)v36, v31, a1);
+                  BG_ParseCommands((char **)v36, v31, a1);
                 }
               }
               else
@@ -85595,12 +85595,12 @@ LABEL_75:
                   v35 = Com_ParseOnLine((char **)v36);
                   if ( !v35 )
                     BG_AnimParseError("BG_AnimParseAnimScript: expected <state type>");
-                  v26 = sub_80D48C6(v35, (int *)&off_81643E0, 0);
+                  v26 = BG_IndexForString(v35, (int *)&off_81643E0, 0);
                   v35 = Com_ParseOnLine((char **)v36);
                   if ( !v35 )
                     BG_AnimParseError("BG_AnimParseAnimScript: expected <state type>");
                   v12 = v27;
-                  *(&v28 + v12) = sub_80D48C6(v35, (int *)&off_81643E0, 0);
+                  *(&v28 + v12) = BG_IndexForString(v35, (int *)&off_81643E0, 0);
                   s = (void *)(516 * *(&v28 + v27) + a1 + 2064 * v26 + 218404);
                   v35 = Com_Parse((char **)v36);
                   if ( !v35 || I_stricmp(v35, "{") )
@@ -85610,7 +85610,7 @@ LABEL_75:
                 else
                 {
                   v13 = v27;
-                  *(&v28 + v13) = sub_80D48C6(v35, (int *)&off_8164580, 0);
+                  *(&v28 + v13) = BG_IndexForString(v35, (int *)&off_8164580, 0);
                   s = (void *)(a1 + 516 * v28 + 226660);
                   dword_855D564 = *(&v28 + v27);
                 }
@@ -85832,7 +85832,7 @@ int __cdecl sub_80D6BC4(_DWORD *a1, __int16 *a2, int a3, int a4, int a5)
 // 855A4E4: using guessed type int dword_855A4E4;
 
 //----- (080D6D82) --------------------------------------------------------
-int __cdecl sub_80D6D82(_DWORD *a1, int a2, int a3, int a4)
+int __cdecl BG_AnimScriptAnimation(_DWORD *a1, int a2, int a3, int a4)
 {
   _DWORD *v6; // [esp+30h] [ebp-8h]
 
@@ -85856,7 +85856,7 @@ int __cdecl sub_80D6D82(_DWORD *a1, int a2, int a3, int a4)
     return -1;
   if ( !v6[28] )
     return -1;
-  sub_80D70E2(a1[51], 3, a3, 1);
+  BG_UpdateConditionValue(a1[51], 3, a3, 1);
   return sub_80D6BC4(a1, (__int16 *)&v6[4 * (a1[51] % v6[28]) + 29], 0, a4, 0) != -1;
 }
 // 855A4E4: using guessed type int dword_855A4E4;
@@ -85911,7 +85911,7 @@ int __cdecl sub_80D70AA(int a1, unsigned int a2)
 // 855A4E4: using guessed type int dword_855A4E4;
 
 //----- (080D70E2) --------------------------------------------------------
-int __cdecl sub_80D70E2(int a1, int a2, int a3, int a4)
+int __cdecl BG_UpdateConditionValue(int a1, int a2, int a3, int a4)
 {
   int result; // eax
 
@@ -85965,21 +85965,21 @@ int __cdecl sub_80D72F8(int *a1)
   v4 = (float *)*a1;
   v1 = sub_80E95EE((_DWORD *)*a1);
   v3 = BG_WeaponDefs(v1);
-  sub_80D70E2(*((_DWORD *)v4 + 51), 0, *(_DWORD *)(v3 + 116), 1);
-  sub_80D70E2(*((_DWORD *)v4 + 51), 1, *(_DWORD *)(v3 + 124), 1);
+  BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 0, *(_DWORD *)(v3 + 116), 1);
+  BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 1, *(_DWORD *)(v3 + 124), 1);
   if ( ((_DWORD)v4[40] & 0x40000) != 0 )
-    sub_80D70E2(*((_DWORD *)v4 + 51), 7, 1, 1);
+    BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 7, 1, 1);
   else
-    sub_80D70E2(*((_DWORD *)v4 + 51), 7, 0, 1);
+    BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 7, 0, 1);
   if ( ((_DWORD)v4[40] & 0x300) != 0 )
-    sub_80D70E2(*((_DWORD *)v4 + 51), 2, 1, 1);
+    BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 2, 1, 1);
   else
-    sub_80D70E2(*((_DWORD *)v4 + 51), 2, 0, 1);
-  sub_80D70E2(*((_DWORD *)v4 + 51), 4, v4[58] > 0.0, 1);
+    BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 2, 0, 1);
+  BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 4, v4[58] > 0.0, 1);
   if ( (a1[2] & 1) != 0 )
-    return sub_80D70E2(*((_DWORD *)v4 + 51), 6, 1, 1);
+    return BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 6, 1, 1);
   else
-    return sub_80D70E2(*((_DWORD *)v4 + 51), 6, 0, 1);
+    return BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 6, 0, 1);
 }
 
 //----- (080D74DE) --------------------------------------------------------
@@ -86500,36 +86500,36 @@ int __cdecl sub_80D8882(_DWORD *a1, int a2)
   unsigned int v4; // [esp+1Ch] [ebp-Ch]
 
   v3 = BG_WeaponDefs(a1[50]);
-  sub_80D70E2(a1[36], 0, *(_DWORD *)(v3 + 116), 1);
-  sub_80D70E2(a1[36], 1, *(_DWORD *)(v3 + 124), 1);
+  BG_UpdateConditionValue(a1[36], 0, *(_DWORD *)(v3 + 116), 1);
+  BG_UpdateConditionValue(a1[36], 1, *(_DWORD *)(v3 + 124), 1);
   if ( (a1[2] & 0x40000) != 0 )
-    sub_80D70E2(a1[36], 7, 1, 1);
+    BG_UpdateConditionValue(a1[36], 7, 1, 1);
   else
-    sub_80D70E2(a1[36], 7, 0, 1);
+    BG_UpdateConditionValue(a1[36], 7, 0, 1);
   if ( (a1[2] & 0x300) != 0 )
-    sub_80D70E2(a1[36], 2, 1, 1);
+    BG_UpdateConditionValue(a1[36], 2, 1, 1);
   else
-    sub_80D70E2(a1[36], 2, 0, 1);
-  sub_80D70E2(a1[36], 4, *(float *)(a2 + 1000) > 0.0, 1);
+    BG_UpdateConditionValue(a1[36], 2, 0, 1);
+  BG_UpdateConditionValue(a1[36], 4, *(float *)(a2 + 1000) > 0.0, 1);
   if ( (a1[2] & 4) != 0 )
-    sub_80D70E2(a1[36], 5, 1, 1);
+    BG_UpdateConditionValue(a1[36], 5, 1, 1);
   else
-    sub_80D70E2(a1[36], 5, 0, 1);
+    BG_UpdateConditionValue(a1[36], 5, 0, 1);
   if ( (a1[2] & 0x40) != 0 )
-    sub_80D70E2(a1[36], 6, 1, 1);
+    BG_UpdateConditionValue(a1[36], 6, 1, 1);
   else
-    sub_80D70E2(a1[36], 6, 0, 1);
+    BG_UpdateConditionValue(a1[36], 6, 0, 1);
   v4 = a1[51] & 0xFFFFFDFF;
   if ( *(_QWORD *)((char *)dword_855A4E0 + 96 * v4 + 84)
     && sub_80D7180(a2, 3, 0) != *(_QWORD *)((char *)dword_855A4E0 + 96 * v4 + 84) )
   {
-    sub_80D70E2(a1[36], 3, *((_DWORD *)dword_855A4E0 + 24 * v4 + 21), 0);
+    BG_UpdateConditionValue(a1[36], 3, *((_DWORD *)dword_855A4E0 + 24 * v4 + 21), 0);
   }
   if ( (*((_DWORD *)dword_855A4E0 + 24 * v4 + 20) & 0x10) != 0 )
-    return sub_80D70E2(a1[36], 8, 1, 1);
+    return BG_UpdateConditionValue(a1[36], 8, 1, 1);
   if ( (*((_DWORD *)dword_855A4E0 + 24 * v4 + 20) & 0x20) != 0 )
-    return sub_80D70E2(a1[36], 8, 2, 1);
-  return sub_80D70E2(a1[36], 8, 0, 1);
+    return BG_UpdateConditionValue(a1[36], 8, 2, 1);
+  return BG_UpdateConditionValue(a1[36], 8, 0, 1);
 }
 
 //----- (080D8C3E) --------------------------------------------------------
@@ -86886,8 +86886,8 @@ int sub_80D9B7E()
   v1 = LargeLocalGetBuf(v2);
   v3[0] = 0;
   sub_80D99BE();
-  sub_80D5B94((int)dword_855A4E0, (int)v1, (int)v3);
-  sub_8075ECE(*((int (__cdecl **)(int))dword_855A4E0 + 184062), *((_DWORD *)dword_855A4E0 + 184058));
+  BG_AnimParseAnimScript((int)dword_855A4E0, (int)v1, (int)v3);
+  Scr_PrecacheAnimTrees(*((int (__cdecl **)(int))dword_855A4E0 + 184062), *((_DWORD *)dword_855A4E0 + 184058));
   sub_80D9ADE();
   sub_8075F0E();
   sub_80D4BC2();
@@ -87392,7 +87392,7 @@ char *__usercall Mantle_RegisterDvars@<eax>(long double a1@<st0>)
 // 8576068: using guessed type int mantle_view_yawcap;
 
 //----- (080DA9B8) --------------------------------------------------------
-void *__cdecl sub_80DA9B8(size_t n)
+void *__cdecl MantleXAnimPrecacheAlloc(size_t n)
 {
   return Hunk_AllocAlignInternal(n, 4);
 }
@@ -87452,14 +87452,14 @@ int __cdecl sub_80DAAF2(int a1, int a2, float *a3)
   if ( a2 > v7 )
   {
     v5 = (long double)(a2 - v7) / (long double)v6;
-    sub_80BF1A4(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)], v8, v9, 1.0);
-    sub_80BF1A4(dword_857606C, dword_8164864[3 * *(_DWORD *)(a1 + 8)], v8, a3, v5);
+    XAnimGetAbsDelta(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)], v8, v9, 1.0);
+    XAnimGetAbsDelta(dword_857606C, dword_8164864[3 * *(_DWORD *)(a1 + 8)], v8, a3, v5);
     sub_80DBFC2(a3, (float *)v9, a3);
   }
   else
   {
     v4 = (long double)a2 / (long double)v7;
-    sub_80BF1A4(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)], v8, a3, v4);
+    XAnimGetAbsDelta(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)], v8, a3, v4);
   }
   return sub_80A530C(a3, *(float *)a1);
 }
@@ -87480,11 +87480,11 @@ int __cdecl sub_80DAC38(float a1, float a2)
   v9 = a2 - a1;
   v5 = 0;
   v3 = flt_8164868[0] - v9;
-  v7 = sub_80DBF16(v3);
+  v7 = Mantle_Fabs(v3);
   for ( i = 1; i <= 6; ++i )
   {
     v4 = flt_8164868[3 * i] - v9;
-    v8 = sub_80DBF16(v4);
+    v8 = Mantle_Fabs(v4);
     if ( v7 > (long double)v8 )
     {
       v5 = i;
@@ -87651,7 +87651,7 @@ int __cdecl sub_80DAF36(int *a1, int a2, int a3, float a4)
 }
 
 //----- (080DB380) --------------------------------------------------------
-void __cdecl sub_80DB380(int (__cdecl *a1)(int))
+void __cdecl Mantle_CreateAnims(int (__cdecl *a1)(int))
 {
   float v1; // [esp+0h] [ebp-58h]
   float v2; // [esp+0h] [ebp-58h]
@@ -87669,28 +87669,28 @@ void __cdecl sub_80DB380(int (__cdecl *a1)(int))
   if ( !dword_857606C )
   {
     dword_857606C = (int)XAnimCreateAnims("PLAYER_MANTLE", 11, a1);
-    sub_80BA57A(dword_857606C, 0, off_81648C0, 1, 0xAu, 0);
+    XAnimBlend(dword_857606C, 0, off_81648C0, 1, 0xAu, 0);
     for ( i = 1; i <= 10; ++i )
     {
-      sub_80BA3AE((&off_81648C0)[i], (int (__cdecl *)(int))sub_80DA9B8);
-      sub_80BA4D8(dword_857606C, i, (&off_81648C0)[i]);
+      XAnimPrecache((&off_81648C0)[i], (int (__cdecl *)(int))MantleXAnimPrecacheAlloc);
+      XAnimCreate(dword_857606C, i, (&off_81648C0)[i]);
     }
     for ( j = 0; j <= 6; ++j )
     {
       v7 = dword_8164860[3 * j];
-      sub_80BF1A4(dword_857606C, v7, v9, &v10, 1.0);
+      XAnimGetAbsDelta(dword_857606C, v7, v9, &v10, 1.0);
       v1 = *(float *)&v10 - 16.0;
-      if ( sub_80DBF16(v1) > 1.0 )
+      if ( Mantle_Fabs(v1) > 1.0 )
         Com_Error(
           1,
           "Mantle anim [%s] has X translation %f, should be %f\n",
           (&off_81648C0)[v7],
           *(float *)&v10,
           (double)16.0);
-      if ( sub_80DBF16(v11) > 1.0 )
+      if ( Mantle_Fabs(v11) > 1.0 )
         Com_Error(1, "Mantle anim [%s] has Y translation %f, should be %f\n", (&off_81648C0)[v7], v11, (double)0.0);
       v2 = v12 - flt_8164868[3 * j];
-      if ( sub_80DBF16(v2) > 1.0 )
+      if ( Mantle_Fabs(v2) > 1.0 )
         Com_Error(
           1,
           "Mantle anim [%s] has Z translation %f, should be %f\n",
@@ -87698,19 +87698,19 @@ void __cdecl sub_80DB380(int (__cdecl *a1)(int))
           v12,
           flt_8164868[3 * j]);
       v8 = dword_8164864[3 * j];
-      sub_80BF1A4(dword_857606C, v8, v9, &v10, 1.0);
+      XAnimGetAbsDelta(dword_857606C, v8, v9, &v10, 1.0);
       v3 = *(float *)&v10 - 31.0;
-      if ( sub_80DBF16(v3) > 1.0 )
+      if ( Mantle_Fabs(v3) > 1.0 )
         Com_Error(
           1,
           "Mantle anim [%s] has X translation %f, should be %f\n",
           (&off_81648C0)[v8],
           *(float *)&v10,
           (double)31.0);
-      if ( sub_80DBF16(v11) > 1.0 )
+      if ( Mantle_Fabs(v11) > 1.0 )
         Com_Error(1, "Mantle anim [%s] has Y translation %f, should be %f\n", (&off_81648C0)[v8], v11, (double)0.0);
       v4 = v12 - -18.0;
-      if ( sub_80DBF16(v4) > 1.0 )
+      if ( Mantle_Fabs(v4) > 1.0 )
         Com_Error(1, "Mantle anim [%s] has Z translation %f, should be %f\n", (&off_81648C0)[v8], v12, (double)-18.0);
     }
   }
@@ -87891,7 +87891,7 @@ int __cdecl sub_80DBB3C(int a1, int a2, int a3)
     sub_80DAAF2(v12, v9, v10);
     sub_80DAAF2(v12, *(_DWORD *)(v12 + 4), (float *)v11);
     v6 = sub_80DAA8E(v12);
-    sub_80D6D82((_DWORD *)a2, 3, v6 + 20, 1);
+    BG_AnimScriptAnimation((_DWORD *)a2, 3, v6 + 20, 1);
     sub_80DC006((float *)v11, v10, (float *)v11);
     sub_80DBFC2((float *)v11, (float *)(a2 + 20), (float *)(a2 + 20));
     v5 = 1.0 / ((long double)v8 * 0.001);
@@ -87969,7 +87969,7 @@ _BOOL4 __cdecl sub_80DBEB0(int a1)
 // 8576054: using guessed type int mantle_enable;
 
 //----- (080DBF16) --------------------------------------------------------
-long double __cdecl sub_80DBF16(float a1)
+long double __cdecl Mantle_Fabs(float a1)
 {
   return (float)fabs(a1);
 }
@@ -88428,7 +88428,7 @@ int __cdecl BG_AddPredictableEventToPlayerstate(int a1, unsigned __int8 a2, int 
 }
 
 //----- (080DD59E) --------------------------------------------------------
-int __cdecl sub_80DD59E(int a1, int a2, int a3, unsigned __int8 a4)
+int __cdecl BG_PlayerStateToEntityState(int a1, int a2, int a3, unsigned __int8 a4)
 {
   unsigned int v4; // edx
   unsigned int v5; // edx
@@ -90956,7 +90956,7 @@ void __cdecl sub_80E3008(int a1, int a2)
   {
     if ( (*(_BYTE *)(v14 + 12) & 1) != 0 )
     {
-      sub_80D6D82((_DWORD *)v14, 3, 3, 1);
+      BG_AnimScriptAnimation((_DWORD *)v14, 3, 3, 1);
       return;
     }
     if ( (*(_DWORD *)(v14 + 12) & 2) != 0 )
@@ -90976,9 +90976,9 @@ void __cdecl sub_80E3008(int a1, int a2)
       else
         v22 = v7 / 95.25 * 0.44999999;
       if ( v7 < 0.0 )
-        sub_80D6D82((_DWORD *)v14, 3, 19, 1);
+        BG_AnimScriptAnimation((_DWORD *)v14, 3, 19, 1);
       else
-        sub_80D6D82((_DWORD *)v14, 3, 18, 1);
+        BG_AnimScriptAnimation((_DWORD *)v14, 3, 18, 1);
       v20 = *(_DWORD *)(v14 + 8);
       *(_DWORD *)(v14 + 8) = (unsigned __int8)(int)((long double)v20 + (long double)*(int *)(a2 + 40) * v22);
       sub_80E2CDE((int *)a1, a2, v20, *(_DWORD *)(v14 + 8), 1);
@@ -91028,36 +91028,36 @@ void __cdecl sub_80E3008(int a1, int a2)
     }
     if ( *(_DWORD *)(v14 + 244) == 11 )
     {
-      v8 = sub_80D6D82((_DWORD *)v14, 3, 3, 1);
+      v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 3, 1);
     }
     else if ( *(_DWORD *)(v14 + 244) == 40 )
     {
       if ( v10 == 14 )
       {
-        v8 = sub_80D6D82((_DWORD *)v14, 3, 16, 1);
+        v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 16, 1);
         if ( v8 > 0 && !*((_DWORD *)v11 + 300) )
           *((_DWORD *)v11 + 300) = *((_DWORD *)dword_855A4E0 + 184055) + *(_DWORD *)(v14 + 136);
       }
       else if ( v10 == 15 )
       {
-        v8 = sub_80D6D82((_DWORD *)v14, 3, 17, 1);
+        v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 17, 1);
         if ( v8 > 0 && !*((_DWORD *)v11 + 300) )
           *((_DWORD *)v11 + 300) = *((_DWORD *)dword_855A4E0 + 184055) + *(_DWORD *)(v14 + 136);
       }
       else
       {
-        v8 = sub_80D6D82((_DWORD *)v14, 3, 2, 1);
+        v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 2, 1);
       }
     }
     else if ( v10 == 14 )
     {
-      v8 = sub_80D6D82((_DWORD *)v14, 3, 14, 1);
+      v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 14, 1);
       if ( v8 > 0 && !*((_DWORD *)v11 + 300) )
         *((_DWORD *)v11 + 300) = *((_DWORD *)dword_855A4E0 + 184055) + *(_DWORD *)(v14 + 136);
     }
     else if ( v10 == 15 )
     {
-      v8 = sub_80D6D82((_DWORD *)v14, 3, 15, 1);
+      v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 15, 1);
       if ( v8 > 0 && !*((_DWORD *)v11 + 300) )
         *((_DWORD *)v11 + 300) = *((_DWORD *)dword_855A4E0 + 184055) + *(_DWORD *)(v14 + 136);
     }
@@ -91067,17 +91067,17 @@ void __cdecl sub_80E3008(int a1, int a2)
       {
         v5 = (float)*(int *)(v14 + 152);
         v12 = sub_80E2F4E(v5);
-        sub_80D6D82((_DWORD *)v14, 3, v12, 1);
+        BG_AnimScriptAnimation((_DWORD *)v14, 3, v12, 1);
         return;
       }
-      v8 = sub_80D6D82((_DWORD *)v14, 3, 1, 1);
+      v8 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 1, 1);
     }
     if ( v8 < 0 )
     {
       if ( *(_DWORD *)(v14 + 244) == 40 )
       {
 LABEL_11:
-        sub_80D6D82((_DWORD *)v14, 3, 2, 1);
+        BG_AnimScriptAnimation((_DWORD *)v14, 3, 2, 1);
         return;
       }
       if ( *(_DWORD *)(v14 + 144) <= v13 )
@@ -91099,15 +91099,15 @@ LABEL_11:
     {
       v17 = v17 * *(float *)(player_backSpeedScale + 8);
     }
-    sub_80D70E2(*(_DWORD *)(v14 + 204), 8, 0, 1);
+    BG_UpdateConditionValue(*(_DWORD *)(v14 + 204), 8, 0, 1);
   }
   else if ( *(_BYTE *)(a1 + 29) )
   {
     v17 = ((*(float *)(player_strafeSpeedScale + 8) - 1.0) * 0.75 + 1.0) * v17;
     if ( *(char *)(a1 + 29) <= 0 )
-      sub_80D70E2(*(_DWORD *)(v14 + 204), 8, 1, 1);
+      BG_UpdateConditionValue(*(_DWORD *)(v14 + 204), 8, 1, 1);
     else
-      sub_80D70E2(*(_DWORD *)(v14 + 204), 8, 2, 1);
+      BG_UpdateConditionValue(*(_DWORD *)(v14 + 204), 8, 2, 1);
   }
   if ( v6 )
     v17 = v17 * 0.40000001;
@@ -91143,9 +91143,9 @@ LABEL_11:
       v2 = *(float *)(a1 + 220) / v17 * 0.25;
     v23 = v2;
     if ( *(char *)(v14 + 12) >= 0 )
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 8, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 8, 1);
     else
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 9, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 9, 1);
   }
   else if ( v18 == 2 )
   {
@@ -91160,16 +91160,16 @@ LABEL_11:
       {
         if ( *(_DWORD *)(v14 + 144) <= v13 )
         {
-          v9 = sub_80D6D82((_DWORD *)v14, 3, 6, 1);
+          v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 6, 1);
           goto LABEL_136;
         }
       }
       else if ( *(_DWORD *)(v14 + 144) <= v13 )
       {
-        v9 = sub_80D6D82((_DWORD *)v14, 3, 12, 1);
+        v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 12, 1);
         goto LABEL_136;
       }
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 39, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 39, 1);
     }
     else
     {
@@ -91177,16 +91177,16 @@ LABEL_11:
       {
         if ( *(_DWORD *)(v14 + 144) <= v13 )
         {
-          v9 = sub_80D6D82((_DWORD *)v14, 3, 7, 1);
+          v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 7, 1);
           goto LABEL_136;
         }
       }
       else if ( *(_DWORD *)(v14 + 144) <= v13 )
       {
-        v9 = sub_80D6D82((_DWORD *)v14, 3, 13, 1);
+        v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 13, 1);
         goto LABEL_136;
       }
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 40, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 40, 1);
     }
   }
   else if ( *(char *)(v14 + 12) >= 0 )
@@ -91195,34 +91195,34 @@ LABEL_11:
     {
       v23 = *(float *)(a1 + 220) / v17 * 0.30500001;
       if ( *(_DWORD *)(v14 + 144) <= v13 )
-        v9 = sub_80D6D82((_DWORD *)v14, 3, 4, 1);
+        v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 4, 1);
       else
-        v9 = sub_80D6D82((_DWORD *)v14, 3, 37, 1);
+        v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 37, 1);
     }
     else
     {
       v23 = *(float *)(a1 + 220) / v17 * 0.33500001;
       if ( *(_DWORD *)(v14 + 144) <= v13 )
-        v9 = sub_80D6D82((_DWORD *)v14, 3, 10, 1);
+        v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 10, 1);
       else
-        v9 = sub_80D6D82((_DWORD *)v14, 3, 35, 1);
+        v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 35, 1);
     }
   }
   else if ( v6 )
   {
     v23 = *(float *)(a1 + 220) / v17 * 0.32499999;
     if ( *(_DWORD *)(v14 + 144) <= v13 )
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 5, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 5, 1);
     else
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 38, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 38, 1);
   }
   else
   {
     v23 = *(float *)(a1 + 220) / v17 * 0.36000001;
     if ( *(_DWORD *)(v14 + 144) <= v13 )
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 11, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 11, 1);
     else
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 36, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 36, 1);
   }
 LABEL_136:
   v19 = sub_80E2EA6((int *)a1);
@@ -91231,29 +91231,29 @@ LABEL_136:
   if ( *(_BYTE *)(a1 + 28) || *(_BYTE *)(a1 + 29) )
   {
     if ( v9 < 0 )
-      sub_80D6D82((_DWORD *)v14, 3, 1, 1);
+      BG_AnimScriptAnimation((_DWORD *)v14, 3, 1, 1);
     sub_80E2CDE((int *)a1, a2, v21, *(_DWORD *)(v14 + 8), v19);
   }
   else if ( *(float *)(a1 + 220) <= 120.0 )
   {
     if ( *(_DWORD *)(v14 + 244) == 11 )
     {
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 3, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 3, 1);
     }
     else if ( *(_DWORD *)(v14 + 244) == 40 )
     {
-      v9 = sub_80D6D82((_DWORD *)v14, 3, 2, 1);
+      v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 2, 1);
     }
     if ( v9 < 0 )
     {
       if ( *(_DWORD *)(v14 + 144) <= v13 )
       {
 LABEL_145:
-        sub_80D6D82((_DWORD *)v14, 3, 1, 1);
+        BG_AnimScriptAnimation((_DWORD *)v14, 3, 1, 1);
         return;
       }
 LABEL_74:
-      sub_80D6D82((_DWORD *)v14, 3, 31, 1);
+      BG_AnimScriptAnimation((_DWORD *)v14, 3, 31, 1);
     }
   }
 }
@@ -94331,9 +94331,9 @@ int __cdecl sub_80EA40E(int a1, int a2)
     }
   }
   if ( (v4[3] & 0x40) != 0 )
-    return sub_80D70E2(v4[51], 7, 1, 1);
+    return BG_UpdateConditionValue(v4[51], 7, 1, 1);
   else
-    return sub_80D70E2(v4[51], 7, 0, 1);
+    return BG_UpdateConditionValue(v4[51], 7, 0, 1);
 }
 
 //----- (080EA53E) --------------------------------------------------------
@@ -94954,8 +94954,8 @@ int __cdecl sub_80EB738(unsigned __int8 *a1)
       v5[13] = *(float *)(BG_WeaponDefs(v6) + 564);
     }
     v4 = BG_WeaponDefs(v6);
-    sub_80D70E2(*((_DWORD *)v5 + 51), 0, *(_DWORD *)(v4 + 116), 1);
-    sub_80D70E2(*((_DWORD *)v5 + 51), 1, *(_DWORD *)(v4 + 124), 1);
+    BG_UpdateConditionValue(*((_DWORD *)v5 + 51), 0, *(_DWORD *)(v4 + 116), 1);
+    BG_UpdateConditionValue(*((_DWORD *)v5 + 51), 1, *(_DWORD *)(v4 + 124), 1);
     if ( v6 && v6 == *(_DWORD *)(BG_WeaponDefs(v7) + 876) )
     {
       if ( v5[373] < 128.0 )
@@ -98304,7 +98304,7 @@ int __cdecl sub_80F20C8(int a1)
         else
         {
           vectoangles((float *)(v11 + 10212), (int)v9);
-          sub_80A7146((float *)(v11 + 232), (int)v6);
+          AnglesToAxis((float *)(v11 + 232), (int)v6);
           v2 = v11;
           LODWORD(v5) = LODWORD(v8) ^ 0x80000000;
           *(float *)(v2 + 10308) = sub_80F55E2((float *)(v11 + 10212), &v7) * v5;
@@ -98439,7 +98439,7 @@ int __cdecl sub_80F24C6(int a1)
 // 80F24C6: using guessed type int var_1018[1026];
 
 //----- (080F275E) --------------------------------------------------------
-int __cdecl sub_80F275E(int a1, int **a2)
+int __cdecl SpectatorThink(int a1, int **a2)
 {
   int result; // eax
   int *v3; // [esp+1Ch] [ebp-10Ch]
@@ -98675,7 +98675,7 @@ int __cdecl sub_80F2F2E(int a1)
 }
 
 //----- (080F2FA4) --------------------------------------------------------
-void __cdecl sub_80F2FA4(int a1, int a2, int a3, int a4)
+void __cdecl G_PlayerStateToEntityStateExtrapolate(int a1, int a2, int a3, int a4)
 {
   unsigned int v4; // edx
   unsigned int v5; // edx
@@ -98804,7 +98804,7 @@ int __cdecl sub_80F34E0(_DWORD *a1, int a2, int a3)
 // 8793DD8: using guessed type int g_mantleBlockTimeBuffer;
 
 //----- (080F35DA) --------------------------------------------------------
-int __usercall sub_80F35DA@<eax>(long double a1@<st0>, int *a2, int **a3)
+int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
 {
   int result; // eax
   unsigned int v4; // edx
@@ -98871,7 +98871,7 @@ int __usercall sub_80F35DA@<eax>(long double a1@<st0>, int *a2, int **a3)
       }
       else if ( *(_DWORD *)(v41 + 9896) == 2 )
       {
-        return sub_80F275E((int)a2, a3);
+        return SpectatorThink((int)a2, a3);
       }
       else
       {
@@ -98947,8 +98947,8 @@ int __usercall sub_80F35DA@<eax>(long double a1@<st0>, int *a2, int **a3)
           sub_80EF52C((float *)v14, (int)v12);
           if ( sub_80E973E(*(_DWORD *)(v14[0] + 212)) && *(float *)(v14[0] + 220) != 0.0 && !*(_DWORD *)(v11 + 632) )
           {
-            sub_80A7146(v12, (int)v7);
-            sub_80A7146((float *)v13, (int)v6);
+            AnglesToAxis(v12, (int)v7);
+            AnglesToAxis((float *)v13, (int)v6);
             sub_80A358E(v7, v6, v5);
             sub_80A71F4((int)v5, (int)v13);
           }
@@ -98968,9 +98968,9 @@ int __usercall sub_80F35DA@<eax>(long double a1@<st0>, int *a2, int **a3)
             a2[85] = dword_859B5EC;
           }
           if ( *(_BYTE *)(g_smoothClients + 8) )
-            sub_80F2FA4(a2[86], (int)a2, *(_DWORD *)a2[86], 1);
+            G_PlayerStateToEntityStateExtrapolate(a2[86], (int)a2, *(_DWORD *)a2[86], 1);
           else
-            sub_80DD59E(a2[86], (int)a2, 1, 1u);
+            BG_PlayerStateToEntityState(a2[86], (int)a2, 1, 1u);
           sub_80F552A(a2 + 6, a2 + 78);
           sub_80F552A(v36, a2 + 65);
           sub_80F552A(v37, a2 + 68);
@@ -99023,7 +99023,7 @@ int __usercall sub_80F3EA4@<eax>(long double a1@<st0>, int a2)
   *(_DWORD *)(v5[86] + 10168) = dword_859B5EC;
   result = g_synchronousClients;
   if ( !*(_BYTE *)(g_synchronousClients + 8) )
-    result = sub_80F35DA(a1, v5, (int **)(v5[86] + 9928));
+    result = ClientThink_real(a1, v5, (int **)(v5[86] + 9928));
   dword_855A4E0 = 0;
   return result;
 }
@@ -99038,7 +99038,7 @@ int __usercall sub_80F3F74@<eax>(long double a1@<st0>, int *a2)
   if ( *(_BYTE *)(g_synchronousClients + 8) )
   {
     *(_DWORD *)(a2[86] + 9928) = dword_859B5EC;
-    sub_80F35DA(a1, a2, (int **)(a2[86] + 9928));
+    ClientThink_real(a1, a2, (int **)(a2[86] + 9928));
   }
   result = a2[86];
   if ( !*(_DWORD *)(result + 10156) )
@@ -99467,9 +99467,9 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
       *(_DWORD *)(v10 + 300) = *(_DWORD *)(a2 + 404);
       sub_80F2350(a2);
       if ( *(_BYTE *)(g_smoothClients + 8) )
-        sub_80F2FA4(v10, a2, *(_DWORD *)v10, 1);
+        G_PlayerStateToEntityStateExtrapolate(v10, a2, *(_DWORD *)v10, 1);
       else
-        sub_80DD59E(v10, a2, 1, 1u);
+        BG_PlayerStateToEntityState(v10, a2, 1, 1u);
       if ( *(int *)(a2 + 404) > 0 && sub_80F474A(a2) )
         *(_DWORD *)(a2 + 284) = 0x4000000;
       sub_80F61BE(a2, v14);
@@ -99510,7 +99510,7 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
         {
           if ( SV_DObjExists((int *)a2) )
           {
-            G_DObjCalcPose(a2);
+            SV_DObjCalcPose(a2);
             SV_XModelDebugBoxes();
           }
         }
@@ -100404,9 +100404,9 @@ int __usercall ClientSpawn@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWOR
   *((_DWORD *)s + 2482) = dword_859B5EC;
   *(_DWORD *)s = dword_859B5EC - 100;
   ClientEndFrame(a2);
-  sub_80F35DA(a1, (int *)a2, (int **)s + 2482);
+  ClientThink_real(a1, (int *)a2, (int **)s + 2482);
   dword_859B420 = 0;
-  return sub_80DD59E((int)s, a2, 1, 1u);
+  return BG_PlayerStateToEntityState((int)s, a2, 1, 1u);
 }
 // 80F4DBE: using guessed type _DWORD __cdecl ClientEndFrame(_DWORD);
 // 8167700: using guessed type _DWORD dword_8167700[3];
@@ -101098,7 +101098,7 @@ int __cdecl PlayerCmd_setOrigin(int a1)
   sub_80FB6EE(v4, (_DWORD *)(*((_DWORD *)v3 + 86) + 20));
   *(float *)(*((_DWORD *)v3 + 86) + 28) = *(float *)(*((_DWORD *)v3 + 86) + 28) + 1.0;
   *(_DWORD *)(*((_DWORD *)v3 + 86) + 160) ^= 2u;
-  sub_80DD59E(*((_DWORD *)v3 + 86), (int)v3, 1, 1u);
+  BG_PlayerStateToEntityState(*((_DWORD *)v3 + 86), (int)v3, 1, 1u);
   sub_80FB6EE((_DWORD *)(*((_DWORD *)v3 + 86) + 20), (_DWORD *)v3 + 78);
   return SV_LinkEntity((int)v3);
 }
@@ -101456,7 +101456,7 @@ int __cdecl PlayerCmd_dropItem(int a1)
     }
     else
     {
-      v7 = sub_8084434(1u);
+      v7 = Scr_GetConstLowercaseString(1u);
       v2 = (int *)sub_810404E((int)v4, v8, v7);
     }
     return GScr_AddEntity(v2);
@@ -105987,7 +105987,7 @@ char **GScr_AddFieldsForHudElems()
 // 8152E40: using guessed type __int16 *off_8152E40;
 
 //----- (08101988) --------------------------------------------------------
-int __cdecl sub_8101988(int a1)
+int __cdecl Scr_HudElemForRef(int a1)
 {
   if ( HIWORD(a1) == 1 )
     return 140 * (unsigned __int16)a1 + 139952128;
@@ -106002,7 +106002,7 @@ int __cdecl HECmd_SetText(int a1)
   _DWORD *v2; // [esp+Ch] [ebp-Ch]
   char *s2; // [esp+10h] [ebp-8h]
 
-  v2 = (_DWORD *)sub_8101988(a1);
+  v2 = (_DWORD *)Scr_HudElemForRef(a1);
   s2 = (char *)Scr_GetIString(0);
   HudElem_ClearTypeSettings(v2);
   *v2 = 1;
@@ -106017,7 +106017,7 @@ void __cdecl HECmd_SetPlayerNameString(int a1)
   int v1; // [esp+10h] [ebp-8h]
   int *v2; // [esp+14h] [ebp-4h]
 
-  v1 = sub_8101988(a1);
+  v1 = Scr_HudElemForRef(a1);
   v2 = (int *)Scr_GetEntity(0);
   if ( v2 )
   {
@@ -106044,7 +106044,7 @@ void __cdecl HECmd_SetGameTypeString(int a1)
   _DWORD *v1; // [esp+10h] [ebp-8h]
   char *s1; // [esp+14h] [ebp-4h]
 
-  v1 = (_DWORD *)sub_8101988(a1);
+  v1 = (_DWORD *)Scr_HudElemForRef(a1);
   s1 = (char *)Scr_GetString(0);
   if ( s1 )
   {
@@ -106072,7 +106072,7 @@ void __cdecl HECmd_SetMapNameString(int a1)
   _DWORD *v1; // [esp+10h] [ebp-8h]
   char *s; // [esp+14h] [ebp-4h]
 
-  v1 = (_DWORD *)sub_8101988(a1);
+  v1 = (_DWORD *)Scr_HudElemForRef(a1);
   s = (char *)Scr_GetString(0);
   if ( s )
   {
@@ -106106,7 +106106,7 @@ int __cdecl HECmd_SetShader(int a1)
   int v8; // [esp+20h] [ebp-8h]
   _DWORD *v9; // [esp+24h] [ebp-4h]
 
-  v9 = (_DWORD *)sub_8101988(a1);
+  v9 = (_DWORD *)Scr_HudElemForRef(a1);
   v8 = Scr_GetNumParam();
   if ( v8 != 1 && v8 != 3 )
     Scr_Error((int)"USAGE: <hudelem> setShader(\"shadername\"[, optional_width, optional_height]);");
@@ -106151,7 +106151,7 @@ int __cdecl HECmd_SetTimer_Internal(int a1, int a2, const char *a3)
   int v7; // [esp+10h] [ebp-8h]
   _DWORD *v8; // [esp+14h] [ebp-4h]
 
-  v8 = (_DWORD *)sub_8101988(a1);
+  v8 = (_DWORD *)Scr_HudElemForRef(a1);
   if ( Scr_GetNumParam() != 1 )
   {
     v3 = va("USAGE: <hudelem> %s(time_in_seconds);\n", a3);
@@ -106191,7 +106191,7 @@ int __cdecl HECmd_SetClock_Internal(int a1, int a2, const char *a3)
   int v17; // [esp+20h] [ebp-8h]
   _DWORD *v18; // [esp+24h] [ebp-4h]
 
-  v18 = (_DWORD *)sub_8101988(a1);
+  v18 = (_DWORD *)Scr_HudElemForRef(a1);
   v17 = Scr_GetNumParam();
   if ( v17 != 3 && v17 != 5 )
   {
@@ -106290,7 +106290,7 @@ int __cdecl HECmd_SetValue(int a1)
   int v2; // [esp+10h] [ebp-8h]
   float v3; // [esp+14h] [ebp-4h]
 
-  v2 = sub_8101988(a1);
+  v2 = Scr_HudElemForRef(a1);
   v3 = Scr_GetFloat(0);
   HudElem_ClearTypeSettings((_DWORD *)v2);
   *(_DWORD *)v2 = 2;
@@ -106306,7 +106306,7 @@ int __cdecl HECmd_SetWaypoint(int a1)
   int v2; // [esp+10h] [ebp-8h]
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_8101988(a1);
+  v3 = Scr_HudElemForRef(a1);
   v2 = Scr_GetInt(0);
   *(_DWORD *)v3 = 13;
   result = v3;
@@ -106324,7 +106324,7 @@ int __cdecl HECmd_FadeOverTime(int a1)
   float v5; // [esp+Ch] [ebp-Ch]
   _DWORD *v6; // [esp+10h] [ebp-8h]
 
-  v6 = (_DWORD *)sub_8101988(a1);
+  v6 = (_DWORD *)Scr_HudElemForRef(a1);
   v5 = Scr_GetFloat(0);
   if ( v5 > 0.0 )
   {
@@ -106359,7 +106359,7 @@ int __cdecl HECmd_ScaleOverTime(int a1)
   float v7; // [esp+1Ch] [ebp-Ch]
   _DWORD *v8; // [esp+20h] [ebp-8h]
 
-  v8 = (_DWORD *)sub_8101988(a1);
+  v8 = (_DWORD *)Scr_HudElemForRef(a1);
   if ( Scr_GetNumParam() != 3 )
     Scr_Error((int)"hudelem scaleOverTime(time_in_seconds, new_width, new_height)");
   v7 = Scr_GetFloat(0);
@@ -106399,7 +106399,7 @@ int __cdecl HECmd_MoveOverTime(int a1)
   float v5; // [esp+Ch] [ebp-Ch]
   _DWORD *v6; // [esp+10h] [ebp-8h]
 
-  v6 = (_DWORD *)sub_8101988(a1);
+  v6 = (_DWORD *)Scr_HudElemForRef(a1);
   v5 = Scr_GetFloat(0);
   if ( v5 > 0.0 )
   {
@@ -106430,7 +106430,7 @@ _DWORD *__cdecl HECmd_Reset(int a1)
 {
   _DWORD *v2; // [esp+4h] [ebp-4h]
 
-  v2 = (_DWORD *)sub_8101988(a1);
+  v2 = (_DWORD *)Scr_HudElemForRef(a1);
   return HudElem_SetDefaults(v2);
 }
 
@@ -106439,7 +106439,7 @@ _DWORD *__cdecl HECmd_Destroy(int a1)
 {
   _DWORD *v2; // [esp+4h] [ebp-4h]
 
-  v2 = (_DWORD *)sub_8101988(a1);
+  v2 = (_DWORD *)Scr_HudElemForRef(a1);
   return HudElem_Free(v2);
 }
 
@@ -108447,13 +108447,13 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
     *(&dword_859EA0C + i) = 0;
     memset((void *)(20 * i + 140110352), 0, 0x14u);
   }
-  sub_80DB380((int (__cdecl *)(int))Hunk_AllocXAnimServer);
+  Mantle_CreateAnims((int (__cdecl *)(int))Hunk_AllocXAnimServer);
   dword_855A4E0 = &unk_859EA40;
   if ( !a4 )
   {
     memset(dword_855A4E0, 0, 0xB3BC8u);
-    *((_DWORD *)dword_855A4E0 + 184048) = sub_80AA8AA;
-    *((_DWORD *)dword_855A4E0 + 184049) = sub_811CEFE;
+    *((_DWORD *)dword_855A4E0 + 184048) = Com_FindSoundAlias;
+    *((_DWORD *)dword_855A4E0 + 184049) = G_AnimScriptSound;
     GScr_LoadScripts(a1);
     sub_80D9B7E();
     sub_8106AAC();
@@ -109185,7 +109185,7 @@ int __cdecl sub_8108270(int a1, _DWORD *a2, _DWORD *a3)
   *(float *)(*(_DWORD *)(a1 + 344) + 28) = v3;
   *(_DWORD *)(*(_DWORD *)(a1 + 344) + 160) ^= 2u;
   sub_80F5E80(v3, a1, a3);
-  sub_80DD59E(*(_DWORD *)(a1 + 344), a1, 1, 1u);
+  BG_PlayerStateToEntityState(*(_DWORD *)(a1 + 344), a1, 1, 1u);
   result = sub_810A912((_DWORD *)(*(_DWORD *)(a1 + 344) + 20), (_DWORD *)(a1 + 312));
   if ( v5 )
     return SV_LinkEntity(a1);
@@ -109365,7 +109365,7 @@ void __cdecl sub_81085B8(int a1, int a2)
       v39 = *(_DWORD *)(v64 + 16) & 0xFFFFFDFF;
       sub_80A913C(v42, v43);
       v62 = sub_80A2A84(v43);
-      sub_80A7146((float *)(a2 + 324), (int)v49);
+      AnglesToAxis((float *)(a2 + 324), (int)v49);
       sub_810A912((_DWORD *)(a2 + 312), v51);
       sub_810A986((float *)(a1 + 312), v51, v35);
       v48 = sub_810AA1E(v35, &v50);
@@ -109531,7 +109531,7 @@ void __cdecl sub_81085B8(int a1, int a2)
         sub_80DEB7A((float *)v33, (float *)v31, s[0], (float *)v29);
         *(_DWORD *)(*(_DWORD *)(a1 + 344) + 28) = v29[2];
       }
-      sub_80DD59E(*(_DWORD *)(a1 + 344), a1, 1, 1u);
+      BG_PlayerStateToEntityState(*(_DWORD *)(a1 + 344), a1, 1, 1u);
       sub_810A912((_DWORD *)(*(_DWORD *)(a1 + 344) + 20), (_DWORD *)(a1 + 312));
       sub_80A71F4((int)v44, a1 + 324);
       SV_LinkEntity(a1);
@@ -109864,7 +109864,7 @@ int __cdecl sub_8109A68(int a1)
     v12 = result;
     if ( result )
     {
-      sub_80A7146((float *)(a1 + 324), (int)v10);
+      AnglesToAxis((float *)(a1 + 324), (int)v10);
       sub_810A912((_DWORD *)(a1 + 312), v11);
       sub_810A986((float *)(v12 + 16), (float *)(v13 + 16), v7);
       result = (int)sub_80A50D2((float *)(v13 + 16), v10, (float *)v5);
@@ -109873,8 +109873,8 @@ int __cdecl sub_8109A68(int a1)
         v8[0] = (long double)i * -3.0;
         v8[1] = 0.0;
         v8[2] = 0.0;
-        sub_80A7146(v8, (int)v9);
-        sub_80A4E52(v7, v9, v6);
+        AnglesToAxis(v8, (int)v9);
+        MatrixTransformVector(v7, v9, v6);
         sub_810A942((float *)(v13 + 16), v6, v6);
         sub_80A50D2(v6, v10, (float *)v4);
         G_LocationalTrace(s, (float *)v5, (float *)v4, *(_DWORD *)a1, 2065, (int)&unk_816778C);
@@ -112357,7 +112357,7 @@ void __usercall ScrCmd_attach(long double a1@<st0>, int a2)
   if ( (unsigned int)Scr_GetNumParam() <= 1 )
     v5 = (unsigned __int16)word_87A22A0;
   else
-    v5 = sub_8084434(1u);
+    v5 = Scr_GetConstLowercaseString(1u);
   if ( (unsigned int)Scr_GetNumParam() <= 2 )
     v4 = 0;
   else
@@ -112390,7 +112390,7 @@ void __usercall ScrCmd_detach(long double a1@<st0>, int a2)
   if ( (unsigned int)Scr_GetNumParam() <= 1 )
     v6 = (unsigned __int16)word_87A22A0;
   else
-    v6 = sub_8084434(1u);
+    v6 = Scr_GetConstLowercaseString(1u);
   if ( !sub_811B528(a1, v9, s2, v6) )
   {
     Com_Printf("Current attachments:\n");
@@ -112506,7 +112506,7 @@ void __usercall ScrCmd_LinkTo(long double a1@<st0>, int a2)
   v12 = 0;
   if ( v11 > 1 )
   {
-    v12 = sub_8084434(1u);
+    v12 = Scr_GetConstLowercaseString(1u);
     if ( !*(_BYTE *)SL_ConvertToString(v12) )
       v12 = 0;
   }
@@ -112660,7 +112660,7 @@ int ScrCmd_SoundExists()
   char *v2; // [esp+4h] [ebp-4h]
 
   v2 = (char *)Scr_GetString(0);
-  v0 = sub_80AA8AA(v2);
+  v0 = Com_FindSoundAlias(v2);
   return Scr_AddBool(v0 != 0);
 }
 
@@ -114799,7 +114799,7 @@ int Scr_PlayFXOnTag()
   v8 = Scr_GetEntity(1u);
   if ( !*(_BYTE *)(v8 + 356) )
     Scr_ParamError(1, (int)"cannot play fx on entity with no model");
-  v7 = (const char *)sub_8084434(2u);
+  v7 = (const char *)Scr_GetConstLowercaseString(2u);
   v1 = (const char *)SL_ConvertToString((int)v7);
   if ( strchr(v1, 34) )
     Scr_ParamError(2, (int)"cannot use \" characters in tag names\n");
@@ -115256,7 +115256,7 @@ int GScr_GetNumParts()
 
   v0 = (char *)Scr_GetString(0);
   v3 = (__int16 **)SV_XModelGet(v0);
-  v1 = sub_80C54CE(v3);
+  v1 = XModelNumBones(v3);
   return Scr_AddInt(v1);
 }
 
@@ -115273,13 +115273,13 @@ int GScr_GetPartName()
   v0 = (char *)Scr_GetString(0);
   v6 = (__int16 **)SV_XModelGet(v0);
   v5 = Scr_GetInt(1u);
-  v4 = sub_80C54CE(v6);
+  v4 = XModelNumBones(v6);
   if ( v5 >= v4 )
   {
     v1 = va("index out of range (0 - %d)", v4 - 1);
     Scr_ParamError(1, (int)v1);
   }
-  v3 = *(_WORD *)(sub_80C3314((int)v6) + 2 * v5);
+  v3 = *(_WORD *)(XModelBoneNames((int)v6) + 2 * v5);
   if ( !v3 )
     Scr_ParamError(0, (int)"bad model");
   return Scr_AddConstString(v3);
@@ -115412,8 +115412,8 @@ _DWORD *__cdecl GScr_LocalToWorldCoords(int a1)
 
   v5 = Scr_EntityForRef(a1);
   Scr_GetVector(0, v4);
-  sub_80A7146((float *)(v5 + 324), (int)v2);
-  sub_80A4E52(v4, v2, v3);
+  AnglesToAxis((float *)(v5 + 324), (int)v2);
+  MatrixTransformVector(v4, v2, v3);
   sub_811623A(v3, (float *)(v5 + 312), v3);
   return Scr_AddVector(v3);
 }
@@ -119733,7 +119733,7 @@ int __usercall sub_811B8BA@<eax>(long double a1@<st0>, int *a2, int *a3, int a4,
   if ( !sub_811B720(a1, a2, a3, a4) )
     return 0;
   v8 = a2[130];
-  sub_80A7146(a6, v8 + 16);
+  AnglesToAxis(a6, v8 + 16);
   sub_811D0FC(a5, (_DWORD *)(v8 + 52));
   return 1;
 }
@@ -119831,14 +119831,14 @@ float *__cdecl sub_811BB3A(int a1, int a2)
   v8 = *(float **)v9;
   if ( *(int *)(v9 + 12) < 0 )
   {
-    sub_80A7146(v8 + 81, a2);
+    AnglesToAxis(v8 + 81, a2);
     return (float *)sub_811D0FC((_DWORD *)v8 + 78, (_DWORD *)(a2 + 36));
   }
   else
   {
-    sub_80A7146(v8 + 81, (int)v6);
+    AnglesToAxis(v8 + 81, (int)v6);
     sub_811D0FC((_DWORD *)v8 + 78, v7);
-    sub_811BFC4((int)v8, *(_DWORD *)(v9 + 12));
+    G_DObjCalcPose((int)v8, *(_DWORD *)(v9 + 12));
     v2 = sub_80908D8((int *)v8);
     v4 = (float *)(32 * *(_DWORD *)(v9 + 12) + v2);
     sub_80A913C(v4, v5);
@@ -119872,7 +119872,7 @@ float *__cdecl sub_811BC88(int a1, int a2)
   int v7; // [esp+ACh] [ebp-Ch]
 
   sub_811BB3A(a1, (int)v4);
-  sub_80A7146((float *)(a1 + 324), (int)v5);
+  AnglesToAxis((float *)(a1 + 324), (int)v5);
   v7 = *(_DWORD *)(a1 + 520);
   if ( a2 )
   {
@@ -119953,7 +119953,7 @@ int __cdecl G_DObjUpdateServerTime(int *a1, int a2)
 // 859B5F4: using guessed type int dword_859B5F4;
 
 //----- (0811BF30) --------------------------------------------------------
-int *__cdecl G_DObjCalcPose(int a1)
+int *__cdecl SV_DObjCalcPose(int a1)
 {
   int *result; // eax
   char s[28]; // [esp+10h] [ebp-28h] BYREF
@@ -119974,7 +119974,7 @@ int *__cdecl G_DObjCalcPose(int a1)
 // 816789C: using guessed type int dword_816789C[];
 
 //----- (0811BFC4) --------------------------------------------------------
-int *__cdecl sub_811BFC4(int a1, int a2)
+int *__cdecl G_DObjCalcPose(int a1, int a2)
 {
   int *result; // eax
   char v3[28]; // [esp+10h] [ebp-28h] BYREF
@@ -120002,7 +120002,7 @@ int __cdecl sub_811C056(int *a1, int a2)
   v4 = sub_8090898(a1, a2);
   if ( v4 < 0 )
     return 0;
-  sub_811BFC4((int)a1, v4);
+  G_DObjCalcPose((int)a1, v4);
   return sub_80908D8(a1) + 32 * v4;
 }
 
@@ -120017,7 +120017,7 @@ int __cdecl sub_811C0B2(int a1, int a2, float *a3)
   v8 = (float *)sub_811C056((int *)a1, a2);
   if ( !v8 )
     return 0;
-  sub_80A7146((float *)(a1 + 324), (int)v6);
+  AnglesToAxis((float *)(a1 + 324), (int)v6);
   sub_811D0FC((_DWORD *)(a1 + 312), v7);
   sub_80A913C(v8, v5);
   sub_80A358E(v5, v6, a3);
@@ -120038,7 +120038,7 @@ int __cdecl sub_811C16A(int a1, int a2, float *a3)
   v7 = sub_811C056((int *)a1, a2);
   if ( !v7 )
     return 0;
-  sub_80A7146((float *)(a1 + 324), (int)v5);
+  AnglesToAxis((float *)(a1 + 324), (int)v5);
   sub_811D0FC((_DWORD *)(a1 + 312), v6);
   sub_80A50D2((float *)(v7 + 16), v5, a3);
   return 1;
@@ -120515,7 +120515,7 @@ int __cdecl sub_811CE9E(_DWORD *a1, int a2)
 }
 
 //----- (0811CEFE) --------------------------------------------------------
-int __cdecl sub_811CEFE(int a1, char **a2)
+int __cdecl G_AnimScriptSound(int a1, char **a2)
 {
   unsigned __int8 v2; // al
 
@@ -125023,7 +125023,7 @@ float *__cdecl sub_81265F4(int a1)
 
   v2 = (long double)*(int *)(off_8168620 + 12) * 0.0099999998;
   sub_8127226((float *)(a1 + 632), v2, (float *)(a1 + 644), (float *)(a1 + 632));
-  return sub_80A7146((float *)(a1 + 632), a1 + 72);
+  return AnglesToAxis((float *)(a1 + 632), a1 + 72);
 }
 
 //----- (08126652) --------------------------------------------------------

@@ -1,11 +1,5 @@
 #pragma once
 
-struct scr_entref_t
-{
-	uint16_t entnum;
-	uint16_t classnum;
-};
-
 typedef void (*xfunction_t)();
 typedef void (*xmethod_t)(scr_entref_t);
 
@@ -215,7 +209,7 @@ static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid
 
 struct scr_animtree_t
 {
-	XAnim_s *anims;
+	struct XAnim_s *anims;
 };
 
 typedef struct scrAnimPub_s
@@ -436,8 +430,10 @@ union sval_u
 };
 
 void Scr_Error(const char *error);
+void Scr_ObjectError(const char *error);
 void Scr_ParamError(int paramNum, const char *error);
 int Scr_GetType(unsigned int param);
+unsigned int Scr_GetNumParam();
 void Scr_AddUndefined();
 void Scr_AddBool(bool value);
 void Scr_AddInt(int value);

@@ -60,3 +60,13 @@ int G_LocalizedStringIndex(const char *string)
 	else
 		return 0;
 }
+
+int G_ShaderIndex(const char *string)
+{
+	char dest[64];
+
+	strcpy(dest, string);
+	I_strlwr(dest);
+
+	return G_FindConfigstringIndex(dest, 1566, 128, level.initializing, "shader");
+}

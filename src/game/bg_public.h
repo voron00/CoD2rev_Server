@@ -232,6 +232,15 @@ typedef struct clientInfo_s
 } clientInfo_t;
 static_assert((sizeof(clientInfo_t) == 0x4B8), "ERROR: clientInfo_t size is invalid!");
 
+struct corpseInfo_t
+{
+	XAnimTree_s *tree;
+	int entnum;
+	int time;
+	clientInfo_t ci;
+	byte falling;
+};
+
 struct bgsAnim_t
 {
 	animScriptData_t animScriptData;

@@ -2413,6 +2413,41 @@ const char *FS_LoadedIwdPureChecksums()
 	return info;
 }
 
+char *FS_GetMapBaseName(const char *mapname)
+{
+	int c;
+	int len;
+	static char basename[MAX_QPATH];
+
+	if ( !Q_stricmpn(mapname, "maps/mp/", 8) )
+	{
+		mapname += 8;
+	}
+
+	len = strlen(mapname);
+
+	if (len >= sizeof(basename))
+	{
+		if ( !Q_stricmp(&mapname[len - 3], "bsp") )
+		{
+			len = len - 7;
+		}
+	}
+
+	Com_Memcpy(basename, (char *)mapname, len);
+	basename[len] = 0;
+
+	for ( c = 0; c < len; ++c )
+	{
+		if ( basename[c] == '%' )
+		{
+			basename[c] = '_';
+		}
+	}
+
+	return basename;
+}
+
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles)
 {
 	return FS_ListFilteredFiles(fs_searchpaths, path, extension, 0, behavior, numfiles);
@@ -2422,7 +2457,7 @@ void FS_Dir_f( void )
 {
 	const char    *path;
 	const char    *extension;
-	char    **dirnames;
+	char   		  **dirnames;
 	int ndirs;
 	int i;
 

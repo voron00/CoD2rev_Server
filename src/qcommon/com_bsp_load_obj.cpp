@@ -35,6 +35,18 @@ qboolean Com_IsBspLoaded()
 	return comBspGlob.header != 0;
 }
 
+const char *GetBspExtension()
+{
+	const char *string;
+
+	string = Dvar_GetString("gfx_driver");
+
+	if ( *string )
+		return va("%sbsp", string);
+	else
+		return va("d3dbsp");
+}
+
 int Com_GetBspHeaderData(int data)
 {
 	return data;

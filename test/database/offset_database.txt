@@ -387,7 +387,7 @@ SetJump(0x08084B88, (DWORD)Scr_AddUndefined);
 SetJump(0x08084CBE, (DWORD)Scr_AddVector);
 SetJump(0x08118CC0, (DWORD)Scr_AddEntity);
 SetJump(0x08118E4E, (DWORD)Scr_Notify);
-SetJump(0x080AC246, (DWORD)Com_LoadSoundAliasFile);
+SetJump(0x080AC246, (DWORD)Com_LoadSndVolumeGroups);
 SetJump(0x08091C02, (DWORD)SV_SpawnServer);
 SetJump(0x08115AE2, (DWORD)Scr_ParseGameTypeList);
 SetJump(0x0810695E, (DWORD)G_GetSavePersist);
@@ -1277,6 +1277,8 @@ SetJump(0x08100D80, (DWORD)HudElem_ClearTypeSettings);
 SetJump(0x0807986A, (DWORD)SL_GetStringForInt);
 SetJump(0x08079824, (DWORD)SL_GetStringForFloat);
 SetJump(0x080798B0, (DWORD)SL_GetStringForVector);
+SetJump(0x080AC22C, (DWORD)Com_InitSoundAlias);
+SetJump(0x080AC582, (DWORD)Com_LoadSoundAliasFile);
 
 
 
@@ -1722,7 +1724,23 @@ SetJump(0x080B8B16, (DWORD)DObjInfoGetBoneName);
 SetJump(0x08084434, (DWORD)Scr_GetConstLowercaseString);
 SetJump(0x080C3324, (DWORD)XModelGetBoneIndex);
 SetJump(0x080B712C, (DWORD)DObjGetBoneIndex);
-SetJump(0x080B712C, (DWORD)DObjGetBoneIndex);
+SetJump(0x080ACE9A, (DWORD)Com_MakeSoundAliasesPermanent);
+SetJump(0x080AC8A0, (DWORD)Com_SortTempSoundAliases_r);
+SetJump(0x080AC880, (DWORD)AliasNameCompare);
+SetJump(0x08118C98, (DWORD)Scr_FreeEntity);
+SetJump(0x08115DD2, (DWORD)Scr_GetGameTypeNameForScript);
+SetJump(0x0811CF36, (DWORD)G_SetOrigin);
+SetJump(0x0811CF96, (DWORD)G_SetAngle);
+SetJump(0x080C063C, (DWORD)XAnimCloneAnimTree);
+SetJump(0x080B8BB6, (DWORD)DObjGetTree);
+SetJump(0x080BDE00, (DWORD)XAnimDisplay);
+SetJump(0x080BEEE4, (DWORD)DObjDisplayAnim);
+SetJump(0x080C19AE, (DWORD)XAnimLoadFile);
+SetJump(0x080BA2FA, (DWORD)XAnimLoadDefaultAnim);
+SetJump(0x080C1886, (DWORD)XAnimLoadNotifyInfo);
+SetJump(0x0808AC6A, (DWORD)SV_GetMapBaseName);
+SetJump(0x08065BE0, (DWORD)FS_GetMapBaseName);
+SetJump(0x0811AFBA, (DWORD)G_ShaderIndex);
 
 
 

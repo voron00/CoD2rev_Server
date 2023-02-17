@@ -2,6 +2,12 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
+#ifdef TESTING_LIBRARY
+#define level (*((level_locals_t*)( 0x0859B400 )))
+#else
+extern level_locals_t level;
+#endif
+
 game_hudelem_t g_hudelems[1024];
 
 game_hudelem_field_t g_hudelem_fields[] =
@@ -21,6 +27,28 @@ game_hudelem_field_t g_hudelem_fields[] =
 	{ "sort", 120, 1, 0, 0, NULL, NULL },
 	{ "foreground", 124, 0, -1, 0, HudElem_SetBoolean, NULL },
 	{ "archived", 136, 0, -1, 0, HudElem_SetBoolean, NULL }
+};
+
+scr_method_t g_he_methods[] =
+{
+	{"settext", HECmd_SetText, 0 },
+	{"setplayernamestring", HECmd_SetPlayerNameString, 0 },
+	{"setmapnamestring", HECmd_SetMapNameString, 0 },
+	{"setgametypestring", HECmd_SetGameTypeString, 0 },
+	{"setshader", HECmd_SetShader, 0 },
+	{"settimer", HECmd_SetTimer, 0 },
+	{"settimerup", HECmd_SetTimerUp, 0 },
+	{"settenthstimer", HECmd_SetTenthsTimer, 0 },
+	{"settenthstimerup", HECmd_SetTenthsTimerUp, 0 },
+	{"setclock", HECmd_SetClock, 0 },
+	{"setclockup", HECmd_SetClockUp, 0 },
+	{"setvalue", HECmd_SetValue, 0 },
+	{"setwaypoint", HECmd_SetWaypoint, 0 },
+	{"fadeovertime", HECmd_FadeOverTime, 0 },
+	{"scaleovertime", HECmd_ScaleOverTime, 0 },
+	{"moveovertime", HECmd_MoveOverTime, 0 },
+	{"reset", HECmd_Reset, 0 },
+	{"destroy", HECmd_Destroy, 0 }
 };
 
 const char *g_he_vertalign[] =
@@ -53,20 +81,20 @@ const char *g_he_font[] =   { "default", "bigfixed", "smallfixed", };
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount)
 {
-	unsigned int *offset;
+	unsigned int *position;
 	char buf[2048];
 	const char *stringValue;
 	int i;
 
-	offset = (unsigned int *)(hud + f->constId);
+	position = (unsigned int *)((byte *)hud + f->constId);
 	stringValue = Scr_GetString(0);
 
 	for ( i = 0; i < nameCount; ++i )
 	{
 		if ( !I_stricmp(stringValue, names[i]) )
 		{
-			*offset &= ~(f->size << f->type);
-			*offset |= i << f->type;
+			*position &= ~(f->size << f->shift);
+			*position |= i << f->shift;
 			return;
 		}
 	}
@@ -156,7 +184,7 @@ void HudElem_SetBoolean(game_hudelem_t *hud, int offset)
 
 void HudElem_AddString(game_hudelem_t *hud, const game_hudelem_field_t *field, const char **names)
 {
-	Scr_AddString(names[field->size & (*(int *)(&hud + field->constId) >> field->type)]);
+	Scr_AddString(names[field->size & (*(int *)(&hud + field->constId) >> field->shift)]);
 }
 
 void HudElem_GetFont(game_hudelem_t *hud, int offset)
@@ -244,9 +272,475 @@ void HudElem_SetDefaults(game_hudelem_t *hud)
 	HudElem_ClearTypeSettings(hud);
 }
 
+void HECmd_SetText(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+	const char *string;
+
+	hud = Scr_HudElemForRef(entRef);
+	string = Scr_GetIString(0);
+	HudElem_ClearTypeSettings(hud);
+	hud->elem.type = HE_TYPE_TEXT;
+	hud->elem.text = G_LocalizedStringIndex(string);
+}
+
+void HECmd_SetPlayerNameString(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+	gentity_t *entity;
+
+	hud = Scr_HudElemForRef(entRef);
+	entity = Scr_GetEntity(0);
+
+	if ( entity )
+	{
+		if ( entity->client )
+		{
+			HudElem_ClearTypeSettings(hud);
+			hud->elem.type = HE_TYPE_PLAYERNAME;
+			hud->elem.value = (float)entity->s.number;
+		}
+		else
+		{
+			Com_Printf("Invalid entity passed to hudelem setplayernamestring(), entity is not a client\n");
+		}
+	}
+	else
+	{
+		Com_Printf("Invalid entity passed to hudelem setplayernamestring()\n");
+	}
+}
+
+void HECmd_SetGameTypeString(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+	const char *string;
+
+	hud = Scr_HudElemForRef(entRef);
+	string = Scr_GetString(0);
+
+	if ( string )
+	{
+		if ( Scr_GetGameTypeNameForScript(string) )
+		{
+			SV_SetConfigstring(0x14, string);
+			HudElem_ClearTypeSettings(hud);
+			hud->elem.type = HE_TYPE_GAMETYPE;
+			hud->elem.value = 20.0;
+		}
+		else
+		{
+			Com_Printf("Invalid gametype '%s'\n", string);
+		}
+	}
+	else
+	{
+		Com_Printf("Invalid entity passed to hudelem setgametypestring()\n");
+	}
+}
+
+void HECmd_SetMapNameString(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+	const char *string;
+
+	hud = Scr_HudElemForRef(entRef);
+	string = Scr_GetString(0);
+
+	if ( string )
+	{
+		if ( SV_MapExists(string) )
+		{
+			SV_SetConfigstring(0x13, string);
+			HudElem_ClearTypeSettings(hud);
+			hud->elem.type = HE_TYPE_MAPNAME;
+		}
+		else
+		{
+			Com_Printf("Invalid map name passed to hudelem setmapnamestring(), map not found\n");
+		}
+	}
+	else
+	{
+		Com_Printf("Invalid mapname passed to hudelem setmapnamestring()\n");
+	}
+}
+
+void HECmd_SetShader(scr_entref_t entRef)
+{
+	const char *shader;
+	int index;
+	int height;
+	int width;
+	unsigned int paramNum;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+	paramNum = Scr_GetNumParam();
+
+	if ( paramNum != 1 && paramNum != 3 )
+		Scr_Error("USAGE: <hudelem> setShader(\"shadername\"[, optional_width, optional_height]);");
+
+	shader = Scr_GetString(0);
+	index = G_ShaderIndex(shader);
+
+	if ( paramNum == 1 )
+	{
+		width = 0;
+		height = 0;
+	}
+	else
+	{
+		width = Scr_GetInt(1);
+
+		if ( width < 0 )
+		{
+			Scr_ParamError(1, va("width %i < 0", width));
+		}
+
+		height = Scr_GetInt(2);
+
+		if ( height < 0 )
+		{
+			Scr_ParamError(2, va("height %i < 0", height));
+		}
+	}
+
+	HudElem_ClearTypeSettings(hud);
+	hud->elem.type = HE_TYPE_MATERIAL;
+	hud->elem.materialIndex = index;
+	hud->elem.width = width;
+	hud->elem.height = height;
+}
+
+void HECmd_SetTimer_Internal(scr_entref_t entRef, he_type_t type, const char *funcName)
+{
+	float time;
+	int timeInt;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+
+	if ( Scr_GetNumParam() != 1 )
+	{
+		Scr_Error(va("USAGE: <hudelem> %s(time_in_seconds);\n", funcName));
+	}
+
+	time = Scr_GetFloat(0) * 1000.0;
+	timeInt = ceil(time);
+
+	if ( timeInt <= 0 && type != HE_TYPE_TIMER_UP )
+	{
+		Scr_ParamError(0, va("time %g should be > 0", time));
+	}
+
+	HudElem_ClearTypeSettings(hud);
+	hud->elem.type = type;
+	hud->elem.time = level.time + timeInt;
+}
+
+void HECmd_SetClock_Internal(scr_entref_t entref, he_type_t type, const char *funcName)
+{
+	float time;
+	int height;
+	int width;
+	int index;
+	int duration;
+	int timeInt;
+	unsigned int paramNum;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entref);
+	paramNum = Scr_GetNumParam();
+
+	if ( paramNum != 3 && paramNum != 5 )
+	{
+		Scr_Error(va("USAGE: <hudelem> %s(time_in_seconds, total_clock_time_in_seconds, shadername[, width, height]);\n", funcName));
+	}
+
+	time = Scr_GetFloat(0) * 1000.0;
+	timeInt = ceil(time);
+
+	if ( timeInt <= 0 && type != HE_TYPE_CLOCK_UP )
+	{
+		Scr_ParamError(0, va("time %g should be > 0", time));
+	}
+
+	time = Scr_GetFloat(1) * 1000.0;
+	duration = ceil(time);
+
+	if ( duration <= 0 )
+	{
+		Scr_ParamError(1, va("duration %g should be > 0", time));
+	}
+
+	index = G_ShaderIndex(Scr_GetString(2));
+
+	if ( paramNum == 3 )
+	{
+		width = 0;
+		height = 0;
+	}
+	else
+	{
+		width = Scr_GetInt(3);
+
+		if ( width < 0 )
+		{
+			Scr_ParamError(3,  va("width %i < 0", width));
+		}
+
+		height = Scr_GetInt(4);
+
+		if ( height < 0 )
+		{
+			Scr_ParamError(4, va("height %i < 0", height));
+		}
+	}
+
+	HudElem_ClearTypeSettings(hud);
+	hud->elem.type = type;
+	hud->elem.time = level.time + timeInt;
+	hud->elem.duration = duration;
+	hud->elem.materialIndex = index;
+	hud->elem.width = width;
+	hud->elem.height = height;
+}
+
+void HECmd_SetTimer(scr_entref_t entRef)
+{
+	HECmd_SetTimer_Internal(entRef, HE_TYPE_TIMER_DOWN, "setTimer");
+}
+
+void HECmd_SetTimerUp(scr_entref_t entRef)
+{
+	HECmd_SetTimer_Internal(entRef, HE_TYPE_TIMER_UP, "setTimerUp");
+}
+
+void HECmd_SetTenthsTimer(scr_entref_t entRef)
+{
+	HECmd_SetTimer_Internal(entRef, HE_TYPE_TENTHS_TIMER_DOWN, "setTenthsTimer");
+}
+
+void HECmd_SetTenthsTimerUp(scr_entref_t entRef)
+{
+	HECmd_SetTimer_Internal(entRef, HE_TYPE_TENTHS_TIMER_UP, "setTenthsTimerUp");
+}
+
+void HECmd_SetClock(scr_entref_t entRef)
+{
+	HECmd_SetClock_Internal(entRef, HE_TYPE_CLOCK_DOWN, "setClock");
+}
+
+void HECmd_SetClockUp(scr_entref_t entRef)
+{
+	HECmd_SetClock_Internal(entRef, HE_TYPE_CLOCK_UP, "setClockUp");
+}
+
+void HECmd_SetValue(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+	float value;
+
+	hud = Scr_HudElemForRef(entRef);
+	value = Scr_GetFloat(0);
+	HudElem_ClearTypeSettings(hud);
+	hud->elem.type = HE_TYPE_VALUE;
+	hud->elem.value = value;
+}
+
+void HECmd_SetWaypoint(scr_entref_t entRef)
+{
+	int waypoint;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+	waypoint = Scr_GetInt(0);
+	hud->elem.type = HE_TYPE_WAYPOINT;
+	hud->elem.value = (float)waypoint;
+}
+
+void HECmd_FadeOverTime(scr_entref_t entRef)
+{
+	float value;
+	float fadetime;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+	value = Scr_GetFloat(0);
+
+	if ( value > 0.0 )
+	{
+		if ( value > 60.0 )
+		{
+			Scr_ParamError(0, va("fade time %g > 60", value));
+		}
+	}
+	else
+	{
+		Scr_ParamError(0, va("fade time %g <= 0", value));
+	}
+
+	hud->elem.fadeStartTime = level.time;
+	fadetime = value * 1000.0;
+	hud->elem.fadeTime = floor(fadetime + 0.5);
+	hud->elem.fromColor.rgba = hud->elem.color.rgba;
+}
+
+void HECmd_ScaleOverTime(scr_entref_t entRef)
+{
+	float scaletime;
+	int height;
+	int width;
+	float value;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+
+	if ( Scr_GetNumParam() != 3 )
+		Scr_Error("hudelem scaleOverTime(time_in_seconds, new_width, new_height)");
+
+	value = Scr_GetFloat(0);
+
+	if ( value > 0.0 )
+	{
+		if ( value > 60.0 )
+		{
+			Scr_ParamError(0, va("scale time %g > 60", value));
+		}
+	}
+	else
+	{
+		Scr_ParamError(0, va("scale time %g <= 0", value));
+	}
+
+	width = Scr_GetInt(1);
+	height = Scr_GetInt(2);
+	hud->elem.scaleStartTime = level.time;
+	scaletime = value * 1000.0;
+	hud->elem.scaleTime = floor(scaletime + 0.5);
+	hud->elem.fromWidth = hud->elem.width;
+	hud->elem.fromHeight = hud->elem.height;
+	hud->elem.width = width;
+	hud->elem.height = height;
+}
+
+void HECmd_MoveOverTime(scr_entref_t entRef)
+{
+	float movetime;
+	float value;
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+	value = Scr_GetFloat(0);
+
+	if ( value > 0.0 )
+	{
+		if ( value > 60.0 )
+		{
+			Scr_ParamError(0, va("move time %g > 60", value));
+		}
+	}
+	else
+	{
+		Scr_ParamError(0, va("move time %g <= 0", value));
+	}
+
+	hud->elem.moveStartTime = level.time;
+	movetime = value * 1000.0;
+	hud->elem.moveTime = floor(movetime + 0.5);
+	hud->elem.fromX = hud->elem.x;
+	hud->elem.fromY = hud->elem.y;
+	hud->elem.fromAlignOrg = hud->elem.alignOrg;
+	hud->elem.fromAlignScreen = hud->elem.alignScreen;
+}
+
+void HECmd_Reset(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+	HudElem_SetDefaults(hud);
+}
+
+void HECmd_Destroy(scr_entref_t entRef)
+{
+	game_hudelem_t *hud;
+
+	hud = Scr_HudElemForRef(entRef);
+	HudElem_Free(hud);
+}
+
+void (*HudElem_GetMethod(const char **pName))(scr_entref_t)
+{
+	const char *name;
+	unsigned int i;
+
+	name = *pName;
+
+	for ( i = 0; i < COUNT_OF(g_he_methods); ++i )
+	{
+		if ( !strcmp(name, g_he_methods[i].name) )
+		{
+			*pName = g_he_methods[i].name;
+			return g_he_methods[i].call;
+		}
+	}
+
+	return NULL;
+}
+
+void HudElem_UpdateClient(gclient_s *client, int clientNum, byte which)
+{
+	game_hudelem_t *hud;
+	hudelem_s *clienthud;
+	int current;
+	int archived;
+	unsigned int i;
+
+	if ( (which & HUDELEM_UPDATE_ARCHIVAL) != 0 )
+		memset(client->ps.hud.archival, 0, sizeof(client->ps.hud.archival));
+
+	if ( (which & HUDELEM_UPDATE_CURRENT) != 0 )
+		memset(&client->ps.hud, 0, sizeof(client->ps.hud.current));
+
+	archived = 0;
+	current = 0;
+
+	hud = g_hudelems;
+
+	for ( i = 0; i < 1024; ++i )
+	{
+		if ( hud->elem.type
+		        && (!hud->team || hud->team == client->sess.state.team)
+		        && (hud->clientNum == 1023 || hud->clientNum == clientNum) )
+		{
+			if ( hud->archived )
+			{
+				if ( ((which ^ HUDELEM_UPDATE_ARCHIVAL) & HUDELEM_UPDATE_ARCHIVAL) == 0 )
+				{
+					clienthud = &client->ps.hud.archival[archived++];
+
+					if ( archived <= MAX_HUDELEMS_ARCHIVAL )
+						memcpy(clienthud, hud, sizeof(hudelem_s));
+				}
+			}
+			else if ( (which & HUDELEM_UPDATE_CURRENT) != 0 )
+			{
+				clienthud = &client->ps.hud.current[current++];
+
+				if ( current <= MAX_HUDELEMS_CURRENT )
+					memcpy(clienthud, hud, sizeof(hudelem_s));
+			}
+		}
+
+		++hud;
+	}
+}
+
 void Scr_GetHudElemField(int entnum, int offset)
 {
-	game_hudelem_s *hud;
+	game_hudelem_t *hud;
 	game_hudelem_field_t *field;
 
 	field = &g_hudelem_fields[offset];
@@ -260,7 +754,7 @@ void Scr_GetHudElemField(int entnum, int offset)
 
 void Scr_SetHudElemField(int entnum, int offset)
 {
-	game_hudelem_s *hud;
+	game_hudelem_t *hud;
 	game_hudelem_field_t *field;
 
 	field = &g_hudelem_fields[offset];
@@ -272,12 +766,15 @@ void Scr_SetHudElemField(int entnum, int offset)
 		Scr_SetGenericField((byte *)hud, field->ofs, field->constId);
 }
 
-void Scr_AddHudElem(game_hudelem_t *hud)
+void GScr_AddFieldsForHudElems()
 {
-	Scr_AddEntityNum(hud - g_hudelems, 1);
+	game_hudelem_field_t *i;
+
+	for ( i = g_hudelem_fields; i->name; ++i )
+		Scr_AddClassField(1, i->name, i - g_hudelem_fields);
 }
 
-void Scr_FreeHudElemConstStrings(game_hudelem_s *hud)
+void Scr_FreeHudElemConstStrings(game_hudelem_t *hud)
 {
 	game_hudelem_field_t *i;
 
@@ -286,12 +783,6 @@ void Scr_FreeHudElemConstStrings(game_hudelem_s *hud)
 		if ( i->ofs == 3 )
 			Scr_SetString((uint16_t *)(hud + i->constId), 0);
 	}
-}
-
-void Scr_FreeHudElem(game_hudelem_s *hud)
-{
-	Scr_FreeHudElemConstStrings(hud);
-	Scr_FreeEntityNum(hud - g_hudelems, 1);
 }
 
 void HudElem_Free(game_hudelem_t *hud)
