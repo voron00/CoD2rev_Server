@@ -4,7 +4,7 @@ CXX = g++
 NASM = nasm
 WINDRES=windres
 CFLAGS=-m32 -g -Wall -std=gnu++11
-CFLAGS_TESTLIB=-m32 -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
+CFLAGS_TESTLIB=-m32 -g -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
 CFLAGS_ZLIB=-m32
 CFLAGS_ZLIB_TEST=-m32 -fPIC
 LFLAGS=-m32

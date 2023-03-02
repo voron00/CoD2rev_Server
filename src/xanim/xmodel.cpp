@@ -6,6 +6,12 @@ qboolean XModelBad(XModel *model)
 	return model->bad;
 }
 
+void QDECL XModelGetBounds(const XModel *model, float *mins, float *maxs)
+{
+	VectorCopy(model->mins, mins);
+	VectorCopy(model->maxs, maxs);
+}
+
 void QDECL XModelPartsFree(XModelParts *modelPart)
 {
 	int numBones;

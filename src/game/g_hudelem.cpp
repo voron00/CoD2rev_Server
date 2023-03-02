@@ -86,7 +86,7 @@ void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, c
 	const char *stringValue;
 	int i;
 
-	position = (unsigned int *)((byte *)hud + f->constId);
+	position = (unsigned int *)((byte *)hud + f->ofs);
 	stringValue = Scr_GetString(0);
 
 	for ( i = 0; i < nameCount; ++i )
@@ -174,17 +174,17 @@ void HudElem_SetLocalizedString(game_hudelem_t *hud, int offset)
 	const char *string;
 
 	string = Scr_GetIString(0);
-	*(int *)(&hud + g_hudelem_fields[offset].constId) = G_LocalizedStringIndex(string);
+	*(int *)(&hud + g_hudelem_fields[offset].ofs) = G_LocalizedStringIndex(string);
 }
 
 void HudElem_SetBoolean(game_hudelem_t *hud, int offset)
 {
-	*(int *)(&hud + g_hudelem_fields[offset].constId) = Scr_GetInt(0);
+	*(int *)(&hud + g_hudelem_fields[offset].ofs) = Scr_GetInt(0);
 }
 
 void HudElem_AddString(game_hudelem_t *hud, const game_hudelem_field_t *field, const char **names)
 {
-	Scr_AddString(names[field->size & (*(int *)(&hud + field->constId) >> field->shift)]);
+	Scr_AddString(names[field->size & (*(int *)(&hud + field->ofs) >> field->shift)]);
 }
 
 void HudElem_GetFont(game_hudelem_t *hud, int offset)
@@ -583,7 +583,7 @@ void HECmd_FadeOverTime(scr_entref_t entRef)
 
 	hud->elem.fadeStartTime = level.time;
 	fadetime = value * 1000.0;
-	hud->elem.fadeTime = floor(fadetime + 0.5);
+	hud->elem.fadeTime = Q_rint(fadetime);
 	hud->elem.fromColor.rgba = hud->elem.color.rgba;
 }
 
@@ -618,7 +618,7 @@ void HECmd_ScaleOverTime(scr_entref_t entRef)
 	height = Scr_GetInt(2);
 	hud->elem.scaleStartTime = level.time;
 	scaletime = value * 1000.0;
-	hud->elem.scaleTime = floor(scaletime + 0.5);
+	hud->elem.scaleTime = Q_rint(scaletime);
 	hud->elem.fromWidth = hud->elem.width;
 	hud->elem.fromHeight = hud->elem.height;
 	hud->elem.width = width;
@@ -648,7 +648,7 @@ void HECmd_MoveOverTime(scr_entref_t entRef)
 
 	hud->elem.moveStartTime = level.time;
 	movetime = value * 1000.0;
-	hud->elem.moveTime = floor(movetime + 0.5);
+	hud->elem.moveTime = Q_rint(movetime);
 	hud->elem.fromX = hud->elem.x;
 	hud->elem.fromY = hud->elem.y;
 	hud->elem.fromAlignOrg = hud->elem.alignOrg;
@@ -749,7 +749,7 @@ void Scr_GetHudElemField(int entnum, int offset)
 	if ( field->getter )
 		field->getter(hud, offset);
 	else
-		Scr_GetGenericField((byte *)hud, field->ofs, field->constId);
+		Scr_GetGenericField((byte *)hud, field->type, field->ofs);
 }
 
 void Scr_SetHudElemField(int entnum, int offset)
@@ -763,7 +763,7 @@ void Scr_SetHudElemField(int entnum, int offset)
 	if ( field->setter )
 		field->setter(hud, offset);
 	else
-		Scr_SetGenericField((byte *)hud, field->ofs, field->constId);
+		Scr_SetGenericField((byte *)hud, field->type, field->ofs);
 }
 
 void GScr_AddFieldsForHudElems()
@@ -780,8 +780,8 @@ void Scr_FreeHudElemConstStrings(game_hudelem_t *hud)
 
 	for ( i = g_hudelem_fields; i->name; ++i )
 	{
-		if ( i->ofs == 3 )
-			Scr_SetString((uint16_t *)(hud + i->constId), 0);
+		if ( i->type == 3 )
+			Scr_SetString((uint16_t *)(hud + i->ofs), 0);
 	}
 }
 

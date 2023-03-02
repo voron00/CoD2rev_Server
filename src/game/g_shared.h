@@ -118,10 +118,8 @@ typedef struct
 	byte linked;
 	byte bmodel;
 	byte svFlags;
-	byte pad1;
 	int clientMask[2];
 	byte inuse;
-	byte pad2[3];
 	int broadcastTime;
 	vec3_t mins;
 	vec3_t maxs;
@@ -130,8 +128,7 @@ typedef struct
 	vec3_t absmax;
 	vec3_t currentOrigin;
 	vec3_t currentAngles;
-	uint16_t ownerNum;
-	uint16_t pad3;
+	int ownerNum;
 	int eventTime;
 } entityShared_t;
 
@@ -252,7 +249,7 @@ typedef struct playerState_s
 	int gravity;
 	float leanf;
 	int speed;
-	vec3_t delta_angles;
+	int delta_angles[3];
 	int groundEntityNum;
 	vec3_t vLadderVec;
 	int jumpTime;
@@ -354,7 +351,7 @@ typedef struct
 	int archiveTime;
 	int score;
 	int deaths;
-	uint16_t scriptPersId;
+	uint16_t pers;
 	byte pad2;
 	byte pad;
 	int connected;
@@ -467,9 +464,9 @@ struct trigger_ent_t
 
 struct item_ent_t
 {
-	int ammoCount;
-	int clipAmmoCount;
 	int index;
+	unsigned short ammoCount;
+	unsigned short clipAmmoCount;
 };
 
 struct mover_ent_t
@@ -549,12 +546,12 @@ struct gentity_s
 	int nextthink;
 	int health;
 	int maxHealth;
-	int damage;
+	int dmg;
 	int count;
 	int unknown;
 	union
 	{
-		struct item_ent_t item[2];
+		struct item_ent_t item;
 		struct trigger_ent_t trigger;
 		struct mover_ent_t mover;
 		struct corpse_ent_t corpse;
@@ -562,8 +559,8 @@ struct gentity_s
 	};
 	tagInfo_s *tagInfo;
 	gentity_s *tagChildren;
-	uint16_t attachModelNames[6];
-	uint16_t attachTagNames[6];
+	byte attachModelNames[8];
+	uint16_t attachTagNames[8];
 	int useCount;
 	gentity_s *nextFree;
 };
@@ -624,6 +621,19 @@ typedef struct
 } level_locals_t;
 static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
 
+enum fieldtype_t
+{
+	F_INT,
+	F_FLOAT,
+	F_LSTRING,
+	F_STRING,
+	F_VECTOR,
+	F_ENTITY,
+	F_VECTORHACK,
+	F_OBJECT,
+	F_MODEL
+};
+
 typedef struct game_hudelem_s
 {
 	hudelem_s elem;
@@ -635,13 +645,30 @@ typedef struct game_hudelem_s
 typedef struct game_hudelem_field_s
 {
 	const char *name;
-	unsigned int constId;
 	int ofs;
+	int type;
 	int size;
 	byte shift;
 	void (*setter)(game_hudelem_s *, int);
 	void (*getter)(game_hudelem_s *, int);
 } game_hudelem_field_t;
+
+typedef struct game_entity_field_s
+{
+	const char *name;
+	int ofs;
+	int type;
+	void (*setter)(gentity_s *, int);
+} game_entity_field_t;
+
+typedef struct game_client_field_s
+{
+	const char *name;
+	int ofs;
+	int type;
+	void (*setter)(gclient_s *, const game_client_field_s *);
+	void (*getter)(gclient_s *, const game_client_field_s *);
+} game_client_field_t;
 
 enum g_class_num_t
 {
@@ -690,6 +717,100 @@ typedef struct
 	int createstruct;
 	corpseInfo_t playerCorpseInfo[8];
 } scr_data_t;
+
+typedef struct
+{
+	unsigned short emptystring;
+	unsigned short allies;
+	unsigned short axis;
+	unsigned short current;
+	unsigned short damage;
+	unsigned short death;
+	unsigned short dlight;
+	unsigned short done;
+	unsigned short empty;
+	unsigned short entity;
+	unsigned short failed;
+	unsigned short fraction;
+	unsigned short goal;
+	unsigned short grenade;
+	unsigned short info_notnull;
+	unsigned short invisible;
+	unsigned short key1;
+	unsigned short key2;
+	unsigned short killanimscript;
+	unsigned short left;
+	unsigned short movedone;
+	unsigned short noclass;
+	unsigned short normal;
+	unsigned short pistol;
+	unsigned short plane_waypoint;
+	unsigned short player;
+	unsigned short position;
+	unsigned short primary;
+	unsigned short primaryb;
+	unsigned short prone;
+	unsigned short right;
+	unsigned short rocket;
+	unsigned short rotatedone;
+	unsigned short script_brushmodel;
+	unsigned short script_model;
+	unsigned short script_origin;
+	unsigned short spectator;
+	unsigned short stand;
+	unsigned short surfacetype;
+	unsigned short target_script_trigger;
+	unsigned short tempEntity;
+	unsigned short touch;
+	unsigned short trigger;
+	unsigned short trigger_use;
+	unsigned short trigger_use_touch;
+	unsigned short trigger_damage;
+	unsigned short trigger_lookat;
+	unsigned short truck_cam;
+	unsigned short worldspawn;
+	unsigned short binocular_enter;
+	unsigned short binocular_exit;
+	unsigned short binocular_fire;
+	unsigned short binocular_release;
+	unsigned short binocular_drop;
+	unsigned short begin;
+	unsigned short intermission;
+	unsigned short menuresponse;
+	unsigned short playing;
+	unsigned short none;
+	unsigned short dead;
+	unsigned short auto_change;
+	unsigned short manual_change;
+	unsigned short freelook;
+	unsigned short call_vote;
+	unsigned short vote;
+	unsigned short snd_enveffectsprio_level;
+	unsigned short snd_enveffectsprio_shellshock;
+	unsigned short snd_channelvolprio_holdbreath;
+	unsigned short snd_channelvolprio_pain;
+	unsigned short snd_channelvolprio_shellshock;
+	unsigned short tag_flash;
+	unsigned short tag_flash_11;
+	unsigned short tag_flash_2;
+	unsigned short tag_flash_22;
+	unsigned short tag_brass;
+	unsigned short j_head;
+	unsigned short tag_weapon;
+	unsigned short tag_player;
+	unsigned short tag_camera;
+	unsigned short tag_aim;
+	unsigned short tag_aim_animated;
+	unsigned short tag_origin;
+	unsigned short tag_butt;
+	unsigned short tag_weapon_right;
+	unsigned short back_low;
+	unsigned short back_mid;
+	unsigned short back_up;
+	unsigned short neck;
+	unsigned short head;
+	unsigned short pelvis;
+} scr_const_t;
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
@@ -750,6 +871,9 @@ void CalculateRanks();
 const char* G_ModelName(int modelIndex);
 int G_LocalizedStringIndex(const char *string);
 int G_ShaderIndex(const char *string);
+XModel* G_CachedModelForIndex(int modelIndex);
+unsigned int G_ModelIndex(const char *name);
+void G_OverrideModel(int modelIndex, const char *defaultModelName);
 
 gentity_t* Scr_EntityForRef(scr_entref_t entref);
 game_hudelem_t* Scr_HudElemForRef(scr_entref_t entref);
@@ -759,3 +883,45 @@ void Scr_AddHudElem(game_hudelem_t *hud);
 void Scr_FreeHudElem(game_hudelem_s *hud);
 
 char* Scr_GetGameTypeNameForScript(const char *pszGameTypeScript);
+
+void Scr_ReadOnlyField(gentity_s *ent, int offset);
+void Scr_SetOrigin(gentity_s *ent, int offset);
+void Scr_SetAngles(gentity_s *ent, int offset);
+void Scr_SetHealth(gentity_s *ent, int offset);
+unsigned int GScr_AllocString(const char *string);
+int GScr_GetHeadIconIndex(const char *pszIcon);
+int GScr_GetStatusIconIndex(const char *pszIcon);
+int Scr_SetObjectField(unsigned int classnum, int entnum, int offset);
+void Scr_GetObjectField(unsigned int classnum, int entnum, int offset);
+int Scr_SetEntityField(int entnum, int offset);
+void Scr_GetEntityField(int entnum, int offset);
+
+void G_SetOrigin(gentity_s *ent, const float *origin);
+void G_SetAngle(gentity_s *ent, const float *angle);
+
+void SetClientViewAngle(gentity_s *ent, const float *angle);
+void ClientUserinfoChanged(int clientNum);
+
+void ClientScr_ReadOnly(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetSessionTeam(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetSessionState(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetMaxHealth(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetScore(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetStatusIcon(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetHeadIcon(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetHeadIconTeam(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetSpectatorClient(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetArchiveTime(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_SetPSOffsetTime(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetSessionTeam(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetSessionState(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetStatusIcon(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetHeadIcon(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetHeadIconTeam(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetArchiveTime(gclient_s *pSelf, const game_client_field_t *pField);
+void ClientScr_GetPSOffsetTime(gclient_s *pSelf, const game_client_field_t *pField);
+void Scr_GetClientField(gclient_s *client, int offset);
+void Scr_SetClientField(gclient_s *client, int offset);
+void GScr_AddFieldsForClient();
+
+void GScr_LoadConsts();

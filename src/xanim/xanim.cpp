@@ -67,7 +67,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 	int i;
 	int j;
 
-	treeIndex = *(&tree->children + infoIndex);
+	treeIndex = tree->children[infoIndex];
 
 	if ( treeIndex )
 	{

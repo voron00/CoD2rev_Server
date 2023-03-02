@@ -421,6 +421,11 @@ unsigned int SL_GetStringForVector(const float *v)
 	return SL_GetString_(s, 0);
 }
 
+unsigned int Scr_AllocString(const char *string)
+{
+	return SL_GetString(string, 1);
+}
+
 void Scr_SetString(uint16_t *to, unsigned int from)
 {
 	if ( from )

@@ -1,4 +1,4 @@
-#include "com_math.h"
+#include "q_shared.h"
 
 vec2_t vec2_origin = {0, 0};
 vec3_t vec3_origin = {0, 0, 0};
@@ -66,6 +66,13 @@ void MatrixTransformVector(const float *in1, const float *in2, float *out)
 	*out = *in1 * *in2 + in1[1] * in2[3] + in1[2] * in2[6];
 	out[1] = *in1 * in2[1] + in1[1] * in2[4] + in1[2] * in2[7];
 	out[2] = *in1 * in2[2] + in1[1] * in2[5] + in1[2] * in2[8];
+}
+
+void MatrixTransformVector43(const float *in1, const float *in2, float *out)
+{
+	*out = *in1 * *in2 + in1[1] * in2[3] + in1[2] * in2[6] + in2[9];
+	out[1] = *in1 * in2[1] + in1[1] * in2[4] + in1[2] * in2[7] + in2[10];
+	out[2] = *in1 * in2[2] + in1[1] * in2[5] + in1[2] * in2[8] + in2[11];
 }
 
 void MatrixInverse(const float *in, float *out)
@@ -149,4 +156,246 @@ void AnglesToAxis( const vec3_t angles, vec3_t axis[3] )
 
 	AngleVectors( angles, axis[0], right, axis[2] );
 	VectorSubtract( vec3_origin, right, axis[1] );
+}
+
+vec_t Vec2Normalize( vec3_t v )
+{
+	float length, ilength;
+
+	length = v[0] * v[0] + v[1] * v[1];
+	length = sqrt( length );
+
+	if ( length )
+	{
+		ilength = 1 / length;
+		v[0] *= ilength;
+		v[1] *= ilength;
+	}
+
+	return length;
+}
+
+
+vec_t Vec3Normalize( vec3_t v )
+{
+	float length, ilength;
+
+	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	length = sqrt( length );
+
+	if ( length )
+	{
+		ilength = 1 / length;
+		v[0] *= ilength;
+		v[1] *= ilength;
+		v[2] *= ilength;
+	}
+
+	return length;
+}
+
+vec_t Vec4Normalize( vec4_t v )
+{
+	float length, ilength;
+
+	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3];
+	length = sqrt( length );
+
+	if ( length )
+	{
+		ilength = 1 / length;
+		v[0] *= ilength;
+		v[1] *= ilength;
+		v[2] *= ilength;
+		v[3] *= ilength;
+	}
+
+	return length;
+}
+
+double Vec2NormalizeTo(const float *v, float *out)
+{
+	float length;
+
+	length = Vec2Length(v);
+
+	if ( length == 0.0 )
+	{
+		length = 1.0;
+	}
+
+	Vec2Scale(v, length, out);
+	return length;
+}
+
+vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out )
+{
+	float length, result;
+
+	length = VectorLength(v);
+	result = length;
+
+	if ( length <= 0.0 )
+	{
+		length = 1.0;
+	}
+
+	VectorScale(v, 1.0 / length, out);
+	return result;
+}
+
+void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross)
+{
+	cross[0] = v0[1] * v1[2] - v0[2] * v1[1];
+	cross[1] = v0[2] * v1[0] - v0[0] * v1[2];
+	cross[2] = v0[0] * v1[1] - v0[1] * v1[0];
+}
+
+float AngleNormalize360( float angle )
+{
+	return ( 360.0 / 65536 ) * ( (int)( angle * ( 65536 / 360.0 ) ) & 65535 );
+}
+
+float AngleNormalize180( float angle )
+{
+	angle = AngleNormalize360( angle );
+
+	if ( angle > 180.0 )
+	{
+		angle -= 360.0;
+	}
+
+	return angle;
+}
+
+float AngleDelta( float angle1, float angle2 )
+{
+	return AngleNormalize180( angle1 - angle2 );
+}
+
+int BoxOnPlaneSide( vec3_t emins, vec3_t emaxs, struct cplane_s *p )
+{
+	float dist1, dist2;
+	int sides;
+
+	// fast axial cases
+	if ( p->type < 3 )
+	{
+		if ( p->dist <= emins[p->type] )
+		{
+			return 1;
+		}
+		if ( p->dist >= emaxs[p->type] )
+		{
+			return 2;
+		}
+		return 3;
+	}
+
+	// general case
+	switch ( p->signbits )
+	{
+	case 0:
+		dist1 = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
+		dist2 = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
+		break;
+	case 1:
+		dist1 = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
+		dist2 = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
+		break;
+	case 2:
+		dist1 = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
+		dist2 = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
+		break;
+	case 3:
+		dist1 = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
+		dist2 = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
+		break;
+	case 4:
+		dist1 = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
+		dist2 = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
+		break;
+	case 5:
+		dist1 = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
+		dist2 = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
+		break;
+	case 6:
+		dist1 = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
+		dist2 = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
+		break;
+	case 7:
+		dist1 = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
+		dist2 = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
+		break;
+	default:
+		dist1 = dist2 = 0;      // shut up compiler
+		break;
+	}
+
+	sides = 0;
+
+	if ( dist1 >= p->dist )
+	{
+		sides = 1;
+	}
+
+	if ( dist2 < p->dist )
+	{
+		sides |= 2;
+	}
+
+	return sides;
+}
+
+float RadiusFromBounds( const vec3_t mins, const vec3_t maxs )
+{
+	int i;
+	vec3_t corner;
+	float a, b;
+
+	for ( i = 0 ; i < 3 ; i++ )
+	{
+		a = fabs( mins[i] );
+		b = fabs( maxs[i] );
+		corner[i] = a > b ? a : b;
+	}
+
+	return VectorLength( corner );
+}
+
+float RadiusFromBounds2D( const vec3_t mins, const vec3_t maxs )
+{
+	int i;
+	vec2_t corner;
+	float a, b;
+
+	for ( i = 0 ; i < 2 ; i++ )
+	{
+		a = fabs( mins[i] );
+		b = fabs( maxs[i] );
+		corner[i] = a > b ? a : b;
+	}
+
+	return Vec2Length( corner );
+}
+
+vec_t Q_rint( vec_t in )
+{
+	return floor( in + 0.5 );
+}
+
+void SnapAngles(vec3_t angles)
+{
+	float delta;
+	int r;
+	int i;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		r = Q_rint(angles[i]);
+		delta = (long double)r - angles[i];
+
+		if ( Square(delta) < 0.0000010000001 )
+			angles[i] = (float)r;
+	}
 }

@@ -26,3 +26,8 @@ void SetAnimCheck(int bAnimCheck)
 {
 	scrAnimGlob.bAnimCheck = bAnimCheck;
 }
+
+XAnim* Scr_GetAnims(unsigned int index)
+{
+	return (XAnim_s *)scrAnimPub.xanim_num[index - 128];
+}

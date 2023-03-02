@@ -1,6 +1,23 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
+#ifdef TESTING_LIBRARY
+#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
+#else
+extern scrVarPub_t scrVarPub;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
+#else
+extern scrCompilePub_t scrCompilePub;
+#endif
+
+qboolean Scr_IsInOpcodeMemory(const char *pos)
+{
+	return pos - scrVarPub.programBuffer < scrCompilePub.programLen;
+}
+
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset)
 {
 	const char *model;

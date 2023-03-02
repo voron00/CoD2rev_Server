@@ -16,7 +16,7 @@ void CM_InitThreadData(int threadContext)
 
 	tti = &g_traceThreadInfo[threadContext];
 	tti->checkcount = 0;
-	tti->partitions = (int *)Hunk_Alloc(sizeof(int16_t) * cm.partitionCount);
+	tti->partitions = (uint16_t *)Hunk_Alloc(sizeof(uint16_t) * cm.partitionCount);
 	tti->edges = (int *)Hunk_Alloc(sizeof(int32_t) * cm.edgeCount);
 	tti->verts = (int *)Hunk_Alloc(sizeof(int32_t) * cm.vertCount);
 	tti->box_brush = (cbrush_t *)Hunk_Alloc(sizeof(cbrush_t));
@@ -39,6 +39,16 @@ clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule)
 	VectorCopy( maxs, box_brush->maxs );
 
 	return CAPSULE_MODEL_HANDLE;
+}
+
+int CM_LeafCluster( int leafnum )
+{
+	if ( leafnum < 0 || leafnum >= cm.numLeafs )
+	{
+		Com_Error( ERR_DROP, "CM_LeafCluster: bad number" );
+	}
+
+	return cm.leafs[leafnum].cluster;
 }
 
 void* CM_Hunk_Alloc(int size)

@@ -480,7 +480,7 @@ void TempMemoryReset()
 	currentPos = 0;
 }
 
-// VoroN: CoD2 doesn't have Hunk users, so these are just a wrappers for copmatibility with CoD4x code and assembly
+// VoroN: CoD2 don't have Hunk users, so these are just a wrappers for copmatibility with CoD4x code and assembly
 // VoroN: These should NOT be used in the actual code.
 HunkUser* QDECL Hunk_UserCreate(int size, const char *name, byte flaga, byte flagb, int type)
 {

@@ -147,13 +147,44 @@ extern void CMod_LoadCollisionPartitions();
 
 void CMod_LoadLeafs_wrap(int a1, bool usePvs)
 {
-	 CMod_LoadLeafs(usePvs);
+	CMod_LoadLeafs(usePvs);
 }
 
 
 void CMod_LoadBrushRelated_wrap(int a1, bool usePvs)
 {
-	 CMod_LoadLeafs(usePvs);
+	CMod_LoadLeafs(usePvs);
+}
+
+#ifdef TESTING_LIBRARY
+#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
+#else
+extern bgs_t level_bgs;
+#endif
+
+
+#define cm_world (*((cm_world_t*)( 0x08185D80 )))
+
+#define net_fields (((game_client_field_s*)( 0x08150B80 )))
+void test2()
+{
+	/*
+	static int printed = 0;
+
+	if (printed)
+		return;
+
+	printed = 1;
+	// Just print stuff until program segfaults
+	for(int i = 0; i < 16384; i++)
+	{
+		if (net_fields[i].name == NULL)
+			return;
+		Com_Printf("{ \"%s\", %i, %i, %p, %p }\n", net_fields[i].name, net_fields[i].ofs, net_fields[i].type, net_fields[i].setter, net_fields[i].getter);
+	}
+	*/
+
+	//printf("%s\n", level_bgs.clientinfo[0].name);
 }
 
 void Sys_RedirectFunctions()
@@ -183,10 +214,11 @@ void Sys_RedirectFunctions()
 	SetJump(0x0805448C, (DWORD)CMod_LoadCollisionBorders);
 	SetJump(0x0805461E, (DWORD)CMod_LoadCollisionPartitions);
 	*/
-	
+
 	// SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
 
 	//SetJump(0x08094F02, (DWORD)test);
+	//SetJump(0x08094F02, (DWORD)test2);
 
 
 	//SetJump(0x080C501A, (DWORD)XModelGetStaticBounds);
@@ -644,25 +676,125 @@ void Sys_RedirectFunctions()
 	SetJump(0x0810E290, (DWORD)Scr_ConstructMessageString);
 	SetJump(0x0807E1F6, (DWORD)Scr_AddClassField);
 
+	SetJump(0x0807C2F6, (DWORD)CopyArray);
+	SetJump(0x0807E856, (DWORD)Scr_EvalArrayRef);
+	SetJump(0x0807C290, (DWORD)SafeRemoveVariable);
+	SetJump(0x0807EB00, (DWORD)ClearArray);
+	SetJump(0x0807BC7C, (DWORD)Scr_FindVariableField);
+	SetJump(0x0807BF8E, (DWORD)ClearVariableField);
+	SetJump(0x0808244A, (DWORD)VM_ArchiveStack);
+	
+	
+	SetJump(0x08082EE2, (DWORD)Scr_TerminateThread);
+	SetJump(0x08082F56, (DWORD)VM_Notify);
+	
+	
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING
+	//SetJump(0x0807FB08, (DWORD)VM_ExecuteInternal);
+	
+	
+	SetJump(0x08077DBA, (DWORD)Scr_PrintPrevCodePos);
+	SetJump(0x0807C83C, (DWORD)Scr_EvalVariableField);
+	SetJump(0x0807DDD2, (DWORD)Scr_EvalBinaryOperator);
+	
+	
+	
+	
+
 	// ALL referenced Hud elem stuff
 	SetJump(0x0810169E, (DWORD)Scr_GetHudElemField);
 	SetJump(0x08101716, (DWORD)Scr_SetHudElemField);
 	SetJump(0x0810178E, (DWORD)Scr_FreeHudElemConstStrings);
 	SetJump(0x0810193A, (DWORD)GScr_AddFieldsForHudElems);
-	
+
 	SetJump(0x08100EDA, (DWORD)HudElem_Alloc);
 	SetJump(0x08100F84, (DWORD)HudElem_ClientDisconnect);
 	SetJump(0x08100FE6, (DWORD)HudElem_DestroyAll);
 	SetJump(0x081023F2, (DWORD)HudElem_UpdateClient);
 	SetJump(0x08118D3A, (DWORD)Scr_FreeHudElem);
 	SetJump(0x08118D6E, (DWORD)Scr_AddHudElem);
-	
 	SetJump(0x0810236E, (DWORD)HudElem_GetMethod);
-	
-	
-	
+
+
+
+	SetJump(0x080B6F64, (DWORD)DObjAbort);
+	SetJump(0x080B6F34, (DWORD)DObjShutdown);
+	SetJump(0x080B6EE8, (DWORD)DObjInit);
+	SetJump(0x080B819E, (DWORD)DObjFree);
+	SetJump(0x080B71A8, (DWORD)DObjCreateDuplicateParts);
+
+
+	SetJump(0x080B7EFC, (DWORD)DObjCreate);
+
+	SetJump(0x08062A66, (DWORD)Com_ServerDObjCreate);
+	SetJump(0x08062B4C, (DWORD)Com_ServerDObjFree);
+	SetJump(0x0806289C, (DWORD)Com_GetServerDObj);
+	SetJump(0x08062BAC, (DWORD)Com_InitDObj);
+	SetJump(0x08062C26, (DWORD)Com_ShutdownDObj);
+	SetJump(0x08062C40, (DWORD)Com_AbortDObj);
+
+
+
+	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
+	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
+
+
+
 	extern void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth);
 	SetJump(0x080BDE00, (DWORD)XAnimDisplay);
+
+
+	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
+
+	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
+	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
+	SetJump(0x0811B422, (DWORD)G_OverrideModel);
+
+
+	extern void CM_UnlinkEntity(svEntity_t *ent);
+	SetJump(0x0805DAA0, (DWORD)CM_UnlinkEntity);
+
+	extern int sub_805D8C4(float *mins, float *maxs);
+	SetJump(0x0805D8C4, (DWORD)sub_805D8C4);
+
+	extern void sub_805DD50(cStaticModel_s *model, unsigned short index);
+	SetJump(0x0805DD50, (DWORD)sub_805DD50);
+
+	extern void sub_805DCC8(svEntity_t *svEnt, unsigned short sectorId);
+	SetJump(0x0805DCC8, (DWORD)sub_805DCC8);
+
+	extern void CM_SortNode(unsigned short nodeIndex, float *mins, float *maxs);
+	SetJump(0x0805DDD0, (DWORD)CM_SortNode);
+
+	extern void CM_LinkEntity(svEntity_t *ent, float *absmin, float *absmax, clipHandle_t clipHandle);
+	SetJump(0x0805E18C, (DWORD)CM_LinkEntity);
+
+
+
+
+
+
+
+
+
+
+
+
+	SetJump(0x080F6506, (DWORD)ClientUserinfoChanged);
+
+
+
+
+
+
+	SetJump(0x080F5E1E, (DWORD)Scr_GetClientField);
+	SetJump(0x080F5DBC, (DWORD)Scr_SetClientField);
+	SetJump(0x080F5D66, (DWORD)GScr_AddFieldsForClient);
+
+
+	SetJump(0x08118822, (DWORD)Scr_SetEntityField);
+	SetJump(0x08118A22, (DWORD)Scr_GetEntityField);
+
 }
 
 class cCallOfDuty2Pro

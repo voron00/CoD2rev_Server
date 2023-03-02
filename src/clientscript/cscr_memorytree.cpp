@@ -450,6 +450,14 @@ void MT_Free(void* p, int numBytes)
 	MT_FreeIndex((MemoryNode*)p - scrMemTreeGlob.nodes, numBytes);
 }
 
+qboolean MT_Realloc(int oldNumBytes, int newNumbytes)
+{
+	int size;
+
+	size = MT_GetSize(oldNumBytes);
+	return size >= MT_GetSize(newNumbytes);
+}
+
 byte* MT_GetRefByIndex(int index)
 {
 	if (index > MEMORY_NODE_COUNT)

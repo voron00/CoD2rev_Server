@@ -3,6 +3,8 @@
 #include "../clientscript/clientscript_public.h"
 #include "../xanim/xanim_public.h"
 
+#define MAX_ANIMSCRIPT_ANIMCOMMANDS         8
+
 typedef enum
 {
 	AISTATE_RELAXED,
@@ -126,7 +128,7 @@ static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid
 typedef struct
 {
 	int index;
-	unsigned int value;
+	int value[2];
 } animScriptCondition_t;
 
 typedef struct
@@ -135,18 +137,15 @@ typedef struct
 	short animIndex[2];
 	unsigned short animDuration[2];
 	struct snd_alias_list_t *soundAlias;
-	unsigned short tagName;
-	unsigned short flags;
 } animScriptCommand_t;
-static_assert((sizeof(animScriptCommand_t) == 0x14), "ERROR: animScriptCommand_t size is invalid!");
+static_assert((sizeof(animScriptCommand_t) == 0x10), "ERROR: animScriptCommand_t size is invalid!");
 
 typedef struct
 {
 	int numConditions;
 	animScriptCondition_t conditions[NUM_ANIM_CONDITIONS];
 	int numCommands;
-	animScriptCommand_t commands[8];
-	int unk;
+	animScriptCommand_t commands[MAX_ANIMSCRIPT_ANIMCOMMANDS];
 } animScriptItem_t;
 static_assert((sizeof(animScriptItem_t) == 0xF4), "ERROR: animScriptItem_t size is invalid!");
 
@@ -222,10 +221,10 @@ typedef struct clientInfo_s
 	float lerpMoveDir;
 	float lerpLean;
 	vec3_t playerAngles;
+	int dobjDirty;
+	int weaponState;
 	clientControllers_t control;
-	unsigned int clientConditions[10][2];
-	XAnimTree_s *pXAnimTree;
-	char weaponModel;
+	int clientConditions[10][2];
 	int stanceTransitionTime;
 	int turnAnimEndTime;
 	char turnAnimType;

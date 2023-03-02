@@ -37,6 +37,8 @@ scrParserGlob_t scrParserGlob;
 scrParserPub_t scrParserPub;
 #endif
 
+char g_EndPos;
+
 unsigned int Scr_GetLineNumInternal(const char *buf, unsigned int sourcePos, const char **startLine, int *col)
 {
 	unsigned int lineNum;
@@ -113,6 +115,95 @@ void Scr_PrintSourcePos(conChannel_t channel, const char *filename, const char *
 		Com_PrintMessage(channel, " ");
 
 	Com_PrintMessage(channel, "*\n");
+}
+
+OpcodeLookup* Scr_GetPrevSourcePosOpcodeLookup(const char *codePos)
+{
+	int middle;
+	signed int high;
+	signed int low;
+
+	low = 0;
+	high = scrParserGlob.opcodeLookupLen - 1;
+
+	while ( low <= high )
+	{
+		middle = (high + low) / 2;
+
+		if ( codePos < scrParserGlob.opcodeLookup[middle].codePos )
+		{
+			high = middle - 1;
+		}
+		else
+		{
+			low = middle + 1;
+
+			if ( middle + 1 == scrParserGlob.opcodeLookupLen || codePos < scrParserGlob.opcodeLookup[low].codePos )
+				return &scrParserGlob.opcodeLookup[middle];
+		}
+	}
+
+	return 0;
+}
+
+unsigned int Scr_GetPrevSourcePos(const char *codePos, unsigned int index)
+{
+	return scrParserGlob.sourcePosLookup[Scr_GetPrevSourcePosOpcodeLookup(codePos)->sourcePosIndex + index].sourcePos;
+}
+
+unsigned int Scr_GetSourceBuffer(const char *codePos)
+{
+	signed int bufferIndex;
+
+	for ( bufferIndex = scrParserPub.sourceBufferLookupLen - 1;
+	        bufferIndex > 0
+	        && (!scrParserPub.sourceBufferLookup[bufferIndex].codePos
+	            || scrParserPub.sourceBufferLookup[bufferIndex].codePos > codePos);
+	        --bufferIndex )
+	{
+		;
+	}
+
+	return bufferIndex;
+}
+
+void Scr_PrintPrevCodePos(conChannel_t channel, const char *codePos, unsigned int index)
+{
+	unsigned int bufferIndex;
+
+	if ( !codePos )
+	{
+		Com_PrintMessage(channel, "<frozen thread>\n");
+		return;
+	}
+
+	if ( codePos == &g_EndPos )
+	{
+		Com_PrintMessage(channel, "<removed thread>\n");
+	}
+	else
+	{
+		if ( scrVarPub.developer )
+		{
+			if ( scrVarPub.programBuffer && Scr_IsInOpcodeMemory(codePos) )
+			{
+				bufferIndex = Scr_GetSourceBuffer(codePos - 1);
+				Scr_PrintSourcePos(
+				    channel,
+				    scrParserPub.sourceBufferLookup[bufferIndex].buf,
+				    scrParserPub.sourceBufferLookup[bufferIndex].sourceBuf,
+				    Scr_GetPrevSourcePos(codePos - 1, index));
+				return;
+			}
+		}
+		else if ( Scr_IsInOpcodeMemory(codePos - 1) )
+		{
+			Com_PrintMessage(channel, va("@ %d\n", codePos - scrVarPub.programBuffer));
+			return;
+		}
+
+		Com_PrintMessage(channel, va("%s\n\n", codePos));
+	}
 }
 
 void CompileError(unsigned int sourcePos, const char *format, ...)

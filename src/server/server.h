@@ -94,7 +94,7 @@ typedef struct client_s
 	int				pureAuthentic;
 	netchan_t		netchan;
 	int 			guid;
-	short			clscriptid;
+	unsigned short	clscriptid;
 	int				bot;
 	int				serverId;
 	voices_t		voicedata[40];
@@ -262,7 +262,19 @@ void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... );
 void SV_SetConfig(int start, int max, unsigned short bit);
 void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value);
 void SV_SetConfigstring(unsigned int index, const char *val);
+void SV_GetConfigstring( int index, char *buffer, int bufferSize );
 const char* SV_GetConfigstringConst(int index);
+void SV_GetUserinfo( int index, char *buffer, int bufferSize );
 
+qboolean SV_IsLocalClient(int clientNum);
 qboolean SV_MapExists(const char *name);
 const char *SV_GetMapBaseName(const char *mapname);
+XModel* SV_XModelGet(const char *name);
+int SV_NumForGentity( gentity_t *ent );
+gentity_t *SV_GentityNum( int num );
+playerState_t *SV_GameClientNum( int num );
+svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt );
+gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
+
+void SV_LinkEntity( gentity_t *gEnt );
+void SV_UnlinkEntity( gentity_t *gEnt );

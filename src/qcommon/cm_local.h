@@ -67,25 +67,21 @@ typedef struct dmaterial_s
 } dmaterial_t;
 static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
 
+struct cStaticModelWritable
+{
+	unsigned short nextModelInWorldSector;
+};
+
 typedef struct cStaticModel_s
 {
-	uint16_t writable;
+	cStaticModelWritable writable;
 	XModel *xmodel;
 	vec3_t origin;
 	vec3_t invScaledAxis[3];
 	vec3_t absmin;
 	vec3_t absmax;
 } cStaticModel_t;
-
-typedef struct cplane_s
-{
-	vec3_t normal;
-	float dist;
-	byte type;
-	byte signbits;
-	byte pad[2];
-} cplane_t;
-static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
+static_assert((sizeof(cStaticModel_t) == 80), "ERROR: cStaticModel_t size is invalid!");
 
 typedef struct cbrushside_s
 {
@@ -208,8 +204,8 @@ static_assert((sizeof(CollisionTriangle_t) == 72), "ERROR: CollisionTriangle_t s
 
 typedef struct CollisionPartition
 {
-	char triCount;
-	char borderCount;
+	byte triCount;
+	byte borderCount;
 	CollisionTriangle_t *triIndices;
 	CollisionBorder_t *borders;
 } CollisionPartition_t;
@@ -292,7 +288,7 @@ typedef struct TraceThreadInfo
 	int checkcount;
 	int *edges;
 	int *verts;
-	int *partitions;
+	unsigned short *partitions;
 	cbrush_t *box_brush;
 	cmodel_t *box_model;
 } TraceThreadInfo;
@@ -312,9 +308,9 @@ typedef struct traceWork_s
 	int contents;
 	qboolean isPoint;
 	qboolean axialCullOnly;
+	float radius;
 	float offsetZ;
 	vec3_t radiusOffset;
-	float boundingRadius;
 	TraceThreadInfo threadInfo;
 } traceWork_t;
 static_assert((sizeof(traceWork_t) == 0xB8), "ERROR: traceWork_t size is invalid!");
@@ -325,12 +321,56 @@ typedef struct
 	vec3_t normal;
 	int surfaceFlags;
 	int contents;
-	const char *material;
-	unsigned short entityNum;
-	unsigned short entityClassNum;
+	dmaterial_t *material;
+	unsigned __int16 entityNum;
+	unsigned __int16 entityClassNum;
 	byte walkable;
 	byte padding;
 	byte allsolid;
 	byte startsolid;
 } trace_t;
 static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
+
+typedef struct worldContents_s
+{
+	int contentsStaticModels;
+	int contentsEntities;
+	uint16_t entities;
+	uint16_t staticModels;
+} worldContents_t;
+
+typedef struct worldTree_s
+{
+	float dist;
+	uint16_t axis;
+	uint16_t nextFree;
+	uint16_t child[2];
+} worldTree_t;
+
+typedef struct worldSector_s
+{
+	worldContents_t contents;
+	worldTree_t tree;
+} worldSector_t;
+
+struct cm_world_t
+{
+	float mins[3];
+	float maxs[3];
+	bool sorted;
+	uint16_t freeHead;
+	worldSector_t sectors[1024];
+};
+static_assert((sizeof(cm_world_t) == 0x601C), "ERROR: cm_world_t size is invalid!");
+
+typedef struct leafList_s
+{
+	int count;
+	int maxcount;
+	qboolean overflowed;
+	uint16_t *list;
+	vec3_t bounds[2];
+	int lastLeaf;
+} leafList_t;
+
+cmodel_t *CM_ClipHandleToModel( clipHandle_t handle );

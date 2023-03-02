@@ -333,8 +333,12 @@ void Com_LoadBsp(const char *filename);
 void Com_UnloadBsp();
 void Com_CleanupBsp();
 
-void Com_ShutdownDObj();
+void Com_ServerDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle);
+void Com_ServerDObjFree(int handle);
+DObj* Com_GetServerDObj(int handle);
 void Com_InitDObj();
+void Com_ShutdownDObj();
+void Com_AbortDObj();
 
 void Sys_OutOfMemErrorInternal(const char *filename, int line);
 void Sys_UnimplementedFunctionInternal(const char *function);
@@ -361,7 +365,13 @@ void CM_LoadMap(const char *name, int *checksum);
 void CM_LoadStaticModels();
 void CM_Cleanup(void);
 void CM_Shutdown();
+
+void CM_LinkEntity(svEntity_t *ent, float *absmin, float *absmax, clipHandle_t clipHandle);
+void CM_UnlinkEntity(svEntity_t *ent);
+
 clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule);
+int CM_LeafCluster( int leafnum );
+int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, uint16_t *list, int listsize, int *lastLeaf );
 
 #include "../xanim/xanim_public.h"
 XModel* CM_XModelPrecache(const char *name);

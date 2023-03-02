@@ -172,8 +172,9 @@ typedef struct XAnimTree_s
 	XAnim_s *anims;
 	uint16_t parent;
 	uint16_t pad;
-	uint16_t children;
-} XAnimTree; // !!! Size not confirmed
+	uint16_t children[1];
+} XAnimTree;
+static_assert((sizeof(XAnimTree) == 0xC), "ERROR: XAnimTree size is invalid!");
 
 struct XBoneInfo
 {
@@ -261,26 +262,32 @@ struct DSkelPartBits_s
 	int anim[4];
 	int control[4];
 	int skel[4];
+	DObjAnimMat Mat;
 };
 
 struct DSkel_t
 {
 	DSkelPartBits_s *partBits;
 	int timeStamp;
-	DObjAnimMat *mat;
 };
 
 typedef struct DObj_s
 {
 	XAnimTree_s *tree;
 	DSkel_t skel;
-	unsigned short duplicateParts;
+	unsigned __int16 *duplicateParts;
+	unsigned __int16 duplicatePartsSize;
 	unsigned int ignoreCollision;
 	byte numModels;
 	byte numBones;
-	byte duplicatePartsSize;
-	XModel *models[1];
-} DObj; // !!! Size not confirmed
+	byte flags;
+	XModel *models[8];
+	byte modelIndex[8];
+	byte boneIndex[8];
+	vec3_t mins;
+	vec3_t maxs;
+} DObj;
+static_assert((sizeof(DObj) == 100), "ERROR: DObj size is invalid!");
 
 struct XAnimState
 {
@@ -312,8 +319,15 @@ typedef struct
 } XAnimInfo;
 static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
 
+void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum);
+void DObjCreateDuplicateParts(DObj_s *obj);
+void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs);
 void DObjInit();
 void DObjShutdown();
+void DObjFree(DObj_s *obj);
+void DObjAbort();
+
+int DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
 
 void XAnimFree(XAnimParts *parts);
 void XAnimFreeList(XAnim *anims);
@@ -327,8 +341,9 @@ void QDECL XModelFree(XModel *model);
 XModel* QDECL XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
 XModelParts* QDECL XModelPartsLoad(XModel *model, const char *partName, void *(*Alloc)(int));
 XModelParts* QDECL XModelPartsLoadFile(XModel *model, const char *partName, void *(*Alloc)(int));
-
 XAnimParts* QDECL XAnimLoadFile(const char *name, void *(*Alloc)(int));
+void QDECL XModelGetBounds(const XModel *model, float *mins, float *maxs);
+int QDECL XModelGetBoneIndex(const XModel *model, unsigned int name);
 
 #ifdef __cplusplus
 }
@@ -339,6 +354,12 @@ XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 
 qboolean XModelGetStaticBounds(const XModel *model, const float *axis, float *mins, float *maxs);
 
+const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
 XAnimParts* XAnimPrecache(const char *name, void *(*Alloc)(int));
 void XAnimInit();
 void XAnimShutdown();
+
+unsigned short* XModelBoneNames(XModel *model);
+int XModelGetContents(const XModel *model);
+
+XAnim* Scr_GetAnims(unsigned int index);

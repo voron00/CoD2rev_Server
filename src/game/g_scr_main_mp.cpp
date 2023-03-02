@@ -8,6 +8,32 @@
 scr_data_t g_scr_data;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define g_entities ((gentity_t*)( 0x08665480 ))
+#else
+extern gentity_t g_entities[];
+#endif
+
+extern game_hudelem_t g_hudelems[];
+
+gentity_t* Scr_EntityForRef(scr_entref_t entRef)
+{
+	if ( entRef.classnum == CLASS_NUM_ENTITY )
+		return &g_entities[entRef.entnum];
+
+	Scr_ObjectError("not an entity");
+	return 0;
+}
+
+game_hudelem_t* Scr_HudElemForRef(scr_entref_t entRef)
+{
+	if ( entRef.classnum == CLASS_NUM_HUDELEM )
+		return &g_hudelems[entRef.entnum];
+
+	Scr_ObjectError("not a hud element");
+	return 0;
+}
+
 char* Scr_GetGameTypeNameForScript(const char *pszGameTypeScript)
 {
 	int i;
@@ -146,9 +172,92 @@ void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const cha
 			{
 				string[stringLen] = '.';
 			}
+
 			++stringLen;
 		}
 	}
 
 	string[stringLen] = 0;
+}
+
+void Scr_SetOrigin(gentity_s *ent, int offset)
+{
+	vec3_t origin;
+
+	Scr_GetVector(0, origin);
+	G_SetOrigin(ent, origin);
+
+	if ( ent->r.linked )
+		SV_LinkEntity(ent);
+}
+
+void Scr_SetAngles(gentity_s *ent, int offset)
+{
+	vec3_t angles;
+
+	Scr_GetVector(0, angles);
+	G_SetAngle(ent, angles);
+}
+
+void Scr_SetHealth(gentity_s *ent, int offset)
+{
+	int health;
+
+	health = Scr_GetInt(0);
+
+	if ( ent->client )
+	{
+		ent->health = health;
+		ent->client->ps.stats[0] = health;
+	}
+	else
+	{
+		ent->maxHealth = health;
+		ent->health = health;
+	}
+}
+
+unsigned int GScr_AllocString(const char *string)
+{
+	return Scr_AllocString(string);
+}
+
+int GScr_GetHeadIconIndex(const char *pszIcon)
+{
+	char dest[MAX_STRING_CHARS];
+	int i;
+
+	if ( !*pszIcon )
+		return 0;
+
+	for ( i = 0; i < 15; ++i )
+	{
+		SV_GetConfigstring(i + 31, dest, 1024);
+
+		if ( !I_stricmp(dest, pszIcon) )
+			return i + 1;
+	}
+
+	Scr_Error(va("Head icon '%s' was not precached\n", pszIcon));
+	return 0;
+}
+
+int GScr_GetStatusIconIndex(const char *pszIcon)
+{
+	char dest[MAX_STRING_CHARS];
+	int i;
+
+	if ( !*pszIcon )
+		return 0;
+
+	for ( i = 0; i < 8; ++i )
+	{
+		SV_GetConfigstring(i + 23, dest, 1024);
+
+		if ( !I_stricmp(dest, (char *)pszIcon) )
+			return i + 1;
+	}
+
+	Scr_Error(va("Status icon '%s' was not precached\n", pszIcon));
+	return 0;
 }

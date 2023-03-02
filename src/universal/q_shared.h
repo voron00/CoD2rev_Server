@@ -1,5 +1,11 @@
 #pragma once
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <math.h>
+
+#include "com_math.h"
+
 #define PRODUCT_VERSION "1.0"
 #define GAME_STRING "CoD2 MP"
 
@@ -196,6 +202,20 @@ typedef struct pc_token_s
 	int linescrossed;
 } pc_token_t;
 
+typedef struct cplane_s
+{
+	vec3_t normal;
+	float dist;
+	byte type;
+	byte signbits;
+	byte pad[2];
+} cplane_t;
+static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
+
+#define SOLID_BMODEL 0xffffff
+#define CONTENTS_SOLID          1       	// an eye is never valid in a solid
+#define CONTENTS_BODY           0x2000000   // should never be on a brush, only in game
+
 extern qboolean com_fileAccessed;
 
 short   LittleShort( short l );
@@ -289,3 +309,4 @@ qboolean I_IsEqualUnitWSpace(char *cmp1, char *cmp2);
 char *I_CleanStr(char *string);
 char I_CleanChar(char character);
 bool Com_ValidXModelName(const char *name);
+qboolean Info_Validate( const char *s );

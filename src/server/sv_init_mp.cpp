@@ -210,6 +210,27 @@ void SV_SetConfigValueForKey(int start, int max, const char *key, const char *va
 	SV_SetConfigstring(i + start + max, value);
 }
 
+void SV_GetConfigstring( int index, char *buffer, int bufferSize )
+{
+	if ( bufferSize < 1 )
+	{
+		Com_Error( ERR_DROP, "SV_GetConfigstring: bufferSize == %i", bufferSize );
+	}
+
+	if ( index < 0 || index >= MAX_CONFIGSTRINGS )
+	{
+		Com_Error( ERR_DROP, "SV_GetConfigstring: bad index %i\n", index );
+	}
+
+	if ( !sv.configstrings[index] )
+	{
+		buffer[0] = 0;
+		return;
+	}
+
+	Q_strncpyz( buffer, sv.configstrings[index], bufferSize );
+}
+
 const char* SV_GetConfigstringConst(int index)
 {
 	const char *configstring;
@@ -220,4 +241,19 @@ const char* SV_GetConfigstringConst(int index)
 		return "";
 
 	return configstring;
+}
+
+void SV_GetUserinfo( int index, char *buffer, int bufferSize )
+{
+	if ( bufferSize < 1 )
+	{
+		Com_Error( ERR_DROP, "SV_GetUserinfo: bufferSize == %i", bufferSize );
+	}
+
+	if ( index < 0 || index >= sv_maxclients->current.integer )
+	{
+		Com_Error( ERR_DROP, "SV_GetUserinfo: bad index %i\n", index );
+	}
+
+	Q_strncpyz( buffer, svs.clients[ index ].userinfo, bufferSize );
 }

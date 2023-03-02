@@ -32,24 +32,24 @@ static signed int SortRanks(const void *num1, const void *num2)
 	client2 = &level.clients[*(int *)num1];
 	client1 = &level.clients[*(int *)num2];
 
-	if ( client2->sess.connected == 1 )
+	if ( client2->sess.connected == CS_ZOMBIE )
 		return 1;
 
-	if ( client1->sess.connected == 1 )
+	if ( client1->sess.connected == CS_ZOMBIE )
 		return -1;
 
-	if ( client2->sess.state.team == 3 && client1->sess.state.team == 3 )
+	if ( client2->sess.state.team == TEAM_SPECTATOR && client1->sess.state.team == TEAM_SPECTATOR )
 	{
 		if ( client2 >= client1 )
 			return client2 > client1;
 		else
 			return -1;
 	}
-	else if ( client2->sess.state.team == 3 )
+	else if ( client2->sess.state.team == TEAM_SPECTATOR )
 	{
 		return 1;
 	}
-	else if ( client1->sess.state.team == 3 )
+	else if ( client1->sess.state.team == TEAM_SPECTATOR )
 	{
 		return -1;
 	}
@@ -85,7 +85,8 @@ void CalculateRanks()
 		if ( level.clients[i].sess.connected )
 		{
 			level.sortedClients[level.numConnectedClients++] = i;
-			if ( level.clients[i].sess.state.team != 3 && level.clients[i].sess.connected == 2 )
+
+			if ( level.clients[i].sess.state.team != TEAM_SPECTATOR && level.clients[i].sess.connected == CS_CONNECTED )
 				++level.numVotingClients;
 		}
 	}
