@@ -590,7 +590,7 @@ _DWORD *__cdecl Field_Clear(_DWORD *a1);
 int __cdecl sub_8062622(int a1);
 _DWORD *__cdecl sub_806263E(int a1);
 int __cdecl sub_806265A(_DWORD *a1);
-int __cdecl sub_8062676(int a1);
+int __cdecl Com_SetWeaponInfoMemory(int a1);
 void __cdecl sub_8062684(int a1);
 int __cdecl sub_80626A8(_BYTE *a1, int a2, int a3, int a4, int a5);
 int sub_8062782();
@@ -986,7 +986,7 @@ int __cdecl sub_8075354(int a1);
 int *__cdecl sub_80753A6(int a1);
 char *__cdecl ScriptCompile(int *a1, int a2, int a3);
 int __cdecl sub_8075710(int a1);
-void sub_8075758();
+void Scr_CompileShutdown();
 int __cdecl AddRefToValue(int *a1);
 int __cdecl RemoveRefToValue(_DWORD *a1);
 _BOOL4 __cdecl Scr_IsInOpcodeMemory(int a1);
@@ -1024,7 +1024,7 @@ int __cdecl MT_Free(int a1, int a2);
 void *MT_BeginRelocate();
 int *__cdecl MT_FreeForLength(int a1, unsigned int a2, int a3);
 void __cdecl MT_EndRelocate(unsigned __int8 *ptr);
-_BOOL4 __cdecl sub_8076B6C(int a1, int a2);
+_BOOL4 __cdecl MT_Realloc(int a1, int a2);
 void Scr_InitOpcodeLookup();
 void sub_8076C84();
 void __cdecl sub_8076D92(int a1, int a2);
@@ -1119,7 +1119,7 @@ void Scr_DumpScriptVariablesDefault();
 int Var_ResetAll();
 int *Var_Init();
 int Var_Shutdown();
-unsigned int __cdecl sub_807A3E8(int a1);
+unsigned int __cdecl GetVariableKeyObject(int a1);
 int __cdecl FindVariableIndexInternal(int a1, int a2);
 int __cdecl FindVariableIndex(int a1, int a2);
 int __cdecl GetNewVariableIndexInternal3(int a1, unsigned int a2, int a3);
@@ -1131,17 +1131,17 @@ int __cdecl GetVariableIndexInternal(int a1, unsigned int a2);
 int __cdecl MakeVariableExternal(__int16 *a1, int a2);
 int __cdecl ClearObjectInternal(int a1);
 int __cdecl ClearObject(int a1);
-int __cdecl sub_807AFAC(int a1, int a2);
+int __cdecl Scr_SetThreadNotifyName(int a1, int a2);
 int __cdecl Scr_ClearThread(int a1);
 int __cdecl sub_807B04E(int a1);
 int __cdecl Scr_RemoveThreadNotifyName(int a1);
 int __cdecl Scr_GetThreadNotifyName(int a1);
 int __cdecl Scr_SetThreadWaitTime(int a1, int a2);
-int __cdecl sub_807B190(int a1);
-unsigned int __cdecl sub_807B1C8(int a1);
+int __cdecl Scr_ClearWaitTime(int a1);
+unsigned int __cdecl Scr_GetThreadWaitTime(int a1);
 unsigned int __cdecl GetParentLocalId(int a1);
 unsigned int __cdecl GetSafeParentLocalId(int a1);
-unsigned int __cdecl sub_807B22A(unsigned int a1);
+unsigned int __cdecl GetStartLocalId(unsigned int a1);
 int __cdecl Scr_KillThread(int a1);
 int __cdecl Scr_KillEndonThread(int a1);
 int AllocVariable();
@@ -1151,7 +1151,7 @@ int AllocObject();
 int __cdecl AllocEntity(int a1, __int16 a2);
 int Scr_AllocArray();
 int __cdecl AllocThread(__int16 a1);
-int __cdecl sub_807B700(__int16 a1, int a2);
+int __cdecl AllocChildThread(__int16 a1, int a2);
 int __cdecl Scr_GetSelf(int a1);
 int __cdecl FreeChildValue(int a1);
 int __cdecl AddRefToObject(int a1);
@@ -1172,23 +1172,23 @@ int __cdecl FindObjectVariable(int a1, int a2);
 int __cdecl GetArrayVariableIndex(int a1, int a2);
 int __cdecl GetNewArrayVariableIndex(int a1, int a2);
 int __cdecl Scr_GetVariableField(int a1, int a2);
-// int *__userpurge sub_807BC7C@<eax>(int *a1, int a2, int a3);
+// int *__userpurge Scr_FindVariableField@<eax>(int *a1, int a2, int a3);
 // _DWORD *__userpurge Scr_GetArrayIndexValue@<eax>(_DWORD *a1, unsigned int a2);
 int __cdecl ClearVariableField(int a1, int a2, int a3);
 int __cdecl GetArrayVariable(int a1, int a2);
 int __cdecl GetNewArrayVariable(int a1, int a2);
 int __cdecl GetVariable(int a1, unsigned int a2);
 int __cdecl GetNewVariable(int a1, unsigned int a2);
-int __cdecl sub_807C0F0(int a1, int a2);
-int __cdecl sub_807C11A(int a1, int a2);
+int __cdecl GetObjectVariable(int a1, int a2);
+int __cdecl GetNewObjectVariable(int a1, int a2);
 int __cdecl GetNewObjectVariableReverse(int a1, int a2);
 int __cdecl RemoveVariable(int a1, int a2);
 int __cdecl RemoveNextVariable(int a1);
 int __cdecl RemoveObjectVariable(int a1, int a2);
-int __cdecl sub_807C248(int a1, int a2);
+int __cdecl SafeRemoveArrayVariable(int a1, int a2);
 int __cdecl RemoveArrayVariable(int a1, int a2);
 int __cdecl SafeRemoveVariable(int a1, int a2);
-int __cdecl sub_807C2F6(int a1, int a2);
+int __cdecl CopyArray(int a1, int a2);
 int __cdecl SetVariableValue(int a1, int *a2);
 int __cdecl SetNewVariableValue(int a1, int *a2);
 __int16 *__cdecl GetVariableValueAddress(int a1);
@@ -1196,29 +1196,29 @@ int __cdecl SetVariableEntityFieldValue(int a1, unsigned int a2, int *a3);
 unsigned int __cdecl ClearVariableValue(int a1);
 int __cdecl SetVariableFieldValue(int a1, int *a2);
 // int *__userpurge Scr_EvalVariable@<eax>(int *a1, int a2);
-int __cdecl sub_807C6AE(int a1);
-// int *__userpurge sub_807C72C@<eax>(int *a1, int a2, int a3);
-// int *__userpurge sub_807C83C@<eax>(int *a1, int a2);
-void __cdecl sub_807C8B2(int *a1);
+int __cdecl Scr_EvalVariableObject(int a1);
+// int *__userpurge Scr_EvalVariableEntityField@<eax>(int *a1, int a2, int a3);
+// int *__userpurge Scr_EvalVariableFieldInternal@<eax>(int *a1, int a2);
+void __cdecl Scr_EvalSizeValue(int *a1);
 int __cdecl GetArraySize(int a1);
 int __cdecl FindNextSibling(int a1);
-int __cdecl sub_807CA16(int a1);
+int __cdecl FindPrevSibling(int a1);
 unsigned int __cdecl GetVariableName(int a1);
 int __cdecl GetObjectA(int a1);
 int __cdecl GetArray(int a1);
 int __cdecl FindObject(int a1);
-_BOOL4 __cdecl sub_807CB3E(int a1);
-_BOOL4 __cdecl sub_807CBAA(int a1);
-void __cdecl sub_807CBD8(int *a1);
-void __cdecl sub_807CC38(float *a1);
+_BOOL4 __cdecl IsFieldObject(int a1);
+_BOOL4 __cdecl Scr_EvalBoolNot(int a1);
+void __cdecl Scr_EvalBoolComplement(int *a1);
+void __cdecl Scr_CastBool(float *a1);
 int __cdecl Scr_CastString(int *a1);
 int __cdecl Scr_CastDebugString(int *a1);
 int __cdecl sub_807CEE4(int a1);
-void __cdecl sub_807CF1E(_DWORD *a1);
-int __cdecl sub_807CFFA(int a1, int *a2);
+void __cdecl Scr_CastVector(_DWORD *a1);
+int __cdecl Scr_EvalFieldObject(int a1, int *a2);
 void __cdecl Scr_UnmatchingTypesError(int *a1, int *a2);
-void __cdecl sub_807D15A(int *a1, int *a2);
-void __cdecl sub_807D1D4(int *a1, int a2);
+void __cdecl Scr_CastWeakerPair(int *a1, int *a2);
+void __cdecl Scr_CastWeakerStringPair(int *a1, int a2);
 void __cdecl Scr_EvalOr(int *a1, int *a2);
 void __cdecl Scr_EvalExOr(int *a1, int *a2);
 void __cdecl Scr_EvalAnd(int *a1, int *a2);
@@ -1239,19 +1239,19 @@ void __cdecl Scr_EvalBinaryOperator(int a1, int *a2, int *a3);
 _BOOL4 __cdecl sub_807DF52(int a1);
 int __cdecl GetVarType(int a1);
 void __cdecl Scr_FreeEntityNum(int a1, int a2);
-int sub_807E04A();
+int Scr_FreeEntityList();
 unsigned int *sub_807E0C6();
 int __cdecl Scr_SetClassMap(int a1);
 int __cdecl sub_807E182(int a1);
 int __cdecl Scr_AddClassField(int a1, char *s2, unsigned __int16 a3);
 int __cdecl Scr_GetOffset(int a1, int a2);
-int __cdecl sub_807E346(int a1, int a2);
+int __cdecl FindEntityId(int a1, int a2);
 int __cdecl Scr_GetEntityId(int a1, int a2);
 int __cdecl Scr_EvalArrayIndex(int a1, int *a2);
 int __cdecl Scr_FindArrayIndex(int a1, int *a2);
 void __cdecl Scr_EvalArray(int *a1, int *a2);
 int __cdecl Scr_EvalArrayRef(int a1);
-void __cdecl sub_807EB00(int a1, int *a2);
+void __cdecl ClearArray(int a1, int *a2);
 int __cdecl sub_807ED9A(int a1);
 // _WORD *__userpurge Scr_GetEntityIdRef@<eax>(_WORD *a1, int a2);
 int __cdecl sub_807EDFC(int a1, int a2);
@@ -1261,12 +1261,12 @@ long double __cdecl Scr_GetObjectEntryUsage(int a1);
 long double __cdecl Scr_GetEndonUsage(int a1);
 long double __cdecl Scr_GetObjectUsage(int a1);
 long double __cdecl Scr_GetThreadUsage(int a1, float *a2);
-int __cdecl sub_807F168(char *s1, _DWORD *a2);
+int __cdecl Scr_FindField(char *s1, _DWORD *a2);
 int __cdecl Scr_AddFieldsForFile(char *src);
 int __cdecl Scr_AddFields(const char *a1, char *a2);
 int __cdecl Scr_FreeValue(int a1);
 int __cdecl sub_807F568(int a1);
-void sub_807F64C();
+void Scr_AllocGameVariable();
 int __cdecl sub_807F676(int a1);
 int __cdecl sub_807F6F2(char a1);
 int sub_807F740();
@@ -1280,11 +1280,11 @@ int Scr_Init();
 bool __cdecl Scr_Settings(int a1, int a2, int a3);
 void Scr_Shutdown();
 void Scr_Abort();
-int __cdecl sub_807F9F2(int a1);
+int __cdecl Scr_SetLoading(int a1);
 void Scr_ErrorInternal();
 int Scr_ClearOutParams();
-int sub_807FACC();
-int sub_807FAEE();
+int FreeTempVariableObject();
+int FreeTempVariable();
 int __cdecl VM_ExecuteInternal(unsigned __int8 *a1, int a2, int a3, _DWORD *a4, char *a5);
 void *__cdecl sub_8081F8C(_DWORD *a1);
 char *__cdecl Scr_GetNextCodepos(int *a1, char *a2, int a3, int a4, _DWORD *a5);
@@ -1293,15 +1293,15 @@ int __cdecl VM_CancelNotify(int a1, int a2);
 int __cdecl VM_ArchiveStack(int a1, int a2, _DWORD *a3, int a4, int *a5);
 int __cdecl sub_8082572(int a1);
 int __cdecl sub_80825C2(int a1, _DWORD *a2, int a3);
-int __cdecl sub_8082754(int a1, int a2, int a3);
+int __cdecl VM_TerminateStack(int a1, int a2, int a3);
 int __cdecl sub_80828BE(int a1, int a2, char a3);
-int __cdecl sub_8082A4A(int a1);
-int __cdecl sub_8082AC0(int a1, int a2);
+int __cdecl Scr_TerminateRunningThread(int a1);
+int __cdecl Scr_TerminateWaitThread(int a1, int a2);
 int __cdecl sub_8082B7E(int a1);
-int __cdecl sub_8082C1A(int a1, int a2);
+int __cdecl Scr_TerminateWaittillThread(int a1, int a2);
 int __cdecl sub_8082D9A(int a1, int a2);
 _BOOL4 __cdecl sub_8082E74(unsigned int a1);
-int __cdecl sub_8082EE2(unsigned int a1);
+int __cdecl Scr_TerminateThread(unsigned int a1);
 int __cdecl VM_Notify(int a1, int a2, int *a3);
 int __cdecl sub_8083426(int a1, int a2, int a3, int a4);
 int __cdecl sub_80834DC(int a1);
@@ -1311,15 +1311,15 @@ int IncInParam();
 int __cdecl VM_Execute(int a1, char *a2, int a3);
 int __cdecl Scr_ExecThread(int a1, int a2);
 int __cdecl sub_8083A1A(int a1, int a2, int a3, int a4);
-int __cdecl sub_8083AAC(int a1, int a2);
+int __cdecl Scr_AddExecThread(int a1, int a2);
 int __cdecl sub_8083B14(int a1, int a2, int a3, int a4);
 int __cdecl Scr_FreeThread(unsigned __int16 a1);
 int __cdecl sub_8083BAA(char *a1, int a2);
 void Scr_RunCurrentThreadsInternal();
 int __cdecl sub_8083CBA(int a1, int a2, int a3, char a4, int a5);
 int __cdecl sub_8083D82(int a1, int *a2, int a3);
-int sub_8083E96();
-unsigned int *__cdecl sub_8083EDA(int a1, int a2);
+int Scr_InitSystem();
+unsigned int *__cdecl Scr_ShutdownSystem(int a1, int a2);
 _BOOL4 Scr_IsSystemActive();
 int __cdecl Scr_GetInt(unsigned int a1);
 // unsigned __int16 *__userpurge Scr_GetAnim@<eax>(unsigned __int16 *a1, unsigned int a2, int a3);
@@ -1336,7 +1336,7 @@ int __cdecl Scr_GetIString(unsigned int a1);
 void __cdecl Scr_GetVector(unsigned int a1, _DWORD *a2);
 int __cdecl Scr_GetFunc(unsigned int a1);
 // _WORD *__userpurge Scr_GetEntityRef@<eax>(_WORD *a1, unsigned int a2);
-int __cdecl sub_808491A(unsigned int a1);
+int __cdecl Scr_GetObject(unsigned int a1);
 int __cdecl Scr_GetType(unsigned int a1);
 int __cdecl sub_80849F8(unsigned int a1);
 int __cdecl Scr_GetPointerType(unsigned int a1);
@@ -1364,7 +1364,7 @@ void __cdecl Scr_ObjectError(int a1);
 int __cdecl SetEntityFieldValue(int a1, int a2, int a3, int a4);
 // _DWORD *__userpurge GetEntityFieldValue@<eax>(_DWORD *a1, char *a2, int a3, int a4);
 int __cdecl Scr_SetStructField(int a1, int a2);
-int __cdecl sub_8084F6A(int a1, int a2, int a3);
+int __cdecl Scr_SetDynamicEntityField(int a1, int a2, int a3);
 int sub_8084F9A();
 void Scr_RunCurrentThreads();
 int Scr_ResetTimeout();
@@ -1452,7 +1452,7 @@ void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5);
 // int __usercall SV_FreeClient@<eax>(long double a1@<st0>, int a2);
 // void __usercall SV_FreeClients(long double a1@<st0>);
 // void __usercall SV_DirectConnect(long double a1@<st0>, void *a2, void *a3, void *a4, void *a5, void *a6);
-int sub_808DC2C();
+int SV_FreeClientScriptPers();
 // void __usercall SV_DropClient(long double a1@<st0>, int a2, char *a3);
 _DWORD *__cdecl SV_DelayDropClient(_DWORD *a1, _DWORD *a2);
 // int __usercall sub_808DECA@<eax>(long double a1@<st0>, int a2);
@@ -1493,8 +1493,8 @@ void *__cdecl sub_8090408(size_t a1);
 void *__cdecl sub_8090438(size_t n, int a2);
 _DWORD *__cdecl sub_8090470(size_t size);
 void __cdecl sub_8090484(_DWORD *ptr);
-int __cdecl sub_8090498(int a1, int a2, int a3, int a4, int a5);
-int __cdecl sub_80904C6(int a1, _DWORD *a2);
+int __cdecl SV_LocateGameData(int a1, int a2, int a3, int a4, int a5);
+int __cdecl SV_GetUsercmd(int a1, _DWORD *a2);
 void *__cdecl SV_AllocXModelPrecache(size_t a1);
 void *__cdecl SV_AllocXModelPrecacheColl(size_t a1);
 int __cdecl SV_XModelGet(char *s1); // idb
@@ -1525,7 +1525,7 @@ void Com_FreeWeaponInfoMemory();
 int __cdecl sub_8090AAA(char *dest, int); // idb
 int __cdecl sub_8090AFE(int a1);
 int __cdecl sub_8090B42(int a1);
-int __cdecl sub_8090B5E(int a1);
+int __cdecl SV_IsLocalClient(int a1);
 // void __usercall SV_ShutdownGameProgs(long double a1@<st0>);
 // void __usercall SV_SetGametype(long double a1@<st0>);
 // void __usercall SV_InitGameVM(long double a1@<st0>, int a2, int a3);
@@ -1785,7 +1785,7 @@ float *__cdecl MatrixInverse(float *a1, float *a2);
 float *__cdecl sub_80A47DE(int a1, int a2);
 float *__cdecl MatrixTransformVector(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A5028(float *a1, float *a2, float *a3);
-float *__cdecl sub_80A50D2(float *a1, float *a2, float *a3);
+float *__cdecl MatrixTransformVector43(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A5194(float *a1, float *a2, float *a3);
 int __cdecl sub_80A530C(float *a1, float a2);
 float *__cdecl sub_80A5372(float *a1, float *a2, float *a3);
@@ -2209,7 +2209,7 @@ int __cdecl Com_InitThreadData(int a1);
 char *__cdecl Info_ValueForKey(char *s, char *a2);
 char *__cdecl sub_80B5D40(char *s, char *s1);
 char *__cdecl sub_80B5E72(char *s, char *s1);
-_BOOL4 __cdecl sub_80B5FA4(char *s);
+_BOOL4 __cdecl Info_Validate(char *s);
 void __cdecl Info_SetValueForKey(char *s, char *s1, int a3);
 void __cdecl Info_SetValueForKey_Big(char *s, char *s1, int a3);
 _BOOL4 __cdecl sub_80B645E(int a1, int a2, int a3, char *s, int a5, int (__cdecl *a6)(int, char *, _DWORD), void (__cdecl *a7)(int, char *));
@@ -2333,7 +2333,7 @@ float *__cdecl sub_80BB590(unsigned __int16 *a1, float a2, int a3, float *a4);
 float *__cdecl sub_80BB642(unsigned __int16 **a1, float a2, int a3, float *a4);
 float *__cdecl sub_80BB682(unsigned __int16 *a1, float a2, int a3, float *a4);
 void __cdecl sub_80BB77C(float *a1, float *a2);
-float *__cdecl sub_80BB82A(int a1, float a2, float a3, float a4, float *a5, int a6);
+float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, float *a5, int a6);
 float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, float *a4);
 int __cdecl XAnimFreeNotifyStrings(int a1);
 int __cdecl sub_80BBA62(int a1, int a2);
@@ -2715,10 +2715,10 @@ void __cdecl sub_80D94B8(float *a1, float a2, float *a3);
 int __cdecl sub_80D954C(int a1, int a2, int a3, int a4, int a5);
 int __cdecl sub_80D9698(int a1, _DWORD *a2, int *a3);
 int __cdecl sub_80D978C(int a1, _DWORD *a2, int a3, int a4);
-int sub_80D99BE();
+int BG_FindAnims();
 // _DWORD *__userpurge sub_80D9A8A@<eax>(_DWORD *a1, char *a2, int a3);
 int sub_80D9ADE();
-int sub_80D9B7E();
+int BG_LoadAnim();
 long double __cdecl sub_80D9C30(float a1);
 long double __cdecl sub_80D9C4A(int a1);
 void __cdecl sub_80D9CAE(float a1, float *a2, float *a3);
@@ -3115,27 +3115,27 @@ long double __cdecl sub_80F55E2(float *a1, float *a2);
 long double __cdecl sub_80F5616(float a1);
 void __cdecl ClientScr_ReadOnly(int a1, const char **a2);
 void __cdecl ClientScr_SetSessionTeam(int a1);
-int __cdecl sub_80F572C(int a1);
-void __cdecl sub_80F57A4(int a1);
-int __cdecl sub_80F5868(int a1);
-int __cdecl sub_80F58E0(_DWORD *a1);
-void __cdecl sub_80F598C(int a1);
-int __cdecl sub_80F59B4(int a1);
-int __cdecl sub_80F59F2(int a1);
-int __cdecl sub_80F5A22(int a1);
-int __cdecl sub_80F5A7C(int a1);
-int __cdecl sub_80F5AD2(int a1);
+int __cdecl ClientScr_GetSessionTeam(int a1);
+void __cdecl ClientScr_SetSessionState(int a1);
+int __cdecl ClientScr_GetSessionState(int a1);
+int __cdecl ClientScr_SetMaxHealth(_DWORD *a1);
+void __cdecl ClientScr_SetScore(int a1);
+int __cdecl ClientScr_SetSpectatorClient(int a1);
+int __cdecl ClientScr_SetStatusIcon(int a1);
+int __cdecl ClientScr_GetStatusIcon(int a1);
+int __cdecl ClientScr_SetHeadIcon(int a1);
+int __cdecl ClientScr_GetHeadIcon(int a1);
 void __cdecl ClientScr_SetHeadIconTeam(int a1);
-int __cdecl sub_80F5C30(int a1);
-__int16 __cdecl sub_80F5CC8(int a1);
-int __cdecl sub_80F5D08(int a1);
-int __cdecl sub_80F5D2A(int a1);
-int __cdecl sub_80F5D4C(int a1);
-char **sub_80F5D66();
+int __cdecl ClientScr_GetHeadIconTeam(int a1);
+__int16 __cdecl ClientScr_SetArchiveTime(int a1);
+int __cdecl ClientScr_GetArchiveTime(int a1);
+int __cdecl ClientScr_SetPSOffsetTime(int a1);
+int __cdecl ClientScr_GetPSOffsetTime(int a1);
+char **GScr_AddFieldsForClient();
 int __cdecl Scr_SetClientField(int a1, int a2);
 int __cdecl Scr_GetClientField(int a1, int a2);
 // int __usercall SetClientViewAngle@<eax>(long double a1@<st0>, int a2, _DWORD *a3);
-void __cdecl sub_80F61BE(int a1, float *a2);
+void __cdecl G_GetPlayerViewOrigin(int a1, float *a2);
 void __cdecl sub_80F63A0(int a1, int a2, float *a3, float *a4);
 char *__cdecl ClientCleanName(char *a1, char *a2, int a3);
 int __cdecl ClientUserinfoChanged(int a1);
@@ -3143,7 +3143,7 @@ int __cdecl ClientUserinfoChanged(int a1);
 int __cdecl sub_80F6954(int a1);
 // int __usercall ClientSpawn@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4);
 // void __usercall ClientDisconnect(long double a1@<st0>, int a2);
-int __cdecl sub_80F6ED0(int a1, float *a2, int a3);
+int __cdecl G_GetNonPVSFriendlyInfo(int a1, float *a2, int a3);
 int *__cdecl G_BroadcastVoice(int *a1, int a2);
 float *__cdecl sub_80F736E(float *a1, float *a2, float *a3);
 int __cdecl sub_80F739A(_DWORD *a1, _DWORD *a2);
@@ -3219,7 +3219,7 @@ int __cdecl CheatsOk(int a1);
 void *__cdecl sub_80FBA44(int a1);
 _BYTE *__cdecl sub_80FBB0A(char *a1, _BYTE *a2);
 int __cdecl sub_80FBB62(int, char *nptr); // idb
-void __cdecl sub_80FBD50(char *s);
+void __cdecl G_setfog(char *s);
 void sub_80FBE00();
 // char *__usercall sub_80FBE1C@<eax>(long double a1@<st0>, int *a2);
 char *__cdecl sub_80FC25E(int a1);
@@ -3250,7 +3250,7 @@ int __cdecl sub_80FEE18(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80FEE3C(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_80FEE6C(float *a1, float a2, float *a3, float *a4);
 char *__cdecl sub_80FEEC0(char *dest, char *src);
-_BOOL4 sub_80FEEDA();
+_BOOL4 G_ParseHitLocDmgTable();
 __int16 __cdecl sub_80FF17A(int a1, int a2, int a3);
 int __cdecl G_IndexForMeansOfDeath(char *a1);
 int __cdecl sub_80FF2CA(int a1, int *a2, int *a3, int a4, unsigned int a5, int a6, _DWORD *a7, int a8, int a9);
@@ -3385,7 +3385,7 @@ int __cdecl sub_8106968(int a1);
 long double sub_8106976();
 int __cdecl sub_810698A(int a1);
 int __cdecl G_GetClientArchiveTime(int a1);
-int __cdecl sub_81069C2(int a1, int a2);
+int __cdecl G_SetClientArchiveTime(int a1, int a2);
 int __cdecl sub_81069E2(int a1);
 // int __usercall sub_81069FC@<eax>(long double a1@<st0>);
 int __cdecl G_CreateDObj(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
@@ -3420,7 +3420,7 @@ int __cdecl TeleportPlayer(int a1, _DWORD *a2, _DWORD *a3);
 // int __usercall sub_8108354@<eax>(long double a1@<st0>, int *s);
 int __cdecl sub_8108368(int a1);
 // int __usercall sub_810839E@<eax>(long double a1@<st0>, int *s);
-int *sub_81083B2();
+int *G_InitTurrets();
 float *__cdecl sub_81083E8(int a1, int a2, int a3);
 int __cdecl sub_81084EA(int a1, int *a2);
 void __cdecl sub_81085B8(int a1, int a2);
@@ -3435,9 +3435,9 @@ int __cdecl sub_8109984(int a1, int a2);
 char *__cdecl sub_81099D6(_DWORD *a1);
 int __cdecl sub_8109A68(int a1);
 int __cdecl sub_8109C76(int *a1, int a2);
-_BOOL4 __cdecl sub_8109D26(int a1, int a2);
+_BOOL4 __cdecl turret_behind(int a1, int a2);
 int __cdecl G_FreeTurret(int a1);
-_BOOL4 __cdecl sub_8109EC0(int a1, int a2);
+_BOOL4 __cdecl G_IsTurretUsable(int a1, int a2);
 void __cdecl sub_8109F46(int a1, int a2);
 int __cdecl G_SpawnTurret(int a1, char *s1);
 int __cdecl sub_810A7F2(int a1);
@@ -3492,7 +3492,7 @@ float *__cdecl sub_810DC60(float *a1, float *a2, float *a3);
 float *__cdecl sub_810DCA4(float *a1, float *a2, float *a3);
 long double __cdecl sub_810DCE8(float *a1, float *a2);
 int __cdecl GScr_AllocString(char *s); // idb
-void sub_810DD38();
+void Scr_LoadLevel();
 int __cdecl Scr_GetFunctionHandle(char *a1, char *s, int a3);
 int GScr_LoadGameTypeScript();
 // int __usercall sub_810DEE2@<eax>(long double a1@<st0>);
@@ -3573,7 +3573,7 @@ unsigned int __cdecl GScr_EnableGrenadeBounce(int a1);
 int __cdecl GScr_DisableGrenadeBounce(int a1);
 int __cdecl GScr_EnableAimAssist(int a1);
 int __cdecl GScr_DisableAimAssist(int a1);
-int *sub_811030E();
+int *G_InitObjectives();
 int __cdecl sub_8110346(_DWORD *a1, int a2);
 int __cdecl sub_81103B0(int a1);
 _DWORD *__cdecl sub_8110408(_DWORD *a1);
@@ -3712,7 +3712,7 @@ int __cdecl GScr_AddEntity(int *a1);
 int Scr_ParseGameTypeList();
 int __cdecl Scr_GetGameTypeNameForScript(char *a1);
 _BOOL4 __cdecl Scr_IsValidGameType(char *a1);
-int sub_8115E66();
+int Scr_LoadGameType();
 int Scr_StartupGameType();
 int __cdecl Scr_PlayerConnect(int *a1);
 int __cdecl sub_8115EF6(int *a1);
@@ -3771,11 +3771,11 @@ int __cdecl sub_8117F76(char *s1, int a2, float *a3);
 int __cdecl sub_8117FB2(char *s1, int a2, int *a3);
 int __cdecl sub_8117FEC(char *s1, int a2, _DWORD *a3);
 void Scr_ReadOnlyField();
-int __cdecl sub_8118060(char *s1, char *nptr); // idb
+int __cdecl G_SetEntityScriptVariableInternal(char *s1, char *nptr); // idb
 int __cdecl sub_8118148(char *s1, char *nptr, int *a3);
 void __cdecl sub_8118180(char *s1, char *s, int *a3);
 int __cdecl G_ParseEntityFields(int *a1);
-int sub_8118398();
+int G_LoadScriptStructs();
 char **__cdecl sub_811841C(int a1, int a2);
 int __cdecl sub_8118504(int *a1, int *a2);
 int __cdecl G_GetItemForClassname(char *s1); // idb
@@ -3857,8 +3857,8 @@ int __cdecl sub_811B1D8(char *s2); // idb
 // _DWORD *__usercall G_DObjUpdate@<eax>(long double a1@<st0>, int a2);
 int __cdecl G_SetModel(int, char *s2); // idb
 int __cdecl G_OverrideModel(int, char *s1); // idb
-// int __usercall sub_811B470@<eax>(long double a1@<st0>, int a2, char *s2, int a4, int a5);
-// int __usercall sub_811B528@<eax>(long double a1@<st0>, int a2, char *s2, int a4);
+// int __usercall G_EntAttach@<eax>(long double a1@<st0>, int a2, char *s2, int a4, int a5);
+// int __usercall G_EntDetach@<eax>(long double a1@<st0>, int a2, char *s2, int a4);
 // _DWORD *__usercall sub_811B6C2@<eax>(long double a1@<st0>, int a2);
 // int __usercall sub_811B720@<eax>(long double a1@<st0>, int *a2, int *a3, int a4);
 // int __usercall sub_811B86E@<eax>(long double a1@<st0>, int *a2, int *a3, int a4);
@@ -3875,9 +3875,9 @@ int __cdecl Com_SafeServerDObjFree(int *a1);
 int __cdecl G_DObjUpdateServerTime(int *a1, int a2);
 int *__cdecl G_DObjCalcPose(int a1);
 int *__cdecl sub_811BFC4(int a1, int a2);
-int __cdecl sub_811C056(int *a1, int a2);
+int __cdecl G_DObjGetLocalTagMatrix(int *a1, int a2);
 int __cdecl sub_811C0B2(int a1, int a2, float *a3);
-int __cdecl sub_811C16A(int a1, int a2, float *a3);
+int __cdecl G_DObjGetWorldTagPos(int a1, int a2, float *a3);
 char *__cdecl sub_811C1EE(int a1, int a2, __int16 a3);
 char *__cdecl sub_811C272(int a1, int a2, char *a3);
 int __cdecl G_PickTarget(unsigned __int16 a1);
@@ -3941,10 +3941,10 @@ float *__cdecl sub_811EADE(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_811EB32(float *a1, float *a2);
 void __cdecl sub_811EB66(float *);
 long double __cdecl sub_811EBA4(float a1);
-int __cdecl sub_811EBC4(int *a1, int a2);
-int __cdecl sub_811ECE4(int a1);
+int __cdecl Player_UseEntity(int *a1, int a2);
+int __cdecl Player_ActivateHoldCmdAllowed(int a1);
 int __cdecl sub_811EDD4(int *a1);
-int __cdecl sub_811EE84(int *a1);
+int __cdecl Player_UpdateActivate(int *a1);
 int __cdecl sub_811EFC8(float *a1, float *a2);
 int __cdecl sub_811F004(float *a1, _DWORD *base);
 int __cdecl sub_811F61A(int a1, int a2);
@@ -27149,7 +27149,7 @@ int __cdecl sub_806265A(_DWORD *a1)
 }
 
 //----- (08062676) --------------------------------------------------------
-int __cdecl sub_8062676(int a1)
+int __cdecl Com_SetWeaponInfoMemory(int a1)
 {
   int result; // eax
 
@@ -35947,7 +35947,7 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
   {
     if ( v15 == 6 || v15 == 5 )
     {
-      sub_807CC38((float *)&v14);
+      Scr_CastBool((float *)&v14);
       if ( !v14 )
         CompileError(a3, "conditional expression cannot be always false");
       v16 = 1;
@@ -36060,7 +36060,7 @@ int __cdecl sub_8072AE6(_DWORD *a1, int a2, int *a3, size_t *a4)
   {
     if ( v15 == 6 || v15 == 5 )
     {
-      sub_807CC38((float *)&v14);
+      Scr_CastBool((float *)&v14);
       if ( v14 )
         v16 = 1;
     }
@@ -36156,7 +36156,7 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
     {
       if ( v20 == 6 || v20 == 5 )
       {
-        sub_807CC38((float *)&v19);
+        Scr_CastBool((float *)&v19);
         if ( !v19 )
           CompileError(a5, "conditional expression cannot be always false");
         v21 = 1;
@@ -36281,7 +36281,7 @@ int __cdecl sub_80730A4(int a1, int a2, int a3, int a4, int *a5, size_t *a6, siz
     {
       if ( v18 == 6 || v18 == 5 )
       {
-        sub_807CC38((float *)&v17);
+        Scr_CastBool((float *)&v17);
         if ( v17 )
           v19 = 1;
       }
@@ -37600,7 +37600,7 @@ int __cdecl sub_8075710(int a1)
 }
 
 //----- (08075758) --------------------------------------------------------
-void sub_8075758()
+void Scr_CompileShutdown()
 {
   void *ptr; // [esp+4h] [ebp-4h]
 
@@ -38510,7 +38510,7 @@ void __cdecl MT_EndRelocate(unsigned __int8 *ptr)
 }
 
 //----- (08076B6C) --------------------------------------------------------
-_BOOL4 __cdecl sub_8076B6C(int a1, int a2)
+_BOOL4 __cdecl MT_Realloc(int a1, int a2)
 {
   int v3; // [esp+4h] [ebp-4h]
 
@@ -40391,7 +40391,7 @@ int Var_Shutdown()
 // 8394028: using guessed type int dword_8394028;
 
 //----- (0807A3E8) --------------------------------------------------------
-unsigned int __cdecl sub_807A3E8(int a1)
+unsigned int __cdecl GetVariableKeyObject(int a1)
 {
   return ((unsigned int)dword_8294008[4 * a1] >> 8) - 0x10000;
 }
@@ -40760,7 +40760,7 @@ int __cdecl ClearObject(int a1)
 }
 
 //----- (0807AFAC) --------------------------------------------------------
-int __cdecl sub_807AFAC(int a1, int a2)
+int __cdecl Scr_SetThreadNotifyName(int a1, int a2)
 {
   int result; // eax
   __int16 *v3; // [esp+0h] [ebp-4h]
@@ -40836,7 +40836,7 @@ int __cdecl Scr_SetThreadWaitTime(int a1, int a2)
 // 8294008: using guessed type int dword_8294008[];
 
 //----- (0807B190) --------------------------------------------------------
-int __cdecl sub_807B190(int a1)
+int __cdecl Scr_ClearWaitTime(int a1)
 {
   __int16 *v1; // edx
   int result; // eax
@@ -40850,7 +40850,7 @@ int __cdecl sub_807B190(int a1)
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807B1C8) --------------------------------------------------------
-unsigned int __cdecl sub_807B1C8(int a1)
+unsigned int __cdecl Scr_GetThreadWaitTime(int a1)
 {
   return (unsigned int)dword_8294008[4 * a1] >> 8;
 }
@@ -40874,7 +40874,7 @@ unsigned int __cdecl GetSafeParentLocalId(int a1)
 // 8294008: using guessed type int dword_8294008[];
 
 //----- (0807B22A) --------------------------------------------------------
-unsigned int __cdecl sub_807B22A(unsigned int a1)
+unsigned int __cdecl GetStartLocalId(unsigned int a1)
 {
   while ( (dword_8294008[4 * a1] & 0x1F) == 18 )
     a1 = (unsigned int)dword_8294008[4 * a1] >> 8;
@@ -41078,7 +41078,7 @@ int __cdecl AllocThread(__int16 a1)
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807B700) --------------------------------------------------------
-int __cdecl sub_807B700(__int16 a1, int a2)
+int __cdecl AllocChildThread(__int16 a1, int a2)
 {
   int result; // eax
   __int16 *v3; // [esp+0h] [ebp-8h]
@@ -41360,7 +41360,7 @@ int __cdecl Scr_GetVariableField(int a1, int a2)
 // 8394044: using guessed type int dword_8394044;
 
 //----- (0807BC7C) --------------------------------------------------------
-int *__userpurge sub_807BC7C@<eax>(int *a1, int a2, int a3)
+int *__userpurge Scr_FindVariableField@<eax>(int *a1, int a2, int a3)
 {
   int v4; // [esp+18h] [ebp-10h]
   int v5; // [esp+24h] [ebp-4h]
@@ -41372,7 +41372,7 @@ int *__userpurge sub_807BC7C@<eax>(int *a1, int a2, int a3)
   }
   else if ( (*(_DWORD *)&word_8294000[8 * a2 + 4] & 0x1F) == 21 )
   {
-    sub_807C72C(a1, a2, a3);
+    Scr_EvalVariableEntityField(a1, a2, a3);
   }
   else
   {
@@ -41466,14 +41466,14 @@ int __cdecl GetNewVariable(int a1, unsigned int a2)
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807C0F0) --------------------------------------------------------
-int __cdecl sub_807C0F0(int a1, int a2)
+int __cdecl GetObjectVariable(int a1, int a2)
 {
   return (unsigned __int16)word_8294000[8 * GetVariableIndexInternal(a1, a2 + 0x10000)];
 }
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807C11A) --------------------------------------------------------
-int __cdecl sub_807C11A(int a1, int a2)
+int __cdecl GetNewObjectVariable(int a1, int a2)
 {
   return (unsigned __int16)word_8294000[8 * GetNewVariableIndexInternal(a1, a2 + 0x10000)];
 }
@@ -41521,7 +41521,7 @@ int __cdecl RemoveObjectVariable(int a1, int a2)
 }
 
 //----- (0807C248) --------------------------------------------------------
-int __cdecl sub_807C248(int a1, int a2)
+int __cdecl SafeRemoveArrayVariable(int a1, int a2)
 {
   return SafeRemoveVariable(a1, (a2 + 0x800000) & 0xFFFFFF);
 }
@@ -41550,7 +41550,7 @@ int __cdecl SafeRemoveVariable(int a1, int a2)
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807C2F6) --------------------------------------------------------
-int __cdecl sub_807C2F6(int a1, int a2)
+int __cdecl CopyArray(int a1, int a2)
 {
   int result; // eax
   int i; // [esp+8h] [ebp-20h]
@@ -41574,7 +41574,7 @@ int __cdecl sub_807C2F6(int a1, int a2)
       if ( (dword_8294008[4 * *((_DWORD *)v5 + 1)] & 0x1F) == 22 )
       {
         *((_DWORD *)v4 + 1) = Scr_AllocArray();
-        sub_807C2F6(*((_DWORD *)v5 + 1), *((_DWORD *)v4 + 1));
+        CopyArray(*((_DWORD *)v5 + 1), *((_DWORD *)v4 + 1));
       }
       else
       {
@@ -41694,7 +41694,7 @@ int *__userpurge Scr_EvalVariable@<eax>(int *a1, int a2)
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807C6AE) --------------------------------------------------------
-int __cdecl sub_807C6AE(int a1)
+int __cdecl Scr_EvalVariableObject(int a1)
 {
   char *v1; // eax
   unsigned int v4; // [esp+10h] [ebp-8h]
@@ -41716,7 +41716,7 @@ int __cdecl sub_807C6AE(int a1)
 // 8294008: using guessed type int dword_8294008[];
 
 //----- (0807C72C) --------------------------------------------------------
-int *__userpurge sub_807C72C@<eax>(int *a1, int a2, int a3)
+int *__userpurge Scr_EvalVariableEntityField@<eax>(int *a1, int a2, int a3)
 {
   int v3; // edx
   int v5[2]; // [esp+10h] [ebp-18h] BYREF
@@ -41743,7 +41743,7 @@ int *__userpurge sub_807C72C@<eax>(int *a1, int a2, int a3)
           v6 = *a1;
           RemoveRefToObject(v6);
           *a1 = Scr_AllocArray();
-          sub_807C2F6(v6, *a1);
+          CopyArray(v6, *a1);
         }
       }
     }
@@ -41759,7 +41759,7 @@ int *__userpurge sub_807C72C@<eax>(int *a1, int a2, int a3)
 // 8294004: using guessed type int dword_8294004[];
 
 //----- (0807C83C) --------------------------------------------------------
-int *__userpurge sub_807C83C@<eax>(int *a1, int a2)
+int *__userpurge Scr_EvalVariableFieldInternal@<eax>(int *a1, int a2)
 {
   int v3; // [esp+10h] [ebp-18h]
   int v4; // [esp+14h] [ebp-14h]
@@ -41768,7 +41768,7 @@ int *__userpurge sub_807C83C@<eax>(int *a1, int a2)
 
   if ( a2 == 65534 )
   {
-    sub_807C72C(v5, dword_8394040, dword_8394044);
+    Scr_EvalVariableEntityField(v5, dword_8394040, dword_8394044);
     v3 = v5[0];
     v4 = v5[1];
   }
@@ -41786,7 +41786,7 @@ int *__userpurge sub_807C83C@<eax>(int *a1, int a2)
 // 8394044: using guessed type int dword_8394044;
 
 //----- (0807C8B2) --------------------------------------------------------
-void __cdecl sub_807C8B2(int *a1)
+void __cdecl Scr_EvalSizeValue(int *a1)
 {
   const char *v1; // eax
   int v2; // [esp+Ch] [ebp-1Ch]
@@ -41845,7 +41845,7 @@ int __cdecl FindNextSibling(int a1)
 // 829400E: using guessed type __int16 word_829400E[524281];
 
 //----- (0807CA16) --------------------------------------------------------
-int __cdecl sub_807CA16(int a1)
+int __cdecl FindPrevSibling(int a1)
 {
   if ( (dword_8294008[4
                     * (unsigned __int16)word_8294000[8
@@ -41907,18 +41907,18 @@ int __cdecl FindObject(int a1)
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807CB3E) --------------------------------------------------------
-_BOOL4 __cdecl sub_807CB3E(int a1)
+_BOOL4 __cdecl IsFieldObject(int a1)
 {
   return (*(_DWORD *)&word_8294000[8 * a1 + 4] & 0x1Fu) <= 0x15;
 }
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807CBAA) --------------------------------------------------------
-_BOOL4 __cdecl sub_807CBAA(int a1)
+_BOOL4 __cdecl Scr_EvalBoolNot(int a1)
 {
   _BOOL4 result; // eax
 
-  sub_807CC38((float *)a1);
+  Scr_CastBool((float *)a1);
   result = a1;
   if ( *(_DWORD *)(a1 + 4) == 6 )
   {
@@ -41929,7 +41929,7 @@ _BOOL4 __cdecl sub_807CBAA(int a1)
 }
 
 //----- (0807CBD8) --------------------------------------------------------
-void __cdecl sub_807CBD8(int *a1)
+void __cdecl Scr_EvalBoolComplement(int *a1)
 {
   char *v1; // eax
   int v2; // [esp+14h] [ebp-4h]
@@ -41949,7 +41949,7 @@ void __cdecl sub_807CBD8(int *a1)
 }
 
 //----- (0807CC38) --------------------------------------------------------
-void __cdecl sub_807CC38(float *a1)
+void __cdecl Scr_CastBool(float *a1)
 {
   char *v1; // eax
   int v2; // [esp+14h] [ebp-4h]
@@ -42058,7 +42058,7 @@ int __cdecl sub_807CEE4(int a1)
 }
 
 //----- (0807CF1E) --------------------------------------------------------
-void __cdecl sub_807CF1E(_DWORD *a1)
+void __cdecl Scr_CastVector(_DWORD *a1)
 {
   char *v1; // eax
   int v2; // [esp+18h] [ebp-20h]
@@ -42092,7 +42092,7 @@ void __cdecl sub_807CF1E(_DWORD *a1)
 // 807CF1E: using guessed type float var_18[6];
 
 //----- (0807CFFA) --------------------------------------------------------
-int __cdecl sub_807CFFA(int a1, int *a2)
+int __cdecl Scr_EvalFieldObject(int a1, int *a2)
 {
   char *v2; // eax
   int v5[3]; // [esp+18h] [ebp-10h] BYREF
@@ -42152,7 +42152,7 @@ void __cdecl Scr_UnmatchingTypesError(int *a1, int *a2)
 }
 
 //----- (0807D15A) --------------------------------------------------------
-void __cdecl sub_807D15A(int *a1, int *a2)
+void __cdecl Scr_CastWeakerPair(int *a1, int *a2)
 {
   int v2; // [esp+10h] [ebp-8h]
   int v3; // [esp+14h] [ebp-4h]
@@ -42179,7 +42179,7 @@ void __cdecl sub_807D15A(int *a1, int *a2)
 }
 
 //----- (0807D1D4) --------------------------------------------------------
-void __cdecl sub_807D1D4(int *a1, int a2)
+void __cdecl Scr_CastWeakerStringPair(int *a1, int a2)
 {
   float v2; // [esp+18h] [ebp-10h]
   int v3; // [esp+18h] [ebp-10h]
@@ -42307,7 +42307,7 @@ void __cdecl Scr_EvalEquality(int *a1, int *a2)
   _BOOL4 v4; // [esp+10h] [ebp-8h]
   _BOOL4 v5; // [esp+10h] [ebp-8h]
 
-  sub_807D15A(a1, a2);
+  Scr_CastWeakerPair(a1, a2);
   switch ( a1[1] )
   {
     case 0:
@@ -42385,7 +42385,7 @@ void __cdecl Scr_EvalLess(int *a1, int *a2)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  sub_807D15A(a1, a2);
+  Scr_CastWeakerPair(a1, a2);
   v2 = a1[1];
   if ( v2 == 5 )
   {
@@ -42418,7 +42418,7 @@ void __cdecl Scr_EvalGreater(int *a1, int *a2)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  sub_807D15A(a1, a2);
+  Scr_CastWeakerPair(a1, a2);
   v2 = a1[1];
   if ( v2 == 5 )
   {
@@ -42477,7 +42477,7 @@ void __cdecl Scr_EvalPlus(int *a1, int *a2)
   float *v9; // [esp+2038h] [ebp-10h]
   int v10; // [esp+203Ch] [ebp-Ch]
 
-  sub_807D1D4(a1, (int)a2);
+  Scr_CastWeakerStringPair(a1, (int)a2);
   v3 = a1[1];
   if ( v3 == 4 )
   {
@@ -42541,7 +42541,7 @@ void __cdecl Scr_EvalMinus(int *a1, int *a2)
   int v2; // [esp+Ch] [ebp-Ch]
   float *v3; // [esp+10h] [ebp-8h]
 
-  sub_807D15A(a1, a2);
+  Scr_CastWeakerPair(a1, a2);
   v2 = a1[1];
   if ( v2 == 5 )
   {
@@ -42575,7 +42575,7 @@ void __cdecl Scr_EvalMultiply(int *a1, int *a2)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  sub_807D15A(a1, a2);
+  Scr_CastWeakerPair(a1, a2);
   v2 = a1[1];
   if ( v2 == 5 )
   {
@@ -42596,7 +42596,7 @@ void __cdecl Scr_EvalDivide(int *a1, int *a2)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  sub_807D15A(a1, a2);
+  Scr_CastWeakerPair(a1, a2);
   v2 = a1[1];
   if ( v2 == 5 )
   {
@@ -42749,7 +42749,7 @@ void __cdecl Scr_FreeEntityNum(int a1, int a2)
 // 8394038: using guessed type char byte_8394038;
 
 //----- (0807E04A) --------------------------------------------------------
-int sub_807E04A()
+int Scr_FreeEntityList()
 {
   int result; // eax
   int v1; // [esp+10h] [ebp-8h]
@@ -42873,7 +42873,7 @@ int __cdecl Scr_GetOffset(int a1, int a2)
 // 8294004: using guessed type int dword_8294004[];
 
 //----- (0807E346) --------------------------------------------------------
-int __cdecl sub_807E346(int a1, int a2)
+int __cdecl FindEntityId(int a1, int a2)
 {
   int v4; // [esp+10h] [ebp-8h]
 
@@ -43131,7 +43131,7 @@ LABEL_12:
         v11 = v9;
         RemoveRefToObject(v9);
         v9 = Scr_AllocArray();
-        sub_807C2F6(v11, v9);
+        CopyArray(v11, v9);
         *((_DWORD *)v14 + 1) = v9;
       }
       return v9;
@@ -43175,7 +43175,7 @@ LABEL_12:
 // 8394044: using guessed type int dword_8394044;
 
 //----- (0807EB00) --------------------------------------------------------
-void __cdecl sub_807EB00(int a1, int *a2)
+void __cdecl ClearArray(int a1, int *a2)
 {
   char *v2; // eax
   char *v3; // eax
@@ -43233,14 +43233,14 @@ LABEL_11:
       v11 = v9;
       RemoveRefToObject(v9);
       v9 = Scr_AllocArray();
-      sub_807C2F6(v11, v9);
+      CopyArray(v11, v9);
       *((_DWORD *)v14 + 1) = v9;
     }
     if ( a2[1] == 6 )
     {
       if ( IsValidArrayIndex(*a2) )
       {
-        sub_807C248(v9, *a2);
+        SafeRemoveArrayVariable(v9, *a2);
       }
       else
       {
@@ -43328,7 +43328,7 @@ int __cdecl sub_807EECE(int a1, int a2, int a3)
   int v4; // eax
   int v5; // [esp+14h] [ebp-4h]
 
-  result = sub_807E346(a1, a3);
+  result = FindEntityId(a1, a3);
   v5 = result;
   if ( result )
   {
@@ -43426,7 +43426,7 @@ long double __cdecl Scr_GetThreadUsage(int a1, float *a2)
 }
 
 //----- (0807F168) --------------------------------------------------------
-int __cdecl sub_807F168(char *s1, _DWORD *a2)
+int __cdecl Scr_FindField(char *s1, _DWORD *a2)
 {
   size_t v4; // [esp+Ch] [ebp-Ch]
   int v5; // [esp+10h] [ebp-8h]
@@ -43520,7 +43520,7 @@ int __cdecl Scr_AddFieldsForFile(char *src)
       *v5 = tolower(s1[i]);
     }
     v11 = SL_GetCanonicalString(s1);
-    if ( sub_807F168(s1, &v8) )
+    if ( Scr_FindField(s1, &v8) )
       Com_Error(1, (char *)&byte_8140128, s1, src);
     v10 = v17 + 3;
     dest = (char *)TempMalloc(v17 + 3);
@@ -43601,7 +43601,7 @@ LABEL_6:
 // 8294000: using guessed type __int16 word_8294000[];
 
 //----- (0807F64C) --------------------------------------------------------
-void sub_807F64C()
+void Scr_AllocGameVariable()
 {
   if ( !dword_8394028 )
   {
@@ -43822,7 +43822,7 @@ void Scr_Abort()
 // 8394038: using guessed type char byte_8394038;
 
 //----- (0807F9F2) --------------------------------------------------------
-int __cdecl sub_807F9F2(int a1)
+int __cdecl Scr_SetLoading(int a1)
 {
   int result; // eax
 
@@ -43873,7 +43873,7 @@ int Scr_ClearOutParams()
 // 83D761C: using guessed type int dword_83D761C;
 
 //----- (0807FACC) --------------------------------------------------------
-int sub_807FACC()
+int FreeTempVariableObject()
 {
   ClearVariableValue(dword_8394034);
   return GetObjectA(dword_8394034);
@@ -43881,7 +43881,7 @@ int sub_807FACC()
 // 8394034: using guessed type int dword_8394034;
 
 //----- (0807FAEE) --------------------------------------------------------
-int sub_807FAEE()
+int FreeTempVariable()
 {
   ClearVariableValue(dword_8394034);
   return dword_8394034;
@@ -44310,7 +44310,7 @@ LABEL_52:
         v155 = Scr_EvalArrayIndex(v46, a4);
         goto LABEL_3;
       case 36:
-        sub_807EB00(v155, a4);
+        ClearArray(v155, a4);
         goto LABEL_3;
       case 37:
         a4 += 2;
@@ -44320,7 +44320,7 @@ LABEL_52:
         continue;
       case 38:
         v154 = Scr_GetSelf(a2);
-        if ( sub_807CB3E(v154) )
+        if ( IsFieldObject(v154) )
           continue;
         goto LABEL_269;
       case 39:
@@ -44340,7 +44340,7 @@ LABEL_58:
         continue;
       case 41:
         v154 = Scr_GetSelf(a2);
-        if ( sub_807CB3E(v154) )
+        if ( IsFieldObject(v154) )
           goto LABEL_62;
         a4 += 2;
         sub_80851E6((_WORD **)&a1);
@@ -44352,7 +44352,7 @@ LABEL_62:
         a4 += 2;
         v52 = a4;
         v53 = sub_80851E6((_WORD **)&a1);
-        sub_807BC7C(v116, v154, v53);
+        Scr_FindVariableField(v116, v154, v53);
         v54 = v116[1];
         *v52 = v116[0];
         v52[1] = v54;
@@ -44589,7 +44589,7 @@ LABEL_125:
         v129 = VM_ArchiveStack(((char *)a4 - a5) >> 3, (int)a1, a4, a3, &a2);
         v67 = GetVariable(dword_839401C, v148);
         v141 = GetArray(v67);
-        v128 = sub_807C11A(v141, a2);
+        v128 = GetNewObjectVariable(v141, a2);
         SetNewVariableValue(v128, &v129);
         Scr_SetThreadWaitTime(a2, v148);
 LABEL_254:
@@ -44628,7 +44628,7 @@ LABEL_128:
         {
           v153 = Scr_GetSelf(a2);
           AddRefToObject(v153);
-          a2 = sub_807B700(v153, a2);
+          a2 = AllocChildThread(v153, a2);
           *(_DWORD *)dword_83D760C = a1;
           a1 = (unsigned __int8 *)sub_8085238((_DWORD **)dword_83D760C);
           goto LABEL_253;
@@ -44641,7 +44641,7 @@ LABEL_131:
         {
           v153 = Scr_GetSelf(a2);
           AddRefToObject(v153);
-          a2 = sub_807B700(v153, a2);
+          a2 = AllocChildThread(v153, a2);
           *(_DWORD *)dword_83D760C = a1;
           a1 = (unsigned __int8 *)*a4;
           a4 -= 2;
@@ -44657,7 +44657,7 @@ LABEL_136:
           goto LABEL_263;
         if ( dword_83D7608 <= 30 )
         {
-          a2 = sub_807B700(*a4, a2);
+          a2 = AllocChildThread(*a4, a2);
           a4 -= 2;
           *(_DWORD *)dword_83D760C = a1;
           a1 = (unsigned __int8 *)sub_8085238((_DWORD **)dword_83D760C);
@@ -44680,7 +44680,7 @@ LABEL_263:
             goto LABEL_265;
           if ( dword_83D7608 <= 30 )
           {
-            a2 = sub_807B700(*a4, a2);
+            a2 = AllocChildThread(*a4, a2);
             a4 -= 2;
             *(_DWORD *)dword_83D760C = a1;
             a1 = v146;
@@ -44794,43 +44794,43 @@ LABEL_253:
       case 88:
         goto LABEL_164;
       case 89:
-        v154 = sub_807CFFA(dword_8394034, a4);
+        v154 = Scr_EvalFieldObject(dword_8394034, a4);
         goto LABEL_3;
       case 90:
         v77 = sub_808516A(a1);
-        v154 = sub_807C6AE(v77);
+        v154 = Scr_EvalVariableObject(v77);
         ++a1;
         continue;
       case 91:
-        sub_807CC38((float *)a4);
+        Scr_CastBool((float *)a4);
         continue;
       case 92:
-        sub_807CBAA((int)a4);
+        Scr_EvalBoolNot((int)a4);
         continue;
       case 93:
-        sub_807CBD8(a4);
+        Scr_EvalBoolComplement(a4);
         continue;
       case 94:
-        sub_807CC38((float *)a4);
+        Scr_CastBool((float *)a4);
         v136 = (unsigned __int16)sub_80851E6((_WORD **)&a1);
         if ( !*a4 )
           a1 += v136;
         goto LABEL_3;
       case 95:
-        sub_807CC38((float *)a4);
+        Scr_CastBool((float *)a4);
         v136 = (unsigned __int16)sub_80851E6((_WORD **)&a1);
         if ( *a4 )
           a1 += v136;
         goto LABEL_3;
       case 96:
-        sub_807CC38((float *)a4);
+        Scr_CastBool((float *)a4);
         v136 = (unsigned __int16)sub_80851E6((_WORD **)&a1);
         if ( *a4 )
           goto LABEL_3;
         a1 += v136;
         continue;
       case 97:
-        sub_807CC38((float *)a4);
+        Scr_CastBool((float *)a4);
         v136 = (unsigned __int16)sub_80851E6((_WORD **)&a1);
         if ( !*a4 )
           goto LABEL_3;
@@ -44876,7 +44876,7 @@ LABEL_253:
 LABEL_186:
             a4 += 2;
             v78 = a4;
-            sub_807C83C(v114, v155);
+            Scr_EvalVariableFieldInternal(v114, v155);
             v79 = v114[1];
             *v78 = v114[0];
             v78[1] = v79;
@@ -44892,7 +44892,7 @@ LABEL_186:
 LABEL_189:
               a4 += 2;
               v81 = a4;
-              sub_807C83C(v113, v155);
+              Scr_EvalVariableFieldInternal(v113, v155);
               v82 = v113[1];
               *v81 = v113[0];
               v81[1] = v82;
@@ -44980,13 +44980,13 @@ LABEL_180:
         Scr_EvalMod(a4 - 2, a4);
         goto LABEL_3;
       case 118:
-        sub_807C8B2(a4);
+        Scr_EvalSizeValue(a4);
         continue;
       case 119:
       case 120:
         if ( a4[1] != 1 )
           goto LABEL_265;
-        if ( !sub_807CB3E(*a4) )
+        if ( !IsFieldObject(*a4) )
           goto LABEL_266;
         v150 = *a4;
         a4 -= 2;
@@ -45000,15 +45000,15 @@ LABEL_180:
           v85 = GetArray(v84);
           v86 = GetVariable(v85, v147);
           v141 = GetArray(v86);
-          v128 = sub_807C11A(v141, a2);
+          v128 = GetNewObjectVariable(v141, a2);
           SetNewVariableValue(v128, &v129);
           v151 = 1;
           v87 = Scr_GetSelf(a2);
-          v88 = sub_807C0F0(dword_8394020, v87);
+          v88 = GetObjectVariable(dword_8394020, v87);
           v89 = GetArray(v88);
-          v90 = sub_807C11A(v89, a2);
+          v90 = GetNewObjectVariable(v89, a2);
           SetNewVariableValue(v90, &v150);
-          sub_807AFAC(a2, v147);
+          Scr_SetThreadNotifyName(a2, v147);
           goto LABEL_254;
         }
         a4 += 2;
@@ -45086,7 +45086,7 @@ LABEL_271:
           case 34:
           case 35:
           case 132:
-            v155 = sub_807FAEE();
+            v155 = FreeTempVariable();
             goto LABEL_295;
           case 36:
           case 76:
@@ -45099,7 +45099,7 @@ LABEL_271:
             continue;
           case 45:
           case 46:
-            v155 = sub_807FAEE();
+            v155 = FreeTempVariable();
             continue;
           case 47:
             if ( dword_83D761C )
@@ -45171,12 +45171,12 @@ LABEL_306:
             a4[1] = 0;
             continue;
           case 89:
-            v154 = sub_807FACC();
+            v154 = FreeTempVariableObject();
             goto LABEL_296;
           case 90:
             ++a1;
 LABEL_286:
-            v154 = sub_807FACC();
+            v154 = FreeTempVariableObject();
             continue;
           case 94:
           case 95:
@@ -45241,7 +45241,7 @@ LABEL_296:
         if ( a4[1] != 1 )
           goto LABEL_265;
         v141 = *a4;
-        if ( !sub_807CB3E(v141) )
+        if ( !IsFieldObject(v141) )
           goto LABEL_266;
         a4 -= 2;
         if ( a4[1] != 2 )
@@ -45267,7 +45267,7 @@ LABEL_296:
       case 122:
         if ( a4[1] != 1 )
           goto LABEL_263;
-        if ( !sub_807CB3E(*a4) )
+        if ( !IsFieldObject(*a4) )
           goto LABEL_264;
         if ( *(a4 - 1) == 2 )
         {
@@ -45278,15 +45278,15 @@ LABEL_296:
           v92 = GetArray(v91);
           v93 = GetVariable(v92, v147);
           v94 = GetArray(v93);
-          sub_807C0F0(v94, v145);
+          GetObjectVariable(v94, v145);
           RemoveRefToObject(v145);
           v151 = 1;
           v150 = *a4;
-          v95 = sub_807C0F0(dword_8394020, a2);
+          v95 = GetObjectVariable(dword_8394020, a2);
           v96 = GetArray(v95);
-          v97 = sub_807C11A(v96, v145);
+          v97 = GetNewObjectVariable(v96, v145);
           SetNewVariableValue(v97, &v150);
-          sub_807AFAC(v145, v147);
+          Scr_SetThreadNotifyName(v145, v147);
           a4 -= 4;
           continue;
         }
@@ -45350,7 +45350,7 @@ LABEL_232:
         continue;
       case 126:
         a4 -= 4;
-        sub_807CF1E(a4);
+        Scr_CastVector(a4);
         continue;
       case 127:
         continue;
@@ -45362,7 +45362,7 @@ LABEL_232:
         v135 = sub_8085180((_DWORD **)&a1);
         v134 = sub_8085180((_DWORD **)&a1);
         v100 = a4;
-        *v100 = sub_807E346(v134, v135);
+        *v100 = FindEntityId(v134, v135);
         if ( !*a4 )
         {
           a4[1] = 0;
@@ -45592,7 +45592,7 @@ LABEL_11:
           v20 = *a1;
           v21 = v5;
           AddRefToValue(&v20);
-          sub_807CC38((float *)&v20);
+          Scr_CastBool((float *)&v20);
           v13 = (unsigned __int16)sub_80851E6((_WORD **)&a2);
           if ( *(_DWORD *)dword_8394010 )
             goto LABEL_44;
@@ -45606,7 +45606,7 @@ LABEL_11:
           v20 = *a1;
           v21 = v6;
           AddRefToValue(&v20);
-          sub_807CC38((float *)&v20);
+          Scr_CastBool((float *)&v20);
           v14 = (unsigned __int16)sub_80851E6((_WORD **)&a2);
           if ( *(_DWORD *)dword_8394010 )
             goto LABEL_44;
@@ -45770,7 +45770,7 @@ int __cdecl sub_8082572(int a1)
   int i; // [esp+14h] [ebp-4h]
 
   v2 = 0;
-  for ( i = sub_807CA16(a1); i; i = sub_807CA16(i) )
+  for ( i = FindPrevSibling(a1); i; i = FindPrevSibling(i) )
   {
     dword_83D7600 += 4;
     *(_DWORD *)dword_83D7600 = i;
@@ -45818,7 +45818,7 @@ int __cdecl sub_80825C2(int a1, _DWORD *a2, int a3)
   a2[3] = v6;
   v5 = *(unsigned __int16 *)(a3 + 8);
   a2[1] = v5;
-  sub_807B190(a1);
+  Scr_ClearWaitTime(a1);
   v4 = dword_83D7608;
   while ( 1 )
   {
@@ -45841,7 +45841,7 @@ int __cdecl sub_80825C2(int a1, _DWORD *a2, int a3)
 // 83D7628: using guessed type int dword_83D7628[190];
 
 //----- (08082754) --------------------------------------------------------
-int __cdecl sub_8082754(int a1, int a2, int a3)
+int __cdecl VM_TerminateStack(int a1, int a2, int a3)
 {
   int v3; // eax
   int v4; // eax
@@ -45880,7 +45880,7 @@ int __cdecl sub_8082754(int a1, int a2, int a3)
         v6[0] = a3;
         v3 = GetVariable(dword_839401C, dword_8394018);
         v4 = GetArray(v3);
-        v7 = sub_807C11A(v4, a2);
+        v7 = GetNewObjectVariable(v4, a2);
         return SetNewVariableValue(v7, v6);
       }
       v13 = v12;
@@ -45931,7 +45931,7 @@ int __cdecl sub_80828BE(int a1, int a2, char a3)
         result = sub_807B04E(v11);
         if ( !v12 )
         {
-          sub_807AFAC(a1, 0);
+          Scr_SetThreadNotifyName(a1, 0);
           *(_DWORD *)a2 = 0;
           v5[1] = 10;
           v5[0] = a2;
@@ -45959,7 +45959,7 @@ int __cdecl sub_80828BE(int a1, int a2, char a3)
 // 8394020: using guessed type int dword_8394020;
 
 //----- (08082A4A) --------------------------------------------------------
-int __cdecl sub_8082A4A(int a1)
+int __cdecl Scr_TerminateRunningThread(int a1)
 {
   int result; // eax
   int v2; // [esp+Ch] [ebp-Ch]
@@ -45991,7 +45991,7 @@ int __cdecl sub_8082A4A(int a1)
 // 83D7624: using guessed type int dword_83D7624[];
 
 //----- (08082AC0) --------------------------------------------------------
-int __cdecl sub_8082AC0(int a1, int a2)
+int __cdecl Scr_TerminateWaitThread(int a1, int a2)
 {
   int v2; // eax
   int v4; // [esp+18h] [ebp-10h]
@@ -45999,8 +45999,8 @@ int __cdecl sub_8082AC0(int a1, int a2)
   int v6; // [esp+20h] [ebp-8h]
   int v7; // [esp+24h] [ebp-4h]
 
-  v6 = sub_807B1C8(a2);
-  sub_807B190(a2);
+  v6 = Scr_GetThreadWaitTime(a2);
+  Scr_ClearWaitTime(a2);
   v2 = FindVariable(dword_839401C, v6);
   v7 = FindObject(v2);
   v5 = FindObjectVariable(v7, a2);
@@ -46008,7 +46008,7 @@ int __cdecl sub_8082AC0(int a1, int a2)
   RemoveObjectVariable(v7, a2);
   if ( !GetArraySize(v7) && v6 != dword_8394018 )
     RemoveVariable(dword_839401C, v6);
-  return sub_8082754(a1, a2, v4);
+  return VM_TerminateStack(a1, a2, v4);
 }
 // 8394018: using guessed type int dword_8394018;
 // 839401C: using guessed type int dword_839401C;
@@ -46038,7 +46038,7 @@ int __cdecl sub_8082B7E(int a1)
 // 8394020: using guessed type int dword_8394020;
 
 //----- (08082C1A) --------------------------------------------------------
-int __cdecl sub_8082C1A(int a1, int a2)
+int __cdecl Scr_TerminateWaittillThread(int a1, int a2)
 {
   unsigned __int16 v2; // ax
   int v3; // eax
@@ -46081,7 +46081,7 @@ int __cdecl sub_8082C1A(int a1, int a2)
     v8 = *(_DWORD *)GetVariableValueAddress(v10);
     RemoveVariable(a2, 0x1FFFF);
   }
-  return sub_8082754(a1, a2, v8);
+  return VM_TerminateStack(a1, a2, v8);
 }
 // 8394020: using guessed type int dword_8394020;
 
@@ -46124,30 +46124,30 @@ _BOOL4 __cdecl sub_8082E74(unsigned int a1)
 
   if ( GetVarType(a1) != 16 )
     return 0;
-  if ( sub_807B22A(a1) != a1 )
+  if ( GetStartLocalId(a1) != a1 )
     return 0;
   v3 = sub_8082D9A(a1, a1);
   return GetVarType(v3) == 0;
 }
 
 //----- (08082EE2) --------------------------------------------------------
-int __cdecl sub_8082EE2(unsigned int a1)
+int __cdecl Scr_TerminateThread(unsigned int a1)
 {
   int result; // eax
   int v2; // [esp+14h] [ebp-4h]
 
-  v2 = sub_807B22A(a1);
+  v2 = GetStartLocalId(a1);
   result = GetVarType(v2);
   if ( result == 16 )
-    return sub_8082C1A(a1, v2);
+    return Scr_TerminateWaittillThread(a1, v2);
   if ( result > 16 )
   {
     if ( result == 17 )
-      return sub_8082AC0(a1, v2);
+      return Scr_TerminateWaitThread(a1, v2);
   }
   else if ( result == 15 )
   {
-    return sub_8082A4A(a1);
+    return Scr_TerminateRunningThread(a1);
   }
   return result;
 }
@@ -46198,10 +46198,10 @@ int __cdecl VM_Notify(int a1, int a2, int *a3)
 LABEL_4:
       while ( 1 )
       {
-        v14 = sub_807CA16(v14);
+        v14 = FindPrevSibling(v14);
         if ( !v14 )
           break;
-        v26 = sub_807A3E8(v14);
+        v26 = GetVariableKeyObject(v14);
         v16 = Scr_GetSelf(v26);
         v4 = FindObjectVariable(dword_8394020, v16);
         v15 = FindObject(v4);
@@ -46249,7 +46249,7 @@ LABEL_4:
           v9[0] = (int)v23;
           v6 = GetVariable(dword_839401C, dword_8394018);
           v7 = GetArray(v6);
-          v8 = sub_807C11A(v7, v26);
+          v8 = GetNewObjectVariable(v7, v26);
           SetNewVariableValue(v8, v9);
           v24 = GetVariableValueAddress(v8);
           VM_CancelNotifyInternal(a1, v26, v27, v28, a2);
@@ -46274,7 +46274,7 @@ LABEL_4:
             while ( i[1] != 8 );
             n = 5 * v20;
             v17 = 5 * v19 + 11;
-            if ( !sub_8076B6C(*((unsigned __int16 *)v23 + 3), v17) )
+            if ( !MT_Realloc(*((unsigned __int16 *)v23 + 3), v17) )
             {
               v22 = (const char **)MT_Alloc(v17);
               *((_WORD *)v22 + 3) = v17;
@@ -46308,7 +46308,7 @@ LABEL_4:
           RemoveObjectVariable(v15, v26);
           if ( !GetArraySize(v15) )
             RemoveObjectVariable(dword_8394020, v16);
-          sub_8082EE2(v16);
+          Scr_TerminateThread(v16);
           v14 = v28;
         }
       }
@@ -46336,7 +46336,7 @@ int __cdecl sub_8083426(int a1, int a2, int a3, int a4)
   Scr_ClearOutParams();
   v6 = dword_83D7610 - 8 * a4;
   v8 = dword_83D7618 - a4;
-  v7 = sub_807E346(a1, a2);
+  v7 = FindEntityId(a1, a2);
   if ( v7 )
   {
     v5 = *(_DWORD *)(v6 + 4);
@@ -46385,7 +46385,7 @@ int __cdecl sub_80834DC(int a1)
     v9 = result;
     if ( !result )
       break;
-    v6 = sub_807A3E8(result);
+    v6 = GetVariableKeyObject(result);
     if ( GetVarType(v9) == 10 )
     {
       v4 = *(_DWORD *)GetVariableValueAddress(v9);
@@ -46397,7 +46397,7 @@ int __cdecl sub_80834DC(int a1)
       AddRefToObject(v6);
       sub_8082B7E(v6);
       v3 = Scr_GetSelf(v6);
-      v2 = sub_807B22A(v3);
+      v2 = GetStartLocalId(v3);
       v10 = FindVariable(v2, 0x1FFFF);
       if ( v10 )
       {
@@ -46424,11 +46424,11 @@ int __cdecl sub_8083640(int a1)
     v4 = FindNextSibling(a1);
     if ( !v4 )
       break;
-    v3 = sub_807A3E8(v4);
+    v3 = GetVariableKeyObject(v4);
     v2 = *(_DWORD *)GetVariableValueAddress(v4);
     RemoveObjectVariable(a1, v3);
-    sub_807B190(v3);
-    sub_8082754(v3, v3, v2);
+    Scr_ClearWaitTime(v3);
+    VM_TerminateStack(v3, v3, v2);
   }
   return RemoveRefToObject(a1);
 }
@@ -46451,7 +46451,7 @@ unsigned int __cdecl VM_Resume(int a1)
     v5 = FindNextSibling(a1);
     if ( !v5 )
       break;
-    v4 = sub_807A3E8(v5);
+    v4 = GetVariableKeyObject(v5);
     v3 = *(_DWORD *)GetVariableValueAddress(v5);
     RemoveObjectVariable(a1, v4);
     sub_80825C2(v4, v6, v3);
@@ -46596,7 +46596,7 @@ int __cdecl sub_8083A1A(int a1, int a2, int a3, int a4)
 // 83D7618: using guessed type int dword_83D7618;
 
 //----- (08083AAC) --------------------------------------------------------
-int __cdecl sub_8083AAC(int a1, int a2)
+int __cdecl Scr_AddExecThread(int a1, int a2)
 {
   int v2; // eax
   int v3; // eax
@@ -46766,7 +46766,7 @@ int __cdecl sub_8083D82(int a1, int *a2, int a3)
 // 839401C: using guessed type int dword_839401C;
 
 //----- (08083E96) --------------------------------------------------------
-int sub_8083E96()
+int Scr_InitSystem()
 {
   int result; // eax
 
@@ -46787,7 +46787,7 @@ int sub_8083E96()
 // 83D553C: using guessed type int dword_83D553C;
 
 //----- (08083EDA) --------------------------------------------------------
-unsigned int *__cdecl sub_8083EDA(int a1, int a2)
+unsigned int *__cdecl Scr_ShutdownSystem(int a1, int a2)
 {
   unsigned int *result; // eax
   int v3; // eax
@@ -46797,8 +46797,8 @@ unsigned int *__cdecl sub_8083EDA(int a1, int a2)
   int v7; // [esp+10h] [ebp-8h]
   int v8; // [esp+10h] [ebp-8h]
 
-  sub_8075758();
-  result = (unsigned int *)sub_807E04A();
+  Scr_CompileShutdown();
+  result = (unsigned int *)Scr_FreeEntityList();
   if ( dword_839401C )
   {
     sub_807F676(a2);
@@ -47239,7 +47239,7 @@ LABEL_7:
 // 83D761C: using guessed type int dword_83D761C;
 
 //----- (0808491A) --------------------------------------------------------
-int __cdecl sub_808491A(unsigned int a1)
+int __cdecl Scr_GetObject(unsigned int a1)
 {
   char *v1; // eax
   char *v2; // eax
@@ -47616,7 +47616,7 @@ int __cdecl Scr_SetStructField(int a1, int a2)
 // 83D7618: using guessed type int dword_83D7618;
 
 //----- (08084F6A) --------------------------------------------------------
-int __cdecl sub_8084F6A(int a1, int a2, int a3)
+int __cdecl Scr_SetDynamicEntityField(int a1, int a2, int a3)
 {
   int v4; // [esp+14h] [ebp-4h]
 
@@ -47630,7 +47630,7 @@ int sub_8084F9A()
   int result; // eax
 
   Scr_RunCurrentThreads();
-  result = sub_807E04A();
+  result = Scr_FreeEntityList();
   ++dword_8394018;
   dword_8394018 &= 0xFFFFFFu;
   return result;
@@ -51673,7 +51673,7 @@ LABEL_55:
 // 808D0E6: using guessed type void *arg_8;
 
 //----- (0808DC2C) --------------------------------------------------------
-int sub_808DC2C()
+int SV_FreeClientScriptPers()
 {
   int result; // eax
   int *i; // [esp+Ch] [ebp-Ch]
@@ -52870,7 +52870,7 @@ void __cdecl sub_8090484(_DWORD *ptr)
 }
 
 //----- (08090498) --------------------------------------------------------
-int __cdecl sub_8090498(int a1, int a2, int a3, int a4, int a5)
+int __cdecl SV_LocateGameData(int a1, int a2, int a3, int a4, int a5)
 {
   int result; // eax
 
@@ -52889,7 +52889,7 @@ int __cdecl sub_8090498(int a1, int a2, int a3, int a4, int a5)
 // 848B0AC: using guessed type int dword_848B0AC;
 
 //----- (080904C6) --------------------------------------------------------
-int __cdecl sub_80904C6(int a1, _DWORD *a2)
+int __cdecl SV_GetUsercmd(int a1, _DWORD *a2)
 {
   _DWORD *v2; // edx
   int result; // eax
@@ -53187,7 +53187,7 @@ _BOOL4 __cdecl SV_DObjExists(int *a1)
 //----- (08090A82) --------------------------------------------------------
 int SV_SetWeaponInfoMemory()
 {
-  return sub_8062676(1);
+  return Com_SetWeaponInfoMemory(1);
 }
 
 //----- (08090A96) --------------------------------------------------------
@@ -53228,7 +53228,7 @@ int __cdecl sub_8090B42(int a1)
 }
 
 //----- (08090B5E) --------------------------------------------------------
-int __cdecl sub_8090B5E(int a1)
+int __cdecl SV_IsLocalClient(int a1)
 {
   return NET_IsLocalAddress(*((_DWORD *)dword_841FB0C + 123845 * a1 + 113009));
 }
@@ -55226,7 +55226,7 @@ void __usercall SV_Frame(long double a1@<st0>, int a2)
                           dword_842BC90 -= v13;
                           dword_841FB04 += v13;
                           sub_8094780(a1);
-                          sub_807F9F2(0);
+                          Scr_SetLoading(0);
                           if ( dword_842BC90 < v13 )
                             break;
                           SV_ArchiveSnapshot();
@@ -56872,7 +56872,7 @@ int __cdecl SV_BuildClientSnapshot(char *a1)
         v13 = -1653759219 * ((a1 - (_BYTE *)dword_841FB0C) >> 2);
         v7 = G_GetClientArchiveTime(v13);
         v11 = SV_GetCachedSnapshot(&v7);
-        sub_81069C2(v13, v7);
+        G_SetClientArchiveTime(v13, v7);
         if ( v11 )
           v6 = dword_841FB04 - v11[1];
         else
@@ -61789,7 +61789,7 @@ float *__cdecl sub_80A5028(float *a1, float *a2, float *a3)
 }
 
 //----- (080A50D2) --------------------------------------------------------
-float *__cdecl sub_80A50D2(float *a1, float *a2, float *a3)
+float *__cdecl MatrixTransformVector43(float *a1, float *a2, float *a3)
 {
   float *result; // eax
 
@@ -70624,7 +70624,7 @@ char *__cdecl sub_80B5E72(char *s, char *s1)
 }
 
 //----- (080B5FA4) --------------------------------------------------------
-_BOOL4 __cdecl sub_80B5FA4(char *s)
+_BOOL4 __cdecl Info_Validate(char *s)
 {
   return !strchr(s, 34) && strchr(s, 59) == 0;
 }
@@ -73464,7 +73464,7 @@ void __cdecl sub_80BB77C(float *a1, float *a2)
 }
 
 //----- (080BB82A) --------------------------------------------------------
-float *__cdecl sub_80BB82A(int a1, float a2, float a3, float a4, float *a5, int a6)
+float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, float *a5, int a6)
 {
   unsigned __int16 *v7; // [esp+14h] [ebp-54h]
   float v8; // [esp+1Ch] [ebp-4Ch]
@@ -74887,7 +74887,7 @@ void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned 
         if ( *(_BYTE *)(a1 + 6) )
           XAnim_CalcDeltaForTime((unsigned __int16 *)v15, a3, *((float *)&unk_8527A80 + 10 * v17 + 3), (float *)a6);
         else
-          sub_80BB82A(
+          XAnimCalcRelDeltaParts(
             v15,
             a3,
             *((float *)&unk_8527A80 + 10 * v17 + 4),
@@ -75253,7 +75253,7 @@ int __cdecl XAnimGetRelDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5, f
     sub_80C0F86(v8);
     v8[2] = 0;
     sub_80C1040(v9);
-    sub_80BB82A(v7, 1.0, a5, a6, (float *)v8, 0);
+    XAnimCalcRelDeltaParts(v7, 1.0, a5, a6, (float *)v8, 0);
     if ( *(float *)v8 == 0.0 && *(float *)&v8[1] == 0.0 )
     {
       *a3 = 0;
@@ -86836,7 +86836,7 @@ int __cdecl sub_80D978C(int a1, _DWORD *a2, int a3, int a4)
 }
 
 //----- (080D99BE) --------------------------------------------------------
-int sub_80D99BE()
+int BG_FindAnims()
 {
   Scr_FindAnim("multiplayer", "root", (_DWORD *)dword_855A4E0 + 184051, *((_DWORD *)dword_855A4E0 + 184058));
   Scr_FindAnim("multiplayer", "torso", (_DWORD *)dword_855A4E0 + 184052, *((_DWORD *)dword_855A4E0 + 184058));
@@ -86876,7 +86876,7 @@ int sub_80D9ADE()
 }
 
 //----- (080D9B7E) --------------------------------------------------------
-int sub_80D9B7E()
+int BG_LoadAnim()
 {
   char *v1; // [esp+1Ch] [ebp-2Ch]
   int v2[7]; // [esp+20h] [ebp-28h] BYREF
@@ -86885,7 +86885,7 @@ int sub_80D9B7E()
   LargeLocal(v2, 36864);
   v1 = LargeLocalGetBuf(v2);
   v3[0] = 0;
-  sub_80D99BE();
+  BG_FindAnims();
   BG_AnimParseAnimScript((int)dword_855A4E0, (int)v1, (int)v3);
   Scr_PrecacheAnimTrees(*((int (__cdecl **)(int))dword_855A4E0 + 184062), *((_DWORD *)dword_855A4E0 + 184058));
   sub_80D9ADE();
@@ -97647,7 +97647,7 @@ int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2)
         FS_Read((int)s1, v9 - n, v5);
         s1[v9 - n] = 0;
         FS_FCloseFile(v5);
-        if ( sub_80B5FA4(s1) )
+        if ( Info_Validate(s1) )
         {
           sub_80F0B8E((char **)v6, a2);
           if ( sub_80B645E(
@@ -98984,7 +98984,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
           sub_80F2362((int)a2, (int)s);
           if ( *(_DWORD *)(a2[86] + 164) != v33 )
             a2[94] = dword_859B5EC;
-          return sub_811EE84(a2);
+          return Player_UpdateActivate(a2);
         }
       }
     }
@@ -99019,7 +99019,7 @@ int __usercall sub_80F3EA4@<eax>(long double a1@<st0>, int a2)
   v2[4] = v3[4];
   v2[5] = v3[5];
   v2[6] = v3[6];
-  sub_80904C6(a2, (_DWORD *)(v5[86] + 9928));
+  SV_GetUsercmd(a2, (_DWORD *)(v5[86] + 9928));
   *(_DWORD *)(v5[86] + 10168) = dword_859B5EC;
   result = g_synchronousClients;
   if ( !*(_BYTE *)(g_synchronousClients + 8) )
@@ -99472,8 +99472,8 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
         BG_PlayerStateToEntityState(v10, a2, 1, 1u);
       if ( *(int *)(a2 + 404) > 0 && sub_80F474A(a2) )
         *(_DWORD *)(a2 + 284) = 0x4000000;
-      sub_80F61BE(a2, v14);
-      *(_DWORD *)(v10 + 1444) = sub_80F6ED0(a2, v14, *(_DWORD *)(v10 + 10296));
+      G_GetPlayerViewOrigin(a2, v14);
+      *(_DWORD *)(v10 + 1444) = G_GetNonPVSFriendlyInfo(a2, v14, *(_DWORD *)(v10 + 10296));
       if ( *(_DWORD *)(v10 + 1444) )
       {
         *(_DWORD *)(v10 + 10296) = *(_DWORD *)(v10 + 1444) & 0x3F;
@@ -99721,7 +99721,7 @@ void __cdecl ClientScr_SetSessionTeam(int a1)
 // 87A2314: using guessed type __int16 word_87A2314;
 
 //----- (080F572C) --------------------------------------------------------
-int __cdecl sub_80F572C(int a1)
+int __cdecl ClientScr_GetSessionTeam(int a1)
 {
   int result; // eax
 
@@ -99751,7 +99751,7 @@ int __cdecl sub_80F572C(int a1)
 // 87A2314: using guessed type __int16 word_87A2314;
 
 //----- (080F57A4) --------------------------------------------------------
-void __cdecl sub_80F57A4(int a1)
+void __cdecl ClientScr_SetSessionState(int a1)
 {
   const char *v1; // eax
   char *v2; // eax
@@ -99788,7 +99788,7 @@ void __cdecl sub_80F57A4(int a1)
 // 87A2316: using guessed type __int16 word_87A2316;
 
 //----- (080F5868) --------------------------------------------------------
-int __cdecl sub_80F5868(int a1)
+int __cdecl ClientScr_GetSessionState(int a1)
 {
   int result; // eax
 
@@ -99818,7 +99818,7 @@ int __cdecl sub_80F5868(int a1)
 // 87A2316: using guessed type __int16 word_87A2316;
 
 //----- (080F58E0) --------------------------------------------------------
-int __cdecl sub_80F58E0(_DWORD *a1)
+int __cdecl ClientScr_SetMaxHealth(_DWORD *a1)
 {
   int result; // eax
 
@@ -99835,14 +99835,14 @@ int __cdecl sub_80F58E0(_DWORD *a1)
 // 859B400: using guessed type int dword_859B400;
 
 //----- (080F598C) --------------------------------------------------------
-void __cdecl sub_80F598C(int a1)
+void __cdecl ClientScr_SetScore(int a1)
 {
   *(_DWORD *)(a1 + 9912) = Scr_GetInt(0);
   CalculateRanks();
 }
 
 //----- (080F59B4) --------------------------------------------------------
-int __cdecl sub_80F59B4(int a1)
+int __cdecl ClientScr_SetSpectatorClient(int a1)
 {
   int result; // eax
   int v2; // [esp+4h] [ebp-4h]
@@ -99856,7 +99856,7 @@ int __cdecl sub_80F59B4(int a1)
 }
 
 //----- (080F59F2) --------------------------------------------------------
-int __cdecl sub_80F59F2(int a1)
+int __cdecl ClientScr_SetStatusIcon(int a1)
 {
   int result; // eax
   char *v2; // [esp+10h] [ebp-8h]
@@ -99868,7 +99868,7 @@ int __cdecl sub_80F59F2(int a1)
 }
 
 //----- (080F5A22) --------------------------------------------------------
-int __cdecl sub_80F5A22(int a1)
+int __cdecl ClientScr_GetStatusIcon(int a1)
 {
   char s[1032]; // [esp+10h] [ebp-408h] BYREF
 
@@ -99879,7 +99879,7 @@ int __cdecl sub_80F5A22(int a1)
 }
 
 //----- (080F5A7C) --------------------------------------------------------
-int __cdecl sub_80F5A7C(int a1)
+int __cdecl ClientScr_SetHeadIcon(int a1)
 {
   int result; // eax
   char *v2; // [esp+Ch] [ebp-Ch]
@@ -99894,7 +99894,7 @@ int __cdecl sub_80F5A7C(int a1)
 // 859B400: using guessed type int dword_859B400;
 
 //----- (080F5AD2) --------------------------------------------------------
-int __cdecl sub_80F5AD2(int a1)
+int __cdecl ClientScr_GetHeadIcon(int a1)
 {
   int result; // eax
   char s[1036]; // [esp+10h] [ebp-418h] BYREF
@@ -99953,7 +99953,7 @@ void __cdecl ClientScr_SetHeadIconTeam(int a1)
 // 87A2314: using guessed type __int16 word_87A2314;
 
 //----- (080F5C30) --------------------------------------------------------
-int __cdecl sub_80F5C30(int a1)
+int __cdecl ClientScr_GetHeadIconTeam(int a1)
 {
   int v2; // [esp+10h] [ebp-8h]
 
@@ -99978,7 +99978,7 @@ int __cdecl sub_80F5C30(int a1)
 // 87A2314: using guessed type __int16 word_87A2314;
 
 //----- (080F5CC8) --------------------------------------------------------
-__int16 __cdecl sub_80F5CC8(int a1)
+__int16 __cdecl ClientScr_SetArchiveTime(int a1)
 {
   long double v1; // fst7
   __int16 result; // ax
@@ -99992,7 +99992,7 @@ __int16 __cdecl sub_80F5CC8(int a1)
 // 80F5CED: variable 'v3' is possibly undefined
 
 //----- (080F5D08) --------------------------------------------------------
-int __cdecl sub_80F5D08(int a1)
+int __cdecl ClientScr_GetArchiveTime(int a1)
 {
   int v2; // [esp+0h] [ebp-8h]
 
@@ -100001,7 +100001,7 @@ int __cdecl sub_80F5D08(int a1)
 }
 
 //----- (080F5D2A) --------------------------------------------------------
-int __cdecl sub_80F5D2A(int a1)
+int __cdecl ClientScr_SetPSOffsetTime(int a1)
 {
   int result; // eax
 
@@ -100011,13 +100011,13 @@ int __cdecl sub_80F5D2A(int a1)
 }
 
 //----- (080F5D4C) --------------------------------------------------------
-int __cdecl sub_80F5D4C(int a1)
+int __cdecl ClientScr_GetPSOffsetTime(int a1)
 {
   return Scr_AddInt(*(_DWORD *)(a1 + 9908));
 }
 
 //----- (080F5D66) --------------------------------------------------------
-char **sub_80F5D66()
+char **GScr_AddFieldsForClient()
 {
   char **result; // eax
   char **i; // [esp+14h] [ebp-4h]
@@ -100120,7 +100120,7 @@ int __usercall SetClientViewAngle@<eax>(long double a1@<st0>, int a2, _DWORD *a3
 }
 
 //----- (080F61BE) --------------------------------------------------------
-void __cdecl sub_80F61BE(int a1, float *a2)
+void __cdecl G_GetPlayerViewOrigin(int a1, float *a2)
 {
   long double v2; // fst7
   float v3; // [esp+20h] [ebp-38h]
@@ -100133,7 +100133,7 @@ void __cdecl sub_80F61BE(int a1, float *a2)
   v8 = *(_DWORD *)(a1 + 344);
   if ( (*(_DWORD *)(v8 + 160) & 0x300) != 0 )
   {
-    if ( !sub_811C16A((int)&unk_8665480 + 560 * *(_DWORD *)(v8 + 1428), (unsigned __int16)word_87A233A, a2) )
+    if ( !G_DObjGetWorldTagPos((int)&unk_8665480 + 560 * *(_DWORD *)(v8 + 1428), (unsigned __int16)word_87A233A, a2) )
       Com_Error(1, (char *)&byte_8150CC0);
   }
   else
@@ -100247,10 +100247,10 @@ int __cdecl ClientUserinfoChanged(int a1)
   v7 = (int)&unk_8665480 + 560 * a1;
   v4 = *(_DWORD *)(v7 + 344);
   SV_GetUserinfo(a1, dest, 1024);
-  if ( !sub_80B5FA4(dest) )
+  if ( !Info_Validate(dest) )
     strcpy(dest, "\\name\\badinfo");
   v1 = v4;
-  *(_DWORD *)(v1 + 9984) = sub_8090B5E(a1);
+  *(_DWORD *)(v1 + 9984) = SV_IsLocalClient(a1);
   nptr = Info_ValueForKey(dest, "cg_predictItems");
   if ( atoi(nptr) )
     *(_DWORD *)(v4 + 9988) = 1;
@@ -100385,7 +100385,7 @@ int __usercall ClientSpawn@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWOR
   *((_DWORD *)s + 2514) = v9;
   *((_DWORD *)s + 51) = v9;
   *((_DWORD *)s + 357) = 1023;
-  sub_80904C6(1682649625 * (((int)s - dword_859B400) >> 2), (_DWORD *)s + 2482);
+  SV_GetUsercmd(1682649625 * (((int)s - dword_859B400) >> 2), (_DWORD *)s + 2482);
   *((_DWORD *)s + 40) ^= 2u;
   sub_80F739A((_DWORD *)(a2 + 260), (_DWORD *)s + 347);
   sub_80F739A((_DWORD *)(a2 + 272), (_DWORD *)s + 350);
@@ -100454,7 +100454,7 @@ void __usercall ClientDisconnect(long double a1@<st0>, int a2)
 // 87A2310: using guessed type __int16 word_87A2310;
 
 //----- (080F6ED0) --------------------------------------------------------
-int __cdecl sub_80F6ED0(int a1, float *a2, int a3)
+int __cdecl G_GetNonPVSFriendlyInfo(int a1, float *a2, int a3)
 {
   unsigned int v4; // [esp+20h] [ebp-48h]
   int v5; // [esp+24h] [ebp-44h]
@@ -103318,7 +103318,7 @@ int __cdecl sub_80FBB62(int a1, char *nptr)
 // 859B5E4: using guessed type int dword_859B5E4;
 
 //----- (080FBD50) --------------------------------------------------------
-void __cdecl sub_80FBD50(char *s)
+void __cdecl G_setfog(char *s)
 {
   char v1; // [esp+3Ch] [ebp-2Ch] BYREF
   char v2; // [esp+40h] [ebp-28h] BYREF
@@ -103346,7 +103346,7 @@ void sub_80FBE00()
   char *v0; // eax
 
   v0 = (char *)sub_80FBA44(1);
-  sub_80FBD50(v0);
+  G_setfog(v0);
 }
 
 //----- (080FBE1C) --------------------------------------------------------
@@ -103789,7 +103789,7 @@ _DWORD *__cdecl sub_80FCAE6(char *a1)
   result = (_DWORD *)(v11[3] & 0x400000);
   if ( result )
   {
-    sub_80F61BE((int)a1, (float *)v9);
+    G_GetPlayerViewOrigin((int)a1, (float *)v9);
     sub_80F63A0((int)a1, (int)v8, 0, (float *)v7);
     sub_80FEE3C(v11 + 58, v10);
     v2 = v10[0] + 15.0;
@@ -104665,7 +104665,7 @@ char *__cdecl sub_80FEEC0(char *dest, char *src)
 }
 
 //----- (080FEEDA) --------------------------------------------------------
-_BOOL4 sub_80FEEDA()
+_BOOL4 G_ParseHitLocDmgTable()
 {
   int v0; // ebx
   _BOOL4 result; // eax
@@ -104703,7 +104703,7 @@ _BOOL4 sub_80FEEDA()
   FS_Read((int)s1, v3 - n, v2);
   s1[v3 - n] = 0;
   FS_FCloseFile(v2);
-  if ( !sub_80B5FA4(s1) )
+  if ( !Info_Validate(s1) )
     Com_Error(1, (char *)&byte_81525E0, src);
   result = sub_80B645E((int)dword_8577F60, (int)v5, 19, s1, 0, 0, (void (__cdecl *)(int, char *))sub_80FEEC0);
   if ( !result )
@@ -105032,7 +105032,7 @@ long double __cdecl sub_80FFA56(int a1, float *a2)
   v24 = 1097859072;
   if ( *(_DWORD *)(a1 + 344) )
   {
-    sub_80F61BE(a1, v6);
+    G_GetPlayerViewOrigin(a1, v6);
     v5 = (v6[2] - *(float *)(a1 + 320)) * 0.5;
     sub_81004B2(a2, (float *)(a1 + 312), (float *)v8);
     v9 = 0;
@@ -108276,7 +108276,7 @@ int __cdecl G_GetClientArchiveTime(int a1)
 // 859B400: using guessed type int dword_859B400;
 
 //----- (081069C2) --------------------------------------------------------
-int __cdecl sub_81069C2(int a1, int a2)
+int __cdecl G_SetClientArchiveTime(int a1, int a2)
 {
   int result; // eax
 
@@ -108455,7 +108455,7 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
     *((_DWORD *)dword_855A4E0 + 184048) = Com_FindSoundAlias;
     *((_DWORD *)dword_855A4E0 + 184049) = G_AnimScriptSound;
     GScr_LoadScripts(a1);
-    sub_80D9B7E();
+    BG_LoadAnim();
     sub_8106AAC();
   }
   GScr_LoadConsts();
@@ -108472,20 +108472,20 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
   *(_DWORD *)dword_859B40C = 72;
   dword_859B410 = 0;
   dword_859B414 = 0;
-  sub_8090498(dword_859B404, 72, 560, dword_859B400, 10404);
-  sub_80FEEDA();
-  sub_81083B2();
+  SV_LocateGameData(dword_859B404, 72, 560, dword_859B400, 10404);
+  G_ParseHitLocDmgTable();
+  G_InitTurrets();
   G_SpawnEntitiesFromString(a1);
-  sub_80FBD50("0");
-  sub_811030E();
-  sub_807E04A();
+  G_setfog("0");
+  G_InitObjectives();
+  Scr_FreeEntityList();
   Com_Printf("-----------------------------------\n");
-  sub_8083E96();
-  sub_807F9F2(1);
-  sub_807F64C();
+  Scr_InitSystem();
+  Scr_SetLoading(1);
+  Scr_AllocGameVariable();
   G_LoadStructs();
-  sub_8115E66();
-  sub_810DD38();
+  Scr_LoadGameType();
+  Scr_LoadLevel();
   Scr_StartupGameType();
   for ( j = 0; j <= 7; ++j )
     dword_879D83C[306 * j] = -1;
@@ -108530,8 +108530,8 @@ unsigned int *__usercall G_ShutdownGame@<eax>(long double a1@<st0>, int a2)
   sub_81069FC(a1);
   HudElem_DestroyAll();
   if ( Scr_IsSystemActive() && !dword_859D154 )
-    sub_808DC2C();
-  result = sub_8083EDA(1, dword_859D154 == 0);
+    SV_FreeClientScriptPers();
+  result = Scr_ShutdownSystem(1, dword_859D154 == 0);
   if ( a2 )
   {
     sub_80DB6CA();
@@ -109214,7 +109214,7 @@ int __usercall sub_810839E@<eax>(long double a1@<st0>, int *s)
 }
 
 //----- (081083B2) --------------------------------------------------------
-int *sub_81083B2()
+int *G_InitTurrets()
 {
   int *result; // eax
   int i; // [esp+0h] [ebp-4h] BYREF
@@ -109243,7 +109243,7 @@ float *__cdecl sub_81083E8(int a1, int a2, int a3)
     v3 = SL_ConvertToString(*(unsigned __int16 *)(a1 + 360));
     Com_Error(1, (char *)&byte_8153AE0, "tag_flash", *(_DWORD *)a1, v3);
   }
-  sub_80F61BE(a2, (float *)v7);
+  G_GetPlayerViewOrigin(a2, (float *)v7);
   sub_80F63A0(a2, a3, (float *)(a3 + 12), (float *)(a3 + 24));
   sub_810A912((_DWORD *)a3, (_DWORD *)(a3 + 48));
   sub_810A986(&v9, (float *)v7, v6);
@@ -109356,7 +109356,7 @@ void __cdecl sub_81085B8(int a1, int a2)
     && *(_DWORD *)(v64 + 20)
     && (*(_DWORD *)(*(_DWORD *)(v64 + 20) + 80) & 4) != 0 )
   {
-    v42 = (float *)sub_811C056((int *)a2, (unsigned __int16)word_87A2338);
+    v42 = (float *)G_DObjGetLocalTagMatrix((int *)a2, (unsigned __int16)word_87A2338);
     if ( v42 )
     {
       v63 = BG_WeaponDefs(*(_DWORD *)(a2 + 200));
@@ -109856,18 +109856,18 @@ int __cdecl sub_8109A68(int a1)
   v14 = *(_DWORD *)(a1 + 348);
   *(_BYTE *)(a1 + 358) = 14;
   *(_DWORD *)(a1 + 400) = dword_859B5EC + 50;
-  result = sub_811C056((int *)a1, (unsigned __int16)word_87A233E);
+  result = G_DObjGetLocalTagMatrix((int *)a1, (unsigned __int16)word_87A233E);
   v13 = result;
   if ( result )
   {
-    result = sub_811C056((int *)a1, (unsigned __int16)word_87A2344);
+    result = G_DObjGetLocalTagMatrix((int *)a1, (unsigned __int16)word_87A2344);
     v12 = result;
     if ( result )
     {
       AnglesToAxis((float *)(a1 + 324), (int)v10);
       sub_810A912((_DWORD *)(a1 + 312), v11);
       sub_810A986((float *)(v12 + 16), (float *)(v13 + 16), v7);
-      result = (int)sub_80A50D2((float *)(v13 + 16), v10, (float *)v5);
+      result = (int)MatrixTransformVector43((float *)(v13 + 16), v10, (float *)v5);
       for ( i = 0; i <= 30; ++i )
       {
         v8[0] = (long double)i * -3.0;
@@ -109876,7 +109876,7 @@ int __cdecl sub_8109A68(int a1)
         AnglesToAxis(v8, (int)v9);
         MatrixTransformVector(v7, v9, v6);
         sub_810A942((float *)(v13 + 16), v6, v6);
-        sub_80A50D2(v6, v10, (float *)v4);
+        MatrixTransformVector43(v6, v10, (float *)v4);
         G_LocationalTrace(s, (float *)v5, (float *)v4, *(_DWORD *)a1, 2065, (int)&unk_816778C);
         if ( s[0] < 1.0 )
         {
@@ -109922,7 +109922,7 @@ int __cdecl sub_8109C76(int *a1, int a2)
 // 87A2340: using guessed type __int16 word_87A2340;
 
 //----- (08109D26) --------------------------------------------------------
-_BOOL4 __cdecl sub_8109D26(int a1, int a2)
+_BOOL4 __cdecl turret_behind(int a1, int a2)
 {
   float v3; // [esp+0h] [ebp-68h]
   float v4; // [esp+0h] [ebp-68h]
@@ -109968,11 +109968,11 @@ int __cdecl G_FreeTurret(int a1)
 }
 
 //----- (08109EC0) --------------------------------------------------------
-_BOOL4 __cdecl sub_8109EC0(int a1, int a2)
+_BOOL4 __cdecl G_IsTurretUsable(int a1, int a2)
 {
   if ( *(_BYTE *)(a1 + 354) || !*(_DWORD *)(a1 + 348) )
     return 0;
-  if ( !sub_8109D26(a1, a2) )
+  if ( !turret_behind(a1, a2) )
     return 0;
   if ( *(_DWORD *)(*(_DWORD *)(a2 + 344) + 60) )
     return 0;
@@ -111575,7 +111575,7 @@ int __cdecl GScr_AllocString(char *s)
 }
 
 //----- (0810DD38) --------------------------------------------------------
-void sub_810DD38()
+void Scr_LoadLevel()
 {
   unsigned __int16 v0; // [esp+16h] [ebp-2h]
 
@@ -112362,13 +112362,13 @@ void __usercall ScrCmd_attach(long double a1@<st0>, int a2)
     v4 = 0;
   else
     v4 = Scr_GetInt(2u);
-  if ( sub_811B528(a1, v7, s2, v5) )
+  if ( G_EntDetach(a1, v7, s2, v5) )
   {
     v2 = (const char *)SL_ConvertToString(v5);
     v3 = va("model '%s' already attached to tag '%s'", s2, v2);
     Scr_Error((int)v3);
   }
-  if ( !sub_811B470(a1, v7, s2, v5, v4) )
+  if ( !G_EntAttach(a1, v7, s2, v5, v4) )
     Scr_Error((int)"maximum attached models exceeded");
 }
 // 87A22A0: using guessed type __int16 word_87A22A0;
@@ -112391,7 +112391,7 @@ void __usercall ScrCmd_detach(long double a1@<st0>, int a2)
     v6 = (unsigned __int16)word_87A22A0;
   else
     v6 = Scr_GetConstLowercaseString(1u);
-  if ( !sub_811B528(a1, v9, s2, v6) )
+  if ( !G_EntDetach(a1, v9, s2, v6) )
   {
     Com_Printf("Current attachments:\n");
     for ( i = 0; i <= 6; ++i )
@@ -113094,7 +113094,7 @@ int __cdecl GScr_DisableAimAssist(int a1)
 }
 
 //----- (0811030E) --------------------------------------------------------
-int *sub_811030E()
+int *G_InitObjectives()
 {
   int *result; // eax
   int i; // [esp+4h] [ebp-4h] BYREF
@@ -114935,7 +114935,7 @@ void __cdecl Scr_SetFog(const char *a1, float a2, float a3, float a4, float a5, 
     Scr_Error((int)v11);
   }
   v12 = va("%g %g %g %g %g %g %.0f", a2, a3, a4, a5, a6, a7, (double)(a8 * 1000.0));
-  sub_80FBD50(v12);
+  G_setfog(v12);
 }
 // 8113294: using guessed type const char *arg_0;
 
@@ -116502,7 +116502,7 @@ _BOOL4 __cdecl Scr_IsValidGameType(char *a1)
 }
 
 //----- (08115E66) --------------------------------------------------------
-int sub_8115E66()
+int Scr_LoadGameType()
 {
   unsigned __int16 v1; // [esp+16h] [ebp-2h]
 
@@ -117676,7 +117676,7 @@ void Scr_ReadOnlyField()
 }
 
 //----- (08118060) --------------------------------------------------------
-int __cdecl sub_8118060(char *s1, char *nptr)
+int __cdecl G_SetEntityScriptVariableInternal(char *s1, char *nptr)
 {
   int v2; // eax
   int v5; // [esp+2Ch] [ebp-2Ch]
@@ -117686,7 +117686,7 @@ int __cdecl sub_8118060(char *s1, char *nptr)
   int v9; // [esp+48h] [ebp-10h]
   int v10[3]; // [esp+4Ch] [ebp-Ch] BYREF
 
-  v9 = sub_807F168(s1, v10);
+  v9 = Scr_FindField(s1, v10);
   if ( !v9 )
     return 0;
   if ( v10[0] == 4 )
@@ -117721,7 +117721,7 @@ int __cdecl sub_8118148(char *s1, char *nptr, int *a3)
 {
   int result; // eax
 
-  result = sub_8118060(s1, nptr);
+  result = G_SetEntityScriptVariableInternal(s1, nptr);
   if ( result )
     return sub_81190B6(a3, result);
   return result;
@@ -117795,21 +117795,21 @@ int __cdecl G_ParseEntityFields(int *a1)
 // 859C74C: using guessed type int dword_859C74C;
 
 //----- (08118398) --------------------------------------------------------
-int sub_8118398()
+int G_LoadScriptStructs()
 {
   int result; // eax
   int v1; // [esp+Ch] [ebp-Ch]
   int v2; // [esp+10h] [ebp-8h]
   int i; // [esp+14h] [ebp-4h]
 
-  sub_8083AAC(dword_879D834, 0);
-  v1 = sub_808491A(0);
+  Scr_AddExecThread(dword_879D834, 0);
+  v1 = Scr_GetObject(0);
   for ( i = 0; ; ++i )
   {
     result = i;
     if ( i >= dword_859C74C )
       break;
-    v2 = sub_8118060((&dword_859C750)[2 * i], (&nptr)[2 * i]);
+    v2 = G_SetEntityScriptVariableInternal((&dword_859C750)[2 * i], (&nptr)[2 * i]);
     if ( v2 )
       Scr_SetStructField(v1, v2);
   }
@@ -117975,7 +117975,7 @@ char **GScr_AddFieldsForEntity()
 
   for ( i = &off_8157780; *i; i += 4 )
     Scr_AddClassField(0, *i, ((char *)i - (char *)&off_8157780) >> 4);
-  return sub_80F5D66();
+  return GScr_AddFieldsForClient();
 }
 // 8157780: using guessed type char *off_8157780;
 
@@ -118387,7 +118387,7 @@ int Scr_GetEntArray()
 //----- (081190B6) --------------------------------------------------------
 int __cdecl sub_81190B6(int *a1, int a2)
 {
-  return sub_8084F6A(*a1, 0, a2);
+  return Scr_SetDynamicEntityField(*a1, 0, a2);
 }
 
 //----- (081190DA) --------------------------------------------------------
@@ -118472,7 +118472,7 @@ void *G_LoadStructs()
   {
     G_SpawnString("classname", (int)&byte_8157544, &s2);
     if ( !strcmp("script_struct", s2) )
-      sub_8118398();
+      G_LoadScriptStructs();
   }
   return SV_ResetEntityParsePoint();
 }
@@ -118851,7 +118851,7 @@ int __cdecl TeamplayInfoMessage(int a1)
 
   if ( *(_DWORD *)(*(_DWORD *)(a1 + 344) + 9896) )
   {
-    sub_80F61BE(a1, (float *)v5);
+    G_GetPlayerViewOrigin(a1, (float *)v5);
     sub_80F63A0(a1, (int)v7, 0, 0);
     if ( *(float *)(*(_DWORD *)(a1 + 344) + 248) < 8.0 )
       v6 = 8.0 - *(float *)(*(_DWORD *)(a1 + 344) + 248) + v6;
@@ -118866,7 +118866,7 @@ int __cdecl TeamplayInfoMessage(int a1)
       *(_DWORD *)(result + 316) = 0;
       return result;
     }
-    sub_80F61BE(a1, (float *)v5);
+    G_GetPlayerViewOrigin(a1, (float *)v5);
     sub_80F63A0(a1, (int)v7, 0, 0);
     sub_8119F76((float *)v5, 8192.0, (float *)v7, (float *)v4);
   }
@@ -119605,7 +119605,7 @@ int __cdecl G_OverrideModel(int a1, char *s1)
 // 87A1EA0: using guessed type int dword_87A1EA0[256];
 
 //----- (0811B470) --------------------------------------------------------
-int __usercall sub_811B470@<eax>(long double a1@<st0>, int a2, char *s2, int a4, int a5)
+int __usercall G_EntAttach@<eax>(long double a1@<st0>, int a2, char *s2, int a4, int a5)
 {
   int i; // [esp+10h] [ebp-8h]
 
@@ -119625,7 +119625,7 @@ int __usercall sub_811B470@<eax>(long double a1@<st0>, int a2, char *s2, int a4,
 }
 
 //----- (0811B528) --------------------------------------------------------
-int __usercall sub_811B528@<eax>(long double a1@<st0>, int a2, char *s2, int a4)
+int __usercall G_EntDetach@<eax>(long double a1@<st0>, int a2, char *s2, int a4)
 {
   const char *v4; // eax
   char v5; // al
@@ -119843,7 +119843,7 @@ float *__cdecl sub_811BB3A(int a1, int a2)
     v4 = (float *)(32 * *(_DWORD *)(v9 + 12) + v2);
     sub_80A913C(v4, v5);
     sub_80A358E(v5, v6, (float *)a2);
-    return sub_80A50D2(v4 + 4, v6, (float *)(a2 + 36));
+    return MatrixTransformVector43(v4 + 4, v6, (float *)(a2 + 36));
   }
 }
 // 811BB3A: using guessed type float var_48[9];
@@ -119911,7 +119911,7 @@ void __cdecl sub_811BD52(int a1, int a2)
   {
     if ( a2 == 2 )
     {
-      sub_80A50D2((float *)(v5 + 52), v2, v4);
+      MatrixTransformVector43((float *)(v5 + 52), v2, v4);
       sub_811D0FC(v4, (_DWORD *)(a1 + 312));
     }
   }
@@ -119995,7 +119995,7 @@ int *__cdecl sub_811BFC4(int a1, int a2)
 // 816789C: using guessed type int dword_816789C[];
 
 //----- (0811C056) --------------------------------------------------------
-int __cdecl sub_811C056(int *a1, int a2)
+int __cdecl G_DObjGetLocalTagMatrix(int *a1, int a2)
 {
   int v4; // [esp+10h] [ebp-8h]
 
@@ -120014,14 +120014,14 @@ int __cdecl sub_811C0B2(int a1, int a2, float *a3)
   int v7[6]; // [esp+74h] [ebp-24h] BYREF
   float *v8; // [esp+8Ch] [ebp-Ch]
 
-  v8 = (float *)sub_811C056((int *)a1, a2);
+  v8 = (float *)G_DObjGetLocalTagMatrix((int *)a1, a2);
   if ( !v8 )
     return 0;
   AnglesToAxis((float *)(a1 + 324), (int)v6);
   sub_811D0FC((_DWORD *)(a1 + 312), v7);
   sub_80A913C(v8, v5);
   sub_80A358E(v5, v6, a3);
-  sub_80A50D2(v8 + 4, v6, a3 + 9);
+  MatrixTransformVector43(v8 + 4, v6, a3 + 9);
   return 1;
 }
 // 811C0B2: using guessed type float var_48[9];
@@ -120029,18 +120029,18 @@ int __cdecl sub_811C0B2(int a1, int a2, float *a3)
 // 811C0B2: using guessed type int anonymous_0[6];
 
 //----- (0811C16A) --------------------------------------------------------
-int __cdecl sub_811C16A(int a1, int a2, float *a3)
+int __cdecl G_DObjGetWorldTagPos(int a1, int a2, float *a3)
 {
   float v5[9]; // [esp+20h] [ebp-48h] BYREF
   int v6[6]; // [esp+44h] [ebp-24h] BYREF
   int v7; // [esp+5Ch] [ebp-Ch]
 
-  v7 = sub_811C056((int *)a1, a2);
+  v7 = G_DObjGetLocalTagMatrix((int *)a1, a2);
   if ( !v7 )
     return 0;
   AnglesToAxis((float *)(a1 + 324), (int)v5);
   sub_811D0FC((_DWORD *)(a1 + 312), v6);
-  sub_80A50D2((float *)(v7 + 16), v5, a3);
+  MatrixTransformVector43((float *)(v7 + 16), v5, a3);
   return 1;
 }
 // 811C16A: using guessed type float var_48[9];
@@ -120203,7 +120203,7 @@ int G_Spawn()
       Com_Error(1, (char *)&byte_8157C61);
     }
     v1 = dword_859B404 + 560 * (*(_DWORD *)dword_859B40C)++;
-    sub_8090498(dword_859B404, *(int *)dword_859B40C, 560, dword_859B400, 10404);
+    SV_LocateGameData(dword_859B404, *(int *)dword_859B40C, 560, dword_859B400, 10404);
   }
   G_InitGentity(v1);
   return v1;
@@ -121090,7 +121090,7 @@ void __cdecl sub_811E35C(int a1, float *a2)
   v2[0] = *(_DWORD *)(*(_DWORD *)(a1 + 344) + 10200);
   v2[1] = *(_DWORD *)(*(_DWORD *)(a1 + 344) + 10204);
   AngleVectors((float *)v2, (int)a2, a2 + 3, a2 + 6);
-  sub_80F61BE(a1, a2 + 9);
+  G_GetPlayerViewOrigin(a1, a2 + 9);
 }
 
 //----- (0811E3E0) --------------------------------------------------------
@@ -121163,7 +121163,7 @@ __int16 __cdecl sub_811E5E0(int a1)
   if ( (*(_DWORD *)(*(_DWORD *)(a1 + 344) + 160) & 0x300) == 0 || (result = a1, !*(_BYTE *)(a1 + 354)) )
   {
     LODWORD(v5[6]) = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
-    sub_80F61BE(a1, v5);
+    G_GetPlayerViewOrigin(a1, v5);
     sub_80F63A0(a1, (int)v2, &v3, &v4);
     return sub_811D3B4(
              (int *)a1,
@@ -121369,7 +121369,7 @@ long double __cdecl sub_811EBA4(float a1)
 }
 
 //----- (0811EBC4) --------------------------------------------------------
-int __cdecl sub_811EBC4(int *a1, int a2)
+int __cdecl Player_UseEntity(int *a1, int a2)
 {
   int result; // eax
   void (__cdecl *v3)(int, int *, _DWORD); // [esp+10h] [ebp-8h]
@@ -121385,7 +121385,7 @@ int __cdecl sub_811EBC4(int *a1, int a2)
     if ( v3 )
       v3(a2, a1, 0);
   }
-  else if ( *(_DWORD *)(a2 + 4) != 9 || sub_8109EC0(a2, (int)a1) )
+  else if ( *(_DWORD *)(a2 + 4) != 9 || G_IsTurretUsable(a2, (int)a1) )
   {
     Scr_AddEntity(a1);
     Scr_Notify((int *)a2, word_87A22F4, 1);
@@ -121402,7 +121402,7 @@ int __cdecl sub_811EBC4(int *a1, int a2)
 // 87A22F4: using guessed type __int16 word_87A22F4;
 
 //----- (0811ECE4) --------------------------------------------------------
-int __cdecl sub_811ECE4(int a1)
+int __cdecl Player_ActivateHoldCmdAllowed(int a1)
 {
   if ( !Scr_IsSystemActive() )
     return 0;
@@ -121447,7 +121447,7 @@ int __cdecl sub_811EDD4(int *a1)
       {
         result = g_useholdtime;
         if ( dword_859B5EC - *(_DWORD *)(a1[86] + 10292) >= *(_DWORD *)(g_useholdtime + 8) )
-          return sub_811EBC4(a1, (int)&unk_8665480 + 560 * *(_DWORD *)(a1[86] + 10288));
+          return Player_UseEntity(a1, (int)&unk_8665480 + 560 * *(_DWORD *)(a1[86] + 10288));
       }
     }
   }
@@ -121457,7 +121457,7 @@ int __cdecl sub_811EDD4(int *a1)
 // 8793DA4: using guessed type int g_useholdspawndelay;
 
 //----- (0811EE84) --------------------------------------------------------
-int __cdecl sub_811EE84(int *a1)
+int __cdecl Player_UpdateActivate(int *a1)
 {
   int result; // eax
   char v2; // [esp+7h] [ebp-1h]
@@ -121471,7 +121471,7 @@ int __cdecl sub_811EE84(int *a1)
       || (*(_DWORD *)(a1[86] + 10172) & 0x20) != 0 )
     {
       if ( (*(_DWORD *)(a1[86] + 10180) & 0x28) != 0 )
-        v2 = sub_811ECE4((int)a1);
+        v2 = Player_ActivateHoldCmdAllowed((int)a1);
       if ( *(_DWORD *)(a1[86] + 10288) != 1023 || v2 )
       {
         result = *(_DWORD *)(a1[86] + 10172) & 0x28;
@@ -121529,7 +121529,7 @@ int __cdecl sub_811F004(float *a1, _DWORD *base)
 
   v4 = 0;
   v21 = *((_DWORD *)a1 + 86);
-  sub_80F61BE((int)a1, v16);
+  G_GetPlayerViewOrigin((int)a1, v16);
   sub_80F63A0((int)a1, (int)v19, 0, 0);
   sub_811FEEA((float *)(v21 + 20), (float *)(v21 + 1388), v6);
   sub_811FEEA((float *)(v21 + 20), (float *)(v21 + 1400), v5);
@@ -121594,7 +121594,7 @@ int __cdecl sub_811F004(float *a1, _DWORD *base)
       sub_811FEEA((float *)(v22 + 288), (float *)(v22 + 300), (float *)v15);
       sub_811FF72((float *)v15, 0.5, (float *)v15);
       if ( *(_DWORD *)(v22 + 4) == 9 )
-        sub_811C16A(v22, (unsigned __int16)word_87A233E, (float *)v15);
+        G_DObjGetWorldTagPos(v22, (unsigned __int16)word_87A233E, (float *)v15);
       if ( !G_TraceCapsuleComplete(v16, flt_8145E68, flt_8145E68, (float *)v15, *(_DWORD *)(v21 + 204), 17) )
       {
         *(float *)&base[2 * i + 1] = *(float *)&base[2 * i + 1] + 10000.0;
@@ -121723,7 +121723,7 @@ LABEL_31:
               }
               else if ( v2 > 3 )
               {
-                if ( v2 == 9 && sub_8109EC0(v8, a1) )
+                if ( v2 == 9 && G_IsTurretUsable(v8, a1) )
                 {
                   v7 = *(_DWORD *)(v8 + 200) + 4;
                   if ( **(_BYTE **)(BG_WeaponDefs(*(_DWORD *)(v8 + 200)) + 1388) )
@@ -121799,7 +121799,7 @@ void __cdecl sub_811FB7A(int *a1)
   v12 = (_DWORD *)a1[86];
   v12[3] &= 0xFFCFFFFF;
   *(_DWORD *)(a1[86] + 10284) = 0;
-  sub_80F61BE((int)a1, (float *)v8);
+  G_GetPlayerViewOrigin((int)a1, (float *)v8);
   sub_80F63A0((int)a1, (int)v6, 0, 0);
   if ( (v12[40] & 0x300) != 0 )
     v13 = BG_WeaponDefs(dword_8665548[140 * v12[357]]);

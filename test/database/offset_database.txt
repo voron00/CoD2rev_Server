@@ -1523,6 +1523,11 @@ SetJump(0x0807CF1E, (DWORD)Scr_CastVector);
 SetJump(0x0807E346, (DWORD)FindEntityId);
 SetJump(0x0807FAEE, (DWORD)FreeTempVariable);
 SetJump(0x0807FACC, (DWORD)FreeTempVariableObject);
+SetJump(0x0808DC2C, (DWORD)SV_FreeClientScriptPers);
+SetJump(0x08083EDA, (DWORD)Scr_ShutdownSystem);
+SetJump(0x08075758, (DWORD)Scr_CompileShutdown);
+SetJump(0x080904C6, (DWORD)SV_GetUsercmd);
+SetJump(0x08062676, (DWORD)Com_SetWeaponInfoMemory);
 
 
 
@@ -1899,6 +1904,8 @@ SetJump(0x080D9B7E, (DWORD)BG_LoadAnim);
 SetJump(0x080D99BE, (DWORD)BG_FindAnims);
 SetJump(0x080BB82A, (DWORD)XAnimCalcRelDeltaParts);
 SetJump(0x081069C2, (DWORD)G_SetClientArchiveTime);
+SetJump(0x0811B470, (DWORD)G_EntAttach);
+SetJump(0x0811B528, (DWORD)G_EntDetach);
 
 
 
