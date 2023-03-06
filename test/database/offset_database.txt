@@ -1328,6 +1328,7 @@ SetJump(0x08082AC0, (DWORD)Scr_TerminateWaitThread);
 SetJump(0x08082A4A, (DWORD)Scr_TerminateRunningThread);
 SetJump(0x0807B1C8, (DWORD)Scr_GetThreadWaitTime);
 SetJump(0x0807B190, (DWORD)Scr_ClearWaitTime);
+SetJump(0x080DAF36, (DWORD)Mantle_CheckLedge);
 
 
 
@@ -1826,6 +1827,10 @@ SetJump(0x080553B2, (DWORD)CM_PositionTestCapsuleInTriangle);
 SetJump(0x080E6D30, (DWORD)Pmove);
 SetJump(0x080E6200, (DWORD)PmoveSingle);
 SetJump(0x080D72F8, (DWORD)BG_AnimUpdatePlayerStateConditions);
+SetJump(0x080B645E, (DWORD)ParseConfigStringToStruct);
+SetJump(0x080F06B4, (DWORD)BG_ParseWeaponDefSpecificFieldType);
+SetJump(0x080F0B8E, (DWORD)SetConfigString2);
+
 
 
 SetJump(0x080BBA2E, (DWORD)XAnimFreeNotifyStrings);
@@ -1906,6 +1911,9 @@ SetJump(0x080BB82A, (DWORD)XAnimCalcRelDeltaParts);
 SetJump(0x081069C2, (DWORD)G_SetClientArchiveTime);
 SetJump(0x0811B470, (DWORD)G_EntAttach);
 SetJump(0x0811B528, (DWORD)G_EntDetach);
+SetJump(0x081173F6, (DWORD)ScriptEntCmdGetCommandTimes);
+SetJump(0x08116F18, (DWORD)ScriptMover_Move);
+SetJump(0x081167BA, (DWORD)ScriptMover_SetupMove);
 
 
 

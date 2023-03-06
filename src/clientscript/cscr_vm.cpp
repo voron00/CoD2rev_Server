@@ -54,10 +54,10 @@ void Scr_ErrorInternal()
 			scrVmPub.terminal_error = 1;
 
 // !!! REMOVE ME WHEN COMPLETE
-//#ifndef TESTING_LIBRARY
+#ifndef TESTING_LIBRARY
 		if ( scrVmPub.function_count || scrVmPub.debugCode )
 			longjmp(g_script_error[g_script_error_level], -1);
-//#endif
+#endif
 
 		Com_Error(ERR_DROP, "%s", scrVarPub.error_message);
 	}
@@ -1038,7 +1038,7 @@ void Scr_Settings(int developer, int developer_script, int abort_on_error)
 void Scr_TerminalError(const char *error)
 {
 	Scr_DumpScriptThreads();
-	Scr_DumpScriptVariablesDefault();
+	Scr_DumpScriptVariables();
 	scrVmPub.terminal_error = 1;
 	Scr_Error(error);
 }

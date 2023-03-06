@@ -294,7 +294,7 @@ typedef struct playerState_s
 	int ammoclip[128];
 	int weapons[2];
 	int oldweapons[2];
-	byte weaponslots[8];
+	char weaponslots[8];
 	int weaponrechamber[2];
 	int oldweaponrechamber[2];
 	vec3_t mins;

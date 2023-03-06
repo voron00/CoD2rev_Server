@@ -163,9 +163,10 @@ extern bgs_t level_bgs;
 #endif
 
 
-#define cm_world (*((cm_world_t*)( 0x08185D80 )))
 
-#define net_fields (((game_client_field_s*)( 0x08150B80 )))
+//#define cm_world (*((cm_world_t*)( 0x08185D80 )))
+
+#define net_fields (((cspField_t*)( 0x081665C0 )))
 void test2()
 {
 	/*
@@ -178,13 +179,13 @@ void test2()
 	// Just print stuff until program segfaults
 	for(int i = 0; i < 16384; i++)
 	{
-		if (net_fields[i].name == NULL)
+		if (net_fields[i].szName == NULL)
 			return;
-		Com_Printf("{ \"%s\", %i, %i, %p, %p }\n", net_fields[i].name, net_fields[i].ofs, net_fields[i].type, net_fields[i].setter, net_fields[i].getter);
+		Com_Printf("{ \"%s\", %i, %i, },\n", net_fields[i].szName, net_fields[i].iOffset, net_fields[i].iFieldType);
 	}
 	*/
 
-	//printf("%s\n", level_bgs.clientinfo[0].name);
+	//printf("%i\n", BG_GetWeaponDef(11)->unk);
 }
 
 void Sys_RedirectFunctions()
@@ -218,7 +219,7 @@ void Sys_RedirectFunctions()
 	// SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
 
 	//SetJump(0x08094F02, (DWORD)test);
-	//SetJump(0x08094F02, (DWORD)test2);
+	SetJump(0x08094F02, (DWORD)test2);
 
 
 	//SetJump(0x080C501A, (DWORD)XModelGetStaticBounds);

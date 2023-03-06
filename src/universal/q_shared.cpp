@@ -1193,3 +1193,13 @@ qboolean Info_Validate( const char *s )
 
 	return qtrue;
 }
+
+bool COM_BitTest(int array[], int bitNum)
+{
+	return (array[bitNum >> 5] >> (bitNum & 0x1F)) & 1;
+}
+
+void COM_BitSet(int array[], int bitNum)
+{
+	array[bitNum >> 5] |= 1 << (bitNum & 0x1F);
+}

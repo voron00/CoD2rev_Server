@@ -2585,7 +2585,7 @@ void Scr_DumpScriptThreads()
 	UNIMPLEMENTED(__FUNCTION__);
 }
 
-void Scr_DumpScriptVariablesDefault()
+void Scr_DumpScriptVariables()
 {
 	UNIMPLEMENTED(__FUNCTION__);
 }

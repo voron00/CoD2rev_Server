@@ -693,7 +693,7 @@ unsigned int Scr_FindField(const char *name, int *type);
 void Scr_AddClassField(unsigned int classnum, const char *name, unsigned short offset);
 bool Scr_CastString(VariableValue *value);
 void Scr_DumpScriptThreads();
-void Scr_DumpScriptVariablesDefault();
+void Scr_DumpScriptVariables();
 void Var_Shutdown();
 void Var_FreeTempVariables();
 void Var_Init();
