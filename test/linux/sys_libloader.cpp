@@ -163,6 +163,14 @@ extern bgs_t level_bgs;
 #endif
 
 
+#ifdef TESTING_LIBRARY
+#define cm (*((clipMap_t*)( 0x08185BE0 )))
+#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
+#else
+extern clipMap_t cm;
+extern clipMapExtra_t cme;
+#endif
+
 
 //#define cm_world (*((cm_world_t*)( 0x08185D80 )))
 
@@ -185,7 +193,25 @@ void test2()
 	}
 	*/
 
-	//printf("%i\n", BG_GetWeaponDef(11)->unk);
+	/*
+	static int printed = 0;
+
+	if (printed)
+		return;
+
+	printed = 1;
+
+	printf("%i\n", cm.vertCount);
+
+	for (unsigned int j = 0; j < cm.vertCount; ++j)
+	{
+		if (j > 512)
+			return;
+		printf("Vert ID: %i Position: (%f %f %f)\n", j, cm.verts[j][0], cm.verts[j][1], cm.verts[j][2]);
+	}
+
+	printf("\n\n");
+	*/
 }
 
 void Sys_RedirectFunctions()
@@ -227,6 +253,19 @@ void Sys_RedirectFunctions()
 	SetJump(0x08051C90, (DWORD)Com_LoadBsp);
 	SetJump(0x08051E5C, (DWORD)Com_UnloadBsp);
 	SetJump(0x08051F9E, (DWORD)CM_LoadMap);
+
+	/*
+	extern void CMod_LoadCollisionVerts();
+	SetJump(0x08053EC2, (DWORD)CMod_LoadCollisionVerts);
+	extern void CMod_LoadCollisionEdges();
+	SetJump(0x08053FC0, (DWORD)CMod_LoadCollisionEdges);
+	extern void CMod_LoadCollisionTriangles();
+	SetJump(0x08054220, (DWORD)CMod_LoadCollisionTriangles);
+	extern void CMod_LoadCollisionBorders();
+	SetJump(0x0805448C, (DWORD)CMod_LoadCollisionBorders);
+	extern void CMod_LoadCollisionPartitions();
+	SetJump(0x0805461E, (DWORD)CMod_LoadCollisionPartitions);
+	*/
 
 	// Don't hook that for now, just init
 	Swap_Init();
@@ -684,23 +723,23 @@ void Sys_RedirectFunctions()
 	SetJump(0x0807BC7C, (DWORD)Scr_FindVariableField);
 	SetJump(0x0807BF8E, (DWORD)ClearVariableField);
 	SetJump(0x0808244A, (DWORD)VM_ArchiveStack);
-	
-	
+
+
 	SetJump(0x08082EE2, (DWORD)Scr_TerminateThread);
 	SetJump(0x08082F56, (DWORD)VM_Notify);
-	
-	
+
+
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING
 	//SetJump(0x0807FB08, (DWORD)VM_ExecuteInternal);
-	
-	
+
+
 	SetJump(0x08077DBA, (DWORD)Scr_PrintPrevCodePos);
 	SetJump(0x0807C83C, (DWORD)Scr_EvalVariableField);
 	SetJump(0x0807DDD2, (DWORD)Scr_EvalBinaryOperator);
-	
-	
-	
-	
+
+
+
+
 
 	// ALL referenced Hud elem stuff
 	SetJump(0x0810169E, (DWORD)Scr_GetHudElemField);
@@ -770,8 +809,8 @@ void Sys_RedirectFunctions()
 	extern void CM_LinkEntity(svEntity_t *ent, float *absmin, float *absmax, clipHandle_t clipHandle);
 	SetJump(0x0805E18C, (DWORD)CM_LinkEntity);
 
-
-
+	//extern void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
+	//SetJump(0x080553B2, (DWORD)CM_PositionTestCapsuleInTriangle);
 
 
 

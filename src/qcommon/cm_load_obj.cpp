@@ -937,13 +937,22 @@ void CMod_LoadLeafSurfaces()
 
 void CMod_LoadCollisionVerts()
 {
-	vec3_t *in;
+	vec3_t *out;
+	unsigned int vertIter;
+	vec4_t *in;
 	unsigned int count;
 
-	in = (vec3_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec3_t), &count);
+	in = (vec4_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec4_t), &count);
+
 	cm.verts = (vec3_t *)CM_Hunk_Alloc(sizeof(vec3_t) * count);
 	cm.vertCount = count;
-	Com_Memcpy(cm.verts, in, sizeof(vec3_t) * count);
+
+	for (vertIter = 0, out = cm.verts ; vertIter < count; ++in, ++out, ++vertIter )
+	{
+		(*out)[0] = (*in)[1];
+		(*out)[1] = (*in)[2];
+		(*out)[2] = (*in)[3];
+	}
 }
 
 struct dedge_t
@@ -960,6 +969,7 @@ void CMod_LoadCollisionEdges()
 	unsigned int edgeIter;
 	dedge_t *in;
 	unsigned int count;
+	float discNormalAxis;
 
 	in = (dedge_t *)Com_GetBspLump(LUMP_COLLISIONEDGES, sizeof(dedge_t), &count);
 
@@ -969,11 +979,14 @@ void CMod_LoadCollisionEdges()
 	for (edgeIter = 0, out = cm.edges ; edgeIter < count; ++in, ++out, ++edgeIter )
 	{
 		VectorCopy(in->position, out->position);
+
 		VectorCopy(in->normal[0], out->normal[0]);
 		VectorCopy(in->normal[1], out->normal[1]);
 		VectorCopy(in->normal[2], out->normal[2]);
 
-		VectorScale(out->normal[2], 1.0 / in->dist, out->normal[2]);
+		discNormalAxis = 1.0 / in->dist;
+
+		VectorScale(out->normal[2], discNormalAxis, out->normal[2]);
 	}
 }
 
@@ -993,6 +1006,7 @@ void CMod_LoadCollisionTriangles()
 	for (triIter = 0, out = cm.triIndices ; triIter < count; ++in, ++out, ++triIter )
 	{
 		VectorCopy(in->position, out->position);
+
 		VectorCopy(in->normal[0], out->normal[0]);
 		VectorCopy(in->normal[1], out->normal[1]);
 		VectorCopy(in->normal[2], out->normal[2]);

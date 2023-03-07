@@ -441,6 +441,7 @@ struct turretInfo_s
 	char stopSnd;
 	char stopSndPlayer;
 };
+static_assert((sizeof(turretInfo_s) == 0x44), "ERROR: turretInfo_s size is invalid!");
 
 struct tagInfo_s
 {
@@ -452,6 +453,7 @@ struct tagInfo_s
 	float axis[4][3];
 	float parentInvAxis[4][3];
 };
+static_assert((sizeof(tagInfo_s) == 112), "ERROR: tagInfo_s size is invalid!");
 
 struct trigger_ent_t
 {

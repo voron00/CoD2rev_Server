@@ -224,7 +224,9 @@ typedef struct clientInfo_s
 	int dobjDirty;
 	int weaponState;
 	clientControllers_t control;
-	int clientConditions[10][2];
+	int clientConditions[9][2];
+	struct XAnimTree_s *pXAnimTree;
+	char weaponModel;
 	int stanceTransitionTime;
 	int turnAnimEndTime;
 	char turnAnimType;
@@ -338,7 +340,7 @@ enum weapProjExposion_t
 	WEAPPROJEXP_NUM = 0x3
 };
 
-struct WeaponDef
+typedef struct
 {
 	const char *szInternalName;
 	const char *szDisplayName;
@@ -722,7 +724,7 @@ struct WeaponDef
 	int locGun;
 	const char *fireRumble;
 	const char *meleeImpactRumble;
-};
+} WeaponDef;
 static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
 
 unsigned int BG_GetNumWeapons();

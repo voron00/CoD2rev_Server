@@ -1329,6 +1329,8 @@ SetJump(0x08082A4A, (DWORD)Scr_TerminateRunningThread);
 SetJump(0x0807B1C8, (DWORD)Scr_GetThreadWaitTime);
 SetJump(0x0807B190, (DWORD)Scr_ClearWaitTime);
 SetJump(0x080DAF36, (DWORD)Mantle_CheckLedge);
+SetJump(0x0807098C, (DWORD)LinkThread);
+SetJump(0x080F63A0, (DWORD)G_GetPlayerViewDirection);
 
 
 

@@ -1,23 +1,24 @@
 #include "../qcommon/qcommon.h"
 
-/*
-==============
-RefreshQuitOnErrorCondition
-==============
-*/
+bool shouldQuitOnError = false;
+
 void RefreshQuitOnErrorCondition()
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	bool quit;
+
+	if ( Dvar_IsSystemActive() )
+	{
+		quit = false;
+
+		if ( Dvar_GetBool("QuitOnError") || Dvar_GetInt("r_vc_compile") == 2 )
+			quit = true;
+
+		shouldQuitOnError = quit;
+	}
 }
 
-/*
-==============
-QuitOnError
-==============
-*/
-qboolean QuitOnError()
+bool QuitOnError()
 {
-	UNIMPLEMENTED(__FUNCTION__);
-	return 0;
+	RefreshQuitOnErrorCondition();
+	return shouldQuitOnError;
 }
-

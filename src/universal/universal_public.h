@@ -9,4 +9,4 @@
 
 // Assertive
 void RefreshQuitOnErrorCondition();
-qboolean QuitOnError();
+bool QuitOnError();
