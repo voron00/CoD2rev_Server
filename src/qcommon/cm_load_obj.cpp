@@ -914,7 +914,7 @@ void CMod_LoadNodes()
 
 			if ( out->children[j] != child )
 			{
-				Com_Error(ERR_DROP, "Mod_LoadNodes: children exceeded");
+				Com_Error(ERR_DROP, "CMod_LoadNodes: children exceeded");
 			}
 		}
 
@@ -957,10 +957,12 @@ void CMod_LoadCollisionVerts()
 
 struct dedge_t
 {
-	int unused;
-	vec3_t position;
-	vec3_t normal[3];
-	float dist;
+	float discriminant;
+	vec3_t discEdgeAxis;
+	vec3_t midpoint;
+	vec3_t start_v;
+	vec3_t discNormalAxis;
+	float discNormalDist;
 };
 
 void CMod_LoadCollisionEdges()
@@ -969,7 +971,7 @@ void CMod_LoadCollisionEdges()
 	unsigned int edgeIter;
 	dedge_t *in;
 	unsigned int count;
-	float discNormalAxis;
+	float normal;
 
 	in = (dedge_t *)Com_GetBspLump(LUMP_COLLISIONEDGES, sizeof(dedge_t), &count);
 
@@ -978,15 +980,13 @@ void CMod_LoadCollisionEdges()
 
 	for (edgeIter = 0, out = cm.edges ; edgeIter < count; ++in, ++out, ++edgeIter )
 	{
-		VectorCopy(in->position, out->position);
+		VectorCopy(in->discEdgeAxis, out->discEdgeAxis);
+		VectorCopy(in->midpoint, out->midpoint);
+		VectorCopy(in->start_v, out->start_v);
+		VectorCopy(in->discNormalAxis, out->discNormalAxis);
 
-		VectorCopy(in->normal[0], out->normal[0]);
-		VectorCopy(in->normal[1], out->normal[1]);
-		VectorCopy(in->normal[2], out->normal[2]);
-
-		discNormalAxis = 1.0 / in->dist;
-
-		VectorScale(out->normal[2], discNormalAxis, out->normal[2]);
+		normal = 1.0 / in->discNormalDist;
+		VectorScale(out->discNormalAxis, normal, out->discNormalAxis);
 	}
 }
 
@@ -1005,16 +1005,14 @@ void CMod_LoadCollisionTriangles()
 
 	for (triIter = 0, out = cm.triIndices ; triIter < count; ++in, ++out, ++triIter )
 	{
-		VectorCopy(in->position, out->position);
-
-		VectorCopy(in->normal[0], out->normal[0]);
-		VectorCopy(in->normal[1], out->normal[1]);
-		VectorCopy(in->normal[2], out->normal[2]);
+		Vector4Copy(in->plane, out->plane);
+		Vector4Copy(in->svec, out->svec);
+		Vector4Copy(in->tvec, out->tvec);
 
 		for (j = 0; j < 3; ++j)
 		{
-			out->edge_id[j] = in->edge_id[j];
-			out->vertex_id[j] = in->vertex_id[j];
+			out->edges[j] = in->edges[j];
+			out->verts[j] = in->verts[j];
 		}
 	}
 }
@@ -1129,10 +1127,14 @@ void CMod_LoadEntityString()
 
 void CM_LoadMapFromBsp(const char *name, bool usePvs)
 {
+	BspHeader *header;
+
 	Com_Memset(&cm, 0, sizeof(cm)); // 0x110
 	Com_Memset(&cm, 0, sizeof(cme)); // 0xC VoroN: In CoD2 there is another struct right after cm that contatins planes and a bsp header.
-	cm.name = (const char*)CM_Hunk_Alloc(strlen(name) + 1);
-	strcpy((char*)cm.name, name);
+	cm.name = (char *)CM_Hunk_Alloc(strlen(name) + 1);
+	strcpy(cm.name, name);
+	header = Com_GetBspHeader(0, &cm.checksum);
+	cme.header = header;
 	CMod_LoadMaterials();
 	CMod_LoadPlanes();
 	CMod_LoadBrushRelated(usePvs);

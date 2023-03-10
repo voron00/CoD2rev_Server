@@ -171,6 +171,32 @@ extern clipMap_t cm;
 extern clipMapExtra_t cme;
 #endif
 
+void CMod_PrintContents()
+{
+	Com_Printf("name: %s\n", cm.name);
+	Com_Printf("numStaticModels: %i\n", cm.numStaticModels);
+	Com_Printf("numMaterials: %i\n", cm.numMaterials);
+	Com_Printf("numBrushSides: %i\n", cm.numBrushSides);
+	Com_Printf("numNodes: %i\n", cm.numNodes);
+	Com_Printf("numLeafs: %i\n", cm.numLeafs);
+	Com_Printf("leafbrushNodesCount: %i\n", cm.leafbrushNodesCount);
+	Com_Printf("numLeafBrushes: %i\n", cm.numLeafBrushes);
+	Com_Printf("numLeafSurfaces: %i\n", cm.numLeafSurfaces);
+	Com_Printf("vertCount: %i\n", cm.vertCount);
+	Com_Printf("edgeCount: %i\n", cm.edgeCount);
+	Com_Printf("triCount: %i\n", cm.triCount);
+	Com_Printf("borderCount: %i\n", cm.borderCount);
+	Com_Printf("partitionCount: %i\n", cm.partitionCount);
+	Com_Printf("aabbTreeCount: %i\n", cm.aabbTreeCount);
+	Com_Printf("numSubModels: %i\n", cm.numSubModels);
+	Com_Printf("numBrushes: %i\n", cm.numBrushes);
+	Com_Printf("numClusters: %i\n", cm.numClusters);
+	Com_Printf("clusterBytes: %i\n", cm.clusterBytes);
+	Com_Printf("vised: %i\n", cm.vised);
+	Com_Printf("numEntityChars: %i\n", cm.numEntityChars);
+	Com_Printf("checksum: %i\n", cm.checksum);
+}
+
 
 //#define cm_world (*((cm_world_t*)( 0x08185D80 )))
 
@@ -193,7 +219,6 @@ void test2()
 	}
 	*/
 
-	/*
 	static int printed = 0;
 
 	if (printed)
@@ -201,17 +226,7 @@ void test2()
 
 	printed = 1;
 
-	printf("%i\n", cm.vertCount);
-
-	for (unsigned int j = 0; j < cm.vertCount; ++j)
-	{
-		if (j > 512)
-			return;
-		printf("Vert ID: %i Position: (%f %f %f)\n", j, cm.verts[j][0], cm.verts[j][1], cm.verts[j][2]);
-	}
-
-	printf("\n\n");
-	*/
+	CMod_PrintContents();
 }
 
 void Sys_RedirectFunctions()
@@ -245,7 +260,7 @@ void Sys_RedirectFunctions()
 	// SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
 
 	//SetJump(0x08094F02, (DWORD)test);
-	SetJump(0x08094F02, (DWORD)test2);
+	//SetJump(0x08094F02, (DWORD)test2);
 
 
 	//SetJump(0x080C501A, (DWORD)XModelGetStaticBounds);
@@ -794,36 +809,37 @@ void Sys_RedirectFunctions()
 	extern void CM_UnlinkEntity(svEntity_t *ent);
 	SetJump(0x0805DAA0, (DWORD)CM_UnlinkEntity);
 
-	extern int sub_805D8C4(float *mins, float *maxs);
-	SetJump(0x0805D8C4, (DWORD)sub_805D8C4);
-
-	extern void sub_805DD50(cStaticModel_s *model, unsigned short index);
-	SetJump(0x0805DD50, (DWORD)sub_805DD50);
-
-	extern void sub_805DCC8(svEntity_t *svEnt, unsigned short sectorId);
-	SetJump(0x0805DCC8, (DWORD)sub_805DCC8);
-
 	extern void CM_SortNode(unsigned short nodeIndex, float *mins, float *maxs);
 	SetJump(0x0805DDD0, (DWORD)CM_SortNode);
 
 	extern void CM_LinkEntity(svEntity_t *ent, float *absmin, float *absmax, clipHandle_t clipHandle);
 	SetJump(0x0805E18C, (DWORD)CM_LinkEntity);
 
-	//extern void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
-	//SetJump(0x080553B2, (DWORD)CM_PositionTestCapsuleInTriangle);
+	extern void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
+	SetJump(0x080553B2, (DWORD)CM_PositionTestCapsuleInTriangle);
+
+	SetJump(0x0805A564, (DWORD)CM_TraceSphereThroughSphere);
+	SetJump(0x0805A75A, (DWORD)CM_TraceCylinderThroughCylinder);
+	SetJump(0x0805AA0E, (DWORD)CM_TraceCapsuleThroughCapsule);
+	//SetJump(0x08056116, (DWORD)CM_TracePointThroughTriangle);
+	SetJump(0x0805D6DC, (DWORD)CM_TraceBox);
+	SetJump(0x08056116, (DWORD)CM_TracePointThroughTriangle);
+	//SetJump(0x0805628C, (DWORD)CM_TraceCapsuleThroughTriangle);
+	//SetJump(0x08056E42, (DWORD)CM_TraceCapsuleThroughBorder);
 
 
 
-
-
-
-
+	//extern int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
+	//SetJump(0x080C33FE, (DWORD)XModelTraceLine);
+	SetJump(0x08057F90, (DWORD)CM_TraceStaticModel);
+	SetJump(0x0805809A, (DWORD)CM_TraceStaticModelComplete);
 
 
 	SetJump(0x080F6506, (DWORD)ClientUserinfoChanged);
 
 
-
+	SetJump(0x080C063C, (DWORD)XAnimCloneAnimTree);
+	SetJump(0x080BBAD0, (DWORD)XAnimGetAverageRateFrequency);
 
 
 

@@ -24,7 +24,7 @@ extern serverStatic_t svs;
 cm_world_t cm_world;
 #endif
 
-int sub_805D8C4(float *mins, float *maxs)
+unsigned short CM_AllocWorldSector(float *mins, float *maxs)
 {
 	vec2_t bounds;
 	int head;
@@ -48,14 +48,14 @@ int sub_805D8C4(float *mins, float *maxs)
 	return head;
 }
 
-void sub_805DD50(cStaticModel_s *model, unsigned short index)
+void CM_AddStaticModelToNode(cStaticModel_s *model, unsigned short childNodeIndex)
 {
 	unsigned short modelIndex;
 	cStaticModel_s *nextModel;
 
 	modelIndex = model - cm.staticModelList;
 
-	for ( nextModel = (cStaticModel_s *)&cm_world.sectors[index].contents.staticModels;
+	for ( nextModel = (cStaticModel_s *)&cm_world.sectors[childNodeIndex].contents.staticModels;
 	        modelIndex >= (unsigned short)(nextModel->writable.nextModelInWorldSector - 1);
 	        nextModel = &cm.staticModelList[nextModel->writable.nextModelInWorldSector - 1] )
 	{
@@ -66,21 +66,21 @@ void sub_805DD50(cStaticModel_s *model, unsigned short index)
 	nextModel->writable.nextModelInWorldSector = modelIndex + 1;
 }
 
-void sub_805DCC8(svEntity_t *svEnt, unsigned short sectorId)
+void CM_AddEntityToNode(svEntity_t *svEnt, unsigned short childNodeIndex)
 {
 	unsigned short index;
 	svEntity_t *nextEntity;
 
 	index = svEnt - sv.svEntities;
 
-	for ( nextEntity = (svEntity_t *)&cm_world.sectors[sectorId].contents.entities;
+	for ( nextEntity = (svEntity_t *)&cm_world.sectors[childNodeIndex].contents.entities;
 	        index >= (unsigned short)(nextEntity->worldSector - 1);
 	        nextEntity = (svEntity_t *)&sv.svEntities[nextEntity->worldSector - 1].nextEntityInWorldSector )
 	{
 		;
 	}
 
-	svEnt->worldSector = sectorId;
+	svEnt->worldSector = childNodeIndex;
 	svEnt->nextEntityInWorldSector = nextEntity->worldSector;
 	nextEntity->worldSector = index + 1;
 }
@@ -118,7 +118,7 @@ void CM_SortNode(unsigned short nodeIndex, float *mins, float *maxs)
 					if ( child1Index )
 						goto LABEL_13;
 
-					child1Index = sub_805D8C4(mins, maxs);
+					child1Index = CM_AllocWorldSector(mins, maxs);
 
 					if ( child1Index )
 					{
@@ -137,7 +137,7 @@ void CM_SortNode(unsigned short nodeIndex, float *mins, float *maxs)
 			{
 LABEL_13:
 				entityIndex = sv.svEntities[entityIndex - 1].nextEntityInWorldSector;
-				sub_805DCC8(svEnt, child1Index);
+				CM_AddEntityToNode(svEnt, child1Index);
 				cm_world.sectors[child1Index].contents.contentsEntities |= SV_GEntityForSvEntity(svEnt)->r.contents;
 
 				if ( writeEnt )
@@ -147,7 +147,7 @@ LABEL_13:
 			}
 			else
 			{
-				child1Index = sub_805D8C4(mins, maxs);
+				child1Index = CM_AllocWorldSector(mins, maxs);
 
 				if ( child1Index )
 				{
@@ -180,7 +180,7 @@ LABEL_12:
 			{
 LABEL_27:
 				nextModelIndex = model->writable.nextModelInWorldSector;
-				sub_805DD50(model, child0Index);
+				CM_AddStaticModelToNode(model, child0Index);
 				cm_world.sectors[child0Index].contents.contentsStaticModels |= XModelGetContents(model->xmodel);
 
 				if ( staticModel )
@@ -190,7 +190,7 @@ LABEL_27:
 			}
 			else
 			{
-				child0Index = sub_805D8C4(mins, maxs);
+				child0Index = CM_AllocWorldSector(mins, maxs);
 
 				if ( child0Index )
 				{
@@ -211,7 +211,7 @@ LABEL_26:
 			if ( child0Index )
 				goto LABEL_27;
 
-			child0Index = sub_805D8C4(mins, maxs);
+			child0Index = CM_AllocWorldSector(mins, maxs);
 
 			if ( child0Index )
 			{
@@ -380,7 +380,7 @@ LABEL_13:
 			CM_UnlinkEntity(ent);
 		}
 
-		sub_805DCC8(ent, i);
+		CM_AddEntityToNode(ent, i);
 LABEL_18:
 		ent->linkcontents = contents;
 		Vector2Copy(absmin, ent->linkmin);

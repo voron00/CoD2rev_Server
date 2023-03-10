@@ -51,6 +51,15 @@ int CM_LeafCluster( int leafnum )
 	return cm.leafs[leafnum].cluster;
 }
 
+void CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs )
+{
+	cmodel_t    *cmod;
+
+	cmod = CM_ClipHandleToModel( model );
+	VectorCopy( cmod->mins, mins );
+	VectorCopy( cmod->maxs, maxs );
+}
+
 void* CM_Hunk_Alloc(int size)
 {
 	return Hunk_Alloc(size);

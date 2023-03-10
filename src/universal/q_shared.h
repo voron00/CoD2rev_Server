@@ -212,6 +212,44 @@ typedef struct cplane_s
 } cplane_t;
 static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
 
+typedef struct dmaterial_s
+{
+	char material[64];
+	int surfaceFlags;
+	int contentFlags;
+} dmaterial_t;
+static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
+
+typedef struct
+{
+	float fraction;
+	vec3_t normal;
+	int surfaceFlags;
+	int contents;
+	dmaterial_t *material;
+	unsigned short hitId;
+	unsigned short partName;
+	unsigned short partGroup;
+	byte allsolid;
+	byte startsolid;
+} trace_t;
+static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
+
+struct TraceExtents
+{
+	vec3_t start;
+	vec3_t end;
+	vec3_t invDelta;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void CM_CalcTraceExtents(TraceExtents *extents);
+#ifdef __cplusplus
+}
+#endif
+
 #define SOLID_BMODEL 0xffffff
 #define CONTENTS_SOLID          1       	// an eye is never valid in a solid
 #define CONTENTS_BODY           0x2000000   // should never be on a brush, only in game

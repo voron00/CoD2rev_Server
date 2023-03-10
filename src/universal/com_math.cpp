@@ -75,6 +75,24 @@ void MatrixTransformVector43(const float *in1, const float *in2, float *out)
 	out[2] = *in1 * in2[2] + in1[1] * in2[5] + in1[2] * in2[8] + in2[11];
 }
 
+void MatrixTransposeTransformVector(const float *in1, const vec3_t in2[3], float *out)
+{
+	out[0] = in1[0] * in2[0][0] + in1[1] * in2[0][1] + in1[2] * in2[0][2];
+	out[1] = in1[0] * in2[1][0] + in1[1] * in2[1][1] + in1[2] * in2[1][2];
+	out[2] = in1[0] * in2[2][0] + in1[1] * in2[2][1] + in1[2] * in2[2][2];
+}
+
+void MatrixTransposeTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out)
+{
+	vec3_t temp;
+
+	VectorSubtract(in1, in2[3], temp);
+
+	out[0] = DotProduct(in2[0], temp);
+	out[1] = DotProduct(in2[1], temp);
+	out[2] = DotProduct(in2[2], temp);
+}
+
 void MatrixInverse(const float *in, float *out)
 {
 	float determinant;

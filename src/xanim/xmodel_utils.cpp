@@ -18,3 +18,13 @@ int XModelGetContents(const XModel *model)
 {
 	return model->contents;
 }
+
+DObjAnimMat* XModelGetBasePose(const XModel *model)
+{
+	return &model->modelParts->baseMat;
+}
+
+int QDECL XModelNumBones(const XModel *model)
+{
+	return model->modelParts->numBones;
+}

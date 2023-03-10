@@ -1,6 +1,6 @@
 #include "../qcommon/qcommon.h"
 
-int DObjGetBoneIndexInternal(const DObj_s *obj, unsigned int name)
+int DObjGetBoneIndex(const DObj_s *obj, unsigned int name)
 {
 	int bone;
 	XModel *model;
@@ -23,9 +23,4 @@ int DObjGetBoneIndexInternal(const DObj_s *obj, unsigned int name)
 	}
 
 	return -1;
-}
-
-int DObjGetBoneIndex(const DObj_s *obj, unsigned int name)
-{
-	return DObjGetBoneIndexInternal(obj, name);
 }

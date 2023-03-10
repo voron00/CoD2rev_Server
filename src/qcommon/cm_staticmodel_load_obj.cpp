@@ -9,7 +9,7 @@ extern clipMap_t cm;
 extern clipMapExtra_t cme;
 #endif
 
-void CM_SetModelData(cStaticModel_s *model, const float *origin, const float *angles, const float *modelscale_vec)
+void CM_InitStaticModel(cStaticModel_s *model, const float *origin, const float *angles, const float *modelscale_vec)
 {
 	vec3_t scale[3];
 
@@ -29,7 +29,7 @@ void CM_SetModelData(cStaticModel_s *model, const float *origin, const float *an
 	}
 }
 
-bool CM_LoadModel(cStaticModel_s *model, const char *modelName, const float *origin, const float *angles, const float *modelscale_vec)
+bool CM_CreateStaticModel(cStaticModel_s *model, const char *modelName, const float *origin, const float *angles, const float *modelscale_vec)
 {
 	XModel *xmodel;
 
@@ -51,7 +51,7 @@ bool CM_LoadModel(cStaticModel_s *model, const char *modelName, const float *ori
 		return false;
 
 	model->xmodel = xmodel;
-	CM_SetModelData(model, origin, angles, modelscale_vec);
+	CM_InitStaticModel(model, origin, angles, modelscale_vec);
 
 	return true;
 }
@@ -187,7 +187,7 @@ void CM_LoadStaticModels()
 
 			if ( isMiscModel && Com_ValidXModelName(xmodel) )
 			{
-				if ( CM_LoadModel(&cm.staticModelList[i], &xmodel[7], origin, angles, modelscale_vec) )
+				if ( CM_CreateStaticModel(&cm.staticModelList[i], &xmodel[7], origin, angles, modelscale_vec) )
 					++i;
 				else
 					--cm.numStaticModels;

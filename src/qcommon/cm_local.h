@@ -5,6 +5,7 @@
 
 #define MAX_SUBMODELS 1024
 #define CAPSULE_MODEL_HANDLE 1023
+#define RADIUS_EPSILON 1.0f
 
 // plane types are used to speed some tests
 // 0-2 are axial planes
@@ -58,14 +59,6 @@ enum LumpType
 	LUMP_PATHCONNECTIONS = 38,
 	LUMP_PRIMARY_LIGHTS = 39,
 };
-
-typedef struct dmaterial_s
-{
-	char material[64];
-	int surfaceFlags;
-	int contentFlags;
-} dmaterial_t;
-static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
 
 struct cStaticModelWritable
 {
@@ -188,17 +181,20 @@ static_assert((sizeof(cbrush_t) == 48), "ERROR: cbrush_t size is invalid!");
 
 typedef struct CollisionEdge_s
 {
-	float position[3];
-	float normal[3][3];
+	vec3_t discEdgeAxis;
+	vec3_t midpoint;
+	vec3_t start_v;
+	vec3_t discNormalAxis;
 } CollisionEdge_t;
 static_assert((sizeof(CollisionEdge_t) == 48), "ERROR: CollisionEdge_t size is invalid!");
 
 typedef struct CollisionTriangle_s
 {
-	float position[3];
-	float normal[3][3];
-	unsigned int vertex_id[3];
-	int edge_id[3];
+	vec4_t plane;
+	vec4_t svec;
+	vec4_t tvec;
+	unsigned int verts[3];
+	unsigned int edges[3];
 } CollisionTriangle_t;
 static_assert((sizeof(CollisionTriangle_t) == 72), "ERROR: CollisionTriangle_t size is invalid!");
 
@@ -218,7 +214,7 @@ typedef void DynEntityColl;
 
 typedef struct clipMap_s
 {
-	const char *name;
+	char *name;
 	unsigned int numStaticModels;
 	cStaticModel_t *staticModelList;
 	unsigned int numMaterials;
@@ -276,13 +272,6 @@ typedef struct clipMapExtra_s
 } clipMapExtra_t;
 static_assert((sizeof(clipMapExtra_t) == 0xC), "ERROR: clipMapExtra_t size is invalid!");
 
-struct TraceExtents
-{
-	vec3_t start;
-	vec3_t end;
-	vec3_t invDelta;
-};
-
 typedef struct TraceThreadInfo
 {
 	int checkcount;
@@ -314,22 +303,6 @@ typedef struct traceWork_s
 	TraceThreadInfo threadInfo;
 } traceWork_t;
 static_assert((sizeof(traceWork_t) == 0xB8), "ERROR: traceWork_t size is invalid!");
-
-typedef struct
-{
-	float fraction;
-	vec3_t normal;
-	int surfaceFlags;
-	int contents;
-	dmaterial_t *material;
-	unsigned __int16 entityNum;
-	unsigned __int16 entityClassNum;
-	byte walkable;
-	byte padding;
-	byte allsolid;
-	byte startsolid;
-} trace_t;
-static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
 
 typedef struct worldContents_s
 {
@@ -372,5 +345,3 @@ typedef struct leafList_s
 	vec3_t bounds[2];
 	int lastLeaf;
 } leafList_t;
-
-cmodel_t *CM_ClipHandleToModel( clipHandle_t handle );

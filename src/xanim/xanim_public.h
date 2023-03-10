@@ -138,6 +138,7 @@ struct DObjAnimMat
 	vec3_t trans;
 	float transWeight;
 };
+static_assert((sizeof(DObjAnimMat) == 32), "ERROR: DObjAnimMat size is invalid!");
 
 struct XAnimParent
 {
@@ -183,18 +184,25 @@ struct XBoneInfo
 	float radiusSquared;
 };
 
+struct XModelCollTri_s
+{
+	vec4_t plane;
+	vec4_t svec;
+	vec4_t tvec;
+};
+
 typedef struct XModelParts_s
 {
-	unsigned short numBones;
-	unsigned short numRootBones;
+	short numBones;
+	short numRootBones;
 	unsigned short **boneNames;
 	short *quats;
 	float *trans;
-	unsigned char *partClassification;
-	DObjAnimMat Mat;
-	DObjAnimMat localMat;
+	byte *partClassification;
+	XModelCollTri_s partCollTris;
+	DObjAnimMat baseMat;
 } XModelParts;
-static_assert((sizeof(XModelParts) == 0x54), "ERROR: XModelParts size is invalid!");
+static_assert((sizeof(XModelParts) == 100), "ERROR: XModelParts size is invalid!");
 
 typedef struct XModelSurfs_s
 {
@@ -207,17 +215,10 @@ typedef struct XModelLodInfo_s
 {
 	float dist;
 	const char *name;
-	unsigned short numsurfs;
+	short numsurfs;
 	unsigned short *surfnames;
 	XModelSurfs_s *surface;
 } XModelLodInfo;
-
-typedef struct XModelCollTri_s
-{
-	vec4_t plane;
-	vec4_t svec;
-	vec4_t tvec;
-} XModelCollTri;
 
 typedef struct XModelCollSurf_s
 {
@@ -275,8 +276,8 @@ typedef struct DObj_s
 {
 	XAnimTree_s *tree;
 	DSkel_t skel;
-	unsigned __int16 *duplicateParts;
-	unsigned __int16 duplicatePartsSize;
+	unsigned short *duplicateParts;
+	unsigned short duplicatePartsSize;
 	unsigned int ignoreCollision;
 	byte numModels;
 	byte numBones;
@@ -344,6 +345,8 @@ XModelParts* QDECL XModelPartsLoadFile(XModel *model, const char *partName, void
 XAnimParts* QDECL XAnimLoadFile(const char *name, void *(*Alloc)(int));
 void QDECL XModelGetBounds(const XModel *model, float *mins, float *maxs);
 int QDECL XModelGetBoneIndex(const XModel *model, unsigned int name);
+int QDECL XModelNumBones(const XModel *model);
+int QDECL XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
 
 #ifdef __cplusplus
 }
@@ -361,5 +364,8 @@ void XAnimShutdown();
 
 unsigned short* XModelBoneNames(XModel *model);
 int XModelGetContents(const XModel *model);
-
+DObjAnimMat* XModelGetBasePose(const XModel *model);
 XAnim* Scr_GetAnims(unsigned int index);
+
+void XAnimCloneAnimTree(const XAnimTree_s *from, XAnimTree_s *to);
+float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoIndex);

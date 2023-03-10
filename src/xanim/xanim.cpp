@@ -253,6 +253,141 @@ XAnimParts* XAnimPrecache(const char *name, void *(*Alloc)(int))
 	return anim;
 }
 
+void XAnimCloneInfo(XAnimInfo *from, XAnimInfo *to)
+{
+	*to = *from;
+
+	if ( to->notifyName )
+		SL_AddRefToString(to->notifyName);
+}
+
+void XAnimFreeNotifyStrings(XAnimInfo *info)
+{
+	if ( info->notifyName )
+	{
+		SL_RemoveRefToString(info->notifyName);
+		info->notifyName = 0;
+	}
+
+	info->notifyIndex = -1;
+}
+
+XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex)
+{
+	uint16_t next;
+
+	next = g_xAnimInfo->next;
+
+	if ( !next )
+		Com_Error(ERR_DROP, "exceeded maximum number of anim info");
+
+	g_xAnimInfo->next = g_xAnimInfo[g_xAnimInfo->next].next;
+	g_xAnimInfo[g_xAnimInfo->next].prev = 0;
+	tree->children[infoIndex] = next;
+
+	return &g_xAnimInfo[next];
+}
+
+void XAnimFreeInfo(XAnimTree_s *tree, unsigned int infoIndex)
+{
+	XAnimInfo *info;
+
+	info = &g_xAnimInfo[infoIndex];
+	XAnimFreeNotifyStrings(info);
+	info->prev = 0;
+	info->next = g_xAnimInfo->next;
+	g_xAnimInfo[g_xAnimInfo->next].prev = infoIndex;
+	g_xAnimInfo->next = infoIndex;
+}
+
+void XAnimCloneAnimTree(const XAnimTree_s *from, XAnimTree_s *to)
+{
+	signed int size;
+	XAnimInfo *info;
+	int index;
+	signed int infoIndex;
+
+	size = from->anims->size;
+
+	for ( infoIndex = 0; infoIndex < size; ++infoIndex )
+	{
+		index = from->children[infoIndex];
+
+		if ( from->children[infoIndex] )
+		{
+			if ( to->children[infoIndex] )
+			{
+				info = &g_xAnimInfo[to->children[infoIndex]];
+				XAnimFreeNotifyStrings(info);
+			}
+			else
+			{
+				info = XAnimGetInfo(to, infoIndex);
+			}
+
+			XAnimCloneInfo(&g_xAnimInfo[index], info);
+		}
+		else if ( to->children[infoIndex] )
+		{
+			XAnimFreeInfo(to, to->children[infoIndex]);
+			to->children[infoIndex] = 0;
+		}
+	}
+}
+
+float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoIndex)
+{
+	float freq;
+	XAnimEntry *entry;
+	float rate;
+	float trans;
+	float weight;
+	XAnimInfo *info;
+	uint16_t index;
+	int i;
+	int numAnims;
+
+	entry = &tree->anims->entries[infoIndex];
+	numAnims = entry->numAnims;
+
+	if ( entry->numAnims )
+	{
+		trans = 0.0;
+		rate = 0.0;
+
+		for ( i = 0; i < numAnims; ++i )
+		{
+			index = tree->children[i + entry->u.animParent.children];
+
+			if ( index )
+			{
+				info = &g_xAnimInfo[index];
+				weight = info->state.weight;
+
+				if ( weight != 0.0 )
+				{
+					freq = XAnimGetAverageRateFrequency(tree, i + entry->u.animParent.children);
+
+					if ( freq != 0.0 )
+					{
+						trans = trans + weight;
+						rate = freq * weight * info->state.rate + rate;
+					}
+				}
+			}
+		}
+
+		if ( trans == 0.0 )
+			return 0.0;
+		else
+			return rate / trans;
+	}
+	else
+	{
+		return tree->anims->entries[infoIndex].u.parts->frequency;
+	}
+}
+
 void XAnimFree(XAnimParts *parts)
 {
 	short count;

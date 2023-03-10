@@ -530,7 +530,7 @@ struct gentity_s
 	byte active;
 	byte nopickup;
 	byte model;
-	byte dobjbits;
+	byte attachIgnoreCollision;
 	byte handler;
 	byte team;
 	uint16_t classname;
@@ -550,7 +550,7 @@ struct gentity_s
 	int maxHealth;
 	int dmg;
 	int count;
-	int unknown;
+	gentity_s *chain;
 	union
 	{
 		struct item_ent_t item;

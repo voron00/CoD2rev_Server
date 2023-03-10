@@ -17,12 +17,14 @@ extern vec3_t vec3_origin;
 extern vec4_t vec4_origin;
 
 #define DotProduct(a,b)         ((a)[0]*(b)[0]+(a)[1]*(b)[1]+(a)[2]*(b)[2])
+#define Dot2Product(a,b)        ((a)[0]*(b)[0]+(a)[1]*(b)[1])
 #define VectorSubtract(a,b,c)   ((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
 #define Vector2Subtract(a,b,c)  ((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1])
 #define VectorAdd(a,b,c)        ((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2])
 #define Vector2Add(a,b,c)       ((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1])
 #define VectorCopy(a,b)         ((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2])
-#define Vector2Copy(a,b) 		((b)[0]=(a)[0],(b)[1]=(a)[1])
+#define Vector2Copy(a,b)        ((b)[0]=(a)[0],(b)[1]=(a)[1])
+#define Vec2Multiply(v)         ((v)[0]*(v)[0]+(v)[1]*(v)[1])
 
 #define	VectorScale(v, s, o)    ((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
 #define	Vec2Scale(v, s, o)      ((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s))
@@ -54,6 +56,26 @@ float Q_fabs( float f );
 #define PITCH               0       // up / down
 #define YAW                 1       // left / right
 #define ROLL                2       // fall over
+
+/*
+==============
+I_fpos
+==============
+*/
+inline bool I_fispos(float x)
+{
+	return x >= 0.0;
+}
+
+/*
+==============
+I_fneg
+==============
+*/
+inline bool I_fisneg(float x)
+{
+	return x < 0.0;
+}
 
 /*
 ==============
@@ -127,6 +149,28 @@ inline int I_min(int x, int y)
 	return y;
 }
 
+/*
+==============
+I_rsqrt
+==============
+*/
+inline float I_rsqrt(const float number)
+{
+	long i;
+	float x2, y;
+	const float threehalfs = 1.5F;
+
+	x2 = number * 0.5F;
+	y = number;
+	i = *(long*)&y;                        // evil floating point bit level hacking
+	i = 0x5f3759df - (i >> 1);               // what the fuck?
+	y = *(float*)&i;
+	y = y * (threehalfs - (x2 * y * y));   // 1st iteration
+//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+	return y;
+}
+
 int VectorCompare(const vec3_t v1, const vec3_t v2);
 int Vector2Compare(const vec2_t v1, const vec2_t v2);
 int Vector4Compare(const vec4_t v1, const vec4_t v2);
@@ -137,6 +181,8 @@ vec_t Vec4LengthSq( const vec4_t v);
 void VectorInverse( vec3_t v );
 void MatrixTransformVector(const float *in1, const float *in2, float *out);
 void MatrixTransformVector43(const float *in1, const float *in2, float *out);
+void MatrixTransposeTransformVector(const float *in1, const vec3_t in2[3], float *out);
+void MatrixTransposeTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
 void MatrixInverse(const float *in, float *out);
 void MatrixMultiply( float in1[3][3], float in2[3][3], float out[3][3] );
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );

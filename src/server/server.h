@@ -217,7 +217,7 @@ typedef struct
 	int start_frameTime;
 	int	checksumFeed;
 	int timeResidual;
-	char *mLocalSubBSPEntityParsePoint;
+	int nextFrameTime;
 	struct cmodel_s *models[MAX_MODELS];
 	char *configstrings[MAX_CONFIGSTRINGS];
 	svEntity_t svEntities[MAX_GENTITIES];
