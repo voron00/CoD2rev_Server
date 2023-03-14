@@ -489,6 +489,7 @@ bool SetEntityFieldValue(unsigned int classnum, int entnum, int offset, Variable
 void Scr_GetVector(unsigned int index, float *vector);
 void VM_CancelNotify(unsigned int notifyListOwnerId, unsigned int startLocalId);
 void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top);
+void Scr_NotifyNum(int entnum, unsigned int classnum, unsigned int stringValue, unsigned int paramcount);
 unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int varCount, VariableValue *top, VariableValue *startTop);
 void Scr_TerminateThread(unsigned int localId);
 void runtimeError(conChannel_t channel, const char *codePos, unsigned int index, const char *errorMessage);
@@ -578,6 +579,8 @@ void SL_ChangeUser(unsigned char from, unsigned char to);
 void SL_AddRefToString(unsigned int stringValue);
 void SL_Shutdown();
 void SL_CheckInit();
+
+unsigned int Scr_CreateCanonicalFilename(const char *name);
 
 #ifdef __cplusplus
 }

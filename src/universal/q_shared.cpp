@@ -1203,3 +1203,16 @@ void COM_BitSet(int array[], int bitNum)
 {
 	array[bitNum >> 5] |= 1 << (bitNum & 0x1F);
 }
+
+long double GetLeanFraction(const float fFrac)
+{
+	return (2.0f - fabs(fFrac)) * fFrac;
+}
+
+long double UnGetLeanFraction(const float fFrac)
+{
+	assert(fFrac >= 0);
+	assert(fFrac <= 1.f);
+
+	return 1.0f - sqrtf(1.0f - fFrac);
+}

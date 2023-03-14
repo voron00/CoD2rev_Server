@@ -183,3 +183,8 @@ void Scr_GetObjectField(unsigned int classnum, int entnum, int offset)
 		Scr_GetEntityField(entnum, offset);
 	}
 }
+
+void Scr_Notify(gentity_s *ent, unsigned short stringValue, unsigned int paramcount)
+{
+	Scr_NotifyNum(ent->s.number, 0, stringValue, paramcount);
+}

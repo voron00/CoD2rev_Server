@@ -111,6 +111,16 @@ gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt )
 	return SV_GentityNum( num );
 }
 
+void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj )
+		DObjUpdateServerInfo(obj, dtime, bNotify);
+}
+
 void SV_ShutdownGameProgs()
 {
 	UNIMPLEMENTED(__FUNCTION__);

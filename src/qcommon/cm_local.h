@@ -345,3 +345,15 @@ typedef struct leafList_s
 	vec3_t bounds[2];
 	int lastLeaf;
 } leafList_t;
+
+typedef struct
+{
+	int unused;
+	const vec3_t *mins;
+	const vec3_t *maxs;
+	int *list;
+	int count;
+	int maxcount;
+	int contentmask;
+} areaParms_t;
+static_assert((sizeof(areaParms_t) == 0x1C), "ERROR: areaParms_t size is invalid!");

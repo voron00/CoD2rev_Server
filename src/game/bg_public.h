@@ -119,8 +119,8 @@ typedef struct animation_s
 	int duration;
 	int nameHash;
 	int flags;
-	int32_t movetype;
-	int movestatus;
+	int32_t movetype; // This should be int64 BUT Windows / Linux have different type size.
+	int pad;
 	int noteType;
 } animation_t;
 static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
@@ -188,7 +188,7 @@ struct lerpFrame_t
 	float pitchAngle;
 	int pitching;
 	int animationNumber;
-	loadAnim_t *animation;
+	animation_s *animation;
 	int animationTime;
 	vec3_t oldFramePos;
 	float animSpeedScale;
@@ -221,12 +221,12 @@ typedef struct clientInfo_s
 	float lerpMoveDir;
 	float lerpLean;
 	vec3_t playerAngles;
+	int leftHandGun;
 	int dobjDirty;
-	int weaponState;
 	clientControllers_t control;
-	int clientConditions[9][2];
-	struct XAnimTree_s *pXAnimTree;
-	char weaponModel;
+	int clientConditions[NUM_ANIM_CONDITIONS][2];
+	XAnimTree_s *pXAnimTree;
+	int weaponIndex;
 	int stanceTransitionTime;
 	int turnAnimEndTime;
 	char turnAnimType;

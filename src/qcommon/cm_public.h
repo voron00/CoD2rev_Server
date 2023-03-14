@@ -15,6 +15,8 @@ void CM_TraceCapsuleThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, f
 void CM_TraceCapsuleThroughBorder(traceWork_t *tw, CollisionBorder *border, trace_t *trace);
 void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *start, const float *end, int contentmask);
 unsigned int CM_TraceStaticModelComplete(cStaticModel_s *sm, const float *start, const float *end, int contentmask);
+int CM_AreaEntities(const vec3_t *mins, const vec3_t *maxs, int *entityList, int maxcount, int contentmask);
+void CM_LinkWorld();
 
 #ifdef __cplusplus
 extern "C" {

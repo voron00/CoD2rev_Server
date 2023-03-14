@@ -334,7 +334,7 @@ void Com_UnloadBsp();
 void Com_CleanupBsp();
 
 void Com_ServerDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle);
-void Com_ServerDObjFree(int handle);
+void Com_SafeServerDObjFree(int handle);
 DObj* Com_GetServerDObj(int handle);
 void Com_InitDObj();
 void Com_ShutdownDObj();

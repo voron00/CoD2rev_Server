@@ -495,7 +495,62 @@ void SL_ChangeUser(unsigned char from, unsigned char to)
 	}
 }
 
-void SL_ShutdownSystem()
+void SL_CreateCanonicalFilename(char *newFilename, const char *filename, int count)
+{
+	unsigned int c;
+
+	while (1)
+	{
+		do
+		{
+			c = *filename++;
+		}
+		while (c == '\\');
+
+		if (c != '/')
+		{
+			while (c >= ' ')
+			{
+				*newFilename++ = tolower(c);
+				--count;
+
+				if (!count)
+				{
+					Com_Error(ERR_DROP, "\x15" "Filename '%s' exceeds maximum length", filename);
+				}
+
+				if (c == '/')
+				{
+					break;
+				}
+
+				c = *filename++;
+
+				if (c == '\\')
+				{
+					c = '/';
+				}
+			}
+
+			if (!c)
+			{
+				break;
+			}
+		}
+	}
+
+	*newFilename = 0;
+}
+
+unsigned int Scr_CreateCanonicalFilename(const char *name)
+{
+	char newFilename[MAX_STRING_CHARS];
+
+	SL_CreateCanonicalFilename(newFilename, name, MAX_STRING_CHARS);
+	return SL_GetString_(newFilename, 0);
+}
+
+void SL_RelocateSystem()
 {
 	size_t length;
 	const char *string;
@@ -533,6 +588,34 @@ void SL_ShutdownSystem()
 	MT_EndRelocate(ptr);
 }
 
+void SL_ShutdownSystem(unsigned char user)
+{
+	RefString *refStr;
+	HashEntry *entry;
+	unsigned int i;
+
+	for ( i = 1; i <= 0x3FFF; ++i )
+	{
+		do
+		{
+			entry = &scrStringGlob.hashTable[i];
+
+			if ( (entry->status_next & 0xC000) == 0 )
+				break;
+
+			refStr = GetRefString(entry->prev);
+
+			if ( (user & refStr->user) == 0 )
+				break;
+
+			refStr->user &= ~user;
+			scrStringGlob.nextFreeEntry = 0;
+			SL_RemoveRefToString(entry->prev);
+		}
+		while ( scrStringGlob.nextFreeEntry );
+	}
+}
+
 void SL_Shutdown()
 {
 	if ( scrStringGlob.inited )
@@ -563,7 +646,7 @@ void SL_Init()
 void SL_CheckInit()
 {
 	if ( scrStringGlob.inited )
-		SL_ShutdownSystem();
+		SL_RelocateSystem();
 	else
 		SL_Init();
 }

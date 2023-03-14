@@ -887,6 +887,36 @@ LABEL_4:
 	}
 }
 
+void Scr_NotifyNum(int entnum, unsigned int classnum, unsigned int stringValue, unsigned int paramcount)
+{
+	int type;
+	VariableValue *entryValue;
+	unsigned int id;
+	unsigned int params;
+
+	Scr_ClearOutParams();
+	entryValue = &scrVmPub.top[-paramcount];
+	params = scrVmPub.inparamcount - paramcount;
+	id = FindEntityId(entnum, classnum);
+
+	if ( id )
+	{
+		type = entryValue->type;
+		entryValue->type = VAR_PRECODEPOS;
+		scrVmPub.inparamcount = 0;
+		VM_Notify(id, stringValue, scrVmPub.top);
+		entryValue->type = type;
+	}
+
+	while ( scrVmPub.top != entryValue )
+	{
+		RemoveRefToValue(scrVmPub.top);
+		--scrVmPub.top;
+	}
+
+	scrVmPub.inparamcount = params;
+}
+
 void Scr_ResetTimeout()
 {
 	scrVmGlob.starttime = Sys_MilliSeconds();

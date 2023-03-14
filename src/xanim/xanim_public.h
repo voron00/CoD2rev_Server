@@ -1,6 +1,6 @@
 #pragma once
 
-#define XMODEL_VERSION 20
+#define XANIM_VERSION 20
 
 enum XAssetType
 {
@@ -39,13 +39,6 @@ enum XAssetType
 	ASSET_TYPE_COUNT = 0x20,
 };
 
-union XAnimIndices
-{
-	byte *b;
-	uint16_t *s;
-	void *data;
-};
-
 struct XAnimNotifyInfo
 {
 	unsigned short name;
@@ -53,9 +46,9 @@ struct XAnimNotifyInfo
 	float time;
 };
 
-struct XAnimDynamicIndices
+union XAnimDynamicIndices
 {
-	char _1[1];
+	byte _1[1];
 	uint16_t _2[1];
 };
 
@@ -65,30 +58,15 @@ struct XAnimDeltaPartQuatDataFrames
 	XAnimDynamicIndices indices;
 };
 
-struct XAnimDeltaPartQuatData
+union XAnimDeltaPartQuatData
 {
 	XAnimDeltaPartQuatDataFrames frames;
 	int16_t frame0[2];
 };
 
-struct XAnimDeltaPartQuat
-{
-	uint16_t size;
-	uint16_t pad;
-	XAnimDeltaPartQuatData u;
-};
-
-struct XAnimDynamicFrames
-{
-	char (*_1)[3];
-	uint16_t (*_2)[3];
-};
-
 struct XAnimPartTransFrames
 {
-	float mins[3];
-	float size[3];
-	XAnimDynamicFrames frames;
+	float (*frames)[3];
 	XAnimDynamicIndices indices;
 };
 
@@ -98,11 +76,15 @@ struct XAnimPartTransData
 	float frame0[3];
 };
 
+struct XAnimDeltaPartQuat
+{
+	uint16_t size;
+	XAnimDeltaPartQuatData u;
+};
+
 struct XAnimPartTrans
 {
 	uint16_t size;
-	char smallTrans;
-	char pad;
 	XAnimPartTransData u;
 };
 
@@ -112,7 +94,7 @@ struct XAnimDeltaPart
 	XAnimDeltaPartQuat *quat;
 };
 
-typedef struct
+typedef struct XAnimParts_s
 {
 	unsigned short numframes;
 	byte looping;
@@ -124,9 +106,9 @@ typedef struct
 	short boneCount;
 	uint16_t *names;
 	char *dataByte;
-	XAnimIndices indices;
+	void *indices;	 // !!! Not known !!!
 	XAnimNotifyInfo *notify;
-	XAnimDeltaPart *deltaPart; // !!! Not verified, but server don't use these.
+	XAnimDeltaPart *deltaPart;
 	const char *name;
 	bool isDefault;
 } XAnimParts;
@@ -172,7 +154,8 @@ typedef struct XAnimTree_s
 {
 	XAnim_s *anims;
 	uint16_t parent;
-	uint16_t pad;
+	bool bUseDelta;
+	bool bUseGoalWeight;
 	uint16_t children[1];
 } XAnimTree;
 static_assert((sizeof(XAnimTree) == 0xC), "ERROR: XAnimTree size is invalid!");
@@ -320,6 +303,38 @@ typedef struct
 } XAnimInfo;
 static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
 
+struct XAnimClientNotify
+{
+	const char *name;
+	unsigned int notifyName;
+	float timeFrac;
+};
+
+struct XAnimSimpleRotPos
+{
+	vec2_t rot;
+	float transWeight;
+	vec3_t trans;
+	vec3_t pos;
+	float posWeight;
+};
+
+struct XAnimCalcAnimInfo
+{
+	DObjAnimMat rotTransArray[512];
+	int animPartBits[4];
+	int ignorePartBits[4];
+};
+
+#pragma pack(push, 1)
+struct XAnimDeltaInfo
+{
+	bool hasTime;
+	bool hasWeight;
+	XAnimEntry *entry;
+};
+#pragma pack(pop)
+
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum);
 void DObjCreateDuplicateParts(DObj_s *obj);
 void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs);
@@ -348,6 +363,21 @@ int QDECL XModelGetBoneIndex(const XModel *model, unsigned int name);
 int QDECL XModelNumBones(const XModel *model);
 int QDECL XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
 
+void QDECL XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update);
+float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime);
+
+// This function has some weird bs and breaks the decompiler. Moved to assembly.
+void QDECL DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
+
+void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *parts, const float weightScale, float time, XAnimSimpleRotPos *rotPos);
+
+float QDECL XAnimCalc_GetLowestElement(float value);
+unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels);
+
+void QDECL XAnimCalcParts(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
+void QDECL XAnimCalcParts2(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
+void QDECL XAnimCalcNonLoopEnd(const XAnimParts_s *parts, const unsigned char *animToModel, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
+
 #ifdef __cplusplus
 }
 #endif
@@ -369,3 +399,25 @@ XAnim* Scr_GetAnims(unsigned int index);
 
 void XAnimCloneAnimTree(const XAnimTree_s *from, XAnimTree_s *to);
 float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoIndex);
+void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, float dtime);
+void XAnimProcessClientNotify(XAnimInfo *info, const XAnimEntry *entry, float dtime);
+void XAnimClearTree(XAnimTree_s *tree);
+float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex);
+void XAnimSetAnimRate(XAnimTree_s *tree, unsigned int animIndex, float rate);
+bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex);
+bool XAnimIsPrimitive(XAnim_s *anim, unsigned int animIndex);
+float XAnimGetLength(const XAnim_s *anims, unsigned int animIndex);
+int XAnimGetLengthMsec(const XAnim_s *anim, unsigned int animIndex);
+void XAnimClearGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
+void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time);
+void XAnimRestart(XAnimTree_s *tree, unsigned int infoIndex);
+void XAnimSetCompleteGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+void XAnimSetCompleteGoalWeightKnobAll(XAnimTree_s *tree, unsigned int animIndex, unsigned int rootIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart);
+void XAnimClearTreeGoalWeights(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
+void XAnimClearTreeGoalWeightsStrict(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
+int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex);
+unsigned int XAnimGetChildAt(const XAnim_s *anim, unsigned int animIndex, unsigned int childIndex);
+void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *syncState, float dtime, bool parentHasWeight, bool *childHasTimeForParent1, bool *childHasTimeForParent2);
+
+void DObjCalcAnim(const DObj_s *obj, int *partBits);

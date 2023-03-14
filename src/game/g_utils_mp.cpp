@@ -73,6 +73,11 @@ int G_ShaderIndex(const char *string)
 	return G_FindConfigstringIndex(dest, 1566, 128, level.initializing, "shader");
 }
 
+int G_TagIndex(const char *name)
+{
+	return G_FindConfigstringIndex(name, 110, 32, 1, 0);
+}
+
 XModel* G_CachedModelForIndex(int modelIndex)
 {
 	return cached_models[modelIndex];

@@ -200,6 +200,13 @@ void CMod_PrintContents()
 
 //#define cm_world (*((cm_world_t*)( 0x08185D80 )))
 
+
+#ifdef TESTING_LIBRARY
+#define bgs (((bgs_t*)( 0x0855A4E0 )))
+#else
+extern bgs_t bgs;
+#endif
+
 #define net_fields (((cspField_t*)( 0x081665C0 )))
 void test2()
 {
@@ -219,14 +226,16 @@ void test2()
 	}
 	*/
 
-	static int printed = 0;
+	//static int printed = 0;
 
-	if (printed)
-		return;
+	//if (printed)
+	//	return;
 
-	printed = 1;
+	//printed = 1;
 
-	CMod_PrintContents();
+	// CMod_PrintContents();
+	
+	printf("%i\n", bgs->animData.animScriptData.turningAnim);
 }
 
 void Sys_RedirectFunctions()
@@ -782,7 +791,7 @@ void Sys_RedirectFunctions()
 	SetJump(0x080B7EFC, (DWORD)DObjCreate);
 
 	SetJump(0x08062A66, (DWORD)Com_ServerDObjCreate);
-	SetJump(0x08062B4C, (DWORD)Com_ServerDObjFree);
+	SetJump(0x08062B4C, (DWORD)Com_SafeServerDObjFree);
 	SetJump(0x0806289C, (DWORD)Com_GetServerDObj);
 	SetJump(0x08062BAC, (DWORD)Com_InitDObj);
 	SetJump(0x08062C26, (DWORD)Com_ShutdownDObj);
@@ -826,6 +835,8 @@ void Sys_RedirectFunctions()
 	SetJump(0x08056116, (DWORD)CM_TracePointThroughTriangle);
 	//SetJump(0x0805628C, (DWORD)CM_TraceCapsuleThroughTriangle);
 	//SetJump(0x08056E42, (DWORD)CM_TraceCapsuleThroughBorder);
+	SetJump(0x0805E782, (DWORD)CM_AreaEntities);
+	SetJump(0x0805DA8E, (DWORD)CM_LinkWorld);
 
 
 
@@ -840,6 +851,67 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x080C063C, (DWORD)XAnimCloneAnimTree);
 	SetJump(0x080BBAD0, (DWORD)XAnimGetAverageRateFrequency);
+	SetJump(0x080BD2FC, (DWORD)XAnimProcessServerNotify);
+	SetJump(0x080BBF7C, (DWORD)XAnimProcessClientNotify);
+
+	extern void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bool update, XAnimState *state, float dtime);
+	SetJump(0x080BC382, (DWORD)XAnimUpdateInfoSyncInternal);
+	extern void XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update);
+	SetJump(0x080BC52E, (DWORD)XAnimUpdateInfoInternal);
+	extern float XAnimGetNotifyFracServer(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, const XAnimState *state, const XAnimState *nextState, float dtime);
+	SetJump(0x080BBDC8, (DWORD)XAnimGetNotifyFracServer);
+	extern float XAnimGetServerNotifyFracSyncTotal(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, const XAnimState *state, const XAnimState *nextState, float dtime);
+	SetJump(0x080BCE56, (DWORD)XAnimGetServerNotifyFracSyncTotal);
+	extern float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime);
+	SetJump(0x080BCF74, (DWORD)XAnimFindServerNoteTrack);
+	//extern void DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
+	//SetJump(0x080BEB76, (DWORD)DObjUpdateServerInfo);
+
+
+	SetJump(0x08090776, (DWORD)SV_DObjUpdateServerTime);
+
+	SetJump(0x080C01C8, (DWORD)XAnimRestart);
+	SetJump(0x080C04C6, (DWORD)XAnimSetCompleteGoalWeight);
+	SetJump(0x080BF6AC, (DWORD)XAnimSetCompleteGoalWeightKnobAll);
+
+
+
+
+
+	/*
+	extern void XAnim_GetTimeIndex_s(const XAnimTime *animTime, uint16_t *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+	SetJump(0x080BB29E, (DWORD)XAnim_GetTimeIndex_s);
+	extern void XAnim_GetTimeIndex_b(const XAnimTime *animTime, byte *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+	SetJump(0x080BAEEC, (DWORD)XAnim_GetTimeIndex_b);
+
+	extern void XAnim_CalcRotDeltaForQuats(const XAnimDeltaPart *animDelta, float *rotDelta);
+	SetJump(0x080BAE2E, (DWORD)XAnim_CalcRotDeltaForQuats);
+	extern void XAnim_CalcPosDeltaForTrans(const XAnimDeltaPart *animDelta, float *posDelta);
+	SetJump(0x080BAEBA, (DWORD)XAnim_CalcPosDeltaForTrans);
+
+	extern void XAnim_CalcDynamicIndicesForQuats_s(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
+	SetJump(0x080BB542, (DWORD)XAnim_CalcDynamicIndicesForQuats_s);
+
+	extern void XAnim_CalcDynamicIndicesForTrans_s(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+	SetJump(0x080BB642, (DWORD)XAnim_CalcDynamicIndicesForTrans_s);
+	
+	extern void XAnim_CalcDynamicIndicesForQuats_b(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
+	SetJump(0x080BB15E, (DWORD)XAnim_CalcDynamicIndicesForQuats_b);
+
+	//extern void XAnim_CalcDynamicIndicesForTrans_b(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+	//SetJump(0x080BB25E, (DWORD)XAnim_CalcDynamicIndicesForTrans_b);
+
+	//extern void XAnim_CalcDelta3DForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
+	//SetJump(0x080BB682, (DWORD)XAnim_CalcDelta3DForTime);
+	*/
+
+	SetJump(0x080BB9A8, (DWORD)XAnim_CalcDeltaForTime);
+	SetJump(0x080BCB3A, (DWORD)XAnimUpdateOldTime);
+	
+	//SetJump(0x080BD62C, (DWORD)XAnimCalc);
+	SetJump(0x080BEC88, (DWORD)DObjCalcAnim);
+
+
 
 
 

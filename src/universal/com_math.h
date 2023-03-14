@@ -39,6 +39,7 @@ extern vec4_t vec4_origin;
 #define VectorMA4( v, s, b, o )   ( ( o )[0] = ( v )[0] + ( b )[0] * ( s ),( o )[1] = ( v )[1] + ( b )[1] * ( s ),( o )[2] = ( v )[2] + ( b )[2] * ( s ),( o )[3] = ( v )[3] + ( b )[3] * ( s ) )
 
 #define VectorClear(a)		      ((a)[0]=(a)[1]=(a)[2]=0)
+#define Vector2Clear(a)		      ((a)[0]=(a)[1]=0)
 #define VectorNegate( a,b )       ( ( b )[0] = -( a )[0],( b )[1] = -( a )[1],( b )[2] = -( a )[2] )
 #define VectorSet(v, x, y, z)	  ((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
 #define Vector4Copy( a,b )        ( ( b )[0] = ( a )[0],( b )[1] = ( a )[1],( b )[2] = ( a )[2],( b )[3] = ( a )[3] )
@@ -201,3 +202,8 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 float RadiusFromBounds2D( const vec3_t mins, const vec3_t maxs );
 vec_t Q_rint( vec_t in );
 void SnapAngles(vec3_t angles);
+void vectoangles( const vec3_t value1, vec3_t angles );
+void AxisToAngles( vec3_t axis[3], vec3_t angles );
+float AngleMod( float a );
+float AngleSubtract( float a1, float a2 );
+double vectosignedyaw(float *vec);

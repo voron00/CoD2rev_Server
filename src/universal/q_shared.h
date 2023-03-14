@@ -350,3 +350,5 @@ bool Com_ValidXModelName(const char *name);
 qboolean Info_Validate( const char *s );
 bool COM_BitTest(int array[], int bitNum);
 void COM_BitSet(int array[], int bitNum);
+long double GetLeanFraction(const float fFrac);
+long double UnGetLeanFraction(const float fFrac);

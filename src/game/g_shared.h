@@ -873,9 +873,12 @@ void CalculateRanks();
 const char* G_ModelName(int modelIndex);
 int G_LocalizedStringIndex(const char *string);
 int G_ShaderIndex(const char *string);
+int G_TagIndex(const char *name);
 XModel* G_CachedModelForIndex(int modelIndex);
 unsigned int G_ModelIndex(const char *name);
 void G_OverrideModel(int modelIndex, const char *defaultModelName);
+
+qboolean G_UpdateClientInfo(gentity_s *ent);
 
 gentity_t* Scr_EntityForRef(scr_entref_t entref);
 game_hudelem_t* Scr_HudElemForRef(scr_entref_t entref);
@@ -897,6 +900,7 @@ int Scr_SetObjectField(unsigned int classnum, int entnum, int offset);
 void Scr_GetObjectField(unsigned int classnum, int entnum, int offset);
 int Scr_SetEntityField(int entnum, int offset);
 void Scr_GetEntityField(int entnum, int offset);
+void Scr_Notify(gentity_s *ent, unsigned short stringValue, unsigned int paramcount);
 
 void G_SetOrigin(gentity_s *ent, const float *origin);
 void G_SetAngle(gentity_s *ent, const float *angle);

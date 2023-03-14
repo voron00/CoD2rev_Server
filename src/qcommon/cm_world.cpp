@@ -392,3 +392,145 @@ LABEL_18:
 		CM_UnlinkEntity(ent);
 	}
 }
+
+void CM_AreaEntities_r(unsigned short nodeIndex, areaParms_t *ap)
+{
+	uint16_t entId;
+	gentity_s *gcheck;
+
+	if ( (cm_world.sectors[nodeIndex].contents.contentsEntities & ap->contentmask) != 0 )
+	{
+		for ( entId = cm_world.sectors[nodeIndex].contents.entities; entId; entId = sv.svEntities[entId - 1].nextEntityInWorldSector )
+		{
+			gcheck = SV_GEntityForSvEntity(&sv.svEntities[entId - 1]);
+
+			if ( (gcheck->r.contents & ap->contentmask) != 0
+			        && gcheck->r.absmin[0] <= (*ap->maxs)[0]
+			        && (*ap->mins)[0] <= gcheck->r.absmax[0]
+			        && gcheck->r.absmin[1] <= (*ap->maxs)[1]
+			        && (*ap->mins)[1] <= gcheck->r.absmax[1]
+			        && gcheck->r.absmin[2] <= (*ap->maxs)[2]
+			        && (*ap->mins)[2] <= gcheck->r.absmax[2] )
+			{
+				if ( ap->count == ap->maxcount )
+				{
+					Com_DPrintf("CM_AreaEntities: MAXCOUNT\n");
+					return;
+				}
+
+				ap->list[ap->count++] = entId - 1;
+			}
+		}
+
+		if ( (*ap->maxs)[cm_world.sectors[nodeIndex].tree.axis] > cm_world.sectors[nodeIndex].tree.dist )
+			CM_AreaEntities_r(cm_world.sectors[nodeIndex].tree.child[0], ap);
+		if ( cm_world.sectors[nodeIndex].tree.dist > (*ap->mins)[cm_world.sectors[nodeIndex].tree.axis] )
+			CM_AreaEntities_r(cm_world.sectors[nodeIndex].tree.child[1], ap);
+	}
+}
+
+int CM_AreaEntities(const vec3_t *mins, const vec3_t *maxs, int *entityList, int maxcount, int contentmask)
+{
+	areaParms_t ap;
+
+	ap.mins = mins;
+	ap.maxs = maxs;
+	ap.list = entityList;
+	ap.count = 0;
+	ap.maxcount = maxcount;
+	ap.contentmask = contentmask;
+
+	CM_AreaEntities_r(1, &ap);
+
+	return ap.count;
+}
+
+void CM_ClearWorld()
+{
+	vec2_t bounds;
+	unsigned int i;
+
+	memset(&cm_world, 0, sizeof(cm_world));
+	CM_ModelBounds(0, cm_world.mins, cm_world.maxs);
+	cm_world.freeHead = 2;
+
+	for ( i = 2; i <= 1022; ++i )
+		cm_world.sectors[i].tree.nextFree = i + 1;
+
+	cm_world.sectors[1023].tree.nextFree = 0;
+	Vector2Subtract(cm_world.maxs, cm_world.mins, bounds);
+	cm_world.sectors[1].tree.axis = bounds[1] >= bounds[0];
+	cm_world.sectors[1].tree.dist = (cm_world.maxs[bounds[1] >= bounds[0]] + cm_world.mins[bounds[1] >= bounds[0]]) * 0.5;
+}
+
+void CM_LinkStaticModel(cStaticModel_s *staticModel)
+{
+	worldSector_s *sector;
+	vec2_t maxs;
+	vec2_t mins;
+	int contents;
+	float dist;
+	int axis;
+	unsigned short i;
+
+	contents = XModelGetContents(staticModel->xmodel);
+
+	Vector2Copy(cm_world.mins, mins);
+	Vector2Copy(cm_world.maxs, maxs);
+
+	for ( i = 1; ; i = sector->tree.child[1] )
+	{
+		while ( 1 )
+		{
+			cm_world.sectors[i].contents.contentsStaticModels |= contents;
+			sector = &cm_world.sectors[i];
+			axis = cm_world.sectors[i].tree.axis;
+			dist = cm_world.sectors[i].tree.dist;
+
+			if ( staticModel->absmin[axis] <= dist )
+				break;
+
+			mins[axis] = dist;
+
+			if ( !sector->tree.child[0] )
+				goto LINK;
+
+			i = sector->tree.child[0];
+		}
+
+		if ( dist <= staticModel->absmax[axis] )
+			break;
+
+		maxs[axis] = dist;
+
+		if ( !sector->tree.child[1] )
+			break;
+	}
+LINK:
+	CM_AddStaticModelToNode(staticModel, i);
+	CM_SortNode(i, mins, maxs);
+}
+
+void CM_LinkAllStaticModels()
+{
+	int i;
+	cStaticModel_s *model;
+
+	i = 0;
+	model = cm.staticModelList;
+
+	while ( i < cm.numStaticModels )
+	{
+		if ( XModelGetContents(model->xmodel) )
+			CM_LinkStaticModel(model);
+
+		++i;
+		++model;
+	}
+}
+
+void CM_LinkWorld()
+{
+	CM_ClearWorld();
+	CM_LinkAllStaticModels();
+}

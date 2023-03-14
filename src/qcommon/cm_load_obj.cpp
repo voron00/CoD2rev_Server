@@ -955,7 +955,7 @@ void CMod_LoadCollisionVerts()
 	}
 }
 
-struct dedge_t
+struct EdgeInfo
 {
 	float discriminant;
 	vec3_t discEdgeAxis;
@@ -969,11 +969,11 @@ void CMod_LoadCollisionEdges()
 {
 	CollisionEdge_s *out;
 	unsigned int edgeIter;
-	dedge_t *in;
+	EdgeInfo *in;
 	unsigned int count;
 	float normal;
 
-	in = (dedge_t *)Com_GetBspLump(LUMP_COLLISIONEDGES, sizeof(dedge_t), &count);
+	in = (EdgeInfo *)Com_GetBspLump(LUMP_COLLISIONEDGES, sizeof(EdgeInfo), &count);
 
 	cm.edges = (CollisionEdge_s *)CM_Hunk_Alloc(sizeof(CollisionEdge_s) * count);
 	cm.edgeCount = count;

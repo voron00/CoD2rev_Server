@@ -417,3 +417,143 @@ void SnapAngles(vec3_t angles)
 			angles[i] = (float)r;
 	}
 }
+
+void vectoangles( const vec3_t value1, vec3_t angles )
+{
+	float forward;
+	float yaw, pitch;
+
+	if ( value1[1] == 0 && value1[0] == 0 )
+	{
+		yaw = 0;
+		if ( value1[2] > 0 )
+		{
+			pitch = 270;
+		}
+		else
+		{
+			pitch = 90;
+		}
+	}
+	else
+	{
+		yaw = ( atan2( value1[1], value1[0] ) * 180 / M_PI );
+		if(yaw < 0.0)
+		{
+			yaw += 360.0;
+		}
+		forward = sqrt( value1[0] * value1[0] + value1[1] * value1[1] );
+		pitch = ( -atan2( value1[2], forward ) * 180 / M_PI );
+		if(pitch < 0.0)
+		{
+			pitch += 360.0;
+		}
+
+	}
+
+	angles[PITCH] = pitch;
+	angles[YAW] = yaw;
+	angles[ROLL] = 0;
+}
+
+vec_t vectosignedpitch(const vec3_t vec)
+{
+	float t;
+
+	if ( 0.0 != vec[1] || 0.0 != vec[0] )
+	{
+		t = atan2(vec[2], sqrt(vec[1] * vec[1] + vec[0] * vec[0]));
+		return t * -180.0 / M_PI;
+	}
+
+	if ( -vec[2] < 0.0 )
+	{
+		return -90.0;
+	}
+
+	return 90.0;
+}
+
+void AxisToAngles( vec3_t axis[3], vec3_t angles )
+{
+	long double a;
+	vec3_t right;
+	float temp;
+	float pitch;
+	float fCos;
+	float fSin;
+
+	// first get the pitch and yaw from the forward vector
+	vectoangles( axis[0], angles );
+
+	// now get the roll from the right vector
+	VectorCopy( axis[1], right );
+
+	// get the angle difference between the tmpAxis[2] and axis[2] after they have been reverse-rotated
+	a = (-angles[YAW] * 0.017453292);
+	fCos = cos(a);
+	fSin = sin(a);
+
+	temp = fCos * right[0] - fSin * right[1];
+	right[1] = fSin * right[0] + fCos * right[1];
+
+	a = -angles[0] * 0.017453292;
+	fCos = cos(a);
+	fSin = sin(a);
+
+	right[0] = (fSin * right[2]) + (fCos * temp);
+	right[2] = (fCos * right[2]) - (fSin * temp);
+
+	// now find the angles, the PITCH is effectively our ROLL
+	pitch = vectosignedpitch(right);
+
+	if ( right[1] >= 0.0 )
+	{
+		angles[ROLL] = -pitch;
+		return;
+	}
+
+	if ( pitch >= 0.0 )
+	{
+		angles[ROLL] = pitch - 180.0;
+		return;
+	}
+
+	angles[ROLL] = pitch + 180.0;
+}
+
+float AngleMod( float a )
+{
+	return( ( 360.0 / 65536 ) * ( (int)( a * ( 65536 / 360.0 ) ) & 65535 ) );
+}
+
+float AngleSubtract( float a1, float a2 )
+{
+	float a = a1 - a2;
+
+	while ( a > 180 )
+	{
+		a -= 360;
+	}
+	while ( a < -180 )
+	{
+		a += 360;
+	}
+
+	return a;
+}
+
+double vectosignedyaw(float *vec)
+{
+	float at;
+	double yaw;
+
+	if ( 0.0 != vec[1] || 0.0 != vec[0] )
+	{
+		at = atan2(vec[1], vec[0]);
+		yaw = at * 180.0 / M_PI;
+		return yaw;
+	}
+
+	return 0.0;
+}

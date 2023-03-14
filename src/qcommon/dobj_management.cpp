@@ -52,7 +52,7 @@ void Com_ServerDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, XAn
 		Com_Error(ERR_DROP, "No free DObjs");
 }
 
-void Com_ServerDObjFree(int handle)
+void Com_SafeServerDObjFree(int handle)
 {
 	int index;
 
@@ -65,11 +65,6 @@ void Com_ServerDObjFree(int handle)
 		++objFreeCount;
 		DObjFree((DObj_s *)(&objBuf[sizeof(DObj) * index]));
 	}
-}
-
-void Com_SafeServerDObjFree(gentity_t *ent)
-{
-	Com_ServerDObjFree(ent->s.number);
 }
 
 DObj* Com_GetServerDObj(int handle)
