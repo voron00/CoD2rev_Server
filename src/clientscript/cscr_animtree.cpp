@@ -22,6 +22,13 @@ static_assert((sizeof(scrAnimGlob_t) == 0x20C), "ERROR: scrAnimGlob_t size is in
 scrAnimGlob_t scrAnimGlob;
 #endif
 
+const char *propertyNames[] =
+{
+	"loopsync",
+	"nonloopsync",
+	"complete"
+};
+
 void SetAnimCheck(int bAnimCheck)
 {
 	scrAnimGlob.bAnimCheck = bAnimCheck;
@@ -31,3 +38,4 @@ XAnim* Scr_GetAnims(unsigned int index)
 {
 	return (XAnim_s *)scrAnimPub.xanim_num[index - 128];
 }
+

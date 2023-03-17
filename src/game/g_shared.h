@@ -617,7 +617,7 @@ typedef struct
 	int registerWeapons;
 	int bRegisterItems;
 	int currentEntityThink;
-	void *openScriptIOFileHandles[1];
+	int openScriptIOFileHandles[1];
 	char *openScriptIOFileBuffers[1];
 	com_parse_mark_t currentScriptIOLineMark[1];
 } level_locals_t;
@@ -870,6 +870,7 @@ void (*HudElem_GetMethod(const char **pName))(scr_entref_t);
 void Scr_LocalizationError(int iParm, const char *pszErrorMessage);
 void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, unsigned int stringLimit);
 void CalculateRanks();
+float G_GetFogOpaqueDistSqrd();
 const char* G_ModelName(int modelIndex);
 int G_LocalizedStringIndex(const char *string);
 int G_ShaderIndex(const char *string);

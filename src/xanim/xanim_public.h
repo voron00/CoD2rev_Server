@@ -312,11 +312,9 @@ struct XAnimClientNotify
 
 struct XAnimSimpleRotPos
 {
-	vec2_t rot;
-	float transWeight;
-	vec3_t trans;
-	vec3_t pos;
+	float rot[2];
 	float posWeight;
+	float pos[3];
 };
 
 struct XAnimCalcAnimInfo
@@ -419,5 +417,6 @@ int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex);
 unsigned int XAnimGetChildAt(const XAnim_s *anim, unsigned int animIndex, unsigned int childIndex);
 void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
 void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *syncState, float dtime, bool parentHasWeight, bool *childHasTimeForParent1, bool *childHasTimeForParent2);
+void XAnimSetupSyncNodes(XAnim_s *anims);
 
 void DObjCalcAnim(const DObj_s *obj, int *partBits);

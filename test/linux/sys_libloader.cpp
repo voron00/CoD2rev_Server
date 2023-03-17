@@ -6,216 +6,23 @@
 #include "../../src/qcommon/sys_thread.h"
 #include "../../src/clientscript/clientscript_public.h"
 
-#define cm_original (*((clipMap_t*)( 0x08185BE0 )))
-#define cme_original (*((clipMapExtra_t*)( 0x08185CF4 )))
-
-extern clipMap_t cm;
-extern clipMapExtra_t cme;
-
-unsigned __int16 * gecrap(cLeafBrushNodeLeaf_t *val)
+typedef struct
 {
-	return val->brushes;
-}
+	int type;
+	animStringItem_t            *values;
+} animConditionTable_t;
 
-#if 0
-void test()
-{
-	static int loaded = 0;
-
-	if (loaded)
-		return;
-
-	loaded = 1;
-
-	Sys_InitMainThread();
-	Dvar_Init();
-	Swap_Init();
-	FS_InitFilesystem();
-	Com_InitHunkMemory();
-	Com_LoadBsp("maps/mp/mp_toujane.d3dbsp");
-	CM_LoadMapFromBsp("maps/mp/mp_toujane.d3dbsp", 1);
-	CM_LoadStaticModels();
-
-	//printf("%i\n", Com_Memcmp(&cm, &cm_original, sizeof(clipMap_t)));
-
-
-	assert(cm_original.numStaticModels == cm.numStaticModels);
-
-
-
-	//printf("%i\n", cm_original.numStaticModels);
-	//printf("%i\n", cm.numStaticModels);
-
-	/*
-	for (unsigned int i = 0; i <  cm_original.numStaticModels; i++)
-	{
-		//bool result = Com_Memcmp(&cm.staticModelList[i], &cm_original.staticModelList[i], sizeof(cStaticModel_t));
-		//assert(result == 0);
-		printf("(%f %f %f) (%f %f %f)\n", cm.staticModelList[i].absmax[0], cm.staticModelList[i].absmax[1], cm.staticModelList[i].absmax[2],
-										  cm_original.staticModelList[i].absmax[0], cm_original.staticModelList[i].absmax[1], cm_original.staticModelList[i].absmax[2]);
-	}
-	*/
-
-	assert(cm_original.numMaterials == cm.numMaterials);
-
-	for (unsigned int i = 0; i <  cm_original.numMaterials; i++)
-	{
-		bool result = Com_Memcmp(&cm.materials[i], &cm_original.materials[i], sizeof(dmaterial_t));
-		assert(result == 0);
-
-	}
-
-	assert(cm_original.numBrushSides == cm.numBrushSides);
-
-	for (unsigned int i = 0; i <  cm_original.numBrushSides; i++)
-	{
-		//bool result = Com_Memcmp(&cm.brushsides[i], &cm_original.brushsides[i], sizeof(cbrushside_t));
-		//assert(result == 0);
-		//printf("%i %i\n", cm.brushsides[i].materialNum, cm_original.brushsides[i].materialNum);
-		//bool result = Com_Memcmp(&cm.brushsides[i].plane, &cm_original.brushsides[i].plane, sizeof(cplane_t));
-		//assert(result == 0);
-		//printf("(%f %f %f) (%f %f %f)\n", cm.brushsides[i].plane->normal[0], cm.brushsides[i].plane->normal[1], cm.brushsides[i].plane->normal[2],
-		//								  cm_original.brushsides[i].plane->normal[0], cm_original.brushsides[i].plane->normal[1], cm_original.brushsides[i].plane->normal[2]);
-		//printf("%i %i\n", cm.brushsides[i].plane->signbits, cm_original.brushsides[i].plane->signbits);
-	}
-
-	assert(cm_original.numNodes == cm.numNodes);
-
-	for (unsigned int i = 0; i <  cm_original.numNodes; i++)
-	{
-		//bool result = Com_Memcmp(&cm.brushsides[i], &cm_original.brushsides[i], sizeof(cbrushside_t));
-		//assert(result == 0);
-		//printf("%i %i\n", cm.nodes[i].children[0], cm_original.nodes[i].children[0]);
-		//bool result = Com_Memcmp(&cm.nodes[i].plane, &cm_original.nodes[i].plane, sizeof(cplane_t));
-		//assert(result == 0);
-		//printf("(%f %f %f) (%f %f %f)\n", cm.nodes[i].plane->normal[0], cm.nodes[i].plane->normal[1], cm.nodes[i].plane->normal[2],
-		//	  cm_original.nodes[i].plane->normal[0], cm_original.nodes[i].plane->normal[1], cm_original.nodes[i].plane->normal[2]);
-		//printf("%i %i\n", cm.nodes[i].plane->signbits, cm_original.nodes[i].plane->signbits);
-	}
-
-	assert(cm_original.leafbrushNodesCount == cm.leafbrushNodesCount);
-
-	for (unsigned int i = 0; i <  cm_original.leafbrushNodesCount; i++)
-	{
-		assert(cm_original.leafbrushNodes->leafBrushCount == cm.leafbrushNodes->leafBrushCount);
-		//bool result = Com_Memcmp(&cm.leafbrushNodes[i], &cm_original.leafbrushNodes[i], sizeof(cLeafBrushNode_t));
-		//assert(result == 0);
-
-		/*
-		//for (unsigned int j = 0; j <  cm_original.leafbrushNodes->leafBrushCount; j++)
-		{
-			uint16_t *brush = gecrap(&cm_original.leafbrushNodes[i].data.leaf);
-
-			printf("%u \n", brush[0]);
-		}
-		*/
-		uint16_t *brush = cm_original.leafbrushNodes[i].data.leaf.brushes;
-		uint16_t *brush2 = cm.leafbrushNodes[i].data.leaf.brushes;
-		printf("%p %p\n", brush, brush2);
-		//bool result = Com_Memcmp(&cm.nodes[i].plane, &cm_original.nodes[i].plane, sizeof(cplane_t));
-		//assert(result == 0);
-		//printf("(%f %f %f) (%f %f %f)\n", cm.nodes[i].plane->normal[0], cm.nodes[i].plane->normal[1], cm.nodes[i].plane->normal[2],
-		//	  cm_original.nodes[i].plane->normal[0], cm_original.nodes[i].plane->normal[1], cm_original.nodes[i].plane->normal[2]);
-		//printf("%i %i\n", cm.nodes[i].plane->signbits, cm_original.nodes[i].plane->signbits);
-	}
-}
-#endif
-
-extern void CMod_LoadBrushes();
-extern void CMod_LoadLeafBrushes();
-extern void CMod_LoadCollisionAabbTrees();
-extern void CMod_LoadLeafs(bool usePvs);
-extern void CMod_LoadSubmodels();
-extern int CMod_GetLeafTerrainContents(cLeaf_s *leaf);
-extern cLeafBrushNode_s* CMod_AllocLeafBrushNode();
-extern double CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist);
-extern cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs);
-extern void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf);
-extern void CMod_LoadLeafBrushNodes();
-extern void CMod_LoadSubmodelBrushNodes();
-extern void CM_InitBoxHull();
-extern void CMod_LoadBrushRelated(bool usePvs);
-extern void CMod_LoadPlanes();
-extern void CMod_LoadMaterials();
-extern void CMod_LoadNodes();
-extern void CMod_LoadLeafSurfaces();
-extern void CMod_LoadCollisionVerts();
-extern void CMod_LoadCollisionEdges();
-extern void CMod_LoadCollisionTriangles();
-extern void CMod_LoadCollisionBorders();
-extern void CMod_LoadCollisionPartitions();
-
-void CMod_LoadLeafs_wrap(int a1, bool usePvs)
-{
-	CMod_LoadLeafs(usePvs);
-}
-
-
-void CMod_LoadBrushRelated_wrap(int a1, bool usePvs)
-{
-	CMod_LoadLeafs(usePvs);
-}
-
-#ifdef TESTING_LIBRARY
+#define net_fields (((animConditionTable_t*)( 0x081647C0 )))
+#define animstrings (((animStringItem_t*)( 0x08164740 )))
+#define testdata (((animScriptData_t*)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
-#else
-extern bgs_t level_bgs;
-#endif
 
-
-#ifdef TESTING_LIBRARY
-#define cm (*((clipMap_t*)( 0x08185BE0 )))
-#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
-#else
-extern clipMap_t cm;
-extern clipMapExtra_t cme;
-#endif
-
-void CMod_PrintContents()
-{
-	Com_Printf("name: %s\n", cm.name);
-	Com_Printf("numStaticModels: %i\n", cm.numStaticModels);
-	Com_Printf("numMaterials: %i\n", cm.numMaterials);
-	Com_Printf("numBrushSides: %i\n", cm.numBrushSides);
-	Com_Printf("numNodes: %i\n", cm.numNodes);
-	Com_Printf("numLeafs: %i\n", cm.numLeafs);
-	Com_Printf("leafbrushNodesCount: %i\n", cm.leafbrushNodesCount);
-	Com_Printf("numLeafBrushes: %i\n", cm.numLeafBrushes);
-	Com_Printf("numLeafSurfaces: %i\n", cm.numLeafSurfaces);
-	Com_Printf("vertCount: %i\n", cm.vertCount);
-	Com_Printf("edgeCount: %i\n", cm.edgeCount);
-	Com_Printf("triCount: %i\n", cm.triCount);
-	Com_Printf("borderCount: %i\n", cm.borderCount);
-	Com_Printf("partitionCount: %i\n", cm.partitionCount);
-	Com_Printf("aabbTreeCount: %i\n", cm.aabbTreeCount);
-	Com_Printf("numSubModels: %i\n", cm.numSubModels);
-	Com_Printf("numBrushes: %i\n", cm.numBrushes);
-	Com_Printf("numClusters: %i\n", cm.numClusters);
-	Com_Printf("clusterBytes: %i\n", cm.clusterBytes);
-	Com_Printf("vised: %i\n", cm.vised);
-	Com_Printf("numEntityChars: %i\n", cm.numEntityChars);
-	Com_Printf("checksum: %i\n", cm.checksum);
-}
-
-
-//#define cm_world (*((cm_world_t*)( 0x08185D80 )))
-
-
-#ifdef TESTING_LIBRARY
-#define bgs (((bgs_t*)( 0x0855A4E0 )))
-#else
-extern bgs_t bgs;
-#endif
-
-#define net_fields (((cspField_t*)( 0x081665C0 )))
 void test2()
 {
 	/*
 	static int printed = 0;
-
 	if (printed)
 		return;
-
 	printed = 1;
 	// Just print stuff until program segfaults
 	for(int i = 0; i < 16384; i++)
@@ -226,70 +33,59 @@ void test2()
 	}
 	*/
 
-	//static int printed = 0;
+	static int printed = 0;
 
-	//if (printed)
-	//	return;
+	if (printed)
+		return;
 
-	//printed = 1;
+	printed = 1;
 
-	// CMod_PrintContents();
-	
-	printf("%i\n", bgs->animData.animScriptData.turningAnim);
+
+	for(int i = 0; i < 9; i++)
+	{
+		//if (net_fields[i].szName == NULL)
+		//	return;
+		Com_Printf("{ %i, %p },\n", net_fields[i].type, net_fields[i].values);
+	}
+
+
+	/*
+	for(int i = 0; i < 16384; i++)
+	{
+		if (animstrings[i].string == NULL)
+			return;
+		Com_Printf("{ \"%s\", %i, },\n", animstrings[i].string, animstrings[i].hash);
+	}
+	*/
+
+	Com_Printf("%s\n", testdata->animations[0].name);
+	Com_Printf("%s\n", level_bgs.animData.animScriptData.animations[0].name);
 }
 
 void Sys_RedirectFunctions()
 {
-	/*
-	SetJump(0x080534B8, (DWORD)CMod_LoadBrushes);
-	SetJump(0x08053D34, (DWORD)CMod_LoadLeafBrushes);
-	SetJump(0x0805474E, (DWORD)CMod_LoadCollisionAabbTrees);
-	SetJump(0x080538BC, (DWORD)CMod_LoadLeafs_wrap);
-	SetJump(0x08052768, (DWORD)CMod_LoadSubmodels);
-	SetJump(0x0805319E, (DWORD)CMod_GetLeafTerrainContents);
-	//SetJump(0x08052728, (DWORD)CMod_AllocLeafBrushNode);
-	SetJump(0x080529AE, (DWORD)CMod_GetPartitionScore);
-	//SetJump(0x08052B12, (DWORD)CMod_PartionLeafBrushes_r);
-	//SetJump(0x08052FD4, (DWORD)CMod_PartionLeafBrushes);
-	//SetJump(0x08053A80, (DWORD)CMod_LoadLeafBrushNodes);
-	SetJump(0x08053200, (DWORD)CMod_LoadSubmodelBrushNodes);
-	SetJump(0x08054D08, (DWORD)CM_InitBoxHull);
-	//SetJump(0x08054A26, (DWORD)CMod_LoadBrushRelated_wrap);
-	SetJump(0x08053B7E, (DWORD)CMod_LoadPlanes);
-	SetJump(0x080525E0, (DWORD)CMod_LoadMaterials);
-	SetJump(0x08053354, (DWORD)CMod_LoadNodes);
-	SetJump(0x08053E0E, (DWORD)CMod_LoadLeafSurfaces);
-	SetJump(0x08053EC2, (DWORD)CMod_LoadCollisionVerts);
-	SetJump(0x08053FC0, (DWORD)CMod_LoadCollisionEdges);
-	SetJump(0x08054220, (DWORD)CMod_LoadCollisionTriangles);
-	SetJump(0x0805448C, (DWORD)CMod_LoadCollisionBorders);
-	SetJump(0x0805461E, (DWORD)CMod_LoadCollisionPartitions);
-	*/
-
-	// SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
-
 	//SetJump(0x08094F02, (DWORD)test);
 	//SetJump(0x08094F02, (DWORD)test2);
 
 
-	//SetJump(0x080C501A, (DWORD)XModelGetStaticBounds);
+
+
 
 	SetJump(0x08051C90, (DWORD)Com_LoadBsp);
 	SetJump(0x08051E5C, (DWORD)Com_UnloadBsp);
+	SetJump(0x08051C54, (DWORD)Com_IsBspLoaded);
+	SetJump(0x08051C66, (DWORD)Com_GetBspHeader);
+	SetJump(0x08051E7C, (DWORD)Com_CleanupBsp);
+
+
+
+
 	SetJump(0x08051F9E, (DWORD)CM_LoadMap);
 
-	/*
-	extern void CMod_LoadCollisionVerts();
-	SetJump(0x08053EC2, (DWORD)CMod_LoadCollisionVerts);
-	extern void CMod_LoadCollisionEdges();
-	SetJump(0x08053FC0, (DWORD)CMod_LoadCollisionEdges);
-	extern void CMod_LoadCollisionTriangles();
-	SetJump(0x08054220, (DWORD)CMod_LoadCollisionTriangles);
-	extern void CMod_LoadCollisionBorders();
-	SetJump(0x0805448C, (DWORD)CMod_LoadCollisionBorders);
-	extern void CMod_LoadCollisionPartitions();
-	SetJump(0x0805461E, (DWORD)CMod_LoadCollisionPartitions);
-	*/
+
+
+
+
 
 	// Don't hook that for now, just init
 	Swap_Init();
@@ -803,49 +599,10 @@ void Sys_RedirectFunctions()
 	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
 
 
-
-	extern void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth);
-	SetJump(0x080BDE00, (DWORD)XAnimDisplay);
-
-
 	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
-
 	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
 	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
 	SetJump(0x0811B422, (DWORD)G_OverrideModel);
-
-
-	extern void CM_UnlinkEntity(svEntity_t *ent);
-	SetJump(0x0805DAA0, (DWORD)CM_UnlinkEntity);
-
-	extern void CM_SortNode(unsigned short nodeIndex, float *mins, float *maxs);
-	SetJump(0x0805DDD0, (DWORD)CM_SortNode);
-
-	extern void CM_LinkEntity(svEntity_t *ent, float *absmin, float *absmax, clipHandle_t clipHandle);
-	SetJump(0x0805E18C, (DWORD)CM_LinkEntity);
-
-	extern void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
-	SetJump(0x080553B2, (DWORD)CM_PositionTestCapsuleInTriangle);
-
-	SetJump(0x0805A564, (DWORD)CM_TraceSphereThroughSphere);
-	SetJump(0x0805A75A, (DWORD)CM_TraceCylinderThroughCylinder);
-	SetJump(0x0805AA0E, (DWORD)CM_TraceCapsuleThroughCapsule);
-	//SetJump(0x08056116, (DWORD)CM_TracePointThroughTriangle);
-	SetJump(0x0805D6DC, (DWORD)CM_TraceBox);
-	SetJump(0x08056116, (DWORD)CM_TracePointThroughTriangle);
-	//SetJump(0x0805628C, (DWORD)CM_TraceCapsuleThroughTriangle);
-	//SetJump(0x08056E42, (DWORD)CM_TraceCapsuleThroughBorder);
-	SetJump(0x0805E782, (DWORD)CM_AreaEntities);
-	SetJump(0x0805DA8E, (DWORD)CM_LinkWorld);
-
-
-
-	//extern int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
-	//SetJump(0x080C33FE, (DWORD)XModelTraceLine);
-	SetJump(0x08057F90, (DWORD)CM_TraceStaticModel);
-	SetJump(0x0805809A, (DWORD)CM_TraceStaticModelComplete);
-
-
 	SetJump(0x080F6506, (DWORD)ClientUserinfoChanged);
 
 
@@ -853,6 +610,9 @@ void Sys_RedirectFunctions()
 	SetJump(0x080BBAD0, (DWORD)XAnimGetAverageRateFrequency);
 	SetJump(0x080BD2FC, (DWORD)XAnimProcessServerNotify);
 	SetJump(0x080BBF7C, (DWORD)XAnimProcessClientNotify);
+
+	extern void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth);
+	SetJump(0x080BDE00, (DWORD)XAnimDisplay);
 
 	extern void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bool update, XAnimState *state, float dtime);
 	SetJump(0x080BC382, (DWORD)XAnimUpdateInfoSyncInternal);
@@ -894,7 +654,7 @@ void Sys_RedirectFunctions()
 
 	extern void XAnim_CalcDynamicIndicesForTrans_s(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
 	SetJump(0x080BB642, (DWORD)XAnim_CalcDynamicIndicesForTrans_s);
-	
+
 	extern void XAnim_CalcDynamicIndicesForQuats_b(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
 	SetJump(0x080BB15E, (DWORD)XAnim_CalcDynamicIndicesForQuats_b);
 
@@ -907,11 +667,11 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x080BB9A8, (DWORD)XAnim_CalcDeltaForTime);
 	SetJump(0x080BCB3A, (DWORD)XAnimUpdateOldTime);
-	
+
 	//SetJump(0x080BD62C, (DWORD)XAnimCalc);
 	SetJump(0x080BEC88, (DWORD)DObjCalcAnim);
 
-
+	SetJump(0x080C006C, (DWORD)XAnimSetupSyncNodes);
 
 
 
@@ -922,6 +682,20 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x08118822, (DWORD)Scr_SetEntityField);
 	SetJump(0x08118A22, (DWORD)Scr_GetEntityField);
+
+	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
+
+
+
+
+
+	/*
+	extern void Scr_FindAnimInternal(scr_anim_s *anim, unsigned int stringIndex, unsigned int animIndex);
+	SetJump(0x0806CA12, (DWORD)Scr_FindAnimInternal);
+
+	SetJump(0x08075828, (DWORD)Scr_IsIdentifier);
+	SetJump(0x0806CF7E, (DWORD)ConnectScriptToAnim);
+	*/
 
 }
 

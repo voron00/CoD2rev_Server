@@ -207,3 +207,4 @@ void AxisToAngles( vec3_t axis[3], vec3_t angles );
 float AngleMod( float a );
 float AngleSubtract( float a1, float a2 );
 double vectosignedyaw(float *vec);
+int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *org, const float fogOpaqueDistSqrd);

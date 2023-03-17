@@ -10,6 +10,48 @@ extern clipMapExtra_t cme;
 #endif
 
 /*
+==================
+CM_PointLeafnum_r
+==================
+*/
+int CM_PointLeafnum_r( const vec3_t p, int num )
+{
+	float d;
+	cNode_t     *node;
+	cplane_t    *plane;
+
+	while ( num >= 0 )
+	{
+		node = cm.nodes + num;
+		plane = node->plane;
+
+		if ( plane->type < 3 )
+		{
+			d = p[plane->type] - plane->dist;
+		}
+		else
+		{
+			d = DotProduct( plane->normal, p ) - plane->dist;
+		}
+		if ( d < 0 )
+		{
+			num = node->children[1];
+		}
+		else
+		{
+			num = node->children[0];
+		}
+	}
+
+	return -1 - num;
+}
+
+int CM_PointLeafnum( const vec3_t p )
+{
+	return CM_PointLeafnum_r( p, 0 );
+}
+
+/*
 ======================================================================
 LEAF LISTING
 ======================================================================
@@ -92,4 +134,20 @@ int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, uint16_t *list, int li
 	*lastLeaf = ll.lastLeaf;
 
 	return ll.count;
+}
+
+/*
+===============================================================================
+PVS
+===============================================================================
+*/
+
+byte *CM_ClusterPVS( int cluster )
+{
+	if ( cluster < 0 || cluster >= cm.numClusters || !cm.vised )
+	{
+		return cm.visibility;
+	}
+
+	return cm.visibility + cluster * cm.clusterBytes;
 }

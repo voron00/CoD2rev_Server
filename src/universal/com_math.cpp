@@ -557,3 +557,29 @@ double vectosignedyaw(float *vec)
 
 	return 0.0;
 }
+
+int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *org, const float fogOpaqueDistSqrd)
+{
+	float f;
+	vec3_t ma;
+	vec3_t mi;
+	int i;
+
+	mi[0] = absmin[0] - org[0];
+	mi[1] = absmin[1] - org[1];
+	mi[2] = absmin[2] - org[2];
+	ma[0] = absmax[0] - org[0];
+	ma[1] = absmax[1] - org[1];
+	ma[2] = absmax[2] - org[2];
+
+	for(i = 0, f = 0.0; i < 3; ++i)
+	{
+		if ((float)(mi[i] * ma[i]) > 0.0)
+			f = f + fminf(ma[i] * ma[i], mi[i] * mi[i]);
+	}
+
+	if(f > fogOpaqueDistSqrd)
+		return 1;
+
+	return 0;
+}

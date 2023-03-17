@@ -177,7 +177,7 @@ struct function_frame_t
 	int topType;
 };
 
-struct scr_anim_t
+typedef struct scr_anim_s
 {
 	union
 	{
@@ -188,7 +188,7 @@ struct scr_anim_t
 		};
 		const char *linkPointer;
 	};
-};
+} scr_anim_t;
 
 typedef struct __attribute__((aligned(128))) scrVmPub_s
 {
@@ -252,6 +252,7 @@ struct SourceLookup
 	unsigned int sourcePos;
 	int type;
 };
+static_assert((sizeof(SourceLookup) == 8), "ERROR: SourceLookup size is invalid!");
 
 struct OpcodeLookup
 {
@@ -261,6 +262,7 @@ struct OpcodeLookup
 	int profileTime;
 	int profileUsage;
 };
+static_assert((sizeof(OpcodeLookup) == 20), "ERROR: OpcodeLookup size is invalid!");
 
 struct SourceBufferInfo
 {
@@ -424,6 +426,97 @@ enum scr_opcode_t
 	OP_count = 0x8A,
 };
 
+enum scr_enum_t
+{
+	ENUM_NOP = 0x0,
+	ENUM_program = 0x1,
+	ENUM_assignment = 0x2,
+	ENUM_duplicate_variable = 0x3,
+	ENUM_local_variable = 0x4,
+	ENUM_local_variable_frozen = 0x5,
+	ENUM_duplicate_expression = 0x6,
+	ENUM_primitive_expression = 0x7,
+	ENUM_integer = 0x8,
+	ENUM_float = 0x9,
+	ENUM_minus_integer = 0xA,
+	ENUM_minus_float = 0xB,
+	ENUM_string = 0xC,
+	ENUM_istring = 0xD,
+	ENUM_array_variable = 0xE,
+	ENUM_field_variable = 0xF,
+	ENUM_field_variable_frozen = 0x10,
+	ENUM_variable = 0x11,
+	ENUM_function = 0x12,
+	ENUM_call_expression = 0x13,
+	ENUM_local_function = 0x14,
+	ENUM_far_function = 0x15,
+	ENUM_function_pointer = 0x16,
+	ENUM_call = 0x17,
+	ENUM_method = 0x18,
+	ENUM_call_expression_statement = 0x19,
+	ENUM_script_call = 0x1A,
+	ENUM_return = 0x1B,
+	ENUM_return2 = 0x1C,
+	ENUM_wait = 0x1D,
+	ENUM_script_thread_call = 0x1E,
+	ENUM_undefined = 0x1F,
+	ENUM_self = 0x20,
+	ENUM_self_frozen = 0x21,
+	ENUM_level = 0x22,
+	ENUM_game = 0x23,
+	ENUM_anim = 0x24,
+	ENUM_if = 0x25,
+	ENUM_if_else = 0x26,
+	ENUM_while = 0x27,
+	ENUM_for = 0x28,
+	ENUM_inc = 0x29,
+	ENUM_dec = 0x2A,
+	ENUM_binary_equals = 0x2B,
+	ENUM_statement_list = 0x2C,
+	ENUM_developer_statement_list = 0x2D,
+	ENUM_expression_list = 0x2E,
+	ENUM_bool_or = 0x2F,
+	ENUM_bool_and = 0x30,
+	ENUM_binary = 0x31,
+	ENUM_bool_not = 0x32,
+	ENUM_bool_complement = 0x33,
+	ENUM_size_field = 0x34,
+	ENUM_self_field = 0x35,
+	ENUM_precachetree = 0x36,
+	ENUM_waittill = 0x37,
+	ENUM_waittillmatch = 0x38,
+	ENUM_waittillFrameEnd = 0x39,
+	ENUM_notify = 0x3A,
+	ENUM_endon = 0x3B,
+	ENUM_switch = 0x3C,
+	ENUM_case = 0x3D,
+	ENUM_default = 0x3E,
+	ENUM_break = 0x3F,
+	ENUM_continue = 0x40,
+	ENUM_expression = 0x41,
+	ENUM_empty_array = 0x42,
+	ENUM_animation = 0x43,
+	ENUM_thread = 0x44,
+	ENUM_begin_developer_thread = 0x45,
+	ENUM_end_developer_thread = 0x46,
+	ENUM_usingtree = 0x47,
+	ENUM_false = 0x48,
+	ENUM_true = 0x49,
+	ENUM_animtree = 0x4A,
+	ENUM_breakpoint = 0x4B,
+	ENUM_prof_begin = 0x4C,
+	ENUM_prof_end = 0x4D,
+	ENUM_vector = 0x4E,
+	ENUM_object = 0x4F,
+	ENUM_thread_object = 0x50,
+	ENUM_local = 0x51,
+	ENUM_statement = 0x52,
+	ENUM_bad_expression = 0x53,
+	ENUM_bad_statement = 0x54,
+	ENUM_include = 0x55,
+	ENUM_argument = 0x56,
+};
+
 struct scr_localVar_t
 {
 	unsigned int name;
@@ -436,13 +529,14 @@ struct scr_block_s
 	int localVarsCreateCount;
 	int localVarsPublicCount;
 	int localVarsCount;
-	byte localVarsInitBits[8];
-	scr_localVar_t localVars[64];
+	int localVarsInitBits[2];
+	scr_localVar_t localVars[32];
 };
+static_assert((sizeof(scr_block_s) == 280), "ERROR: scr_block_s size is invalid!");
 
 union sval_u
 {
-	byte type;
+	int type;
 	unsigned int stringValue;
 	unsigned int idValue;
 	float floatValue;
@@ -451,7 +545,13 @@ union sval_u
 	unsigned int sourcePosValue;
 	const char *codePosValue;
 	const char *debugString;
-	struct scr_block_s *block;
+	scr_block_s *block;
+};
+
+struct VariableCompileValue
+{
+	VariableValue value;
+	sval_u sourcePos;
 };
 
 void Scr_Error(const char *error);
@@ -558,12 +658,15 @@ extern "C" {
 const char* SL_ConvertToString(unsigned int index);
 unsigned int SL_ConvertToLowercase(unsigned int stringValue, unsigned char user);
 unsigned int SL_ConvertFromString(const char *str);
+unsigned int SL_GetLowercaseStringOfLen(const char *upperstring, unsigned char user, unsigned int len);
+unsigned int SL_GetLowercaseString_(const char *str, unsigned char user);
 unsigned int GetHashCode(const char *str, unsigned int len);
 void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len);
 void SL_AddUserInternal(RefString *refStr, unsigned char user);
 unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int len);
 unsigned int QDECL SL_GetStringOfSize(const char *str, unsigned char user, unsigned int len, int type);
 unsigned int SL_FindStringOfLen(const char *str, unsigned int len);
+unsigned int SL_FindLowercaseString(const char *upperstring);
 unsigned int SL_FindString(const char *string);
 unsigned int SL_GetString_(const char *str, unsigned char user);
 unsigned int SL_GetString(const char *str, unsigned char user);
@@ -603,6 +706,7 @@ void Scr_EvalVariable(VariableValue *val, unsigned int index);
 unsigned int GetNewArrayVariableIndex(unsigned int parentId, unsigned int index);
 unsigned int GetNewArrayVariable(unsigned int parentId, unsigned int index);
 void FreeVariable(unsigned int id);
+unsigned int GetVariableName(unsigned int id);
 void SetNewVariableValue(unsigned int id, VariableValue *value);
 unsigned int GetNewVariable(unsigned int parentId, unsigned int name);
 void RemoveRefToEmptyObject(unsigned int id);
@@ -702,12 +806,15 @@ void Var_FreeTempVariables();
 void Var_Init();
 
 void SetAnimCheck(int bAnimCheck);
+void ConnectScriptToAnim(unsigned int names, int index, unsigned int filename, unsigned short name, int treeIndex);
 
 qboolean Scr_IsInOpcodeMemory(const char *pos);
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset);
 void Scr_SetGenericField(byte *data, int fieldtype, int offset);
 unsigned int Scr_GetCanonicalStringIndex(unsigned int index);
 unsigned int SL_GetCanonicalString(const char *str);
+
+bool Scr_IsIdentifier(const char *token);
 
 #ifdef __cplusplus
 extern "C" {

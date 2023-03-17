@@ -117,3 +117,16 @@ void Scr_SetGenericField(byte *data, int fieldtype, int offset)
 		break;
 	}
 }
+
+bool Scr_IsIdentifier(const char *token)
+{
+	while ( *token )
+	{
+		if ( !isalnum(*token) && *token != '_' )
+			return false;
+
+		++token;
+	}
+
+	return true;
+}

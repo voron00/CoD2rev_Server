@@ -1216,3 +1216,20 @@ long double UnGetLeanFraction(const float fFrac)
 
 	return 1.0f - sqrtf(1.0f - fFrac);
 }
+
+void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist)
+{
+	float v;
+	vec3_t v3ViewAngles;
+	vec3_t right;
+
+	if (fLeanFrac != 0.0)
+	{
+		v = fLeanFrac * (2.0 - fabs(fLeanFrac));
+		v3ViewAngles[0] = 0.0;
+		v3ViewAngles[1] = fViewYaw;
+		v3ViewAngles[2] = fViewRoll * v;
+		AngleVectors(v3ViewAngles, 0, right, 0);
+		VectorMA(position, v * fLeanDist, right, position);
+	}
+}

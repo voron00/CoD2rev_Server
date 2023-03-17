@@ -49,9 +49,9 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 	float scale2;
 	float time;
 	XAnimParts_s *parts;
-	const char *partName;
+	int *partNamePtr;
 	XAnimTree_s *tree;
-	byte *part;
+	byte *partPtr;
 	XAnimEntry *animEntry;
 	uint16_t childIndex;
 	uint16_t childIndex2;
@@ -120,7 +120,6 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 			if ( childIndex2 )
 			{
 				weight2 = g_xAnimInfo[childIndex2].state.weight;
-
 				if ( weight2 != 0.0 )
 					break;
 			}
@@ -164,7 +163,7 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 			{
 				for ( m = 0; m < obj->numBones; ++m )
 				{
-					if ( ((animInfo->ignorePartBits[(m >> 5) + 1] >> (m & 0x1F)) & 1) == 0 )
+					if ( ((animInfo->ignorePartBits[m >> 5] >> (m & 0x1F)) & 1) == 0 )
 					{
 						len2 = Vec4LengthSq(rotTransArray->quat);
 
@@ -189,14 +188,14 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 			{
 				for ( n = 0; n < obj->numBones; ++n )
 				{
-					if ( ((animInfo->ignorePartBits[(n >> 5) + 1] >> (n & 0x1F)) & 1) == 0 )
+					if ( ((animInfo->ignorePartBits[n >> 5] >> (n & 0x1F)) & 1) == 0 )
 					{
 						len4 = Vec4LengthSq(animMat->quat);
 
 						if ( len4 != 0.0 )
 						{
 							scale4 = XAnimCalc_GetLowestElement(len4) * weightScale;
-							VectorMA(rotTransArray->quat, scale4, animMat->quat, rotTransArray->quat);
+							VectorMA4(rotTransArray->quat, scale4, animMat->quat, rotTransArray->quat);
 						}
 
 						if ( animMat->transWeight != 0.0 )
@@ -216,7 +215,7 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 		{
 			for ( ii = 0; ii < obj->numBones; ++ii )
 			{
-				if ( ((animInfo->ignorePartBits[(ii >> 5) + 1] >> (ii & 0x1F)) & 1) == 0 && rotTransArray->transWeight != 0.0 )
+				if ( ((animInfo->ignorePartBits[ii >> 5] >> (ii & 0x1F)) & 1) == 0 && rotTransArray->transWeight != 0.0 )
 				{
 					scaleWeight = 1.0 / rotTransArray->transWeight;
 					VectorScale4(rotTransArray->quat, scaleWeight, rotTransArray->quat);
@@ -232,13 +231,13 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 		if ( bClear )
 			XanimCalcClearInfo(obj, rotTransArray, animInfo);
 
-		part = (byte *)&obj->duplicateParts[tree->anims->size];
+		partPtr = (byte *)&obj->duplicateParts[tree->anims->size];
 
 		if ( obj->duplicateParts[entry] )
 		{
-			if ( part[entry + 1] != *part )
+			if ( partPtr[entry + 1] != *partPtr )
 			{
-				part[entry + 1] = *part;
+				partPtr[entry + 1] = *partPtr;
 				SL_RemoveRefToStringOfLen(obj->duplicateParts[entry], animEntry->u.parts->boneCount + 16);
 				duplicateParts = obj->duplicateParts;
 				duplicateParts[entry] = XAnimSetModel(animEntry, obj->models, obj->numModels);
@@ -246,46 +245,46 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 		}
 		else
 		{
-			part[entry + 1] = *part;
+			partPtr[entry + 1] = *partPtr;
 			modelNames = obj->duplicateParts;
 			modelNames[entry] = XAnimSetModel(animEntry, obj->models, obj->numModels);
 		}
 
-		partName = SL_ConvertToString(obj->duplicateParts[entry]);
+		partNamePtr = (int *)SL_ConvertToString(obj->duplicateParts[entry]);
 
 		for ( jj = 0; jj <= 3; ++jj )
-			animInfo->animPartBits[jj] |= *(_DWORD *)&partName[4 * jj] & ~animInfo->ignorePartBits[jj + 1];
+			animInfo->animPartBits[jj] |= partNamePtr[jj] & ~animInfo->ignorePartBits[jj];
 
 		parts = animEntry->u.parts;
 		time = g_xAnimInfo[tree->children[entry]].state.time;
 
 		if ( time != 1.0 && parts->numframes )
 		{
-			if ( parts->numframes > 0xFFu )
+			if ( parts->numframes > 255 )
 				XAnimCalcParts(
 				    parts,
-				    (byte *)partName + 16,
+				    (byte *)partNamePtr + 16,
 				    time,
 				    weightScale,
 				    rotTransArray,
-				    &animInfo->ignorePartBits[1]);
+				    animInfo->ignorePartBits);
 			else
 				XAnimCalcParts2(
 				    parts,
-				    (byte *)partName + 16,
+				    (byte *)partNamePtr + 16,
 				    time,
 				    weightScale,
 				    rotTransArray,
-				    &animInfo->ignorePartBits[1]);
+				    animInfo->ignorePartBits);
 		}
 		else
 		{
 			XAnimCalcNonLoopEnd(
 			    parts,
-			    (byte *)partName + 16,
+			    (byte *)partNamePtr + 16,
 			    weightScale,
 			    rotTransArray,
-			    &animInfo->ignorePartBits[1]);
+			    animInfo->ignorePartBits);
 		}
 	}
 }

@@ -7,6 +7,8 @@
 scrCompilePub_t scrCompilePub;
 #endif
 
+
+
 int QDECL Scr_ScanFile(char *buf, int max_size)
 {
 	char c;

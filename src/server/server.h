@@ -276,6 +276,7 @@ playerState_t *SV_GameClientNum( int num );
 svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt );
 gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
 void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
+qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 
 void SV_LinkEntity( gentity_t *gEnt );
 void SV_UnlinkEntity( gentity_t *gEnt );

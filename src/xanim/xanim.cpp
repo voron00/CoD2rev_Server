@@ -13,6 +13,11 @@ int g_notifyListSize = 0;
 XAnimInfo g_xAnimInfo[1024];
 #endif
 
+void *Hunk_AllocXAnimPrecache(int size)
+{
+	return Hunk_AllocAlignInternal(size, 4);
+}
+
 bool XanimIsDefaultPart(XAnimParts *animParts)
 {
 	return animParts->isDefault;
@@ -792,6 +797,100 @@ float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoInd
 	{
 		return tree->anims->entries[infoIndex].u.parts->frequency;
 	}
+}
+
+void XAnimFillInSyncNodes_r(XAnim_s *anims, unsigned int animIndex, bool bLoop)
+{
+	uint16_t loopFlag;
+	uint16_t flags;
+	int count;
+	int i;
+	int numAnims;
+	XAnimEntry *entry;
+
+	entry = &anims->entries[animIndex];
+	numAnims = entry->numAnims;
+
+	if ( entry->numAnims )
+	{
+		if ( (anims->entries[animIndex].u.animParent.flags & 3) != 0 )
+		{
+			count = 0;
+			do
+			{
+				++count;
+				entry = &anims->entries[entry->u.animParent.children];
+			}
+			while ( entry->numAnims );
+			Com_Error(ERR_DROP, "duplicate specification of animation sync in '%s', %d nodes above '%s'", anims->debugName, count, XAnimGetAnimDebugName(anims, animIndex));
+		}
+
+		flags = anims->entries[animIndex].u.animParent.flags;
+
+		if ( bLoop )
+			loopFlag = flags | 1;
+		else
+			loopFlag = flags | 2;
+
+		anims->entries[animIndex].u.animParent.flags = loopFlag;
+
+		for ( i = 0; i < numAnims; ++i )
+			XAnimFillInSyncNodes_r(anims, i + anims->entries[animIndex].u.animParent.children, bLoop);
+	}
+	else if ( anims->entries[animIndex].u.parts->looping != bLoop )
+	{
+		if ( !XanimIsDefaultPart(anims->entries[animIndex].u.parts) )
+		{
+			if ( bLoop )
+			{
+				Com_Error(ERR_DROP, "animation '%s' in '%s' cannot be sync looping and nonlooping", XAnimGetAnimDebugName(anims, animIndex), anims->debugName);
+			}
+
+			Com_Error(ERR_DROP, "animation '%s' in '%s' cannot be sync nonlooping and looping", XAnimGetAnimDebugName(anims, animIndex), anims->debugName);
+		}
+
+		XAnimPrecache("void_loop", Hunk_AllocXAnimPrecache);
+		anims->entries[animIndex].u.parts = XAnimFindData("void_loop");
+
+		if ( !anims->entries[animIndex].u.parts )
+			Com_Error(ERR_DROP, "Cannot find 'xanim/%s'.\nThis is a default xanim file that you should have.\n", "void_loop");
+	}
+}
+
+void XAnimSetupSyncNodes_r(XAnim_s *anims, unsigned int animIndex)
+{
+	int loop;
+	int i;
+	int j;
+	int numAnims;
+
+	numAnims = anims->entries[animIndex].numAnims;
+
+	if ( anims->entries[animIndex].numAnims )
+	{
+		loop = anims->entries[animIndex].u.animParent.flags & 3;
+
+		if ( loop )
+		{
+			if ( loop == 3 )
+				Com_Error(ERR_DROP, "animation cannot be sync looping and sync nonlooping");
+
+			anims->entries[animIndex].u.animParent.flags |= 4u;
+
+			for ( i = 0; i < numAnims; ++i )
+				XAnimFillInSyncNodes_r(anims, i + anims->entries[animIndex].u.animParent.children, loop == 1);
+		}
+		else
+		{
+			for ( j = 0; j < numAnims; ++j )
+				XAnimSetupSyncNodes_r(anims, j + anims->entries[animIndex].u.animParent.children);
+		}
+	}
+}
+
+void XAnimSetupSyncNodes(XAnim_s *anims)
+{
+	XAnimSetupSyncNodes_r(anims, 0);
 }
 
 unsigned short XAnimGetNextNotifyIndex(const XAnimEntry *entry, float dtime)

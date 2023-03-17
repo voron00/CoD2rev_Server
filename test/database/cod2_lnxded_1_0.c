@@ -283,7 +283,7 @@ int __cdecl sub_805202A(int a1, int a2);
 void __cdecl CM_SaveLump(int a1, char *a2, int a3, int *a4);
 void *CM_EntityString();
 int __cdecl CM_LeafCluster(int a1);
-int __cdecl sub_8052518(int a1, _DWORD *a2, _DWORD *a3);
+int __cdecl CM_ModelBounds(int a1, _DWORD *a2, _DWORD *a3);
 void *__cdecl CM_Hunk_Alloc(size_t a1);
 void Hunk_UserCreate();
 void CM_Hunk_CheckTempMemoryHighClear();
@@ -339,10 +339,10 @@ int __cdecl sub_80551CE(int a1, int a2, int a3);
 long double __cdecl sub_80551EE(float a1);
 _BOOL4 __cdecl CM_CullBox(int a1, float *a2, float *a3);
 void __cdecl CM_PositionTestCapsuleInTriangle(int a1, float *a2, int a3);
-void __cdecl sub_80558EC(int a1, int a2, int a3);
+void __cdecl CM_TraceThroughAabbTree_r(int a1, int a2, int a3);
 int __cdecl CM_PositionTestInAabbTree_r(int a1, int a2, int a3);
-void __cdecl sub_8055C74(int a1, int a2, int a3);
-void __cdecl sub_8055CFE(int a1, int a2, int a3);
+void __cdecl CM_TraceThroughAabbTree(int a1, int a2, int a3);
+void __cdecl CM_SightTraceThroughAabbTree(int a1, int a2, int a3);
 int __cdecl CM_MeshTestInLeaf(int a1, unsigned __int16 *a2, int a3);
 int __cdecl sub_8055E02(float *a1, float *a2, float *a3, float *a4, float *a5, float *a6, float *a7, float *a8);
 long double __cdecl sub_8055F88(float a1);
@@ -352,9 +352,9 @@ float *__cdecl sub_8056016(float *a1, float *a2, float *a3);
 float *__cdecl sub_805605A(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_80560AE(float *a1, float *a2);
 long double __cdecl sub_80560E2(float *a1);
-void __cdecl sub_8056116(float *a1, float *a2, int a3);
-void __cdecl sub_805628C(int a1, float *a2, float a3, int a4);
-void __cdecl sub_8056E42(float *a1, int a2, int a3);
+void __cdecl CM_TracePointThroughTriangle(float *a1, float *a2, int a3);
+void __cdecl CM_TraceCapsuleThroughTriangle(int a1, float *a2, float a3, int a4);
+void __cdecl CM_TraceCapsuleThroughBorder(float *a1, int a2, int a3);
 long double __cdecl sub_805739C(float a1);
 void __cdecl sub_80573BC(float, float);
 float *__cdecl sub_80573E0(float *a1, float *a2, float *a3);
@@ -378,8 +378,8 @@ long double __cdecl sub_8057F10(float *a1, float *a2);
 void *__cdecl sub_8057F44(size_t a1);
 void *__cdecl sub_8057F58(size_t a1);
 int __cdecl CM_XModelPrecache(char *s2);
-int __cdecl sub_8057F90(int a1, int a2, float *a3, float *a4, int a5);
-unsigned int __cdecl sub_805809A(int a1, float *a2, float *a3, int a4);
+int __cdecl CM_TraceStaticModel(int a1, int a2, float *a3, float *a4, int a5);
+unsigned int __cdecl CM_TraceStaticModelComplete(int a1, float *a2, float *a3, int a4);
 int __cdecl sub_8058162(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058192(float *a1, float *a2, float *a3);
 float *__cdecl CM_SetModelData(int a1, float *a2, float *a3, float *a4);
@@ -388,15 +388,15 @@ char *CM_LoadStaticModels();
 int __cdecl sub_80588E0(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058910(float *a1, float *a2, float *a3);
 float *__cdecl sub_8058954(float *a1, float a2, float *a3);
-int __cdecl sub_805898C(float *a1, int a2);
-int __cdecl sub_8058A2C(float *a1);
+int __cdecl CM_PointLeafnum_r(float *a1, int a2);
+int __cdecl CM_PointLeafnum(float *a1);
 _DWORD *__cdecl CM_StoreLeafs(_DWORD *a1, int a2);
 _DWORD *__cdecl CM_BoxLeafnums_r(int a1, int a2);
 int __cdecl CM_BoxLeafnums(_DWORD *a1, _DWORD *a2, int a3, int a4, _DWORD *a5);
 int __cdecl sub_8058BD8(float *a1, unsigned __int8 *a2);
 int __cdecl sub_8058D88(float *a1, int a2);
 int __cdecl sub_8058E94(float *a1, int a2, float *a3, float *a4);
-char *__cdecl sub_8058F82(int a1);
+char *__cdecl CM_ClusterPVS(int a1);
 int __cdecl sub_8058FC4(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_8058FF4(float *a1, float *a2, float *a3);
 long double __cdecl sub_8059038(float *a1, float *a2);
@@ -413,29 +413,29 @@ void __cdecl CM_TestBoxInBrush(float *a1, int a2, int a3);
 int __cdecl CM_TestInLeafBrushNode_r(int a1, unsigned __int8 *a2, int a3);
 int __cdecl CM_TestInLeafBrushNode(int a1, int a2, int a3);
 int __cdecl CM_TestInLeaf(int a1, int a2, int a3);
-void __cdecl sub_80596DA(int a1, int a2);
-_DWORD *__cdecl sub_8059A48(float *a1, int a2);
-void __cdecl sub_8059BBC(float *a1, _DWORD *a2, int a3);
-void __cdecl sub_8059FDC(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, float *a5);
-_BOOL4 __cdecl sub_805A3A4(int a1, int a2, float *a3);
-void __cdecl sub_805A4AA(int a1, unsigned __int16 *a2, float *a3);
-int __cdecl sub_805A564(int a1, float *a2, float *a3, float *a4, float a5, int a6);
-int __cdecl sub_805A75A(int a1, float *a2, float a3, float a4, int a5);
-void __cdecl sub_805AA0E(int a1, int a2);
-void __cdecl sub_805AE54(int a1, int a2, _DWORD *a3, float *a4, float *a5);
+void __cdecl CM_TestCapsuleInCapsule(int a1, int a2);
+_DWORD *__cdecl CM_PositionTest(float *a1, int a2);
+void __cdecl CM_TraceThroughBrush(float *a1, _DWORD *a2, int a3);
+void __cdecl CM_TraceThroughLeafBrushNode_r(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, float *a5);
+_BOOL4 __cdecl CM_TraceThroughLeafBrushNode(int a1, int a2, float *a3);
+void __cdecl CM_TraceThroughLeaf(int a1, unsigned __int16 *a2, float *a3);
+int __cdecl CM_TraceSphereThroughSphere(int a1, float *a2, float *a3, float *a4, float a5, int a6);
+int __cdecl CM_TraceCylinderThroughCylinder(int a1, float *a2, float a3, float a4, int a5);
+void __cdecl CM_TraceCapsuleThroughCapsule(int a1, int a2);
+void __cdecl CM_TraceThroughTree(int a1, int a2, _DWORD *a3, float *a4, float *a5);
 _BOOL4 __cdecl CM_SetAxialCullOnly(int a1);
 void __cdecl CM_Trace(int a1, float *a2, float *a3, int a4, int a5, int a6, int a7);
 void __cdecl CM_BoxTrace(_DWORD *s, float *a2, float *a3, int a4, int a5, int a6, int a7);
-void __cdecl sub_805B6F2(float *a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9);
+void __cdecl CM_TransformedBoxTrace(float *a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9);
 void __cdecl sub_805B972(_DWORD *s, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9);
 int __cdecl CM_SightTraceThroughBrush(float *a1, int a2);
-int __cdecl sub_805BCEE(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4);
-int __cdecl sub_805C0BC(int a1, int a2);
-int __cdecl sub_805C16E(int a1, unsigned __int16 *a2, float *a3);
+int __cdecl CM_SightTraceThroughLeafBrushNode_r(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4);
+int __cdecl CM_SightTraceThroughLeafBrushNode(int a1, int a2);
+int __cdecl CM_SightTraceThroughLeaf(int a1, unsigned __int16 *a2, float *a3);
 _BOOL4 __cdecl CM_SightTraceSphereThroughSphere(float *a1, float *a2, int a3, float *a4, float a5, float *a6);
 _BOOL4 __cdecl CM_SightTraceCylinderThroughCylinder(float *a1, float *a2, float a3, float a4, float *a5);
 int __cdecl CM_SightTraceCapsuleThroughCapsule(int a1, float *a2);
-int __cdecl sub_805C9DE(int a1, int a2, _DWORD *a3, float *a4, float *a5);
+int __cdecl CM_SightTraceThroughTree(int a1, int a2, _DWORD *a3, float *a4, float *a5);
 int __cdecl CM_BoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int a7);
 int __cdecl sub_805D124(int a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9);
 long double __cdecl sub_805D34E(float a1, float a2, float a3);
@@ -455,34 +455,34 @@ int __cdecl CM_VectorCompare(float *a1, float *a2);
 long double __cdecl CM_VectorLengthSquared(float *a1);
 int __cdecl sub_805D626(_DWORD *a1, _DWORD *a2);
 int *__cdecl CM_CalcTraceExtents(int a1);
-int __cdecl sub_805D6DC(int a1, int a2, int a3, float a4);
+int __cdecl CM_TraceBox(int a1, int a2, int a3, float a4);
 void __cdecl sub_805D852(float, float);
 void __cdecl sub_805D876(float, float);
 long double __cdecl sub_805D89A(float a1, float a2, float a3);
 int __cdecl sub_805D8C4(float *a1, float *a2);
-__int64 sub_805D9A8();
-int sub_805DA8E();
+__int64 CM_ClearWorld();
+int CM_LinkWorld();
 int __cdecl CM_UnlinkEntity(unsigned __int16 *a1);
 int __cdecl sub_805DCC8(unsigned __int16 *a1, unsigned __int16 a2);
 int __cdecl sub_805DD50(_WORD *a1, unsigned __int16 a2);
 int __cdecl CM_SortNode(int a1, float *a2, float *a3);
 int __cdecl CM_LinkEntity(int a1, _DWORD *a2, _DWORD *a3, int a4);
-int __cdecl sub_805E3D8(int a1);
-int sub_805E51A();
-void __cdecl sub_805E56A(unsigned __int16 a1, int a2);
-int __cdecl sub_805E782(int a1, int a2, int a3, int a4, int a5);
-void __cdecl sub_805E7C6(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5);
-void __cdecl sub_805EA28(float *a1, _DWORD *a2, _DWORD *a3, int a4);
-int __cdecl sub_805EAD0(int a1, unsigned __int16 a2, _DWORD *a3, float *a4);
-int __cdecl sub_805ED1E(_DWORD *a1, _DWORD *a2, float a3);
-void __cdecl sub_805ED88(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5);
-void __cdecl sub_805F0A4(int a1, float *a2);
-int __cdecl sub_805F10E(_DWORD *a1, unsigned __int16 a2, _DWORD *a3, float *a4);
-int __cdecl sub_805F3F6(int a1);
-void __cdecl sub_805F42C(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5);
-void __cdecl sub_805F61E(_DWORD *a1, float *a2);
-int __cdecl sub_805F686(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4);
-int __cdecl sub_805F8C6(int a1);
+int __cdecl CM_LinkStaticModel(int a1);
+int CM_LinkAllStaticModels();
+void __cdecl CM_AreaEntities_r(unsigned __int16 a1, int a2);
+int __cdecl CM_AreaEntities(int a1, int a2, int a3, int a4, int a5);
+void __cdecl CM_PointTraceStaticModels_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5);
+void __cdecl CM_PointTraceStaticModels(float *a1, _DWORD *a2, _DWORD *a3, int a4);
+int __cdecl CM_PointTraceStaticModelsComplete_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4);
+int __cdecl CM_PointTraceStaticModelsComplete(_DWORD *a1, _DWORD *a2, float a3);
+void __cdecl CM_ClipMoveToEntities_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5);
+void __cdecl CM_ClipMoveToEntities(int a1, float *a2);
+int __cdecl CM_ClipSightTraceToEntities_r(_DWORD *a1, unsigned __int16 a2, _DWORD *a3, float *a4);
+int __cdecl CM_ClipSightTraceToEntities(int a1);
+void __cdecl CM_PointTraceToEntities_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5);
+void __cdecl CM_PointTraceToEntities(_DWORD *a1, float *a2);
+int __cdecl CM_PointSightTraceToEntities_r(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4);
+int __cdecl CM_PointSightTraceToEntities(int a1);
 long double __cdecl sub_805F8F8(float a1, float a2, float a3);
 long double __cdecl sub_805F922(float a1);
 _BOOL4 __cdecl sub_805F93C(float a1);
@@ -604,7 +604,7 @@ int __cdecl sub_8062988(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
 int *sub_8062A0C();
 int __cdecl Com_ServerDObjCreate(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
 int __cdecl sub_8062AEC(int a1);
-int __cdecl Com_ServerDObjFree(int a1);
+int __cdecl Com_SafeServerDObjFree(int a1);
 void *Com_InitDObj();
 void Com_ShutdownDObj();
 void Com_AbortDObj();
@@ -770,228 +770,228 @@ int __cdecl LittleLong(int a1);
 int sub_806C8C0();
 void *sub_806C8EA();
 int __cdecl SetAnimCheck(int a1);
-char *__cdecl sub_806C926(const char *a1);
-int sub_806C95E();
-int __cdecl Scr_FindAnimInternal(_DWORD *a1, unsigned int a2, int a3);
-char *__cdecl sub_806CA94(_DWORD *a1, unsigned int a2, int a3);
+char *__cdecl AnimTreeCompileError(const char *a1);
+int GetAnimTreeParseProperties();
+int __cdecl Scr_EmitAnimationInternal(_DWORD *a1, unsigned int a2, int a3);
+char *__cdecl Scr_EmitAnimation(_DWORD *a1, unsigned int a2, int a3);
 int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5);
-_DWORD *__cdecl sub_806CE74(int a1, int a2, int a3);
-void *__cdecl sub_806CED4(size_t n);
-int __cdecl sub_806CEF0(int a1);
-int __cdecl sub_806CF7E(int a1, __int16 a2, int a3, int a4, __int16 a5);
+_DWORD *__cdecl Scr_AnimTreeParse(int a1, int a2, int a3);
+void *__cdecl Hunk_AllocXAnimTreePrecache(size_t n);
+int __cdecl Scr_GetAnimTreeSize(int a1);
+int __cdecl ConnectScriptToAnim(int a1, __int16 a2, int a3, int a4, __int16 a5);
 int __cdecl Scr_GetAnims(int a1);
-int __cdecl sub_806D084(int, int, int, int, char *s, int, int, int); // idb
-int __cdecl sub_806D2DC(int a1, int a2);
-int __cdecl sub_806D3B4(int a1);
+int __cdecl Scr_CreateAnimationTree(int, int, int, int, char *s, int, int, int); // idb
+int __cdecl Scr_CheckAnimsDefined(int a1, int a2);
+int __cdecl Scr_PrecacheAnimationTree(int a1);
 int __cdecl Scr_UsingTreeInternal(char *a1, int *a2, int a3);
-char *__cdecl sub_806D55A(char *a1, int a2);
-_BOOL4 __cdecl sub_806D5A6(const char *a1, int a2, int a3);
+char *__cdecl Scr_UsingTree(char *a1, int a2);
+_BOOL4 __cdecl Scr_LoadAnimTreeInternal(const char *a1, int a2, int a3);
 int __cdecl Scr_LoadAnimTreeAtIndex(int a1, int (__cdecl *a2)(int), int a3);
-// _DWORD *__userpurge sub_806D8CE@<eax>(_DWORD *a1, char *a2);
+// _DWORD *__userpurge Scr_FindAnimTree@<eax>(_DWORD *a1, char *a2);
 int __cdecl Scr_FindAnim(char *a1, char *s, _DWORD *a3, int a4);
-int __cdecl sub_806D9EC(int a1);
-int __cdecl sub_806DA0A(int a1);
-int __cdecl sub_806DA66(int a1);
-int __cdecl sub_806DA94(int a1, unsigned __int8 a2);
+int __cdecl Scr_CompileRemoveRefToString(int a1);
+int __cdecl EmitCanonicalString(int a1);
+int __cdecl EmitCanonicalStringConst(int a1);
+int __cdecl CompileTransferRefToString(int a1, unsigned __int8 a2);
 int __cdecl EmitOpcode(int a1, int a2, int a3);
-int sub_806DEC6();
-int sub_806DEEA();
-int __cdecl sub_806DF0E(int a1);
-int __cdecl sub_806DF32(unsigned __int16 a1);
-int __cdecl sub_806DF60(unsigned __int16 a1);
-int __cdecl sub_806DF8E(unsigned __int8 a1);
-int __cdecl sub_806DFBA(int a1);
-int __cdecl sub_806DFDE(int a1);
-int __cdecl sub_806E004(int a1);
-int __cdecl sub_806E028(int a1, int a2);
-void __cdecl sub_806E042(int a1);
-int __cdecl sub_806E07A(int a1, int a2, _DWORD *a3);
-void __cdecl sub_806E09C(int a1, int a2);
-int __cdecl sub_806E250(int a1, int a2, _DWORD *a3);
-int __cdecl sub_806E272(int a1, int a2);
-void __cdecl sub_806E2B4(int a1);
-void __cdecl sub_806E2EE(int a1);
-int __cdecl sub_806E326(int a1, int a2, int a3);
-int __cdecl sub_806E36A(int a1, int a2, char a3, int a4);
-int __cdecl sub_806E4CA(int a1);
-int __cdecl sub_806E53A(_DWORD *a1, int a2);
-int __cdecl sub_806E59A(char a1, int a2, _DWORD *a3);
-void __cdecl sub_806E5EC(int a1);
-void __cdecl sub_806E614(int a1);
-_DWORD *__cdecl sub_806E638(_DWORD *a1, int a2, _DWORD *a3);
-_DWORD *__cdecl sub_806E69A(_DWORD *a1, size_t *a2);
-int __cdecl sub_806E714(int a1, int a2, int a3);
-void __cdecl sub_806E846(int a1, int a2, _DWORD *a3);
-void __cdecl sub_806E94E(int a1, int a2, _DWORD *a3);
-_DWORD *__cdecl sub_806EA5A(int a1, _DWORD *a2);
-void __cdecl sub_806EB94(int a1, int a2, int a3);
-_DWORD *__cdecl sub_806EC16(_DWORD *a1, int a2, _DWORD *a3);
-void __cdecl sub_806EC38(int a1, int a2, int a3);
-int __cdecl sub_806ECA0(int a1, int a2, _DWORD *a3);
-int __cdecl sub_806ECC2(int a1, int a2);
-int __cdecl sub_806ED18(int a1, int a2, _DWORD *a3);
-int __cdecl sub_806ED3A(int a1, int a2);
-int __cdecl sub_806ED90(int a1, int a2);
-void __cdecl sub_806EE00(int *a1);
-char *__cdecl sub_806EEC6(int *a1);
-void sub_806EF26();
-void __cdecl sub_806EF32(int a1);
-void __cdecl sub_806EF6A(int a1);
-void __cdecl sub_806EFA2(int a1);
-void __cdecl sub_806EFDA(int a1, int a2, int a3);
-void __cdecl sub_806F024(int a1);
-void __cdecl sub_806F05C(int a1);
-void __cdecl sub_806F094(int a1);
-void __cdecl sub_806F0CC(int a1);
-void __cdecl sub_806F104(int a1);
-void __cdecl sub_806F13C(int a1);
-void __cdecl sub_806F174(int a1);
-void __cdecl sub_806F1AC(int a1, int a2, int a3);
-void __cdecl sub_806F230(int a1, int a2, int a3);
-_DWORD *__cdecl sub_806F2B2(_DWORD *a1, int a2, _DWORD *a3);
-void __cdecl sub_806F2D4(int a1);
-void __cdecl sub_806F30C(int a1, int a2);
-void __cdecl sub_806F356(int a1, int a2);
-void __cdecl sub_806F3A0(int a1, int a2);
-void __cdecl sub_806F3EA(int a1);
-int __cdecl sub_806F422(unsigned int a1, int a2);
-int __cdecl sub_806F48C(_DWORD *a1, int a2, int a3, int a4);
-int __cdecl sub_806F4E8(_DWORD *a1, int a2, int a3, int a4);
-int __cdecl sub_806F530(_DWORD *a1, int a2, int a3, int a4, int a5);
-char *__cdecl sub_806F58C(int a1, int a2);
-int sub_806F6FE();
-void __cdecl sub_806F722(int a1);
-void __cdecl sub_806F75A(int a1, _DWORD *a2, int a3, int a4, int a5);
-void __cdecl sub_806F798(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5);
-int __cdecl sub_806F7DE(int *a1, int a2);
-void __cdecl sub_806F7F8(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5);
-void __cdecl sub_806F83E(int *a1, int a2);
-int __cdecl sub_806F96C(int *a1);
-int __cdecl sub_806F9A0(int *a1, int a2);
-int __cdecl sub_806F9EA(int a1);
-_DWORD *__cdecl sub_806FA26(_DWORD *a1);
-int __cdecl sub_806FA70(unsigned int a1, int a2, char a3);
-void __cdecl sub_806FADC(_DWORD *a1, int a2);
-void __cdecl sub_806FE34(_DWORD *a1, int a2);
-int __cdecl sub_806FE7E(int a1);
-void __cdecl sub_806FEF6(_DWORD *a1, int a2, char a3, int a4);
-void __cdecl sub_806FF6C(int a1, int a2, char a3, int a4, int a5, int a6);
-int __cdecl sub_806FFF8(_DWORD *a1, int a2, char a3, int a4);
-int __cdecl sub_807007C(int a1, int a2, char a3, int a4, int a5);
-void __cdecl sub_80700FE(_DWORD *a1, int a2, char a3, int a4, int a5);
-void __cdecl sub_8070184(_DWORD *a1, int a2, char a3, int a4, int a5, int a6);
-int __cdecl sub_8070216(_DWORD *a1);
-void __cdecl sub_8070242(int a1, int a2, char a3, int a4);
-int __cdecl sub_80702D8(_DWORD *a1);
-_DWORD *__cdecl sub_807035E(_DWORD *a1, unsigned int *a2);
-unsigned int __cdecl sub_80703B6(int a1, int *a2);
-int __cdecl sub_80703E6(int a1);
+int EmitEnd();
+int EmitReturn();
+int __cdecl EmitCodepos(int a1);
+int __cdecl EmitShort3(unsigned __int16 a1);
+int __cdecl EmitShort2(unsigned __int16 a1);
+int __cdecl EmitByte(unsigned __int8 a1);
+int __cdecl EmitFloat(int a1);
+int __cdecl EmitShort(int a1);
+int __cdecl EmitCodepos2(int a1);
+int __cdecl EvalUndefined(int a1, int a2);
+void __cdecl EmitGetUndefined(int a1);
+int __cdecl EvalInteger(int a1, int a2, _DWORD *a3);
+void __cdecl EmitGetInteger(int a1, int a2);
+int __cdecl EvalFloat(int a1, int a2, _DWORD *a3);
+int __cdecl EmitGetFloat(int a1, int a2);
+void __cdecl EmitAnimTree(int a1);
+void __cdecl EmitSetVariableField(int a1);
+int __cdecl Scr_FindLocalVar(int a1, int a2, int a3);
+int __cdecl Scr_FindLocalVarIndex(int a1, int a2, char a3, int a4);
+int __cdecl EmitCreateLocalVars(int a1);
+int __cdecl EmitRemoveLocalVars(_DWORD *a1, int a2);
+int __cdecl EmitNOP2(char a1, int a2, _DWORD *a3);
+void __cdecl Scr_CheckMaxSwitchCases(int a1);
+void __cdecl Scr_CheckLocalVarsCount(int a1);
+_DWORD *__cdecl Scr_RegisterLocalVar(_DWORD *a1, int a2, _DWORD *a3);
+_DWORD *__cdecl Scr_CopyBlock(_DWORD *a1, size_t *a2);
+int __cdecl Scr_InitFromChildBlocks(int a1, int a2, int a3);
+void __cdecl Scr_AppendChildBlocks(int a1, int a2, _DWORD *a3);
+void __cdecl Scr_MergeChildBlocks(int a1, int a2, _DWORD *a3);
+_DWORD *__cdecl Scr_TransferBlock(int a1, _DWORD *a2);
+void __cdecl EmitSafeSetVariableField(int a1, int a2, int a3);
+_DWORD *__cdecl Scr_CalcLocalVarsSafeSetVariableField(_DWORD *a1, int a2, _DWORD *a3);
+void __cdecl EmitSafeSetWaittillVariableField(int a1, int a2, int a3);
+int __cdecl EvalString(int a1, int a2, _DWORD *a3);
+int __cdecl EmitGetString(int a1, int a2);
+int __cdecl EvalIString(int a1, int a2, _DWORD *a3);
+int __cdecl EmitGetIString(int a1, int a2);
+int __cdecl EmitGetVector(int a1, int a2);
+void __cdecl EmitValue(int *a1);
+char *__cdecl Scr_PushValue(int *a1);
+void Scr_PopValue();
+void __cdecl EmitCastBool(int a1);
+void __cdecl EmitBoolNot(int a1);
+void __cdecl EmitBoolComplement(int a1);
+void __cdecl EmitSize(int a1, int a2, int a3);
+void __cdecl EmitSelf(int a1);
+void __cdecl EmitLevel(int a1);
+void __cdecl EmitGame(int a1);
+void __cdecl EmitAnim(int a1);
+void __cdecl EmitSelfObject(int a1);
+void __cdecl EmitLevelObject(int a1);
+void __cdecl EmitAnimObject(int a1);
+void __cdecl EmitLocalVariable(int a1, int a2, int a3);
+void __cdecl EmitLocalVariableRef(int a1, int a2, int a3);
+_DWORD *__cdecl Scr_CalcLocalVarsSafeSetVariableField2(_DWORD *a1, int a2, _DWORD *a3);
+void __cdecl EmitGameRef(int a1);
+void __cdecl EmitEvalArray(int a1, int a2);
+void __cdecl EmitEvalArrayRef(int a1, int a2);
+void __cdecl EmitClearArray(int a1, int a2);
+void __cdecl EmitEmptyArray(int a1);
+int __cdecl EmitAnimation(unsigned int a1, int a2);
+int __cdecl EmitFieldVariable(_DWORD *a1, int a2, int a3, int a4);
+int __cdecl EmitFieldVariableRef(_DWORD *a1, int a2, int a3, int a4);
+int __cdecl EmitClearFieldVariable(_DWORD *a1, int a2, int a3, int a4, int a5);
+char *__cdecl EmitObject(int a1, int a2);
+int EmitDecTop();
+void __cdecl EmitCastFieldObject(int a1);
+void __cdecl EmitArrayVariable(int a1, _DWORD *a2, int a3, int a4, int a5);
+void __cdecl EmitArrayVariableRef(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5);
+int __cdecl Scr_CalcLocalVarsArrayVariableRef(int *a1, int a2);
+void __cdecl EmitClearArrayVariable(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5);
+void __cdecl EmitVariableExpression(int *a1, int a2);
+int __cdecl GetExpressionCount(int *a1);
+int __cdecl EmitExpressionList(int *a1, int a2);
+int __cdecl GetSingleParameter(int a1);
+_DWORD *__cdecl AddExpressionListOpcodePos(_DWORD *a1);
+int __cdecl AddFilePrecache(unsigned int a1, int a2, char a3);
+void __cdecl EmitFunction(_DWORD *a1, int a2);
+void __cdecl EmitGetFunction(_DWORD *a1, int a2);
+int __cdecl AddFunction(int a1);
+void __cdecl EmitPostScriptFunction(_DWORD *a1, int a2, char a3, int a4);
+void __cdecl EmitPostScriptFunctionPointer(int a1, int a2, char a3, int a4, int a5, int a6);
+int __cdecl EmitPostScriptThread(_DWORD *a1, int a2, char a3, int a4);
+int __cdecl EmitPostScriptThreadPointer(int a1, int a2, char a3, int a4, int a5);
+void __cdecl EmitPostScriptFunctionCall(_DWORD *a1, int a2, char a3, int a4, int a5);
+void __cdecl EmitPostScriptThreadCall(_DWORD *a1, int a2, char a3, int a4, int a5, int a6);
+int __cdecl EmitPreFunctionCall(_DWORD *a1);
+void __cdecl EmitPostFunctionCall(int a1, int a2, char a3, int a4);
+int __cdecl Scr_GetBuiltin(_DWORD *a1);
+_DWORD *__cdecl Scr_BeginDevScript(_DWORD *a1, unsigned int *a2);
+unsigned int __cdecl Scr_EndDevScript(int a1, int *a2);
+int __cdecl Scr_GetCacheType(int a1);
 _BOOL4 __cdecl sub_807040A(int a1);
-void __cdecl sub_8070430(int a1, int a2);
-void __cdecl sub_8070496(int a1, int a2);
+void __cdecl EmitCallBuiltinOpcode(int a1, int a2);
+void __cdecl EmitCallBuiltinMethodOpcode(int a1, int a2);
 char *__cdecl EmitCall(_DWORD *a1, int *a2, char a3, int a4);
 char *__cdecl EmitMethod(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a6);
-int __cdecl sub_807098C(int a1, _DWORD *a2, char a3);
-int __cdecl sub_8070AA8(int a1);
-int __cdecl sub_8070B86(int a1, int a2, int a3, int a4);
-unsigned int __cdecl sub_8070C7A(int a1);
-char *__cdecl sub_8070CB2(int a1, unsigned __int8 a2, int a3);
-void __cdecl sub_8070D46(int a1, int a2);
-char *__cdecl sub_8070DF8(int a1, char **a2);
-int __cdecl sub_8070EE4(int *a1, int a2, int a3);
-int __cdecl sub_8070FC0(int *a1, int a2, int a3, int a4);
-char *__cdecl sub_807112A(int a1, int a2, int a3);
-int __cdecl sub_8071180(_DWORD *a1, _DWORD *a2);
-int __cdecl sub_8071370(_DWORD *a1, _DWORD *a2, int a3);
-void __cdecl sub_8071552(int a1, int a2);
-unsigned int __cdecl sub_8071586(int a1, int a2, int a3, int a4, int a5);
-unsigned int __cdecl sub_807162A(int a1, int a2, int a3, int a4, int a5);
-int __cdecl sub_80716CE(int a1, int a2, int a3, int a4, _DWORD *a5);
-int __cdecl sub_807179C(int a1, int a2, int a3, int a4, _DWORD *a5, int a6);
-void __cdecl sub_80718AE(int *a1, _DWORD *a2, char a3, int a4, int a5);
+int __cdecl LinkThread(int a1, _DWORD *a2, char a3);
+int __cdecl LinkFile(int a1);
+int __cdecl SpecifyThreadPosition(int a1, int a2, int a3, int a4);
+unsigned int __cdecl SetThreadPosition(int a1);
+char *__cdecl EmitCallExpression(int a1, unsigned __int8 a2, int a3);
+void __cdecl EmitCallExpressionFieldObject(int a1, int a2);
+char *__cdecl Scr_CreateVector(int a1, char **a2);
+int __cdecl EvalPrimitiveExpressionList(int *a1, int a2, int a3);
+int __cdecl EmitOrEvalPrimitiveExpressionList(int *a1, int a2, int a3, int a4);
+char *__cdecl EmitExpressionListFieldObject(int a1, int a2, int a3);
+int __cdecl EvalPrimitiveExpression(_DWORD *a1, _DWORD *a2);
+int __cdecl EmitOrEvalPrimitiveExpression(_DWORD *a1, _DWORD *a2, int a3);
+void __cdecl EmitPrimitiveExpression(int a1, int a2);
+unsigned int __cdecl EmitBoolOrExpression(int a1, int a2, int a3, int a4, int a5);
+unsigned int __cdecl EmitBoolAndExpression(int a1, int a2, int a3, int a4, int a5);
+int __cdecl EvalBinaryOperatorExpression(int a1, int a2, int a3, int a4, _DWORD *a5);
+int __cdecl EmitOrEvalBinaryOperatorExpression(int a1, int a2, int a3, int a4, _DWORD *a5, int a6);
+void __cdecl EmitBinaryEqualsOperatorExpression(int *a1, _DWORD *a2, char a3, int a4, int a5);
 _DWORD *__cdecl sub_8071934(int a1, _DWORD *a2);
-int __cdecl sub_807194E(_DWORD *a1, _DWORD *a2);
-int __cdecl sub_80719D8(_DWORD *a1, _DWORD *a2, int a3);
-void __cdecl sub_8071B6C(_DWORD *a1, int a2);
-void __cdecl sub_8071BA0(int *a1, int a2);
-_DWORD *__cdecl sub_8071CB0(int a1, _DWORD *a2);
-void __cdecl sub_8071D0A(_DWORD *a1, int a2, int a3);
-int __cdecl sub_8071D66(int *a1, int a2);
-void __cdecl sub_8071D92(_DWORD *a1, int a2, int a3);
-char *__cdecl sub_8071E6A(_DWORD *a1, int a2, int a3);
-int sub_8071EB6();
-int sub_8071EFA();
-_BOOL4 __cdecl sub_8071F3E(_DWORD *a1);
-int __cdecl sub_8071F50(int a1);
-int __cdecl sub_8071F86(int a1, int a2, int a3);
-void __cdecl sub_8072088(int *a1, _DWORD *a2, int a3, int a4, int a5);
-_DWORD *__cdecl sub_80720EE(int a1, int a2, _DWORD *a3);
-char *__cdecl sub_8072108(int a1, int a2);
-void __cdecl sub_807212A(_DWORD *a1, int a2, _DWORD *a3);
-void __cdecl sub_807216E(int a1, _DWORD *a2);
-void __cdecl sub_80721A0(_DWORD *a1, int a2, int a3, int a4);
-void __cdecl sub_8072210(int a1);
-unsigned int __cdecl sub_807225A(_DWORD *a1, int a2, int a3, unsigned __int8 a4, int a5, int a6, _DWORD **a7);
-void __cdecl sub_807233A(int a1, _DWORD *a2, size_t *a3);
-int __cdecl sub_8072382(_DWORD *a1, int a2, int a3, int a4, int a5, unsigned __int8 a6, int a7, int a8, int *a9, _DWORD **a10);
-void __cdecl sub_80725C2(int a1, int a2, int *a3, size_t *a4, size_t *a5);
-int __cdecl sub_80726C0(_DWORD *a1);
-int __cdecl sub_807270E(_DWORD *a1);
-int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6);
-int __cdecl sub_8072AE6(_DWORD *a1, int a2, int *a3, size_t *a4);
-int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int a7, int *a8, int *a9);
-int __cdecl sub_80730A4(int a1, int a2, int a3, int a4, int *a5, size_t *a6, size_t *a7);
-void __cdecl sub_80732BA(int *a1, int a2, int a3);
-_DWORD *__cdecl sub_807331C(int a1, _DWORD *a2);
-void __cdecl sub_8073336(int *a1, int a2, int a3);
-int **__cdecl sub_8073398(int **a1, int a2);
-_DWORD ***__cdecl sub_80733DA(_DWORD ***a1, _DWORD *a2);
-int **__cdecl sub_807341C(int **a1, int a2);
-int __cdecl sub_807345E(int a1, int a2, int a3, int a4, int a5);
-_DWORD ***__cdecl sub_8073538(int a1, _DWORD *a2);
-int __cdecl sub_8073560(int a1, int a2, int a3, int a4, int a5);
-void __cdecl sub_80736AC(int a1, int *a2, int a3, int a4, int a5);
-void __cdecl sub_80737A2(int a1, _DWORD *a2, int a3, int a4, int a5);
+int __cdecl EvalExpression(_DWORD *a1, _DWORD *a2);
+int __cdecl EmitOrEvalExpression(_DWORD *a1, _DWORD *a2, int a3);
+void __cdecl EmitExpression(_DWORD *a1, int a2);
+void __cdecl EmitVariableExpressionRef(int *a1, int a2);
+_DWORD *__cdecl Scr_CalcLocalVarsVariableExpressionRef(int a1, _DWORD *a2);
+void __cdecl EmitArrayPrimitiveExpressionRef(_DWORD *a1, int a2, int a3);
+int __cdecl Scr_CalcLocalVarsArrayPrimitiveExpressionRef(int *a1, int a2);
+void __cdecl EmitPrimitiveExpressionFieldObject(_DWORD *a1, int a2, int a3);
+char *__cdecl EmitExpressionFieldObject(_DWORD *a1, int a2, int a3);
+int ConnectBreakStatements();
+int ConnectContinueStatements();
+_BOOL4 __cdecl IsUndefinedPrimitiveExpression(_DWORD *a1);
+int __cdecl IsUndefinedExpression(int a1);
+int __cdecl EmitClearVariableExpression(int a1, int a2, int a3);
+void __cdecl EmitAssignmentStatement(int *a1, _DWORD *a2, int a3, int a4, int a5);
+_DWORD *__cdecl Scr_CalcLocalVarsAssignmentStatement(int a1, int a2, _DWORD *a3);
+char *__cdecl EmitCallExpressionStatement(int a1, int a2);
+void __cdecl EmitReturnStatement(_DWORD *a1, int a2, _DWORD *a3);
+void __cdecl EmitEndStatement(int a1, _DWORD *a2);
+void __cdecl EmitWaitStatement(_DWORD *a1, int a2, int a3, int a4);
+void __cdecl EmitWaittillFrameEnd(int a1);
+unsigned int __cdecl EmitIfStatement(_DWORD *a1, int a2, int a3, unsigned __int8 a4, int a5, int a6, _DWORD **a7);
+void __cdecl Scr_CalcLocalVarsIfStatement(int a1, _DWORD *a2, size_t *a3);
+int __cdecl EmitIfElseStatement(_DWORD *a1, int a2, int a3, int a4, int a5, unsigned __int8 a6, int a7, int a8, int *a9, _DWORD **a10);
+void __cdecl Scr_CalcLocalVarsIfElseStatement(int a1, int a2, int *a3, size_t *a4, size_t *a5);
+int __cdecl Scr_AddBreakBlock(_DWORD *a1);
+int __cdecl Scr_AddContinueBlock(_DWORD *a1);
+int __cdecl EmitWhileStatement(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6);
+int __cdecl Scr_CalcLocalVarsWhileStatement(_DWORD *a1, int a2, int *a3, size_t *a4);
+int __cdecl EmitForStatement(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int a7, int *a8, int *a9);
+int __cdecl Scr_CalcLocalVarsForStatement(int a1, int a2, int a3, int a4, int *a5, size_t *a6, size_t *a7);
+void __cdecl EmitIncStatement(int *a1, int a2, int a3);
+_DWORD *__cdecl Scr_CalcLocalVarsIncStatement(int a1, _DWORD *a2);
+void __cdecl EmitDecStatement(int *a1, int a2, int a3);
+int **__cdecl EmitFormalParameterListInternal(int **a1, int a2);
+_DWORD ***__cdecl Scr_CalcLocalVarsFormalParameterListInternal(_DWORD ***a1, _DWORD *a2);
+int **__cdecl EmitFormalWaittillParameterListRefInternal(int **a1, int a2);
+int __cdecl EmitWaittillStatement(int a1, int a2, int a3, int a4, int a5);
+_DWORD ***__cdecl Scr_CalcLocalVarsWaittillStatement(int a1, _DWORD *a2);
+int __cdecl EmitWaittillmatchStatement(int a1, int a2, int a3, int a4, int a5);
+void __cdecl EmitNotifyStatement(int a1, int *a2, int a3, int a4, int a5);
+void __cdecl EmitEndOnStatement(int a1, _DWORD *a2, int a3, int a4, int a5);
 int __cdecl compar(_DWORD *a1, _DWORD *a2);
-int __cdecl sub_807384C(int a1);
-void __cdecl sub_80738A8(_DWORD *a1, int a2);
-void __cdecl sub_8073964(int a1);
-char *__cdecl sub_8073980(int a1, char a2, int a3, int a4);
-int __cdecl sub_8073BC8(int a1, int *a2);
-char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6);
-void __cdecl sub_8074020(int a1, int a2);
-char *__cdecl sub_807407E(int a1, _DWORD *a2);
-char *__cdecl sub_8074158(int a1, _DWORD *a2);
-void sub_8074230();
-int __cdecl sub_8074236(int a1, int a2, unsigned __int8 a3);
-int __cdecl sub_807428E(int a1, int a2);
-int __cdecl sub_80742B0(int a1, int a2);
-void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4);
-void __cdecl sub_8074842(size_t *a1, int *a2);
-int *__cdecl sub_8074A7A(int a1, char a2, int a3, _DWORD *a4);
-int __cdecl sub_8074AF6(int a1, int *a2);
-void __cdecl sub_8074B34(int a1, _DWORD *a2, size_t *a3);
-char *__cdecl sub_8074B7C(int a1, int a2, int a3, int *a4);
-void __cdecl sub_8074C6A(int ***a1, int a2, int a3);
-_DWORD ***__cdecl sub_8074CB6(_DWORD ****a1, _DWORD *a2);
-char *__cdecl sub_8074CD2(char **a1);
-int __cdecl sub_8074DEE(int a1, int a2, int a3, int a4, _DWORD *a5);
-int __cdecl sub_8074ED8(_DWORD ****a1, int a2, int **a3);
-void __cdecl sub_8074F74(int a1);
-int __cdecl sub_807501A(int *a1, _DWORD **a2);
-int __cdecl sub_807509C(int *a1, _DWORD **a2);
-char *__cdecl sub_80751B4(int a1);
-int *__cdecl sub_80752BA(int a1);
-int __cdecl sub_8075354(int a1);
-int *__cdecl sub_80753A6(int a1);
+int __cdecl Scr_IsLastStatement(int a1);
+void __cdecl EmitCaseStatement(_DWORD *a1, int a2);
+void __cdecl EmitDefaultStatement(int a1);
+char *__cdecl EmitSwitchStatementList(int a1, char a2, int a3, int a4);
+int __cdecl Scr_CalcLocalVarsSwitchStatement(int a1, int *a2);
+char *__cdecl EmitSwitchStatement(_DWORD *a1, int a2, int a3, char a4, int a5, int a6);
+void __cdecl EmitCaseStatementInfo(int a1, int a2);
+char *__cdecl EmitBreakStatement(int a1, _DWORD *a2);
+char *__cdecl EmitContinueStatement(int a1, _DWORD *a2);
+void EmitBreakpointStatement();
+int __cdecl EmitProfStatement(int a1, int a2, unsigned __int8 a3);
+int __cdecl EmitProfBeginStatement(int a1, int a2);
+int __cdecl EmitProfEndStatement(int a1, int a2);
+void __cdecl EmitStatement(int a1, unsigned __int8 a2, int a3, _DWORD *a4);
+void __cdecl Scr_CalcLocalVarsStatement(size_t *a1, int *a2);
+int *__cdecl EmitStatementList(int a1, char a2, int a3, _DWORD *a4);
+int __cdecl Scr_CalcLocalVarsStatementList(int a1, int *a2);
+void __cdecl Scr_CalcLocalVarsDeveloperStatementList(int a1, _DWORD *a2, size_t *a3);
+char *__cdecl EmitDeveloperStatementList(int a1, int a2, int a3, int *a4);
+void __cdecl EmitFormalParameterList(int ***a1, int a2, int a3);
+_DWORD ***__cdecl Scr_CalcLocalVarsFormalParameterList(_DWORD ****a1, _DWORD *a2);
+char *__cdecl SpecifyThread(char **a1);
+int __cdecl EmitThreadInternal(int a1, int a2, int a3, int a4, _DWORD *a5);
+int __cdecl Scr_CalcLocalVarsThread(_DWORD ****a1, int a2, int **a3);
+void __cdecl InitThread(int a1);
+int __cdecl EmitNormalThread(int *a1, _DWORD **a2);
+int __cdecl EmitDeveloperThread(int *a1, _DWORD **a2);
+char *__cdecl EmitThread(int a1);
+int *__cdecl EmitThreadList(int a1);
+int __cdecl EmitInclude(int a1);
+int *__cdecl EmitIncludeList(int a1);
 char *__cdecl ScriptCompile(int *a1, int a2, int a3);
 int __cdecl sub_8075710(int a1);
 void Scr_CompileShutdown();
 int __cdecl AddRefToValue(int *a1);
 int __cdecl RemoveRefToValue(_DWORD *a1);
 _BOOL4 __cdecl Scr_IsInOpcodeMemory(int a1);
-int __cdecl sub_8075828(_BYTE *a1);
-int __cdecl sub_8075874(char *a1, char *s);
+int __cdecl Scr_IsIdentifier(_BYTE *a1);
+int __cdecl Scr_GetFunctionHandleInternal(char *a1, char *s);
 void *Scr_AllocStrings();
 unsigned int *sub_80759D2();
 int __cdecl Scr_GetCanonicalStringIndex(int a1);
@@ -1004,7 +1004,7 @@ int __cdecl Scr_LoadScript(char *a1);
 int sub_8075E10();
 int sub_8075E1E();
 int __cdecl Scr_PrecacheAnimTrees(int (__cdecl *a1)(int), int a2);
-void *sub_8075F0E();
+void *Scr_EndLoadAnimTrees();
 void sub_8075F74();
 int __cdecl MT_GetSubTreeSize(int a1);
 void MT_DumpTree();
@@ -1027,18 +1027,18 @@ void __cdecl MT_EndRelocate(unsigned __int8 *ptr);
 _BOOL4 __cdecl MT_Realloc(int a1, int a2);
 void Scr_InitOpcodeLookup();
 void sub_8076C84();
-void __cdecl sub_8076D92(int a1, int a2);
-int sub_8076FAE();
-_DWORD *__cdecl sub_8077016(int a1);
+void __cdecl AddOpcodePos(int a1, int a2);
+int RemoveOpcodePos();
+_DWORD *__cdecl AddThreadStartOpcodePos(int a1);
 char *__cdecl Scr_GetPrevSourcePosOpcodeLookup(unsigned int a1);
 char *__cdecl sub_8077474(unsigned int a1);
 int __cdecl Scr_GetPrevSourcePos(unsigned int a1, int a2);
 int __cdecl Scr_GetLineNumInternal(_BYTE *a1, int a2, _DWORD *a3, _DWORD *a4);
 int __cdecl sub_80775A6(int a1, int a2);
 int __cdecl sub_80775E4(unsigned int a1, int a2, int *a3);
-char *sub_80776B8();
-int __cdecl sub_8077750(char *s, int a2, char *a3, int a4, int a5, unsigned __int8 a6);
-int __cdecl sub_80778BC(int a1, char *s, int a3, unsigned __int8 a4);
+char *Scr_GetNewSourceBuffer();
+int __cdecl Scr_AddSourceBufferInternal(char *s, int a2, char *a3, int a4, int a5, unsigned __int8 a6);
+int __cdecl Scr_ReadFile(int a1, char *s, int a3, unsigned __int8 a4);
 char *__cdecl Scr_AddSourceBuffer(int a1, char *s, int a3, unsigned __int8 a4);
 int __cdecl Scr_GetLineInfo(_BYTE *a1, int a2, _DWORD *a3, int a4);
 void __cdecl Scr_PrintSourcePos(int a1, const char *a2, _BYTE *a3, int a4);
@@ -1080,7 +1080,7 @@ void SL_CheckInit();
 void SL_Shutdown();
 int __cdecl SL_FindStringOfLen(char *s2, size_t n);
 int __cdecl SL_FindString(char *s2);
-int __cdecl sub_8078CEA(char *s); // idb
+int __cdecl SL_FindLowercaseString(char *s); // idb
 int __cdecl SL_AddUserInternal(int a1, unsigned __int8 a2);
 int __cdecl SL_GetStringOfLen(char *s2, unsigned __int8 a2, size_t n);
 int __cdecl SL_GetString_(char *s, unsigned __int8 a2);
@@ -1101,10 +1101,10 @@ int __cdecl Scr_AllocString(char *s); // idb
 int __cdecl SL_GetStringForFloat(float); // idb
 int __cdecl SL_GetStringForInt(int a1);
 int __cdecl SL_GetStringForVector(float *a1);
-void __cdecl sub_8079910(unsigned __int8 a1);
+void __cdecl SL_ShutdownSystem(unsigned __int8 a1);
 void sub_80799B6();
-void SL_ShutdownSystem();
-_BYTE *__cdecl sub_8079B84(_BYTE *a1, char *a2, int a3);
+void SL_RelocateSystem();
+_BYTE *__cdecl SL_CreateCanonicalFilename(_BYTE *a1, char *a2, int a3);
 int __cdecl Scr_CreateCanonicalFilename(char *a1);
 size_t __cdecl I_strlen(char *s);
 void TempMemoryReset();
@@ -1236,7 +1236,7 @@ void __cdecl Scr_EvalMultiply(int *a1, int *a2);
 void __cdecl Scr_EvalDivide(int *a1, int *a2);
 void __cdecl Scr_EvalMod(int *a1, int *a2);
 void __cdecl Scr_EvalBinaryOperator(int a1, int *a2, int *a3);
-_BOOL4 __cdecl sub_807DF52(int a1);
+_BOOL4 __cdecl IsObjectFree(int a1);
 int __cdecl GetVarType(int a1);
 void __cdecl Scr_FreeEntityNum(int a1, int a2);
 int Scr_FreeEntityList();
@@ -1268,7 +1268,7 @@ int __cdecl Scr_FreeValue(int a1);
 int __cdecl sub_807F568(int a1);
 void Scr_AllocGameVariable();
 int __cdecl sub_807F676(int a1);
-int __cdecl sub_807F6F2(char a1);
+int __cdecl Scr_GetClassnumForCharId(char a1);
 int sub_807F740();
 int __cdecl sub_807F74E(int, char *s); // idb
 int __cdecl sub_807F7E0(int a1);
@@ -1303,14 +1303,14 @@ int __cdecl sub_8082D9A(int a1, int a2);
 _BOOL4 __cdecl sub_8082E74(unsigned int a1);
 int __cdecl Scr_TerminateThread(unsigned int a1);
 int __cdecl VM_Notify(int a1, int a2, int *a3);
-int __cdecl sub_8083426(int a1, int a2, int a3, int a4);
-int __cdecl sub_80834DC(int a1);
+int __cdecl Scr_NotifyNum(int a1, int a2, int a3, int a4);
+int __cdecl Scr_CancelNotifyList(int a1);
 int __cdecl sub_8083640(int a1);
 unsigned int __cdecl VM_Resume(int a1);
 int IncInParam();
 int __cdecl VM_Execute(int a1, char *a2, int a3);
 int __cdecl Scr_ExecThread(int a1, int a2);
-int __cdecl sub_8083A1A(int a1, int a2, int a3, int a4);
+int __cdecl Scr_ExecEntThreadNum(int a1, int a2, int a3, int a4);
 int __cdecl Scr_AddExecThread(int a1, int a2);
 int __cdecl sub_8083B14(int a1, int a2, int a3, int a4);
 int __cdecl Scr_FreeThread(unsigned __int16 a1);
@@ -1338,7 +1338,7 @@ int __cdecl Scr_GetFunc(unsigned int a1);
 // _WORD *__userpurge Scr_GetEntityRef@<eax>(_WORD *a1, unsigned int a2);
 int __cdecl Scr_GetObject(unsigned int a1);
 int __cdecl Scr_GetType(unsigned int a1);
-int __cdecl sub_80849F8(unsigned int a1);
+int __cdecl Scr_GetTypeName(unsigned int a1);
 int __cdecl Scr_GetPointerType(unsigned int a1);
 int Scr_GetNumParam();
 int __cdecl Scr_AddBool(int a1);
@@ -1365,7 +1365,7 @@ int __cdecl SetEntityFieldValue(int a1, int a2, int a3, int a4);
 // _DWORD *__userpurge GetEntityFieldValue@<eax>(_DWORD *a1, char *a2, int a3, int a4);
 int __cdecl Scr_SetStructField(int a1, int a2);
 int __cdecl Scr_SetDynamicEntityField(int a1, int a2, int a3);
-int sub_8084F9A();
+int Scr_IncTime();
 void Scr_RunCurrentThreads();
 int Scr_ResetTimeout();
 int __cdecl sub_80850EE(float); // idb
@@ -1486,7 +1486,7 @@ int __cdecl SV_GEntityForSvEntity(int a1);
 int __cdecl SV_GameSendServerCommand(int a1, int a2, const char *a3);
 // void __usercall sub_808FF0A(long double a1@<st0>, int a2, char *a3);
 int __cdecl SV_SetBrushModel(int a1);
-_BOOL4 __cdecl sub_808FFBC(float *a1, int a2);
+_BOOL4 __cdecl SV_inSnapshot(float *a1, int a2);
 int __cdecl sub_80901C2(float *a1, float *a2, int a3);
 char *__cdecl SV_GetServerinfo(char *dest, int a2);
 void *__cdecl sub_8090408(size_t a1);
@@ -1501,17 +1501,17 @@ int __cdecl SV_XModelGet(char *s1); // idb
 void __cdecl SV_DObjDumpInfo(int *a1);
 unsigned int SV_ResetSkeletonCache();
 int __cdecl SV_AllocSkelMemory(int a1);
-int __cdecl sub_8090666(int *a1, int a2);
+int __cdecl SV_DObjCreateSkelForBone(int *a1, int a2);
 int __cdecl SV_DObjCreateSkelForBones(int *a1, int a2);
 int __cdecl SV_DObjUpdateServerTime(int *a1, float a2, int a3);
-_DWORD **__cdecl sub_80907BC(int *a1, float a2);
-int __cdecl sub_80907EE(int *a1, int a2, int a3);
+_DWORD **__cdecl SV_DObjInitServerTime(int *a1, float a2);
+int __cdecl SV_DObjGetHierarchyBits(int *a1, int a2, int a3);
 int __cdecl SV_DObjCalcAnim(int *a1, int a2);
 int *__cdecl SV_DObjCalcSkel(int *a1, int a2);
-int __cdecl sub_8090874(int *a1);
+int __cdecl SV_DObjNumBones(int *a1);
 int __cdecl SV_DObjGetBoneIndex(int *a1, int a2);
-int __cdecl sub_80908D8(int *a1);
-void __cdecl sub_80908FC(int *a1);
+int __cdecl SV_DObjGetMatrixArray(int *a1);
+void __cdecl SV_DObjDisplayAnim(int *a1);
 int __cdecl sub_8090928(int *a1);
 int __cdecl sub_809094C(int *a1, int a2, int a3);
 int __cdecl sub_809097E(int *a1, int a2, int a3);
@@ -1548,7 +1548,7 @@ int sub_8091372();
 // int __usercall sub_80915D0@<eax>(long double a1@<st0>);
 void __cdecl sub_809188A(char *a1);
 void *sub_8091998();
-void *__cdecl sub_80919F4(int a1);
+void *__cdecl SV_EnableArchivedSnapshot(int a1);
 void sub_8091A70();
 void sub_8091AB2();
 _WORD *sub_8091B5A();
@@ -1604,10 +1604,10 @@ int __cdecl SV_WriteSnapshotToClient(int a1, _DWORD *a2);
 int __cdecl SV_UpdateServerCommandsToClient(int a1, _DWORD *a2);
 int __cdecl sub_80967E4(_DWORD *a1, _DWORD *a2, signed int a3);
 void __cdecl SV_ShowClientUnAckCommands(int a1);
-_DWORD *__cdecl sub_8096970(int a1, _DWORD *a2);
-_DWORD *__cdecl sub_8096996(int a1, _DWORD *a2);
-int __cdecl sub_80969BC(float *a1, int a2, _DWORD *a3);
-int __cdecl sub_8096C56(int a1, int a2, float *a3, int a4, _DWORD *a5);
+_DWORD *__cdecl SV_AddEntToSnapshot(int a1, _DWORD *a2);
+_DWORD *__cdecl SV_AddCachedEntToSnapshot(int a1, _DWORD *a2);
+int __cdecl SV_AddEntitiesVisibleFromPoint(float *a1, int a2, _DWORD *a3);
+int __cdecl SV_AddCachedEntitiesVisibleFromPoint(int a1, int a2, float *a3, int a4, _DWORD *a5);
 _DWORD *__cdecl SV_GetCachedSnapshotInternal(int a1);
 _DWORD *__cdecl SV_GetCachedSnapshot(int *a1);
 int __cdecl sub_8097B54(int a1, _DWORD *a2, void *a3);
@@ -1633,10 +1633,10 @@ int __cdecl SV_ClipHandleForEntity(int a1);
 int __cdecl SV_UnlinkEntity(int a1);
 void __cdecl sub_809A3E6(int a1);
 int __cdecl SV_LinkEntity(int a1);
-void __cdecl sub_809AB88(int a1, int a2, int a3);
-void __cdecl sub_809AD2C(int a1, int a2, int a3);
+void __cdecl SV_ClipMoveToEntity(int a1, int a2, int a3);
+void __cdecl SV_PointTraceToEntity(int a1, int a2, int a3);
 int __cdecl sub_809B1A0(_DWORD *a1, int a2);
-int __cdecl sub_809B30E(_DWORD *a1, int a2);
+int __cdecl SV_PointSightTraceToEntity(_DWORD *a1, int a2);
 void __cdecl SV_Trace(float *s, float *a2, float *a3, float *a4, float *a5, int a6, int a7, int a8, int a9, int a10);
 int __cdecl SV_TracePassed(float *a1, float *a2, float *a3, float *a4, int a5, int a6, int a7, int a8, int a9);
 int *__cdecl SV_SightTrace(int *a1, float *a2, float *a3, float *a4, float *a5, int a6, int a7, int a8);
@@ -1767,7 +1767,7 @@ float *__cdecl sub_80A2672(int a1, int a2, float *a3, float a4);
 float *__cdecl sub_80A28D8(float *a1, float a2);
 float *__cdecl sub_80A295E(int a1, int a2, float *a3);
 long double __cdecl sub_80A29F6(float *a1);
-long double __cdecl sub_80A2A84(float *a1);
+long double __cdecl vectosignedyaw(float *a1);
 long double __cdecl sub_80A2AF6(float *a1);
 long double __cdecl sub_80A2BC8(float *a1);
 int __cdecl vectoangles(float *a1, int a2);
@@ -1784,7 +1784,7 @@ int __cdecl sub_80A442E(_DWORD *a1, _DWORD *a2);
 float *__cdecl MatrixInverse(float *a1, float *a2);
 float *__cdecl sub_80A47DE(int a1, int a2);
 float *__cdecl MatrixTransformVector(float *a1, float *a2, float *a3);
-float *__cdecl sub_80A5028(float *a1, float *a2, float *a3);
+float *__cdecl MatrixTransposeTransformVector(float *a1, float *a2, float *a3);
 float *__cdecl MatrixTransformVector43(float *a1, float *a2, float *a3);
 float *__cdecl sub_80A5194(float *a1, float *a2, float *a3);
 int __cdecl sub_80A530C(float *a1, float a2);
@@ -1803,7 +1803,7 @@ int __cdecl sub_80A59B0(int *a1, float a2);
 int __cdecl sub_80A5A48(int *a1, float a2);
 int __cdecl sub_80A5AE0(float *s, float a2, float a3, int a4);
 int __cdecl sub_80A5B9C(float *s, float a2, float a3, float a4);
-long double __cdecl sub_80A5F4C(float a1);
+long double __cdecl AngleMod(float a1);
 long double __cdecl sub_80A6000(float a1, float a2);
 float *__cdecl sub_80A6062(float *a1, float *a2, float *a3);
 long double __cdecl sub_80A60CE(float a1);
@@ -1822,13 +1822,13 @@ int __cdecl sub_80A6FE6(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_80A70C0(float *a1, float a2, float a3, float a4, float *a5);
 float *__cdecl AnglesToAxis(float *a1, int a2);
 float *__cdecl sub_80A718E(float a1, int a2);
-int __cdecl sub_80A71F4(int a1, int a2);
+int __cdecl AxisToAngles(int a1, int a2);
 int __cdecl sub_80A7338(int a1, int a2);
 int __cdecl sub_80A7CE6(float *a1, float *a2, float *a3, float *a4);
 float *__cdecl sub_80A7D80(float *a1, float *a2, float *a3);
 int __cdecl BoxOnPlaneSide(float *a1, float *a2, int a3);
 int __cdecl sub_80A81F8(float *a1, float a2, float *a3, float a4, float a5, float a6, float a7);
-_BOOL4 __cdecl sub_80A831C(float *a1, float *a2, float *a3, float a4);
+_BOOL4 __cdecl BoxDistSqrdExceeds(float *a1, float *a2, float *a3, float a4);
 int __cdecl sub_80A84C6(_DWORD *a1, int a2, _DWORD *a3);
 float *__cdecl sub_80A8610(float *a1, int a2, float *a3, float *a4);
 float *__cdecl sub_80A8664(float *a1, float a2, float a3);
@@ -2212,10 +2212,10 @@ char *__cdecl sub_80B5E72(char *s, char *s1);
 _BOOL4 __cdecl Info_Validate(char *s);
 void __cdecl Info_SetValueForKey(char *s, char *s1, int a3);
 void __cdecl Info_SetValueForKey_Big(char *s, char *s1, int a3);
-_BOOL4 __cdecl sub_80B645E(int a1, int a2, int a3, char *s, int a5, int (__cdecl *a6)(int, char *, _DWORD), void (__cdecl *a7)(int, char *));
-long double __cdecl sub_80B6688(float a1);
+_BOOL4 __cdecl ParseConfigStringToStruct(int a1, int a2, int a3, char *s, int a5, int (__cdecl *a6)(int, char *, _DWORD), void (__cdecl *a7)(int, char *));
+long double __cdecl GetLeanFraction(float a1);
 long double __cdecl sub_80B66A6(float a1);
-void __cdecl sub_80B66C0(float *a1, int a2, float a3, float a4, float a5);
+void __cdecl AddLeanToPosition(float *a1, int a2, float a3, float a4, float a5);
 float *__cdecl sub_80B6758(float *a1, float *a2, float *a3);
 float *__cdecl sub_80B6806(float *a1, float *a2, float *a3);
 float *__cdecl sub_80B68EE(float *a1, float *a2, float *a3);
@@ -2235,7 +2235,7 @@ void DObjAbort();
 void __cdecl DObjDumpInfo(int a1);
 int __cdecl DObjGetBoneIndexInternal(int a1, int a2);
 int __cdecl DObjCreateDuplicateParts(int a1);
-int __cdecl sub_80B73C0(int a1, int a2, int a3);
+int __cdecl DObjGetHierarchyBits(int a1, int a2, int a3);
 int *__cdecl sub_80B75A8(int a1, int a2);
 int __cdecl sub_80B7796(int a1, int a2);
 int __cdecl DObjSkelAreBonesUpToDate(int a1, int a2);
@@ -2252,7 +2252,7 @@ int __cdecl sub_80B840A(int a1);
 int *__cdecl DObjCreateSkel(int a1, int a2, int *a3);
 int __cdecl sub_80B8490(int a1, int a2);
 int __cdecl DObjGetBounds(int a1, _DWORD *a2, _DWORD *a3);
-int __cdecl sub_80B84D2(int a1);
+int __cdecl DObjGetRotTransArray(int a1);
 int __cdecl sub_80B858C(int a1, int a2, int a3);
 int __cdecl sub_80B8616(int a1, int a2, int a3);
 const char *__cdecl sub_80B8768(int a1, int a2, int a3, int a4);
@@ -2261,13 +2261,13 @@ int __cdecl DObjGetBoneIndex(int a1, int a2);
 int __cdecl DObjInfoGetBoneName(int a1, int a2);
 int __cdecl DObjGetTree(int a1);
 int __cdecl sub_80B8BC0(int a1);
-int __cdecl sub_80B8C0C(int a1);
+int __cdecl DObjNumBones(int a1);
 float *__cdecl sub_80B8C18(float *a1, float *a2, float *a3);
 void __cdecl sub_80B8CA6(int a1, float *a2, float *a3, int a4, int a5);
 int __cdecl sub_80B955A(int a1, float *a2, float *a3, int a4, int a5);
 int __cdecl sub_80B9676(int, int, float); // idb
 long double __cdecl sub_80B9698(int a1);
-int __cdecl sub_80B96F8(int a1, int a2);
+int __cdecl DObjHasContents(int a1, int a2);
 float *__cdecl sub_80B9748(int a1, _DWORD *a2, float *a3, int a4);
 int __cdecl sub_80B98CC(int a1, int a2, int a3, float *a4);
 int __cdecl sub_80B994A(int a1, int a2, int a3, _DWORD *a4, float *a5);
@@ -2307,14 +2307,14 @@ int __cdecl XAnimFreeList(int a1);
 int __cdecl sub_80BA7BC(int a1);
 _DWORD *__cdecl sub_80BA7E4(int a1, int (__cdecl *a2)(int));
 int __cdecl sub_80BA836(_DWORD *a1, int (__cdecl *a2)(_DWORD *, int));
-int __cdecl sub_80BA87C(int a1);
+int __cdecl XAnimGetAnims(int a1);
 int __cdecl XAnimSetModel(int a1, int a2, int a3);
 __int16 __cdecl sub_80BAACE(float a1, int a2, int a3);
 __int16 *__cdecl sub_80BAB16(unsigned __int16 *a1, float a2, float *a3);
 __int16 *__cdecl sub_80BAB6C(unsigned __int16 *a1, float a2, float *a3);
 float *__cdecl sub_80BABCE(unsigned __int16 *a1, float a2, float *a3);
 int __cdecl sub_80BAC36(int, int, float, int, int); // idb
-int __cdecl XanimClearInfo(int a1, _DWORD *a2, int a3);
+int __cdecl XanimCalcClearInfo(int a1, _DWORD *a2, int a3);
 __int16 *__cdecl sub_80BADE6(unsigned __int16 *a1, float *a2);
 int __cdecl sub_80BAE2E(int a1, int a2);
 int __cdecl sub_80BAE6E(unsigned __int16 *a1, _DWORD *a2);
@@ -2331,83 +2331,83 @@ __int16 *__cdecl sub_80BB49E(__int16 *a1, float a2, int a3, float *a4);
 int __cdecl sub_80BB542(int a1, float a2, int a3, int a4);
 float *__cdecl sub_80BB590(unsigned __int16 *a1, float a2, int a3, float *a4);
 float *__cdecl sub_80BB642(unsigned __int16 **a1, float a2, int a3, float *a4);
-float *__cdecl sub_80BB682(unsigned __int16 *a1, float a2, int a3, float *a4);
+float *__cdecl XAnim_CalcDelta3DForTime(unsigned __int16 *a1, float a2, int a3, float *a4);
 void __cdecl sub_80BB77C(float *a1, float *a2);
 float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, float *a5, int a6);
 float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, float *a4);
 int __cdecl XAnimFreeNotifyStrings(int a1);
-int __cdecl sub_80BBA62(int a1, int a2);
+int __cdecl XAnimFreeInfo(int a1, int a2);
 long double __cdecl XAnimGetAverageRateFrequency(_DWORD *a1, int a2);
 int __cdecl sub_80BBC06(int, float); // idb
 long double __cdecl sub_80BBC94(int a1, int a2, float a3, float a4);
 long double __cdecl XAnimGetNotifyFracServer(int a1, float *a2, int a3, int a4, int a5, float a6);
 int __cdecl sub_80BBED6(int, int, float, int); // idb
-void __cdecl sub_80BBF7C(int a1, int a2, float a3);
-void __cdecl sub_80BC382(_DWORD *a1, int a2, unsigned __int8 a3, int a4, float a5);
+void __cdecl XAnimProcessClientNotify(int a1, int a2, float a3);
+void __cdecl XAnimUpdateInfoSyncInternal(_DWORD *a1, int a2, unsigned __int8 a3, int a4, float a5);
 void __cdecl XAnimUpdateInfoInternal(_DWORD *a1, int a2, float a3, unsigned __int8 a4);
 _WORD *__cdecl sub_80BC8C8(_WORD *a1);
 int __cdecl sub_80BC912(int a1, int a2);
-int __cdecl sub_80BCA42(int a1);
-int __cdecl sub_80BCAB4(_DWORD *a1, int a2);
-int __cdecl sub_80BCB3A(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6, _BYTE *a7);
-int __cdecl sub_80BCE1C(int a1, int a2, int a3);
+int __cdecl XAnimNeedClearState(int a1);
+int __cdecl XAnimResetTime(_DWORD *a1, int a2);
+int __cdecl XAnimUpdateOldTime(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6, _BYTE *a7);
+int __cdecl XAnimAddServerNotifyNamed(int a1, int a2, int a3);
 long double __cdecl XAnimGetServerNotifyFracSyncTotal(_DWORD *a1, float *a2, unsigned __int16 *a3, int a4, int a5, float a6);
 long double __cdecl XAnimFindServerNoteTrack(_DWORD *a1, int a2, float a3);
-void __cdecl sub_80BD2FC(int a1, float *a2, int a3, float a4);
+void __cdecl XAnimProcessServerNotify(int a1, float *a2, int a3, float a4);
 void __cdecl XAnimCalc(int a1, int a2, float a3, int a4, unsigned __int8 a5, unsigned __int8 a6, int a7, int a8);
 void __cdecl XAnimDisplay(int *a1, int a2, int a3);
-void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned __int8 a5, _DWORD *a6);
-long double __cdecl sub_80BE760(int a1, int a2);
-int __cdecl sub_80BE794(int a1, int a2);
-long double __cdecl sub_80BE7D2(int a1, int a2);
-long double __cdecl sub_80BE816(int a1, int a2);
-int __cdecl sub_80BE8E4(int a1, int a2);
-int __cdecl sub_80BE8F4(int a1, int a2, int a3);
-void *__cdecl sub_80BE908(int a1, int a2);
+void __cdecl XAnimCalcDeltaTree(int a1, int a2, float a3, unsigned __int8 a4, unsigned __int8 a5, _DWORD *a6);
+long double __cdecl XAnimGetLength(int a1, int a2);
+int __cdecl XAnimGetLengthMsec(int a1, int a2);
+long double __cdecl XAnimGetTime(int a1, int a2);
+long double __cdecl XAnimGetWeight(int a1, int a2);
+int __cdecl XAnimGetNumChildren(int a1, int a2);
+int __cdecl XAnimGetChildAt(int a1, int a2, int a3);
+void *__cdecl XAnimGetAnimName(int a1, int a2);
 int __cdecl sub_80BE940(int a1);
 char *__cdecl XAnimGetAnimDebugName(int a1, int a2);
-int __cdecl sub_80BEA0E(int a1);
-int __cdecl sub_80BEA18(int a1);
+int __cdecl XAnimGetAnimTreeDebugName(int a1);
+int __cdecl XAnimGetAnimTreeSize(int a1);
 int *__cdecl sub_80BEA24(int *a1, int *a2, float a3);
-_DWORD **__cdecl sub_80BEA94(_DWORD **a1, float a2);
+_DWORD **__cdecl DObjInitServerTime(_DWORD **a1, float a2);
 void __cdecl sub_80BEAEE(_DWORD **a1, float a2);
 int __cdecl DObjUpdateServerInfo(_DWORD **a1, float a2, int a3);
 int __cdecl DObjCalcAnim(int a1, int a2);
 void __cdecl DObjDisplayAnim(int **a1);
 int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5);
-int __cdecl sub_80BEFE2(int a1, int a2, _DWORD *a3, _DWORD *a4);
+int __cdecl XAnimCalcAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4);
 int __cdecl XAnimGetRelDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5, float a6);
 int __cdecl XAnimGetAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5);
-int __cdecl sub_80BF2AE(int a1, int a2);
-int __cdecl sub_80BF346(int a1, int a2, float a3);
-int __cdecl sub_80BF3FE(_DWORD *a1, int a2, float a3);
-int __cdecl sub_80BF482(_DWORD *a1, int a2, float a3);
-int __cdecl sub_80BF4DC(_DWORD *a1, int a2, float a3, float a4);
+int __cdecl XAnimGetInfo(int a1, int a2);
+int __cdecl XAnimClearGoalWeight(int a1, int a2, float a3);
+int __cdecl XAnimClearTreeGoalWeights(_DWORD *a1, int a2, float a3);
+int __cdecl XAnimClearTreeGoalWeightsStrict(_DWORD *a1, int a2, float a3);
+int __cdecl XAnimClearGoalWeightKnobInternal(_DWORD *a1, int a2, float a3, float a4);
 void __cdecl sub_80BF62C(_DWORD *a1, int a2, float a3, float a4, int a5, int a6, int a7);
-int __cdecl sub_80BF6AC(_DWORD *a1, int a2, int a3, float a4, float a5, int a6, int a7, int a8);
+int __cdecl XAnimSetCompleteGoalWeightKnobAll(_DWORD *a1, int a2, int a3, float a4, float a5, int a6, int a7, int a8);
 int __cdecl sub_80BF81E(_DWORD *a1, int a2, float a3, float a4, int a5, int a6, int a7);
 int __cdecl sub_80BF89E(_DWORD *a1, int a2, float a3);
 int __cdecl XAnimClearTreeWeights(_DWORD *a1, int a2);
 int __cdecl sub_80BF980(int a1);
 int __cdecl XAnimClearTree(_DWORD *a1);
-int __cdecl sub_80BFA44(_DWORD *a1, int a2);
-int __cdecl sub_80BFB06(_DWORD *a1, int a2, float a3, float a4, int a5, char a6, int a7, __int16 a8);
-int __cdecl sub_80BFD38(int a1, int a2, int a3);
-void *__cdecl sub_80BFD6A(size_t n);
-int __cdecl sub_80BFD86(_DWORD *a1, int a2, unsigned __int8 a3);
-int __cdecl sub_80BFF8E(_DWORD *a1, int a2);
-int __cdecl sub_80C006C(_DWORD *a1);
+int __cdecl XAnimGetDescendantWithGreatestWeight(_DWORD *a1, int a2);
+int __cdecl XAnimSetGoalWeightInternal(_DWORD *a1, int a2, float a3, float a4, int a5, char a6, int a7, __int16 a8);
+int __cdecl XAnimSetAnimRate(int a1, int a2, int a3);
+void *__cdecl Hunk_AllocXAnimPrecache(size_t n);
+int __cdecl XAnimFillInSyncNodes_r(_DWORD *a1, int a2, unsigned __int8 a3);
+int __cdecl XAnimSetupSyncNodes_r(_DWORD *a1, int a2);
+int __cdecl XAnimSetupSyncNodes(_DWORD *a1);
 int __cdecl sub_80C0088(int a1, int a2);
-_BOOL4 __cdecl sub_80C00CA(int a1, int a2);
-char *__cdecl sub_80C00E2(int a1, int a2, int a3);
+_BOOL4 __cdecl XAnimIsPrimitive(int a1, int a2);
+char *__cdecl XAnimSetTime(int a1, int a2, int a3);
 void __cdecl sub_80C0164(_DWORD *a1, float *a2, _WORD *a3);
-int __cdecl sub_80C01C8(_DWORD *a1, int a2);
+int __cdecl XAnimRestart(_DWORD *a1, int a2);
 int __cdecl sub_80C02D8(_DWORD *a1, int a2, int a3);
-int __cdecl sub_80C0354(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8);
-int __cdecl sub_80C03EA(int a1, int a2, int a3);
-int __cdecl sub_80C040C(int a1, int a2);
-int __cdecl sub_80C044E(int a1, int a2, int a3);
-void __cdecl sub_80C04C6(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8);
+int __cdecl XAnimSetGoalWeight(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8);
+int __cdecl BG_SetAnimRate(int a1, int a2, int a3);
+int __cdecl XAnimIsLooped(int a1, int a2);
+int __cdecl XAnimNotetrackExists(int a1, int a2, int a3);
+void __cdecl XAnimSetCompleteGoalWeight(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8);
 int __cdecl XAnimCloneInfo(_DWORD *a1, _DWORD *a2);
 int __cdecl XAnimCloneAnimTree(int a1, int a2);
 int __cdecl sub_80C072E(_DWORD *a1, int a2);
@@ -2476,7 +2476,7 @@ int __cdecl XModelBoneNames(int a1);
 int __cdecl XModelGetBoneIndex(__int16 **a1, int a2);
 int __cdecl XModelGetBounds(int a1, _DWORD *a2, _DWORD *a3);
 int __cdecl XModelGetContents(int a1);
-int __cdecl sub_80C33FE(int a1, int a2, int a3, float *a4, float *a5, int a6);
+int __cdecl XModelTraceLine(int a1, int a2, int a3, float *a4, float *a5, int a6);
 int __cdecl Com_ValidXModelName(char *s1); // idb
 void __cdecl sub_80C3888(float, float);
 int __cdecl sub_80C38AC(_DWORD *a1, _DWORD *a2);
@@ -2512,7 +2512,7 @@ const char *__cdecl XModelGetSurfaceName(int a1, int a2, int a3);
 int __cdecl sub_80C5482(int a1, _DWORD *a2, int a3, _DWORD *a4);
 int __cdecl sub_80C54C2(int a1);
 int __cdecl XModelNumBones(__int16 **a1);
-int __cdecl sub_80C54DC(_DWORD *a1);
+int __cdecl XModelGetBasePose(_DWORD *a1);
 long double __cdecl sub_80C5506(int a1);
 int __cdecl sub_80C5556(int, float); // idb
 int __cdecl sub_80C5628(int a1, unsigned __int8 *a2, unsigned int a3);
@@ -2677,47 +2677,47 @@ void __noreturn BG_AnimParseError(char *format, ...);
 int __cdecl BG_AnimationIndexForString(char *src); // idb
 int __cdecl BG_AnimationForString(char *a1);
 int __cdecl BG_IndexForString(char *a1, int *a2, int a3);
-char *__cdecl sub_80D4970(char *s, int a2, unsigned int a3, _DWORD *a4);
-int __cdecl sub_80D49D8(int a1, int a2);
-int sub_80D4A08();
+char *__cdecl BG_CopyStringIntoBuffer(char *s, int a2, unsigned int a3, _DWORD *a4);
+int __cdecl BG_InitWeaponString(int a1, int a2);
+int BG_InitWeaponStrings();
 unsigned __int16 *__cdecl BG_GetAnim(unsigned int a1);
-void *__cdecl sub_80D4ABE(int a1);
-void *sub_80D4BC2();
-void *__cdecl sub_80D4ED4(char **a1, int *a2, int a3, _DWORD *s);
+void *__cdecl BG_SetupAnimNoteTypes(int a1);
+void *BG_FinalizePlayerAnims();
+void *__cdecl BG_ParseConditionBits(char **a1, int *a2, int a3, _DWORD *s);
 int __cdecl BG_ParseConditions(char **a1, _DWORD *a2);
 size_t __cdecl BG_ParseCommands(char **a1, _DWORD *a2, int a3);
 _DWORD *__cdecl BG_AnimParseAnimScript(int a1, int a2, int a3);
-int __cdecl sub_80D688A(int a1, _DWORD *a2);
-_DWORD *__cdecl sub_80D6944(int a1, _DWORD *a2);
-int __cdecl sub_80D69B2(_DWORD *a1, int a2, int a3, int a4, int a5, int a6, int a7);
+int __cdecl BG_EvaluateConditions(int a1, _DWORD *a2);
+_DWORD *__cdecl BG_FirstValidItem(int a1, _DWORD *a2);
+int __cdecl BG_PlayAnim(_DWORD *a1, int a2, int a3, int a4, int a5, int a6, int a7);
 int __cdecl sub_80D6B7C(_DWORD *a1, char *src, int a3, int a4, int a5, int a6);
-int __cdecl sub_80D6BC4(_DWORD *a1, __int16 *a2, int a3, int a4, int a5);
+int __cdecl BG_ExecuteCommand(_DWORD *a1, __int16 *a2, int a3, int a4, int a5);
 int __cdecl BG_AnimScriptAnimation(_DWORD *a1, int a2, int a3, int a4);
-int __cdecl sub_80D6EDC(_DWORD *a1, int a2, int a3);
+int __cdecl BG_AnimScriptCannedAnimation(_DWORD *a1, int a2, int a3);
 int __cdecl BG_AnimScriptEvent(_DWORD *a1, int a2, int a3, int a4);
-int __cdecl sub_80D70AA(int a1, unsigned int a2);
+int __cdecl BG_GetAnimString(int a1, unsigned int a2);
 int __cdecl BG_UpdateConditionValue(int a1, int a2, int a3, int a4);
-unsigned int __cdecl sub_80D7180(int a1, int a2, int a3);
-int __cdecl sub_80D72B8(int a1, unsigned int a2);
+unsigned int __cdecl BG_GetConditionValue(int a1, int a2, int a3);
+int __cdecl BG_GetAnimationForIndex(int a1, unsigned int a2);
 int __cdecl BG_AnimUpdatePlayerStateConditions(int *a1);
 _BOOL4 __cdecl sub_80D74DE(int a1, int a2);
 _BOOL4 __cdecl sub_80D7534(int a1, int a2);
 _BOOL4 __cdecl sub_80D7588(int a1, int a2);
-void __cdecl sub_80D75DC(int *a1, int *a2, int a3, int a4);
-int __cdecl sub_80D7D06(int *a1, int a2, int a3, int a4);
-void __cdecl sub_80D8052(int a1, _DWORD *a2);
-void __cdecl sub_80D80B8(float a1, float a2, float a3, float a4, float *a5, _DWORD *a6);
-void __cdecl sub_80D82A4(int a1, int a2);
-int __cdecl sub_80D8882(_DWORD *a1, int a2);
+void __cdecl BG_SetNewAnimation(int *a1, int *a2, int a3, int a4);
+int __cdecl BG_RunLerpFrameRate(int *a1, int a2, int a3, int a4);
+void __cdecl BG_PlayerAnimation_VerifyAnim(int a1, _DWORD *a2);
+void __cdecl BG_SwingAngles(float a1, float a2, float a3, float a4, float *a5, _DWORD *a6);
+void __cdecl BG_PlayerAngles(int a1, int a2);
+int __cdecl BG_AnimPlayerConditions(_DWORD *a1, int a2);
 void *__cdecl sub_80D8C3E(int a1, int a2, int a3, int a4, void *s);
 int *__cdecl sub_80D93D8(int a1, float a2, int a3);
 void __cdecl sub_80D94B8(float *a1, float a2, float *a3);
 int __cdecl sub_80D954C(int a1, int a2, int a3, int a4, int a5);
-int __cdecl sub_80D9698(int a1, _DWORD *a2, int *a3);
-int __cdecl sub_80D978C(int a1, _DWORD *a2, int a3, int a4);
+int __cdecl BG_PlayerAnimation(int a1, _DWORD *a2, int *a3);
+int __cdecl BG_UpdatePlayerDObj(int a1, _DWORD *a2, int a3, int a4);
 int BG_FindAnims();
-// _DWORD *__userpurge sub_80D9A8A@<eax>(_DWORD *a1, char *a2, int a3);
-int sub_80D9ADE();
+// _DWORD *__userpurge BG_FindAnimTree@<eax>(_DWORD *a1, char *a2, int a3);
+int BG_FindAnimTrees();
 int BG_LoadAnim();
 long double __cdecl sub_80D9C30(float a1);
 long double __cdecl sub_80D9C4A(int a1);
@@ -2763,7 +2763,7 @@ int __cdecl sub_80DAAF2(int a1, int a2, float *a3);
 int __cdecl sub_80DAC38(float, float); // idb
 int __cdecl sub_80DACB8(int **a1, int a2);
 int __cdecl sub_80DAE2E(int a1, int a2, int a3);
-int __cdecl sub_80DAF36(int *a1, int a2, int a3, float a4);
+int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4);
 void __cdecl Mantle_CreateAnims(int (__cdecl *a1)(int));
 void sub_80DB6CA();
 int __cdecl sub_80DB6DA(int *a1, _DWORD *a2, float *s, unsigned int *a4);
@@ -2785,7 +2785,7 @@ long double __cdecl sub_80DC0D6(float *a1, float *a2);
 int __cdecl BG_FindItemForWeapon(int a1);
 char *__cdecl sub_80DCB02(char *s1);
 _BOOL4 __cdecl sub_80DCBB6(float *a1, int a2, int a3);
-_BOOL4 __cdecl sub_80DCC7A(_DWORD *a1, _DWORD *a2, int a3);
+_BOOL4 __cdecl BG_CanItemBeGrabbed(_DWORD *a1, _DWORD *a2, int a3);
 float *__cdecl BG_EvaluateTrajectory(int a1, int a2, int a3);
 float *__cdecl sub_80DD224(float *a1, int a2, int a3);
 // int __usercall sub_80DD452@<eax>(long double a1@<st0>, _DWORD *a2, float *a3, _DWORD *a4);
@@ -2836,7 +2836,7 @@ void __cdecl sub_80E09A0(int a1, int a2);
 int __cdecl sub_80E0DA2(int *a1, _DWORD *a2, unsigned __int16 *s);
 _DWORD *__cdecl sub_80E0F86(int a1, _DWORD *a2);
 _DWORD *__cdecl sub_80E117E(int *a1, int a2);
-int __cdecl sub_80E1522(int a1, int a2, int a3);
+int __cdecl PM_GetViewHeightLerpTime(int a1, int a2, int a3);
 long double __cdecl sub_80E1562(int a1, int a2, float *a3);
 long double __cdecl sub_80E168A(_DWORD *a1, int a2, int a3);
 void __cdecl sub_80E178C(int *a1, int a2);
@@ -2844,7 +2844,7 @@ void __cdecl sub_80E1F20(int a1, int a2);
 char __cdecl sub_80E2CDE(int *a1, int a2, char a3, char a4, int a5);
 _BOOL4 __cdecl sub_80E2EA6(int *a1);
 int __cdecl sub_80E2F4E(float); // idb
-void __cdecl sub_80E3008(int a1, int a2);
+void __cdecl PM_Footsteps(int a1, int a2);
 void __cdecl sub_80E4060(int a1);
 _DWORD *__cdecl sub_80E4212(_DWORD *a1, int a2);
 void __cdecl sub_80E42D0(int a1, float a2, int a3, void (__cdecl *a4)(float *, _DWORD *, _DWORD *, _DWORD *, int *, _DWORD, int));
@@ -2926,7 +2926,7 @@ int __cdecl sub_80E936C(int a1);
 int __cdecl sub_80E93C4(char *a1);
 int __cdecl sub_80E9430(char *a1);
 int __cdecl BG_FindWeaponIndexForName(char *a1);
-int __cdecl sub_80E94F0(char *s1, void (__cdecl *a2)(int));
+int __cdecl BG_GetWeaponIndexForName(char *s1, void (__cdecl *a2)(int));
 int __cdecl sub_80E958C(char *s1); // idb
 int sub_80E95A8();
 int __cdecl sub_80E95EE(_DWORD *a1);
@@ -2958,8 +2958,8 @@ void __cdecl sub_80EA950(int *a1, int a2);
 int __cdecl sub_80EABAA(_DWORD *a1);
 int __cdecl sub_80EAC7A(int a1);
 int __cdecl sub_80EAC94(int a1);
-int __cdecl sub_80EACAE(int a1);
-int __cdecl sub_80EACC8(int a1, int a2);
+int __cdecl BG_WeaponIsClipOnly(int a1);
+int __cdecl BG_WeaponAmmo(int a1, int a2);
 int __cdecl sub_80EAD0C(int a1);
 int __cdecl sub_80EAE8C(int a1, int a2, int a3);
 int __cdecl sub_80EAEC8(int a1);
@@ -3049,14 +3049,14 @@ int __cdecl sub_80F03E0(int a1, int a2, int a3);
 int __cdecl sub_80F0400(int a1, int a2);
 int __cdecl sub_80F0450(char *s1); // idb
 char *__cdecl sub_80F049E(int a1);
-int sub_80F04AE();
+int BG_LoadWeaponStrings();
 _DWORD *BG_LoadPlayerAnimTypes();
 int __cdecl sub_80F065E(char *s1, int, int); // idb
-int __cdecl sub_80F06B4(_DWORD *a1, char *s1, int a3);
+int __cdecl BG_ParseWeaponDefSpecificFieldType(_DWORD *a1, char *s1, int a3);
 int __cdecl sub_80F09D6(int *a1);
 void __cdecl sub_80F0A52(int a1);
 void __cdecl sub_80F0AA6(int a1);
-char *__cdecl sub_80F0B8E(char **a1, char *s);
+char *__cdecl SetConfigString2(char **a1, char *s);
 char *__cdecl sub_80F0BE2(char **a1, char *s);
 char ***__cdecl sub_80F0BFC(char ***a1);
 int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2);
@@ -3078,7 +3078,7 @@ char *__cdecl vtos(float *a1);
 int __cdecl sub_80F1C24(char *a1, char *src, int a3, int *a4);
 int __cdecl G_ParseWeaponAccurayGraphs(int a1, const char *a2, const char *a3, int a4, int *a5);
 int __cdecl sub_80F1F7E(int a1);
-int __cdecl sub_80F20C8(int a1);
+int __cdecl P_DamageFeedback(int a1);
 int __cdecl sub_80F2350(int a1);
 int __cdecl sub_80F2362(int a1, int a2);
 int __cdecl sub_80F24C6(int a1);
@@ -3097,9 +3097,9 @@ int __cdecl ClientIntermission(int a1);
 _DWORD *__cdecl SpectatorClientEndFrame(int a1);
 int __cdecl CanSpectateTeam(int a1, char a2);
 int __cdecl sub_80F4696(int a1, _DWORD *a2);
-int __cdecl sub_80F474A(int a1);
-int __cdecl sub_80F4B46(int *a1, int a2);
-int __cdecl sub_80F4BA4(int a1);
+int __cdecl StuckInClient(int a1);
+int __cdecl G_PlayerController(int *a1, int a2);
+int __cdecl G_UpdateClientInfo(int a1);
 // int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2);
 float *__cdecl sub_80F53E0(int a1, int a2);
 float *__cdecl sub_80F543C(float *a1, float *a2, float *a3);
@@ -3136,7 +3136,7 @@ int __cdecl Scr_SetClientField(int a1, int a2);
 int __cdecl Scr_GetClientField(int a1, int a2);
 // int __usercall SetClientViewAngle@<eax>(long double a1@<st0>, int a2, _DWORD *a3);
 void __cdecl G_GetPlayerViewOrigin(int a1, float *a2);
-void __cdecl sub_80F63A0(int a1, int a2, float *a3, float *a4);
+void __cdecl G_GetPlayerViewDirection(int a1, int a2, float *a3, float *a4);
 char *__cdecl ClientCleanName(char *a1, char *a2, int a3);
 int __cdecl ClientUserinfoChanged(int a1);
 // const char *__usercall ClientConnect@<eax>(long double a1@<st0>, int a2, __int16 a3);
@@ -3253,10 +3253,10 @@ char *__cdecl sub_80FEEC0(char *dest, char *src);
 _BOOL4 G_ParseHitLocDmgTable();
 __int16 __cdecl sub_80FF17A(int a1, int a2, int a3);
 int __cdecl G_IndexForMeansOfDeath(char *a1);
-int __cdecl sub_80FF2CA(int a1, int *a2, int *a3, int a4, unsigned int a5, int a6, _DWORD *a7, int a8, int a9);
-long double __cdecl sub_80FF652(int a1, int a2);
-__int16 __cdecl sub_80FF6B0(int a1, int *a2, int *a3, _DWORD *a4, _DWORD *a5, int a6, int a7, unsigned int a8, int a9, int a10);
-__int16 __cdecl sub_80FF7C8(int *a1, int *a2, int *a3, float *a4, _DWORD *a5, int a6, int a7, unsigned int a8, int a9, int a10);
+int __cdecl player_die(int a1, int *a2, int *a3, int a4, unsigned int a5, int a6, _DWORD *a7, int a8, int a9);
+long double __cdecl G_GetWeaponHitLocationMultiplier(int a1, int a2);
+__int16 __cdecl G_DamageClient(int a1, int *a2, int *a3, _DWORD *a4, _DWORD *a5, int a6, int a7, unsigned int a8, int a9, int a10);
+__int16 __cdecl G_Damage(int *a1, int *a2, int *a3, float *a4, _DWORD *a5, int a6, int a7, unsigned int a8, int a9, int a10);
 long double __cdecl sub_80FFA56(int a1, float *a2);
 int __cdecl G_RadiusDamage(float *a1, int *a2, int *a3, float a4, float a5, float a6, int *a7, int a8);
 int __cdecl G_GetHitLocationString(int a1);
@@ -3345,8 +3345,8 @@ int __cdecl sub_8102704(int a1, int a2, int a3, int a4);
 int __cdecl sub_81029D4(int a1, int *a2);
 int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4);
 int __cdecl sub_8103530(int a1, int *a2);
-// int __usercall sub_81037F0@<eax>(long double a1@<st0>, int a2, int *a3, int a4);
-// int __usercall sub_810381C@<eax>(long double a1@<st0>, unsigned __int16 *s, int *a3, int a4);
+// int __usercall Touch_Item_Auto@<eax>(long double a1@<st0>, int a2, int *a3, int a4);
+// int __usercall Touch_Item@<eax>(long double a1@<st0>, unsigned __int16 *s, int *a3, int a4);
 // int __usercall sub_8103B6A@<eax>(long double a1@<st0>);
 int __cdecl sub_8103CB2(char **a1, _WORD *a2);
 // int __usercall sub_8103D3C@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4, int a5);
@@ -3382,11 +3382,11 @@ int __cdecl sub_8105FEA(int a1);
 // char *__usercall G_RegisterDvars@<eax>(long double a1@<st0>);
 int G_GetSavePersist();
 int __cdecl sub_8106968(int a1);
-long double sub_8106976();
+long double G_GetFogOpaqueDistSqrd();
 int __cdecl sub_810698A(int a1);
 int __cdecl G_GetClientArchiveTime(int a1);
 int __cdecl G_SetClientArchiveTime(int a1, int a2);
-int __cdecl sub_81069E2(int a1);
+int __cdecl G_GetClientState(int a1);
 // int __usercall sub_81069FC@<eax>(long double a1@<st0>);
 int __cdecl G_CreateDObj(__int16 ***a1, unsigned __int16 a2, int a3, int a4);
 int *sub_8106AAC();
@@ -3424,21 +3424,21 @@ int *G_InitTurrets();
 float *__cdecl sub_81083E8(int a1, int a2, int a3);
 int __cdecl sub_81084EA(int a1, int *a2);
 void __cdecl sub_81085B8(int a1, int a2);
-int __cdecl sub_8109236(int a1, int a2);
+int __cdecl turret_clientaim(int a1, int a2);
 int *__cdecl sub_8109348(int a1, int *a2);
-int __cdecl sub_81093B8(_DWORD *a1, int *a2);
+int __cdecl turret_track(_DWORD *a1, int *a2);
 int __cdecl sub_810948E(_DWORD *a1);
 unsigned int __cdecl G_ClientStopUsingTurret(int a1);
-int __cdecl sub_8109672(_DWORD *a1);
+int __cdecl turret_think_client(_DWORD *a1);
 int __cdecl sub_81096DE(int a1, int a2, int a3);
 int __cdecl sub_8109984(int a1, int a2);
-char *__cdecl sub_81099D6(_DWORD *a1);
-int __cdecl sub_8109A68(int a1);
-int __cdecl sub_8109C76(int *a1, int a2);
+char *__cdecl turret_think(_DWORD *a1);
+int __cdecl turret_think_init(int a1);
+int __cdecl turret_controller(int *a1, int a2);
 _BOOL4 __cdecl turret_behind(int a1, int a2);
 int __cdecl G_FreeTurret(int a1);
 _BOOL4 __cdecl G_IsTurretUsable(int a1, int a2);
-void __cdecl sub_8109F46(int a1, int a2);
+void __cdecl turret_use(int a1, int a2);
 int __cdecl G_SpawnTurret(int a1, char *s1);
 int __cdecl sub_810A7F2(int a1);
 long double __cdecl sub_810A840(float a1);
@@ -3455,7 +3455,7 @@ long double __cdecl sub_810AA52(float a1, float a2, float a3);
 void __cdecl sub_810AAB4(int a1, float *a2, int a3, int a4);
 _BOOL4 __cdecl sub_810AD10(int a1, int a2);
 // int __usercall sub_810B07A@<eax>(long double a1@<st0>, int a2, int a3, int a4, float *a5);
-int __cdecl sub_810B4D8(int a1);
+int __cdecl G_ExplodeMissile(int a1);
 void __cdecl sub_810B894(float *s, float *a2, float *a3, int a4, int a5);
 int __cdecl sub_810B90E(float *s, int a2, int a3, float *a4);
 long double __cdecl sub_810B988(float a1);
@@ -3564,7 +3564,7 @@ void __cdecl ScrCmd_ShowToPlayer(int a1);
 int __cdecl ScrCmd_SetContents(int a1);
 int __cdecl Scr_SetStableMissile(int a1);
 void __cdecl GScr_SetCursorHint(int a1);
-int __cdecl sub_810FFAA(_DWORD *a1, char *s1);
+int __cdecl G_GetHintStringIndex(_DWORD *a1, char *s1);
 int __cdecl GScr_SetHintString(int a1);
 int __cdecl GScr_GetEntityNumber(int a1);
 int __cdecl GScr_EnableGrenadeTouchDamage(int a1);
@@ -3644,7 +3644,7 @@ _DWORD *GScr_GetMoveDelta();
 int GScr_GetAngleDelta();
 int GScr_GetNorthYaw();
 int Scr_LoadFX();
-void __cdecl sub_8112BAC(const char *a1, int a2);
+void __cdecl Scr_FxParamError(const char *a1, int a2);
 // int __usercall Scr_PlayFX@<eax>(long double a1@<st0>);
 int Scr_PlayFXOnTag();
 int Scr_PlayLoopedFX();
@@ -3733,10 +3733,10 @@ long double __cdecl sub_811632E(float *a1);
 void __cdecl sub_8116362(float *);
 long double __cdecl sub_81163A0(float a1);
 int __cdecl sub_81163C0(int a1, int a2, float a3, float a4, float a5, float *a6, float *a7, float *a8);
-int __cdecl sub_81165A0(int a1);
-float *__cdecl sub_81167BA(int a1, float *a2, float a3, float a4, float a5, float *a6, float *a7, float *a8, float *a9, float *a10, float *a11, _DWORD *a12);
+int __cdecl Reached_ScriptMover(int a1);
+float *__cdecl ScriptMover_SetupMove(int a1, float *a2, float a3, float a4, float a5, float *a6, float *a7, float *a8, float *a9, float *a10, float *a11, _DWORD *a12);
 float *__cdecl sub_8116B6E(_DWORD *a1, float *a2, float a3, float a4, float a5, _DWORD *a6, float *a7, float *a8, float *a9, float *a10, float *a11, _DWORD *a12);
-int __cdecl sub_8116F18(int a1, float *a2, float a3, float a4, float a5);
+int __cdecl ScriptMover_Move(int a1, float *a2, float a3, float a4, float a5);
 int __cdecl sub_8116FAA(_DWORD *a1, _DWORD *a2, float a3);
 int __cdecl sub_8117050(int a1, float *a2, float a3, float a4, float a5);
 int __cdecl sub_81170E2(int a1, float *a2, float a3, float a4, float a5);
@@ -3744,7 +3744,7 @@ int __cdecl sub_8117174(int a1);
 int __cdecl sub_8117316(int a1);
 // int __usercall sub_811734C@<eax>(long double a1@<st0>, int a2);
 int __cdecl sub_8117398(int a1);
-void __cdecl sub_81173F6(float *a1, float *a2, float *a3);
+void __cdecl ScriptEntCmdGetCommandTimes(float *a1, float *a2, float *a3);
 int __cdecl ScriptEntCmd_MoveTo(int a1);
 int __cdecl ScriptEntCmd_GravityMove(int a1);
 int __cdecl sub_81176A6(int a1, int a2);
@@ -3820,23 +3820,23 @@ _BOOL4 __cdecl sub_8119C40(int a1, int a2);
 int __cdecl TeamplayInfoMessage(int a1);
 int CheckTeamStatus();
 float *__cdecl sub_8119F76(float *a1, float a2, float *a3, float *a4);
-int __cdecl sub_8119FCC(int *a1, int *a2);
+int __cdecl G_Trigger(int *a1, int *a2);
 int __cdecl sub_811A074(int a1);
 void __cdecl sub_811A0AE(int a1, int a2);
 int __cdecl sub_811A106(int a1);
 int __cdecl sub_811A1B8(int *a1);
-int __cdecl sub_811A1DE(int *a1, int *a2);
+int __cdecl Touch_Multi(int *a1, int *a2);
 int __cdecl sub_811A20A(int a1);
 int __cdecl sub_811A250(int a1);
 int __cdecl sub_811A3F0(int a1);
-int __cdecl sub_811A4FC(int a1, int a2);
+int __cdecl hurt_touch(int a1, int a2);
 int __cdecl SP_trigger_hurt(int a1);
 int __cdecl sub_811A6A6(int a1);
 _BOOL4 __cdecl sub_811A6EE(int a1, int a2);
 int __cdecl sub_811A826(int *a1, int *a2, int a3, int a4);
-int __cdecl sub_811A8D2(int *a1, int *a2);
-int *__cdecl sub_811A902(int *a1, int *a2, int a3, int a4, int a5);
-int *__cdecl sub_811A944(int *a1, int a2, int *a3, int a4, int a5);
+int __cdecl Use_trigger_damage(int *a1, int *a2);
+int *__cdecl Pain_trigger_damage(int *a1, int *a2, int a3, int a4, int a5);
+int *__cdecl Die_trigger_damage(int *a1, int a2, int *a3, int a4, int a5);
 int __cdecl SP_trigger_damage(int a1);
 int __cdecl sub_811AA18(int *a1, _DWORD *a2, float *a3, int a4, int a5);
 int __cdecl sub_811AC06(int *a1, _DWORD *a2, float *a3, int a4, int a5);
@@ -3853,7 +3853,7 @@ const char *__cdecl G_ModelName(int a1);
 int __cdecl G_TagIndex(char *s2); // idb
 int __cdecl G_EffectIndex(char *s2); // idb
 int __cdecl G_ShellShockIndex(char *s2); // idb
-int __cdecl sub_811B1D8(char *s2); // idb
+int __cdecl G_SoundAliasIndex(char *s2); // idb
 // _DWORD *__usercall G_DObjUpdate@<eax>(long double a1@<st0>, int a2);
 int __cdecl G_SetModel(int, char *s2); // idb
 int __cdecl G_OverrideModel(int, char *s1); // idb
@@ -3871,10 +3871,10 @@ float *__cdecl sub_811BC46(int a1, float *a2);
 float *__cdecl sub_811BC88(int a1, int a2);
 void __cdecl sub_811BD52(int a1, int a2);
 int __cdecl sub_811BE86(_DWORD *a1);
-int __cdecl Com_SafeServerDObjFree(int *a1);
+int __cdecl G_SafeDObjFree(int *a1);
 int __cdecl G_DObjUpdateServerTime(int *a1, int a2);
 int *__cdecl G_DObjCalcPose(int a1);
-int *__cdecl sub_811BFC4(int a1, int a2);
+int *__cdecl G_DObjCalcBone(int a1, int a2);
 int __cdecl G_DObjGetLocalTagMatrix(int *a1, int a2);
 int __cdecl sub_811C0B2(int a1, int a2, float *a3);
 int __cdecl G_DObjGetWorldTagPos(int a1, int a2, float *a3);
@@ -3891,13 +3891,13 @@ int __cdecl sub_811C830(_DWORD *a1);
 // int __usercall G_GetFreePlayerCorpseIndex@<eax>(long double a1@<st0>);
 int __cdecl sub_811C996(_DWORD *a1);
 // int __usercall G_FreeEntity@<eax>(long double a1@<st0>, int *s);
-int __cdecl sub_811CB00(int *a1);
+int __cdecl G_FreeEntityDelay(int *a1);
 _DWORD *__cdecl G_TempEntity(_DWORD *a1, int a2);
 int __cdecl sub_811CC24(int a1);
 int __cdecl G_AddPredictableEvent(int a1, int a2, unsigned __int8 a3);
 int __cdecl G_AddEvent(_DWORD *a1, int a2, int a3);
 int __cdecl sub_811CE66(_DWORD *a1, int a2);
-int __cdecl sub_811CE9E(_DWORD *a1, int a2);
+int __cdecl G_PlaySoundAlias(_DWORD *a1, int a2);
 int __cdecl G_AnimScriptSound(int a1, char **a2);
 int __cdecl G_SetOrigin(_DWORD *a1, _DWORD *a2);
 int __cdecl G_SetAngle(_DWORD *a1, _DWORD *a2);
@@ -3949,9 +3949,9 @@ int __cdecl sub_811EFC8(float *a1, float *a2);
 int __cdecl sub_811F004(float *a1, _DWORD *base);
 int __cdecl sub_811F61A(int a1, int a2);
 _BYTE *__cdecl sub_811F6A6(int a1);
-int *__cdecl sub_811F736(int a1);
+int *__cdecl Player_UpdateCursorHints(int a1);
 int __cdecl sub_811FABE(float *s, float *a2, float *a3, int a4, int a5, int a6, float *a7);
-void __cdecl sub_811FB7A(int *a1);
+void __cdecl Player_UpdateLookAtEntity(int *a1);
 long double __cdecl sub_811FEDE(float a1);
 float *__cdecl sub_811FEEA(float *a1, float *a2, float *a3);
 float *__cdecl sub_811FF2E(float *a1, float *a2, float *a3);
@@ -18505,7 +18505,7 @@ int __cdecl CM_LeafCluster(int a1)
 // 8185C08: using guessed type int dword_8185C08;
 
 //----- (08052518) --------------------------------------------------------
-int __cdecl sub_8052518(int a1, _DWORD *a2, _DWORD *a3)
+int __cdecl CM_ModelBounds(int a1, _DWORD *a2, _DWORD *a3)
 {
   _DWORD *v4; // [esp+14h] [ebp-4h]
 
@@ -20262,7 +20262,7 @@ void __cdecl CM_PositionTestCapsuleInTriangle(int a1, float *a2, int a3)
 // 8185C30: using guessed type int dword_8185C30;
 
 //----- (080558EC) --------------------------------------------------------
-void __cdecl sub_80558EC(int a1, int a2, int a3)
+void __cdecl CM_TraceThroughAabbTree_r(int a1, int a2, int a3)
 {
   float *v3; // [esp+18h] [ebp-20h]
   int i; // [esp+1Ch] [ebp-1Ch]
@@ -20282,7 +20282,7 @@ void __cdecl sub_80558EC(int a1, int a2, int a3)
       v10 = dword_8185C50 + 32 * *(_DWORD *)(a2 + 28);
       while ( v11 < *(unsigned __int16 *)(a2 + 26) )
       {
-        sub_80558EC(a1, v10, a3);
+        CM_TraceThroughAabbTree_r(a1, v10, a3);
         ++v11;
         v10 += 32;
       }
@@ -20298,21 +20298,21 @@ void __cdecl sub_80558EC(int a1, int a2, int a3)
         if ( *(_DWORD *)(a1 + 132) )
         {
           for ( i = 0; i < *v8; ++i )
-            sub_8056116((float *)a1, (float *)(*((_DWORD *)v8 + 1) + 72 * i), a3);
+            CM_TracePointThroughTriangle((float *)a1, (float *)(*((_DWORD *)v8 + 1) + 72 * i), a3);
         }
         else
         {
           for ( j = 0; j < *v8; ++j )
           {
             v3 = (float *)(*((_DWORD *)v8 + 1) + 72 * j);
-            sub_805628C(a1, v3, *(float *)(a1 + 144), a3);
+            CM_TraceCapsuleThroughTriangle(a1, v3, *(float *)(a1 + 144), a3);
             if ( v3[2] < 0.0 )
-              sub_805628C(a1, v3, COERCE_FLOAT(*(_DWORD *)(a1 + 144) ^ 0x80000000), a3);
+              CM_TraceCapsuleThroughTriangle(a1, v3, COERCE_FLOAT(*(_DWORD *)(a1 + 144) ^ 0x80000000), a3);
           }
           if ( (*(float *)(a1 + 36) != 0.0 || *(float *)(a1 + 40) != 0.0) && *(float *)(a1 + 144) != 0.0 )
           {
             for ( k = 0; k < v8[1]; ++k )
-              sub_8056E42((float *)a1, *((_DWORD *)v8 + 2) + 28 * k, a3);
+              CM_TraceCapsuleThroughBorder((float *)a1, *((_DWORD *)v8 + 2) + 28 * k, a3);
           }
         }
       }
@@ -20373,7 +20373,7 @@ int __cdecl CM_PositionTestInAabbTree_r(int a1, int a2, int a3)
 // 8185C50: using guessed type int dword_8185C50;
 
 //----- (08055C74) --------------------------------------------------------
-void __cdecl sub_8055C74(int a1, int a2, int a3)
+void __cdecl CM_TraceThroughAabbTree(int a1, int a2, int a3)
 {
   char *v3; // [esp+10h] [ebp-8h]
   float v4; // [esp+14h] [ebp-4h]
@@ -20382,7 +20382,7 @@ void __cdecl sub_8055C74(int a1, int a2, int a3)
   if ( (*(_DWORD *)(a1 + 128) & *((_DWORD *)v3 + 17)) != 0 )
   {
     v4 = *(float *)a3;
-    sub_80558EC(a1, a2, a3);
+    CM_TraceThroughAabbTree_r(a1, a2, a3);
     if ( v4 > (long double)*(float *)a3 )
     {
       *(_DWORD *)(a3 + 16) = *((_DWORD *)v3 + 16);
@@ -20393,10 +20393,10 @@ void __cdecl sub_8055C74(int a1, int a2, int a3)
 }
 
 //----- (08055CFE) --------------------------------------------------------
-void __cdecl sub_8055CFE(int a1, int a2, int a3)
+void __cdecl CM_SightTraceThroughAabbTree(int a1, int a2, int a3)
 {
   if ( (*(_DWORD *)(a1 + 128) & *((_DWORD *)dword_8185BF0 + 18 * *(unsigned __int16 *)(a2 + 24) + 17)) != 0 )
-    sub_8055C74(a1, a2, a3);
+    CM_TraceThroughAabbTree(a1, a2, a3);
 }
 
 //----- (08055D4C) --------------------------------------------------------
@@ -20537,7 +20537,7 @@ long double __cdecl sub_80560E2(float *a1)
 }
 
 //----- (08056116) --------------------------------------------------------
-void __cdecl sub_8056116(float *a1, float *a2, int a3)
+void __cdecl CM_TracePointThroughTriangle(float *a1, float *a2, int a3)
 {
   float v3; // [esp+18h] [ebp-30h]
   float v4; // [esp+1Ch] [ebp-2Ch]
@@ -20575,7 +20575,7 @@ void __cdecl sub_8056116(float *a1, float *a2, int a3)
 }
 
 //----- (0805628C) --------------------------------------------------------
-void __cdecl sub_805628C(int a1, float *a2, float a3, int a4)
+void __cdecl CM_TraceCapsuleThroughTriangle(int a1, float *a2, float a3, int a4)
 {
   long double v4; // fst7
   long double v5; // fst7
@@ -20838,7 +20838,7 @@ LABEL_8:
 // 805628C: using guessed type float var_B8[2];
 
 //----- (08056E42) --------------------------------------------------------
-void __cdecl sub_8056E42(float *a1, int a2, int a3)
+void __cdecl CM_TraceCapsuleThroughBorder(float *a1, int a2, int a3)
 {
   float v3; // [esp+0h] [ebp-98h]
   float v4; // [esp+0h] [ebp-98h]
@@ -21310,7 +21310,7 @@ int __cdecl CM_XModelPrecache(char *s2)
 }
 
 //----- (08057F90) --------------------------------------------------------
-int __cdecl sub_8057F90(int a1, int a2, float *a3, float *a4, int a5)
+int __cdecl CM_TraceStaticModel(int a1, int a2, float *a3, float *a4, int a5)
 {
   int result; // eax
   float v6[4]; // [esp+20h] [ebp-58h] BYREF
@@ -21323,12 +21323,12 @@ int __cdecl sub_8057F90(int a1, int a2, float *a3, float *a4, int a5)
   MatrixTransformVector(v7, (float *)(a1 + 20), v8);
   sub_8058192(a4, (float *)(a1 + 8), v7);
   MatrixTransformVector(v7, (float *)(a1 + 20), v9);
-  v10 = sub_80C54DC(*(_DWORD **)(a1 + 4));
-  result = sub_80C33FE(*(_DWORD *)(a1 + 4), a2, v10, v8, v9, a5);
+  v10 = XModelGetBasePose(*(_DWORD **)(a1 + 4));
+  result = XModelTraceLine(*(_DWORD *)(a1 + 4), a2, v10, v8, v9, a5);
   if ( result >= 0 )
   {
     *(_WORD *)(a2 + 28) = 1022;
-    sub_80A5028((float *)(a2 + 4), (float *)(a1 + 20), v6);
+    MatrixTransposeTransformVector((float *)(a2 + 4), (float *)(a1 + 20), v6);
     Vec3Normalize(v6);
     return sub_8058162(v6, (_DWORD *)(a2 + 4));
   }
@@ -21340,7 +21340,7 @@ int __cdecl sub_8057F90(int a1, int a2, float *a3, float *a4, int a5)
 // 8057F90: using guessed type float var_58[4];
 
 //----- (0805809A) --------------------------------------------------------
-unsigned int __cdecl sub_805809A(int a1, float *a2, float *a3, int a4)
+unsigned int __cdecl CM_TraceStaticModelComplete(int a1, float *a2, float *a3, int a4)
 {
   int v5[12]; // [esp+20h] [ebp-78h] BYREF
   float v6[4]; // [esp+50h] [ebp-48h] BYREF
@@ -21353,8 +21353,8 @@ unsigned int __cdecl sub_805809A(int a1, float *a2, float *a3, int a4)
   sub_8058192(a3, (float *)(a1 + 8), v6);
   MatrixTransformVector(v6, (float *)(a1 + 20), v8);
   v5[0] = 1065353216;
-  v9 = sub_80C54DC(*(_DWORD **)(a1 + 4));
-  return (unsigned int)sub_80C33FE(*(_DWORD *)(a1 + 4), (int)v5, v9, v7, v8, a4) >> 31;
+  v9 = XModelGetBasePose(*(_DWORD **)(a1 + 4));
+  return (unsigned int)XModelTraceLine(*(_DWORD *)(a1 + 4), (int)v5, v9, v7, v8, a4) >> 31;
 }
 // 805809A: using guessed type float var_48[4];
 // 805809A: using guessed type float var_38[4];
@@ -21609,7 +21609,7 @@ float *__cdecl sub_8058954(float *a1, float a2, float *a3)
 }
 
 //----- (0805898C) --------------------------------------------------------
-int __cdecl sub_805898C(float *a1, int a2)
+int __cdecl CM_PointLeafnum_r(float *a1, int a2)
 {
   int v3; // [esp+Ch] [ebp-Ch]
   __int16 *v4; // [esp+10h] [ebp-8h]
@@ -21633,9 +21633,9 @@ int __cdecl sub_805898C(float *a1, int a2)
 // 8185C00: using guessed type int dword_8185C00;
 
 //----- (08058A2C) --------------------------------------------------------
-int __cdecl sub_8058A2C(float *a1)
+int __cdecl CM_PointLeafnum(float *a1)
 {
-  return sub_805898C(a1, 0);
+  return CM_PointLeafnum_r(a1, 0);
 }
 
 //----- (08058A48) --------------------------------------------------------
@@ -21766,7 +21766,7 @@ int __cdecl sub_8058D88(float *a1, int a2)
   if ( a2 )
     v5 = CM_ClipHandleToModel(a2) + 28;
   else
-    v5 = dword_8185C08 + 44 * sub_805898C(a1, 0);
+    v5 = dword_8185C08 + 44 * CM_PointLeafnum_r(a1, 0);
   if ( !*(_DWORD *)(v5 + 36) )
     return 0;
   for ( i = 0; i <= 2; ++i )
@@ -21808,7 +21808,7 @@ int __cdecl sub_8058E94(float *a1, int a2, float *a3, float *a4)
 // 8058E94: using guessed type float var_28[4];
 
 //----- (08058F82) --------------------------------------------------------
-char *__cdecl sub_8058F82(int a1)
+char *__cdecl CM_ClusterPVS(int a1)
 {
   if ( a1 >= 0 && a1 < dword_8185C64 && dword_8185C70 )
     return (char *)dword_8185C6C + n * a1;
@@ -22085,7 +22085,7 @@ int __cdecl CM_TestInLeaf(int a1, int a2, int a3)
 }
 
 //----- (080596DA) --------------------------------------------------------
-void __cdecl sub_80596DA(int a1, int a2)
+void __cdecl CM_TestCapsuleInCapsule(int a1, int a2)
 {
   float v2; // [esp+10h] [ebp-B8h]
   float v3; // [esp+14h] [ebp-B4h]
@@ -22180,7 +22180,7 @@ void __cdecl sub_80596DA(int a1, int a2)
 // 80596DA: using guessed type float var_58[2];
 
 //----- (08059A48) --------------------------------------------------------
-_DWORD *__cdecl sub_8059A48(float *a1, int a2)
+_DWORD *__cdecl CM_PositionTest(float *a1, int a2)
 {
   _DWORD *result; // eax
   int v3[4]; // [esp+10h] [ebp-1048h] BYREF
@@ -22226,7 +22226,7 @@ _DWORD *__cdecl sub_8059A48(float *a1, int a2)
 // 8059A48: using guessed type int var_1008[1026];
 
 //----- (08059BBC) --------------------------------------------------------
-void __cdecl sub_8059BBC(float *a1, _DWORD *a2, int a3)
+void __cdecl CM_TraceThroughBrush(float *a1, _DWORD *a2, int a3)
 {
   long double v3; // fst7
   long double v4; // fst7
@@ -22391,7 +22391,7 @@ LABEL_29:
 // 8059BBC: using guessed type float var_78[10];
 
 //----- (08059FDC) --------------------------------------------------------
-void __cdecl sub_8059FDC(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, float *a5)
+void __cdecl CM_TraceThroughLeafBrushNode_r(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, float *a5)
 {
   long double v5; // fst7
   long double v6; // fst7
@@ -22429,11 +22429,11 @@ void __cdecl sub_8059FDC(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, flo
           v26 = *(unsigned __int16 *)(*((_DWORD *)a2 + 2) + 2 * i);
           v25 = (_DWORD *)(dword_8185C60 + 48 * v26);
           if ( (v25[3] & *(_DWORD *)(a1 + 128)) != 0 )
-            sub_8059BBC((float *)a1, v25, (int)a5);
+            CM_TraceThroughBrush((float *)a1, v25, (int)a5);
         }
         return;
       }
-      sub_8059FDC(a1, a2 + 20, &v15, a4, a5);
+      CM_TraceThroughLeafBrushNode_r(a1, a2 + 20, &v15, a4, a5);
     }
     v23 = *(&v15 + *a2) - *((float *)a2 + 2);
     v22 = a4[*a2] - *((float *)a2 + 2);
@@ -22474,7 +22474,7 @@ void __cdecl sub_8059FDC(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, flo
         v10[2] = (a4[2] - v17) * v12 + v17;
         v7 = (a4[3] - v18) * v12 + v18;
         v10[3] = v7;
-        sub_8059FDC(a1, &a2[20 * *(unsigned __int16 *)&a2[2 * v13 + 16]], &v15, v10, a5);
+        CM_TraceThroughLeafBrushNode_r(a1, &a2[20 * *(unsigned __int16 *)&a2[2 * v13 + 16]], &v15, v10, a5);
         sub_805D3CA(v11, 0.0);
         v11 = v7;
         v15 = (*a4 - v15) * v11 + v15;
@@ -22499,7 +22499,7 @@ void __cdecl sub_8059FDC(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4, flo
 // 8185C60: using guessed type int dword_8185C60;
 
 //----- (0805A3A4) --------------------------------------------------------
-_BOOL4 __cdecl sub_805A3A4(int a1, int a2, float *a3)
+_BOOL4 __cdecl CM_TraceThroughLeafBrushNode(int a1, int a2, float *a3)
 {
   float v5[4]; // [esp+30h] [ebp-48h] BYREF
   _DWORD v6[4]; // [esp+40h] [ebp-38h] BYREF
@@ -22508,35 +22508,35 @@ _BOOL4 __cdecl sub_805A3A4(int a1, int a2, float *a3)
 
   CM_VectorSubtract((float *)(a2 + 12), (float *)(a1 + 92), v8);
   sub_805D4CC((float *)(a2 + 24), (float *)(a1 + 92), v7);
-  if ( sub_805D6DC(a1, (int)v8, (int)v7, *a3) )
+  if ( CM_TraceBox(a1, (int)v8, (int)v7, *a3) )
     return 0;
   CM_VectorCopy2((_DWORD *)a1, v6);
   CM_VectorCopy2((_DWORD *)(a1 + 12), v5);
   v6[3] = 0;
   v5[3] = *a3;
-  sub_8059FDC(a1, (unsigned __int8 *)dword_8185C10 + 20 * *(_DWORD *)(a2 + 36), v6, v5, a3);
+  CM_TraceThroughLeafBrushNode_r(a1, (unsigned __int8 *)dword_8185C10 + 20 * *(_DWORD *)(a2 + 36), v6, v5, a3);
   return 0.0 == *a3;
 }
 // 805A3A4: using guessed type float var_18[6];
 // 805A3A4: using guessed type float var_28[4];
 
 //----- (0805A4AA) --------------------------------------------------------
-void __cdecl sub_805A4AA(int a1, unsigned __int16 *a2, float *a3)
+void __cdecl CM_TraceThroughLeaf(int a1, unsigned __int16 *a2, float *a3)
 {
   int i; // [esp+14h] [ebp-4h]
 
   if ( *a3 != 0.0
-    && ((*((_DWORD *)a2 + 1) & *(_DWORD *)(a1 + 128)) == 0 || !sub_805A3A4(a1, (int)a2, a3))
+    && ((*((_DWORD *)a2 + 1) & *(_DWORD *)(a1 + 128)) == 0 || !CM_TraceThroughLeafBrushNode(a1, (int)a2, a3))
     && (*((_DWORD *)a2 + 2) & *(_DWORD *)(a1 + 128)) != 0 )
   {
     for ( i = 0; i < a2[1] && *a3 != 0.0; ++i )
-      sub_8055C74(a1, dword_8185C50 + 32 * (i + *a2), (int)a3);
+      CM_TraceThroughAabbTree(a1, dword_8185C50 + 32 * (i + *a2), (int)a3);
   }
 }
 // 8185C50: using guessed type int dword_8185C50;
 
 //----- (0805A564) --------------------------------------------------------
-int __cdecl sub_805A564(int a1, float *a2, float *a3, float *a4, float a5, int a6)
+int __cdecl CM_TraceSphereThroughSphere(int a1, float *a2, float *a3, float *a4, float a5, int a6)
 {
   long double v6; // fst7
   long double v7; // fst7
@@ -22607,7 +22607,7 @@ int __cdecl sub_805A564(int a1, float *a2, float *a3, float *a4, float a5, int a
 // 805A564: using guessed type _DWORD var_48[5];
 
 //----- (0805A75A) --------------------------------------------------------
-int __cdecl sub_805A75A(int a1, float *a2, float a3, float a4, int a5)
+int __cdecl CM_TraceCylinderThroughCylinder(int a1, float *a2, float a3, float a4, int a5)
 {
   long double v5; // fst7
   float v7; // [esp+10h] [ebp-58h]
@@ -22701,7 +22701,7 @@ int __cdecl sub_805A75A(int a1, float *a2, float a3, float a4, int a5)
 // 805A75A: using guessed type _DWORD var_48[4];
 
 //----- (0805AA0E) --------------------------------------------------------
-void __cdecl sub_805AA0E(int a1, int a2)
+void __cdecl CM_TraceCapsuleThroughCapsule(int a1, int a2)
 {
   float v2; // [esp+2Ch] [ebp-BCh]
   float v3; // [esp+30h] [ebp-B8h]
@@ -22756,25 +22756,25 @@ void __cdecl sub_805AA0E(int a1, int a2)
     if ( v13 <= (long double)v19 )
     {
       if ( v17 > (long double)v15
-        && (!sub_805A564(a1, (float *)v14, (float *)v10, (float *)v16, v2, a2) || *(float *)(a1 + 44) <= 0.0) )
+        && (!CM_TraceSphereThroughSphere(a1, (float *)v14, (float *)v10, (float *)v16, v2, a2) || *(float *)(a1 + 44) <= 0.0) )
       {
         return;
       }
     }
-    else if ( !sub_805A564(a1, (float *)v12, (float *)v8, (float *)v18, v2, a2) || *(float *)(a1 + 44) >= 0.0 )
+    else if ( !CM_TraceSphereThroughSphere(a1, (float *)v12, (float *)v8, (float *)v18, v2, a2) || *(float *)(a1 + 44) >= 0.0 )
     {
       return;
     }
-    if ( sub_805A75A(a1, v7, v3, v2, a2) )
+    if ( CM_TraceCylinderThroughCylinder(a1, v7, v3, v2, a2) )
     {
       if ( v9 <= (long double)v19 )
       {
         if ( v17 > (long double)v11 && v15 >= (long double)v17 )
-          sub_805A564(a1, (float *)v14, (float *)v10, (float *)v16, v2, a2);
+          CM_TraceSphereThroughSphere(a1, (float *)v14, (float *)v10, (float *)v16, v2, a2);
       }
       else if ( v19 >= (long double)v13 )
       {
-        sub_805A564(a1, (float *)v12, (float *)v8, (float *)v18, v2, a2);
+        CM_TraceSphereThroughSphere(a1, (float *)v12, (float *)v8, (float *)v18, v2, a2);
       }
     }
   }
@@ -22784,7 +22784,7 @@ void __cdecl sub_805AA0E(int a1, int a2)
 // 805AA0E: using guessed type float var_9C[2];
 
 //----- (0805AE54) --------------------------------------------------------
-void __cdecl sub_805AE54(int a1, int a2, _DWORD *a3, float *a4, float *a5)
+void __cdecl CM_TraceThroughTree(int a1, int a2, _DWORD *a3, float *a4, float *a5)
 {
   long double v5; // fst7
   long double v6; // fst7
@@ -22870,7 +22870,7 @@ void __cdecl sub_805AE54(int a1, int a2, _DWORD *a3, float *a4, float *a5)
         v20[2] = (a4[2] - v17) * v22 + v17;
         v11 = (a4[3] - v18) * v22 + v18;
         v20[3] = v11;
-        sub_805AE54(a1, *(__int16 *)(v28 + 2 * v19 + 4), &v15, v20, a5);
+        CM_TraceThroughTree(a1, *(__int16 *)(v28 + 2 * v19 + 4), &v15, v20, a5);
         sub_805D3CA(v21, 0.0);
         v21 = v11;
         v15 = (*a4 - v15) * v21 + v15;
@@ -22889,7 +22889,7 @@ void __cdecl sub_805AE54(int a1, int a2, _DWORD *a3, float *a4, float *a5)
       a2 = *(__int16 *)(v28 + 4);
     }
   }
-  sub_805A4AA(a1, (unsigned __int16 *)(dword_8185C08 + 44 * (-1 - a2)), a5);
+  CM_TraceThroughLeaf(a1, (unsigned __int16 *)(dword_8185C08 + 44 * (-1 - a2)), a5);
 }
 // 8185C00: using guessed type int dword_8185C00;
 // 8185C08: using guessed type int dword_8185C08;
@@ -23001,7 +23001,7 @@ void __cdecl CM_Trace(int a1, float *a2, float *a3, int a4, int a5, int a6, int 
       if ( a6 == 1023 )
       {
         if ( (v26 & *(_DWORD *)(v34 + 12)) != 0 )
-          sub_80596DA((int)v13, a1);
+          CM_TestCapsuleInCapsule((int)v13, a1);
       }
       else if ( !*(_BYTE *)(a1 + 34) )
       {
@@ -23010,7 +23010,7 @@ void __cdecl CM_Trace(int a1, float *a2, float *a3, int a4, int a5, int a6, int 
     }
     else
     {
-      sub_8059A48(v13, a1);
+      CM_PositionTest(v13, a1);
     }
   }
   else
@@ -23024,11 +23024,11 @@ void __cdecl CM_Trace(int a1, float *a2, float *a3, int a4, int a5, int a6, int 
       if ( a6 == 1023 )
       {
         if ( (v26 & *(_DWORD *)(v34 + 12)) != 0 )
-          sub_805AA0E((int)v13, a1);
+          CM_TraceCapsuleThroughCapsule((int)v13, a1);
       }
       else
       {
-        sub_805A4AA((int)v13, (unsigned __int16 *)(v11 + 28), (float *)a1);
+        CM_TraceThroughLeaf((int)v13, (unsigned __int16 *)(v11 + 28), (float *)a1);
       }
     }
     else
@@ -23037,7 +23037,7 @@ void __cdecl CM_Trace(int a1, float *a2, float *a3, int a4, int a5, int a6, int 
       v10[3] = 0;
       CM_VectorCopy2(v15, v9);
       v9[3] = *(float *)a1;
-      sub_805AE54((int)v13, 0, v10, v9, (float *)a1);
+      CM_TraceThroughTree((int)v13, 0, v10, v9, (float *)a1);
     }
   }
 }
@@ -23057,7 +23057,7 @@ void __cdecl CM_BoxTrace(_DWORD *s, float *a2, float *a3, int a4, int a5, int a6
 }
 
 //----- (0805B6F2) --------------------------------------------------------
-void __cdecl sub_805B6F2(float *a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9)
+void __cdecl CM_TransformedBoxTrace(float *a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9)
 {
   int v9; // [esp+2Ch] [ebp-DCh]
   float v10; // [esp+30h] [ebp-D8h]
@@ -23112,7 +23112,7 @@ void __cdecl sub_805B972(_DWORD *s, int a2, int a3, int a4, int a5, int a6, int 
 {
   memset(s, 0, 0x24u);
   *s = 1065353216;
-  sub_805B6F2((float *)s, a2, a3, a4, a5, a6, a7, a8, a9);
+  CM_TransformedBoxTrace((float *)s, a2, a3, a4, a5, a6, a7, a8, a9);
 }
 
 //----- (0805B9E2) --------------------------------------------------------
@@ -23217,7 +23217,7 @@ int __cdecl CM_SightTraceThroughBrush(float *a1, int a2)
 // 8185C60: using guessed type int dword_8185C60;
 
 //----- (0805BCEE) --------------------------------------------------------
-int __cdecl sub_805BCEE(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4)
+int __cdecl CM_SightTraceThroughLeafBrushNode_r(int a1, unsigned __int8 *a2, _DWORD *a3, float *a4)
 {
   long double v4; // fst7
   long double v5; // fst7
@@ -23287,7 +23287,7 @@ LABEL_15:
         v11[1] = (a4[1] - v17) * v13 + v17;
         v6 = (a4[2] - v18) * v13 + v18;
         v11[2] = v6;
-        v25 = sub_805BCEE(a1, &a2[20 * *(unsigned __int16 *)&a2[2 * v14 + 16]], &v16, v11);
+        v25 = CM_SightTraceThroughLeafBrushNode_r(a1, &a2[20 * *(unsigned __int16 *)&a2[2 * v14 + 16]], &v16, v11);
         if ( v25 )
           return v25;
         sub_805D3CA(v12, 0.0);
@@ -23311,7 +23311,7 @@ LABEL_15:
   }
   if ( *((__int16 *)a2 + 1) <= 0 )
   {
-    v25 = sub_805BCEE(a1, a2 + 20, &v16, a4);
+    v25 = CM_SightTraceThroughLeafBrushNode_r(a1, a2 + 20, &v16, a4);
     if ( v25 )
       return v25;
     goto LABEL_15;
@@ -23332,17 +23332,17 @@ LABEL_15:
 // 8185C60: using guessed type int dword_8185C60;
 
 //----- (0805C0BC) --------------------------------------------------------
-int __cdecl sub_805C0BC(int a1, int a2)
+int __cdecl CM_SightTraceThroughLeafBrushNode(int a1, int a2)
 {
   float v4[4]; // [esp+20h] [ebp-28h] BYREF
   float v5[6]; // [esp+30h] [ebp-18h] BYREF
 
   CM_VectorSubtract((float *)(a2 + 12), (float *)(a1 + 92), v5);
   sub_805D4CC((float *)(a2 + 24), (float *)(a1 + 92), v4);
-  if ( sub_805D6DC(a1, (int)v5, (int)v4, 1.0) )
+  if ( CM_TraceBox(a1, (int)v5, (int)v4, 1.0) )
     return 0;
   else
-    return sub_805BCEE(
+    return CM_SightTraceThroughLeafBrushNode_r(
              a1,
              (unsigned __int8 *)dword_8185C10 + 20 * *(_DWORD *)(a2 + 36),
              (_DWORD *)a1,
@@ -23352,14 +23352,14 @@ int __cdecl sub_805C0BC(int a1, int a2)
 // 805C0BC: using guessed type float var_28[4];
 
 //----- (0805C16E) --------------------------------------------------------
-int __cdecl sub_805C16E(int a1, unsigned __int16 *a2, float *a3)
+int __cdecl CM_SightTraceThroughLeaf(int a1, unsigned __int16 *a2, float *a3)
 {
   int v5; // [esp+10h] [ebp-8h]
   int i; // [esp+14h] [ebp-4h]
 
   if ( (*((_DWORD *)a2 + 1) & *(_DWORD *)(a1 + 128)) != 0 )
   {
-    v5 = sub_805C0BC(a1, (int)a2);
+    v5 = CM_SightTraceThroughLeafBrushNode(a1, (int)a2);
     if ( v5 )
       return v5;
   }
@@ -23367,7 +23367,7 @@ int __cdecl sub_805C16E(int a1, unsigned __int16 *a2, float *a3)
   {
     for ( i = 0; i < a2[1]; ++i )
     {
-      sub_8055CFE(a1, dword_8185C50 + 32 * (i + *a2), (int)a3);
+      CM_SightTraceThroughAabbTree(a1, dword_8185C50 + 32 * (i + *a2), (int)a3);
       if ( *a3 != 1.0 )
         return i + *a2 + (unsigned __int16)word_8185C5C + 1;
     }
@@ -23577,7 +23577,7 @@ int __cdecl CM_SightTraceCapsuleThroughCapsule(int a1, float *a2)
 // 805C534: using guessed type float var_9C[2];
 
 //----- (0805C9DE) --------------------------------------------------------
-int __cdecl sub_805C9DE(int a1, int a2, _DWORD *a3, float *a4, float *a5)
+int __cdecl CM_SightTraceThroughTree(int a1, int a2, _DWORD *a3, float *a4, float *a5)
 {
   long double v5; // fst7
   long double v6; // fst7
@@ -23612,7 +23612,7 @@ int __cdecl sub_805C9DE(int a1, int a2, _DWORD *a3, float *a4, float *a5)
       while ( 1 )
       {
         if ( a2 < 0 )
-          return sub_805C16E(a1, (unsigned __int16 *)(dword_8185C08 + 44 * (-1 - a2)), a5);
+          return CM_SightTraceThroughLeaf(a1, (unsigned __int16 *)(dword_8185C08 + 44 * (-1 - a2)), a5);
         v30 = dword_8185C00 + 8 * a2;
         v29 = *(float **)v30;
         if ( *((_BYTE *)v29 + 16) > 2u )
@@ -23667,7 +23667,7 @@ int __cdecl sub_805C9DE(int a1, int a2, _DWORD *a3, float *a4, float *a5)
     v22[1] = (a4[1] - v18) * v24 + v18;
     v11 = (a4[2] - v19) * v24 + v19;
     v22[2] = v11;
-    v20 = sub_805C9DE(a1, *(__int16 *)(v30 + 2 * v21 + 4), &v17, v22, a5);
+    v20 = CM_SightTraceThroughTree(a1, *(__int16 *)(v30 + 2 * v21 + 4), &v17, v22, a5);
     if ( v20 )
       break;
     sub_805D3CA(v23, 0.0);
@@ -23783,7 +23783,7 @@ int __cdecl CM_BoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int
     }
     else
     {
-      return sub_805C16E((int)v16, (unsigned __int16 *)(v14 + 28), (float *)v10);
+      return CM_SightTraceThroughLeaf((int)v16, (unsigned __int16 *)(v14 + 28), (float *)v10);
     }
   }
   else
@@ -23796,7 +23796,7 @@ int __cdecl CM_BoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int
         v13 = CM_SightTraceThroughBrush(v16, dword_8185C60 + 48 * v38);
     }
     if ( !v13 )
-      return sub_805C9DE((int)v16, 0, v16, v18, (float *)v10);
+      return CM_SightTraceThroughTree((int)v16, 0, v16, v18, (float *)v10);
   }
   return v13;
 }
@@ -24014,7 +24014,7 @@ int *__cdecl CM_CalcTraceExtents(int a1)
 }
 
 //----- (0805D6DC) --------------------------------------------------------
-int __cdecl sub_805D6DC(int a1, int a2, int a3, float a4)
+int __cdecl CM_TraceBox(int a1, int a2, int a3, float a4)
 {
   int i; // [esp+18h] [ebp-20h]
   float v8; // [esp+1Ch] [ebp-1Ch]
@@ -24114,7 +24114,7 @@ int __cdecl sub_805D8C4(float *a1, float *a2)
 // 8185DAE: using guessed type __int16 word_8185DAE[];
 
 //----- (0805D9A8) --------------------------------------------------------
-__int64 sub_805D9A8()
+__int64 CM_ClearWorld()
 {
   __int64 result; // rax
   float v1; // [esp+18h] [ebp-10h] BYREF
@@ -24122,7 +24122,7 @@ __int64 sub_805D9A8()
   unsigned int i; // [esp+24h] [ebp-4h]
 
   memset(flt_8185D80, 0, 0x601Cu);
-  sub_8052518(0, flt_8185D80, flt_8185D8C);
+  CM_ModelBounds(0, flt_8185D80, flt_8185D8C);
   word_8185D9A = 2;
   for ( i = 2; i <= 0x3FE; ++i )
     word_8185DAE[12 * i] = i + 1;
@@ -24143,10 +24143,10 @@ __int64 sub_805D9A8()
 // 818BD96: using guessed type __int16 word_818BD96;
 
 //----- (0805DA8E) --------------------------------------------------------
-int sub_805DA8E()
+int CM_LinkWorld()
 {
-  sub_805D9A8();
-  return sub_805E51A();
+  CM_ClearWorld();
+  return CM_LinkAllStaticModels();
 }
 
 //----- (0805DAA0) --------------------------------------------------------
@@ -24470,7 +24470,7 @@ LABEL_18:
 // 805E18C: using guessed type float var_20[2];
 
 //----- (0805E3D8) --------------------------------------------------------
-int __cdecl sub_805E3D8(int a1)
+int __cdecl CM_LinkStaticModel(int a1)
 {
   int v2; // [esp+14h] [ebp-24h]
   float v3[2]; // [esp+18h] [ebp-20h] BYREF
@@ -24515,7 +24515,7 @@ LABEL_8:
 // 805E3D8: using guessed type float var_20[2];
 
 //----- (0805E51A) --------------------------------------------------------
-int sub_805E51A()
+int CM_LinkAllStaticModels()
 {
   int result; // eax
   int v1; // [esp+10h] [ebp-8h]
@@ -24528,7 +24528,7 @@ int sub_805E51A()
     if ( v1 >= dword_8185BE4 )
       break;
     if ( XModelGetContents(*(_DWORD *)(i + 4)) )
-      sub_805E3D8(i);
+      CM_LinkStaticModel(i);
     ++v1;
   }
   return result;
@@ -24537,7 +24537,7 @@ int sub_805E51A()
 // 8185BE8: using guessed type int dword_8185BE8;
 
 //----- (0805E56A) --------------------------------------------------------
-void __cdecl sub_805E56A(unsigned __int16 a1, int a2)
+void __cdecl CM_AreaEntities_r(unsigned __int16 a1, int a2)
 {
   unsigned __int16 i; // [esp+1Ah] [ebp-Eh]
   int v3; // [esp+1Ch] [ebp-Ch]
@@ -24568,17 +24568,17 @@ void __cdecl sub_805E56A(unsigned __int16 a1, int a2)
       }
     }
     if ( *(float *)(*(_DWORD *)(a2 + 8) + 4 * *((unsigned __int16 *)&unk_8185DAC + 12 * a1)) > (long double)*((float *)&unk_8185DA8 + 6 * a1) )
-      sub_805E56A(*(unsigned __int16 *)&algn_8185DB0[24 * a1], a2);
+      CM_AreaEntities_r(*(unsigned __int16 *)&algn_8185DB0[24 * a1], a2);
     if ( *((float *)&unk_8185DA8 + 6 * a1) > (long double)*(float *)(*(_DWORD *)(a2 + 4)
                                                                    + 4 * *((unsigned __int16 *)&unk_8185DAC + 12 * a1)) )
-      sub_805E56A(*(unsigned __int16 *)&algn_8185DB0[24 * a1 + 2], a2);
+      CM_AreaEntities_r(*(unsigned __int16 *)&algn_8185DB0[24 * a1 + 2], a2);
   }
 }
 // 8185DA0: using guessed type int dword_8185DA0[];
 // 842BC80: using guessed type int dword_842BC80;
 
 //----- (0805E782) --------------------------------------------------------
-int __cdecl sub_805E782(int a1, int a2, int a3, int a4, int a5)
+int __cdecl CM_AreaEntities(int a1, int a2, int a3, int a4, int a5)
 {
   char v6[4]; // [esp+10h] [ebp-28h] BYREF
   int v7; // [esp+14h] [ebp-24h]
@@ -24594,13 +24594,13 @@ int __cdecl sub_805E782(int a1, int a2, int a3, int a4, int a5)
   v10 = 0;
   v11 = a4;
   v12 = a5;
-  sub_805E56A(1u, (int)v6);
+  CM_AreaEntities_r(1u, (int)v6);
   return v10;
 }
 // 805E782: using guessed type char var_28[4];
 
 //----- (0805E7C6) --------------------------------------------------------
-void __cdecl sub_805E7C6(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5)
+void __cdecl CM_PointTraceStaticModels_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5)
 {
   int v5; // ebx
   float v6; // [esp+20h] [ebp-58h] BYREF
@@ -24627,8 +24627,8 @@ void __cdecl sub_805E7C6(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
     for ( i = *(_WORD *)(v10 + 10); i; i = *(_WORD *)v12 )
     {
       v12 = dword_8185BE8 + 80 * i - 80;
-      if ( (*(_DWORD *)a1 & XModelGetContents(*(_DWORD *)(v12 + 4))) != 0 && !sub_805D6DC(a1 + 4, v12 + 56, v12 + 68, *a5) )
-        sub_8057F90(v12, (int)a5, (float *)(a1 + 4), (float *)(a1 + 16), *(_DWORD *)a1);
+      if ( (*(_DWORD *)a1 & XModelGetContents(*(_DWORD *)(v12 + 4))) != 0 && !CM_TraceBox(a1 + 4, v12 + 56, v12 + 68, *a5) )
+        CM_TraceStaticModel(v12, (int)a5, (float *)(a1 + 4), (float *)(a1 + 16), *(_DWORD *)a1);
     }
     v17 = *(&v6 + *(unsigned __int16 *)(v10 + 16)) - *(float *)(v10 + 12);
     v16 = a4[*(unsigned __int16 *)(v10 + 16)] - *(float *)(v10 + 12);
@@ -24642,7 +24642,7 @@ void __cdecl sub_805E7C6(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
       v13[2] = (a4[2] - v8) * v15 + v8;
       v13[3] = (a4[3] - v9) * v15 + v9;
       v14 = sub_805F93C(v16);
-      sub_805E7C6(a1, *(unsigned __int16 *)(v10 + 2 * v14 + 20), &v6, v13, a5);
+      CM_PointTraceStaticModels_r(a1, *(unsigned __int16 *)(v10 + 2 * v14 + 20), &v6, v13, a5);
       v18 = *(_WORD *)(v10 + 2 * (1 - v14) + 20);
       sub_805FA18(v13, &v6);
     }
@@ -24658,7 +24658,7 @@ void __cdecl sub_805E7C6(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
 // 8185D9C: using guessed type int dword_8185D9C[];
 
 //----- (0805EA28) --------------------------------------------------------
-void __cdecl sub_805EA28(float *a1, _DWORD *a2, _DWORD *a3, int a4)
+void __cdecl CM_PointTraceStaticModels(float *a1, _DWORD *a2, _DWORD *a3, int a4)
 {
   float v4[4]; // [esp+20h] [ebp-58h] BYREF
   _DWORD v5[4]; // [esp+30h] [ebp-48h] BYREF
@@ -24674,11 +24674,11 @@ void __cdecl sub_805EA28(float *a1, _DWORD *a2, _DWORD *a3, int a4)
   v5[3] = 0;
   sub_805F9E8(v8, v4);
   v4[3] = *a1;
-  sub_805E7C6((int)&v6, 1u, v5, v4, a1);
+  CM_PointTraceStaticModels_r((int)&v6, 1u, v5, v4, a1);
 }
 
 //----- (0805EAD0) --------------------------------------------------------
-int __cdecl sub_805EAD0(int a1, unsigned __int16 a2, _DWORD *a3, float *a4)
+int __cdecl CM_PointTraceStaticModelsComplete_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4)
 {
   int v4; // ebx
   float v7; // [esp+20h] [ebp-58h] BYREF
@@ -24707,8 +24707,8 @@ int __cdecl sub_805EAD0(int a1, unsigned __int16 a2, _DWORD *a3, float *a4)
       {
         v12 = dword_8185BE8 + 80 * i - 80;
         if ( (*(_DWORD *)(a1 + 36) & XModelGetContents(*(_DWORD *)(v12 + 4))) != 0
-          && !sub_805D6DC(a1, v12 + 56, v12 + 68, 1.0)
-          && !sub_805809A(v12, (float *)a1, (float *)(a1 + 12), *(_DWORD *)(a1 + 36)) )
+          && !CM_TraceBox(a1, v12 + 56, v12 + 68, 1.0)
+          && !CM_TraceStaticModelComplete(v12, (float *)a1, (float *)(a1 + 12), *(_DWORD *)(a1 + 36)) )
         {
           return 0;
         }
@@ -24726,7 +24726,7 @@ int __cdecl sub_805EAD0(int a1, unsigned __int16 a2, _DWORD *a3, float *a4)
     v13[1] = (a4[1] - v8) * v15 + v8;
     v13[2] = (a4[2] - v9) * v15 + v9;
     v14 = sub_805F93C(v16);
-    if ( !sub_805EAD0(a1, *(unsigned __int16 *)(v10 + 2 * v14 + 20), &v7, v13) )
+    if ( !CM_PointTraceStaticModelsComplete_r(a1, *(unsigned __int16 *)(v10 + 2 * v14 + 20), &v7, v13) )
       break;
     v18 = *(_WORD *)(v10 + 2 * (1 - v14) + 20);
     sub_805F9E8(v13, &v7);
@@ -24737,7 +24737,7 @@ int __cdecl sub_805EAD0(int a1, unsigned __int16 a2, _DWORD *a3, float *a4)
 // 8185D9C: using guessed type int dword_8185D9C[];
 
 //----- (0805ED1E) --------------------------------------------------------
-int __cdecl sub_805ED1E(_DWORD *a1, _DWORD *a2, float a3)
+int __cdecl CM_PointTraceStaticModelsComplete(_DWORD *a1, _DWORD *a2, float a3)
 {
   _DWORD v4[3]; // [esp+20h] [ebp-38h] BYREF
   float v5[11]; // [esp+2Ch] [ebp-2Ch] BYREF
@@ -24746,12 +24746,12 @@ int __cdecl sub_805ED1E(_DWORD *a1, _DWORD *a2, float a3)
   sub_805F9E8(a1, v4);
   sub_805F9E8(a2, v5);
   CM_CalcTraceExtents((int)v4);
-  return sub_805EAD0((int)v4, 1u, v4, v5);
+  return CM_PointTraceStaticModelsComplete_r((int)v4, 1u, v4, v5);
 }
 // 805ED1E: using guessed type _DWORD var_38[3];
 
 //----- (0805ED88) --------------------------------------------------------
-void __cdecl sub_805ED88(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5)
+void __cdecl CM_ClipMoveToEntities_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5)
 {
   long double v5; // fst7
   long double v6; // fst6
@@ -24789,7 +24789,7 @@ void __cdecl sub_805ED88(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
     {
       v21 = 372 * i + 138600228;
       if ( (*(_DWORD *)(a1 + 80) & *((_DWORD *)&unk_842E084 + 93 * i)) != 0 )
-        sub_809AB88(a1, v21, (int)a5);
+        SV_ClipMoveToEntity(a1, v21, (int)a5);
     }
     v27 = *(&v13 + *(unsigned __int16 *)(v17 + 16)) - *(float *)(v17 + 12);
     v5 = a4[*(unsigned __int16 *)(v17 + 16)] - *(float *)(v17 + 12);
@@ -24830,7 +24830,7 @@ void __cdecl sub_805ED88(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
         v22[2] = (a4[2] - v15) * v25 + v15;
         v9 = (a4[3] - v16) * v25 + v16;
         v22[3] = v9;
-        sub_805ED88(a1, *(unsigned __int16 *)(v17 + 2 * v23 + 20), &v13, v22, a5);
+        CM_ClipMoveToEntities_r(a1, *(unsigned __int16 *)(v17 + 2 * v23 + 20), &v13, v22, a5);
         sub_805F954(v24, 0.0);
         v24 = v9;
         v13 = (*a4 - v13) * v24 + v13;
@@ -24853,7 +24853,7 @@ void __cdecl sub_805ED88(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
 // 8185DA0: using guessed type int dword_8185DA0[];
 
 //----- (0805F0A4) --------------------------------------------------------
-void __cdecl sub_805F0A4(int a1, float *a2)
+void __cdecl CM_ClipMoveToEntities(int a1, float *a2)
 {
   float v2[4]; // [esp+20h] [ebp-28h] BYREF
   _DWORD v3[6]; // [esp+30h] [ebp-18h] BYREF
@@ -24862,11 +24862,11 @@ void __cdecl sub_805F0A4(int a1, float *a2)
   sub_805F9E8((_DWORD *)(a1 + 48), v2);
   v3[3] = 0;
   v2[3] = *a2;
-  sub_805ED88(a1, 1u, v3, v2, a2);
+  CM_ClipMoveToEntities_r(a1, 1u, v3, v2, a2);
 }
 
 //----- (0805F10E) --------------------------------------------------------
-int __cdecl sub_805F10E(_DWORD *a1, unsigned __int16 a2, _DWORD *a3, float *a4)
+int __cdecl CM_ClipSightTraceToEntities_r(_DWORD *a1, unsigned __int16 a2, _DWORD *a3, float *a4)
 {
   long double v4; // fst7
   long double v5; // fst6
@@ -24951,7 +24951,7 @@ int __cdecl sub_805F10E(_DWORD *a1, unsigned __int16 a2, _DWORD *a3, float *a4)
     v23[1] = (a4[1] - v15) * v26 + v15;
     v8 = (a4[2] - v16) * v26 + v16;
     v23[2] = v8;
-    v19 = sub_805F10E(a1, *(unsigned __int16 *)(v17 + 2 * v24 + 20), &v14, v23);
+    v19 = CM_ClipSightTraceToEntities_r(a1, *(unsigned __int16 *)(v17 + 2 * v24 + 20), &v14, v23);
     if ( v19 )
       break;
     sub_805F954(v25, 0.0);
@@ -24966,13 +24966,13 @@ int __cdecl sub_805F10E(_DWORD *a1, unsigned __int16 a2, _DWORD *a3, float *a4)
 // 8185DA0: using guessed type int dword_8185DA0[];
 
 //----- (0805F3F6) --------------------------------------------------------
-int __cdecl sub_805F3F6(int a1)
+int __cdecl CM_ClipSightTraceToEntities(int a1)
 {
-  return sub_805F10E((_DWORD *)a1, 1u, (_DWORD *)(a1 + 36), (float *)(a1 + 48));
+  return CM_ClipSightTraceToEntities_r((_DWORD *)a1, 1u, (_DWORD *)(a1 + 36), (float *)(a1 + 48));
 }
 
 //----- (0805F42C) --------------------------------------------------------
-void __cdecl sub_805F42C(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5)
+void __cdecl CM_PointTraceToEntities_r(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, float *a5)
 {
   int v5; // ebx
   float v6; // [esp+20h] [ebp-58h] BYREF
@@ -24999,7 +24999,7 @@ void __cdecl sub_805F42C(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
     for ( i = *(_WORD *)(v10 + 8); i; i = *(_WORD *)(v12 + 2) )
     {
       v12 = 372 * i + 138600228;
-      sub_809AD2C(a1, v12, (int)a5);
+      SV_PointTraceToEntity(a1, v12, (int)a5);
     }
     v17 = *(&v6 + *(unsigned __int16 *)(v10 + 16)) - *(float *)(v10 + 12);
     v16 = a4[*(unsigned __int16 *)(v10 + 16)] - *(float *)(v10 + 12);
@@ -25013,7 +25013,7 @@ void __cdecl sub_805F42C(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
       v13[2] = (a4[2] - v8) * v15 + v8;
       v13[3] = (a4[3] - v9) * v15 + v9;
       v14 = sub_805F93C(v16);
-      sub_805F42C(a1, *(unsigned __int16 *)(v10 + 2 * v14 + 20), &v6, v13, a5);
+      CM_PointTraceToEntities_r(a1, *(unsigned __int16 *)(v10 + 2 * v14 + 20), &v6, v13, a5);
       v18 = *(_WORD *)(v10 + 2 * (1 - v14) + 20);
       sub_805FA18(v13, &v6);
     }
@@ -25028,7 +25028,7 @@ void __cdecl sub_805F42C(int a1, unsigned __int16 a2, _DWORD *a3, float *a4, flo
 // 8185DA0: using guessed type int dword_8185DA0[];
 
 //----- (0805F61E) --------------------------------------------------------
-void __cdecl sub_805F61E(_DWORD *a1, float *a2)
+void __cdecl CM_PointTraceToEntities(_DWORD *a1, float *a2)
 {
   float v2[4]; // [esp+20h] [ebp-28h] BYREF
   _DWORD v3[6]; // [esp+30h] [ebp-18h] BYREF
@@ -25037,11 +25037,11 @@ void __cdecl sub_805F61E(_DWORD *a1, float *a2)
   sub_805F9E8(a1 + 3, v2);
   v3[3] = 0;
   v2[3] = *a2;
-  sub_805F42C((int)a1, 1u, v3, v2, a2);
+  CM_PointTraceToEntities_r((int)a1, 1u, v3, v2, a2);
 }
 
 //----- (0805F686) --------------------------------------------------------
-int __cdecl sub_805F686(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4)
+int __cdecl CM_PointSightTraceToEntities_r(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4)
 {
   _BOOL4 v4; // eax
   int v7; // [esp+26h] [ebp-42h]
@@ -25068,10 +25068,10 @@ int __cdecl sub_805F686(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4)
     v12[1] = (a4[1] - a3[1]) * v14 + a3[1];
     v12[2] = (a4[2] - a3[2]) * v14 + a3[2];
     v13 = sub_805F93C(v15);
-    v9 = sub_805F686(a1, *((unsigned __int16 *)&dword_8185D9C[6 * a2 + 5] + v13), a3, v12);
+    v9 = CM_PointSightTraceToEntities_r(a1, *((unsigned __int16 *)&dword_8185D9C[6 * a2 + 5] + v13), a3, v12);
     if ( v9 )
       return v9;
-    v10 = sub_805F686(a1, *((unsigned __int16 *)&dword_8185D9C[6 * a2 + 5] + 1 - v13), v12, a4);
+    v10 = CM_PointSightTraceToEntities_r(a1, *((unsigned __int16 *)&dword_8185D9C[6 * a2 + 5] + 1 - v13), v12, a4);
     if ( v10 )
       return v10;
   }
@@ -25079,14 +25079,14 @@ int __cdecl sub_805F686(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4)
   {
     sub_805F978(v16, v15);
     v4 = sub_805F93C(0.0);
-    v8 = sub_805F686(a1, *((unsigned __int16 *)&dword_8185D9C[6 * a2 + 5] + 1 - v4), a3, a4);
+    v8 = CM_PointSightTraceToEntities_r(a1, *((unsigned __int16 *)&dword_8185D9C[6 * a2 + 5] + 1 - v4), a3, a4);
     if ( v8 )
       return v8;
   }
   LOWORD(v7) = *((_WORD *)&unk_8185DA4 + 12 * a2);
   while ( (_WORD)v7 )
   {
-    v11 = sub_809B30E(a1, 372 * (unsigned __int16)v7 + 138600228);
+    v11 = SV_PointSightTraceToEntity(a1, 372 * (unsigned __int16)v7 + 138600228);
     if ( v11 )
       return v11;
     v7 = *((unsigned __int16 *)&unk_842DF26 + 186 * (unsigned __int16)v7);
@@ -25097,9 +25097,9 @@ int __cdecl sub_805F686(_DWORD *a1, unsigned __int16 a2, float *a3, float *a4)
 // 8185DA0: using guessed type int dword_8185DA0[];
 
 //----- (0805F8C6) --------------------------------------------------------
-int __cdecl sub_805F8C6(int a1)
+int __cdecl CM_PointSightTraceToEntities(int a1)
 {
-  return sub_805F686((_DWORD *)a1, 1u, (float *)a1, (float *)(a1 + 12));
+  return CM_PointSightTraceToEntities_r((_DWORD *)a1, 1u, (float *)a1, (float *)(a1 + 12));
 }
 
 //----- (0805F8F8) --------------------------------------------------------
@@ -27375,7 +27375,7 @@ int __cdecl sub_8062AEC(int a1)
 // 81D4600: using guessed type __int16 word_81D4600[1152];
 
 //----- (08062B4C) --------------------------------------------------------
-int __cdecl Com_ServerDObjFree(int a1)
+int __cdecl Com_SafeServerDObjFree(int a1)
 {
   int result; // eax
 
@@ -32379,7 +32379,7 @@ int __cdecl SetAnimCheck(int a1)
 // 8202428: using guessed type int dword_8202428;
 
 //----- (0806C926) --------------------------------------------------------
-char *__cdecl sub_806C926(const char *a1)
+char *__cdecl AnimTreeCompileError(const char *a1)
 {
   int v2; // [esp+14h] [ebp-4h]
 
@@ -32390,7 +32390,7 @@ char *__cdecl sub_806C926(const char *a1)
 // 8202220: using guessed type int dword_8202220;
 
 //----- (0806C95E) --------------------------------------------------------
-int sub_806C95E()
+int GetAnimTreeParseProperties()
 {
   int v1; // [esp+Ch] [ebp-Ch]
   int i; // [esp+10h] [ebp-8h]
@@ -32414,7 +32414,7 @@ int sub_806C95E()
         v1 |= 8u;
       else
 LABEL_16:
-        sub_806C926("unknown anim property");
+        AnimTreeCompileError("unknown anim property");
     }
     else
     {
@@ -32427,7 +32427,7 @@ LABEL_16:
 // 8202224: using guessed type int dword_8202224;
 
 //----- (0806CA12) --------------------------------------------------------
-int __cdecl Scr_FindAnimInternal(_DWORD *a1, unsigned int a2, int a3)
+int __cdecl Scr_EmitAnimationInternal(_DWORD *a1, unsigned int a2, int a3)
 {
   int result; // eax
   __int16 *v4; // eax
@@ -32457,10 +32457,10 @@ int __cdecl Scr_FindAnimInternal(_DWORD *a1, unsigned int a2, int a3)
 }
 
 //----- (0806CA94) --------------------------------------------------------
-char *__cdecl sub_806CA94(_DWORD *a1, unsigned int a2, int a3)
+char *__cdecl Scr_EmitAnimation(_DWORD *a1, unsigned int a2, int a3)
 {
   if ( dword_8202448 )
-    return (char *)Scr_FindAnimInternal(a1, a2, dword_8202448);
+    return (char *)Scr_EmitAnimationInternal(a1, a2, dword_8202448);
   else
     return CompileError(a3, "#using_animtree was not specified");
 }
@@ -32505,13 +32505,13 @@ int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5)
           v10 = 1;
           goto LABEL_46;
         }
-        if ( !(unsigned __int8)sub_8075828(v17) )
+        if ( !(unsigned __int8)Scr_IsIdentifier(v17) )
           break;
         if ( v11 )
           RemoveVariable(a1, v15);
         v15 = SL_GetLowercaseString_(v17, 2u);
         if ( FindVariable(a1, v15) )
-          sub_806C926("duplicate animation");
+          AnimTreeCompileError("duplicate animation");
         v16 = GetVariable(a1, v15);
         v9 = 0;
         if ( !v18 && !FindVariable(a2, v15) && !dword_8202428 )
@@ -32521,31 +32521,31 @@ int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5)
         v17 = Com_ParseOnLine((char **)&dword_8202224);
         if ( *v17 )
         {
-          if ( (unsigned __int8)sub_8075828(v17) )
-            sub_806C926("FIXME: aliases not yet implemented");
+          if ( (unsigned __int8)Scr_IsIdentifier(v17) )
+            AnimTreeCompileError("FIXME: aliases not yet implemented");
           if ( *v17 != 58 || v17[1] )
-            sub_806C926("bad token");
-          v12 = sub_806C95E();
+            AnimTreeCompileError("bad token");
+          v12 = GetAnimTreeParseProperties();
           v17 = Com_Parse((char **)&dword_8202224);
           if ( *v17 != 123 || v17[1] )
-            sub_806C926("properties cannot be applied to primitive animations");
+            AnimTreeCompileError("properties cannot be applied to primitive animations");
           break;
         }
       }
       if ( *v17 != 123 )
         break;
       if ( v17[1] )
-        sub_806C926("bad token");
+        AnimTreeCompileError("bad token");
       if ( *Com_ParseOnLine((char **)&dword_8202224) )
-        sub_806C926("token not allowed after '{'");
+        AnimTreeCompileError("token not allowed after '{'");
       if ( !v16 )
-        sub_806C926("no animation specified for this block");
+        AnimTreeCompileError("no animation specified for this block");
       v13 = GetArray(v16);
       v8 = 0;
       if ( v18 || (v12 & 8) != 0 && !v11 )
         v8 = 1;
       if ( (unsigned __int8)AnimTreeParseInternal(v13, a2, (unsigned __int8)v11 ^ 1, v12 & 1, v8) )
-        sub_806C926("unexpected end of file");
+        AnimTreeCompileError("unexpected end of file");
       if ( GetArraySize(v13) )
       {
         v14[0] = v12;
@@ -32561,12 +32561,12 @@ int __cdecl AnimTreeParseInternal(int a1, int a2, char a3, char a4, char a5)
     }
     if ( *v17 == 125 )
       break;
-    sub_806C926("bad token");
+    AnimTreeCompileError("bad token");
   }
   if ( v17[1] )
-    sub_806C926("bad token");
+    AnimTreeCompileError("bad token");
   if ( *Com_ParseOnLine((char **)&dword_8202224) )
-    sub_806C926("token not allowed after '}'");
+    AnimTreeCompileError("token not allowed after '}'");
   v10 = 0;
 LABEL_46:
   if ( v11 )
@@ -32587,26 +32587,26 @@ LABEL_46:
 // 8202428: using guessed type int dword_8202428;
 
 //----- (0806CE74) --------------------------------------------------------
-_DWORD *__cdecl sub_806CE74(int a1, int a2, int a3)
+_DWORD *__cdecl Scr_AnimTreeParse(int a1, int a2, int a3)
 {
   Com_BeginParseSession("Scr_AnimTreeParse");
   dword_8202224 = a1;
   dword_8202220 = a1;
   if ( !(unsigned __int8)AnimTreeParseInternal(a2, a3, 1, 0, 0) )
-    sub_806C926("bad token");
+    AnimTreeCompileError("bad token");
   return Com_EndParseSession();
 }
 // 8202220: using guessed type int dword_8202220;
 // 8202224: using guessed type int dword_8202224;
 
 //----- (0806CED4) --------------------------------------------------------
-void *__cdecl sub_806CED4(size_t n)
+void *__cdecl Hunk_AllocXAnimTreePrecache(size_t n)
 {
   return Hunk_AllocAlignInternal(n, 4);
 }
 
 //----- (0806CEF0) --------------------------------------------------------
-int __cdecl sub_806CEF0(int a1)
+int __cdecl Scr_GetAnimTreeSize(int a1)
 {
   int v1; // eax
   int v3; // [esp+Ch] [ebp-Ch]
@@ -32620,7 +32620,7 @@ int __cdecl sub_806CEF0(int a1)
       if ( GetVarType(i) == 1 )
       {
         v1 = FindObject(i);
-        v3 += sub_806CEF0(v1);
+        v3 += Scr_GetAnimTreeSize(v1);
       }
       else
       {
@@ -32634,7 +32634,7 @@ int __cdecl sub_806CEF0(int a1)
 }
 
 //----- (0806CF7E) --------------------------------------------------------
-int __cdecl sub_806CF7E(int a1, __int16 a2, int a3, int a4, __int16 a5)
+int __cdecl ConnectScriptToAnim(int a1, __int16 a2, int a3, int a4, __int16 a5)
 {
   int result; // eax
   int v6; // ebx
@@ -32675,7 +32675,7 @@ int __cdecl Scr_GetAnims(int a1)
 // 820264C: using guessed type int dword_820264C[128];
 
 //----- (0806D084) --------------------------------------------------------
-int __cdecl sub_806D084(int a1, int a2, int a3, int a4, char *s, int a6, int a7, int a8)
+int __cdecl Scr_CreateAnimationTree(int a1, int a2, int a3, int a4, char *s, int a6, int a7, int a8)
 {
   char *v8; // ebx
   int v9; // eax
@@ -32716,12 +32716,12 @@ int __cdecl sub_806D084(int a1, int a2, int a3, int a4, char *s, int a6, int a7,
     v15 = GetVariableName(j);
     if ( v15 <= 0xFFFF )
     {
-      sub_806CF7E(a2, v19, a7, (unsigned __int16)v15, a8);
+      ConnectScriptToAnim(a2, v19, a7, (unsigned __int16)v15, a8);
       if ( GetVarType(j) == 1 )
       {
         v8 = (char *)SL_ConvertToString(v15);
         v9 = FindObject(j);
-        v18 = sub_806D084(v9, a2, a3, v18, v8, v19, a7, a8);
+        v18 = Scr_CreateAnimationTree(v9, a2, a3, v18, v8, v19, a7, a8);
       }
       else
       {
@@ -32738,7 +32738,7 @@ int __cdecl sub_806D084(int a1, int a2, int a3, int a4, char *s, int a6, int a7,
 // 839403C: using guessed type int dword_839403C;
 
 //----- (0806D2DC) --------------------------------------------------------
-int __cdecl sub_806D2DC(int a1, int a2)
+int __cdecl Scr_CheckAnimsDefined(int a1, int a2)
 {
   int result; // eax
   const char *v3; // ebx
@@ -32768,7 +32768,7 @@ int __cdecl sub_806D2DC(int a1, int a2)
 }
 
 //----- (0806D3B4) --------------------------------------------------------
-int __cdecl sub_806D3B4(int a1)
+int __cdecl Scr_PrecacheAnimationTree(int a1)
 {
   int result; // eax
   int v2; // eax
@@ -32785,12 +32785,12 @@ int __cdecl sub_806D3B4(int a1)
       if ( GetVarType(i) == 1 )
       {
         v2 = FindObject(i);
-        sub_806D3B4(v2);
+        Scr_PrecacheAnimationTree(v2);
       }
       else
       {
         v3 = (char *)SL_ConvertToString(v4);
-        XAnimPrecache(v3, (int (__cdecl *)(int))sub_806CED4);
+        XAnimPrecache(v3, (int (__cdecl *)(int))Hunk_AllocXAnimTreePrecache);
       }
     }
     result = FindNextSibling(i);
@@ -32843,11 +32843,11 @@ int __cdecl Scr_UsingTreeInternal(char *a1, int *a2, int a3)
 // 820284C: using guessed type int dword_820284C[];
 
 //----- (0806D55A) --------------------------------------------------------
-char *__cdecl sub_806D55A(char *a1, int a2)
+char *__cdecl Scr_UsingTree(char *a1, int a2)
 {
   char *result; // eax
 
-  if ( !(unsigned __int8)sub_8075828(a1) )
+  if ( !(unsigned __int8)Scr_IsIdentifier(a1) )
     return CompileError(a2, "bad anim tree name");
   result = (char *)Scr_UsingTreeInternal(a1, &dword_8202854, 1);
   dword_8202448 = (int)result;
@@ -32857,7 +32857,7 @@ char *__cdecl sub_806D55A(char *a1, int a2)
 // 8202854: using guessed type int dword_8202854;
 
 //----- (0806D5A6) --------------------------------------------------------
-_BOOL4 __cdecl sub_806D5A6(const char *a1, int a2, int a3)
+_BOOL4 __cdecl Scr_LoadAnimTreeInternal(const char *a1, int a2, int a3)
 {
   int v5; // [esp+24h] [ebp-54h]
   int v6; // [esp+28h] [ebp-50h]
@@ -32871,7 +32871,7 @@ _BOOL4 __cdecl sub_806D5A6(const char *a1, int a2, int a3)
     return 0;
   v6 = *(_DWORD *)dword_8283EDC;
   *(_DWORD *)dword_8283EDC = s;
-  sub_806CE74((int)v7, a2, a3);
+  Scr_AnimTreeParse((int)v7, a2, a3);
   *(_DWORD *)dword_8283EDC = v6;
   *(_DWORD *)dword_8283EE0 = v5;
   Hunk_ClearTempMemoryHighInternal();
@@ -32909,21 +32909,21 @@ int __cdecl Scr_LoadAnimTreeAtIndex(int a1, int (__cdecl *a2)(int), int a3)
       v16 = FindObject(v15);
       dword_8202444 = Scr_AllocArray();
       v4 = (const char *)SL_ConvertToString(v13);
-      if ( !sub_806D5A6(v4, dword_8202444, v16) )
+      if ( !Scr_LoadAnimTreeInternal(v4, dword_8202444, v16) )
       {
         v5 = (const char *)SL_ConvertToString(v13);
         v6 = va("unknown anim tree '%s'", v5);
         Com_Error(1, v6);
       }
-      v14 = sub_806CEF0(dword_8202444);
+      v14 = Scr_GetAnimTreeSize(dword_8202444);
       v7 = (char *)SL_ConvertToString(v13);
       v12 = XAnimCreateAnims(v7, v14, a2);
       v11 = SL_GetString_("root", 0);
-      sub_806CF7E(v16, 0, v13, v11, a1);
+      ConnectScriptToAnim(v16, 0, v13, v11, a1);
       SL_RemoveRefToString(v11);
-      sub_806D3B4(dword_8202444);
-      sub_806D084(dword_8202444, v16, (int)v12, 1, "root", 0, v13, a1);
-      sub_806D2DC(v16, v13);
+      Scr_PrecacheAnimationTree(dword_8202444);
+      Scr_CreateAnimationTree(dword_8202444, v16, (int)v12, 1, "root", 0, v13, a1);
+      Scr_CheckAnimsDefined(v16, v13);
       RemoveVariable(v10, 0);
       RemoveRefToObject(dword_8202444);
       dword_8202444 = 0;
@@ -32931,7 +32931,7 @@ int __cdecl Scr_LoadAnimTreeAtIndex(int a1, int (__cdecl *a2)(int), int a3)
       v17[0] = (int)v12;
       v8 = GetVariable(v10, 1u);
       SetVariableValue(v8, v17);
-      sub_80C006C(v12);
+      XAnimSetupSyncNodes(v12);
       result = (int)v12;
       dword_820244C[128 * a3 + a1] = (int)v12;
     }
@@ -32947,7 +32947,7 @@ int __cdecl Scr_LoadAnimTreeAtIndex(int a1, int (__cdecl *a2)(int), int a3)
 // 820244C: using guessed type int dword_820244C[128];
 
 //----- (0806D8CE) --------------------------------------------------------
-_DWORD *__userpurge sub_806D8CE@<eax>(_DWORD *a1, char *a2)
+_DWORD *__userpurge Scr_FindAnimTree@<eax>(_DWORD *a1, char *a2)
 {
   int v3[5]; // [esp+8h] [ebp-20h] BYREF
   int v4; // [esp+1Ch] [ebp-Ch]
@@ -32984,12 +32984,12 @@ int __cdecl Scr_FindAnim(char *a1, char *s, _DWORD *a3, int a4)
 
   v7 = SL_GetLowercaseString_(s, 0);
   v4 = Scr_UsingTreeInternal(a1, &v6, a4);
-  Scr_FindAnimInternal(a3, v7, v4);
+  Scr_EmitAnimationInternal(a3, v7, v4);
   return SL_RemoveRefToString(v7);
 }
 
 //----- (0806D9EC) --------------------------------------------------------
-int __cdecl sub_806D9EC(int a1)
+int __cdecl Scr_CompileRemoveRefToString(int a1)
 {
   int result; // eax
 
@@ -33000,14 +33000,14 @@ int __cdecl sub_806D9EC(int a1)
 // 820287C: using guessed type char byte_820287C;
 
 //----- (0806DA0A) --------------------------------------------------------
-int __cdecl sub_806DA0A(int a1)
+int __cdecl EmitCanonicalString(int a1)
 {
   int result; // eax
   _WORD *v2; // ebx
 
   dword_8202860 = TempMallocAlign(2);
   if ( dword_8202A68 == 2 )
-    return sub_806D9EC(a1);
+    return Scr_CompileRemoveRefToString(a1);
   if ( byte_820287C )
     SL_AddRefToString(a1);
   v2 = (_WORD *)dword_8202860;
@@ -33020,14 +33020,14 @@ int __cdecl sub_806DA0A(int a1)
 // 8202A68: using guessed type int dword_8202A68;
 
 //----- (0806DA66) --------------------------------------------------------
-int __cdecl sub_806DA66(int a1)
+int __cdecl EmitCanonicalStringConst(int a1)
 {
   int result; // eax
   unsigned __int8 v2; // [esp+7h] [ebp-1h]
 
   v2 = byte_820287C;
   byte_820287C = 1;
-  sub_806DA0A(a1);
+  EmitCanonicalString(a1);
   result = v2;
   byte_820287C = v2;
   return result;
@@ -33035,10 +33035,10 @@ int __cdecl sub_806DA66(int a1)
 // 820287C: using guessed type char byte_820287C;
 
 //----- (0806DA94) --------------------------------------------------------
-int __cdecl sub_806DA94(int a1, unsigned __int8 a2)
+int __cdecl CompileTransferRefToString(int a1, unsigned __int8 a2)
 {
   if ( dword_8202A68 == 2 )
-    return sub_806D9EC(a1);
+    return Scr_CompileRemoveRefToString(a1);
   if ( byte_820287C )
     SL_AddRefToString(a1);
   return SL_TransferRefToUser(a1, a2);
@@ -33060,7 +33060,7 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
     v6 = dword_8202A40;
     dword_8202A40 = 0;
     for ( i = 0; i < v6; ++i )
-      sub_806EE00((int *)(12 * i + 136325308));
+      EmitValue((int *)(12 * i + 136325308));
   }
   byte_8202A65 = 0;
   if ( !dword_8202870 || a3 == 2 || a3 == 3 )
@@ -33080,7 +33080,7 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
       case ' ':
         if ( *(_BYTE *)dword_8202A6C == 30 )
         {
-          sub_8076FAE();
+          RemoveOpcodePos();
           result = dword_8202A6C;
           *(_BYTE *)dword_8202A6C = 31;
           return result;
@@ -33088,20 +33088,20 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
         v4 = *(unsigned __int8 *)dword_8202A6C - 24;
         if ( v4 > 5 )
           goto LABEL_61;
-        sub_8076FAE();
+        RemoveOpcodePos();
         *(_BYTE *)dword_8202A6C = 31;
-        return sub_806DF8E(v4);
+        return EmitByte(v4);
       case '#':
         if ( *(_BYTE *)dword_8202A6C == 55 )
         {
-          sub_8076FAE();
+          RemoveOpcodePos();
           result = dword_8202A6C;
           *(_BYTE *)dword_8202A6C = 34;
           return result;
         }
         if ( *(_BYTE *)dword_8202A6C != 54 )
           goto LABEL_61;
-        sub_8076FAE();
+        RemoveOpcodePos();
         result = dword_8202A6C;
         *(_BYTE *)dword_8202A6C = 33;
         return result;
@@ -33151,29 +33151,29 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
         switch ( *(_BYTE *)dword_8202A6C )
         {
           case '7':
-            sub_8076FAE();
+            RemoveOpcodePos();
             result = dword_8202A6C;
             *(_BYTE *)dword_8202A6C = 61;
             return result;
           case '6':
-            sub_8076FAE();
+            RemoveOpcodePos();
             result = dword_8202A6C;
             *(_BYTE *)dword_8202A6C = 60;
             return result;
           case '-':
-            sub_8076FAE();
+            RemoveOpcodePos();
             result = dword_8202A6C;
             *(_BYTE *)dword_8202A6C = 59;
             return result;
           case '+':
-            sub_8076FAE();
+            RemoveOpcodePos();
             result = dword_8202A6C;
             *(_BYTE *)dword_8202A6C = 56;
             return result;
         }
         if ( *(_BYTE *)dword_8202A6C != 44 )
           goto LABEL_61;
-        sub_8076FAE();
+        RemoveOpcodePos();
         result = dword_8202A6C;
         *(_BYTE *)dword_8202A6C = 58;
         return result;
@@ -33186,7 +33186,7 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
       case 'R':
         if ( *(_BYTE *)dword_8202A6C != 15 )
           goto LABEL_61;
-        sub_8076FAE();
+        RemoveOpcodePos();
         *(_BYTE *)dword_8202A6C = 80;
         result = dword_8202864;
         if ( *(_BYTE *)dword_8202864 == 78 )
@@ -33202,7 +33202,7 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
       case 'V':
         if ( *(_BYTE *)dword_8202A6C != 15 )
           goto LABEL_61;
-        sub_8076FAE();
+        RemoveOpcodePos();
         result = dword_8202A6C;
         *(_BYTE *)dword_8202A6C = 84;
         return result;
@@ -33217,12 +33217,12 @@ int __cdecl EmitOpcode(int a1, int a2, int a3)
         if ( v5 > 5 )
           goto LABEL_61;
         *(_BYTE *)dword_8202A6C = 90;
-        result = sub_806DF8E(v5);
+        result = EmitByte(v5);
         break;
       case '^':
         if ( *(_BYTE *)dword_8202A6C != 92 )
           goto LABEL_61;
-        sub_8076FAE();
+        RemoveOpcodePos();
         result = dword_8202A6C;
         *(_BYTE *)dword_8202A6C = 95;
         return result;
@@ -33252,19 +33252,19 @@ LABEL_61:
 // 839403C: using guessed type int dword_839403C;
 
 //----- (0806DEC6) --------------------------------------------------------
-int sub_806DEC6()
+int EmitEnd()
 {
   return EmitOpcode(0, 0, 0);
 }
 
 //----- (0806DEEA) --------------------------------------------------------
-int sub_806DEEA()
+int EmitReturn()
 {
   return EmitOpcode(1, -1, 0);
 }
 
 //----- (0806DF0E) --------------------------------------------------------
-int __cdecl sub_806DF0E(int a1)
+int __cdecl EmitCodepos(int a1)
 {
   int result; // eax
 
@@ -33276,7 +33276,7 @@ int __cdecl sub_806DF0E(int a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806DF32) --------------------------------------------------------
-int __cdecl sub_806DF32(unsigned __int16 a1)
+int __cdecl EmitShort3(unsigned __int16 a1)
 {
   int result; // eax
 
@@ -33288,7 +33288,7 @@ int __cdecl sub_806DF32(unsigned __int16 a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806DF60) --------------------------------------------------------
-int __cdecl sub_806DF60(unsigned __int16 a1)
+int __cdecl EmitShort2(unsigned __int16 a1)
 {
   int result; // eax
 
@@ -33300,7 +33300,7 @@ int __cdecl sub_806DF60(unsigned __int16 a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806DF8E) --------------------------------------------------------
-int __cdecl sub_806DF8E(unsigned __int8 a1)
+int __cdecl EmitByte(unsigned __int8 a1)
 {
   int result; // eax
 
@@ -33312,7 +33312,7 @@ int __cdecl sub_806DF8E(unsigned __int8 a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806DFBA) --------------------------------------------------------
-int __cdecl sub_806DFBA(int a1)
+int __cdecl EmitFloat(int a1)
 {
   int result; // eax
 
@@ -33324,7 +33324,7 @@ int __cdecl sub_806DFBA(int a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806DFDE) --------------------------------------------------------
-int __cdecl sub_806DFDE(int a1)
+int __cdecl EmitShort(int a1)
 {
   int result; // eax
 
@@ -33336,7 +33336,7 @@ int __cdecl sub_806DFDE(int a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806E004) --------------------------------------------------------
-int __cdecl sub_806E004(int a1)
+int __cdecl EmitCodepos2(int a1)
 {
   int result; // eax
 
@@ -33348,7 +33348,7 @@ int __cdecl sub_806E004(int a1)
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806E028) --------------------------------------------------------
-int __cdecl sub_806E028(int a1, int a2)
+int __cdecl EvalUndefined(int a1, int a2)
 {
   int result; // eax
 
@@ -33359,15 +33359,15 @@ int __cdecl sub_806E028(int a1, int a2)
 }
 
 //----- (0806E042) --------------------------------------------------------
-void __cdecl sub_806E042(int a1)
+void __cdecl EmitGetUndefined(int a1)
 {
   EmitOpcode(2, 1, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 // 806DAD8: using guessed type _DWORD __cdecl EmitOpcode(_DWORD, _DWORD, _DWORD);
 
 //----- (0806E07A) --------------------------------------------------------
-int __cdecl sub_806E07A(int a1, int a2, _DWORD *a3)
+int __cdecl EvalInteger(int a1, int a2, _DWORD *a3)
 {
   int result; // eax
 
@@ -33379,22 +33379,22 @@ int __cdecl sub_806E07A(int a1, int a2, _DWORD *a3)
 }
 
 //----- (0806E09C) --------------------------------------------------------
-void __cdecl sub_806E09C(int a1, int a2)
+void __cdecl EmitGetInteger(int a1, int a2)
 {
   if ( a1 < 0 )
   {
     if ( a1 > -256 )
     {
       EmitOpcode(5, 1, 0);
-      sub_8076D92(a2, 1);
-      sub_806DF8E(-(char)a1);
+      AddOpcodePos(a2, 1);
+      EmitByte(-(char)a1);
       return;
     }
     if ( a1 > -65536 )
     {
       EmitOpcode(7, 1, 0);
-      sub_8076D92(a2, 1);
-      sub_806DF60(-(__int16)a1);
+      AddOpcodePos(a2, 1);
+      EmitShort2(-(__int16)a1);
       return;
     }
   }
@@ -33403,32 +33403,32 @@ void __cdecl sub_806E09C(int a1, int a2)
     if ( !a1 )
     {
       EmitOpcode(3, 1, 0);
-      sub_8076D92(a2, 1);
+      AddOpcodePos(a2, 1);
       return;
     }
     if ( a1 <= 255 )
     {
       EmitOpcode(4, 1, 0);
-      sub_8076D92(a2, 1);
-      sub_806DF8E(a1);
+      AddOpcodePos(a2, 1);
+      EmitByte(a1);
       return;
     }
     if ( a1 <= 0xFFFF )
     {
       EmitOpcode(6, 1, 0);
-      sub_8076D92(a2, 1);
-      sub_806DF60(a1);
+      AddOpcodePos(a2, 1);
+      EmitShort2(a1);
       return;
     }
   }
   EmitOpcode(8, 1, 0);
-  sub_8076D92(a2, 1);
-  sub_806DF0E(a1);
+  AddOpcodePos(a2, 1);
+  EmitCodepos(a1);
 }
 // 806DAD8: using guessed type _DWORD __cdecl EmitOpcode(_DWORD, _DWORD, _DWORD);
 
 //----- (0806E250) --------------------------------------------------------
-int __cdecl sub_806E250(int a1, int a2, _DWORD *a3)
+int __cdecl EvalFloat(int a1, int a2, _DWORD *a3)
 {
   int result; // eax
 
@@ -33440,33 +33440,33 @@ int __cdecl sub_806E250(int a1, int a2, _DWORD *a3)
 }
 
 //----- (0806E272) --------------------------------------------------------
-int __cdecl sub_806E272(int a1, int a2)
+int __cdecl EmitGetFloat(int a1, int a2)
 {
   EmitOpcode(9, 1, 0);
-  sub_8076D92(a2, 1);
-  return sub_806DFBA(a1);
+  AddOpcodePos(a2, 1);
+  return EmitFloat(a1);
 }
 // 806DAD8: using guessed type _DWORD __cdecl EmitOpcode(_DWORD, _DWORD, _DWORD);
 
 //----- (0806E2B4) --------------------------------------------------------
-void __cdecl sub_806E2B4(int a1)
+void __cdecl EmitAnimTree(int a1)
 {
   if ( dword_8202854 )
-    sub_806E09C(dword_8202854, a1);
+    EmitGetInteger(dword_8202854, a1);
   else
     CompileError(a1, "#using_animtree was not specified");
 }
 // 8202854: using guessed type int dword_8202854;
 
 //----- (0806E2EE) --------------------------------------------------------
-void __cdecl sub_806E2EE(int a1)
+void __cdecl EmitSetVariableField(int a1)
 {
   EmitOpcode(57, -1, 0);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0806E326) --------------------------------------------------------
-int __cdecl sub_806E326(int a1, int a2, int a3)
+int __cdecl Scr_FindLocalVar(int a1, int a2, int a3)
 {
   while ( a2 < *(_DWORD *)(a1 + 12) )
   {
@@ -33478,7 +33478,7 @@ int __cdecl sub_806E326(int a1, int a2, int a3)
 }
 
 //----- (0806E36A) --------------------------------------------------------
-int __cdecl sub_806E36A(int a1, int a2, char a3, int a4)
+int __cdecl Scr_FindLocalVarIndex(int a1, int a2, char a3, int a4)
 {
   const char *v4; // eax
   int i; // [esp+18h] [ebp-10h]
@@ -33493,12 +33493,12 @@ int __cdecl sub_806E36A(int a1, int a2, char a3, int a4)
     {
       ++*(_DWORD *)(a4 + 4);
       EmitOpcode(22, 0, 0);
-      sub_806DA66(*(_DWORD *)(a4 + 4 * i + 24));
+      EmitCanonicalStringConst(*(_DWORD *)(a4 + 4 * i + 24));
     }
     if ( *(_DWORD *)(a4 + 4 * i + 24) == a1 )
       break;
   }
-  sub_806D9EC(a1);
+  Scr_CompileRemoveRefToString(a1);
   if ( (*(_BYTE *)(a4 + (i >> 3) + 16) & (unsigned __int8)(1 << (i & 7))) != 0 )
     return *(_DWORD *)(a4 + 4) - i - 1;
   if ( a3 && !byte_82028B0 )
@@ -33523,7 +33523,7 @@ LABEL_16:
 // 82028B0: using guessed type char byte_82028B0;
 
 //----- (0806E4CA) --------------------------------------------------------
-int __cdecl sub_806E4CA(int a1)
+int __cdecl EmitCreateLocalVars(int a1)
 {
   int result; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -33534,7 +33534,7 @@ int __cdecl sub_806E4CA(int a1)
     for ( i = *(_DWORD *)(a1 + 4); i < *(_DWORD *)(a1 + 8); ++i )
     {
       EmitOpcode(22, 0, 0);
-      sub_806DA66(*(_DWORD *)(a1 + 4 * i + 24));
+      EmitCanonicalStringConst(*(_DWORD *)(a1 + 4 * i + 24));
     }
     result = a1;
     *(_DWORD *)(a1 + 4) = *(_DWORD *)(a1 + 8);
@@ -33543,7 +33543,7 @@ int __cdecl sub_806E4CA(int a1)
 }
 
 //----- (0806E53A) --------------------------------------------------------
-int __cdecl sub_806E53A(_DWORD *a1, int a2)
+int __cdecl EmitRemoveLocalVars(_DWORD *a1, int a2)
 {
   int result; // eax
   unsigned __int8 v3; // [esp+14h] [ebp-4h]
@@ -33556,7 +33556,7 @@ int __cdecl sub_806E53A(_DWORD *a1, int a2)
     if ( result )
     {
       EmitOpcode(23, 0, 0);
-      sub_806DF8E(v3);
+      EmitByte(v3);
       result = a1[2];
       a1[1] = result;
     }
@@ -33565,7 +33565,7 @@ int __cdecl sub_806E53A(_DWORD *a1, int a2)
 }
 
 //----- (0806E59A) --------------------------------------------------------
-int __cdecl sub_806E59A(char a1, int a2, _DWORD *a3)
+int __cdecl EmitNOP2(char a1, int a2, _DWORD *a3)
 {
   int result; // eax
   int v4; // [esp+10h] [ebp-8h]
@@ -33573,12 +33573,12 @@ int __cdecl sub_806E59A(char a1, int a2, _DWORD *a3)
   v4 = dword_839403C;
   if ( a1 )
   {
-    sub_806DEC6();
-    sub_8076D92(a2, 1);
+    EmitEnd();
+    AddOpcodePos(a2, 1);
   }
   else
   {
-    sub_806E53A(a3, (int)a3);
+    EmitRemoveLocalVars(a3, (int)a3);
   }
   result = v4 + 1;
   dword_839403C = v4 + 1;
@@ -33587,21 +33587,21 @@ int __cdecl sub_806E59A(char a1, int a2, _DWORD *a3)
 // 839403C: using guessed type int dword_839403C;
 
 //----- (0806E5EC) --------------------------------------------------------
-void __cdecl sub_806E5EC(int a1)
+void __cdecl Scr_CheckMaxSwitchCases(int a1)
 {
   if ( a1 > 1023 )
     Com_Error(1, "MAX_SWITCH_CASES exceeded");
 }
 
 //----- (0806E614) --------------------------------------------------------
-void __cdecl sub_806E614(int a1)
+void __cdecl Scr_CheckLocalVarsCount(int a1)
 {
   if ( a1 > 63 )
     Com_Error(1, "LOCAL_VAR_STACK_SIZE exceeded");
 }
 
 //----- (0806E638) --------------------------------------------------------
-_DWORD *__cdecl sub_806E638(_DWORD *a1, int a2, _DWORD *a3)
+_DWORD *__cdecl Scr_RegisterLocalVar(_DWORD *a1, int a2, _DWORD *a3)
 {
   _DWORD *result; // eax
   int i; // [esp+4h] [ebp-4h]
@@ -33615,7 +33615,7 @@ _DWORD *__cdecl sub_806E638(_DWORD *a1, int a2, _DWORD *a3)
       if ( result == a1 )
         return result;
     }
-    sub_806E614(a3[3]);
+    Scr_CheckLocalVarsCount(a3[3]);
     a3[a3[3] + 6] = a1;
     result = a3;
     ++a3[3];
@@ -33624,7 +33624,7 @@ _DWORD *__cdecl sub_806E638(_DWORD *a1, int a2, _DWORD *a3)
 }
 
 //----- (0806E69A) --------------------------------------------------------
-_DWORD *__cdecl sub_806E69A(_DWORD *a1, size_t *a2)
+_DWORD *__cdecl Scr_CopyBlock(_DWORD *a1, size_t *a2)
 {
   _DWORD *result; // eax
   unsigned int v3; // [esp+10h] [ebp-18h]
@@ -33649,7 +33649,7 @@ _DWORD *__cdecl sub_806E69A(_DWORD *a1, size_t *a2)
 }
 
 //----- (0806E714) --------------------------------------------------------
-int __cdecl sub_806E714(int a1, int a2, int a3)
+int __cdecl Scr_InitFromChildBlocks(int a1, int a2, int a3)
 {
   int result; // eax
   int v4; // [esp+0h] [ebp-20h]
@@ -33690,7 +33690,7 @@ LABEL_15:
 }
 
 //----- (0806E846) --------------------------------------------------------
-void __cdecl sub_806E846(int a1, int a2, _DWORD *a3)
+void __cdecl Scr_AppendChildBlocks(int a1, int a2, _DWORD *a3)
 {
   int v3; // [esp+1Ch] [ebp-Ch]
   int i; // [esp+20h] [ebp-8h]
@@ -33704,11 +33704,11 @@ void __cdecl sub_806E846(int a1, int a2, _DWORD *a3)
     for ( j = 0; j < *(_DWORD *)(*(_DWORD *)a1 + 12); ++j )
     {
       v3 = *(_DWORD *)(*(_DWORD *)a1 + 4 * j + 24);
-      if ( sub_806E326((int)a3, 0, v3) < 0 )
+      if ( Scr_FindLocalVar((int)a3, 0, v3) < 0 )
       {
         for ( k = 1; k < a2; ++k )
         {
-          if ( sub_806E326(*(_DWORD *)(a1 + 4 * k), 0, v3) < 0 )
+          if ( Scr_FindLocalVar(*(_DWORD *)(a1 + 4 * k), 0, v3) < 0 )
             goto LABEL_14;
         }
         a3[a3[3]++ + 6] = v3;
@@ -33720,7 +33720,7 @@ LABEL_14:
 }
 
 //----- (0806E94E) --------------------------------------------------------
-void __cdecl sub_806E94E(int a1, int a2, _DWORD *a3)
+void __cdecl Scr_MergeChildBlocks(int a1, int a2, _DWORD *a3)
 {
   int v3; // [esp+14h] [ebp-14h]
   int v4; // [esp+18h] [ebp-10h]
@@ -33737,11 +33737,11 @@ void __cdecl sub_806E94E(int a1, int a2, _DWORD *a3)
       for ( j = 0; j < a3[3]; ++j )
       {
         v4 = a3[j + 6];
-        v6 = sub_806E326(v3, j, v4);
+        v6 = Scr_FindLocalVar(v3, j, v4);
         if ( v6 < 0 )
         {
           v6 = *(_DWORD *)(v3 + 12);
-          sub_806E614(v6);
+          Scr_CheckLocalVarsCount(v6);
           ++*(_DWORD *)(v3 + 12);
         }
         while ( v6 > j )
@@ -33756,7 +33756,7 @@ void __cdecl sub_806E94E(int a1, int a2, _DWORD *a3)
 }
 
 //----- (0806EA5A) --------------------------------------------------------
-_DWORD *__cdecl sub_806EA5A(int a1, _DWORD *a2)
+_DWORD *__cdecl Scr_TransferBlock(int a1, _DWORD *a2)
 {
   _DWORD *result; // eax
   int v3; // [esp+10h] [ebp-18h]
@@ -33766,11 +33766,11 @@ _DWORD *__cdecl sub_806EA5A(int a1, _DWORD *a2)
   for ( i = 0; i < a2[2] || i < *(_DWORD *)(a1 + 4); ++i )
   {
     v3 = *(_DWORD *)(a1 + 4 * i + 24);
-    v4 = sub_806E326((int)a2, i, v3);
+    v4 = Scr_FindLocalVar((int)a2, i, v3);
     if ( v4 < 0 )
     {
       v4 = a2[3];
-      sub_806E614(v4);
+      Scr_CheckLocalVarsCount(v4);
       ++a2[3];
     }
     if ( v4 >= a2[2] )
@@ -33791,39 +33791,39 @@ _DWORD *__cdecl sub_806EA5A(int a1, _DWORD *a2)
 }
 
 //----- (0806EB94) --------------------------------------------------------
-void __cdecl sub_806EB94(int a1, int a2, int a3)
+void __cdecl EmitSafeSetVariableField(int a1, int a2, int a3)
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_806E36A(a1, a2, 1, a3);
+  v3 = Scr_FindLocalVarIndex(a1, a2, 1, a3);
   if ( v3 )
     EmitOpcode(50, 0, 0);
   else
     EmitOpcode(49, 0, 0);
   if ( v3 )
-    sub_806DF8E(v3);
-  sub_8076D92(a2, 0);
+    EmitByte(v3);
+  AddOpcodePos(a2, 0);
 }
 
 //----- (0806EC16) --------------------------------------------------------
-_DWORD *__cdecl sub_806EC16(_DWORD *a1, int a2, _DWORD *a3)
+_DWORD *__cdecl Scr_CalcLocalVarsSafeSetVariableField(_DWORD *a1, int a2, _DWORD *a3)
 {
-  return sub_806E638(a1, a2, a3);
+  return Scr_RegisterLocalVar(a1, a2, a3);
 }
 
 //----- (0806EC38) --------------------------------------------------------
-void __cdecl sub_806EC38(int a1, int a2, int a3)
+void __cdecl EmitSafeSetWaittillVariableField(int a1, int a2, int a3)
 {
   unsigned __int8 v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_806E36A(a1, a2, 1, a3);
+  v3 = Scr_FindLocalVarIndex(a1, a2, 1, a3);
   EmitOpcode(51, 0, 0);
-  sub_806DF8E(v3);
-  sub_8076D92(a2, 0);
+  EmitByte(v3);
+  AddOpcodePos(a2, 0);
 }
 
 //----- (0806ECA0) --------------------------------------------------------
-int __cdecl sub_806ECA0(int a1, int a2, _DWORD *a3)
+int __cdecl EvalString(int a1, int a2, _DWORD *a3)
 {
   int result; // eax
 
@@ -33835,17 +33835,17 @@ int __cdecl sub_806ECA0(int a1, int a2, _DWORD *a3)
 }
 
 //----- (0806ECC2) --------------------------------------------------------
-int __cdecl sub_806ECC2(int a1, int a2)
+int __cdecl EmitGetString(int a1, int a2)
 {
   EmitOpcode(10, 1, 0);
-  sub_8076D92(a2, 1);
-  sub_806DFDE(a1);
-  return sub_806DA94(a1, 1u);
+  AddOpcodePos(a2, 1);
+  EmitShort(a1);
+  return CompileTransferRefToString(a1, 1u);
 }
 // 806DAD8: using guessed type _DWORD __cdecl EmitOpcode(_DWORD, _DWORD, _DWORD);
 
 //----- (0806ED18) --------------------------------------------------------
-int __cdecl sub_806ED18(int a1, int a2, _DWORD *a3)
+int __cdecl EvalIString(int a1, int a2, _DWORD *a3)
 {
   int result; // eax
 
@@ -33857,50 +33857,50 @@ int __cdecl sub_806ED18(int a1, int a2, _DWORD *a3)
 }
 
 //----- (0806ED3A) --------------------------------------------------------
-int __cdecl sub_806ED3A(int a1, int a2)
+int __cdecl EmitGetIString(int a1, int a2)
 {
   EmitOpcode(11, 1, 0);
-  sub_8076D92(a2, 1);
-  sub_806DFDE(a1);
-  return sub_806DA94(a1, 1u);
+  AddOpcodePos(a2, 1);
+  EmitShort(a1);
+  return CompileTransferRefToString(a1, 1u);
 }
 // 806DAD8: using guessed type _DWORD __cdecl EmitOpcode(_DWORD, _DWORD, _DWORD);
 
 //----- (0806ED90) --------------------------------------------------------
-int __cdecl sub_806ED90(int a1, int a2)
+int __cdecl EmitGetVector(int a1, int a2)
 {
   int i; // [esp+14h] [ebp-4h]
 
   EmitOpcode(12, 1, 0);
-  sub_8076D92(a2, 1);
+  AddOpcodePos(a2, 1);
   for ( i = 0; i <= 2; ++i )
-    sub_806DFBA(*(_DWORD *)(a1 + 4 * i));
+    EmitFloat(*(_DWORD *)(a1 + 4 * i));
   return RemoveRefToVector(a1);
 }
 // 806DAD8: using guessed type _DWORD __cdecl EmitOpcode(_DWORD, _DWORD, _DWORD);
 
 //----- (0806EE00) --------------------------------------------------------
-void __cdecl sub_806EE00(int *a1)
+void __cdecl EmitValue(int *a1)
 {
   switch ( a1[1] )
   {
     case 0:
-      sub_806E042(a1[2]);
+      EmitGetUndefined(a1[2]);
       break;
     case 2:
-      sub_806ECC2(*a1, a1[2]);
+      EmitGetString(*a1, a1[2]);
       break;
     case 3:
-      sub_806ED3A(*a1, a1[2]);
+      EmitGetIString(*a1, a1[2]);
       break;
     case 4:
-      sub_806ED90(*a1, a1[2]);
+      EmitGetVector(*a1, a1[2]);
       break;
     case 5:
-      sub_806E272(*a1, a1[2]);
+      EmitGetFloat(*a1, a1[2]);
       break;
     case 6:
-      sub_806E09C(*a1, a1[2]);
+      EmitGetInteger(*a1, a1[2]);
       break;
     default:
       return;
@@ -33908,7 +33908,7 @@ void __cdecl sub_806EE00(int *a1)
 }
 
 //----- (0806EEC6) --------------------------------------------------------
-char *__cdecl sub_806EEC6(int *a1)
+char *__cdecl Scr_PushValue(int *a1)
 {
   char *result; // eax
   int v2; // ecx
@@ -33929,97 +33929,97 @@ char *__cdecl sub_806EEC6(int *a1)
 // 8202A40: using guessed type int dword_8202A40;
 
 //----- (0806EF26) --------------------------------------------------------
-void sub_806EF26()
+void Scr_PopValue()
 {
   --dword_8202A40;
 }
 // 8202A40: using guessed type int dword_8202A40;
 
 //----- (0806EF32) --------------------------------------------------------
-void __cdecl sub_806EF32(int a1)
+void __cdecl EmitCastBool(int a1)
 {
   EmitOpcode(91, 0, 0);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0806EF6A) --------------------------------------------------------
-void __cdecl sub_806EF6A(int a1)
+void __cdecl EmitBoolNot(int a1)
 {
   EmitOpcode(92, 0, 0);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0806EFA2) --------------------------------------------------------
-void __cdecl sub_806EFA2(int a1)
+void __cdecl EmitBoolComplement(int a1)
 {
   EmitOpcode(93, 0, 0);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0806EFDA) --------------------------------------------------------
-void __cdecl sub_806EFDA(int a1, int a2, int a3)
+void __cdecl EmitSize(int a1, int a2, int a3)
 {
-  sub_8071552(a1, a3);
+  EmitPrimitiveExpression(a1, a3);
   EmitOpcode(118, 0, 0);
-  sub_8076D92(a2, 0);
+  AddOpcodePos(a2, 0);
 }
 
 //----- (0806F024) --------------------------------------------------------
-void __cdecl sub_806F024(int a1)
+void __cdecl EmitSelf(int a1)
 {
   EmitOpcode(15, 1, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F05C) --------------------------------------------------------
-void __cdecl sub_806F05C(int a1)
+void __cdecl EmitLevel(int a1)
 {
   EmitOpcode(16, 1, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F094) --------------------------------------------------------
-void __cdecl sub_806F094(int a1)
+void __cdecl EmitGame(int a1)
 {
   EmitOpcode(17, 1, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F0CC) --------------------------------------------------------
-void __cdecl sub_806F0CC(int a1)
+void __cdecl EmitAnim(int a1)
 {
   EmitOpcode(18, 1, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F104) --------------------------------------------------------
-void __cdecl sub_806F104(int a1)
+void __cdecl EmitSelfObject(int a1)
 {
   EmitOpcode(38, 0, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F13C) --------------------------------------------------------
-void __cdecl sub_806F13C(int a1)
+void __cdecl EmitLevelObject(int a1)
 {
   EmitOpcode(13, 0, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F174) --------------------------------------------------------
-void __cdecl sub_806F174(int a1)
+void __cdecl EmitAnimObject(int a1)
 {
   EmitOpcode(14, 0, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F1AC) --------------------------------------------------------
-void __cdecl sub_806F1AC(int a1, int a2, int a3)
+void __cdecl EmitLocalVariable(int a1, int a2, int a3)
 {
   int v3; // [esp+10h] [ebp-8h]
   int v4; // [esp+14h] [ebp-4h]
 
-  v4 = sub_806E36A(a1, a2, 0, a3);
+  v4 = Scr_FindLocalVarIndex(a1, a2, 0, a3);
   if ( v4 > 5 )
   {
     v3 = 30;
@@ -34031,108 +34031,108 @@ void __cdecl sub_806F1AC(int a1, int a2, int a3)
     EmitOpcode(v4 + 24, 1, 0);
   }
   if ( v3 == 30 )
-    sub_806DF8E(v4);
-  sub_8076D92(a2, 1);
+    EmitByte(v4);
+  AddOpcodePos(a2, 1);
 }
 
 //----- (0806F230) --------------------------------------------------------
-void __cdecl sub_806F230(int a1, int a2, int a3)
+void __cdecl EmitLocalVariableRef(int a1, int a2, int a3)
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_806E36A(a1, a2, 1, a3);
+  v3 = Scr_FindLocalVarIndex(a1, a2, 1, a3);
   if ( v3 )
     EmitOpcode(55, 0, 0);
   else
     EmitOpcode(54, 0, 0);
   if ( v3 )
-    sub_806DF8E(v3);
-  sub_8076D92(a2, 1);
+    EmitByte(v3);
+  AddOpcodePos(a2, 1);
 }
 
 //----- (0806F2B2) --------------------------------------------------------
-_DWORD *__cdecl sub_806F2B2(_DWORD *a1, int a2, _DWORD *a3)
+_DWORD *__cdecl Scr_CalcLocalVarsSafeSetVariableField2(_DWORD *a1, int a2, _DWORD *a3)
 {
-  return sub_806E638(a1, a2, a3);
+  return Scr_RegisterLocalVar(a1, a2, a3);
 }
 
 //----- (0806F2D4) --------------------------------------------------------
-void __cdecl sub_806F2D4(int a1)
+void __cdecl EmitGameRef(int a1)
 {
   EmitOpcode(20, 0, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F30C) --------------------------------------------------------
-void __cdecl sub_806F30C(int a1, int a2)
+void __cdecl EmitEvalArray(int a1, int a2)
 {
   EmitOpcode(32, -1, 0);
-  sub_8076D92(a2, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a2, 0);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F356) --------------------------------------------------------
-void __cdecl sub_806F356(int a1, int a2)
+void __cdecl EmitEvalArrayRef(int a1, int a2)
 {
   EmitOpcode(35, -1, 0);
-  sub_8076D92(a2, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a2, 0);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F3A0) --------------------------------------------------------
-void __cdecl sub_806F3A0(int a1, int a2)
+void __cdecl EmitClearArray(int a1, int a2)
 {
   EmitOpcode(36, -1, 0);
-  sub_8076D92(a2, 0);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a2, 0);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0806F3EA) --------------------------------------------------------
-void __cdecl sub_806F3EA(int a1)
+void __cdecl EmitEmptyArray(int a1)
 {
   EmitOpcode(37, 1, 0);
-  sub_8076D92(a1, 1);
+  AddOpcodePos(a1, 1);
 }
 
 //----- (0806F422) --------------------------------------------------------
-int __cdecl sub_806F422(unsigned int a1, int a2)
+int __cdecl EmitAnimation(unsigned int a1, int a2)
 {
   EmitOpcode(19, 1, 0);
-  sub_8076D92(a2, 1);
-  sub_806DF0E(-1);
-  sub_806CA94((_DWORD *)dword_8202860, a1, a2);
-  return sub_806D9EC(a1);
+  AddOpcodePos(a2, 1);
+  EmitCodepos(-1);
+  Scr_EmitAnimation((_DWORD *)dword_8202860, a1, a2);
+  return Scr_CompileRemoveRefToString(a1);
 }
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0806F48C) --------------------------------------------------------
-int __cdecl sub_806F48C(_DWORD *a1, int a2, int a3, int a4)
+int __cdecl EmitFieldVariable(_DWORD *a1, int a2, int a3, int a4)
 {
-  sub_8071D92(a1, a3, a4);
+  EmitPrimitiveExpressionFieldObject(a1, a3, a4);
   EmitOpcode(42, 1, 0);
-  sub_8076D92(a3, 0);
-  return sub_806DA0A(a2);
+  AddOpcodePos(a3, 0);
+  return EmitCanonicalString(a2);
 }
 
 //----- (0806F4E8) --------------------------------------------------------
-int __cdecl sub_806F4E8(_DWORD *a1, int a2, int a3, int a4)
+int __cdecl EmitFieldVariableRef(_DWORD *a1, int a2, int a3, int a4)
 {
-  sub_8071D92(a1, a3, a4);
+  EmitPrimitiveExpressionFieldObject(a1, a3, a4);
   EmitOpcode(46, 0, 0);
-  return sub_806DA0A(a2);
+  return EmitCanonicalString(a2);
 }
 
 //----- (0806F530) --------------------------------------------------------
-int __cdecl sub_806F530(_DWORD *a1, int a2, int a3, int a4, int a5)
+int __cdecl EmitClearFieldVariable(_DWORD *a1, int a2, int a3, int a4, int a5)
 {
-  sub_8071D92(a1, a3, a5);
+  EmitPrimitiveExpressionFieldObject(a1, a3, a5);
   EmitOpcode(47, 0, 0);
-  sub_8076D92(a4, 0);
-  return sub_806DA0A(a2);
+  AddOpcodePos(a4, 0);
+  return EmitCanonicalString(a2);
 }
 
 //----- (0806F58C) --------------------------------------------------------
-char *__cdecl sub_806F58C(int a1, int a2)
+char *__cdecl EmitObject(int a1, int a2)
 {
   int v3; // [esp+10h] [ebp-18h]
   int v4; // [esp+14h] [ebp-14h]
@@ -34148,82 +34148,82 @@ char *__cdecl sub_806F58C(int a1, int a2)
     v5 = atoi((const char *)(v4 + 1));
     if ( v5 )
     {
-      if ( v5 <= 0xFFFD && !sub_807DF52((unsigned __int16)v5) )
+      if ( v5 <= 0xFFFD && !IsObjectFree((unsigned __int16)v5) )
       {
         v3 = GetVarType((unsigned __int16)v5);
         if ( v3 >= 15 && (v3 <= 18 || v3 == 23) )
         {
           EmitOpcode(130, 1, 0);
-          return (char *)sub_806DF32(v5);
+          return (char *)EmitShort3(v5);
         }
       }
     }
     return CompileError(a2, "bad expression");
   }
-  v7 = sub_807F6F2(*(_BYTE *)v4);
+  v7 = Scr_GetClassnumForCharId(*(_BYTE *)v4);
   if ( v7 < 0 )
     return CompileError(a2, "bad expression");
   v6 = atoi((const char *)(v4 + 1));
   if ( !v6 && *(_BYTE *)(v4 + 1) != 48 )
     return CompileError(a2, "bad expression");
   EmitOpcode(129, 1, 0);
-  sub_806DF0E(v7);
-  return (char *)sub_806DF0E(v6);
+  EmitCodepos(v7);
+  return (char *)EmitCodepos(v6);
 }
 // 8202A64: using guessed type char byte_8202A64;
 
 //----- (0806F6FE) --------------------------------------------------------
-int sub_806F6FE()
+int EmitDecTop()
 {
   return EmitOpcode(88, -1, 0);
 }
 
 //----- (0806F722) --------------------------------------------------------
-void __cdecl sub_806F722(int a1)
+void __cdecl EmitCastFieldObject(int a1)
 {
   EmitOpcode(89, -1, 0);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0806F75A) --------------------------------------------------------
-void __cdecl sub_806F75A(int a1, _DWORD *a2, int a3, int a4, int a5)
+void __cdecl EmitArrayVariable(int a1, _DWORD *a2, int a3, int a4, int a5)
 {
-  sub_8071B6C(a2, a5);
-  sub_8071552(a1, a5);
-  sub_806F30C(a3, a4);
+  EmitExpression(a2, a5);
+  EmitPrimitiveExpression(a1, a5);
+  EmitEvalArray(a3, a4);
 }
 
 //----- (0806F798) --------------------------------------------------------
-void __cdecl sub_806F798(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5)
+void __cdecl EmitArrayVariableRef(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5)
 {
-  sub_8071B6C(a2, a5);
-  sub_8071D0A(a1, a3, a5);
-  sub_806F356(a3, a4);
+  EmitExpression(a2, a5);
+  EmitArrayPrimitiveExpressionRef(a1, a3, a5);
+  EmitEvalArrayRef(a3, a4);
 }
 
 //----- (0806F7DE) --------------------------------------------------------
-int __cdecl sub_806F7DE(int *a1, int a2)
+int __cdecl Scr_CalcLocalVarsArrayVariableRef(int *a1, int a2)
 {
-  return sub_8071D66(a1, a2);
+  return Scr_CalcLocalVarsArrayPrimitiveExpressionRef(a1, a2);
 }
 
 //----- (0806F7F8) --------------------------------------------------------
-void __cdecl sub_806F7F8(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5)
+void __cdecl EmitClearArrayVariable(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5)
 {
-  sub_8071B6C(a2, a5);
-  sub_8071D0A(a1, a3, a5);
-  sub_806F3A0(a3, a4);
+  EmitExpression(a2, a5);
+  EmitArrayPrimitiveExpressionRef(a1, a3, a5);
+  EmitClearArray(a3, a4);
 }
 
 //----- (0806F83E) --------------------------------------------------------
-void __cdecl sub_806F83E(int *a1, int a2)
+void __cdecl EmitVariableExpression(int *a1, int a2)
 {
   int v2; // [esp+20h] [ebp-8h]
 
   v2 = *a1;
   if ( *a1 == 15 )
   {
-    sub_806F48C((_DWORD *)a1[1], a1[2], a1[3], a2);
+    EmitFieldVariable((_DWORD *)a1[1], a1[2], a1[3], a2);
   }
   else if ( v2 > 15 )
   {
@@ -34236,22 +34236,22 @@ void __cdecl sub_806F83E(int *a1, int a2)
     }
     else if ( v2 == 79 )
     {
-      sub_806F58C(a1[1], a1[2]);
+      EmitObject(a1[1], a1[2]);
     }
   }
   else if ( v2 == 4 )
   {
-    sub_806F1AC(a1[1], a1[2], a2);
+    EmitLocalVariable(a1[1], a1[2], a2);
   }
   else if ( v2 == 13 )
   {
-    sub_806F75A(a1[1], (_DWORD *)a1[2], a1[3], a1[4], a2);
+    EmitArrayVariable(a1[1], (_DWORD *)a1[2], a1[3], a1[4], a2);
   }
 }
 // 8202A64: using guessed type char byte_8202A64;
 
 //----- (0806F96C) --------------------------------------------------------
-int __cdecl sub_806F96C(int *a1)
+int __cdecl GetExpressionCount(int *a1)
 {
   int v2; // [esp+0h] [ebp-8h]
   int i; // [esp+4h] [ebp-4h]
@@ -34263,7 +34263,7 @@ int __cdecl sub_806F96C(int *a1)
 }
 
 //----- (0806F9A0) --------------------------------------------------------
-int __cdecl sub_806F9A0(int *a1, int a2)
+int __cdecl EmitExpressionList(int *a1, int a2)
 {
   int v3; // [esp+10h] [ebp-8h]
   int i; // [esp+14h] [ebp-4h]
@@ -34271,14 +34271,14 @@ int __cdecl sub_806F9A0(int *a1, int a2)
   v3 = 0;
   for ( i = *a1; i; i = *(_DWORD *)(i + 4) )
   {
-    sub_8071B6C(**(_DWORD ***)i, a2);
+    EmitExpression(**(_DWORD ***)i, a2);
     ++v3;
   }
   return v3;
 }
 
 //----- (0806F9EA) --------------------------------------------------------
-int __cdecl sub_806F9EA(int a1)
+int __cdecl GetSingleParameter(int a1)
 {
   if ( !*(_DWORD *)a1 )
     return 0;
@@ -34288,7 +34288,7 @@ int __cdecl sub_806F9EA(int a1)
 }
 
 //----- (0806FA26) --------------------------------------------------------
-_DWORD *__cdecl sub_806FA26(_DWORD *a1)
+_DWORD *__cdecl AddExpressionListOpcodePos(_DWORD *a1)
 {
   _DWORD *result; // eax
   _DWORD *i; // [esp+14h] [ebp-4h]
@@ -34298,7 +34298,7 @@ _DWORD *__cdecl sub_806FA26(_DWORD *a1)
     result = (_DWORD *)*a1;
     for ( i = (_DWORD *)*a1; i; i = result )
     {
-      sub_8076D92(*(_DWORD *)(*i + 4), 0);
+      AddOpcodePos(*(_DWORD *)(*i + 4), 0);
       result = (_DWORD *)i[1];
     }
   }
@@ -34307,12 +34307,12 @@ _DWORD *__cdecl sub_806FA26(_DWORD *a1)
 // 839400A: using guessed type char byte_839400A;
 
 //----- (0806FA70) --------------------------------------------------------
-int __cdecl sub_806FA70(unsigned int a1, int a2, char a3)
+int __cdecl AddFilePrecache(unsigned int a1, int a2, char a3)
 {
   int v3; // eax
 
   SL_AddRefToString(a1);
-  sub_806D9EC(a1);
+  Scr_CompileRemoveRefToString(a1);
   *(_WORD *)dword_82028B4 = a1;
   *(_DWORD *)(dword_82028B4 + 4) = a2;
   *(_BYTE *)(dword_82028B4 + 2) = a3;
@@ -34324,7 +34324,7 @@ int __cdecl sub_806FA70(unsigned int a1, int a2, char a3)
 // 8202A4C: using guessed type int dword_8202A4C;
 
 //----- (0806FADC) --------------------------------------------------------
-void __cdecl sub_806FADC(_DWORD *a1, int a2)
+void __cdecl EmitFunction(_DWORD *a1, int a2)
 {
   char *v2; // eax
   int v3; // eax
@@ -34352,10 +34352,10 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
 
   if ( dword_8202A68 == 2 )
   {
-    sub_806D9EC(a1[1]);
+    Scr_CompileRemoveRefToString(a1[1]);
     if ( *a1 == 21 )
     {
-      sub_806D9EC(a1[2]);
+      Scr_CompileRemoveRefToString(a1[2]);
       --dword_8202A44;
     }
     return;
@@ -34365,7 +34365,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
   {
     v10 = 0;
     v19 = GetVariable(dword_8202868, a1[1]);
-    sub_806DA94(a1[1], 2u);
+    CompileTransferRefToString(a1[1], 2u);
     v20 = GetObjectA(v19);
   }
   else
@@ -34373,13 +34373,13 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
     v10 = 1;
     v2 = (char *)SL_ConvertToString(a1[1]);
     v15 = Scr_CreateCanonicalFilename(v2);
-    sub_806D9EC(a1[1]);
+    Scr_CompileRemoveRefToString(a1[1]);
     v3 = FindVariable(dword_8202A48, v15);
     Scr_EvalVariable(&v8, v3);
     v21 = v8;
     v22 = v9;
     v14 = v9 != 0;
-    v16 = sub_806FA70(v15, a2, 0);
+    v16 = AddFilePrecache(v15, a2, 0);
     if ( v14 )
     {
       v19 = FindVariable(v16, a1[2]);
@@ -34393,7 +34393,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
     {
       v19 = GetVariable(v16, a1[2]);
     }
-    sub_806DA94(a1[2], 2u);
+    CompileTransferRefToString(a1[2], 2u);
     v20 = GetObjectA(v19);
     v13 = FindVariable(v20, 1);
     if ( v13 )
@@ -34409,14 +34409,14 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
       if ( v11 )
       {
         if ( v12 == 7 || dword_8202A68 )
-          sub_806E004(v11);
+          EmitCodepos2(v11);
         else
           CompileError(a2, "normal script cannot reference a function in a /# ... #/ comment");
         return;
       }
     }
   }
-  sub_806DF0E(v10);
+  EmitCodepos(v10);
   v18 = GetVariable(v20, 0);
   Scr_EvalVariable(&v4, v18);
   v23 = v4;
@@ -34435,7 +34435,7 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
   SetNewVariableValue(v17, &v21);
   ++v23;
   SetVariableValue(v18, &v23);
-  sub_8076D92(a2, 0);
+  AddOpcodePos(a2, 0);
 }
 // 8202860: using guessed type int dword_8202860;
 // 8202868: using guessed type int dword_8202868;
@@ -34444,15 +34444,15 @@ void __cdecl sub_806FADC(_DWORD *a1, int a2)
 // 8202A68: using guessed type int dword_8202A68;
 
 //----- (0806FE34) --------------------------------------------------------
-void __cdecl sub_806FE34(_DWORD *a1, int a2)
+void __cdecl EmitGetFunction(_DWORD *a1, int a2)
 {
   EmitOpcode(21, 1, 0);
-  sub_8076D92(a2, 3);
-  sub_806FADC(a1, a2);
+  AddOpcodePos(a2, 3);
+  EmitFunction(a1, a2);
 }
 
 //----- (0806FE7E) --------------------------------------------------------
-int __cdecl sub_806FE7E(int a1)
+int __cdecl AddFunction(int a1)
 {
   int i; // [esp+14h] [ebp-4h]
 
@@ -34470,83 +34470,83 @@ int __cdecl sub_806FE7E(int a1)
 // 8202A78: using guessed type int dword_8202A78[1058];
 
 //----- (0806FEF6) --------------------------------------------------------
-void __cdecl sub_806FEF6(_DWORD *a1, int a2, char a3, int a4)
+void __cdecl EmitPostScriptFunction(_DWORD *a1, int a2, char a3, int a4)
 {
   if ( a3 )
     EmitOpcode(82, -a2 - 1, 3);
   else
     EmitOpcode(80, -a2, 3);
-  sub_8076D92(a4, 3);
-  sub_806FADC(a1, a4);
+  AddOpcodePos(a4, 3);
+  EmitFunction(a1, a4);
 }
 
 //----- (0806FF6C) --------------------------------------------------------
-void __cdecl sub_806FF6C(int a1, int a2, char a3, int a4, int a5, int a6)
+void __cdecl EmitPostScriptFunctionPointer(int a1, int a2, char a3, int a4, int a5, int a6)
 {
-  sub_8071B6C(a1, a6);
+  EmitExpression(a1, a6);
   if ( a3 )
     EmitOpcode(83, -a2 - 2, 3);
   else
     EmitOpcode(81, -a2 - 1, 3);
-  sub_8076D92(a5, 0);
-  sub_8076D92(a4, 1);
+  AddOpcodePos(a5, 0);
+  AddOpcodePos(a4, 1);
 }
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 
 //----- (0806FFF8) --------------------------------------------------------
-int __cdecl sub_806FFF8(_DWORD *a1, int a2, char a3, int a4)
+int __cdecl EmitPostScriptThread(_DWORD *a1, int a2, char a3, int a4)
 {
   if ( a3 )
     EmitOpcode(86, -a2, 2);
   else
     EmitOpcode(84, 1 - a2, 2);
-  sub_8076D92(a4, 3);
-  sub_806FADC(a1, a4);
-  return sub_806DF0E(a2);
+  AddOpcodePos(a4, 3);
+  EmitFunction(a1, a4);
+  return EmitCodepos(a2);
 }
 
 //----- (0807007C) --------------------------------------------------------
-int __cdecl sub_807007C(int a1, int a2, char a3, int a4, int a5)
+int __cdecl EmitPostScriptThreadPointer(int a1, int a2, char a3, int a4, int a5)
 {
-  sub_8071B6C(a1, a5);
+  EmitExpression(a1, a5);
   if ( a3 )
     EmitOpcode(87, -a2 - 1, 2);
   else
     EmitOpcode(85, -a2, 2);
-  sub_8076D92(a4, 1);
-  return sub_806DF0E(a2);
+  AddOpcodePos(a4, 1);
+  return EmitCodepos(a2);
 }
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 
 //----- (080700FE) --------------------------------------------------------
-void __cdecl sub_80700FE(_DWORD *a1, int a2, char a3, int a4, int a5)
+void __cdecl EmitPostScriptFunctionCall(_DWORD *a1, int a2, char a3, int a4, int a5)
 {
   if ( *a1 == 18 )
   {
-    sub_806FEF6((_DWORD *)a1[1], a2, a3, a4);
+    EmitPostScriptFunction((_DWORD *)a1[1], a2, a3, a4);
   }
   else if ( *a1 == 22 )
   {
-    sub_806FF6C(a1[1], a2, a3, a4, a1[2], a5);
+    EmitPostScriptFunctionPointer(a1[1], a2, a3, a4, a1[2], a5);
   }
 }
 
 //----- (08070184) --------------------------------------------------------
-void __cdecl sub_8070184(_DWORD *a1, int a2, char a3, int a4, int a5, int a6)
+void __cdecl EmitPostScriptThreadCall(_DWORD *a1, int a2, char a3, int a4, int a5, int a6)
 {
   if ( *a1 == 18 )
   {
-    sub_806FFF8((_DWORD *)a1[1], a2, a3, a5);
+    EmitPostScriptThread((_DWORD *)a1[1], a2, a3, a5);
   }
   else if ( *a1 == 22 )
   {
-    sub_807007C(a1[1], a2, a3, a1[2], a6);
+    EmitPostScriptThreadPointer(a1[1], a2, a3, a1[2], a6);
   }
-  sub_8076D92(a4, 0);
+  AddOpcodePos(a4, 0);
 }
 
 //----- (08070216) --------------------------------------------------------
-int __cdecl sub_8070216(_DWORD *a1)
+int __cdecl EmitPreFunctionCall(_DWORD *a1)
 {
   int result; // eax
 
@@ -34557,20 +34557,20 @@ int __cdecl sub_8070216(_DWORD *a1)
 }
 
 //----- (08070242) --------------------------------------------------------
-void __cdecl sub_8070242(int a1, int a2, char a3, int a4)
+void __cdecl EmitPostFunctionCall(int a1, int a2, char a3, int a4)
 {
   if ( *(_DWORD *)a1 == 26 )
   {
-    sub_80700FE(*(_DWORD **)(a1 + 4), a2, a3, *(_DWORD *)(a1 + 8), a4);
+    EmitPostScriptFunctionCall(*(_DWORD **)(a1 + 4), a2, a3, *(_DWORD *)(a1 + 8), a4);
   }
   else if ( *(_DWORD *)a1 == 30 )
   {
-    sub_8070184(*(_DWORD **)(a1 + 4), a2, a3, *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a4);
+    EmitPostScriptThreadCall(*(_DWORD **)(a1 + 4), a2, a3, *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a4);
   }
 }
 
 //----- (080702D8) --------------------------------------------------------
-int __cdecl sub_80702D8(_DWORD *a1)
+int __cdecl Scr_GetBuiltin(_DWORD *a1)
 {
   _DWORD *v3; // [esp+20h] [ebp+8h]
   _DWORD *v4; // [esp+20h] [ebp+8h]
@@ -34590,7 +34590,7 @@ int __cdecl sub_80702D8(_DWORD *a1)
 // 8202868: using guessed type int dword_8202868;
 
 //----- (0807035E) --------------------------------------------------------
-_DWORD *__cdecl sub_807035E(_DWORD *a1, unsigned int *a2)
+_DWORD *__cdecl Scr_BeginDevScript(_DWORD *a1, unsigned int *a2)
 {
   _DWORD *result; // eax
 
@@ -34619,7 +34619,7 @@ _DWORD *__cdecl sub_807035E(_DWORD *a1, unsigned int *a2)
 // 839400B: using guessed type char byte_839400B;
 
 //----- (080703B6) --------------------------------------------------------
-unsigned int __cdecl sub_80703B6(int a1, int *a2)
+unsigned int __cdecl Scr_EndDevScript(int a1, int *a2)
 {
   unsigned int result; // eax
 
@@ -34635,7 +34635,7 @@ unsigned int __cdecl sub_80703B6(int a1, int *a2)
 // 839400B: using guessed type char byte_839400B;
 
 //----- (080703E6) --------------------------------------------------------
-int __cdecl sub_80703E6(int a1)
+int __cdecl Scr_GetCacheType(int a1)
 {
   if ( a1 )
     return 12;
@@ -34650,7 +34650,7 @@ _BOOL4 __cdecl sub_807040A(int a1)
 }
 
 //----- (08070430) --------------------------------------------------------
-void __cdecl sub_8070430(int a1, int a2)
+void __cdecl EmitCallBuiltinOpcode(int a1, int a2)
 {
   int v2; // [esp+14h] [ebp-4h]
 
@@ -34664,13 +34664,13 @@ void __cdecl sub_8070430(int a1, int a2)
     v2 = a1 + 62;
     EmitOpcode(a1 + 62, 1 - a1, 1);
   }
-  sub_8076D92(a2, 1);
+  AddOpcodePos(a2, 1);
   if ( v2 == 68 )
-    sub_806DF8E(a1);
+    EmitByte(a1);
 }
 
 //----- (08070496) --------------------------------------------------------
-void __cdecl sub_8070496(int a1, int a2)
+void __cdecl EmitCallBuiltinMethodOpcode(int a1, int a2)
 {
   int v2; // [esp+14h] [ebp-4h]
 
@@ -34684,9 +34684,9 @@ void __cdecl sub_8070496(int a1, int a2)
     v2 = a1 + 69;
     EmitOpcode(a1 + 69, -a1, 1);
   }
-  sub_8076D92(a2, 1);
+  AddOpcodePos(a2, 1);
   if ( v2 == 75 )
-    sub_806DF8E(a1);
+    EmitByte(a1);
 }
 
 //----- (080704FA) --------------------------------------------------------
@@ -34709,7 +34709,7 @@ char *__cdecl EmitCall(_DWORD *a1, int *a2, char a3, int a4)
   char v18; // [esp+47h] [ebp-1h]
 
   v18 = a3;
-  v16 = sub_80702D8(a1);
+  v16 = Scr_GetBuiltin(a1);
   if ( !v16 )
     goto LABEL_15;
   v14 = (char *)SL_ConvertToString(v16);
@@ -34728,29 +34728,29 @@ char *__cdecl EmitCall(_DWORD *a1, int *a2, char a3, int a4)
     v13 = 0;
     v12 = Scr_GetFunction(&v14, &v13);
     v10 = GetNewVariable(dword_8202A50, v16);
-    v9 = sub_80703E6(v13);
+    v9 = Scr_GetCacheType(v13);
     v8 = v12;
     SetVariableValue(v10, &v8);
   }
   if ( v12 )
   {
-    if ( v13 == 1 && (sub_807035E(&v13, (unsigned int *)&v11), v13 == 1) && !v18 )
+    if ( v13 == 1 && (Scr_BeginDevScript(&v13, (unsigned int *)&v11), v13 == 1) && !v18 )
     {
       return CompileError(v15, "return value of developer command can not be accessed if not in a /# ... #/ comment");
     }
     else
     {
-      v17 = sub_806F9A0(a2, a4);
+      v17 = EmitExpressionList(a2, a4);
       if ( v17 <= 255 )
       {
-        sub_806D9EC(v16);
-        sub_8070430(v17, v15);
-        v5 = sub_806FE7E(v12);
-        sub_806DF60(v5);
-        sub_806FA26(a2);
+        Scr_CompileRemoveRefToString(v16);
+        EmitCallBuiltinOpcode(v17, v15);
+        v5 = AddFunction(v12);
+        EmitShort2(v5);
+        AddExpressionListOpcodePos(a2);
         if ( v18 )
-          sub_806F6FE();
-        return (char *)sub_80703B6(v13, &v11);
+          EmitDecTop();
+        return (char *)Scr_EndDevScript(v13, &v11);
       }
       else
       {
@@ -34761,12 +34761,12 @@ char *__cdecl EmitCall(_DWORD *a1, int *a2, char a3, int a4)
   else
   {
 LABEL_15:
-    sub_8070216(a1);
-    v17 = sub_806F9A0(a2, a4);
-    sub_8070242((int)a1, v17, 0, a4);
-    result = (char *)sub_806FA26(a2);
+    EmitPreFunctionCall(a1);
+    v17 = EmitExpressionList(a2, a4);
+    EmitPostFunctionCall((int)a1, v17, 0, a4);
+    result = (char *)AddExpressionListOpcodePos(a2);
     if ( v18 )
-      return (char *)sub_806F6FE();
+      return (char *)EmitDecTop();
   }
   return result;
 }
@@ -34792,7 +34792,7 @@ char *__cdecl EmitMethod(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a6
   char v20; // [esp+47h] [ebp-1h]
 
   v20 = a5;
-  v18 = sub_80702D8(a2);
+  v18 = Scr_GetBuiltin(a2);
   if ( !v18 )
     goto LABEL_15;
   v16 = (char *)SL_ConvertToString(v18);
@@ -34811,31 +34811,31 @@ char *__cdecl EmitMethod(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a6
     v15 = 0;
     v14 = Scr_GetMethod(&v16, &v15);
     v12 = GetNewVariable(dword_8202A54, v18);
-    v11 = sub_80703E6(v15);
+    v11 = Scr_GetCacheType(v15);
     v10 = v14;
     SetVariableValue(v12, (int *)&v10);
   }
   if ( v14 )
   {
-    if ( v15 == 1 && (sub_807035E(&v15, (unsigned int *)&v13), v15 == 1) && !v20 )
+    if ( v15 == 1 && (Scr_BeginDevScript(&v15, (unsigned int *)&v13), v15 == 1) && !v20 )
     {
       return CompileError(v17, "return value of developer command can not be accessed if not in a /# ... #/ comment");
     }
     else
     {
-      v19 = sub_806F9A0(a3, a6);
-      sub_8071552(a1, a6);
+      v19 = EmitExpressionList(a3, a6);
+      EmitPrimitiveExpression(a1, a6);
       if ( v19 <= 255 )
       {
-        sub_806D9EC(v18);
-        sub_8070496(v19, v17);
-        v7 = sub_806FE7E((int)v14);
-        sub_806DF60(v7);
-        sub_8076D92(a4, 0);
-        sub_806FA26(a3);
+        Scr_CompileRemoveRefToString(v18);
+        EmitCallBuiltinMethodOpcode(v19, v17);
+        v7 = AddFunction((int)v14);
+        EmitShort2(v7);
+        AddOpcodePos(a4, 0);
+        AddExpressionListOpcodePos(a3);
         if ( v20 )
-          sub_806F6FE();
-        return (char *)sub_80703B6(v15, &v13);
+          EmitDecTop();
+        return (char *)Scr_EndDevScript(v15, &v13);
       }
       else
       {
@@ -34846,22 +34846,22 @@ char *__cdecl EmitMethod(int a1, _DWORD *a2, _DWORD *a3, int a4, char a5, int a6
   else
   {
 LABEL_15:
-    sub_8070216(a2);
-    v19 = sub_806F9A0(a3, a6);
-    sub_8071552(a1, a6);
-    sub_8070242((int)a2, v19, 1, a6);
-    sub_8076D92(a4, 0);
-    result = (char *)sub_806FA26(a3);
+    EmitPreFunctionCall(a2);
+    v19 = EmitExpressionList(a3, a6);
+    EmitPrimitiveExpression(a1, a6);
+    EmitPostFunctionCall((int)a2, v19, 1, a6);
+    AddOpcodePos(a4, 0);
+    result = (char *)AddExpressionListOpcodePos(a3);
     if ( v20 )
-      return (char *)sub_806F6FE();
+      return (char *)EmitDecTop();
   }
   return result;
 }
-// 806F9A0: using guessed type _DWORD __cdecl sub_806F9A0(_DWORD, _DWORD);
+// 806F9A0: using guessed type _DWORD __cdecl EmitExpressionList(_DWORD, _DWORD);
 // 8202A54: using guessed type int dword_8202A54;
 
 //----- (0807098C) --------------------------------------------------------
-int __cdecl sub_807098C(int a1, _DWORD *a2, char a3)
+int __cdecl LinkThread(int a1, _DWORD *a2, char a3)
 {
   int result; // eax
   int v4[3]; // [esp+8h] [ebp-30h] BYREF
@@ -34903,7 +34903,7 @@ int __cdecl sub_807098C(int a1, _DWORD *a2, char a3)
 }
 
 //----- (08070AA8) --------------------------------------------------------
-int __cdecl sub_8070AA8(int a1)
+int __cdecl LinkFile(int a1)
 {
   int result; // eax
   int v2; // [esp+10h] [ebp-28h] BYREF
@@ -34929,11 +34929,11 @@ int __cdecl sub_8070AA8(int a1)
       if ( v3 == 13 )
         SetVariableValue(i, v4);
       else
-        sub_807098C(v7, v5, 1);
+        LinkThread(v7, v5, 1);
     }
     else
     {
-      sub_807098C(v7, v4, 1);
+      LinkThread(v7, v4, 1);
     }
     result = FindNextSibling(i);
   }
@@ -34941,7 +34941,7 @@ int __cdecl sub_8070AA8(int a1)
 }
 
 //----- (08070B86) --------------------------------------------------------
-int __cdecl sub_8070B86(int a1, int a2, int a3, int a4)
+int __cdecl SpecifyThreadPosition(int a1, int a2, int a3, int a4)
 {
   const char *v4; // eax
   const char *v5; // eax
@@ -34981,7 +34981,7 @@ int __cdecl sub_8070B86(int a1, int a2, int a3, int a4)
 }
 
 //----- (08070C7A) --------------------------------------------------------
-unsigned int __cdecl sub_8070C7A(int a1)
+unsigned int __cdecl SetThreadPosition(int a1)
 {
   int v1; // eax
   __int16 *v2; // ebx
@@ -34995,7 +34995,7 @@ unsigned int __cdecl sub_8070C7A(int a1)
 }
 
 //----- (08070CB2) --------------------------------------------------------
-char *__cdecl sub_8070CB2(int a1, unsigned __int8 a2, int a3)
+char *__cdecl EmitCallExpression(int a1, unsigned __int8 a2, int a3)
 {
   char *result; // eax
 
@@ -35009,22 +35009,22 @@ char *__cdecl sub_8070CB2(int a1, unsigned __int8 a2, int a3)
 // 80704FA: using guessed type _DWORD __cdecl EmitCall(_DWORD, _DWORD, _DWORD, _DWORD);
 
 //----- (08070D46) --------------------------------------------------------
-void __cdecl sub_8070D46(int a1, int a2)
+void __cdecl EmitCallExpressionFieldObject(int a1, int a2)
 {
   if ( *(_DWORD *)a1 == 23 )
   {
     EmitCall(*(_DWORD **)(a1 + 4), *(int **)(a1 + 8), 0, a2);
-    sub_806F722(*(_DWORD *)(a1 + 12));
+    EmitCastFieldObject(*(_DWORD *)(a1 + 12));
   }
   else if ( *(_DWORD *)a1 == 24 )
   {
     EmitMethod(*(_DWORD *)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD **)(a1 + 12), *(_DWORD *)(a1 + 16), 0, a2);
-    sub_806F722(*(_DWORD *)(a1 + 20));
+    EmitCastFieldObject(*(_DWORD *)(a1 + 20));
   }
 }
 
 //----- (08070DF8) --------------------------------------------------------
-char *__cdecl sub_8070DF8(int a1, char **a2)
+char *__cdecl Scr_CreateVector(int a1, char **a2)
 {
   char *result; // eax
   int v3; // [esp+18h] [ebp-20h]
@@ -35053,42 +35053,42 @@ char *__cdecl sub_8070DF8(int a1, char **a2)
 // 8070DF8: using guessed type float var_18[6];
 
 //----- (08070EE4) --------------------------------------------------------
-int __cdecl sub_8070EE4(int *a1, int a2, int a3)
+int __cdecl EvalPrimitiveExpressionList(int *a1, int a2, int a3)
 {
   _DWORD v5[13]; // [esp+20h] [ebp-48h] BYREF
   int v6; // [esp+54h] [ebp-14h]
   int i; // [esp+58h] [ebp-10h]
   int v8; // [esp+5Ch] [ebp-Ch]
 
-  v8 = sub_806F96C(a1);
+  v8 = GetExpressionCount(a1);
   if ( v8 == 1 )
-    return (unsigned __int8)sub_807194E(**(_DWORD **)*a1, a3);
+    return (unsigned __int8)EvalExpression(**(_DWORD **)*a1, a3);
   if ( v8 != 3 )
     return 0;
   v6 = 0;
   for ( i = *a1; i; i = *(_DWORD *)(i + 4) )
   {
-    if ( (unsigned __int8)sub_807194E(**(_DWORD **)i, &v5[3 * v6]) != 1 )
+    if ( (unsigned __int8)EvalExpression(**(_DWORD **)i, &v5[3 * v6]) != 1 )
       return 0;
     ++v6;
   }
-  sub_8070DF8((int)v5, (char **)a3);
+  Scr_CreateVector((int)v5, (char **)a3);
   *(_DWORD *)(a3 + 8) = a2;
   return 1;
 }
-// 807194E: using guessed type _DWORD __cdecl sub_807194E(_DWORD, _DWORD);
+// 807194E: using guessed type _DWORD __cdecl EvalExpression(_DWORD, _DWORD);
 
 //----- (08070FC0) --------------------------------------------------------
-int __cdecl sub_8070FC0(int *a1, int a2, int a3, int a4)
+int __cdecl EmitOrEvalPrimitiveExpressionList(int *a1, int a2, int a3, int a4)
 {
   int v6[5]; // [esp+20h] [ebp-28h] BYREF
   char v7; // [esp+37h] [ebp-11h]
   _DWORD **i; // [esp+38h] [ebp-10h]
   int v9; // [esp+3Ch] [ebp-Ch]
 
-  v9 = sub_806F96C(a1);
+  v9 = GetExpressionCount(a1);
   if ( v9 == 1 )
-    return (unsigned __int8)sub_80719D8(**(_DWORD **)*a1, a3, a4);
+    return (unsigned __int8)EmitOrEvalExpression(**(_DWORD **)*a1, a3, a4);
   if ( v9 == 3 )
   {
     v7 = 1;
@@ -35096,27 +35096,27 @@ int __cdecl sub_8070FC0(int *a1, int a2, int a3, int a4)
     {
       if ( v7 )
       {
-        v7 = sub_80719D8(**i, v6, a4);
+        v7 = EmitOrEvalExpression(**i, v6, a4);
         if ( v7 )
-          sub_806EEC6(v6);
+          Scr_PushValue(v6);
       }
       else
       {
-        sub_8071B6C(**i, a4);
+        EmitExpression(**i, a4);
       }
     }
     if ( v7 )
     {
       dword_8202A40 -= 3;
-      sub_8070DF8(12 * dword_8202A40 + 136325308, (char **)a3);
+      Scr_CreateVector(12 * dword_8202A40 + 136325308, (char **)a3);
       *(_DWORD *)(a3 + 8) = a2;
       return 1;
     }
     else
     {
       EmitOpcode(126, -2, 0);
-      sub_8076D92(a2, 1);
-      sub_806FA26(a1);
+      AddOpcodePos(a2, 1);
+      AddExpressionListOpcodePos(a1);
       return 0;
     }
   }
@@ -35126,67 +35126,67 @@ int __cdecl sub_8070FC0(int *a1, int a2, int a3, int a4)
     return 0;
   }
 }
-// 80719D8: using guessed type _DWORD __cdecl sub_80719D8(_DWORD, _DWORD, _DWORD);
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 80719D8: using guessed type _DWORD __cdecl EmitOrEvalExpression(_DWORD, _DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 // 8202A40: using guessed type int dword_8202A40;
 // 8070FC0: using guessed type int var_28[5];
 
 //----- (0807112A) --------------------------------------------------------
-char *__cdecl sub_807112A(int a1, int a2, int a3)
+char *__cdecl EmitExpressionListFieldObject(int a1, int a2, int a3)
 {
   _DWORD ***v4; // [esp+14h] [ebp-4h]
 
-  v4 = (_DWORD ***)sub_806F9EA(a1);
+  v4 = (_DWORD ***)GetSingleParameter(a1);
   if ( v4 )
-    return sub_8071E6A(**v4, (int)(*v4)[1], a3);
+    return EmitExpressionFieldObject(**v4, (int)(*v4)[1], a3);
   else
     return CompileError(a2, "not an object");
 }
 
 //----- (08071180) --------------------------------------------------------
-int __cdecl sub_8071180(_DWORD *a1, _DWORD *a2)
+int __cdecl EvalPrimitiveExpression(_DWORD *a1, _DWORD *a2)
 {
   int v3; // [esp+14h] [ebp-4h]
 
   switch ( *a1 )
   {
     case 7:
-      sub_806E07A(a1[1], a1[2], a2);
+      EvalInteger(a1[1], a1[2], a2);
       v3 = 1;
       break;
     case 8:
-      sub_806E250(a1[1], a1[2], a2);
+      EvalFloat(a1[1], a1[2], a2);
       v3 = 1;
       break;
     case 9:
-      sub_806E07A(-a1[1], a1[2], a2);
+      EvalInteger(-a1[1], a1[2], a2);
       v3 = 1;
       break;
     case 0xA:
-      sub_806E250(a1[1] ^ 0x80000000, a1[2], a2);
+      EvalFloat(a1[1] ^ 0x80000000, a1[2], a2);
       v3 = 1;
       break;
     case 0xB:
-      sub_806ECA0(a1[1], a1[2], a2);
+      EvalString(a1[1], a1[2], a2);
       v3 = 1;
       break;
     case 0xC:
-      sub_806ED18(a1[1], a1[2], a2);
+      EvalIString(a1[1], a1[2], a2);
       v3 = 1;
       break;
     case 0x1F:
-      sub_806E028(a1[1], (int)a2);
+      EvalUndefined(a1[1], (int)a2);
       v3 = 1;
       break;
     case 0x2E:
-      v3 = (unsigned __int8)sub_8070EE4((int *)a1[1], a1[2], (int)a2);
+      v3 = (unsigned __int8)EvalPrimitiveExpressionList((int *)a1[1], a1[2], (int)a2);
       break;
     case 0x48:
-      sub_806E07A(0, a1[1], a2);
+      EvalInteger(0, a1[1], a2);
       v3 = 1;
       break;
     case 0x49:
-      sub_806E07A(1, a1[1], a2);
+      EvalInteger(1, a1[1], a2);
       v3 = 1;
       break;
     default:
@@ -35197,132 +35197,132 @@ int __cdecl sub_8071180(_DWORD *a1, _DWORD *a2)
 }
 
 //----- (08071370) --------------------------------------------------------
-int __cdecl sub_8071370(_DWORD *a1, _DWORD *a2, int a3)
+int __cdecl EmitOrEvalPrimitiveExpression(_DWORD *a1, _DWORD *a2, int a3)
 {
   int v4; // [esp+14h] [ebp-4h]
 
   switch ( *a1 )
   {
     case 0x11:
-      sub_806F83E(a1[1], a3);
+      EmitVariableExpression(a1[1], a3);
       v4 = 0;
       break;
     case 0x12:
-      sub_806FE34((_DWORD *)a1[1], a1[2]);
+      EmitGetFunction((_DWORD *)a1[1], a1[2]);
       v4 = 0;
       break;
     case 0x13:
-      sub_8070CB2(a1[1], 0, a3);
+      EmitCallExpression(a1[1], 0, a3);
       v4 = 0;
       break;
     case 0x20:
-      sub_806F024(a1[1]);
+      EmitSelf(a1[1]);
       v4 = 0;
       break;
     case 0x22:
-      sub_806F05C(a1[1]);
+      EmitLevel(a1[1]);
       v4 = 0;
       break;
     case 0x23:
-      sub_806F094(a1[1]);
+      EmitGame(a1[1]);
       v4 = 0;
       break;
     case 0x24:
-      sub_806F0CC(a1[1]);
+      EmitAnim(a1[1]);
       v4 = 0;
       break;
     case 0x2E:
-      v4 = (unsigned __int8)sub_8070FC0((int *)a1[1], a1[2], (int)a2, a3);
+      v4 = (unsigned __int8)EmitOrEvalPrimitiveExpressionList((int *)a1[1], a1[2], (int)a2, a3);
       break;
     case 0x34:
-      sub_806EFDA(a1[1], a1[2], a3);
+      EmitSize(a1[1], a1[2], a3);
       v4 = 0;
       break;
     case 0x42:
-      sub_806F3EA(a1[1]);
+      EmitEmptyArray(a1[1]);
       v4 = 0;
       break;
     case 0x43:
-      sub_806F422(a1[1], a1[2]);
+      EmitAnimation(a1[1], a1[2]);
       v4 = 0;
       break;
     case 0x4A:
-      sub_806E2B4(a1[1]);
+      EmitAnimTree(a1[1]);
       v4 = 0;
       break;
     default:
-      v4 = (unsigned __int8)sub_8071180(a1, a2);
+      v4 = (unsigned __int8)EvalPrimitiveExpression(a1, a2);
       break;
   }
   return v4;
 }
-// 806F83E: using guessed type _DWORD __cdecl sub_806F83E(_DWORD, _DWORD);
+// 806F83E: using guessed type _DWORD __cdecl EmitVariableExpression(_DWORD, _DWORD);
 
 //----- (08071552) --------------------------------------------------------
-void __cdecl sub_8071552(int a1, int a2)
+void __cdecl EmitPrimitiveExpression(int a1, int a2)
 {
   int v2[6]; // [esp+10h] [ebp-18h] BYREF
 
-  if ( (unsigned __int8)sub_8071370(a1, v2, a2) == 1 )
-    sub_806EE00(v2);
+  if ( (unsigned __int8)EmitOrEvalPrimitiveExpression(a1, v2, a2) == 1 )
+    EmitValue(v2);
 }
-// 8071370: using guessed type _DWORD __cdecl sub_8071370(_DWORD, _DWORD, _DWORD);
+// 8071370: using guessed type _DWORD __cdecl EmitOrEvalPrimitiveExpression(_DWORD, _DWORD, _DWORD);
 // 8071552: using guessed type int var_18[6];
 
 //----- (08071586) --------------------------------------------------------
-unsigned int __cdecl sub_8071586(int a1, int a2, int a3, int a4, int a5)
+unsigned int __cdecl EmitBoolOrExpression(int a1, int a2, int a3, int a4, int a5)
 {
   unsigned int result; // eax
   unsigned int v6; // [esp+10h] [ebp-8h]
   _WORD *v7; // [esp+14h] [ebp-4h]
 
-  sub_8071B6C(a1, a5);
+  EmitExpression(a1, a5);
   EmitOpcode(97, -1, 0);
-  sub_8076D92(a3, 0);
-  sub_806DF60(0);
+  AddOpcodePos(a3, 0);
+  EmitShort2(0);
   v7 = (_WORD *)dword_8202860;
   v6 = TempMalloc(0);
-  sub_8071B6C(a2, a5);
-  sub_806EF32(a4);
+  EmitExpression(a2, a5);
+  EmitCastBool(a4);
   result = TempMalloc(0) - v6;
   *v7 = result;
   return result;
 }
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0807162A) --------------------------------------------------------
-unsigned int __cdecl sub_807162A(int a1, int a2, int a3, int a4, int a5)
+unsigned int __cdecl EmitBoolAndExpression(int a1, int a2, int a3, int a4, int a5)
 {
   unsigned int result; // eax
   unsigned int v6; // [esp+10h] [ebp-8h]
   _WORD *v7; // [esp+14h] [ebp-4h]
 
-  sub_8071B6C(a1, a5);
+  EmitExpression(a1, a5);
   EmitOpcode(96, -1, 0);
-  sub_8076D92(a3, 0);
-  sub_806DF60(0);
+  AddOpcodePos(a3, 0);
+  EmitShort2(0);
   v7 = (_WORD *)dword_8202860;
   v6 = TempMalloc(0);
-  sub_8071B6C(a2, a5);
-  sub_806EF32(a4);
+  EmitExpression(a2, a5);
+  EmitCastBool(a4);
   result = TempMalloc(0) - v6;
   *v7 = result;
   return result;
 }
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 // 8202860: using guessed type int dword_8202860;
 
 //----- (080716CE) --------------------------------------------------------
-int __cdecl sub_80716CE(int a1, int a2, int a3, int a4, _DWORD *a5)
+int __cdecl EvalBinaryOperatorExpression(int a1, int a2, int a3, int a4, _DWORD *a5)
 {
   int v5; // edx
   int v8[4]; // [esp+20h] [ebp-28h] BYREF
   int v9[6]; // [esp+30h] [ebp-18h] BYREF
 
-  if ( (unsigned __int8)sub_807194E(a1, v9) != 1 )
+  if ( (unsigned __int8)EvalExpression(a1, v9) != 1 )
     return 0;
-  if ( (unsigned __int8)sub_807194E(a2, v8) != 1 )
+  if ( (unsigned __int8)EvalExpression(a2, v8) != 1 )
     return 0;
   AddRefToValue(v9);
   AddRefToValue(v8);
@@ -35341,28 +35341,28 @@ int __cdecl sub_80716CE(int a1, int a2, int a3, int a4, _DWORD *a5)
     return 1;
   }
 }
-// 807194E: using guessed type _DWORD __cdecl sub_807194E(_DWORD, _DWORD);
+// 807194E: using guessed type _DWORD __cdecl EvalExpression(_DWORD, _DWORD);
 // 80716CE: using guessed type int var_28[4];
 
 //----- (0807179C) --------------------------------------------------------
-int __cdecl sub_807179C(int a1, int a2, int a3, int a4, _DWORD *a5, int a6)
+int __cdecl EmitOrEvalBinaryOperatorExpression(int a1, int a2, int a3, int a4, _DWORD *a5, int a6)
 {
   int v6; // edx
   int v9[4]; // [esp+20h] [ebp-28h] BYREF
   int v10[6]; // [esp+30h] [ebp-18h] BYREF
 
-  if ( (unsigned __int8)sub_80719D8(a1, v10, a6) != 1 )
+  if ( (unsigned __int8)EmitOrEvalExpression(a1, v10, a6) != 1 )
   {
-    sub_8071B6C(a2, a6);
+    EmitExpression(a2, a6);
 LABEL_7:
     EmitOpcode((char)a3, -1, 0);
-    sub_8076D92(a4, 0);
+    AddOpcodePos(a4, 0);
     return 0;
   }
-  sub_806EEC6(v10);
-  if ( (unsigned __int8)sub_80719D8(a2, v9, a6) != 1 )
+  Scr_PushValue(v10);
+  if ( (unsigned __int8)EmitOrEvalExpression(a2, v9, a6) != 1 )
     goto LABEL_7;
-  sub_806EF26();
+  Scr_PopValue();
   Scr_EvalBinaryOperator(a3, v10, v9);
   if ( *(_DWORD *)dword_8394010 )
   {
@@ -35378,69 +35378,69 @@ LABEL_7:
     return 1;
   }
 }
-// 80719D8: using guessed type _DWORD __cdecl sub_80719D8(_DWORD, _DWORD, _DWORD);
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 80719D8: using guessed type _DWORD __cdecl EmitOrEvalExpression(_DWORD, _DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 // 807179C: using guessed type int var_28[4];
 
 //----- (080718AE) --------------------------------------------------------
-void __cdecl sub_80718AE(int *a1, _DWORD *a2, char a3, int a4, int a5)
+void __cdecl EmitBinaryEqualsOperatorExpression(int *a1, _DWORD *a2, char a3, int a4, int a5)
 {
   byte_820287C = 1;
-  sub_806F83E(a1, a5);
+  EmitVariableExpression(a1, a5);
   byte_820287C = 0;
-  sub_8071B6C(a2, a5);
+  EmitExpression(a2, a5);
   EmitOpcode(a3, -1, 0);
-  sub_8076D92(a4, 0);
-  sub_8071BA0(a1, a5);
-  sub_806E2EE(a4);
+  AddOpcodePos(a4, 0);
+  EmitVariableExpressionRef(a1, a5);
+  EmitSetVariableField(a4);
 }
 // 820287C: using guessed type char byte_820287C;
 
 //----- (08071934) --------------------------------------------------------
 _DWORD *__cdecl sub_8071934(int a1, _DWORD *a2)
 {
-  return sub_8071CB0(a1, a2);
+  return Scr_CalcLocalVarsVariableExpressionRef(a1, a2);
 }
 
 //----- (0807194E) --------------------------------------------------------
-int __cdecl sub_807194E(_DWORD *a1, _DWORD *a2)
+int __cdecl EvalExpression(_DWORD *a1, _DWORD *a2)
 {
   if ( *a1 == 6 )
-    return (unsigned __int8)sub_8071180((_DWORD *)a1[1], a2);
+    return (unsigned __int8)EvalPrimitiveExpression((_DWORD *)a1[1], a2);
   if ( *a1 == 49 )
-    return (unsigned __int8)sub_80716CE(a1[1], a1[2], a1[3], a1[4], a2);
+    return (unsigned __int8)EvalBinaryOperatorExpression(a1[1], a1[2], a1[3], a1[4], a2);
   return 0;
 }
 
 //----- (080719D8) --------------------------------------------------------
-int __cdecl sub_80719D8(_DWORD *a1, _DWORD *a2, int a3)
+int __cdecl EmitOrEvalExpression(_DWORD *a1, _DWORD *a2, int a3)
 {
   int v4; // [esp+24h] [ebp-4h]
 
   switch ( *a1 )
   {
     case 6:
-      v4 = (unsigned __int8)sub_8071370((_DWORD *)a1[1], a2, a3);
+      v4 = (unsigned __int8)EmitOrEvalPrimitiveExpression((_DWORD *)a1[1], a2, a3);
       break;
     case 0x2F:
-      sub_8071586(a1[1], a1[2], a1[3], a1[4], a3);
+      EmitBoolOrExpression(a1[1], a1[2], a1[3], a1[4], a3);
       v4 = 0;
       break;
     case 0x30:
-      sub_807162A(a1[1], a1[2], a1[3], a1[4], a3);
+      EmitBoolAndExpression(a1[1], a1[2], a1[3], a1[4], a3);
       v4 = 0;
       break;
     case 0x31:
-      v4 = (unsigned __int8)sub_807179C(a1[1], a1[2], a1[3], a1[4], a2, a3);
+      v4 = (unsigned __int8)EmitOrEvalBinaryOperatorExpression(a1[1], a1[2], a1[3], a1[4], a2, a3);
       break;
     case 0x32:
-      sub_8071B6C(a1[1], a3);
-      sub_806EF6A(a1[2]);
+      EmitExpression(a1[1], a3);
+      EmitBoolNot(a1[2]);
       v4 = 0;
       break;
     case 0x33:
-      sub_8071B6C(a1[1], a3);
-      sub_806EFA2(a1[2]);
+      EmitExpression(a1[1], a3);
+      EmitBoolComplement(a1[2]);
       v4 = 0;
       break;
     default:
@@ -35449,27 +35449,27 @@ int __cdecl sub_80719D8(_DWORD *a1, _DWORD *a2, int a3)
   }
   return v4;
 }
-// 8071B6C: using guessed type _DWORD __cdecl sub_8071B6C(_DWORD, _DWORD);
+// 8071B6C: using guessed type _DWORD __cdecl EmitExpression(_DWORD, _DWORD);
 
 //----- (08071B6C) --------------------------------------------------------
-void __cdecl sub_8071B6C(_DWORD *a1, int a2)
+void __cdecl EmitExpression(_DWORD *a1, int a2)
 {
   int v2[6]; // [esp+10h] [ebp-18h] BYREF
 
-  if ( (unsigned __int8)sub_80719D8(a1, v2, a2) == 1 )
-    sub_806EE00(v2);
+  if ( (unsigned __int8)EmitOrEvalExpression(a1, v2, a2) == 1 )
+    EmitValue(v2);
 }
 // 8071B6C: using guessed type int var_18[6];
 
 //----- (08071BA0) --------------------------------------------------------
-void __cdecl sub_8071BA0(int *a1, int a2)
+void __cdecl EmitVariableExpressionRef(int *a1, int a2)
 {
   int v2; // [esp+20h] [ebp-8h]
 
   v2 = *a1;
   if ( *a1 == 15 )
   {
-    sub_806F4E8((_DWORD *)a1[1], a1[2], a1[3], a2);
+    EmitFieldVariableRef((_DWORD *)a1[1], a1[2], a1[3], a2);
   }
   else if ( v2 > 15 )
   {
@@ -35483,101 +35483,101 @@ void __cdecl sub_8071BA0(int *a1, int a2)
   }
   else if ( v2 == 4 )
   {
-    sub_806F230(a1[1], a1[2], a2);
+    EmitLocalVariableRef(a1[1], a1[2], a2);
   }
   else if ( v2 == 13 )
   {
-    sub_806F798((_DWORD *)a1[1], (_DWORD *)a1[2], a1[3], a1[4], a2);
+    EmitArrayVariableRef((_DWORD *)a1[1], (_DWORD *)a1[2], a1[3], a1[4], a2);
   }
 }
 // 8202A64: using guessed type char byte_8202A64;
 
 //----- (08071CB0) --------------------------------------------------------
-_DWORD *__cdecl sub_8071CB0(int a1, _DWORD *a2)
+_DWORD *__cdecl Scr_CalcLocalVarsVariableExpressionRef(int a1, _DWORD *a2)
 {
   _DWORD *result; // eax
 
   result = *(_DWORD **)a1;
   if ( *(_DWORD *)a1 == 4 )
-    return sub_806F2B2(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), a2);
+    return Scr_CalcLocalVarsSafeSetVariableField2(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), a2);
   if ( *(_DWORD *)a1 == 13 )
-    return (_DWORD *)sub_806F7DE(*(int **)(a1 + 4), (int)a2);
+    return (_DWORD *)Scr_CalcLocalVarsArrayVariableRef(*(int **)(a1 + 4), (int)a2);
   return result;
 }
 
 //----- (08071D0A) --------------------------------------------------------
-void __cdecl sub_8071D0A(_DWORD *a1, int a2, int a3)
+void __cdecl EmitArrayPrimitiveExpressionRef(_DWORD *a1, int a2, int a3)
 {
   if ( *a1 == 17 )
   {
-    sub_8071BA0(a1[1], a3);
+    EmitVariableExpressionRef(a1[1], a3);
   }
   else if ( *a1 == 35 )
   {
-    sub_806F2D4(a1[1]);
+    EmitGameRef(a1[1]);
   }
   else
   {
     CompileError(a2, "not an lvalue");
   }
 }
-// 8071BA0: using guessed type _DWORD __cdecl sub_8071BA0(_DWORD, _DWORD);
+// 8071BA0: using guessed type _DWORD __cdecl EmitVariableExpressionRef(_DWORD, _DWORD);
 
 //----- (08071D66) --------------------------------------------------------
-int __cdecl sub_8071D66(int *a1, int a2)
+int __cdecl Scr_CalcLocalVarsArrayPrimitiveExpressionRef(int *a1, int a2)
 {
   int result; // eax
 
   result = *a1;
   if ( *a1 == 17 )
-    return sub_8071CB0(a1[1], a2);
+    return Scr_CalcLocalVarsVariableExpressionRef(a1[1], a2);
   return result;
 }
-// 8071CB0: using guessed type _DWORD __cdecl sub_8071CB0(_DWORD, _DWORD);
+// 8071CB0: using guessed type _DWORD __cdecl Scr_CalcLocalVarsVariableExpressionRef(_DWORD, _DWORD);
 
 //----- (08071D92) --------------------------------------------------------
-void __cdecl sub_8071D92(_DWORD *a1, int a2, int a3)
+void __cdecl EmitPrimitiveExpressionFieldObject(_DWORD *a1, int a2, int a3)
 {
   switch ( *a1 )
   {
     case 0x11:
-      sub_806F83E(a1[1], a3);
-      sub_806F722(a1[2]);
+      EmitVariableExpression(a1[1], a3);
+      EmitCastFieldObject(a1[2]);
       break;
     case 0x13:
-      sub_8070D46(a1[1], a3);
+      EmitCallExpressionFieldObject(a1[1], a3);
       break;
     case 0x20:
-      sub_806F104(a1[1]);
+      EmitSelfObject(a1[1]);
       break;
     case 0x22:
-      sub_806F13C(a1[1]);
+      EmitLevelObject(a1[1]);
       break;
     case 0x24:
-      sub_806F174(a1[1]);
+      EmitAnimObject(a1[1]);
       break;
     case 0x2E:
-      sub_807112A(a1[1], a2, a3);
+      EmitExpressionListFieldObject(a1[1], a2, a3);
       break;
     default:
       CompileError(a2, "not an object");
       break;
   }
 }
-// 806F83E: using guessed type _DWORD __cdecl sub_806F83E(_DWORD, _DWORD);
+// 806F83E: using guessed type _DWORD __cdecl EmitVariableExpression(_DWORD, _DWORD);
 
 //----- (08071E6A) --------------------------------------------------------
-char *__cdecl sub_8071E6A(_DWORD *a1, int a2, int a3)
+char *__cdecl EmitExpressionFieldObject(_DWORD *a1, int a2, int a3)
 {
   if ( *a1 == 6 )
-    return (char *)sub_8071D92(a1[1], a1[2], a3);
+    return (char *)EmitPrimitiveExpressionFieldObject(a1[1], a1[2], a3);
   else
     return CompileError(a2, "not an object");
 }
-// 8071D92: using guessed type _DWORD __cdecl sub_8071D92(_DWORD, _DWORD, _DWORD);
+// 8071D92: using guessed type _DWORD __cdecl EmitPrimitiveExpressionFieldObject(_DWORD, _DWORD, _DWORD);
 
 //----- (08071EB6) --------------------------------------------------------
-int sub_8071EB6()
+int ConnectBreakStatements()
 {
   int result; // eax
   int i; // [esp+10h] [ebp-8h]
@@ -35595,7 +35595,7 @@ int sub_8071EB6()
 // 8202890: using guessed type int dword_8202890;
 
 //----- (08071EFA) --------------------------------------------------------
-int sub_8071EFA()
+int ConnectContinueStatements()
 {
   int result; // eax
   int i; // [esp+10h] [ebp-8h]
@@ -35613,31 +35613,31 @@ int sub_8071EFA()
 // 8202898: using guessed type int dword_8202898;
 
 //----- (08071F3E) --------------------------------------------------------
-_BOOL4 __cdecl sub_8071F3E(_DWORD *a1)
+_BOOL4 __cdecl IsUndefinedPrimitiveExpression(_DWORD *a1)
 {
   return *a1 == 31;
 }
 
 //----- (08071F50) --------------------------------------------------------
-int __cdecl sub_8071F50(int a1)
+int __cdecl IsUndefinedExpression(int a1)
 {
   int v2; // [esp+4h] [ebp-4h]
 
   v2 = 0;
-  if ( *(_DWORD *)a1 == 6 && sub_8071F3E(*(_DWORD **)(a1 + 4)) )
+  if ( *(_DWORD *)a1 == 6 && IsUndefinedPrimitiveExpression(*(_DWORD **)(a1 + 4)) )
     return 1;
   return v2;
 }
 
 //----- (08071F86) --------------------------------------------------------
-int __cdecl sub_8071F86(int a1, int a2, int a3)
+int __cdecl EmitClearVariableExpression(int a1, int a2, int a3)
 {
   int v4; // [esp+1Ch] [ebp-Ch]
 
   v4 = *(_DWORD *)a1;
   if ( *(_DWORD *)a1 == 15 )
   {
-    sub_806F530(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a2, a3);
+    EmitClearFieldVariable(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a2, a3);
     return 1;
   }
   if ( v4 > 15 )
@@ -35654,7 +35654,7 @@ int __cdecl sub_8071F86(int a1, int a2, int a3)
   if ( v4 != 4 )
   {
     if ( v4 == 13 )
-      sub_806F7F8(*(_DWORD **)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), a3);
+      EmitClearArrayVariable(*(_DWORD **)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), a3);
     return 1;
   }
   return 0;
@@ -35662,99 +35662,99 @@ int __cdecl sub_8071F86(int a1, int a2, int a3)
 // 8202A64: using guessed type char byte_8202A64;
 
 //----- (08072088) --------------------------------------------------------
-void __cdecl sub_8072088(int *a1, _DWORD *a2, int a3, int a4, int a5)
+void __cdecl EmitAssignmentStatement(int *a1, _DWORD *a2, int a3, int a4, int a5)
 {
-  if ( !(unsigned __int8)sub_8071F50((int)a2) || !(unsigned __int8)sub_8071F86((int)a1, a4, a5) )
+  if ( !(unsigned __int8)IsUndefinedExpression((int)a2) || !(unsigned __int8)EmitClearVariableExpression((int)a1, a4, a5) )
   {
-    sub_8071B6C(a2, a5);
-    sub_8071BA0(a1, a5);
-    sub_806E2EE(a3);
+    EmitExpression(a2, a5);
+    EmitVariableExpressionRef(a1, a5);
+    EmitSetVariableField(a3);
   }
 }
 
 //----- (080720EE) --------------------------------------------------------
-_DWORD *__cdecl sub_80720EE(int a1, int a2, _DWORD *a3)
+_DWORD *__cdecl Scr_CalcLocalVarsAssignmentStatement(int a1, int a2, _DWORD *a3)
 {
-  return sub_8071CB0(a1, a3);
+  return Scr_CalcLocalVarsVariableExpressionRef(a1, a3);
 }
 
 //----- (08072108) --------------------------------------------------------
-char *__cdecl sub_8072108(int a1, int a2)
+char *__cdecl EmitCallExpressionStatement(int a1, int a2)
 {
-  return sub_8070CB2(a1, 1u, a2);
+  return EmitCallExpression(a1, 1u, a2);
 }
 
 //----- (0807212A) --------------------------------------------------------
-void __cdecl sub_807212A(_DWORD *a1, int a2, _DWORD *a3)
+void __cdecl EmitReturnStatement(_DWORD *a1, int a2, _DWORD *a3)
 {
   if ( !*a3 )
     *a3 = 3;
-  sub_8071B6C(a1, (int)a3);
-  sub_806DEEA();
-  sub_8076D92(a2, 0);
+  EmitExpression(a1, (int)a3);
+  EmitReturn();
+  AddOpcodePos(a2, 0);
 }
 
 //----- (0807216E) --------------------------------------------------------
-void __cdecl sub_807216E(int a1, _DWORD *a2)
+void __cdecl EmitEndStatement(int a1, _DWORD *a2)
 {
   if ( !*a2 )
     *a2 = 3;
-  sub_806DEC6();
-  sub_8076D92(a1, 1);
+  EmitEnd();
+  AddOpcodePos(a1, 1);
 }
 
 //----- (080721A0) --------------------------------------------------------
-void __cdecl sub_80721A0(_DWORD *a1, int a2, int a3, int a4)
+void __cdecl EmitWaitStatement(_DWORD *a1, int a2, int a3, int a4)
 {
-  sub_8071B6C(a1, a4);
+  EmitExpression(a1, a4);
   EmitOpcode(76, -1, 0);
-  sub_8076D92(a3, 0);
-  sub_8076D92(a3, 0);
-  sub_8076D92(a2, 0);
+  AddOpcodePos(a3, 0);
+  AddOpcodePos(a3, 0);
+  AddOpcodePos(a2, 0);
 }
 
 //----- (08072210) --------------------------------------------------------
-void __cdecl sub_8072210(int a1)
+void __cdecl EmitWaittillFrameEnd(int a1)
 {
   EmitOpcode(77, 0, 0);
-  sub_8076D92(a1, 1);
-  sub_8076D92(a1, 0);
+  AddOpcodePos(a1, 1);
+  AddOpcodePos(a1, 0);
 }
 
 //----- (0807225A) --------------------------------------------------------
-unsigned int __cdecl sub_807225A(_DWORD *a1, int a2, int a3, unsigned __int8 a4, int a5, int a6, _DWORD **a7)
+unsigned int __cdecl EmitIfStatement(_DWORD *a1, int a2, int a3, unsigned __int8 a4, int a5, int a6, _DWORD **a7)
 {
   unsigned int result; // eax
   unsigned int v8; // [esp+1Ch] [ebp-Ch]
   _WORD *v9; // [esp+20h] [ebp-8h]
 
-  sub_8071B6C(a1, a6);
+  EmitExpression(a1, a6);
   EmitOpcode(94, -1, 0);
-  sub_8076D92(a3, 0);
-  sub_806DF60(0);
+  AddOpcodePos(a3, 0);
+  EmitShort2(0);
   v9 = (_WORD *)dword_8202860;
   v8 = TempMalloc(0);
-  sub_806EA5A(a6, *a7);
-  sub_80742D2(a2, a4, a5, *a7);
-  sub_806E59A(a4, a5, *a7);
+  Scr_TransferBlock(a6, *a7);
+  EmitStatement(a2, a4, a5, *a7);
+  EmitNOP2(a4, a5, *a7);
   result = TempMalloc(0) - v8;
   *v9 = result;
   return result;
 }
-// 80742D2: using guessed type _DWORD __cdecl sub_80742D2(_DWORD, _DWORD, _DWORD, _DWORD);
+// 80742D2: using guessed type _DWORD __cdecl EmitStatement(_DWORD, _DWORD, _DWORD, _DWORD);
 // 8202860: using guessed type int dword_8202860;
 
 //----- (0807233A) --------------------------------------------------------
-void __cdecl sub_807233A(int a1, _DWORD *a2, size_t *a3)
+void __cdecl Scr_CalcLocalVarsIfStatement(int a1, _DWORD *a2, size_t *a3)
 {
-  sub_806E69A(a2, a3);
-  sub_8074842(a1, *a3);
-  sub_806E94E((int)a3, 1, a2);
+  Scr_CopyBlock(a2, a3);
+  Scr_CalcLocalVarsStatement(a1, *a3);
+  Scr_MergeChildBlocks((int)a3, 1, a2);
 }
-// 8074842: using guessed type _DWORD __cdecl sub_8074842(_DWORD, _DWORD);
+// 8074842: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatement(_DWORD, _DWORD);
 
 //----- (08072382) --------------------------------------------------------
-int __cdecl sub_8072382(
+int __cdecl EmitIfElseStatement(
         _DWORD *a1,
         int a2,
         int a3,
@@ -35778,15 +35778,15 @@ int __cdecl sub_8072382(
 
   v19 = a6;
   v12 = 0;
-  sub_8071B6C(a1, a8);
+  EmitExpression(a1, a8);
   EmitOpcode(94, -1, 0);
-  sub_8076D92(a4, 0);
-  sub_806DF60(0);
+  AddOpcodePos(a4, 0);
+  EmitShort2(0);
   v18 = (_WORD *)dword_8202860;
   v16 = TempMalloc(0);
-  sub_806EA5A(a8, (_DWORD *)*a9);
-  sub_80742D2(a2, a6, a7, *a9);
-  sub_806E53A((_DWORD *)*a9, *a9);
+  Scr_TransferBlock(a8, (_DWORD *)*a9);
+  EmitStatement(a2, a6, a7, *a9);
+  EmitRemoveLocalVars((_DWORD *)*a9, *a9);
   if ( !*(_DWORD *)*a9 )
   {
     v13[0] = *a9;
@@ -35795,25 +35795,25 @@ int __cdecl sub_8072382(
   v14 = dword_839403C;
   if ( v19 )
   {
-    sub_806DEC6();
-    sub_806DF0E(0);
-    sub_8076D92(a7, 1);
+    EmitEnd();
+    EmitCodepos(0);
+    AddOpcodePos(a7, 1);
     v17 = 0;
     v15 = 0;
   }
   else
   {
     EmitOpcode(98, 0, 0);
-    sub_8076D92(a5, 1);
-    sub_806DF0E(0);
+    AddOpcodePos(a5, 1);
+    EmitCodepos(0);
     v17 = (_DWORD *)dword_8202860;
     v15 = TempMalloc(0);
   }
   dword_839403C = v14 + 1;
   *v18 = TempMalloc(0) - v16;
-  sub_806EA5A(a8, *a10);
-  sub_80742D2(a3, v19, a7, *a10);
-  sub_806E59A(v19, a7, *a10);
+  Scr_TransferBlock(a8, *a10);
+  EmitStatement(a3, v19, a7, *a10);
+  EmitNOP2(v19, a7, *a10);
   if ( !**a10 )
     v13[v12++] = (int)*a10;
   if ( !v19 )
@@ -35821,14 +35821,14 @@ int __cdecl sub_8072382(
     v10 = v17;
     *v10 = TempMalloc(0) - v15;
   }
-  return sub_806E714((int)v13, v12, a8);
+  return Scr_InitFromChildBlocks((int)v13, v12, a8);
 }
-// 80742D2: using guessed type _DWORD __cdecl sub_80742D2(_DWORD, _DWORD, _DWORD, _DWORD);
+// 80742D2: using guessed type _DWORD __cdecl EmitStatement(_DWORD, _DWORD, _DWORD, _DWORD);
 // 8202860: using guessed type int dword_8202860;
 // 839403C: using guessed type int dword_839403C;
 
 //----- (080725C2) --------------------------------------------------------
-void __cdecl sub_80725C2(int a1, int a2, int *a3, size_t *a4, size_t *a5)
+void __cdecl Scr_CalcLocalVarsIfElseStatement(int a1, int a2, int *a3, size_t *a4, size_t *a5)
 {
   int v5; // [esp+18h] [ebp-10h]
   int v6; // [esp+1Ch] [ebp-Ch]
@@ -35836,8 +35836,8 @@ void __cdecl sub_80725C2(int a1, int a2, int *a3, size_t *a4, size_t *a5)
 
   v6 = 0;
   v5 = 3;
-  sub_806E69A(a3, a4);
-  sub_8074842(a1, *a4);
+  Scr_CopyBlock(a3, a4);
+  Scr_CalcLocalVarsStatement(a1, *a4);
   if ( *(int *)*a4 <= 3 )
   {
     v5 = *(_DWORD *)*a4;
@@ -35847,8 +35847,8 @@ void __cdecl sub_80725C2(int a1, int a2, int *a3, size_t *a4, size_t *a5)
       v6 = 1;
     }
   }
-  sub_806E69A(a3, a5);
-  sub_8074842(a2, *a5);
+  Scr_CopyBlock(a3, a5);
+  Scr_CalcLocalVarsStatement(a2, *a5);
   if ( *(_DWORD *)*a5 <= v5 )
   {
     v5 = *(_DWORD *)*a5;
@@ -35857,13 +35857,13 @@ void __cdecl sub_80725C2(int a1, int a2, int *a3, size_t *a4, size_t *a5)
   }
   if ( !*a3 )
     *a3 = v5;
-  sub_806E846((int)v7, v6, a3);
-  sub_806E94E((int)v7, v6, a3);
+  Scr_AppendChildBlocks((int)v7, v6, a3);
+  Scr_MergeChildBlocks((int)v7, v6, a3);
 }
-// 8074842: using guessed type _DWORD __cdecl sub_8074842(_DWORD, _DWORD);
+// 8074842: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatement(_DWORD, _DWORD);
 
 //----- (080726C0) --------------------------------------------------------
-int __cdecl sub_80726C0(_DWORD *a1)
+int __cdecl Scr_AddBreakBlock(_DWORD *a1)
 {
   int result; // eax
 
@@ -35872,7 +35872,7 @@ int __cdecl sub_80726C0(_DWORD *a1)
   {
     if ( dword_820289C )
     {
-      sub_806E5EC(*(_DWORD *)dword_82028A0);
+      Scr_CheckMaxSwitchCases(*(_DWORD *)dword_82028A0);
       *(_DWORD *)(dword_820289C + 4 * *(_DWORD *)dword_82028A0) = a1;
       result = dword_82028A0;
       ++*(_DWORD *)dword_82028A0;
@@ -35884,7 +35884,7 @@ int __cdecl sub_80726C0(_DWORD *a1)
 // 82028A0: using guessed type int dword_82028A0;
 
 //----- (0807270E) --------------------------------------------------------
-int __cdecl sub_807270E(_DWORD *a1)
+int __cdecl Scr_AddContinueBlock(_DWORD *a1)
 {
   int result; // eax
 
@@ -35893,7 +35893,7 @@ int __cdecl sub_807270E(_DWORD *a1)
   {
     if ( dword_82028A8 )
     {
-      sub_806E5EC(*(_DWORD *)dword_82028AC);
+      Scr_CheckMaxSwitchCases(*(_DWORD *)dword_82028AC);
       *(_DWORD *)(dword_82028A8 + 4 * *(_DWORD *)dword_82028AC) = a1;
       result = dword_82028AC;
       ++*(_DWORD *)dword_82028AC;
@@ -35905,7 +35905,7 @@ int __cdecl sub_807270E(_DWORD *a1)
 // 82028AC: using guessed type int dword_82028AC;
 
 //----- (0807275C) --------------------------------------------------------
-int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
+int __cdecl EmitWhileStatement(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
 {
   int result; // eax
   int v7; // [esp+14h] [ebp-54h]
@@ -35938,12 +35938,12 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
   v17 = dword_8202898;
   byte_8202894 = 0;
   byte_8202895 = 0;
-  sub_806EA5A(a5, (_DWORD *)*a6);
-  sub_806E4CA(*a6);
+  Scr_TransferBlock(a5, (_DWORD *)*a6);
+  EmitCreateLocalVars(*a6);
   *(_DWORD *)(a5 + 4) = *(_DWORD *)(*a6 + 4);
   v25 = TempMalloc(0);
   v16 = 0;
-  if ( (unsigned __int8)sub_80719D8(a1, &v14, a5) )
+  if ( (unsigned __int8)EmitOrEvalExpression(a1, &v14, a5) )
   {
     if ( v15 == 6 || v15 == 5 )
     {
@@ -35954,7 +35954,7 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
     }
     else
     {
-      sub_806EE00(&v14);
+      EmitValue(&v14);
     }
   }
   v13 = dword_820289C;
@@ -35975,8 +35975,8 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
   else
   {
     EmitOpcode(94, -1, 0);
-    sub_8076D92(a3, 0);
-    sub_806DF60(0);
+    AddOpcodePos(a3, 0);
+    EmitShort2(0);
     v24 = (_WORD *)dword_8202860;
     v23 = TempMalloc(0);
     v11 = 0;
@@ -35988,23 +35988,23 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
   byte_8202894 = 1;
   byte_8202895 = dword_8202A68 != 0;
   dword_8202898 = 0;
-  sub_80742D2(a2, 0, 0, *a6);
+  EmitStatement(a2, 0, 0, *a6);
   if ( *(_DWORD *)*a6 != 3 )
     *(_DWORD *)*a6 = 0;
   byte_820288C = 0;
   byte_820288D = 0;
   byte_8202894 = 0;
   byte_8202895 = 0;
-  sub_8071EFA();
+  ConnectContinueStatements();
   EmitOpcode(99, 0, 0);
-  sub_8076D92(a4, 0);
+  AddOpcodePos(a4, 0);
   if ( *a2 == 44 )
-    sub_8076D92(a2[3], 1);
-  sub_806DF60(0);
+    AddOpcodePos(a2[3], 1);
+  EmitShort2(0);
   *(_WORD *)dword_8202860 = TempMalloc(0) - v25;
   if ( v24 )
     *v24 = TempMalloc(0) - v23;
-  sub_8071EB6();
+  ConnectBreakStatements();
   byte_820288C = v22;
   byte_820288D = v21;
   dword_8202890 = v20;
@@ -36012,7 +36012,7 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
   byte_8202895 = v18;
   dword_8202898 = v17;
   if ( v16 )
-    sub_806E714(v11, v10, a5);
+    Scr_InitFromChildBlocks(v11, v10, a5);
   dword_820289C = v13;
   dword_82028A0 = v12;
   dword_82028A4 = v7;
@@ -36021,7 +36021,7 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
   dword_82028AC = v8;
   return result;
 }
-// 80742D2: using guessed type _DWORD __cdecl sub_80742D2(_DWORD, _DWORD, _DWORD, _DWORD);
+// 80742D2: using guessed type _DWORD __cdecl EmitStatement(_DWORD, _DWORD, _DWORD, _DWORD);
 // 8202860: using guessed type int dword_8202860;
 // 820288C: using guessed type char byte_820288C;
 // 820288D: using guessed type char byte_820288D;
@@ -36038,7 +36038,7 @@ int __cdecl sub_807275C(_DWORD *a1, _DWORD *a2, int a3, int a4, int a5, int *a6)
 // 807275C: using guessed type int arg_10;
 
 //----- (08072AE6) --------------------------------------------------------
-int __cdecl sub_8072AE6(_DWORD *a1, int a2, int *a3, size_t *a4)
+int __cdecl Scr_CalcLocalVarsWhileStatement(_DWORD *a1, int a2, int *a3, size_t *a4)
 {
   int result; // eax
   int i; // [esp+1Ch] [ebp-4Ch]
@@ -36056,7 +36056,7 @@ int __cdecl sub_8072AE6(_DWORD *a1, int a2, int *a3, size_t *a4)
   int v17; // [esp+5Ch] [ebp-Ch]
 
   v16 = 0;
-  if ( (unsigned __int8)sub_807194E(a1, &v14) )
+  if ( (unsigned __int8)EvalExpression(a1, &v14) )
   {
     if ( v15 == 6 || v15 == 5 )
     {
@@ -36086,14 +36086,14 @@ int __cdecl sub_8072AE6(_DWORD *a1, int a2, int *a3, size_t *a4)
     v11 = 0;
   }
   dword_820289C = v11;
-  sub_806E69A(a3, a4);
-  sub_8074842(a2, *a4);
-  sub_807270E((_DWORD *)*a4);
+  Scr_CopyBlock(a3, a4);
+  Scr_CalcLocalVarsStatement(a2, *a4);
+  Scr_AddContinueBlock((_DWORD *)*a4);
   for ( i = 0; i < v8; ++i )
-    sub_806E846(v9 + 4 * i, 1, a3);
+    Scr_AppendChildBlocks(v9 + 4 * i, 1, a3);
   if ( v16 )
-    sub_806E846(v11, v10, a3);
-  sub_806E94E((int)a4, 1, a3);
+    Scr_AppendChildBlocks(v11, v10, a3);
+  Scr_MergeChildBlocks((int)a4, 1, a3);
   dword_820289C = v13;
   dword_82028A0 = v12;
   dword_82028A8 = v7;
@@ -36101,14 +36101,14 @@ int __cdecl sub_8072AE6(_DWORD *a1, int a2, int *a3, size_t *a4)
   dword_82028AC = v6;
   return result;
 }
-// 8074842: using guessed type _DWORD __cdecl sub_8074842(_DWORD, _DWORD);
+// 8074842: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatement(_DWORD, _DWORD);
 // 820289C: using guessed type int dword_820289C;
 // 82028A0: using guessed type int dword_82028A0;
 // 82028A8: using guessed type int dword_82028A8;
 // 82028AC: using guessed type int dword_82028AC;
 
 //----- (08072C7E) --------------------------------------------------------
-int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int a7, int *a8, int *a9)
+int __cdecl EmitForStatement(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int a7, int *a8, int *a9)
 {
   int result; // eax
   int v10; // [esp+1Ch] [ebp-5Ch]
@@ -36143,16 +36143,16 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
   v22 = dword_8202898;
   byte_8202894 = 0;
   byte_8202895 = 0;
-  sub_80742D2(a1, 0, 0, a7);
-  sub_806EA5A(a7, (_DWORD *)*a8);
-  sub_806E4CA(*a8);
+  EmitStatement(a1, 0, 0, a7);
+  Scr_TransferBlock(a7, (_DWORD *)*a8);
+  EmitCreateLocalVars(*a8);
   *(_DWORD *)(a7 + 4) = *(_DWORD *)(*a8 + 4);
-  sub_806EA5A(a7, (_DWORD *)*a9);
+  Scr_TransferBlock(a7, (_DWORD *)*a9);
   v30 = TempMalloc(0);
   if ( *(_DWORD *)a2 == 65 )
   {
     v21 = 0;
-    if ( (unsigned __int8)sub_80719D8(*(_DWORD **)(a2 + 4), &v19, a7) )
+    if ( (unsigned __int8)EmitOrEvalExpression(*(_DWORD **)(a2 + 4), &v19, a7) )
     {
       if ( v20 == 6 || v20 == 5 )
       {
@@ -36163,7 +36163,7 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
       }
       else
       {
-        sub_806EE00(&v19);
+        EmitValue(&v19);
       }
     }
   }
@@ -36192,8 +36192,8 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
   else
   {
     EmitOpcode(94, -1, 0);
-    sub_8076D92(a5, 0);
-    sub_806DF60(0);
+    AddOpcodePos(a5, 0);
+    EmitShort2(0);
     v29 = (_WORD *)dword_8202860;
     v28 = TempMalloc(0);
     v16 = 0;
@@ -36205,24 +36205,24 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
   byte_8202894 = 1;
   byte_8202895 = dword_8202A68 != 0;
   dword_8202898 = 0;
-  sub_80742D2(a4, 0, 0, *a8);
-  sub_807270E((_DWORD *)*a8);
+  EmitStatement(a4, 0, 0, *a8);
+  Scr_AddContinueBlock((_DWORD *)*a8);
   byte_820288C = 0;
   byte_820288D = 0;
   byte_8202894 = 0;
   byte_8202895 = 0;
-  sub_8071EFA();
-  sub_806E714(v14, v13, *a9);
-  sub_80742D2(a3, 0, 0, *a9);
+  ConnectContinueStatements();
+  Scr_InitFromChildBlocks(v14, v13, *a9);
+  EmitStatement(a3, 0, 0, *a9);
   EmitOpcode(99, 0, 0);
-  sub_8076D92(a6, 0);
+  AddOpcodePos(a6, 0);
   if ( *a4 == 44 )
-    sub_8076D92(a4[3], 1);
-  sub_806DF60(0);
+    AddOpcodePos(a4[3], 1);
+  EmitShort2(0);
   *(_WORD *)dword_8202860 = TempMalloc(0) - v30;
   if ( v29 )
     *v29 = TempMalloc(0) - v28;
-  sub_8071EB6();
+  ConnectBreakStatements();
   byte_820288C = v27;
   byte_820288D = v26;
   dword_8202890 = v25;
@@ -36230,7 +36230,7 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
   byte_8202895 = v23;
   dword_8202898 = v22;
   if ( v21 )
-    sub_806E714(v16, v15, a7);
+    Scr_InitFromChildBlocks(v16, v15, a7);
   dword_820289C = v18;
   dword_82028A0 = v17;
   dword_82028A4 = v10;
@@ -36239,7 +36239,7 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
   dword_82028AC = v11;
   return result;
 }
-// 80742D2: using guessed type _DWORD __cdecl sub_80742D2(_DWORD, _DWORD, _DWORD, _DWORD);
+// 80742D2: using guessed type _DWORD __cdecl EmitStatement(_DWORD, _DWORD, _DWORD, _DWORD);
 // 8202860: using guessed type int dword_8202860;
 // 820288C: using guessed type char byte_820288C;
 // 820288D: using guessed type char byte_820288D;
@@ -36256,7 +36256,7 @@ int __cdecl sub_8072C7E(int a1, int a2, int a3, _DWORD *a4, int a5, int a6, int 
 // 8072C7E: using guessed type int arg_18;
 
 //----- (080730A4) --------------------------------------------------------
-int __cdecl sub_80730A4(int a1, int a2, int a3, int a4, int *a5, size_t *a6, size_t *a7)
+int __cdecl Scr_CalcLocalVarsForStatement(int a1, int a2, int a3, int a4, int *a5, size_t *a6, size_t *a7)
 {
   int result; // eax
   int i; // [esp+1Ch] [ebp-4Ch]
@@ -36273,11 +36273,11 @@ int __cdecl sub_80730A4(int a1, int a2, int a3, int a4, int *a5, size_t *a6, siz
   char v19; // [esp+5Bh] [ebp-Dh]
   int v20; // [esp+5Ch] [ebp-Ch]
 
-  sub_8074842(a1, a5);
+  Scr_CalcLocalVarsStatement(a1, a5);
   if ( *(_DWORD *)a2 == 65 )
   {
     v19 = 0;
-    if ( (unsigned __int8)sub_807194E(*(_DWORD **)(a2 + 4), &v17) )
+    if ( (unsigned __int8)EvalExpression(*(_DWORD **)(a2 + 4), &v17) )
     {
       if ( v18 == 6 || v18 == 5 )
       {
@@ -36312,18 +36312,18 @@ int __cdecl sub_80730A4(int a1, int a2, int a3, int a4, int *a5, size_t *a6, siz
     v14 = 0;
   }
   dword_820289C = v14;
-  sub_806E69A(a5, a6);
-  sub_806E69A(a5, a7);
-  sub_8074842(a4, *a6);
-  sub_807270E((_DWORD *)*a6);
+  Scr_CopyBlock(a5, a6);
+  Scr_CopyBlock(a5, a7);
+  Scr_CalcLocalVarsStatement(a4, *a6);
+  Scr_AddContinueBlock((_DWORD *)*a6);
   for ( i = 0; i < v11; ++i )
-    sub_806E846(v12 + 4 * i, 1, a5);
-  sub_8074842(a3, *a7);
-  sub_806E846((int)a7, 1, a5);
-  sub_806E94E((int)a7, 1, a5);
+    Scr_AppendChildBlocks(v12 + 4 * i, 1, a5);
+  Scr_CalcLocalVarsStatement(a3, *a7);
+  Scr_AppendChildBlocks((int)a7, 1, a5);
+  Scr_MergeChildBlocks((int)a7, 1, a5);
   if ( v19 )
-    sub_806E846(v14, v13, a5);
-  sub_806E94E((int)a6, 1, a5);
+    Scr_AppendChildBlocks(v14, v13, a5);
+  Scr_MergeChildBlocks((int)a6, 1, a5);
   dword_820289C = v16;
   dword_82028A0 = v15;
   dword_82028A8 = v10;
@@ -36331,44 +36331,44 @@ int __cdecl sub_80730A4(int a1, int a2, int a3, int a4, int *a5, size_t *a6, siz
   dword_82028AC = v9;
   return result;
 }
-// 8074842: using guessed type _DWORD __cdecl sub_8074842(_DWORD, _DWORD);
+// 8074842: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatement(_DWORD, _DWORD);
 // 820289C: using guessed type int dword_820289C;
 // 82028A0: using guessed type int dword_82028A0;
 // 82028A8: using guessed type int dword_82028A8;
 // 82028AC: using guessed type int dword_82028AC;
 
 //----- (080732BA) --------------------------------------------------------
-void __cdecl sub_80732BA(int *a1, int a2, int a3)
+void __cdecl EmitIncStatement(int *a1, int a2, int a3)
 {
   byte_82028B0 = 1;
-  sub_8071BA0(a1, a3);
+  EmitVariableExpressionRef(a1, a3);
   byte_82028B0 = 0;
   EmitOpcode(100, 1, 0);
-  sub_8076D92(a2, 0);
-  sub_806E2EE(a2);
+  AddOpcodePos(a2, 0);
+  EmitSetVariableField(a2);
 }
 // 82028B0: using guessed type char byte_82028B0;
 
 //----- (0807331C) --------------------------------------------------------
-_DWORD *__cdecl sub_807331C(int a1, _DWORD *a2)
+_DWORD *__cdecl Scr_CalcLocalVarsIncStatement(int a1, _DWORD *a2)
 {
-  return sub_8071CB0(a1, a2);
+  return Scr_CalcLocalVarsVariableExpressionRef(a1, a2);
 }
 
 //----- (08073336) --------------------------------------------------------
-void __cdecl sub_8073336(int *a1, int a2, int a3)
+void __cdecl EmitDecStatement(int *a1, int a2, int a3)
 {
   byte_82028B0 = 1;
-  sub_8071BA0(a1, a3);
+  EmitVariableExpressionRef(a1, a3);
   byte_82028B0 = 0;
   EmitOpcode(101, 1, 0);
-  sub_8076D92(a2, 0);
-  sub_806E2EE(a2);
+  AddOpcodePos(a2, 0);
+  EmitSetVariableField(a2);
 }
 // 82028B0: using guessed type char byte_82028B0;
 
 //----- (08073398) --------------------------------------------------------
-int **__cdecl sub_8073398(int **a1, int a2)
+int **__cdecl EmitFormalParameterListInternal(int **a1, int a2)
 {
   int **result; // eax
 
@@ -36378,13 +36378,13 @@ int **__cdecl sub_8073398(int **a1, int a2)
     a1 = result;
     if ( !result )
       break;
-    sub_806EB94(**result, (*result)[1], a2);
+    EmitSafeSetVariableField(**result, (*result)[1], a2);
   }
   return result;
 }
 
 //----- (080733DA) --------------------------------------------------------
-_DWORD ***__cdecl sub_80733DA(_DWORD ***a1, _DWORD *a2)
+_DWORD ***__cdecl Scr_CalcLocalVarsFormalParameterListInternal(_DWORD ***a1, _DWORD *a2)
 {
   _DWORD ***result; // eax
 
@@ -36394,13 +36394,13 @@ _DWORD ***__cdecl sub_80733DA(_DWORD ***a1, _DWORD *a2)
     a1 = result;
     if ( !result )
       break;
-    sub_806EC16(**result, (int)(*result)[1], a2);
+    Scr_CalcLocalVarsSafeSetVariableField(**result, (int)(*result)[1], a2);
   }
   return result;
 }
 
 //----- (0807341C) --------------------------------------------------------
-int **__cdecl sub_807341C(int **a1, int a2)
+int **__cdecl EmitFormalWaittillParameterListRefInternal(int **a1, int a2)
 {
   int **result; // eax
 
@@ -36410,36 +36410,36 @@ int **__cdecl sub_807341C(int **a1, int a2)
     a1 = result;
     if ( !result )
       break;
-    sub_806EC38(**result, (*result)[1], a2);
+    EmitSafeSetWaittillVariableField(**result, (*result)[1], a2);
   }
   return result;
 }
 
 //----- (0807345E) --------------------------------------------------------
-int __cdecl sub_807345E(int a1, int a2, int a3, int a4, int a5)
+int __cdecl EmitWaittillStatement(int a1, int a2, int a3, int a4, int a5)
 {
   int **v6; // [esp+14h] [ebp-4h]
 
   v6 = *(int ***)(*(_DWORD *)a2 + 4);
-  sub_8071B6C((_DWORD *)**v6, a5);
-  sub_8071552(a1, a5);
+  EmitExpression((_DWORD *)**v6, a5);
+  EmitPrimitiveExpression(a1, a5);
   EmitOpcode(120, -2, 0);
-  sub_8076D92(a4, 0);
-  sub_8076D92(a4, 0);
-  sub_8076D92(a3, 0);
-  sub_8076D92((*v6)[1], 0);
-  sub_807341C(v6, a5);
+  AddOpcodePos(a4, 0);
+  AddOpcodePos(a4, 0);
+  AddOpcodePos(a3, 0);
+  AddOpcodePos((*v6)[1], 0);
+  EmitFormalWaittillParameterListRefInternal(v6, a5);
   return EmitOpcode(52, 0, 0);
 }
 
 //----- (08073538) --------------------------------------------------------
-_DWORD ***__cdecl sub_8073538(int a1, _DWORD *a2)
+_DWORD ***__cdecl Scr_CalcLocalVarsWaittillStatement(int a1, _DWORD *a2)
 {
-  return sub_80733DA(*(_DWORD ****)(*(_DWORD *)a1 + 4), a2);
+  return Scr_CalcLocalVarsFormalParameterListInternal(*(_DWORD ****)(*(_DWORD *)a1 + 4), a2);
 }
 
 //----- (08073560) --------------------------------------------------------
-int __cdecl sub_8073560(int a1, int a2, int a3, int a4, int a5)
+int __cdecl EmitWaittillmatchStatement(int a1, int a2, int a3, int a4, int a5)
 {
   int i; // [esp+10h] [ebp-8h]
   int v7; // [esp+14h] [ebp-4h]
@@ -36451,59 +36451,59 @@ int __cdecl sub_8073560(int a1, int a2, int a3, int a4, int a5)
     v7 = *(_DWORD *)(v7 + 4);
     if ( !v7 )
       break;
-    sub_8071B6C(**(_DWORD ***)v7, a5);
+    EmitExpression(**(_DWORD ***)v7, a5);
   }
   v8 = *(_DWORD *)(*(_DWORD *)a2 + 4);
-  sub_8071B6C(**(_DWORD ***)v8, a5);
-  sub_8071552(a1, a5);
+  EmitExpression(**(_DWORD ***)v8, a5);
+  EmitPrimitiveExpression(a1, a5);
   EmitOpcode(119, -2 - i, 0);
-  sub_8076D92(a4, 0);
-  sub_8076D92(a4, 0);
-  sub_8076D92(a3, 0);
-  sub_8076D92(*(_DWORD *)(*(_DWORD *)v8 + 4), 0);
+  AddOpcodePos(a4, 0);
+  AddOpcodePos(a4, 0);
+  AddOpcodePos(a3, 0);
+  AddOpcodePos(*(_DWORD *)(*(_DWORD *)v8 + 4), 0);
   while ( 1 )
   {
     v8 = *(_DWORD *)(v8 + 4);
     if ( !v8 )
       break;
-    sub_8076D92(*(_DWORD *)(*(_DWORD *)v8 + 4), 0);
+    AddOpcodePos(*(_DWORD *)(*(_DWORD *)v8 + 4), 0);
   }
-  sub_806DF8E(i);
+  EmitByte(i);
   return EmitOpcode(52, 0, 0);
 }
 
 //----- (080736AC) --------------------------------------------------------
-void __cdecl sub_80736AC(int a1, int *a2, int a3, int a4, int a5)
+void __cdecl EmitNotifyStatement(int a1, int *a2, int a3, int a4, int a5)
 {
   int v5; // [esp+Ch] [ebp-Ch]
   int i; // [esp+10h] [ebp-8h]
   int v7; // [esp+14h] [ebp-4h]
 
   EmitOpcode(123, 1, 0);
-  sub_8076D92(a3, 1);
+  AddOpcodePos(a3, 1);
   v5 = 0;
   v7 = 0;
   for ( i = *a2; i; i = *(_DWORD *)(i + 4) )
   {
     v7 = i;
-    sub_8071B6C(**(_DWORD ***)i, a5);
+    EmitExpression(**(_DWORD ***)i, a5);
     ++v5;
   }
-  sub_8071552(a1, a5);
+  EmitPrimitiveExpression(a1, a5);
   EmitOpcode(121, -v5 - 2, 0);
-  sub_8076D92(a4, 0);
-  sub_8076D92(*(_DWORD *)(*(_DWORD *)v7 + 4), 0);
-  sub_8076D92(a3, 0);
+  AddOpcodePos(a4, 0);
+  AddOpcodePos(*(_DWORD *)(*(_DWORD *)v7 + 4), 0);
+  AddOpcodePos(a3, 0);
 }
 
 //----- (080737A2) --------------------------------------------------------
-void __cdecl sub_80737A2(int a1, _DWORD *a2, int a3, int a4, int a5)
+void __cdecl EmitEndOnStatement(int a1, _DWORD *a2, int a3, int a4, int a5)
 {
-  sub_8071B6C(a2, a5);
-  sub_8071552(a1, a5);
+  EmitExpression(a2, a5);
+  EmitPrimitiveExpression(a1, a5);
   EmitOpcode(122, -2, 0);
-  sub_8076D92(a4, 0);
-  sub_8076D92(a3, 0);
+  AddOpcodePos(a4, 0);
+  AddOpcodePos(a3, 0);
 }
 
 //----- (08073810) --------------------------------------------------------
@@ -36516,7 +36516,7 @@ int __cdecl compar(_DWORD *a1, _DWORD *a2)
 }
 
 //----- (0807384C) --------------------------------------------------------
-int __cdecl sub_807384C(int a1)
+int __cdecl Scr_IsLastStatement(int a1)
 {
   if ( !a1 )
     return 1;
@@ -36533,7 +36533,7 @@ int __cdecl sub_807384C(int a1)
 // 839400B: using guessed type char byte_839400B;
 
 //----- (080738A8) --------------------------------------------------------
-void __cdecl sub_80738A8(_DWORD *a1, int a2)
+void __cdecl EmitCaseStatement(_DWORD *a1, int a2)
 {
   char *v2; // eax
   int v3; // [esp+14h] [ebp-4h]
@@ -36544,7 +36544,7 @@ void __cdecl sub_80738A8(_DWORD *a1, int a2)
     if ( IsValidArrayIndex(a1[1]) )
     {
       v3 = sub_807BADA(a1[1]);
-      sub_8074020(v3, a2);
+      EmitCaseStatementInfo(v3, a2);
     }
     else
     {
@@ -36555,8 +36555,8 @@ void __cdecl sub_80738A8(_DWORD *a1, int a2)
   else if ( *a1 == 11 )
   {
     v4 = a1[1];
-    sub_806DA94(v4, 1u);
-    sub_8074020(v4, a2);
+    CompileTransferRefToString(v4, 1u);
+    EmitCaseStatementInfo(v4, a2);
   }
   else
   {
@@ -36565,13 +36565,13 @@ void __cdecl sub_80738A8(_DWORD *a1, int a2)
 }
 
 //----- (08073964) --------------------------------------------------------
-void __cdecl sub_8073964(int a1)
+void __cdecl EmitDefaultStatement(int a1)
 {
-  sub_8074020(0, a1);
+  EmitCaseStatementInfo(0, a1);
 }
 
 //----- (08073980) --------------------------------------------------------
-char *__cdecl sub_8073980(int a1, char a2, int a3, int a4)
+char *__cdecl EmitSwitchStatementList(int a1, char a2, int a3, int a4)
 {
   char *result; // eax
   int v5; // [esp+10h] [ebp-28h]
@@ -36603,20 +36603,20 @@ char *__cdecl sub_8073980(int a1, char a2, int a3, int a4)
       if ( dword_82028A4 )
       {
         byte_820288C = 0;
-        sub_806E53A((_DWORD *)dword_82028A4, dword_82028A4);
+        EmitRemoveLocalVars((_DWORD *)dword_82028A4, dword_82028A4);
       }
       if ( *(_DWORD *)*i == 61 )
       {
         dword_82028A4 = *(_DWORD *)(*i + 12);
-        sub_80738A8(*(_DWORD **)(*i + 4), *(_DWORD *)(*i + 8));
+        EmitCaseStatement(*(_DWORD **)(*i + 4), *(_DWORD *)(*i + 8));
       }
       else
       {
         dword_82028A4 = *(_DWORD *)(*i + 8);
         v11 = 1;
-        sub_8073964(*(_DWORD *)(*i + 4));
+        EmitDefaultStatement(*(_DWORD *)(*i + 4));
       }
-      sub_806EA5A(a4, (_DWORD *)dword_82028A4);
+      Scr_TransferBlock(a4, (_DWORD *)dword_82028A4);
       byte_820288C = 1;
     }
     else
@@ -36624,9 +36624,9 @@ char *__cdecl sub_8073980(int a1, char a2, int a3, int a4)
       if ( !dword_82028A4 )
         return CompileError(a3, "missing case statement");
       v5 = 0;
-      if ( v14 && (unsigned __int8)sub_807384C((int)v12) )
+      if ( v14 && (unsigned __int8)Scr_IsLastStatement((int)v12) )
         v5 = 1;
-      sub_80742D2(*i, v5, a3, dword_82028A4);
+      EmitStatement(*i, v5, a3, dword_82028A4);
       if ( dword_82028A4 && *(_DWORD *)dword_82028A4 )
       {
         dword_82028A4 = 0;
@@ -36637,13 +36637,13 @@ char *__cdecl sub_8073980(int a1, char a2, int a3, int a4)
   if ( dword_82028A4 )
   {
     byte_820288C = 0;
-    sub_806E53A((_DWORD *)dword_82028A4, dword_82028A4);
+    EmitRemoveLocalVars((_DWORD *)dword_82028A4, dword_82028A4);
   }
   if ( v11 )
   {
     if ( dword_82028A4 )
-      sub_80726C0((_DWORD *)dword_82028A4);
-    sub_806E714(v10, v9, a4);
+      Scr_AddBreakBlock((_DWORD *)dword_82028A4);
+    Scr_InitFromChildBlocks(v10, v9, a4);
   }
   dword_820289C = v8;
   dword_82028A0 = v7;
@@ -36651,14 +36651,14 @@ char *__cdecl sub_8073980(int a1, char a2, int a3, int a4)
   dword_82028A4 = v6;
   return result;
 }
-// 80742D2: using guessed type _DWORD __cdecl sub_80742D2(_DWORD, _DWORD, _DWORD, _DWORD);
+// 80742D2: using guessed type _DWORD __cdecl EmitStatement(_DWORD, _DWORD, _DWORD, _DWORD);
 // 820288C: using guessed type char byte_820288C;
 // 820289C: using guessed type int dword_820289C;
 // 82028A0: using guessed type int dword_82028A0;
 // 82028A4: using guessed type int dword_82028A4;
 
 //----- (08073BC8) --------------------------------------------------------
-int __cdecl sub_8073BC8(int a1, int *a2)
+int __cdecl Scr_CalcLocalVarsSwitchStatement(int a1, int *a2)
 {
   int result; // eax
   int v3; // [esp+10h] [ebp-28h]
@@ -36688,7 +36688,7 @@ int __cdecl sub_8073BC8(int a1, int *a2)
     if ( *(_DWORD *)*i == 61 || *(_DWORD *)*i == 62 )
     {
       v7 = 0;
-      sub_806E69A(a2, (size_t *)&v7);
+      Scr_CopyBlock(a2, (size_t *)&v7);
       if ( *(_DWORD *)*i == 61 )
       {
         *(_DWORD *)(*i + 12) = v7;
@@ -36701,14 +36701,14 @@ int __cdecl sub_8073BC8(int a1, int *a2)
     }
     else if ( v7 )
     {
-      sub_8074842(*i, v7);
+      Scr_CalcLocalVarsStatement(*i, v7);
       if ( *v7 )
       {
         if ( *v7 == 2 )
         {
           *v7 = 0;
           v5 = 0;
-          sub_806E5EC(v3);
+          Scr_CheckMaxSwitchCases(v3);
           *(_DWORD *)(v4 + 4 * v3++) = v7;
         }
         else if ( *v7 <= v5 )
@@ -36723,26 +36723,26 @@ int __cdecl sub_8073BC8(int a1, int *a2)
   {
     if ( v7 )
     {
-      sub_80726C0(v7);
-      sub_806E5EC(v3);
+      Scr_AddBreakBlock(v7);
+      Scr_CheckMaxSwitchCases(v3);
       *(_DWORD *)(v4 + 4 * v3++) = v7;
     }
     if ( !*a2 )
       *a2 = v5;
-    sub_806E846(v11, v10, a2);
-    sub_806E94E(v4, v3, a2);
+    Scr_AppendChildBlocks(v11, v10, a2);
+    Scr_MergeChildBlocks(v4, v3, a2);
   }
   dword_820289C = v9;
   result = v8;
   dword_82028A0 = v8;
   return result;
 }
-// 8074842: using guessed type _DWORD __cdecl sub_8074842(_DWORD, _DWORD);
+// 8074842: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatement(_DWORD, _DWORD);
 // 820289C: using guessed type int dword_820289C;
 // 82028A0: using guessed type int dword_82028A0;
 
 //----- (08073DBC) --------------------------------------------------------
-char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
+char *__cdecl EmitSwitchStatement(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
 {
   char *result; // eax
   int nmemb; // [esp+10h] [ebp-28h]
@@ -36766,21 +36766,21 @@ char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
   v12 = dword_8202890;
   byte_820288C = 0;
   byte_820288D = 0;
-  sub_8071B6C(a1, a6);
+  EmitExpression(a1, a6);
   EmitOpcode(124, -1, 0);
-  sub_806DF0E(0);
+  EmitCodepos(0);
   v11 = (_DWORD *)dword_8202860;
   v8 = TempMalloc(0);
   byte_8202886 = dword_8202A68 != 0;
   dword_8202888 = 0;
   byte_820288D = dword_8202A68 != 0;
   dword_8202890 = 0;
-  sub_8073980(a2, a4, a5, a6);
+  EmitSwitchStatementList(a2, a4, a5, a6);
   byte_8202886 = 0;
   byte_820288D = 0;
   EmitOpcode(125, 0, 0);
-  sub_8076D92(a3, 0);
-  sub_806DF32(0);
+  AddOpcodePos(a3, 0);
+  EmitShort3(0);
   v10 = (_WORD *)dword_8202860;
   *v11 = dword_8202860 - v8;
   base = (_DWORD *)TempMallocAlignStrict(0);
@@ -36788,8 +36788,8 @@ char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
   v15 = (int *)dword_8202888;
   while ( v15 )
   {
-    sub_806DF0E(*v15);
-    sub_806E004(v15[1]);
+    EmitCodepos(*v15);
+    EmitCodepos2(v15[1]);
     v15 = (int *)v15[3];
     ++nmemb;
   }
@@ -36808,7 +36808,7 @@ char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
     --nmemb;
     base += 2;
   }
-  sub_8071EB6();
+  ConnectBreakStatements();
   byte_8202886 = v18;
   dword_8202888 = v17;
   byte_820288C = v14;
@@ -36826,7 +36826,7 @@ char *__cdecl sub_8073DBC(_DWORD *a1, int a2, int a3, char a4, int a5, int a6)
 // 8202A68: using guessed type int dword_8202A68;
 
 //----- (08074020) --------------------------------------------------------
-void __cdecl sub_8074020(int a1, int a2)
+void __cdecl EmitCaseStatementInfo(int a1, int a2)
 {
   _DWORD *v2; // [esp+10h] [ebp-8h]
 
@@ -36844,19 +36844,19 @@ void __cdecl sub_8074020(int a1, int a2)
 // 8202A68: using guessed type int dword_8202A68;
 
 //----- (0807407E) --------------------------------------------------------
-char *__cdecl sub_807407E(int a1, _DWORD *a2)
+char *__cdecl EmitBreakStatement(int a1, _DWORD *a2)
 {
   char *result; // eax
   char *v3; // [esp+10h] [ebp-8h]
 
   if ( !byte_820288C || *a2 )
     return CompileError(a1, "illegal break statement");
-  sub_80726C0(a2);
-  sub_806E53A(a2, dword_82028A4);
+  Scr_AddBreakBlock(a2);
+  EmitRemoveLocalVars(a2, dword_82028A4);
   *a2 = 2;
   EmitOpcode(98, 0, 0);
-  sub_8076D92(a1, 1);
-  sub_806DF0E(0);
+  AddOpcodePos(a1, 1);
+  EmitCodepos(0);
   v3 = (char *)Hunk_AllocateTempMemoryHighInternal(12);
   *(_DWORD *)v3 = dword_8202860;
   *((_DWORD *)v3 + 1) = TempMalloc(0);
@@ -36871,19 +36871,19 @@ char *__cdecl sub_807407E(int a1, _DWORD *a2)
 // 82028A4: using guessed type int dword_82028A4;
 
 //----- (08074158) --------------------------------------------------------
-char *__cdecl sub_8074158(int a1, _DWORD *a2)
+char *__cdecl EmitContinueStatement(int a1, _DWORD *a2)
 {
   char *result; // eax
   char *v3; // [esp+10h] [ebp-8h]
 
   if ( !byte_8202894 || *a2 )
     return CompileError(a1, "illegal continue statement");
-  sub_807270E(a2);
-  sub_806E53A(a2, (int)a2);
+  Scr_AddContinueBlock(a2);
+  EmitRemoveLocalVars(a2, (int)a2);
   *a2 = 1;
   EmitOpcode(98, 0, 0);
-  sub_8076D92(a1, 1);
-  sub_806DF0E(0);
+  AddOpcodePos(a1, 1);
+  EmitCodepos(0);
   v3 = (char *)Hunk_AllocateTempMemoryHighInternal(12);
   *(_DWORD *)v3 = dword_8202860;
   *((_DWORD *)v3 + 1) = TempMalloc(0);
@@ -36897,56 +36897,56 @@ char *__cdecl sub_8074158(int a1, _DWORD *a2)
 // 8202898: using guessed type int dword_8202898;
 
 //----- (08074230) --------------------------------------------------------
-void sub_8074230()
+void EmitBreakpointStatement()
 {
   ;
 }
 
 //----- (08074236) --------------------------------------------------------
-int __cdecl sub_8074236(int a1, int a2, unsigned __int8 a3)
+int __cdecl EmitProfStatement(int a1, int a2, unsigned __int8 a3)
 {
   if ( !byte_839400B )
-    return sub_806D9EC(a1);
-  sub_806D9EC(a1);
+    return Scr_CompileRemoveRefToString(a1);
+  Scr_CompileRemoveRefToString(a1);
   EmitOpcode(a3, 0, 0);
-  return sub_806DF8E(0);
+  return EmitByte(0);
 }
 // 839400B: using guessed type char byte_839400B;
 
 //----- (0807428E) --------------------------------------------------------
-int __cdecl sub_807428E(int a1, int a2)
+int __cdecl EmitProfBeginStatement(int a1, int a2)
 {
-  return sub_8074236(a1, a2, 0x85u);
+  return EmitProfStatement(a1, a2, 0x85u);
 }
 
 //----- (080742B0) --------------------------------------------------------
-int __cdecl sub_80742B0(int a1, int a2)
+int __cdecl EmitProfEndStatement(int a1, int a2)
 {
-  return sub_8074236(a1, a2, 0x86u);
+  return EmitProfStatement(a1, a2, 0x86u);
 }
 
 //----- (080742D2) --------------------------------------------------------
-void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
+void __cdecl EmitStatement(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
 {
   switch ( *(_DWORD *)a1 )
   {
     case 2:
-      sub_8072088(*(int **)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
+      EmitAssignmentStatement(*(int **)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
       break;
     case 0x19:
-      sub_8072108(*(_DWORD *)(a1 + 4), (int)a4);
+      EmitCallExpressionStatement(*(_DWORD *)(a1 + 4), (int)a4);
       break;
     case 0x1B:
-      sub_807212A(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), a4);
+      EmitReturnStatement(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), a4);
       break;
     case 0x1C:
-      sub_807216E(*(_DWORD *)(a1 + 4), a4);
+      EmitEndStatement(*(_DWORD *)(a1 + 4), a4);
       break;
     case 0x1D:
-      sub_80721A0(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), (int)a4);
+      EmitWaitStatement(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), (int)a4);
       break;
     case 0x25:
-      sub_807225A(
+      EmitIfStatement(
         *(_DWORD **)(a1 + 4),
         *(_DWORD *)(a1 + 8),
         *(_DWORD *)(a1 + 12),
@@ -36956,7 +36956,7 @@ void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
         (_DWORD **)(a1 + 16));
       break;
     case 0x26:
-      sub_8072382(
+      EmitIfElseStatement(
         *(_DWORD **)(a1 + 4),
         *(_DWORD *)(a1 + 8),
         *(_DWORD *)(a1 + 12),
@@ -36969,7 +36969,7 @@ void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
         (_DWORD **)(a1 + 28));
       break;
     case 0x27:
-      sub_807275C(
+      EmitWhileStatement(
         *(_DWORD **)(a1 + 4),
         *(_DWORD **)(a1 + 8),
         *(_DWORD *)(a1 + 12),
@@ -36978,7 +36978,7 @@ void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
         (int *)(a1 + 20));
       break;
     case 0x28:
-      sub_8072C7E(
+      EmitForStatement(
         *(_DWORD *)(a1 + 4),
         *(_DWORD *)(a1 + 8),
         *(_DWORD *)(a1 + 12),
@@ -36990,37 +36990,37 @@ void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
         (int *)(a1 + 32));
       break;
     case 0x29:
-      sub_80732BA(*(int **)(a1 + 4), *(_DWORD *)(a1 + 8), (int)a4);
+      EmitIncStatement(*(int **)(a1 + 4), *(_DWORD *)(a1 + 8), (int)a4);
       break;
     case 0x2A:
-      sub_8073336(*(int **)(a1 + 4), *(_DWORD *)(a1 + 8), (int)a4);
+      EmitDecStatement(*(int **)(a1 + 4), *(_DWORD *)(a1 + 8), (int)a4);
       break;
     case 0x2B:
-      sub_80718AE(*(int **)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
+      EmitBinaryEqualsOperatorExpression(*(int **)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
       break;
     case 0x2C:
-      sub_8074A7A(*(_DWORD *)(a1 + 4), a2, a3, a4);
+      EmitStatementList(*(_DWORD *)(a1 + 4), a2, a3, a4);
       break;
     case 0x2D:
-      sub_8074B7C(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8), (int)a4, (int *)(a1 + 12));
+      EmitDeveloperStatementList(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8), (int)a4, (int *)(a1 + 12));
       break;
     case 0x37:
-      sub_807345E(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
+      EmitWaittillStatement(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
       break;
     case 0x38:
-      sub_8073560(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
+      EmitWaittillmatchStatement(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
       break;
     case 0x39:
-      sub_8072210(*(_DWORD *)(a1 + 4));
+      EmitWaittillFrameEnd(*(_DWORD *)(a1 + 4));
       break;
     case 0x3A:
-      sub_80736AC(*(_DWORD *)(a1 + 4), *(int **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
+      EmitNotifyStatement(*(_DWORD *)(a1 + 4), *(int **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
       break;
     case 0x3B:
-      sub_80737A2(*(_DWORD *)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
+      EmitEndOnStatement(*(_DWORD *)(a1 + 4), *(_DWORD **)(a1 + 8), *(_DWORD *)(a1 + 12), *(_DWORD *)(a1 + 16), (int)a4);
       break;
     case 0x3C:
-      sub_8073DBC(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a2, a3, (int)a4);
+      EmitSwitchStatement(*(_DWORD **)(a1 + 4), *(_DWORD *)(a1 + 8), *(_DWORD *)(a1 + 12), a2, a3, (int)a4);
       break;
     case 0x3D:
       CompileError(*(_DWORD *)(a1 + 8), "illegal case statement");
@@ -37029,33 +37029,33 @@ void __cdecl sub_80742D2(int a1, unsigned __int8 a2, int a3, _DWORD *a4)
       CompileError(*(_DWORD *)(a1 + 4), "illegal default statement");
       break;
     case 0x3F:
-      sub_807407E(*(_DWORD *)(a1 + 4), a4);
+      EmitBreakStatement(*(_DWORD *)(a1 + 4), a4);
       break;
     case 0x40:
-      sub_8074158(*(_DWORD *)(a1 + 4), a4);
+      EmitContinueStatement(*(_DWORD *)(a1 + 4), a4);
       break;
     case 0x4B:
-      sub_8074230();
+      EmitBreakpointStatement();
       break;
     case 0x4C:
-      sub_807428E(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8));
+      EmitProfBeginStatement(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8));
       break;
     case 0x4D:
-      sub_80742B0(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8));
+      EmitProfEndStatement(*(_DWORD *)(a1 + 4), *(_DWORD *)(a1 + 8));
       break;
     default:
       return;
   }
 }
-// 8074A7A: using guessed type _DWORD __cdecl sub_8074A7A(_DWORD, _DWORD, _DWORD, _DWORD);
+// 8074A7A: using guessed type _DWORD __cdecl EmitStatementList(_DWORD, _DWORD, _DWORD, _DWORD);
 
 //----- (08074842) --------------------------------------------------------
-void __cdecl sub_8074842(size_t *a1, int *a2)
+void __cdecl Scr_CalcLocalVarsStatement(size_t *a1, int *a2)
 {
   switch ( *a1 )
   {
     case 2u:
-      sub_80720EE(a1[1], a1[2], a2);
+      Scr_CalcLocalVarsAssignmentStatement(a1[1], a1[2], a2);
       break;
     case 0x1Bu:
     case 0x1Cu:
@@ -37063,43 +37063,43 @@ void __cdecl sub_8074842(size_t *a1, int *a2)
         *a2 = 3;
       break;
     case 0x25u:
-      sub_807233A(a1[2], a2, a1 + 4);
+      Scr_CalcLocalVarsIfStatement(a1[2], a2, a1 + 4);
       break;
     case 0x26u:
-      sub_80725C2(a1[2], a1[3], a2, a1 + 6, a1 + 7);
+      Scr_CalcLocalVarsIfElseStatement(a1[2], a1[3], a2, a1 + 6, a1 + 7);
       break;
     case 0x27u:
-      sub_8072AE6((_DWORD *)a1[1], a1[2], a2, a1 + 5);
+      Scr_CalcLocalVarsWhileStatement((_DWORD *)a1[1], a1[2], a2, a1 + 5);
       break;
     case 0x28u:
-      sub_80730A4(a1[1], a1[2], a1[3], a1[4], a2, a1 + 7, a1 + 8);
+      Scr_CalcLocalVarsForStatement(a1[1], a1[2], a1[3], a1[4], a2, a1 + 7, a1 + 8);
       break;
     case 0x29u:
     case 0x2Au:
-      sub_807331C(a1[1], a2);
+      Scr_CalcLocalVarsIncStatement(a1[1], a2);
       break;
     case 0x2Bu:
       sub_8071934(a1[1], a2);
       break;
     case 0x2Cu:
-      sub_8074AF6(a1[1], a2);
+      Scr_CalcLocalVarsStatementList(a1[1], a2);
       break;
     case 0x2Du:
-      sub_8074B34(a1[1], a2, a1 + 3);
+      Scr_CalcLocalVarsDeveloperStatementList(a1[1], a2, a1 + 3);
       break;
     case 0x37u:
-      sub_8073538(a1[2], a2);
+      Scr_CalcLocalVarsWaittillStatement(a1[2], a2);
       break;
     case 0x3Cu:
-      sub_8073BC8(a1[2], a2);
+      Scr_CalcLocalVarsSwitchStatement(a1[2], a2);
       break;
     case 0x3Fu:
-      sub_80726C0(a2);
+      Scr_AddBreakBlock(a2);
       if ( !*a2 )
         *a2 = 2;
       break;
     case 0x40u:
-      sub_807270E(a2);
+      Scr_AddContinueBlock(a2);
       if ( !*a2 )
         *a2 = 1;
       break;
@@ -37107,10 +37107,10 @@ void __cdecl sub_8074842(size_t *a1, int *a2)
       return;
   }
 }
-// 8074AF6: using guessed type _DWORD __cdecl sub_8074AF6(_DWORD, _DWORD);
+// 8074AF6: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatementList(_DWORD, _DWORD);
 
 //----- (08074A7A) --------------------------------------------------------
-int *__cdecl sub_8074A7A(int a1, char a2, int a3, _DWORD *a4)
+int *__cdecl EmitStatementList(int a1, char a2, int a3, _DWORD *a4)
 {
   int *result; // eax
   unsigned __int8 v5; // [esp+18h] [ebp-10h]
@@ -37124,17 +37124,17 @@ int *__cdecl sub_8074A7A(int a1, char a2, int a3, _DWORD *a4)
     v5 = 0;
     if ( a2 )
     {
-      if ( (unsigned __int8)sub_807384C(v6) )
+      if ( (unsigned __int8)Scr_IsLastStatement(v6) )
         v5 = 1;
     }
-    sub_80742D2(*i, v5, a3, a4);
+    EmitStatement(*i, v5, a3, a4);
     result = (int *)v6;
   }
   return result;
 }
 
 //----- (08074AF6) --------------------------------------------------------
-int __cdecl sub_8074AF6(int a1, int *a2)
+int __cdecl Scr_CalcLocalVarsStatementList(int a1, int *a2)
 {
   int result; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -37142,23 +37142,23 @@ int __cdecl sub_8074AF6(int a1, int *a2)
   result = *(_DWORD *)(*(_DWORD *)a1 + 4);
   for ( i = result; i; i = result )
   {
-    sub_8074842(*(size_t **)i, a2);
+    Scr_CalcLocalVarsStatement(*(size_t **)i, a2);
     result = *(_DWORD *)(i + 4);
   }
   return result;
 }
 
 //----- (08074B34) --------------------------------------------------------
-void __cdecl sub_8074B34(int a1, _DWORD *a2, size_t *a3)
+void __cdecl Scr_CalcLocalVarsDeveloperStatementList(int a1, _DWORD *a2, size_t *a3)
 {
-  sub_806E69A(a2, a3);
-  sub_8074AF6(a1, *a3);
-  sub_806E94E((int)a3, 1, a2);
+  Scr_CopyBlock(a2, a3);
+  Scr_CalcLocalVarsStatementList(a1, *a3);
+  Scr_MergeChildBlocks((int)a3, 1, a2);
 }
-// 8074AF6: using guessed type _DWORD __cdecl sub_8074AF6(_DWORD, _DWORD);
+// 8074AF6: using guessed type _DWORD __cdecl Scr_CalcLocalVarsStatementList(_DWORD, _DWORD);
 
 //----- (08074B7C) --------------------------------------------------------
-char *__cdecl sub_8074B7C(int a1, int a2, int a3, int *a4)
+char *__cdecl EmitDeveloperStatementList(int a1, int a2, int a3, int *a4)
 {
   char *result; // eax
   int v5; // [esp+10h] [ebp-8h]
@@ -37167,18 +37167,18 @@ char *__cdecl sub_8074B7C(int a1, int a2, int a3, int *a4)
   if ( dword_8202A68 )
     return CompileError(a2, "cannot recurse /#");
   v6 = dword_839403C;
-  sub_806EA5A(a3, (_DWORD *)*a4);
+  Scr_TransferBlock(a3, (_DWORD *)*a4);
   if ( byte_839400B )
   {
     dword_8202A68 = 1;
-    sub_8074A7A(a1, 0, 0, *a4);
-    sub_806E53A((_DWORD *)*a4, *a4);
+    EmitStatementList(a1, 0, 0, *a4);
+    EmitRemoveLocalVars((_DWORD *)*a4, *a4);
   }
   else
   {
     v5 = TempMalloc(0);
     dword_8202A68 = 2;
-    sub_8074A7A(a1, 0, 0, *a4);
+    EmitStatementList(a1, 0, 0, *a4);
     TempMemorySetPos(v5);
   }
   dword_8202A68 = 0;
@@ -37186,27 +37186,27 @@ char *__cdecl sub_8074B7C(int a1, int a2, int a3, int *a4)
   dword_839403C = v6;
   return result;
 }
-// 8074A7A: using guessed type _DWORD __cdecl sub_8074A7A(_DWORD, _DWORD, _DWORD, _DWORD);
+// 8074A7A: using guessed type _DWORD __cdecl EmitStatementList(_DWORD, _DWORD, _DWORD, _DWORD);
 // 8202A68: using guessed type int dword_8202A68;
 // 839400B: using guessed type char byte_839400B;
 // 839403C: using guessed type int dword_839403C;
 
 //----- (08074C6A) --------------------------------------------------------
-void __cdecl sub_8074C6A(int ***a1, int a2, int a3)
+void __cdecl EmitFormalParameterList(int ***a1, int a2, int a3)
 {
-  sub_8073398(*a1, a3);
+  EmitFormalParameterListInternal(*a1, a3);
   EmitOpcode(53, 0, 0);
-  sub_8076D92(a2, 0);
+  AddOpcodePos(a2, 0);
 }
 
 //----- (08074CB6) --------------------------------------------------------
-_DWORD ***__cdecl sub_8074CB6(_DWORD ****a1, _DWORD *a2)
+_DWORD ***__cdecl Scr_CalcLocalVarsFormalParameterList(_DWORD ****a1, _DWORD *a2)
 {
-  return sub_80733DA(*a1, a2);
+  return Scr_CalcLocalVarsFormalParameterListInternal(*a1, a2);
 }
 
 //----- (08074CD2) --------------------------------------------------------
-char *__cdecl sub_8074CD2(char **a1)
+char *__cdecl SpecifyThread(char **a1)
 {
   char *result; // eax
   int v2; // eax
@@ -37243,9 +37243,9 @@ char *__cdecl sub_8074CD2(char **a1)
     v2 = GetVariable(dword_8202868, (unsigned int)a1[1]);
     v4 = GetObjectA(v2);
     if ( byte_820287D )
-      return (char *)sub_8070B86(v4, (int)a1[1], (int)a1[4], 12);
+      return (char *)SpecifyThreadPosition(v4, (int)a1[1], (int)a1[4], 12);
     else
-      return (char *)sub_8070B86(v4, (int)a1[1], (int)a1[4], 7);
+      return (char *)SpecifyThreadPosition(v4, (int)a1[1], (int)a1[4], 7);
   }
   return result;
 }
@@ -37254,21 +37254,21 @@ char *__cdecl sub_8074CD2(char **a1)
 // 839400B: using guessed type char byte_839400B;
 
 //----- (08074DEE) --------------------------------------------------------
-int __cdecl sub_8074DEE(int a1, int a2, int a3, int a4, _DWORD *a5)
+int __cdecl EmitThreadInternal(int a1, int a2, int a3, int a4, _DWORD *a5)
 {
   int result; // eax
 
   dword_820286C = a1;
-  sub_8077016(a3);
+  AddThreadStartOpcodePos(a3);
   dword_8202870 = 0;
   dword_8202874 = 0;
   dword_8202878 = 0;
-  sub_806DA94(*(_DWORD *)(a2 + 4), 2u);
-  sub_8074C6A(*(int ****)(a2 + 8), a3, (int)a5);
-  sub_8074A7A(*(_DWORD *)(a2 + 12), 1, a4, a5);
-  sub_806DEC6();
-  sub_8076D92(a4, 1);
-  sub_8076D92(-2, 0);
+  CompileTransferRefToString(*(_DWORD *)(a2 + 4), 2u);
+  EmitFormalParameterList(*(int ****)(a2 + 8), a3, (int)a5);
+  EmitStatementList(*(_DWORD *)(a2 + 12), 1, a4, a5);
+  EmitEnd();
+  AddOpcodePos(a4, 1);
+  AddOpcodePos(-2, 0);
   result = dword_8202874 + 32 * dword_8202878;
   if ( result > 2047 )
     return (int)CompileError(a3, "function exceeds operand stack size");
@@ -37281,7 +37281,7 @@ int __cdecl sub_8074DEE(int a1, int a2, int a3, int a4, _DWORD *a5)
 // 8074DEE: using guessed type int arg_C;
 
 //----- (08074ED8) --------------------------------------------------------
-int __cdecl sub_8074ED8(_DWORD ****a1, int a2, int **a3)
+int __cdecl Scr_CalcLocalVarsThread(_DWORD ****a1, int a2, int **a3)
 {
   byte_82028B0 = 0;
   *a3 = (int *)Hunk_AllocateTempMemoryHighInternal(280);
@@ -37290,13 +37290,13 @@ int __cdecl sub_8074ED8(_DWORD ****a1, int a2, int **a3)
   (*a3)[3] = 0;
   (*a3)[2] = 0;
   memset(*a3 + 4, 0, 8u);
-  sub_8074CB6(a1, *a3);
-  return sub_8074AF6(a2, *a3);
+  Scr_CalcLocalVarsFormalParameterList(a1, *a3);
+  return Scr_CalcLocalVarsStatementList(a2, *a3);
 }
 // 82028B0: using guessed type char byte_82028B0;
 
 //----- (08074F74) --------------------------------------------------------
-void __cdecl sub_8074F74(int a1)
+void __cdecl InitThread(int a1)
 {
   byte_8202886 = 0;
   dword_8202888 = 0;
@@ -37311,9 +37311,9 @@ void __cdecl sub_8074F74(int a1)
   if ( *(_BYTE *)(a1 + 136325252) )
   {
     *(_BYTE *)(a1 + 136325252) = 0;
-    sub_806DEC6();
-    sub_8076D92(0, 0);
-    sub_8076D92(-2, 0);
+    EmitEnd();
+    AddOpcodePos(0, 0);
+    AddOpcodePos(-2, 0);
   }
 }
 // 8202886: using guessed type char byte_8202886;
@@ -37328,21 +37328,21 @@ void __cdecl sub_8074F74(int a1)
 // 82028A8: using guessed type int dword_82028A8;
 
 //----- (0807501A) --------------------------------------------------------
-int __cdecl sub_807501A(int *a1, _DWORD **a2)
+int __cdecl EmitNormalThread(int *a1, _DWORD **a2)
 {
   int v2; // eax
   int v4; // [esp+14h] [ebp-4h]
 
-  sub_8074F74(0);
+  InitThread(0);
   v2 = FindVariable(dword_8202868, a1[1]);
   v4 = FindObject(v2);
-  sub_8070C7A(v4);
-  return sub_8074DEE(v4, (int)a1, a1[4], a1[5], *a2);
+  SetThreadPosition(v4);
+  return EmitThreadInternal(v4, (int)a1, a1[4], a1[5], *a2);
 }
 // 8202868: using guessed type int dword_8202868;
 
 //----- (0807509C) --------------------------------------------------------
-int __cdecl sub_807509C(int *a1, _DWORD **a2)
+int __cdecl EmitDeveloperThread(int *a1, _DWORD **a2)
 {
   int result; // eax
   int v3; // eax
@@ -37353,19 +37353,19 @@ int __cdecl sub_807509C(int *a1, _DWORD **a2)
   if ( byte_839400B )
   {
     dword_8202A68 = 1;
-    sub_8074F74(1);
+    InitThread(1);
     v3 = FindVariable(dword_8202868, a1[1]);
     v5 = FindObject(v3);
-    sub_8070C7A(v5);
-    result = sub_8074DEE(v5, (int)a1, a1[4], a1[5], *a2);
+    SetThreadPosition(v5);
+    result = EmitThreadInternal(v5, (int)a1, a1[4], a1[5], *a2);
   }
   else
   {
     v4 = TempMalloc(0);
     v6 = dword_839403C;
     dword_8202A68 = 2;
-    sub_8074F74(1);
-    sub_8074DEE(0, (int)a1, a1[4], a1[5], *a2);
+    InitThread(1);
+    EmitThreadInternal(0, (int)a1, a1[4], a1[5], *a2);
     TempMemorySetPos(v4);
     result = v6;
     dword_839403C = v6;
@@ -37379,7 +37379,7 @@ int __cdecl sub_807509C(int *a1, _DWORD **a2)
 // 839403C: using guessed type int dword_839403C;
 
 //----- (080751B4) --------------------------------------------------------
-char *__cdecl sub_80751B4(int a1)
+char *__cdecl EmitThread(int a1)
 {
   char *result; // eax
   char *v2; // eax
@@ -37406,25 +37406,25 @@ char *__cdecl sub_80751B4(int a1)
       else
       {
         v2 = (char *)SL_ConvertToString(*(_DWORD *)(a1 + 4));
-        sub_806D55A(v2, *(_DWORD *)(a1 + 12));
-        return (char *)sub_806D9EC(*(_DWORD *)(a1 + 4));
+        Scr_UsingTree(v2, *(_DWORD *)(a1 + 12));
+        return (char *)Scr_CompileRemoveRefToString(*(_DWORD *)(a1 + 4));
       }
     }
   }
   else if ( v3 == 68 )
   {
-    sub_8074ED8(*(_DWORD *****)(a1 + 8), *(_DWORD *)(a1 + 12), (int **)(a1 + 24));
+    Scr_CalcLocalVarsThread(*(_DWORD *****)(a1 + 8), *(_DWORD *)(a1 + 12), (int **)(a1 + 24));
     if ( byte_820287D )
-      return (char *)sub_807509C((int *)a1, (_DWORD **)(a1 + 24));
+      return (char *)EmitDeveloperThread((int *)a1, (_DWORD **)(a1 + 24));
     else
-      return (char *)sub_807501A((int *)a1, (_DWORD **)(a1 + 24));
+      return (char *)EmitNormalThread((int *)a1, (_DWORD **)(a1 + 24));
   }
   return result;
 }
 // 820287D: using guessed type char byte_820287D;
 
 //----- (080752BA) --------------------------------------------------------
-int *__cdecl sub_80752BA(int a1)
+int *__cdecl EmitThreadList(int a1)
 {
   int *result; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -37432,7 +37432,7 @@ int *__cdecl sub_80752BA(int a1)
 
   byte_820287D = 0;
   for ( i = *(_DWORD *)(*(_DWORD *)a1 + 4); i; i = *(_DWORD *)(i + 4) )
-    sub_8074CD2(*(char ***)i);
+    SpecifyThread(*(char ***)i);
   if ( byte_820287D )
     CompileError(dword_8202880, "/# has no matching #/");
   byte_8202884 = 1;
@@ -37440,7 +37440,7 @@ int *__cdecl sub_80752BA(int a1)
   result = *(int **)(*(_DWORD *)a1 + 4);
   for ( j = result; j; j = result )
   {
-    sub_80751B4(*j);
+    EmitThread(*j);
     result = (int *)j[1];
   }
   return result;
@@ -37450,19 +37450,19 @@ int *__cdecl sub_80752BA(int a1)
 // 8202885: using guessed type char byte_8202885;
 
 //----- (08075354) --------------------------------------------------------
-int __cdecl sub_8075354(int a1)
+int __cdecl EmitInclude(int a1)
 {
   char *v1; // eax
   int v3; // [esp+14h] [ebp-4h]
 
   v1 = (char *)SL_ConvertToString(*(_DWORD *)(a1 + 4));
   v3 = Scr_CreateCanonicalFilename(v1);
-  sub_806D9EC(*(_DWORD *)(a1 + 4));
-  return sub_806FA70(v3, *(_DWORD *)(a1 + 8), 1);
+  Scr_CompileRemoveRefToString(*(_DWORD *)(a1 + 4));
+  return AddFilePrecache(v3, *(_DWORD *)(a1 + 8), 1);
 }
 
 //----- (080753A6) --------------------------------------------------------
-int *__cdecl sub_80753A6(int a1)
+int *__cdecl EmitIncludeList(int a1)
 {
   int *result; // eax
   int *i; // [esp+4h] [ebp-4h]
@@ -37470,7 +37470,7 @@ int *__cdecl sub_80753A6(int a1)
   result = *(int **)(*(_DWORD *)a1 + 4);
   for ( i = result; i; i = result )
   {
-    sub_8075354(*i);
+    EmitInclude(*i);
     result = (int *)i[1];
   }
   return result;
@@ -37518,8 +37518,8 @@ char *__cdecl ScriptCompile(int *a1, int a2, int a3)
     *((_DWORD *)ptr + 2) = dword_82028B8;
     dword_82028B8 = (int)ptr;
   }
-  sub_80753A6(*a1);
-  sub_80752BA(a1[1]);
+  EmitIncludeList(*a1);
+  EmitThreadList(a1[1]);
   dword_8202A70 = TempMalloc(0) - dword_8394048;
   Hunk_ClearTempMemoryHighInternal();
   v23 = dword_8202A44;
@@ -37562,10 +37562,10 @@ char *__cdecl ScriptCompile(int *a1, int a2, int a3)
               v15 = GetVariableName(k);
               v6 = GetVariable(a2, v15);
               v12 = GetObjectA(v6);
-              v11 = sub_8070B86(v12, v15, *(_DWORD *)(v21 + 4), 13);
+              v11 = SpecifyThreadPosition(v12, v15, *(_DWORD *)(v21 + 4), 13);
               v7 = GetVariableValueAddress(v11);
               *(_DWORD *)v7 = *(_DWORD *)GetVariableValueAddress(v14);
-              sub_807098C(v12, v13, 0);
+              LinkThread(v12, v13, 0);
             }
           }
         }
@@ -37577,7 +37577,7 @@ char *__cdecl ScriptCompile(int *a1, int a2, int a3)
     dword_82028B8 = *((_DWORD *)ptr + 2);
     Z_FreeInternal(ptr);
   }
-  sub_8070AA8(a2);
+  LinkFile(a2);
   v16[1] = 6;
   return (char *)SetVariableValue(a3, v16);
 }
@@ -37595,7 +37595,7 @@ char *__cdecl ScriptCompile(int *a1, int a2, int a3)
 //----- (08075710) --------------------------------------------------------
 int __cdecl sub_8075710(int a1)
 {
-  sub_80742D2(a1, 0, 0, 0);
+  EmitStatement(a1, 0, 0, 0);
   return EmitOpcode(128, 0, 0);
 }
 
@@ -37635,7 +37635,7 @@ _BOOL4 __cdecl Scr_IsInOpcodeMemory(int a1)
 // 8394048: using guessed type int dword_8394048;
 
 //----- (08075828) --------------------------------------------------------
-int __cdecl sub_8075828(_BYTE *a1)
+int __cdecl Scr_IsIdentifier(_BYTE *a1)
 {
   while ( *a1 )
   {
@@ -37648,7 +37648,7 @@ int __cdecl sub_8075828(_BYTE *a1)
 // 8185A64: using guessed type int _ctype_b;
 
 //----- (08075874) --------------------------------------------------------
-int __cdecl sub_8075874(char *a1, char *s)
+int __cdecl Scr_GetFunctionHandleInternal(char *a1, char *s)
 {
   int v4[2]; // [esp+10h] [ebp-38h] BYREF
   int v5; // [esp+18h] [ebp-30h]
@@ -37669,7 +37669,7 @@ int __cdecl sub_8075874(char *a1, char *s)
   if ( !v15 )
     return 0;
   v13 = FindObject(v15);
-  v12 = sub_8078CEA(s);
+  v12 = SL_FindLowercaseString(s);
   if ( !v12 )
     return 0;
   v14 = FindVariable(v13, v12);
@@ -37922,7 +37922,7 @@ int sub_8075E1E()
   int result; // eax
 
   sub_80759D2();
-  sub_8079910(2u);
+  SL_ShutdownSystem(2u);
   byte_8202A64 = 0;
   ClearObject(dword_8202A48);
   RemoveRefToObject(dword_8202A48);
@@ -37962,7 +37962,7 @@ int __cdecl Scr_PrecacheAnimTrees(int (__cdecl *a1)(int), int a2)
 // 820284C: using guessed type int dword_820284C[];
 
 //----- (08075F0E) --------------------------------------------------------
-void *sub_8075F0E()
+void *Scr_EndLoadAnimTrees()
 {
   void *result; // eax
 
@@ -37971,7 +37971,7 @@ void *sub_8075F0E()
   dword_8202440 = 0;
   if ( dword_8202444 )
     RemoveRefToObject(dword_8202444);
-  sub_8079910(2u);
+  SL_ShutdownSystem(2u);
   result = Hunk_AllocLowInternal(0);
   dword_839404C = (int)result;
   byte_8202858 = 0;
@@ -37992,9 +37992,9 @@ void sub_8075F74()
   if ( byte_8202858 )
   {
     byte_8202858 = 0;
-    sub_8075F0E();
+    Scr_EndLoadAnimTrees();
   }
-  sub_8079910(1u);
+  SL_ShutdownSystem(1u);
   sub_8076C84();
   dword_8394048 = 0;
   dword_8202A70 = 0;
@@ -38587,7 +38587,7 @@ void sub_8076C84()
 // 8283ED8: using guessed type int dword_8283ED8;
 
 //----- (08076D92) --------------------------------------------------------
-void __cdecl sub_8076D92(int a1, int a2)
+void __cdecl AddOpcodePos(int a1, int a2)
 {
   int v2; // [esp+14h] [ebp-14h]
   _DWORD *v3; // [esp+18h] [ebp-10h]
@@ -38664,7 +38664,7 @@ void __cdecl sub_8076D92(int a1, int a2)
 // 839400A: using guessed type char byte_839400A;
 
 //----- (08076FAE) --------------------------------------------------------
-int sub_8076FAE()
+int RemoveOpcodePos()
 {
   int result; // eax
 
@@ -38687,7 +38687,7 @@ int sub_8076FAE()
 // 839400A: using guessed type char byte_839400A;
 
 //----- (08077016) --------------------------------------------------------
-_DWORD *__cdecl sub_8077016(int a1)
+_DWORD *__cdecl AddThreadStartOpcodePos(int a1)
 {
   _DWORD *result; // eax
   _DWORD *v2; // [esp+0h] [ebp-4h]
@@ -38823,7 +38823,7 @@ int __cdecl sub_80775E4(unsigned int a1, int a2, int *a3)
 }
 
 //----- (080776B8) --------------------------------------------------------
-char *sub_80776B8()
+char *Scr_GetNewSourceBuffer()
 {
   void *dest; // [esp+14h] [ebp-4h]
 
@@ -38841,7 +38841,7 @@ char *sub_80776B8()
 // 8283ED8: using guessed type int dword_8283ED8;
 
 //----- (08077750) --------------------------------------------------------
-int __cdecl sub_8077750(char *s, int a2, char *a3, int a4, int a5, unsigned __int8 a6)
+int __cdecl Scr_AddSourceBufferInternal(char *s, int a2, char *a3, int a4, int a5, unsigned __int8 a6)
 {
   int result; // eax
   char *v7; // eax
@@ -38888,7 +38888,7 @@ int __cdecl sub_8077750(char *s, int a2, char *a3, int a4, int a5, unsigned __in
         *v15++ = v12;
       }
     }
-    v7 = sub_80776B8();
+    v7 = Scr_GetNewSourceBuffer();
     *(_DWORD *)v7 = a2;
     *((_DWORD *)v7 + 1) = dest;
     *((_DWORD *)v7 + 2) = v9;
@@ -38911,7 +38911,7 @@ int __cdecl sub_8077750(char *s, int a2, char *a3, int a4, int a5, unsigned __in
 }
 
 //----- (080778BC) --------------------------------------------------------
-int __cdecl sub_80778BC(int a1, char *s, int a3, unsigned __int8 a4)
+int __cdecl Scr_ReadFile(int a1, char *s, int a3, unsigned __int8 a4)
 {
   int v6; // [esp+28h] [ebp-10h] BYREF
   int v7; // [esp+2Ch] [ebp-Ch]
@@ -38926,12 +38926,12 @@ int __cdecl sub_80778BC(int a1, char *s, int a3, unsigned __int8 a4)
     FS_Read(v8, v7, v6);
     *(_BYTE *)(v8 + v7) = 0;
     FS_FCloseFile(v6);
-    sub_8077750(s, a3, (char *)v8, v7, 1, v9);
+    Scr_AddSourceBufferInternal(s, a3, (char *)v8, v7, 1, v9);
     return v8;
   }
   else
   {
-    sub_8077750(s, a3, 0, -1, 1, v9);
+    Scr_AddSourceBufferInternal(s, a3, 0, -1, 1, v9);
     return 0;
   }
 }
@@ -38949,7 +38949,7 @@ char *__cdecl Scr_AddSourceBuffer(int a1, char *s, int a3, unsigned __int8 a4)
   char *v13; // [esp+40h] [ebp-8h]
 
   if ( !a4 || !dword_8283EC4 )
-    return (char *)sub_80778BC(a1, s, a3, a4);
+    return (char *)Scr_ReadFile(a1, s, a3, a4);
   --dword_8283EC8;
   v7 = (char *)dword_8283EC4 + 8 * dword_8283EC8;
   v9 = *((_DWORD *)v7 + 1);
@@ -38969,12 +38969,12 @@ char *__cdecl Scr_AddSourceBuffer(int a1, char *s, int a3, unsigned __int8 a4)
     *v13 = 0;
     if ( *(_DWORD *)v7 )
       Z_FreeInternal(*((void **)dword_8283EC4 + 2 * dword_8283EC8));
-    sub_8077750(s, a3, v10, v9, 1, a4);
+    Scr_AddSourceBufferInternal(s, a3, v10, v9, 1, a4);
   }
   else
   {
     v10 = 0;
-    sub_8077750(s, a3, 0, v9, 1, a4);
+    Scr_AddSourceBufferInternal(s, a3, 0, v9, 1, a4);
   }
   return v10;
 }
@@ -39557,7 +39557,7 @@ unsigned int SL_Init()
 void SL_CheckInit()
 {
   if ( byte_8293F00 )
-    SL_ShutdownSystem();
+    SL_RelocateSystem();
   else
     SL_Init();
 }
@@ -39624,7 +39624,7 @@ int __cdecl SL_FindString(char *s2)
 }
 
 //----- (08078CEA) --------------------------------------------------------
-int __cdecl sub_8078CEA(char *s)
+int __cdecl SL_FindLowercaseString(char *s)
 {
   signed int n; // [esp+18h] [ebp-2010h]
   signed int i; // [esp+1Ch] [ebp-200Ch]
@@ -40020,7 +40020,7 @@ int __cdecl SL_GetStringForVector(float *a1)
 }
 
 //----- (08079910) --------------------------------------------------------
-void __cdecl sub_8079910(unsigned __int8 a1)
+void __cdecl SL_ShutdownSystem(unsigned __int8 a1)
 {
   int v1; // [esp+Ch] [ebp-Ch]
   __int16 *v2; // [esp+10h] [ebp-8h]
@@ -40049,11 +40049,11 @@ void __cdecl sub_8079910(unsigned __int8 a1)
 //----- (080799B6) --------------------------------------------------------
 void sub_80799B6()
 {
-  sub_8079910(1u);
+  SL_ShutdownSystem(1u);
 }
 
 //----- (08079A58) --------------------------------------------------------
-void SL_ShutdownSystem()
+void SL_RelocateSystem()
 {
   size_t v0; // eax
   char *s; // [esp+14h] [ebp-14h]
@@ -40090,7 +40090,7 @@ void SL_ShutdownSystem()
 // 8293F04: using guessed type int dword_8293F04;
 
 //----- (08079B84) --------------------------------------------------------
-_BYTE *__cdecl sub_8079B84(_BYTE *a1, char *a2, int a3)
+_BYTE *__cdecl SL_CreateCanonicalFilename(_BYTE *a1, char *a2, int a3)
 {
   _BYTE *result; // eax
   unsigned int c; // [esp+10h] [ebp-8h]
@@ -40128,7 +40128,7 @@ int __cdecl Scr_CreateCanonicalFilename(char *a1)
 {
   char s[1032]; // [esp+10h] [ebp-408h] BYREF
 
-  sub_8079B84(s, a1, 1024);
+  SL_CreateCanonicalFilename(s, a1, 1024);
   return SL_GetString_(s, 0);
 }
 
@@ -42705,7 +42705,7 @@ void __cdecl Scr_EvalBinaryOperator(int a1, int *a2, int *a3)
 }
 
 //----- (0807DF52) --------------------------------------------------------
-_BOOL4 __cdecl sub_807DF52(int a1)
+_BOOL4 __cdecl IsObjectFree(int a1)
 {
   return (dword_8294008[4 * a1] & 0x60) == 0;
 }
@@ -42761,7 +42761,7 @@ int Scr_FreeEntityList()
     v2 = &word_8294000[8 * dword_8394030];
     dword_8394030 = (unsigned __int16)v2[3];
     v2[3] = 0;
-    sub_80834DC(v1);
+    Scr_CancelNotifyList(v1);
     if ( (unsigned __int16)word_8294000[8 * (unsigned __int16)v2[7]] != v1 )
       ClearObjectInternal(v1);
     result = RemoveRefToObject(v1);
@@ -42783,7 +42783,7 @@ unsigned int *sub_807E0C6()
     v1 = &word_8294000[8 * i];
     if ( (*((_DWORD *)v1 + 2) & 0x60) != 0 && ((*((_DWORD *)v1 + 2) & 0x1F) == 19 || (*((_DWORD *)v1 + 2) & 0x1F) == 20) )
     {
-      sub_80834DC(i);
+      Scr_CancelNotifyList(i);
       ClearObject(i);
     }
     result = &i;
@@ -43626,7 +43626,7 @@ int __cdecl sub_807F676(int a1)
 // 8394028: using guessed type int dword_8394028;
 
 //----- (0807F6F2) --------------------------------------------------------
-int __cdecl sub_807F6F2(char a1)
+int __cdecl Scr_GetClassnumForCharId(char a1)
 {
   int i; // [esp+4h] [ebp-8h]
 
@@ -46325,7 +46325,7 @@ LABEL_4:
 // 83D5590: using guessed type int dword_83D5590;
 
 //----- (08083426) --------------------------------------------------------
-int __cdecl sub_8083426(int a1, int a2, int a3, int a4)
+int __cdecl Scr_NotifyNum(int a1, int a2, int a3, int a4)
 {
   int result; // eax
   int v5; // [esp+Ch] [ebp-Ch]
@@ -46358,7 +46358,7 @@ int __cdecl sub_8083426(int a1, int a2, int a3, int a4)
 // 83D7618: using guessed type int dword_83D7618;
 
 //----- (080834DC) --------------------------------------------------------
-int __cdecl sub_80834DC(int a1)
+int __cdecl Scr_CancelNotifyList(int a1)
 {
   int result; // eax
   int v2; // [esp+Ch] [ebp-1Ch]
@@ -46570,7 +46570,7 @@ int __cdecl Scr_ExecThread(int a1, int a2)
 // 83D7618: using guessed type int dword_83D7618;
 
 //----- (08083A1A) --------------------------------------------------------
-int __cdecl sub_8083A1A(int a1, int a2, int a3, int a4)
+int __cdecl Scr_ExecEntThreadNum(int a1, int a2, int a3, int a4)
 {
   int v4; // eax
   char *v6; // [esp+Ch] [ebp-Ch]
@@ -46816,7 +46816,7 @@ unsigned int *__cdecl Scr_ShutdownSystem(int a1, int a2)
       v8 = FindNextSibling(v4);
       v5 = *(_DWORD *)GetVariableValueAddress(v8);
       AddRefToObject(v5);
-      sub_80834DC(v5);
+      Scr_CancelNotifyList(v5);
       RemoveRefToObject(v5);
     }
     ClearObject(dword_8394024);
@@ -46897,12 +46897,12 @@ unsigned __int16 *__userpurge Scr_GetAnim@<eax>(unsigned __int16 *a1, unsigned i
   if ( a3 )
   {
     v3 = Scr_GetAnims(a1[1]);
-    if ( v3 != sub_80BA87C(a3) )
+    if ( v3 != XAnimGetAnims(a3) )
     {
-      v4 = sub_80BA87C(a3);
-      v5 = (const char *)sub_80BEA0E(v4);
+      v4 = XAnimGetAnims(a3);
+      v5 = (const char *)XAnimGetAnimTreeDebugName(v4);
       v6 = Scr_GetAnims(a1[1]);
-      v7 = (const char *)sub_80BEA0E(v6);
+      v7 = (const char *)XAnimGetAnimTreeDebugName(v6);
       v8 = Scr_GetAnims(a1[1]);
       v9 = XAnimGetAnimDebugName(v8, *a1);
       *(_DWORD *)dword_8394010 = va(
@@ -47279,7 +47279,7 @@ int __cdecl Scr_GetType(unsigned int a1)
 // 83D761C: using guessed type int dword_83D761C;
 
 //----- (080849F8) --------------------------------------------------------
-int __cdecl sub_80849F8(unsigned int a1)
+int __cdecl Scr_GetTypeName(unsigned int a1)
 {
   char *v1; // eax
 
@@ -47625,7 +47625,7 @@ int __cdecl Scr_SetDynamicEntityField(int a1, int a2, int a3)
 }
 
 //----- (08084F9A) --------------------------------------------------------
-int sub_8084F9A()
+int Scr_IncTime()
 {
   int result; // eax
 
@@ -52709,7 +52709,7 @@ int __cdecl SV_SetBrushModel(int a1)
   _DWORD v2[4]; // [esp+10h] [ebp-28h] BYREF
   _DWORD v3[6]; // [esp+20h] [ebp-18h] BYREF
 
-  sub_8052518(*(_DWORD *)(a1 + 140), v3, v2);
+  CM_ModelBounds(*(_DWORD *)(a1 + 140), v3, v2);
   sub_8090E3A(v3, (_DWORD *)(a1 + 260));
   sub_8090E3A(v2, (_DWORD *)(a1 + 272));
   *(_BYTE *)(a1 + 241) = 1;
@@ -52720,7 +52720,7 @@ int __cdecl SV_SetBrushModel(int a1)
 // 808FF44: using guessed type _DWORD var_18[6];
 
 //----- (0808FFBC) --------------------------------------------------------
-_BOOL4 __cdecl sub_808FFBC(float *a1, int a2)
+_BOOL4 __cdecl SV_inSnapshot(float *a1, int a2)
 {
   float v4; // [esp+24h] [ebp-24h]
   char *v5; // [esp+28h] [ebp-20h]
@@ -52741,11 +52741,11 @@ _BOOL4 __cdecl sub_808FFBC(float *a1, int a2)
   if ( (*(_BYTE *)(v11 + 242) & 0x18) != 0 )
     return 1;
   v10 = SV_SvEntityForGentity((_DWORD *)v11);
-  v8 = sub_8058A2C(a1);
+  v8 = CM_PointLeafnum(a1);
   if ( !*(_DWORD *)(v10 + 280) )
     return 0;
   v9 = CM_LeafCluster(v8);
-  v5 = sub_8058F82(v9);
+  v5 = CM_ClusterPVS(v9);
   v7 = 0;
   for ( i = 0; i < *(_DWORD *)(v10 + 280); ++i )
   {
@@ -52762,8 +52762,8 @@ _BOOL4 __cdecl sub_808FFBC(float *a1, int a2)
   if ( v7 == *(_DWORD *)(v10 + 348) )
     return 0;
 LABEL_23:
-  v4 = sub_8106976();
-  return v4 == 3.4028235e38 || !sub_80A831C((float *)(v11 + 288), (float *)(v11 + 300), a1, v4);
+  v4 = G_GetFogOpaqueDistSqrd();
+  return v4 == 3.4028235e38 || !BoxDistSqrdExceeds((float *)(v11 + 288), (float *)(v11 + 300), a1, v4);
 }
 
 //----- (080901C2) --------------------------------------------------------
@@ -52986,7 +52986,7 @@ int __cdecl SV_AllocSkelMemory(int a1)
 // 848B0B4: using guessed type int dword_848B0B4;
 
 //----- (08090666) --------------------------------------------------------
-int __cdecl sub_8090666(int *a1, int a2)
+int __cdecl SV_DObjCreateSkelForBone(int *a1, int a2)
 {
   int v4; // [esp+1Ch] [ebp-Ch]
   int v5; // [esp+20h] [ebp-8h]
@@ -53032,23 +53032,23 @@ int __cdecl SV_DObjUpdateServerTime(int *a1, float a2, int a3)
 }
 
 //----- (080907BC) --------------------------------------------------------
-_DWORD **__cdecl sub_80907BC(int *a1, float a2)
+_DWORD **__cdecl SV_DObjInitServerTime(int *a1, float a2)
 {
   _DWORD **result; // eax
 
   result = (_DWORD **)Com_GetServerDObj(*a1);
   if ( result )
-    return sub_80BEA94(result, a2);
+    return DObjInitServerTime(result, a2);
   return result;
 }
 
 //----- (080907EE) --------------------------------------------------------
-int __cdecl sub_80907EE(int *a1, int a2, int a3)
+int __cdecl SV_DObjGetHierarchyBits(int *a1, int a2, int a3)
 {
   int v4; // [esp+14h] [ebp-4h]
 
   v4 = Com_GetServerDObj(*a1);
-  return sub_80B73C0(v4, a2, a3);
+  return DObjGetHierarchyBits(v4, a2, a3);
 }
 
 //----- (08090820) --------------------------------------------------------
@@ -53070,12 +53070,12 @@ int *__cdecl SV_DObjCalcSkel(int *a1, int a2)
 }
 
 //----- (08090874) --------------------------------------------------------
-int __cdecl sub_8090874(int *a1)
+int __cdecl SV_DObjNumBones(int *a1)
 {
   int v2; // [esp+4h] [ebp-4h]
 
   v2 = Com_GetServerDObj(*a1);
-  return sub_80B8C0C(v2);
+  return DObjNumBones(v2);
 }
 
 //----- (08090898) --------------------------------------------------------
@@ -53091,16 +53091,16 @@ int __cdecl SV_DObjGetBoneIndex(int *a1, int a2)
 }
 
 //----- (080908D8) --------------------------------------------------------
-int __cdecl sub_80908D8(int *a1)
+int __cdecl SV_DObjGetMatrixArray(int *a1)
 {
   int v2; // [esp+4h] [ebp-4h]
 
   v2 = Com_GetServerDObj(*a1);
-  return sub_80B84D2(v2);
+  return DObjGetRotTransArray(v2);
 }
 
 //----- (080908FC) --------------------------------------------------------
-void __cdecl sub_80908FC(int *a1)
+void __cdecl SV_DObjDisplayAnim(int *a1)
 {
   int **v1; // [esp+4h] [ebp-4h]
 
@@ -53115,7 +53115,7 @@ int __cdecl sub_8090928(int *a1)
   int v2; // [esp+4h] [ebp-4h]
 
   v2 = Com_GetServerDObj(*a1);
-  return sub_80B84D2(v2);
+  return DObjGetRotTransArray(v2);
 }
 
 //----- (0809094C) --------------------------------------------------------
@@ -53749,7 +53749,7 @@ void *sub_8091998()
 // 842BC80: using guessed type int dword_842BC80;
 
 //----- (080919F4) --------------------------------------------------------
-void *__cdecl sub_80919F4(int a1)
+void *__cdecl SV_EnableArchivedSnapshot(int a1)
 {
   void *result; // eax
 
@@ -53932,7 +53932,7 @@ void __usercall SV_SpawnServer(long double a1@<st0>, char *a2)
   Com_LoadBsp(s);
   CM_LoadMap(a1, s, &v17);
   Com_UnloadBsp();
-  sub_805DA8E();
+  CM_LinkWorld();
   dword_841FA88 = (unsigned __int8)(dword_841FA88 + 16);
   if ( (dword_841FA88 & 0xF0) == 0 )
     dword_841FA88 += 16;
@@ -56239,7 +56239,7 @@ void __cdecl SV_ShowClientUnAckCommands(int a1)
 }
 
 //----- (08096970) --------------------------------------------------------
-_DWORD *__cdecl sub_8096970(int a1, _DWORD *a2)
+_DWORD *__cdecl SV_AddEntToSnapshot(int a1, _DWORD *a2)
 {
   _DWORD *result; // eax
 
@@ -56254,7 +56254,7 @@ _DWORD *__cdecl sub_8096970(int a1, _DWORD *a2)
 }
 
 //----- (08096996) --------------------------------------------------------
-_DWORD *__cdecl sub_8096996(int a1, _DWORD *a2)
+_DWORD *__cdecl SV_AddCachedEntToSnapshot(int a1, _DWORD *a2)
 {
   _DWORD *result; // eax
 
@@ -56269,7 +56269,7 @@ _DWORD *__cdecl sub_8096996(int a1, _DWORD *a2)
 }
 
 //----- (080969BC) --------------------------------------------------------
-int __cdecl sub_80969BC(float *a1, int a2, _DWORD *a3)
+int __cdecl SV_AddEntitiesVisibleFromPoint(float *a1, int a2, _DWORD *a3)
 {
   int result; // eax
   float v4; // [esp+10h] [ebp-28h]
@@ -56281,12 +56281,12 @@ int __cdecl sub_80969BC(float *a1, int a2, _DWORD *a3)
   int j; // [esp+30h] [ebp-8h]
   int i; // [esp+34h] [ebp-4h]
 
-  v5 = sub_8058A2C(a1);
+  v5 = CM_PointLeafnum(a1);
   result = CM_LeafCluster(v5);
   if ( result >= 0 )
   {
-    v6 = sub_8058F82(result);
-    v4 = sub_8106976();
+    v6 = CM_ClusterPVS(result);
+    v4 = G_GetFogOpaqueDistSqrd();
     if ( v4 == 3.4028235e38 )
       v4 = 0.0;
     for ( i = 0; ; ++i )
@@ -56328,10 +56328,10 @@ int __cdecl sub_80969BC(float *a1, int a2, _DWORD *a3)
             if ( v7 != *(_DWORD *)(v8 + 348) )
             {
 LABEL_34:
-              if ( v4 == 0.0 || !sub_80A831C((float *)(v9 + 288), (float *)(v9 + 300), a1, v4) )
+              if ( v4 == 0.0 || !BoxDistSqrdExceeds((float *)(v9 + 288), (float *)(v9 + 300), a1, v4) )
               {
 LABEL_30:
-                sub_8096970(i, a3);
+                SV_AddEntToSnapshot(i, a3);
                 continue;
               }
             }
@@ -56345,7 +56345,7 @@ LABEL_30:
 // 848B0A4: using guessed type int dword_848B0A4;
 
 //----- (08096C56) --------------------------------------------------------
-int __cdecl sub_8096C56(int a1, int a2, float *a3, int a4, _DWORD *a5)
+int __cdecl SV_AddCachedEntitiesVisibleFromPoint(int a1, int a2, float *a3, int a4, _DWORD *a5)
 {
   int result; // eax
   float v6; // [esp+30h] [ebp-238h]
@@ -56360,13 +56360,13 @@ int __cdecl sub_8096C56(int a1, int a2, float *a3, int a4, _DWORD *a5)
   int j; // [esp+258h] [ebp-10h]
   int i; // [esp+25Ch] [ebp-Ch]
 
-  v7 = sub_8058A2C(a3);
+  v7 = CM_PointLeafnum(a3);
   result = CM_LeafCluster(v7);
   v13 = result;
   if ( result >= 0 )
   {
-    v12 = sub_8058F82(v13);
-    v6 = sub_8106976();
+    v12 = CM_ClusterPVS(v13);
+    v6 = G_GetFogOpaqueDistSqrd();
     if ( v6 == 3.4028235e38 )
       v6 = 0.0;
     for ( i = 0; ; ++i )
@@ -56388,9 +56388,9 @@ int __cdecl sub_8096C56(int a1, int a2, float *a3, int a4, _DWORD *a5)
             if ( v8 != -1 && (((int)(unsigned __int8)v12[v8 >> 3] >> (v8 & 7)) & 1) != 0 )
               break;
           }
-          if ( j != v11 && (v6 == 0.0 || !sub_80A831C(v14 + 63, v14 + 66, a3, v6)) )
+          if ( j != v11 && (v6 == 0.0 || !BoxDistSqrdExceeds(v14 + 63, v14 + 66, a3, v6)) )
 LABEL_18:
-            sub_8096996(i, a5);
+            SV_AddCachedEntToSnapshot(i, a5);
         }
       }
     }
@@ -56663,7 +56663,7 @@ int __cdecl sub_8097B54(int a1, _DWORD *a2, void *a3)
     return 0;
   if ( !sub_80F4696(a1, a2) )
     return 0;
-  qmemcpy(a3, (const void *)sub_81069E2(a1), 0x5Cu);
+  qmemcpy(a3, (const void *)G_GetClientState(a1), 0x5Cu);
   return 1;
 }
 
@@ -56895,10 +56895,10 @@ int __cdecl SV_BuildClientSnapshot(char *a1)
           Com_Error(1, (char *)&byte_8145300);
         sub_8099DB4((_DWORD *)v12 + 5, v22);
         v23 = v23 + v12[62];
-        sub_80B66C0(v22, *((_DWORD *)v12 + 59), v12[19], 16.0, 20.0);
+        AddLeanToPosition(v22, *((_DWORD *)v12 + 59), v12[19], 16.0, 20.0);
         if ( v11 )
         {
-          sub_8096C56(v11[2], v11[3], v22, v13, v19);
+          SV_AddCachedEntitiesVisibleFromPoint(v11[2], v11[3], v22, v13, v19);
           for ( i = 0; i < *(int *)v19; ++i )
           {
             v10 = (char *)dword_841FB48 + 276 * ((v20[i] + v11[3]) % 0x4000);
@@ -56932,7 +56932,7 @@ int __cdecl SV_BuildClientSnapshot(char *a1)
         }
         else
         {
-          sub_80969BC(v22, v13, v19);
+          SV_AddEntitiesVisibleFromPoint(v22, v13, v19);
           for ( i = 0; i < *(int *)v19; ++i )
           {
             v17 = (const void *)SV_GentityNum(v20[i]);
@@ -56951,7 +56951,7 @@ int __cdecl SV_BuildClientSnapshot(char *a1)
             if ( *j > 1 )
             {
               v15 = (_DWORD *)(dword_841FB24 + 92 * (dword_841FB1C % dword_841FB14));
-              qmemcpy(v15, (const void *)sub_81069E2(i), 0x5Cu);
+              qmemcpy(v15, (const void *)G_GetClientState(i), 0x5Cu);
               if ( *v15 == i )
               {
                 if ( ++dword_841FB1C > 2147483645 )
@@ -57177,7 +57177,7 @@ int SV_ArchiveSnapshot()
               }
               if ( v11 == v9 )
               {
-                v0 = (int *)sub_81069E2(v11);
+                v0 = (int *)G_GetClientState(v11);
                 MSG_WriteDeltaClient(&s, (int *)(v15 + 4), v0, 1);
                 if ( sub_80F4696(v11, v19) )
                 {
@@ -57198,7 +57198,7 @@ int SV_ArchiveSnapshot()
               }
               else
               {
-                v1 = (int *)sub_81069E2(v11);
+                v1 = (int *)G_GetClientState(v11);
                 MSG_WriteDeltaClient(&s, 0, v1, 1);
                 if ( sub_80F4696(v11, v19) )
                 {
@@ -57261,7 +57261,7 @@ int SV_ArchiveSnapshot()
       if ( *v23 > 1 )
       {
         v15 = (int)dword_841FB4C + 9992 * (dword_841FB40 % 4096);
-        qmemcpy((void *)(v15 + 4), (const void *)sub_81069E2(i), 0x5Cu);
+        qmemcpy((void *)(v15 + 4), (const void *)G_GetClientState(i), 0x5Cu);
         MSG_WriteDeltaClient(&s, 0, (int *)(v15 + 4), 1);
         v3 = (int *)v15;
         *v3 = sub_80F4696(i, (_DWORD *)(v15 + 96));
@@ -57803,7 +57803,7 @@ int __cdecl SV_LinkEntity(int a1)
 // 809A45E: using guessed type float var_258[4];
 
 //----- (0809AB88) --------------------------------------------------------
-void __cdecl sub_809AB88(int a1, int a2, int a3)
+void __cdecl SV_ClipMoveToEntity(int a1, int a2, int a3)
 {
   float v3[4]; // [esp+30h] [ebp-48h] BYREF
   float v4[7]; // [esp+40h] [ebp-38h] BYREF
@@ -57823,14 +57823,14 @@ void __cdecl sub_809AB88(int a1, int a2, int a3)
   {
     sub_809C326((float *)(v9 + 288), (float *)a1, v4);
     sub_809C326((float *)(v9 + 300), (float *)(a1 + 12), v3);
-    if ( !sub_805D6DC(a1 + 36, (int)v4, (int)v3, *(float *)a3) )
+    if ( !CM_TraceBox(a1 + 36, (int)v4, (int)v3, *(float *)a3) )
     {
       v8 = SV_ClipHandleForEntity(v9);
       v7 = (float *)(v9 + 324);
       if ( !*(_BYTE *)(v9 + 241) )
         v7 = flt_8145E68;
       v5 = *(float *)a3;
-      sub_805B6F2((float *)a3, a1 + 36, a1 + 48, a1, a1 + 12, v8, *(_DWORD *)(a1 + 80), (float *)(v9 + 312), v7);
+      CM_TransformedBoxTrace((float *)a3, a1 + 36, a1 + 48, a1, a1 + 12, v8, *(_DWORD *)(a1 + 80), (float *)(v9 + 312), v7);
       if ( *(float *)a3 < (long double)v5 )
         *(_WORD *)(a3 + 28) = *(_WORD *)v9;
     }
@@ -57842,7 +57842,7 @@ void __cdecl sub_809AB88(int a1, int a2, int a3)
 // 809AB88: using guessed type float var_48[4];
 
 //----- (0809AD2C) --------------------------------------------------------
-void __cdecl sub_809AD2C(int a1, int a2, int a3)
+void __cdecl SV_PointTraceToEntity(int a1, int a2, int a3)
 {
   float v3[9]; // [esp+30h] [ebp-C8h] BYREF
   float v4[6]; // [esp+54h] [ebp-A4h] BYREF
@@ -57878,14 +57878,14 @@ void __cdecl sub_809AD2C(int a1, int a2, int a3)
       {
         if ( (*(_BYTE *)(v16 + 242) & 4) != 0 )
         {
-          if ( !sub_80B96F8(v12, *(_DWORD *)(a1 + 44)) )
+          if ( !DObjHasContents(v12, *(_DWORD *)(a1 + 44)) )
             return;
           sub_809C2F6((_DWORD *)(v16 + 312), v4);
           DObjGetBounds(v12, v11, v10);
           sub_809C326(v4, v11, v11);
           sub_809C326(v4, v10, v10);
 LABEL_14:
-          if ( !sub_805D6DC(a1, (int)v11, (int)v10, *(float *)a3) )
+          if ( !CM_TraceBox(a1, (int)v11, (int)v10, *(float *)a3) )
           {
             G_DObjCalcPose(v16);
             AnglesToAxis((float *)(v16 + 324), (int)v3);
@@ -57921,14 +57921,14 @@ LABEL_26:
       }
     }
   }
-  if ( (*(_DWORD *)(a1 + 44) & *(_DWORD *)(a2 + 352)) != 0 && !sub_805D6DC(a1, v16 + 288, v16 + 300, *(float *)a3) )
+  if ( (*(_DWORD *)(a1 + 44) & *(_DWORD *)(a2 + 352)) != 0 && !CM_TraceBox(a1, v16 + 288, v16 + 300, *(float *)a3) )
   {
     v15 = SV_ClipHandleForEntity(v16);
     v14 = (float *)(v16 + 324);
     if ( !*(_BYTE *)(v16 + 241) )
       v14 = flt_8145E68;
     v5 = *(float *)a3;
-    sub_805B6F2(
+    CM_TransformedBoxTrace(
       (float *)a3,
       a1,
       a1 + 12,
@@ -57996,7 +57996,7 @@ int __cdecl sub_809B1A0(_DWORD *a1, int a2)
 // 842BC80: using guessed type int dword_842BC80;
 
 //----- (0809B30E) --------------------------------------------------------
-int __cdecl sub_809B30E(_DWORD *a1, int a2)
+int __cdecl SV_PointSightTraceToEntity(_DWORD *a1, int a2)
 {
   float v4[9]; // [esp+40h] [ebp-F8h] BYREF
   float v5[3]; // [esp+64h] [ebp-D4h] BYREF
@@ -58033,7 +58033,7 @@ int __cdecl sub_809B30E(_DWORD *a1, int a2)
     }
     if ( a1[9] && (v11 = Com_GetServerDObj(*(_DWORD *)v17)) != 0 && (*(_BYTE *)(v17 + 242) & 4) != 0 )
     {
-      if ( !sub_80B96F8(v11, a1[8]) )
+      if ( !DObjHasContents(v11, a1[8]) )
         return 0;
       sub_809C2F6((_DWORD *)(v17 + 312), v5);
       DObjGetBounds(v11, v10, v9);
@@ -58042,7 +58042,7 @@ int __cdecl sub_809B30E(_DWORD *a1, int a2)
       sub_809C2F6(a1, v12);
       sub_809C2F6(a1 + 3, v13);
       CM_CalcTraceExtents((int)v12);
-      if ( sub_805D6DC((int)v12, (int)v10, (int)v9, 1.0) )
+      if ( CM_TraceBox((int)v12, (int)v10, (int)v9, 1.0) )
         return 0;
       G_DObjCalcPose(v17);
       AnglesToAxis((float *)(v17 + 324), (int)v4);
@@ -58116,7 +58116,7 @@ void __cdecl SV_Trace(float *s, float *a2, float *a3, float *a4, float *a5, int 
   *((_WORD *)s + 14) = v10;
   if ( *s != 0.0 )
   {
-    if ( !a10 || (sub_805EA28(s, a2, a5, a7), *s != 0.0) )
+    if ( !a10 || (CM_PointTraceStaticModels(s, a2, a5, a7), *s != 0.0) )
     {
       if ( *a4 - *a3 + a4[1] - a3[1] + a4[2] - a3[2] == 0.0 )
       {
@@ -58137,7 +58137,7 @@ void __cdecl SV_Trace(float *s, float *a2, float *a3, float *a4, float *a5, int 
           if ( v22 == 1023 )
             v22 = -1;
         }
-        sub_805F61E(v20, s);
+        CM_PointTraceToEntities(v20, s);
       }
       else
       {
@@ -58165,7 +58165,7 @@ void __cdecl SV_Trace(float *s, float *a2, float *a3, float *a4, float *a5, int 
         sub_809C326(a2, (float *)v26, v16);
         sub_809C326(a5, (float *)v26, v17);
         CM_CalcTraceExtents((int)v16);
-        sub_805F0A4((int)v11, s);
+        CM_ClipMoveToEntities((int)v11, s);
       }
     }
   }
@@ -58189,7 +58189,7 @@ int __cdecl SV_TracePassed(float *a1, float *a2, float *a3, float *a4, int a5, i
 
   if ( CM_BoxSightTrace(0, (int)a1, (int)a4, (int)a2, (int)a3, 0, a7) )
     return 0;
-  if ( !a9 || sub_805ED1E(a1, a4, *(float *)&a7) )
+  if ( !a9 || CM_PointTraceStaticModelsComplete(a1, a4, *(float *)&a7) )
   {
     if ( *a3 - *a2 + a3[1] - a2[1] + a3[2] - a2[2] == 0.0 )
     {
@@ -58199,7 +58199,7 @@ int __cdecl SV_TracePassed(float *a1, float *a2, float *a3, float *a4, int a5, i
       v19[3] = a5;
       v19[4] = a6;
       v19[6] = a8;
-      if ( sub_805F8C6((int)v18) )
+      if ( CM_PointSightTraceToEntities((int)v18) )
         return 0;
     }
     else
@@ -58218,7 +58218,7 @@ int __cdecl SV_TracePassed(float *a1, float *a2, float *a3, float *a4, int a5, i
       sub_809C3AE((float *)v20, 0.5, (float *)v20);
       sub_809C326(a1, (float *)v20, &v16);
       sub_809C326(a4, (float *)v20, v17);
-      if ( sub_805F3F6((int)v11) )
+      if ( CM_ClipSightTraceToEntities((int)v11) )
         return 0;
     }
     return 1;
@@ -58256,7 +58256,7 @@ int *__cdecl SV_SightTrace(int *a1, float *a2, float *a3, float *a4, float *a5, 
       v18[3] = a6;
       v18[4] = a7;
       v18[6] = 0;
-      v9 = sub_805F8C6((int)v17);
+      v9 = CM_PointSightTraceToEntities((int)v17);
     }
     else
     {
@@ -58274,7 +58274,7 @@ int *__cdecl SV_SightTrace(int *a1, float *a2, float *a3, float *a4, float *a5, 
       sub_809C3AE((float *)v19, 0.5, (float *)v19);
       sub_809C326(a2, (float *)v19, &v15);
       sub_809C326(a5, (float *)v19, v16);
-      v9 = sub_805F3F6((int)v10);
+      v9 = CM_ClipSightTraceToEntities((int)v10);
     }
     result = a1;
     *a1 = v9;
@@ -58353,7 +58353,7 @@ void __cdecl sub_809C0CE(_DWORD *s, _DWORD *a2, _DWORD *a3, int a4, int a5, int 
   v7[8] = a5;
   v7[9] = 1;
   v7[10] = a6;
-  sub_809AD2C((int)v6, v8, (int)s);
+  SV_PointTraceToEntity((int)v6, v8, (int)s);
 }
 // 809C0CE: using guessed type _DWORD var_58[3];
 
@@ -58368,7 +58368,7 @@ int __cdecl sub_809C18C(float *a1, int a2, int a3)
   int v9[1026]; // [esp+40h] [ebp-1008h] BYREF
 
   v5 = sub_8058D88(a1, 0);
-  v6 = sub_805E782((int)a1, (int)a1, (int)v9, 1024, a3);
+  v6 = CM_AreaEntities((int)a1, (int)a1, (int)v9, 1024, a3);
   for ( i = 0; i < v6; ++i )
   {
     if ( v9[i] != a2 )
@@ -61434,7 +61434,7 @@ long double __cdecl sub_80A29F6(float *a1)
 }
 
 //----- (080A2A84) --------------------------------------------------------
-long double __cdecl sub_80A2A84(float *a1)
+long double __cdecl vectosignedyaw(float *a1)
 {
   if ( a1[1] == 0.0 && *a1 == 0.0 )
     return 0.0;
@@ -61777,7 +61777,7 @@ float *__cdecl MatrixTransformVector(float *a1, float *a2, float *a3)
 }
 
 //----- (080A5028) --------------------------------------------------------
-float *__cdecl sub_80A5028(float *a1, float *a2, float *a3)
+float *__cdecl MatrixTransposeTransformVector(float *a1, float *a2, float *a3)
 {
   float *result; // eax
 
@@ -62108,7 +62108,7 @@ int __cdecl sub_80A5B9C(float *s, float a2, float a3, float a4)
 }
 
 //----- (080A5F4C) --------------------------------------------------------
-long double __cdecl sub_80A5F4C(float a1)
+long double __cdecl AngleMod(float a1)
 {
   return (long double)(unsigned __int16)(int)(a1 * 182.04445) * 0.0054931641;
 }
@@ -62418,7 +62418,7 @@ float *__cdecl sub_80A718E(float a1, int a2)
 // 8145E68: using guessed type float flt_8145E68[3];
 
 //----- (080A71F4) --------------------------------------------------------
-int __cdecl sub_80A71F4(int a1, int a2)
+int __cdecl AxisToAngles(int a1, int a2)
 {
   int result; // eax
   float v3; // [esp+20h] [ebp-38h]
@@ -62627,7 +62627,7 @@ int __cdecl sub_80A81F8(float *a1, float a2, float *a3, float a4, float a5, floa
 // 80A81F8: using guessed type float var_18[6];
 
 //----- (080A831C) --------------------------------------------------------
-_BOOL4 __cdecl sub_80A831C(float *a1, float *a2, float *a3, float a4)
+_BOOL4 __cdecl BoxDistSqrdExceeds(float *a1, float *a2, float *a3, float a4)
 {
   float v5; // [esp+10h] [ebp-48h]
   float v6; // [esp+14h] [ebp-44h]
@@ -70752,7 +70752,7 @@ void __cdecl Info_SetValueForKey_Big(char *s, char *s1, int a3)
 // 80B622A: using guessed type char var_4008[8192];
 
 //----- (080B645E) --------------------------------------------------------
-_BOOL4 __cdecl sub_80B645E(
+_BOOL4 __cdecl ParseConfigStringToStruct(
         int a1,
         int a2,
         int a3,
@@ -70823,7 +70823,7 @@ _BOOL4 __cdecl sub_80B645E(
 }
 
 //----- (080B6688) --------------------------------------------------------
-long double __cdecl sub_80B6688(float a1)
+long double __cdecl GetLeanFraction(float a1)
 {
   return (2.0 - sub_80B6D1E(a1)) * a1;
 }
@@ -70838,7 +70838,7 @@ long double __cdecl sub_80B66A6(float a1)
 }
 
 //----- (080B66C0) --------------------------------------------------------
-void __cdecl sub_80B66C0(float *a1, int a2, float a3, float a4, float a5)
+void __cdecl AddLeanToPosition(float *a1, int a2, float a3, float a4, float a5)
 {
   int v5; // [esp+Ch] [ebp-3Ch]
   float v6[4]; // [esp+10h] [ebp-38h] BYREF
@@ -70847,7 +70847,7 @@ void __cdecl sub_80B66C0(float *a1, int a2, float a3, float a4, float a5)
 
   if ( a3 != 0.0 )
   {
-    v8 = sub_80B6688(a3);
+    v8 = GetLeanFraction(a3);
     *(float *)&v5 = v8 * a4;
     sub_80B6D74(v6, 0, a2, v5);
     AngleVectors(v6, 0, (float *)v7, 0);
@@ -71182,7 +71182,7 @@ int __cdecl DObjCreateDuplicateParts(int a1)
 // 8527A68: using guessed type int dword_8527A68;
 
 //----- (080B73C0) --------------------------------------------------------
-int __cdecl sub_80B73C0(int a1, int a2, int a3)
+int __cdecl DObjGetHierarchyBits(int a1, int a2, int a3)
 {
   int result; // eax
   int v4; // [esp+1Ch] [ebp-5Ch]
@@ -71784,7 +71784,7 @@ int __cdecl DObjGetBounds(int a1, _DWORD *a2, _DWORD *a3)
 }
 
 //----- (080B84D2) --------------------------------------------------------
-int __cdecl sub_80B84D2(int a1)
+int __cdecl DObjGetRotTransArray(int a1)
 {
   if ( *(_DWORD *)(a1 + 4) )
     return *(_DWORD *)(a1 + 4) + 48;
@@ -71971,7 +71971,7 @@ int __cdecl sub_80B8BC0(int a1)
 }
 
 //----- (080B8C0C) --------------------------------------------------------
-int __cdecl sub_80B8C0C(int a1)
+int __cdecl DObjNumBones(int a1)
 {
   return *(unsigned __int8 *)(a1 + 25);
 }
@@ -72055,7 +72055,7 @@ void __cdecl sub_80B8CA6(int a1, float *a2, float *a3, int a4, int a5)
   v9 = sub_80B9CA4((float *)v53);
   if ( v9 == 0.0 )
     return;
-  v47 = (float *)sub_80B84D2(a1);
+  v47 = (float *)DObjGetRotTransArray(a1);
   if ( !v47 )
     return;
   v52 = 1.0 / v9;
@@ -72270,7 +72270,7 @@ int __cdecl sub_80B955A(int a1, float *a2, float *a3, int a4, int a5)
   v12 = *(_DWORD *)a5;
   v14 = 0;
   sub_80B9ADE(v13);
-  v9 = sub_80B84D2(a1);
+  v9 = DObjGetRotTransArray(a1);
   if ( v9 )
   {
     for ( i = 0; i < *(unsigned __int8 *)(a1 + 24); ++i )
@@ -72278,7 +72278,7 @@ int __cdecl sub_80B955A(int a1, float *a2, float *a3, int a4, int a5)
       v11 = *(_DWORD *)(a1 + 4 * i + 28);
       v10 = *(__int16 **)v11;
       v7 = **(_DWORD **)(*(_DWORD *)v11 + 4);
-      v6 = sub_80C33FE(v11, (int)&v12, v9, a2, a3, a4);
+      v6 = XModelTraceLine(v11, (int)&v12, v9, a2, a3, a4);
       if ( v6 >= 0 )
         *(_WORD *)(a5 + 20) = *(_WORD *)(v7 + 2 * v6);
       v9 += 32 * *v10;
@@ -72313,7 +72313,7 @@ long double __cdecl sub_80B9698(int a1)
 }
 
 //----- (080B96F8) --------------------------------------------------------
-int __cdecl sub_80B96F8(int a1, int a2)
+int __cdecl DObjHasContents(int a1, int a2)
 {
   int i; // [esp+14h] [ebp-4h]
 
@@ -72344,7 +72344,7 @@ float *__cdecl sub_80B9748(int a1, _DWORD *a2, float *a3, int a4)
   float v17[2]; // [esp+64h] [ebp-14h] BYREF
   float *v18; // [esp+6Ch] [ebp-Ch]
 
-  result = (float *)sub_80B84D2(a1);
+  result = (float *)DObjGetRotTransArray(a1);
   v18 = result;
   if ( result )
   {
@@ -72932,7 +72932,7 @@ int __cdecl sub_80BA836(_DWORD *a1, int (__cdecl *a2)(_DWORD *, int))
 }
 
 //----- (080BA87C) --------------------------------------------------------
-int __cdecl sub_80BA87C(int a1)
+int __cdecl XAnimGetAnims(int a1)
 {
   return *(_DWORD *)a1;
 }
@@ -73077,7 +73077,7 @@ int __cdecl sub_80BAC36(int a1, int a2, float a3, int a4, int a5)
 }
 
 //----- (080BAD76) --------------------------------------------------------
-int __cdecl XanimClearInfo(int a1, _DWORD *a2, int a3)
+int __cdecl XanimCalcClearInfo(int a1, _DWORD *a2, int a3)
 {
   int result; // eax
   int i; // [esp+4h] [ebp-4h]
@@ -73412,7 +73412,7 @@ float *__cdecl sub_80BB642(unsigned __int16 **a1, float a2, int a3, float *a4)
 }
 
 //----- (080BB682) --------------------------------------------------------
-float *__cdecl sub_80BB682(unsigned __int16 *a1, float a2, int a3, float *a4)
+float *__cdecl XAnim_CalcDelta3DForTime(unsigned __int16 *a1, float a2, int a3, float *a4)
 {
   char v5; // [esp+1Bh] [ebp-Dh]
   unsigned __int16 **v6; // [esp+1Ch] [ebp-Ch]
@@ -73476,8 +73476,8 @@ float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, floa
   float v14; // [esp+58h] [ebp-10h] BYREF
   float v15; // [esp+5Ch] [ebp-Ch]
 
-  sub_80BB682((unsigned __int16 *)a1, a3, (int)&v12, (float *)v11);
-  sub_80BB682((unsigned __int16 *)a1, a4, (int)&v14, (float *)v10);
+  XAnim_CalcDelta3DForTime((unsigned __int16 *)a1, a3, (int)&v12, (float *)v11);
+  XAnim_CalcDelta3DForTime((unsigned __int16 *)a1, a4, (int)&v14, (float *)v10);
   if ( *(_BYTE *)(a1 + 2) )
   {
     if ( a3 > (long double)a4 )
@@ -73509,7 +73509,7 @@ float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, 
   int v6[6]; // [esp+10h] [ebp-28h] BYREF
   int v7[4]; // [esp+28h] [ebp-10h] BYREF
 
-  sub_80BB682(a1, a3, (int)v7, (float *)v6);
+  XAnim_CalcDelta3DForTime(a1, a3, (int)v7, (float *)v6);
   v5 = a2 * 0.000030518509;
   sub_80C0FE8(a4, v5, (float *)v7, a4);
   a4[2] = a4[2] + a2;
@@ -73532,7 +73532,7 @@ int __cdecl XAnimFreeNotifyStrings(int a1)
 }
 
 //----- (080BBA62) --------------------------------------------------------
-int __cdecl sub_80BBA62(int a1, int a2)
+int __cdecl XAnimFreeInfo(int a1, int a2)
 {
   int result; // eax
   char *v3; // [esp+4h] [ebp-4h]
@@ -73704,7 +73704,7 @@ int __cdecl sub_80BBED6(int a1, int a2, float a3, int a4)
 // 85500A0: using guessed type int dword_85500A0;
 
 //----- (080BBF7C) --------------------------------------------------------
-void __cdecl sub_80BBF7C(int a1, int a2, float a3)
+void __cdecl XAnimProcessClientNotify(int a1, int a2, float a3)
 {
   float v3; // [esp+8h] [ebp-20h]
   float v4; // [esp+8h] [ebp-20h]
@@ -73803,7 +73803,7 @@ LABEL_3:
 }
 
 //----- (080BC382) --------------------------------------------------------
-void __cdecl sub_80BC382(_DWORD *a1, int a2, unsigned __int8 a3, int a4, float a5)
+void __cdecl XAnimUpdateInfoSyncInternal(_DWORD *a1, int a2, unsigned __int8 a3, int a4, float a5)
 {
   unsigned __int16 *v5; // [esp+1Ch] [ebp-1Ch]
   _DWORD *v6; // [esp+20h] [ebp-18h]
@@ -73831,15 +73831,15 @@ void __cdecl sub_80BC382(_DWORD *a1, int a2, unsigned __int8 a3, int a4, float a
         *((_WORD *)v7 + 1) = -1;
       }
       if ( a3 )
-        sub_80BD2FC((int)a1, (float *)v7, (int)v5, *(float *)a4);
+        XAnimProcessServerNotify((int)a1, (float *)v7, (int)v5, *(float *)a4);
       *v6 = *(_DWORD *)a4;
       *((_WORD *)v7 + 10) = *(_WORD *)(a4 + 8);
       *((_WORD *)v7 + 1) = -1;
       if ( a3 )
-        sub_80BBF7C((int)v7, (int)v5, a5);
+        XAnimProcessClientNotify((int)v7, (int)v5, a5);
       v9 = *v5;
       for ( i = 0; i < v9; ++i )
-        sub_80BC382((int)a1, i + v5[3], a3, a4, a5);
+        XAnimUpdateInfoSyncInternal((int)a1, i + v5[3], a3, a4, a5);
     }
   }
 }
@@ -73902,14 +73902,14 @@ void __cdecl XAnimUpdateInfoInternal(_DWORD *a1, int a2, float a3, unsigned __in
             if ( *v10 - v7 <= (long double)(v5 - *((__int16 *)v11 + 10)) )
             {
               if ( a4 )
-                sub_80BD2FC((int)a1, v11, (int)v9, v7);
+                XAnimProcessServerNotify((int)a1, v11, (int)v9, v7);
               *v10 = v7;
               *((_WORD *)v11 + 10) = v5;
               *((_WORD *)v11 + 1) = -1;
               if ( a4 )
-                sub_80BBF7C((int)v11, (int)v9, v18);
+                XAnimProcessClientNotify((int)v11, (int)v9, v18);
               for ( i = 0; i < v13; ++i )
-                sub_80BC382(a1, i + v9[3], a4, (int)v10, v18);
+                XAnimUpdateInfoSyncInternal(a1, i + v9[3], a4, (int)v10, v18);
             }
           }
         }
@@ -73950,12 +73950,12 @@ void __cdecl XAnimUpdateInfoInternal(_DWORD *a1, int a2, float a3, unsigned __in
           if ( *v10 - v6 <= (long double)(v4 - *((__int16 *)v11 + 10)) )
           {
             if ( a4 )
-              sub_80BD2FC((int)a1, v11, (int)v9, v6);
+              XAnimProcessServerNotify((int)a1, v11, (int)v9, v6);
             *v10 = v6;
             *((_WORD *)v11 + 10) = v4;
             *((_WORD *)v11 + 1) = -1;
             if ( a4 )
-              sub_80BBF7C((int)v11, (int)v9, v17);
+              XAnimProcessClientNotify((int)v11, (int)v9, v17);
           }
         }
       }
@@ -74001,7 +74001,7 @@ int __cdecl sub_80BC912(int a1, int a2)
       }
       else
       {
-        v4 = (char *)sub_80BF2AE(a2, i);
+        v4 = (char *)XAnimGetInfo(a2, i);
         sub_80BC8C8(v4);
       }
       *((_DWORD *)v4 + 3) = dword_8527A90[10 * v5];
@@ -74012,7 +74012,7 @@ int __cdecl sub_80BC912(int a1, int a2)
     }
     else if ( *(_WORD *)(a2 + 2 * i + 8) )
     {
-      sub_80BBA62(a2, *(unsigned __int16 *)(a2 + 2 * i + 8));
+      XAnimFreeInfo(a2, *(unsigned __int16 *)(a2 + 2 * i + 8));
       *(_WORD *)(a2 + 2 * i + 8) = 0;
     }
   }
@@ -74024,7 +74024,7 @@ int __cdecl sub_80BC912(int a1, int a2)
 // 8527AA4: using guessed type int dword_8527AA4[40951];
 
 //----- (080BCA42) --------------------------------------------------------
-int __cdecl sub_80BCA42(int a1)
+int __cdecl XAnimNeedClearState(int a1)
 {
   if ( *(float *)(a1 + 12) == 0.0 && !*(_WORD *)(a1 + 20) )
     return 0;
@@ -74037,7 +74037,7 @@ int __cdecl sub_80BCA42(int a1)
 }
 
 //----- (080BCAB4) --------------------------------------------------------
-int __cdecl sub_80BCAB4(_DWORD *a1, int a2)
+int __cdecl XAnimResetTime(_DWORD *a1, int a2)
 {
   int result; // eax
   unsigned __int16 *v3; // [esp+8h] [ebp-10h]
@@ -74049,7 +74049,7 @@ int __cdecl sub_80BCAB4(_DWORD *a1, int a2)
   v4 = *((_WORD *)a1 + a2 + 4);
   if ( v4 )
   {
-    sub_80BCA42(40 * v4 + 139623040);
+    XAnimNeedClearState(40 * v4 + 139623040);
     v3 = (unsigned __int16 *)(*a1 + 8 * a2 + 12);
     v5 = *v3;
     for ( i = 0; ; ++i )
@@ -74057,14 +74057,14 @@ int __cdecl sub_80BCAB4(_DWORD *a1, int a2)
       result = i;
       if ( i >= v5 )
         break;
-      sub_80BCAB4(a1, i + v3[3]);
+      XAnimResetTime(a1, i + v3[3]);
     }
   }
   return result;
 }
 
 //----- (080BCB3A) --------------------------------------------------------
-int __cdecl sub_80BCB3A(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6, _BYTE *a7)
+int __cdecl XAnimUpdateOldTime(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6, _BYTE *a7)
 {
   int result; // eax
   char v8; // [esp+1Eh] [ebp-2Ah]
@@ -74114,7 +74114,7 @@ int __cdecl sub_80BCB3A(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6
       if ( (*(_WORD *)(*(_DWORD *)&v10[1] + 4) & 4) != 0 )
         a3 = v11;
       for ( i = 0; i < v14; ++i )
-        sub_80BCB3A(
+        XAnimUpdateOldTime(
           (int)a1,
           i + *(unsigned __int16 *)(*(_DWORD *)&v10[1] + 6),
           a3,
@@ -74135,10 +74135,10 @@ int __cdecl sub_80BCB3A(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6
       }
       else if ( v14 && (*(_WORD *)(*(_DWORD *)&v10[1] + 4) & 4) != 0 )
       {
-        if ( (unsigned __int8)sub_80BCA42(v12) )
+        if ( (unsigned __int8)XAnimNeedClearState(v12) )
         {
           for ( i = 0; i < v14; ++i )
-            sub_80BCAB4(a1, i + *(unsigned __int16 *)(*(_DWORD *)&v10[1] + 6));
+            XAnimResetTime(a1, i + *(unsigned __int16 *)(*(_DWORD *)&v10[1] + 6));
         }
       }
       else if ( *(float *)v11 != *(float *)a3 || *(_WORD *)(v11 + 8) != *(_WORD *)(a3 + 8) )
@@ -74154,7 +74154,7 @@ int __cdecl sub_80BCB3A(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6
     }
     else
     {
-      sub_80BBA62((int)a1, v13);
+      XAnimFreeInfo((int)a1, v13);
       result = a2;
       *((_WORD *)a1 + a2 + 4) = 0;
     }
@@ -74163,10 +74163,10 @@ int __cdecl sub_80BCB3A(_DWORD *a1, int a2, int a3, float a4, char a5, _BYTE *a6
 }
 
 //----- (080BCE1C) --------------------------------------------------------
-int __cdecl sub_80BCE1C(int a1, int a2, int a3)
+int __cdecl XAnimAddServerNotifyNamed(int a1, int a2, int a3)
 {
   Scr_AddConstString(a3);
-  return sub_8083426(*(unsigned __int16 *)(a1 + 4) - 1, 0, a2, 1);
+  return Scr_NotifyNum(*(unsigned __int16 *)(a1 + 4) - 1, 0, a2, 1);
 }
 
 //----- (080BCE56) --------------------------------------------------------
@@ -74343,7 +74343,7 @@ long double __cdecl XAnimFindServerNoteTrack(_DWORD *a1, int a2, float a3)
 }
 
 //----- (080BD2FC) --------------------------------------------------------
-void __cdecl sub_80BD2FC(int a1, float *a2, int a3, float a4)
+void __cdecl XAnimProcessServerNotify(int a1, float *a2, int a3, float a4)
 {
   int v4; // [esp+1Ch] [ebp-Ch]
   float *v5; // [esp+20h] [ebp-8h]
@@ -74356,7 +74356,7 @@ void __cdecl sub_80BD2FC(int a1, float *a2, int a3, float a4)
     {
 LABEL_4:
       Scr_AddConstString(g_end);
-      sub_8083426(*(unsigned __int16 *)(a1 + 4) - 1, 0, *((unsigned __int16 *)a2 + 2), 1);
+      Scr_NotifyNum(*(unsigned __int16 *)(a1 + 4) - 1, 0, *((unsigned __int16 *)a2 + 2), 1);
       return;
     }
     if ( *((__int16 *)a2 + 1) >= 0 || (sub_80C0164((_DWORD *)a1, a2, (_WORD *)a3), *((__int16 *)a2 + 1) >= 0) )
@@ -74374,7 +74374,7 @@ LABEL_4:
           {
             do
             {
-              sub_80BCE1C(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
+              XAnimAddServerNotifyNamed(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
               v5 += 2;
               ++v4;
             }
@@ -74385,7 +74385,7 @@ LABEL_4:
         {
           do
           {
-            sub_80BCE1C(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
+            XAnimAddServerNotifyNamed(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
             v5 += 2;
             ++v4;
           }
@@ -74398,20 +74398,20 @@ LABEL_4:
         {
           do
           {
-            sub_80BCE1C(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
+            XAnimAddServerNotifyNamed(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
             v5 += 2;
             ++v4;
           }
           while ( v4 < *(unsigned __int8 *)(v7 + 12) );
           for ( i = *(float **)(v7 + 28); a4 > (long double)i[1]; i += 2 )
-            sub_80BCE1C(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)i);
+            XAnimAddServerNotifyNamed(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)i);
         }
       }
       else
       {
         do
         {
-          sub_80BCE1C(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
+          XAnimAddServerNotifyNamed(a1, *((unsigned __int16 *)a2 + 2), *(unsigned __int16 *)v5);
           v5 += 2;
           ++v4;
         }
@@ -74469,7 +74469,7 @@ void __cdecl XAnimCalc(int a1, int a2, float a3, int a4, unsigned __int8 a5, uns
       if ( i >= v27 )
       {
         if ( a5 )
-          XanimClearInfo(a1, (_DWORD *)a4, a7);
+          XanimCalcClearInfo(a1, (_DWORD *)a4, a7);
         return;
       }
       v20 = *((_WORD *)v17 + i + *(unsigned __int16 *)(**(_DWORD **)a1 + 8 * a2 + 18) + 4);
@@ -74587,7 +74587,7 @@ void __cdecl XAnimCalc(int a1, int a2, float a3, int a4, unsigned __int8 a5, uns
   else
   {
     if ( a5 )
-      XanimClearInfo(a1, (_DWORD *)a4, a7);
+      XanimCalcClearInfo(a1, (_DWORD *)a4, a7);
     v18 = (_BYTE *)(*(_DWORD *)(a1 + 12) + 2 * *(_DWORD *)(*v17 + 4));
     if ( *(_WORD *)(*(_DWORD *)(a1 + 12) + 2 * a2) )
     {
@@ -74740,7 +74740,7 @@ void __cdecl XAnimDisplay(int *a1, int a2, int a3)
 // 80BDE00: using guessed type int arg_4;
 
 //----- (080BE1F4) --------------------------------------------------------
-void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned __int8 a5, _DWORD *a6)
+void __cdecl XAnimCalcDeltaTree(int a1, int a2, float a3, unsigned __int8 a4, unsigned __int8 a5, _DWORD *a6)
 {
   float v6; // [esp+4h] [ebp-94h]
   float v7; // [esp+4h] [ebp-94h]
@@ -74799,7 +74799,7 @@ void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned 
     {
       if ( j >= v24 )
       {
-        sub_80BE1F4(a1, i + v16[3], a3, v30, v29, (int)a6);
+        XAnimCalcDeltaTree(a1, i + v16[3], a3, v30, v29, (int)a6);
         return;
       }
       v19 = *(_WORD *)(a1 + 2 * (j + v16[3]) + 8);
@@ -74816,8 +74816,8 @@ void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned 
     else
       v12 = &v21;
     v23 = (int)v12;
-    sub_80BE1F4(a1, i + v16[3], v27, 1, 1, (int)v12);
-    sub_80BE1F4(a1, j + v16[3], v28, 0, 1, v23);
+    XAnimCalcDeltaTree(a1, i + v16[3], v27, 1, 1, (int)v12);
+    XAnimCalcDeltaTree(a1, j + v16[3], v28, 0, 1, v23);
     ++j;
     while ( j < v24 )
     {
@@ -74827,7 +74827,7 @@ void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned 
         v11 = *(_BYTE *)(a1 + 7) ? *(float *)&dword_8527A9C[10 * v20] : *(float *)&dword_8527AA0[10 * v20];
         v28 = v11;
         if ( v11 != 0.0 )
-          sub_80BE1F4(a1, j + v16[3], v28, 0, 1, v23);
+          XAnimCalcDeltaTree(a1, j + v16[3], v28, 0, 1, v23);
       }
       ++j;
     }
@@ -74902,19 +74902,19 @@ void __cdecl sub_80BE1F4(int a1, int a2, float a3, unsigned __int8 a4, unsigned 
 // 8527AA0: using guessed type int dword_8527AA0[];
 
 //----- (080BE760) --------------------------------------------------------
-long double __cdecl sub_80BE760(int a1, int a2)
+long double __cdecl XAnimGetLength(int a1, int a2)
 {
   return (long double)**(unsigned __int16 **)(a1 + 8 * a2 + 16) / *(float *)(*(_DWORD *)(a1 + 8 * a2 + 16) + 4);
 }
 
 //----- (080BE794) --------------------------------------------------------
-int __cdecl sub_80BE794(int a1, int a2)
+int __cdecl XAnimGetLengthMsec(int a1, int a2)
 {
-  return (int)(sub_80BE760(a1, a2) * 1000.0);
+  return (int)(XAnimGetLength(a1, a2) * 1000.0);
 }
 
 //----- (080BE7D2) --------------------------------------------------------
-long double __cdecl sub_80BE7D2(int a1, int a2)
+long double __cdecl XAnimGetTime(int a1, int a2)
 {
   unsigned __int16 v4; // [esp+6h] [ebp-2h]
 
@@ -74927,7 +74927,7 @@ long double __cdecl sub_80BE7D2(int a1, int a2)
 // 8527A8C: using guessed type int dword_8527A8C[];
 
 //----- (080BE816) --------------------------------------------------------
-long double __cdecl sub_80BE816(int a1, int a2)
+long double __cdecl XAnimGetWeight(int a1, int a2)
 {
   unsigned __int16 v4; // [esp+6h] [ebp-2h]
 
@@ -74940,19 +74940,19 @@ long double __cdecl sub_80BE816(int a1, int a2)
 // 8527AA0: using guessed type int dword_8527AA0[];
 
 //----- (080BE8E4) --------------------------------------------------------
-int __cdecl sub_80BE8E4(int a1, int a2)
+int __cdecl XAnimGetNumChildren(int a1, int a2)
 {
   return *(unsigned __int16 *)(a1 + 8 * a2 + 12);
 }
 
 //----- (080BE8F4) --------------------------------------------------------
-int __cdecl sub_80BE8F4(int a1, int a2, int a3)
+int __cdecl XAnimGetChildAt(int a1, int a2, int a3)
 {
   return a3 + *(unsigned __int16 *)(a1 + 8 * a2 + 18);
 }
 
 //----- (080BE908) --------------------------------------------------------
-void *__cdecl sub_80BE908(int a1, int a2)
+void *__cdecl XAnimGetAnimName(int a1, int a2)
 {
   if ( *(_WORD *)(a1 + 8 * a2 + 12) )
     return &unk_8148F07;
@@ -74996,13 +74996,13 @@ char *__cdecl XAnimGetAnimDebugName(int a1, int a2)
 }
 
 //----- (080BEA0E) --------------------------------------------------------
-int __cdecl sub_80BEA0E(int a1)
+int __cdecl XAnimGetAnimTreeDebugName(int a1)
 {
   return *(_DWORD *)a1;
 }
 
 //----- (080BEA18) --------------------------------------------------------
-int __cdecl sub_80BEA18(int a1)
+int __cdecl XAnimGetAnimTreeSize(int a1)
 {
   return *(_DWORD *)(a1 + 4);
 }
@@ -75020,7 +75020,7 @@ int *__cdecl sub_80BEA24(int *a1, int *a2, float a3)
   {
     v4 = 0;
     v5 = 0;
-    sub_80BCB3A((_DWORD *)*a2, 0, (int)&v4, a3, 1, &v6[1], v6);
+    XAnimUpdateOldTime((_DWORD *)*a2, 0, (int)&v4, a3, 1, &v6[1], v6);
     return (int *)sub_80BC912(*a1, *a2);
   }
   return result;
@@ -75028,7 +75028,7 @@ int *__cdecl sub_80BEA24(int *a1, int *a2, float a3)
 // 80BEA24: using guessed type _BYTE var_A[10];
 
 //----- (080BEA94) --------------------------------------------------------
-_DWORD **__cdecl sub_80BEA94(_DWORD **a1, float a2)
+_DWORD **__cdecl DObjInitServerTime(_DWORD **a1, float a2)
 {
   _DWORD **result; // eax
   int v3; // [esp+20h] [ebp-38h] BYREF
@@ -75040,7 +75040,7 @@ _DWORD **__cdecl sub_80BEA94(_DWORD **a1, float a2)
   {
     v3 = 0;
     v4 = 0;
-    return (_DWORD **)sub_80BCB3A(*a1, 0, (int)&v3, a2, 1, &v5[1], v5);
+    return (_DWORD **)XAnimUpdateOldTime(*a1, 0, (int)&v3, a2, 1, &v5[1], v5);
   }
   return result;
 }
@@ -75058,7 +75058,7 @@ void __cdecl sub_80BEAEE(_DWORD **a1, float a2)
   {
     v2 = 0;
     v3 = 0;
-    sub_80BCB3A(*a1, 0, (int)&v2, a2, 1, &v4[1], v4);
+    XAnimUpdateOldTime(*a1, 0, (int)&v2, a2, 1, &v4[1], v4);
     XAnimUpdateInfoInternal(*a1, 0, a2, 1u);
   }
 }
@@ -75199,7 +75199,7 @@ int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5)
   v8 = a5;
   *(_BYTE *)(a1 + 6) = 0;
   *(_BYTE *)(a1 + 7) = v8;
-  sub_80BE1F4(a1, a2, 1.0, 1u, 0, v6);
+  XAnimCalcDeltaTree(a1, a2, 1.0, 1u, 0, v6);
   if ( *(float *)v6 == 0.0 || *(float *)&v6[1] == 0.0 )
   {
     *a3 = 0;
@@ -75214,14 +75214,14 @@ int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5)
 // 80BEF2C: using guessed type int anonymous_0[8];
 
 //----- (080BEFE2) --------------------------------------------------------
-int __cdecl sub_80BEFE2(int a1, int a2, _DWORD *a3, _DWORD *a4)
+int __cdecl XAnimCalcAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4)
 {
   int v5[3]; // [esp+20h] [ebp-28h] BYREF
   int v6[7]; // [esp+2Ch] [ebp-1Ch] BYREF
 
   *(_BYTE *)(a1 + 6) = 1;
   *(_BYTE *)(a1 + 7) = 1;
-  sub_80BE1F4(a1, a2, 1.0, 1u, 0, v5);
+  XAnimCalcDeltaTree(a1, a2, 1.0, 1u, 0, v5);
   if ( *(float *)v5 == 0.0 && *(float *)&v5[1] == 0.0 )
   {
     *a3 = 0;
@@ -75300,7 +75300,7 @@ int __cdecl XAnimGetAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5)
 }
 
 //----- (080BF2AE) --------------------------------------------------------
-int __cdecl sub_80BF2AE(int a1, int a2)
+int __cdecl XAnimGetInfo(int a1, int a2)
 {
   unsigned __int16 v3; // [esp+16h] [ebp-2h]
 
@@ -75316,7 +75316,7 @@ int __cdecl sub_80BF2AE(int a1, int a2)
 // 8527A8A: using guessed type __int16 word_8527A8A[];
 
 //----- (080BF346) --------------------------------------------------------
-int __cdecl sub_80BF346(int a1, int a2, float a3)
+int __cdecl XAnimClearGoalWeight(int a1, int a2, float a3)
 {
   int result; // eax
   float *v4; // [esp+10h] [ebp-8h]
@@ -75345,7 +75345,7 @@ int __cdecl sub_80BF346(int a1, int a2, float a3)
 }
 
 //----- (080BF3FE) --------------------------------------------------------
-int __cdecl sub_80BF3FE(_DWORD *a1, int a2, float a3)
+int __cdecl XAnimClearTreeGoalWeights(_DWORD *a1, int a2, float a3)
 {
   int result; // eax
   unsigned __int16 *v4; // [esp+Ch] [ebp-Ch]
@@ -75355,7 +75355,7 @@ int __cdecl sub_80BF3FE(_DWORD *a1, int a2, float a3)
   result = a2;
   if ( *((_WORD *)a1 + a2 + 4) )
   {
-    sub_80BF346((int)a1, a2, a3);
+    XAnimClearGoalWeight((int)a1, a2, a3);
     v4 = (unsigned __int16 *)(*a1 + 8 * a2 + 12);
     v6 = *v4;
     for ( i = 0; ; ++i )
@@ -75363,14 +75363,14 @@ int __cdecl sub_80BF3FE(_DWORD *a1, int a2, float a3)
       result = i;
       if ( i >= v6 )
         break;
-      sub_80BF3FE(a1, i + v4[3], LODWORD(a3));
+      XAnimClearTreeGoalWeights(a1, i + v4[3], LODWORD(a3));
     }
   }
   return result;
 }
 
 //----- (080BF482) --------------------------------------------------------
-int __cdecl sub_80BF482(_DWORD *a1, int a2, float a3)
+int __cdecl XAnimClearTreeGoalWeightsStrict(_DWORD *a1, int a2, float a3)
 {
   int result; // eax
   unsigned __int16 *v4; // [esp+Ch] [ebp-Ch]
@@ -75384,13 +75384,13 @@ int __cdecl sub_80BF482(_DWORD *a1, int a2, float a3)
     result = i;
     if ( i >= v6 )
       break;
-    sub_80BF3FE(a1, i + v4[3], a3);
+    XAnimClearTreeGoalWeights(a1, i + v4[3], a3);
   }
   return result;
 }
 
 //----- (080BF4DC) --------------------------------------------------------
-int __cdecl sub_80BF4DC(_DWORD *a1, int a2, float a3, float a4)
+int __cdecl XAnimClearGoalWeightKnobInternal(_DWORD *a1, int a2, float a3, float a4)
 {
   int result; // eax
   float v5; // [esp+0h] [ebp-48h]
@@ -75436,7 +75436,7 @@ int __cdecl sub_80BF4DC(_DWORD *a1, int a2, float a3, float a4)
       if ( j + v11[3] != a2 )
       {
         v10 = v9 * a4;
-        sub_80BF346((int)a1, j + v11[3], v10);
+        XAnimClearGoalWeight((int)a1, j + v11[3], v10);
       }
     }
   }
@@ -75449,24 +75449,24 @@ void __cdecl sub_80BF62C(_DWORD *a1, int a2, float a3, float a4, int a5, int a6,
 {
   if ( a3 < 0.001 )
     a3 = 0.0;
-  sub_80BF4DC(a1, a2, a3, a4);
-  sub_80C04C6(a1, a2, a3, SLODWORD(a4), a5, a6, 0, a7);
+  XAnimClearGoalWeightKnobInternal(a1, a2, a3, a4);
+  XAnimSetCompleteGoalWeight(a1, a2, a3, SLODWORD(a4), a5, a6, 0, a7);
 }
 
 //----- (080BF6AC) --------------------------------------------------------
-int __cdecl sub_80BF6AC(_DWORD *a1, int a2, int a3, float a4, float a5, int a6, int a7, int a8)
+int __cdecl XAnimSetCompleteGoalWeightKnobAll(_DWORD *a1, int a2, int a3, float a4, float a5, int a6, int a7, int a8)
 {
   int v10; // [esp+24h] [ebp-4h]
 
   if ( a4 < 0.001 )
     a4 = 0.0;
-  sub_80BF4DC(a1, a2, a4, a5);
-  v10 = sub_80BFB06(a1, a2, a4, a5, a6, 0, a7, 0);
+  XAnimClearGoalWeightKnobInternal(a1, a2, a4, a5);
+  v10 = XAnimSetGoalWeightInternal(a1, a2, a4, a5, a6, 0, a7, 0);
   sub_80C02D8(a1, a2, SLODWORD(a5));
   if ( a8 )
   {
 LABEL_4:
-    sub_80C01C8(a1, a2);
+    XAnimRestart(a1, a2);
     goto LABEL_5;
   }
   while ( 1 )
@@ -75477,8 +75477,8 @@ LABEL_5:
     a2 = *(unsigned __int16 *)(*a1 + 8 * a2 + 14);
     if ( a2 == a3 )
       return v10;
-    sub_80BF4DC(a1, a2, 1.0, a5);
-    sub_80BFB06(a1, a2, 1.0, a5, 1065353216, 0, 0, 0);
+    XAnimClearGoalWeightKnobInternal(a1, a2, 1.0, a5);
+    XAnimSetGoalWeightInternal(a1, a2, 1.0, a5, 1065353216, 0, 0, 0);
     if ( a8 )
       goto LABEL_4;
   }
@@ -75489,8 +75489,8 @@ int __cdecl sub_80BF81E(_DWORD *a1, int a2, float a3, float a4, int a5, int a6, 
 {
   if ( a3 < 0.001 )
     a3 = 0.0;
-  sub_80BF4DC(a1, a2, a3, a4);
-  return sub_80C0354(a1, a2, a3, SLODWORD(a4), a5, a6, 0, a7);
+  XAnimClearGoalWeightKnobInternal(a1, a2, a3, a4);
+  return XAnimSetGoalWeight(a1, a2, a3, SLODWORD(a4), a5, a6, 0, a7);
 }
 
 //----- (080BF89E) --------------------------------------------------------
@@ -75508,7 +75508,7 @@ int __cdecl sub_80BF89E(_DWORD *a1, int a2, float a3)
     result = i;
     if ( i >= v5 )
       break;
-    sub_80BF346((int)a1, i + v4[3], a3);
+    XAnimClearGoalWeight((int)a1, i + v4[3], a3);
   }
   return result;
 }
@@ -75530,7 +75530,7 @@ int __cdecl XAnimClearTreeWeights(_DWORD *a1, int a2)
     v6 = *v3;
     for ( i = 0; i < v6; ++i )
       XAnimClearTreeWeights(a1, i + v3[3]);
-    sub_80BBA62((int)a1, v4);
+    XAnimFreeInfo((int)a1, v4);
     result = a2;
     *((_WORD *)a1 + a2 + 4) = 0;
   }
@@ -75569,7 +75569,7 @@ int __cdecl XAnimClearTree(_DWORD *a1)
 }
 
 //----- (080BFA44) --------------------------------------------------------
-int __cdecl sub_80BFA44(_DWORD *a1, int a2)
+int __cdecl XAnimGetDescendantWithGreatestWeight(_DWORD *a1, int a2)
 {
   unsigned __int16 *v4; // [esp+Ch] [ebp-18h]
   int i; // [esp+10h] [ebp-14h]
@@ -75588,7 +75588,7 @@ int __cdecl sub_80BFA44(_DWORD *a1, int a2)
     v8 = *(float *)&dword_8527A9C[10 * *((unsigned __int16 *)a1 + i + v4[3] + 4)];
     if ( v9 < (long double)v8 )
     {
-      v7 = sub_80BFA44(a1, i + v4[3]);
+      v7 = XAnimGetDescendantWithGreatestWeight(a1, i + v4[3]);
       if ( v7 )
       {
         v9 = v8;
@@ -75601,7 +75601,7 @@ int __cdecl sub_80BFA44(_DWORD *a1, int a2)
 // 8527A9C: using guessed type int dword_8527A9C[];
 
 //----- (080BFB06) --------------------------------------------------------
-int __cdecl sub_80BFB06(_DWORD *a1, int a2, float a3, float a4, int a5, char a6, int a7, __int16 a8)
+int __cdecl XAnimSetGoalWeightInternal(_DWORD *a1, int a2, float a3, float a4, int a5, char a6, int a7, __int16 a8)
 {
   float *v10; // [esp+18h] [ebp-10h]
 
@@ -75651,7 +75651,7 @@ LABEL_7:
       SL_AddRefToString(a7);
     if ( a7 && *(_WORD *)(*a1 + 8 * a2 + 12) && (*(_WORD *)(*a1 + 8 * a2 + 16) & 3) != 0 )
     {
-      *(_WORD *)v10 = sub_80BFA44(a1, a2);
+      *(_WORD *)v10 = XAnimGetDescendantWithGreatestWeight(a1, a2);
       if ( !*(_WORD *)v10 )
         return 2;
     }
@@ -75664,7 +75664,7 @@ LABEL_7:
   }
   if ( a3 != 0.0 || a6 )
   {
-    v10 = (float *)sub_80BF2AE((int)a1, a2);
+    v10 = (float *)XAnimGetInfo((int)a1, a2);
     sub_80BC8C8(v10);
     goto LABEL_7;
   }
@@ -75672,7 +75672,7 @@ LABEL_7:
 }
 
 //----- (080BFD38) --------------------------------------------------------
-int __cdecl sub_80BFD38(int a1, int a2, int a3)
+int __cdecl XAnimSetAnimRate(int a1, int a2, int a3)
 {
   int result; // eax
 
@@ -75683,13 +75683,13 @@ int __cdecl sub_80BFD38(int a1, int a2, int a3)
 // 8527AA4: using guessed type int dword_8527AA4[40951];
 
 //----- (080BFD6A) --------------------------------------------------------
-void *__cdecl sub_80BFD6A(size_t n)
+void *__cdecl Hunk_AllocXAnimPrecache(size_t n)
 {
   return Hunk_AllocAlignInternal(n, 4);
 }
 
 //----- (080BFD86) --------------------------------------------------------
-int __cdecl sub_80BFD86(_DWORD *a1, int a2, unsigned __int8 a3)
+int __cdecl XAnimFillInSyncNodes_r(_DWORD *a1, int a2, unsigned __int8 a3)
 {
   int result; // eax
   char *v4; // eax
@@ -75729,7 +75729,7 @@ int __cdecl sub_80BFD86(_DWORD *a1, int a2, unsigned __int8 a3)
       result = i;
       if ( i >= v11 )
         break;
-      sub_80BFD86(a1, i + HIWORD(a1[2 * a2 + 4]), a3);
+      XAnimFillInSyncNodes_r(a1, i + HIWORD(a1[2 * a2 + 4]), a3);
     }
   }
   else
@@ -75747,7 +75747,7 @@ int __cdecl sub_80BFD86(_DWORD *a1, int a2, unsigned __int8 a3)
         v5 = XAnimGetAnimDebugName((int)a1, a2);
         Com_Error(1, (char *)&byte_81491E0, v5, *a1);
       }
-      XAnimPrecache("void_loop", (int (__cdecl *)(int))sub_80BFD6A);
+      XAnimPrecache("void_loop", (int (__cdecl *)(int))Hunk_AllocXAnimPrecache);
       a1[2 * a2 + 4] = XAnimFindData("void_loop");
       result = (int)&a1[2 * a2 + 3];
       if ( !a1[2 * a2 + 4] )
@@ -75758,7 +75758,7 @@ int __cdecl sub_80BFD86(_DWORD *a1, int a2, unsigned __int8 a3)
 }
 
 //----- (080BFF8E) --------------------------------------------------------
-int __cdecl sub_80BFF8E(_DWORD *a1, int a2)
+int __cdecl XAnimSetupSyncNodes_r(_DWORD *a1, int a2)
 {
   int result; // eax
   int v3; // [esp+18h] [ebp-10h]
@@ -75781,7 +75781,7 @@ int __cdecl sub_80BFF8E(_DWORD *a1, int a2)
         result = i;
         if ( i >= v6 )
           break;
-        sub_80BFD86(a1, i + HIWORD(a1[2 * a2 + 4]), v3 == 1);
+        XAnimFillInSyncNodes_r(a1, i + HIWORD(a1[2 * a2 + 4]), v3 == 1);
       }
     }
     else
@@ -75791,7 +75791,7 @@ int __cdecl sub_80BFF8E(_DWORD *a1, int a2)
         result = j;
         if ( j >= v6 )
           break;
-        sub_80BFF8E(a1, j + HIWORD(a1[2 * a2 + 4]));
+        XAnimSetupSyncNodes_r(a1, j + HIWORD(a1[2 * a2 + 4]));
       }
     }
   }
@@ -75799,9 +75799,9 @@ int __cdecl sub_80BFF8E(_DWORD *a1, int a2)
 }
 
 //----- (080C006C) --------------------------------------------------------
-int __cdecl sub_80C006C(_DWORD *a1)
+int __cdecl XAnimSetupSyncNodes(_DWORD *a1)
 {
-  return sub_80BFF8E(a1, 0);
+  return XAnimSetupSyncNodes_r(a1, 0);
 }
 
 //----- (080C0088) --------------------------------------------------------
@@ -75816,13 +75816,13 @@ int __cdecl sub_80C0088(int a1, int a2)
 }
 
 //----- (080C00CA) --------------------------------------------------------
-_BOOL4 __cdecl sub_80C00CA(int a1, int a2)
+_BOOL4 __cdecl XAnimIsPrimitive(int a1, int a2)
 {
   return *(_WORD *)(a1 + 8 * a2 + 12) == 0;
 }
 
 //----- (080C00E2) --------------------------------------------------------
-char *__cdecl sub_80C00E2(int a1, int a2, int a3)
+char *__cdecl XAnimSetTime(int a1, int a2, int a3)
 {
   char *result; // eax
   unsigned __int16 v4; // [esp+Eh] [ebp-2h]
@@ -75857,7 +75857,7 @@ void __cdecl sub_80C0164(_DWORD *a1, float *a2, _WORD *a3)
 }
 
 //----- (080C01C8) --------------------------------------------------------
-int __cdecl sub_80C01C8(_DWORD *a1, int a2)
+int __cdecl XAnimRestart(_DWORD *a1, int a2)
 {
   int result; // eax
   int j; // [esp+14h] [ebp-14h]
@@ -75870,7 +75870,7 @@ int __cdecl sub_80C01C8(_DWORD *a1, int a2)
     v5 = (unsigned __int16 *)(*a1 + 8 * i + 12);
     if ( *v5 && (*(_WORD *)(*a1 + 8 * i + 16) & 4) != 0 )
     {
-      result = sub_80BCA42((int)&unk_8527A80 + 40 * *((unsigned __int16 *)a1 + i + 4));
+      result = XAnimNeedClearState((int)&unk_8527A80 + 40 * *((unsigned __int16 *)a1 + i + 4));
       if ( (_BYTE)result )
       {
         v4 = *v5;
@@ -75879,7 +75879,7 @@ int __cdecl sub_80C01C8(_DWORD *a1, int a2)
           result = j;
           if ( j >= v4 )
             break;
-          sub_80BCAB4(a1, j + v5[3]);
+          XAnimResetTime(a1, j + v5[3]);
         }
       }
       return result;
@@ -75887,7 +75887,7 @@ int __cdecl sub_80C01C8(_DWORD *a1, int a2)
   }
   result = *(unsigned __int16 *)(*a1 + 8 * a2 + 12);
   if ( !*(_WORD *)(*a1 + 8 * a2 + 12) )
-    return sub_80BCA42(40 * *((unsigned __int16 *)a1 + a2 + 4) + 139623040);
+    return XAnimNeedClearState(40 * *((unsigned __int16 *)a1 + a2 + 4) + 139623040);
   return result;
 }
 
@@ -75898,7 +75898,7 @@ int __cdecl sub_80C02D8(_DWORD *a1, int a2, int a3)
   int i; // [esp+24h] [ebp-4h]
 
   result = a2;
-  for ( i = a2; i; result = sub_80BFB06(a1, i, 0.0, *(float *)&a3, 1065353216, 1, 0, 0) )
+  for ( i = a2; i; result = XAnimSetGoalWeightInternal(a1, i, 0.0, *(float *)&a3, 1065353216, 1, 0, 0) )
   {
     i = *(unsigned __int16 *)(*a1 + 8 * i + 14);
     result = i;
@@ -75909,27 +75909,27 @@ int __cdecl sub_80C02D8(_DWORD *a1, int a2, int a3)
 }
 
 //----- (080C0354) --------------------------------------------------------
-int __cdecl sub_80C0354(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8)
+int __cdecl XAnimSetGoalWeight(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8)
 {
   int v9; // [esp+24h] [ebp-4h]
 
   if ( a3 < 0.001 )
     a3 = 0.0;
-  v9 = sub_80BFB06(a1, a2, a3, *(float *)&a4, a5, 0, a6, a7);
+  v9 = XAnimSetGoalWeightInternal(a1, a2, a3, *(float *)&a4, a5, 0, a6, a7);
   sub_80C02D8(a1, a2, a4);
   if ( a8 )
-    sub_80C01C8(a1, a2);
+    XAnimRestart(a1, a2);
   return v9;
 }
 
 //----- (080C03EA) --------------------------------------------------------
-int __cdecl sub_80C03EA(int a1, int a2, int a3)
+int __cdecl BG_SetAnimRate(int a1, int a2, int a3)
 {
-  return sub_80BFD38(a1, a2, a3);
+  return XAnimSetAnimRate(a1, a2, a3);
 }
 
 //----- (080C040C) --------------------------------------------------------
-int __cdecl sub_80C040C(int a1, int a2)
+int __cdecl XAnimIsLooped(int a1, int a2)
 {
   if ( *(_WORD *)(a1 + 8 * a2 + 12) )
     return *(_WORD *)(a1 + 8 * a2 + 16) & 1;
@@ -75938,7 +75938,7 @@ int __cdecl sub_80C040C(int a1, int a2)
 }
 
 //----- (080C044E) --------------------------------------------------------
-int __cdecl sub_80C044E(int a1, int a2, int a3)
+int __cdecl XAnimNotetrackExists(int a1, int a2, int a3)
 {
   int i; // [esp+4h] [ebp-10h]
   unsigned __int16 *v6; // [esp+8h] [ebp-Ch]
@@ -75958,22 +75958,22 @@ int __cdecl sub_80C044E(int a1, int a2, int a3)
 }
 
 //----- (080C04C6) --------------------------------------------------------
-void __cdecl sub_80C04C6(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8)
+void __cdecl XAnimSetCompleteGoalWeight(_DWORD *a1, int a2, float a3, int a4, int a5, int a6, __int16 a7, int a8)
 {
   int v8; // [esp+20h] [ebp-8h]
 
   if ( a3 < 0.001 )
     a3 = 0.0;
-  sub_80BFB06(a1, a2, a3, *(float *)&a4, a5, 0, a6, a7);
+  XAnimSetGoalWeightInternal(a1, a2, a3, *(float *)&a4, a5, 0, a6, a7);
   v8 = a2;
   while ( v8 )
   {
     v8 = *(unsigned __int16 *)(*a1 + 8 * v8 + 14);
     if ( !*((_WORD *)a1 + v8 + 4) || *(float *)&dword_8527A9C[10 * *((unsigned __int16 *)a1 + v8 + 4)] == 0.0 )
-      sub_80BFB06(a1, v8, 1.0, *(float *)&a4, 1065353216, 0, 0, 0);
+      XAnimSetGoalWeightInternal(a1, v8, 1.0, *(float *)&a4, 1065353216, 0, 0, 0);
   }
   if ( a8 )
-    sub_80C01C8(a1, a2);
+    XAnimRestart(a1, a2);
 }
 // 8527A9C: using guessed type int dword_8527A9C[];
 
@@ -76023,13 +76023,13 @@ int __cdecl XAnimCloneAnimTree(int a1, int a2)
       }
       else
       {
-        v4 = (_DWORD *)sub_80BF2AE(a2, i);
+        v4 = (_DWORD *)XAnimGetInfo(a2, i);
       }
       XAnimCloneInfo((_DWORD *)(40 * v5 + 139623040), v4);
     }
     else if ( *(_WORD *)(a2 + 2 * i + 8) )
     {
-      sub_80BBA62(a2, *(unsigned __int16 *)(a2 + 2 * i + 8));
+      XAnimFreeInfo(a2, *(unsigned __int16 *)(a2 + 2 * i + 8));
       *(_WORD *)(a2 + 2 * i + 8) = 0;
     }
   }
@@ -76076,7 +76076,7 @@ int __cdecl sub_80C078E(int a1, int a2)
     v5 = *(_WORD *)(a1 + 2 * i + 8);
     if ( v5 )
     {
-      v4 = sub_80BF2AE(a2, i);
+      v4 = XAnimGetInfo(a2, i);
       sub_80C072E((_DWORD *)(40 * v5 + 139623040), v4);
     }
   }
@@ -77455,7 +77455,7 @@ int __cdecl XModelGetContents(int a1)
 }
 
 //----- (080C33FE) --------------------------------------------------------
-int __cdecl sub_80C33FE(int a1, int a2, int a3, float *a4, float *a5, int a6)
+int __cdecl XModelTraceLine(int a1, int a2, int a3, float *a4, float *a5, int a6)
 {
   long double v6; // fst7
   long double v7; // fst7
@@ -77500,7 +77500,7 @@ int __cdecl sub_80C33FE(int a1, int a2, int a3, float *a4, float *a5, int a6)
       sub_80C3AB4(v31, v13, (float *)v28);
       sub_80C3AB4(v30, v13, v29);
       CM_CalcTraceExtents((int)v28);
-      if ( !sub_805D6DC((int)v28, (int)(v26 + 2), (int)(v26 + 5), *(float *)a2) )
+      if ( !CM_TraceBox((int)v28, (int)(v26 + 2), (int)(v26 + 5), *(float *)a2) )
       {
         sub_80C38DC(v29, (float *)v28, (float *)v24);
         for ( j = 0; j < v26[1]; ++j )
@@ -78376,7 +78376,7 @@ int __cdecl XModelNumBones(__int16 **a1)
 }
 
 //----- (080C54DC) --------------------------------------------------------
-int __cdecl sub_80C54DC(_DWORD *a1)
+int __cdecl XModelGetBasePose(_DWORD *a1)
 {
   return *a1 + 68;
 }
@@ -84839,7 +84839,7 @@ int __cdecl BG_IndexForString(char *a1, int *a2, int a3)
 // 80D48C6: using guessed type char *arg_0;
 
 //----- (080D4970) --------------------------------------------------------
-char *__cdecl sub_80D4970(char *s, int a2, unsigned int a3, _DWORD *a4)
+char *__cdecl BG_CopyStringIntoBuffer(char *s, int a2, unsigned int a3, _DWORD *a4)
 {
   char *dest; // [esp+Ch] [ebp-Ch]
 
@@ -84852,7 +84852,7 @@ char *__cdecl sub_80D4970(char *s, int a2, unsigned int a3, _DWORD *a4)
 }
 
 //----- (080D49D8) --------------------------------------------------------
-int __cdecl sub_80D49D8(int a1, int a2)
+int __cdecl BG_InitWeaponString(int a1, int a2)
 {
   int result; // eax
 
@@ -84865,10 +84865,10 @@ int __cdecl sub_80D49D8(int a1, int a2)
 // 8575C44: using guessed type int dword_8575C44[255];
 
 //----- (080D4A08) --------------------------------------------------------
-int sub_80D4A08()
+int BG_InitWeaponStrings()
 {
   memset(dword_8575C40, 0, 0x400u);
-  return sub_80F04AE();
+  return BG_LoadWeaponStrings();
 }
 // 8575C40: using guessed type int dword_8575C40[];
 
@@ -84896,7 +84896,7 @@ unsigned __int16 *__cdecl BG_GetAnim(unsigned int a1)
 // 855D56C: using guessed type int dword_855D56C;
 
 //----- (080D4ABE) --------------------------------------------------------
-void *__cdecl sub_80D4ABE(int a1)
+void *__cdecl BG_SetupAnimNoteTypes(int a1)
 {
   void *result; // eax
   int k; // [esp+0h] [ebp-14h]
@@ -84930,7 +84930,7 @@ void *__cdecl sub_80D4ABE(int a1)
 }
 
 //----- (080D4BC2) --------------------------------------------------------
-void *sub_80D4BC2()
+void *BG_FinalizePlayerAnims()
 {
   char *v0; // eax
   char *v1; // ebx
@@ -84948,7 +84948,7 @@ void *sub_80D4BC2()
 
   v11 = dword_855A4E4;
   v9 = *(_DWORD *)(dword_855A4E4 + 736180);
-  v12 = sub_80BEA18(v9);
+  v12 = XAnimGetAnimTreeSize(v9);
   *(_DWORD *)(dword_855A4E4 + 49152) = v12;
   dest = (char *)v11;
   *(_DWORD *)(v11 + 80) |= 0x101u;
@@ -84961,15 +84961,15 @@ void *sub_80D4BC2()
     v6 = BG_GetAnim(v13);
     if ( v6 )
     {
-      if ( sub_80C00CA(v9, v13) )
+      if ( XAnimIsPrimitive(v9, v13) )
       {
-        v0 = (char *)sub_80BE908(v9, v13);
+        v0 = (char *)XAnimGetAnimName(v9, v13);
         I_strncpyz(dest, v0, 64);
         v1 = dest;
         *((_DWORD *)v1 + 19) = BG_StringHashValue_Lwr((int)dest);
         if ( !*((_DWORD *)dest + 16) )
           *((_DWORD *)dest + 16) = -1;
-        v5 = sub_80BE760(v9, v13);
+        v5 = XAnimGetLength(v9, v13);
         if ( v5 == 0.0 )
         {
           *((_DWORD *)dest + 18) = 500;
@@ -84986,7 +84986,7 @@ void *sub_80D4BC2()
           if ( *((int *)dest + 18) <= 499 )
             *((_DWORD *)dest + 18) = 500;
         }
-        if ( (unsigned __int8)sub_80C040C(v9, v13) )
+        if ( (unsigned __int8)XAnimIsLooped(v9, v13) )
           *((_DWORD *)dest + 20) |= 0x80u;
       }
       else
@@ -85010,14 +85010,14 @@ void *sub_80D4BC2()
     dest += 96;
   }
   BG_AnimParseAnimScript(dword_855A4E4, 0, 0);
-  return sub_80D4ABE(dword_855A4E4);
+  return BG_SetupAnimNoteTypes(dword_855A4E4);
 }
 // 80D4CCE: conditional instruction was optimized away because %var_3C.4!=0
 // 855A4E4: using guessed type int dword_855A4E4;
 // 80D4BC2: using guessed type int var_28[3];
 
 //----- (080D4ED4) --------------------------------------------------------
-void *__cdecl sub_80D4ED4(char **a1, int *a2, int a3, _DWORD *s)
+void *__cdecl BG_ParseConditionBits(char **a1, int *a2, int a3, _DWORD *s)
 {
   void *result; // eax
   int v5; // eax
@@ -85169,7 +85169,7 @@ int __cdecl BG_ParseConditions(char **a1, _DWORD *a2)
     }
     else
     {
-      sub_80D4ED4(a1, (int *)off_81647C4[2 * v7], v7, s);
+      BG_ParseConditionBits(a1, (int *)off_81647C4[2 * v7], v7, s);
     }
     a2[3 * *a2 + 1] = v7;
     a2[3 * *a2 + 2] = s[0];
@@ -85418,7 +85418,7 @@ _DWORD *__cdecl BG_AnimParseAnimScript(int a1, int a2, int a3)
   dword_855D568 = a2;
   dword_855D56C = a3;
   v34 = 0;
-  sub_80D4A08();
+  BG_InitWeaponStrings();
   memset(dword_855CC60, 0, 0x480u);
   memset(&unk_855A540, 0, 0x2710u);
   memset(dword_855A500, 0, 0x24u);
@@ -85452,7 +85452,7 @@ _DWORD *__cdecl BG_AnimParseAnimScript(int a1, int a2, int a3)
             if ( !v35 || !*v35 )
               BG_AnimParseError("BG_AnimParseAnimScript: expected condition define string");
             v3 = dword_855A500[v23] + 16 * v23;
-            dword_855CC60[2 * v3] = (int)sub_80D4970(v35, (int)&unk_855A540, 0x2710u, &dword_855CC50);
+            dword_855CC60[2 * v3] = (int)BG_CopyStringIntoBuffer(v35, (int)&unk_855A540, 0x2710u, &dword_855CC50);
             v4 = dword_855A500[v23] + 16 * v23;
             dword_855CC64[2 * v4] = BG_StringHashValue_Lwr(dword_855CC60[2 * v4]);
             v35 = Com_ParseOnLine((char **)v36);
@@ -85460,7 +85460,7 @@ _DWORD *__cdecl BG_AnimParseAnimScript(int a1, int a2, int a3)
               BG_AnimParseError("BG_AnimParseAnimScript: expected '=', found end of line");
             if ( I_stricmp(v35, "=") )
               BG_AnimParseError("BG_AnimParseAnimScript: expected '=', found '%s'", v35);
-            sub_80D4ED4(
+            BG_ParseConditionBits(
               (char **)v36,
               (int *)off_81647C4[2 * v23],
               v23,
@@ -85675,7 +85675,7 @@ LABEL_103:
 // 80D5B94: using guessed type _DWORD var_128[64];
 
 //----- (080D688A) --------------------------------------------------------
-int __cdecl sub_80D688A(int a1, _DWORD *a2)
+int __cdecl BG_EvaluateConditions(int a1, _DWORD *a2)
 {
   int v3; // [esp+0h] [ebp-10h]
   _DWORD *v5; // [esp+8h] [ebp-8h]
@@ -85703,7 +85703,7 @@ int __cdecl sub_80D688A(int a1, _DWORD *a2)
 // 81647C0: using guessed type int dword_81647C0[];
 
 //----- (080D6944) --------------------------------------------------------
-_DWORD *__cdecl sub_80D6944(int a1, _DWORD *a2)
+_DWORD *__cdecl BG_FirstValidItem(int a1, _DWORD *a2)
 {
   int v4; // [esp+10h] [ebp-8h]
   _DWORD **v5; // [esp+14h] [ebp-4h]
@@ -85712,7 +85712,7 @@ _DWORD *__cdecl sub_80D6944(int a1, _DWORD *a2)
   v5 = (_DWORD **)(a2 + 1);
   while ( v4 < *a2 )
   {
-    if ( sub_80D688A((int)dword_855A4E0 + 1208 * a1 + 736252, *v5) )
+    if ( BG_EvaluateConditions((int)dword_855A4E0 + 1208 * a1 + 736252, *v5) )
       return *v5;
     ++v4;
     ++v5;
@@ -85721,7 +85721,7 @@ _DWORD *__cdecl sub_80D6944(int a1, _DWORD *a2)
 }
 
 //----- (080D69B2) --------------------------------------------------------
-int __cdecl sub_80D69B2(_DWORD *a1, int a2, int a3, int a4, int a5, int a6, int a7)
+int __cdecl BG_PlayAnim(_DWORD *a1, int a2, int a3, int a4, int a5, int a6, int a7)
 {
   int v9; // [esp+8h] [ebp-8h]
   int v10; // [esp+Ch] [ebp-4h]
@@ -85795,11 +85795,11 @@ int __cdecl sub_80D6B7C(_DWORD *a1, char *src, int a3, int a4, int a5, int a6)
   int v6; // eax
 
   v6 = BG_AnimationIndexForString(src);
-  return sub_80D69B2(a1, v6, a3, 0, a4, a5, a6);
+  return BG_PlayAnim(a1, v6, a3, 0, a4, a5, a6);
 }
 
 //----- (080D6BC4) --------------------------------------------------------
-int __cdecl sub_80D6BC4(_DWORD *a1, __int16 *a2, int a3, int a4, int a5)
+int __cdecl BG_ExecuteCommand(_DWORD *a1, __int16 *a2, int a3, int a4, int a5)
 {
   _BOOL4 v7; // [esp+20h] [ebp-8h]
   int v8; // [esp+24h] [ebp-4h]
@@ -85810,17 +85810,17 @@ int __cdecl sub_80D6BC4(_DWORD *a1, __int16 *a2, int a3, int a4, int a5)
   {
     v8 = a2[4] + 50;
     if ( *a2 == 1 || *a2 == 3 )
-      v7 = sub_80D69B2(a1, a2[2], *a2, v8, a3, a4, a5) >= 0;
+      v7 = BG_PlayAnim(a1, a2[2], *a2, v8, a3, a4, a5) >= 0;
     else
-      sub_80D69B2(a1, a2[2], *a2, v8, a3, a4, a5);
+      BG_PlayAnim(a1, a2[2], *a2, v8, a3, a4, a5);
   }
   if ( a2[1] )
   {
     v8 = a2[4] + 50;
     if ( *a2 == 1 || *a2 == 3 )
-      v7 = sub_80D69B2(a1, a2[3], a2[1], v8, a3, a4, a5) >= 0;
+      v7 = BG_PlayAnim(a1, a2[3], a2[1], v8, a3, a4, a5) >= 0;
     else
-      sub_80D69B2(a1, a2[3], a2[1], v8, a3, a4, a5);
+      BG_PlayAnim(a1, a2[3], a2[1], v8, a3, a4, a5);
   }
   if ( *((_DWORD *)a2 + 3) )
     (*(void (__cdecl **)(_DWORD, _DWORD))(dword_855A4E4 + 736196))(a1[51], *((_DWORD *)a2 + 3));
@@ -85843,7 +85843,7 @@ int __cdecl BG_AnimScriptAnimation(_DWORD *a1, int a2, int a3, int a4)
   {
     if ( *(_DWORD *)(516 * a3 + dword_855A4E4 + 21156 * a2 + 49156) )
     {
-      v6 = sub_80D6944(a1[51], (_DWORD *)(516 * a3 + dword_855A4E4 + 21156 * a2 + 49156));
+      v6 = BG_FirstValidItem(a1[51], (_DWORD *)(516 * a3 + dword_855A4E4 + 21156 * a2 + 49156));
       if ( !v6 )
         --a2;
     }
@@ -85857,12 +85857,12 @@ int __cdecl BG_AnimScriptAnimation(_DWORD *a1, int a2, int a3, int a4)
   if ( !v6[28] )
     return -1;
   BG_UpdateConditionValue(a1[51], 3, a3, 1);
-  return sub_80D6BC4(a1, (__int16 *)&v6[4 * (a1[51] % v6[28]) + 29], 0, a4, 0) != -1;
+  return BG_ExecuteCommand(a1, (__int16 *)&v6[4 * (a1[51] % v6[28]) + 29], 0, a4, 0) != -1;
 }
 // 855A4E4: using guessed type int dword_855A4E4;
 
 //----- (080D6EDC) --------------------------------------------------------
-int __cdecl sub_80D6EDC(_DWORD *a1, int a2, int a3)
+int __cdecl BG_AnimScriptCannedAnimation(_DWORD *a1, int a2, int a3)
 {
   __int16 *v5; // [esp+1Ch] [ebp-Ch]
   _DWORD *v6; // [esp+20h] [ebp-8h]
@@ -85871,13 +85871,13 @@ int __cdecl sub_80D6EDC(_DWORD *a1, int a2, int a3)
     return -1;
   if ( !*(_DWORD *)(516 * a2 + dword_855A4E4 + 2064 * a3 + 218404) )
     return -1;
-  v6 = sub_80D6944(a1[51], (_DWORD *)(516 * a2 + dword_855A4E4 + 2064 * a3 + 218404));
+  v6 = BG_FirstValidItem(a1[51], (_DWORD *)(516 * a2 + dword_855A4E4 + 2064 * a3 + 218404));
   if ( !v6 )
     return -1;
   if ( !v6[28] )
     return -1;
   v5 = (__int16 *)&v6[4 * (rand() % v6[28]) + 29];
-  return sub_80D6BC4(a1, v5, 1, 0, 0);
+  return BG_ExecuteCommand(a1, v5, 1, 0, 0);
 }
 // 855A4E4: using guessed type int dword_855A4E4;
 
@@ -85891,18 +85891,18 @@ int __cdecl BG_AnimScriptEvent(_DWORD *a1, int a2, int a3, int a4)
     return -1;
   if ( !*(_DWORD *)(dword_855A4E4 + 516 * a2 + 226660) )
     return -1;
-  v7 = sub_80D6944(a1[51], (_DWORD *)(dword_855A4E4 + 516 * a2 + 226660));
+  v7 = BG_FirstValidItem(a1[51], (_DWORD *)(dword_855A4E4 + 516 * a2 + 226660));
   if ( !v7 )
     return -1;
   if ( !v7[28] )
     return -1;
   v6 = (__int16 *)&v7[4 * (rand() % v7[28]) + 29];
-  return sub_80D6BC4(a1, v6, 1, a3, a4);
+  return BG_ExecuteCommand(a1, v6, 1, a3, a4);
 }
 // 855A4E4: using guessed type int dword_855A4E4;
 
 //----- (080D70AA) --------------------------------------------------------
-int __cdecl sub_80D70AA(int a1, unsigned int a2)
+int __cdecl BG_GetAnimString(int a1, unsigned int a2)
 {
   if ( a2 >= *(_DWORD *)(dword_855A4E4 + 49152) )
     BG_AnimParseError("BG_GetAnimString: anim index is out of range");
@@ -85931,7 +85931,7 @@ int __cdecl BG_UpdateConditionValue(int a1, int a2, int a3, int a4)
 // 81647C0: using guessed type int dword_81647C0[];
 
 //----- (080D7180) --------------------------------------------------------
-unsigned int __cdecl sub_80D7180(int a1, int a2, int a3)
+unsigned int __cdecl BG_GetConditionValue(int a1, int a2, int a3)
 {
   unsigned int i; // [esp+10h] [ebp-8h]
 
@@ -85947,7 +85947,7 @@ unsigned int __cdecl sub_80D7180(int a1, int a2, int a3)
 // 81647C0: using guessed type int dword_81647C0[];
 
 //----- (080D72B8) --------------------------------------------------------
-int __cdecl sub_80D72B8(int a1, unsigned int a2)
+int __cdecl BG_GetAnimationForIndex(int a1, unsigned int a2)
 {
   if ( a2 >= *(_DWORD *)(dword_855A4E4 + 49152) )
     Com_Error(1, (char *)&byte_814BFE0);
@@ -85987,24 +85987,24 @@ _BOOL4 __cdecl sub_80D74DE(int a1, int a2)
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_80D72B8(*(_DWORD *)(a1 + 8), a2 & 0xFFFFFDFF);
+  v3 = BG_GetAnimationForIndex(*(_DWORD *)(a1 + 8), a2 & 0xFFFFFDFF);
   return (*(_DWORD *)(v3 + 88) & 0x180 | *(_DWORD *)(v3 + 84) & 0xC4) != 0;
 }
 
 //----- (080D7534) --------------------------------------------------------
 _BOOL4 __cdecl sub_80D7534(int a1, int a2)
 {
-  return (*(_DWORD *)(sub_80D72B8(*(_DWORD *)(a1 + 8), a2 & 0xFFFFFDFF) + 84) & 0x308) != 0;
+  return (*(_DWORD *)(BG_GetAnimationForIndex(*(_DWORD *)(a1 + 8), a2 & 0xFFFFFDFF) + 84) & 0x308) != 0;
 }
 
 //----- (080D7588) --------------------------------------------------------
 _BOOL4 __cdecl sub_80D7588(int a1, int a2)
 {
-  return (*(_DWORD *)(sub_80D72B8(*(_DWORD *)(a1 + 8), a2 & 0xFFFFFDFF) + 84) & 0x7FF00000) != 0;
+  return (*(_DWORD *)(BG_GetAnimationForIndex(*(_DWORD *)(a1 + 8), a2 & 0xFFFFFDFF) + 84) & 0x7FF00000) != 0;
 }
 
 //----- (080D75DC) --------------------------------------------------------
-void __cdecl sub_80D75DC(int *a1, int *a2, int a3, int a4)
+void __cdecl BG_SetNewAnimation(int *a1, int *a2, int a3, int a4)
 {
   _BOOL4 v4; // ebx
   _BOOL4 v5; // ebx
@@ -86087,17 +86087,17 @@ void __cdecl sub_80D75DC(int *a1, int *a2, int a3, int a4)
     if ( a2[6] < v24 )
       a2[6] = v24;
   }
-  if ( v26 && *((float *)v26 + 17) != 0.0 && (unsigned __int8)sub_80C040C(v18, v27) )
+  if ( v26 && *((float *)v26 + 17) != 0.0 && (unsigned __int8)XAnimIsLooped(v18, v27) )
   {
     v16 = v23 & 0xFFFFFDFF;
-    if ( v25 && *(float *)(v25 + 68) != 0.0 && (unsigned __int8)sub_80C040C(v18, v16) )
+    if ( v25 && *(float *)(v25 + 68) != 0.0 && (unsigned __int8)XAnimIsLooped(v18, v16) )
     {
-      v20 = sub_80BE7D2((int)v19, v16);
+      v20 = XAnimGetTime((int)v19, v16);
     }
     else
     {
-      if ( sub_80C00CA(v18, v16) )
-        v17 = sub_80BE794(v18, v16) + 200;
+      if ( XAnimIsPrimitive(v18, v16) )
+        v17 = XAnimGetLengthMsec(v18, v16) + 200;
       else
         v17 = 1000;
       v21 = (long double)(*((_DWORD *)dword_855A4E0 + 184055) % v17) / (long double)v17
@@ -86108,7 +86108,7 @@ void __cdecl sub_80D75DC(int *a1, int *a2, int a3, int a4)
   if ( v25 )
   {
     v6 = (long double)a2[6] * 0.001;
-    sub_80BF346((int)v19, v23 & 0xFFFFFDFF, v6);
+    XAnimClearGoalWeight((int)v19, v23 & 0xFFFFFDFF, v6);
   }
   if ( v27 )
   {
@@ -86119,35 +86119,35 @@ void __cdecl sub_80D75DC(int *a1, int *a2, int a3, int a4)
     }
     if ( (*((_DWORD *)v26 + 20) & 0x40) != 0 )
     {
-      if ( (unsigned __int8)sub_80C040C(v18, v27) )
+      if ( (unsigned __int8)XAnimIsLooped(v18, v27) )
         Com_Error(1, "death animation '%s' is looping", v26);
       if ( a4 )
       {
         *(float *)&v7 = (long double)a2[6] * 0.001;
-        sub_80C04C6(v19, v27, 1.0, v7, 1065353216, 0, 0, 0);
+        XAnimSetCompleteGoalWeight(v19, v27, 1.0, v7, 1065353216, 0, 0, 0);
       }
       else
       {
-        sub_80BF6AC(v19, v27, *((unsigned __int16 *)dword_855A4E0 + 368102), 1.0, 0.0, 1065353216, 0, 0);
-        sub_80C00E2((int)v19, v27, 1065353216);
+        XAnimSetCompleteGoalWeightKnobAll(v19, v27, *((unsigned __int16 *)dword_855A4E0 + 368102), 1.0, 0.0, 1065353216, 0, 0);
+        XAnimSetTime((int)v19, v27, 1065353216);
       }
     }
     else
     {
       v13 = 0;
-      if ( *((float *)v26 + 17) != 0.0 && sub_80BE816((int)v19, v27) == 0.0 )
+      if ( *((float *)v26 + 17) != 0.0 && XAnimGetWeight((int)v19, v27) == 0.0 )
         v13 = 1;
       *(float *)&v8 = (long double)a2[6] * 0.001;
-      sub_80C04C6(v19, v27, 1.0, v8, 1065353216, 0, *((_DWORD *)v26 + 23), a2 != a1 + 224);
+      XAnimSetCompleteGoalWeight(v19, v27, 1.0, v8, 1065353216, 0, *((_DWORD *)v26 + 23), a2 != a1 + 224);
       if ( v13 )
-        sub_80C00E2((int)v19, v27, SLODWORD(v20));
+        XAnimSetTime((int)v19, v27, SLODWORD(v20));
     }
     if ( a2 != a1 + 224 )
     {
       *(float *)&v9 = (long double)a2[6] * 0.001;
-      sub_80C04C6(v19, *((unsigned __int16 *)dword_855A4E0 + 368092), 1.0, v9, 1065353216, 0, *((_DWORD *)v26 + 23), 0);
+      XAnimSetCompleteGoalWeight(v19, *((unsigned __int16 *)dword_855A4E0 + 368092), 1.0, v9, 1065353216, 0, *((_DWORD *)v26 + 23), 0);
       *(float *)&v10 = (long double)a2[6] * 0.001;
-      sub_80C04C6(
+      XAnimSetCompleteGoalWeight(
         v19,
         *((unsigned __int16 *)dword_855A4E0 + 368093),
         0.0099999998,
@@ -86161,14 +86161,14 @@ void __cdecl sub_80D75DC(int *a1, int *a2, int a3, int a4)
   else if ( a2 != a1 + 224 )
   {
     *(float *)&v11 = (long double)a2[6] * 0.001;
-    sub_80C04C6(v19, *((unsigned __int16 *)dword_855A4E0 + 368092), 0.0, v11, 1065353216, 0, 0, 0);
+    XAnimSetCompleteGoalWeight(v19, *((unsigned __int16 *)dword_855A4E0 + 368092), 0.0, v11, 1065353216, 0, 0, 0);
     *(float *)&v12 = (long double)a2[6] * 0.001;
-    sub_80C04C6(v19, *((unsigned __int16 *)dword_855A4E0 + 368093), 1.0, v12, 1065353216, 0, 0, 0);
+    XAnimSetCompleteGoalWeight(v19, *((unsigned __int16 *)dword_855A4E0 + 368093), 1.0, v12, 1065353216, 0, 0, 0);
   }
 }
 
 //----- (080D7D06) --------------------------------------------------------
-int __cdecl sub_80D7D06(int *a1, int a2, int a3, int a4)
+int __cdecl BG_RunLerpFrameRate(int *a1, int a2, int a3, int a4)
 {
   int result; // eax
   float v5; // [esp+0h] [ebp-38h]
@@ -86184,7 +86184,7 @@ int __cdecl sub_80D7D06(int *a1, int a2, int a3, int a4)
     v6 = 1;
   v10 = a1[297];
   if ( a3 != *(_DWORD *)(a2 + 16) || !*(_DWORD *)(a2 + 20) && (a3 & 0xFFFFFDFF) != 0 )
-    sub_80D75DC(a1, (int *)a2, a3, (*(_DWORD *)(a4 + 8) >> 19) & 1);
+    BG_SetNewAnimation(a1, (int *)a2, a3, (*(_DWORD *)(a4 + 8) >> 19) & 1);
   result = a3 & 0xFFFFFDFF;
   if ( (a3 & 0xFFFFFDFF) != 0 )
   {
@@ -86250,17 +86250,17 @@ int __cdecl sub_80D7D06(int *a1, int a2, int a3, int a4)
     }
     result = a2;
     if ( *(_DWORD *)(a2 + 16) )
-      return sub_80C03EA(v10, *(_DWORD *)(a2 + 16) & 0xFFFFFDFF, *(_DWORD *)(a2 + 40));
+      return BG_SetAnimRate(v10, *(_DWORD *)(a2 + 16) & 0xFFFFFDFF, *(_DWORD *)(a2 + 40));
   }
   return result;
 }
 
 //----- (080D8052) --------------------------------------------------------
-void __cdecl sub_80D8052(int a1, _DWORD *a2)
+void __cdecl BG_PlayerAnimation_VerifyAnim(int a1, _DWORD *a2)
 {
   if ( a2[4] )
   {
-    if ( sub_80BE816(a1, a2[4] & 0xFFFFFDFF) == 0.0 )
+    if ( XAnimGetWeight(a1, a2[4] & 0xFFFFFDFF) == 0.0 )
     {
       a2[4] = 0;
       a2[5] = 0;
@@ -86270,7 +86270,7 @@ void __cdecl sub_80D8052(int a1, _DWORD *a2)
 }
 
 //----- (080D80B8) --------------------------------------------------------
-void __cdecl sub_80D80B8(float a1, float a2, float a3, float a4, float *a5, _DWORD *a6)
+void __cdecl BG_SwingAngles(float a1, float a2, float a3, float a4, float *a5, _DWORD *a6)
 {
   float v6; // [esp+0h] [ebp-18h]
   float v7; // [esp+0h] [ebp-18h]
@@ -86322,26 +86322,26 @@ void __cdecl sub_80D80B8(float a1, float a2, float a3, float a4, float *a5, _DWO
       }
     }
     v6 = *a5 + v11;
-    *a5 = sub_80A5F4C(v6);
+    *a5 = AngleMod(v6);
     v14 = sub_80A6000(a1, *a5);
     if ( v14 <= (long double)a3 )
     {
       if ( -a3 > (long double)v14 )
       {
         v8 = a1 + a3;
-        *a5 = sub_80A5F4C(v8);
+        *a5 = AngleMod(v8);
       }
     }
     else
     {
       v7 = a1 - a3;
-      *a5 = sub_80A5F4C(v7);
+      *a5 = AngleMod(v7);
     }
   }
 }
 
 //----- (080D82A4) --------------------------------------------------------
-void __cdecl sub_80D82A4(int a1, int a2)
+void __cdecl BG_PlayerAngles(int a1, int a2)
 {
   float v2; // [esp+20h] [ebp-48h] BYREF
   float v3; // [esp+24h] [ebp-44h]
@@ -86354,10 +86354,10 @@ void __cdecl sub_80D82A4(int a1, int a2)
   float v10; // [esp+58h] [ebp-10h]
   float v11; // [esp+5Ch] [ebp-Ch]
 
-  v9 = sub_80B6688(*(float *)(a2 + 996));
+  v9 = GetLeanFraction(*(float *)(a2 + 996));
   v8 = *(float *)(a2 + 992);
   sub_80D9D2A((_DWORD *)(a2 + 1000), &v2);
-  v3 = sub_80A5F4C(v3);
+  v3 = AngleMod(v3);
   sub_80D9CDC(&v6);
   sub_80D9CDC(&v4);
   if ( (*(_DWORD *)(a1 + 8) & 0x300) != 0 )
@@ -86366,7 +86366,7 @@ void __cdecl sub_80D82A4(int a1, int a2)
     *(_DWORD *)(a2 + 956) = 1;
     *(_DWORD *)(a2 + 900) = 1;
   }
-  else if ( (sub_80D7180(a2, 3, 0) & 0xC0000) != 0 )
+  else if ( (BG_GetConditionValue(a2, 3, 0) & 0xC0000) != 0 )
   {
     *(_DWORD *)(a2 + 948) = 1;
     *(_DWORD *)(a2 + 956) = 1;
@@ -86378,9 +86378,9 @@ void __cdecl sub_80D82A4(int a1, int a2)
     *(_DWORD *)(a2 + 956) = 1;
     *(_DWORD *)(a2 + 900) = 1;
   }
-  else if ( (sub_80D7180(a2, 3, 0) & 6) != 0 )
+  else if ( (BG_GetConditionValue(a2, 3, 0) & 6) != 0 )
   {
-    if ( sub_80D7180(a2, 6, 1) )
+    if ( BG_GetConditionValue(a2, 6, 1) )
     {
       *(_DWORD *)(a2 + 948) = 1;
       *(_DWORD *)(a2 + 956) = 1;
@@ -86399,7 +86399,7 @@ void __cdecl sub_80D82A4(int a1, int a2)
     v5 = v3;
     v10 = 90.0;
   }
-  else if ( (sub_80D7180(a2, 3, 0) & 0xC0000) != 0 )
+  else if ( (BG_GetConditionValue(a2, 3, 0) & 0xC0000) != 0 )
   {
     v5 = v7;
     v10 = 0.0;
@@ -86429,7 +86429,7 @@ void __cdecl sub_80D82A4(int a1, int a2)
       v5 = v8 * 0.30000001 + v3;
     v10 = 90.0;
   }
-  sub_80D80B8(v5, 0.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 944), (_DWORD *)(a2 + 948));
+  BG_SwingAngles(v5, 0.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 944), (_DWORD *)(a2 + 948));
   v10 = 150.0;
   if ( (*(_DWORD *)(a1 + 8) & 0x20000) != 0 )
     goto LABEL_26;
@@ -86442,17 +86442,17 @@ void __cdecl sub_80D82A4(int a1, int a2)
   {
     *(_DWORD *)(a2 + 900) = 0;
     v7 = v3;
-    sub_80D80B8(v3, 0.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 896), (_DWORD *)(a2 + 900));
+    BG_SwingAngles(v3, 0.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 896), (_DWORD *)(a2 + 900));
   }
   else
   {
     if ( *(_DWORD *)(a2 + 900) )
     {
 LABEL_26:
-      sub_80D80B8(v7, 0.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 896), (_DWORD *)(a2 + 900));
+      BG_SwingAngles(v7, 0.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 896), (_DWORD *)(a2 + 900));
       goto LABEL_33;
     }
-    sub_80D80B8(v7, 40.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 896), (_DWORD *)(a2 + 900));
+    BG_SwingAngles(v7, 40.0, v10, *(float *)(bg_swingSpeed + 8), (float *)(a2 + 896), (_DWORD *)(a2 + 900));
   }
 LABEL_33:
   if ( (*(_DWORD *)(a1 + 8) & 0x300) != 0 )
@@ -86460,7 +86460,7 @@ LABEL_33:
     *(float *)(a2 + 944) = v3;
     *(float *)(a2 + 896) = v3;
   }
-  else if ( (sub_80D7180(a2, 3, 0) & 0xC0000) != 0 )
+  else if ( (BG_GetConditionValue(a2, 3, 0) & 0xC0000) != 0 )
   {
     *(float *)(a2 + 944) = v3 + v8;
     *(float *)(a2 + 896) = v3 + v8;
@@ -86473,7 +86473,7 @@ LABEL_33:
   {
     v11 = 0.0;
   }
-  else if ( (sub_80D7180(a2, 3, 0) & 0xC0000) != 0 )
+  else if ( (BG_GetConditionValue(a2, 3, 0) & 0xC0000) != 0 )
   {
     v11 = 0.0;
   }
@@ -86489,12 +86489,12 @@ LABEL_33:
   {
     v11 = (v2 + -360.0) * 0.60000002;
   }
-  sub_80D80B8(v11, 0.0, 45.0, 0.15000001, (float *)(a2 + 952), (_DWORD *)(a2 + 956));
+  BG_SwingAngles(v11, 0.0, 45.0, 0.15000001, (float *)(a2 + 952), (_DWORD *)(a2 + 956));
 }
 // 85760B4: using guessed type int bg_swingSpeed;
 
 //----- (080D8882) --------------------------------------------------------
-int __cdecl sub_80D8882(_DWORD *a1, int a2)
+int __cdecl BG_AnimPlayerConditions(_DWORD *a1, int a2)
 {
   int v3; // [esp+18h] [ebp-10h]
   unsigned int v4; // [esp+1Ch] [ebp-Ch]
@@ -86521,7 +86521,7 @@ int __cdecl sub_80D8882(_DWORD *a1, int a2)
     BG_UpdateConditionValue(a1[36], 6, 0, 1);
   v4 = a1[51] & 0xFFFFFDFF;
   if ( *(_QWORD *)((char *)dword_855A4E0 + 96 * v4 + 84)
-    && sub_80D7180(a2, 3, 0) != *(_QWORD *)((char *)dword_855A4E0 + 96 * v4 + 84) )
+    && BG_GetConditionValue(a2, 3, 0) != *(_QWORD *)((char *)dword_855A4E0 + 96 * v4 + 84) )
   {
     BG_UpdateConditionValue(a1[36], 3, *((_DWORD *)dword_855A4E0 + 24 * v4 + 21), 0);
   }
@@ -86578,7 +86578,7 @@ void *__cdecl sub_80D8C3E(int a1, int a2, int a3, int a4, void *s)
   sub_80D9D2A((_DWORD *)(a4 + 1000), &v12);
   v22 = *(float *)(a4 + 896);
   v16 = *(float *)(a4 + 944);
-  if ( (sub_80D7180(a4, 3, 0) & 0xC0000) == 0 )
+  if ( (BG_GetConditionValue(a4, 3, 0) & 0xC0000) == 0 )
   {
     v15 = *(float *)(a4 + 952);
     if ( (*(_DWORD *)(a2 + 8) & 8) != 0 )
@@ -86593,7 +86593,7 @@ void *__cdecl sub_80D8C3E(int a1, int a2, int a3, int a4, void *s)
   sub_80A6062(&v12, &v15, &v12);
   sub_80A6062(&v15, &v21, &v15);
   sub_80D9D06(&v19, 0, 0, *(_DWORD *)(a2 + 228));
-  v18 = sub_80B6688(*(float *)(a4 + 996));
+  v18 = GetLeanFraction(*(float *)(a4 + 996));
   v17 = v18 * 50.0 * 0.92500001;
   v14 = v17;
   if ( v18 != 0.0 )
@@ -86762,26 +86762,26 @@ int __cdecl sub_80D954C(int a1, int a2, int a3, int a4, int a5)
 // 87A2342: using guessed type __int16 word_87A2342;
 
 //----- (080D9698) --------------------------------------------------------
-int __cdecl sub_80D9698(int a1, _DWORD *a2, int *a3)
+int __cdecl BG_PlayerAnimation(int a1, _DWORD *a2, int *a3)
 {
   int v4; // [esp+14h] [ebp-4h]
 
-  sub_80D82A4((int)a2, (int)a3);
-  sub_80D8882(a2, (int)a3);
+  BG_PlayerAngles((int)a2, (int)a3);
+  BG_AnimPlayerConditions(a2, (int)a3);
   v4 = a3[297];
-  sub_80D8052(v4, a3 + 224);
-  sub_80D8052(v4, a3 + 236);
+  BG_PlayerAnimation_VerifyAnim(v4, a3 + 224);
+  BG_PlayerAnimation_VerifyAnim(v4, a3 + 236);
   if ( a3[253] && (a3[240] & 0xFFFFFDFF) == 0 )
   {
     a3[253] = 0;
     a3[254] = 1;
   }
-  sub_80D7D06(a3, (int)(a3 + 224), a2[51], (int)a2);
-  return sub_80D7D06(a3, (int)(a3 + 236), a2[52], (int)a2);
+  BG_RunLerpFrameRate(a3, (int)(a3 + 224), a2[51], (int)a2);
+  return BG_RunLerpFrameRate(a3, (int)(a3 + 236), a2[52], (int)a2);
 }
 
 //----- (080D978C) --------------------------------------------------------
-int __cdecl sub_80D978C(int a1, _DWORD *a2, int a3, int a4)
+int __cdecl BG_UpdatePlayerDObj(int a1, _DWORD *a2, int a3, int a4)
 {
   int result; // eax
   int v5; // [esp+2Ch] [ebp-7Ch]
@@ -86845,11 +86845,11 @@ int BG_FindAnims()
 }
 
 //----- (080D9A8A) --------------------------------------------------------
-_DWORD *__userpurge sub_80D9A8A@<eax>(_DWORD *a1, char *a2, int a3)
+_DWORD *__userpurge BG_FindAnimTree@<eax>(_DWORD *a1, char *a2, int a3)
 {
   int v4; // [esp+14h] [ebp-4h] BYREF
 
-  sub_806D8CE(&v4, a2);
+  Scr_FindAnimTree(&v4, a2);
   *a1 = v4;
   if ( !*a1 && a3 )
     Com_Error(1, (char *)&byte_814C140, a2);
@@ -86858,14 +86858,14 @@ _DWORD *__userpurge sub_80D9A8A@<eax>(_DWORD *a1, char *a2, int a3)
 // 80D9A8A: using guessed type char *arg_4;
 
 //----- (080D9ADE) --------------------------------------------------------
-int sub_80D9ADE()
+int BG_FindAnimTrees()
 {
   _DWORD *v0; // ebx
   int result; // eax
   int v2; // [esp+10h] [ebp-8h] BYREF
 
   v0 = (char *)dword_855A4E0 + 736200;
-  sub_80D9A8A(&v2, "multiplayer", 1);
+  BG_FindAnimTree(&v2, "multiplayer", 1);
   *v0 = v2;
   *((_DWORD *)dword_855A4E0 + 184045) = *((_DWORD *)dword_855A4E0 + 184050);
   *((_WORD *)dword_855A4E0 + 368092) = *((_WORD *)dword_855A4E0 + 368104);
@@ -86888,9 +86888,9 @@ int BG_LoadAnim()
   BG_FindAnims();
   BG_AnimParseAnimScript((int)dword_855A4E0, (int)v1, (int)v3);
   Scr_PrecacheAnimTrees(*((int (__cdecl **)(int))dword_855A4E0 + 184062), *((_DWORD *)dword_855A4E0 + 184058));
-  sub_80D9ADE();
-  sub_8075F0E();
-  sub_80D4BC2();
+  BG_FindAnimTrees();
+  Scr_EndLoadAnimTrees();
+  BG_FinalizePlayerAnims();
   return LargeLocalDealloc(v2);
 }
 // 80D9B7E: using guessed type int var_28[7];
@@ -87408,7 +87408,7 @@ void __cdecl Mantle_DebugPrint(const char *a1)
 //----- (080DA9FC) --------------------------------------------------------
 int __cdecl sub_80DA9FC(int a1)
 {
-  return sub_80BE794(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)]);
+  return XAnimGetLengthMsec(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)]);
 }
 // 8164860: using guessed type int dword_8164860[];
 
@@ -87418,7 +87418,7 @@ int __cdecl sub_80DAA36(int a1)
   if ( ((*(_BYTE *)(a1 + 12) ^ 1) & 1) != 0 )
     return 0;
   else
-    return sub_80BE794(dword_857606C, dword_8164864[3 * *(_DWORD *)(a1 + 8)]);
+    return XAnimGetLengthMsec(dword_857606C, dword_8164864[3 * *(_DWORD *)(a1 + 8)]);
 }
 // 8164864: using guessed type int dword_8164864[];
 
@@ -87564,7 +87564,7 @@ int __cdecl sub_80DAE2E(int a1, int a2, int a3)
 // 80DAE2E: using guessed type float var_28[7];
 
 //----- (080DAF36) --------------------------------------------------------
-int __cdecl sub_80DAF36(int *a1, int a2, int a3, float a4)
+int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4)
 {
   char *v4; // eax
   int v6; // [esp+Ch] [ebp-ACh]
@@ -87834,10 +87834,10 @@ void __cdecl Mantle_Check(int *a1, _DWORD *a2)
           sub_80DBF54(v2 + 5, v6);
           if ( (LODWORD(v4[4]) & 0x4000000) != 0 )
             v7 |= 1u;
-          if ( !(unsigned __int8)sub_80DAF36(a1, (int)a2, (int)s, 60.0)
-            && !(unsigned __int8)sub_80DAF36(a1, (int)a2, (int)s, 40.0) )
+          if ( !(unsigned __int8)Mantle_CheckLedge(a1, (int)a2, (int)s, 60.0)
+            && !(unsigned __int8)Mantle_CheckLedge(a1, (int)a2, (int)s, 40.0) )
           {
-            sub_80DAF36(a1, (int)a2, (int)s, 20.0);
+            Mantle_CheckLedge(a1, (int)a2, (int)s, 20.0);
           }
         }
       }
@@ -88200,7 +88200,7 @@ _BOOL4 __cdecl sub_80DCBB6(float *a1, int a2, int a3)
 }
 
 //----- (080DCC7A) --------------------------------------------------------
-_BOOL4 __cdecl sub_80DCC7A(_DWORD *a1, _DWORD *a2, int a3)
+_BOOL4 __cdecl BG_CanItemBeGrabbed(_DWORD *a1, _DWORD *a2, int a3)
 {
   char *v3; // eax
   int v5; // [esp+Ch] [ebp-Ch]
@@ -88226,7 +88226,7 @@ _BOOL4 __cdecl sub_80DCC7A(_DWORD *a1, _DWORD *a2, int a3)
             if ( sub_80E9DE0((int)a2, *((_DWORD *)v7 + 8)) <= 0 )
               return 0;
           }
-          else if ( !sub_80EACAE(*((_DWORD *)v7 + 8)) || sub_80E9DE0((int)a2, *((_DWORD *)v7 + 8)) <= 0 )
+          else if ( !BG_WeaponIsClipOnly(*((_DWORD *)v7 + 8)) || sub_80E9DE0((int)a2, *((_DWORD *)v7 + 8)) <= 0 )
           {
             return 0;
           }
@@ -88482,7 +88482,7 @@ int __cdecl BG_PlayerStateToEntityState(int a1, int a2, int a3, unsigned __int8 
     if ( *(_DWORD *)(a1 + 252) )
     {
       v9 = (long double)(*(_DWORD *)a1 - *(_DWORD *)(a1 + 252))
-         / (long double)sub_80E1522(a1, *(_DWORD *)(a1 + 256), *(_DWORD *)(a1 + 260));
+         / (long double)PM_GetViewHeightLerpTime(a1, *(_DWORD *)(a1 + 256), *(_DWORD *)(a1 + 260));
       if ( v9 >= 0.0 )
       {
         if ( v9 > 1.0 )
@@ -90192,7 +90192,7 @@ _DWORD *__cdecl sub_80E117E(int *a1, int a2)
 }
 
 //----- (080E1522) --------------------------------------------------------
-int __cdecl sub_80E1522(int a1, int a2, int a3)
+int __cdecl PM_GetViewHeightLerpTime(int a1, int a2, int a3)
 {
   if ( a2 == 11 )
     return 400;
@@ -90254,7 +90254,7 @@ long double __cdecl sub_80E168A(_DWORD *a1, int a2, int a3)
   {
     if ( a2 == -1 || a3 == -1 || a3 == v6[64] && (a3 != 40 || a2 == 11 && !v6[65] || a2 == 60 && v6[65]) )
     {
-      v5 = (long double)(a1[1] - v6[63]) / (long double)sub_80E1522((int)v6, v6[64], v6[65]);
+      v5 = (long double)(a1[1] - v6[63]) / (long double)PM_GetViewHeightLerpTime((int)v6, v6[64], v6[65]);
       if ( v5 >= 0.0 )
       {
         if ( v5 > 1.0 )
@@ -90302,7 +90302,7 @@ void __cdecl sub_80E178C(int *a1, int a2)
       {
         if ( *(_DWORD *)(v12 + 252) )
         {
-          v10 = sub_80E1522(v12, *(_DWORD *)(v12 + 256), *(_DWORD *)(v12 + 260));
+          v10 = PM_GetViewHeightLerpTime(v12, *(_DWORD *)(v12 + 256), *(_DWORD *)(v12 + 260));
           v11 = 100 * (a1[1] - *(_DWORD *)(v12 + 252)) / v10;
           if ( v11 >= 0 )
           {
@@ -90393,7 +90393,7 @@ void __cdecl sub_80E178C(int *a1, int a2)
             }
             else
             {
-              v10 = sub_80E1522(v12, *(_DWORD *)(v12 + 256), *(_DWORD *)(v12 + 260));
+              v10 = PM_GetViewHeightLerpTime(v12, *(_DWORD *)(v12 + 256), *(_DWORD *)(v12 + 260));
               *(_DWORD *)(v12 + 252) = a1[1] - (int)((long double)v11 * 0.0099999998 * (long double)v10);
               if ( *(_DWORD *)(v12 + 256) == 11 )
               {
@@ -90686,7 +90686,7 @@ void __cdecl sub_80E1F20(int a1, int a2)
           {
             *((_DWORD *)v10 + 61) = 11;
             *(_DWORD *)(a1 + 224) = 1;
-            sub_80D69B2(v10, 0, 2, 0, 0, 1, 1);
+            BG_PlayAnim(v10, 0, 2, 0, 0, 1, 1);
             Jump_ActivateSlowdown((int)v10);
           }
         }
@@ -90694,7 +90694,7 @@ void __cdecl sub_80E1F20(int a1, int a2)
         {
           *((_DWORD *)v10 + 61) = 40;
           *(_DWORD *)(a1 + 224) = 1;
-          sub_80D69B2(v10, 0, 2, 0, 0, 1, 1);
+          BG_PlayAnim(v10, 0, 2, 0, 0, 1, 1);
         }
         else if ( ((_DWORD)v10[3] & 2) != 0 )
         {
@@ -90915,7 +90915,7 @@ int __cdecl sub_80E2F4E(float a1)
 }
 
 //----- (080E3008) --------------------------------------------------------
-void __cdecl sub_80E3008(int a1, int a2)
+void __cdecl PM_Footsteps(int a1, int a2)
 {
   long double v2; // fst7
   long double v3; // fst7
@@ -91423,7 +91423,7 @@ void __cdecl sub_80E42D0(
     sub_80E70CA((_DWORD *)(a1 + 20), v13);
     v14 = v14 + *(float *)(a1 + 248);
     sub_80E70CA(v13, v12);
-    sub_80B66C0((float *)v12, *(_DWORD *)(a1 + 236), v4, 16.0, 20.0);
+    AddLeanToPosition((float *)v12, *(_DWORD *)(a1 + 236), v4, 16.0, 20.0);
     sub_80E70A6(v11, -1056964608, -1056964608, -1056964608);
     sub_80E70A6(v10, 1090519040, 1090519040, 1090519040);
     a4(v7, v13, v11, v10, v12, *(_DWORD *)(a1 + 204), 42008593);
@@ -92402,7 +92402,7 @@ void __cdecl PmoveSingle(int a1)
       sub_80E5844((int **)a1);
       sub_80E1F20(a1, (int)s);
       sub_80E4212((_DWORD *)v27, (int)s);
-      sub_80E3008(a1, (int)s);
+      PM_Footsteps(a1, (int)s);
       sub_80EDF3A(a1, (int)s);
       break;
     case 2:
@@ -92448,7 +92448,7 @@ void __cdecl PmoveSingle(int a1)
         sub_80E5844((int **)a1);
         sub_80E1F20(a1, (int)s);
         sub_80E4212((_DWORD *)v27, (int)s);
-        sub_80E3008(a1, (int)s);
+        PM_Footsteps(a1, (int)s);
         sub_80EE212((_DWORD *)v27);
       }
       else
@@ -92493,7 +92493,7 @@ void __cdecl PmoveSingle(int a1)
             sub_80DFCD4(v2, a1, (int)s);
           }
           sub_80E117E((int *)a1, (int)s);
-          sub_80E3008(a1, (int)s);
+          PM_Footsteps(a1, (int)s);
           sub_80EDF3A(a1, (int)s);
           sub_80E4060(a1);
           sub_80E717C((float *)(v27 + 20), v25, (float *)v16);
@@ -93429,7 +93429,7 @@ int __cdecl BG_FillInAmmoItems(void (__cdecl *a1)(int))
           break;
         }
       }
-      v6 = sub_80E94F0(dest, a1);
+      v6 = BG_GetWeaponIndexForName(dest, a1);
       if ( v6 )
       {
         v5 = BG_WeaponDefs(v6);
@@ -93440,7 +93440,7 @@ int __cdecl BG_FillInAmmoItems(void (__cdecl *a1)(int))
         return result;
       }
       Com_Printf("^3WARNING^7: Could not find weapon for ammo item %s\n", *(const char **)(v4 + 20));
-      v6 = sub_80E94F0("defaultweapon_mp", a1);
+      v6 = BG_GetWeaponIndexForName("defaultweapon_mp", a1);
       if ( !v6 )
         Com_Error(1, (char *)&byte_814E260);
       v5 = BG_WeaponDefs(v6);
@@ -93623,7 +93623,7 @@ _BYTE *__cdecl sub_80E8FBA(int a1, int a2)
   result = (_BYTE *)v4[218];
   if ( *result )
   {
-    v5 = sub_80E94F0((char *)v4[218], a2);
+    v5 = BG_GetWeaponIndexForName((char *)v4[218], a2);
     if ( !v5 )
       Com_Error(1, (char *)&byte_814E400, v4[218], *v4);
     v4[219] = v5;
@@ -93653,7 +93653,7 @@ int BG_ClearWeaponDef()
   for ( i = 1; i <= 128; ++i )
     dword_8164C3C[11 * i] = 0;
   BG_LoadPlayerAnimTypes();
-  return sub_80D4A08();
+  return BG_InitWeaponStrings();
 }
 // 8164C3C: using guessed type int dword_8164C3C[1449];
 // 8576160: using guessed type int dword_8576160[128];
@@ -93837,7 +93837,7 @@ int __cdecl BG_FindWeaponIndexForName(char *a1)
 // 8576160: using guessed type int dword_8576160[128];
 
 //----- (080E94F0) --------------------------------------------------------
-int __cdecl sub_80E94F0(char *s1, void (__cdecl *a2)(int))
+int __cdecl BG_GetWeaponIndexForName(char *s1, void (__cdecl *a2)(int))
 {
   char **v4; // [esp+10h] [ebp-8h]
   int v5; // [esp+14h] [ebp-4h]
@@ -93857,7 +93857,7 @@ int __cdecl sub_80E94F0(char *s1, void (__cdecl *a2)(int))
 //----- (080E958C) --------------------------------------------------------
 int __cdecl sub_80E958C(char *s1)
 {
-  return sub_80E94F0(s1, 0);
+  return BG_GetWeaponIndexForName(s1, 0);
 }
 
 //----- (080E95A8) --------------------------------------------------------
@@ -93894,7 +93894,7 @@ int __cdecl sub_80E963A(int a1, int a2)
   v4 = BG_GetNumWeapons();
   for ( i = 1; i <= v4; ++i )
   {
-    if ( *(_DWORD *)(BG_WeaponDefs(i) + 132) == a2 && (unsigned __int8)sub_80D9E84(a1 + 1348, i) && sub_80EACC8(a1, i) )
+    if ( *(_DWORD *)(BG_WeaponDefs(i) + 132) == a2 && (unsigned __int8)sub_80D9E84(a1 + 1348, i) && BG_WeaponAmmo(a1, i) )
       return i;
   }
   return 0;
@@ -94119,7 +94119,7 @@ int __cdecl sub_80E9DE0(int a1, int a2)
   v9 = sub_80EAC7A(a2);
   if ( *(int *)(v13 + 484) < 0 )
   {
-    if ( sub_80EACAE(a2) )
+    if ( BG_WeaponIsClipOnly(a2) )
     {
       v4 = sub_80E9356(v9);
       return v4 - *(_DWORD *)(a1 + 4 * v9 + 836);
@@ -94140,7 +94140,7 @@ int __cdecl sub_80E9DE0(int a1, int a2)
         v12 = BG_WeaponDefs(i);
         if ( *(_DWORD *)(v12 + 484) == *(_DWORD *)(v13 + 484) )
         {
-          if ( sub_80EACAE(i) )
+          if ( BG_WeaponIsClipOnly(i) )
           {
             if ( !v7[sub_80EAC7A(i)] )
             {
@@ -94187,7 +94187,7 @@ int __cdecl sub_80E9FD2(int a1, int a2)
   v11 = BG_WeaponDefs(a2);
   if ( *(int *)(v11 + 484) < 0 )
   {
-    if ( sub_80EACAE(a2) )
+    if ( BG_WeaponIsClipOnly(a2) )
       return *(_DWORD *)(a1 + 4 * v7 + 836);
     else
       return *(_DWORD *)(a1 + 4 * v8 + 324);
@@ -94201,7 +94201,7 @@ int __cdecl sub_80E9FD2(int a1, int a2)
         v10 = BG_WeaponDefs(i);
         if ( *(_DWORD *)(v10 + 484) == *(_DWORD *)(v11 + 484) )
         {
-          if ( sub_80EACAE(i) )
+          if ( BG_WeaponIsClipOnly(i) )
           {
             if ( !v5[sub_80EAC7A(i)] )
             {
@@ -94557,13 +94557,13 @@ int __cdecl sub_80EAC94(int a1)
 }
 
 //----- (080EACAE) --------------------------------------------------------
-int __cdecl sub_80EACAE(int a1)
+int __cdecl BG_WeaponIsClipOnly(int a1)
 {
   return *(_DWORD *)(BG_WeaponDefs(a1) + 832);
 }
 
 //----- (080EACC8) --------------------------------------------------------
-int __cdecl sub_80EACC8(int a1, int a2)
+int __cdecl BG_WeaponAmmo(int a1, int a2)
 {
   int v3; // [esp+Ch] [ebp-Ch]
 
@@ -94812,7 +94812,7 @@ int __cdecl sub_80EB3D0(_DWORD *a1)
       result = BG_GetNumWeapons();
       if ( a1[53] <= result )
       {
-        if ( !sub_80EACAE(a1[53]) )
+        if ( !BG_WeaponIsClipOnly(a1[53]) )
           BG_AnimScriptEvent(a1, 10, 0, 1);
         sub_80DED2E((int)a1, 149);
         if ( *(_DWORD *)(v2 + 860) && *(_DWORD *)(v2 + 548) )
@@ -94857,7 +94857,7 @@ int __cdecl sub_80EB4FC(_DWORD *a1, int a2)
         if ( a2 && a2 == v6[219] )
           v4 = 1;
         v7 = 1;
-        if ( sub_80EACAE(v5) && !a1[sub_80EAC7A(v5) + 209] )
+        if ( BG_WeaponIsClipOnly(v5) && !a1[sub_80EAC7A(v5) + 209] )
           v7 = 0;
         a1[15] = 0;
         if ( v4 )
@@ -95180,7 +95180,7 @@ char __cdecl sub_80EBFF0(int a1)
           LOBYTE(v1) = a1;
           if ( *(_DWORD *)(a1 + 224) )
           {
-            v1 = sub_80EACAE(v3[53]);
+            v1 = BG_WeaponIsClipOnly(v3[53]);
             if ( !v1 )
               LOBYTE(v1) = BG_AnimScriptEvent(v3, 10, 0, 1);
           }
@@ -95219,7 +95219,7 @@ int __cdecl sub_80EC22A(int a1)
 {
   int result; // eax
 
-  result = sub_80EACAE(*(_DWORD *)(a1 + 212));
+  result = BG_WeaponIsClipOnly(*(_DWORD *)(a1 + 212));
   if ( result )
   {
     result = sub_80EAC7A(*(_DWORD *)(a1 + 212));
@@ -95780,7 +95780,7 @@ int __cdecl sub_80ED3DE(int *a1)
     sub_80E9210((int)v2, 2);
     sub_80EAE8C((int)v2, v2[52], 1);
     BG_AnimScriptEvent(v2, 2, 0, 1);
-    result = sub_80EACC8((int)v2, v2[52]);
+    result = BG_WeaponAmmo((int)v2, v2[52]);
     if ( !result )
       return sub_80DED2E((int)v2, 148);
   }
@@ -96736,7 +96736,7 @@ void __cdecl sub_80EEF38(float *a1, float *a2)
       if ( v13 > 0.0 )
       {
         v2 = 1.0 - v13;
-        v14 = 1.0 - sub_80B6688(v2);
+        v14 = 1.0 - GetLeanFraction(v2);
         v15 = v14 * v8;
         *a2 = v15 * a1[9] * 0.5 + *a2;
         a2[1] = a2[1] - v15 * a1[10];
@@ -96746,7 +96746,7 @@ void __cdecl sub_80EEF38(float *a1, float *a2)
     else
     {
       v10 = v9 / v7;
-      v11 = sub_80B6688(v10);
+      v11 = GetLeanFraction(v10);
       v12 = v11 * v8;
       *a2 = v12 * a1[9] * 0.5 + *a2;
       a2[1] = a2[1] - v12 * a1[10];
@@ -96887,7 +96887,7 @@ int __cdecl sub_80EF52C(float *a1, int a2)
   sub_80F028C((_DWORD *)a2);
   if ( *(float *)(LODWORD(v4) + 76) != 0.0 )
   {
-    v5 = sub_80B6688(*(float *)(LODWORD(v4) + 76));
+    v5 = GetLeanFraction(*(float *)(LODWORD(v4) + 76));
     *(float *)(a2 + 8) = *(float *)(a2 + 8) - (v5 + v5);
   }
   sub_80EEA0C(a1, (float *)a2);
@@ -96933,7 +96933,7 @@ void __cdecl sub_80EF61E(float *a1, float *a2)
       if ( v11 > 0.0 )
       {
         v2 = 1.0 - v11;
-        v12 = 1.0 - sub_80B6688(v2);
+        v12 = 1.0 - GetLeanFraction(v2);
         v13 = v12 * v6;
         *a2 = v13 * a1[3] + *a2;
         a2[2] = v13 * a1[4] + a2[2];
@@ -96942,7 +96942,7 @@ void __cdecl sub_80EF61E(float *a1, float *a2)
     else
     {
       v8 = v7 / 100.0;
-      v9 = sub_80B6688(v8);
+      v9 = GetLeanFraction(v8);
       v10 = v9 * v6;
       *a2 = v10 * a1[3] + *a2;
       a2[2] = v10 * a1[4] + a2[2];
@@ -97211,7 +97211,7 @@ char **__cdecl sub_80F0110(const char *a1, char *s)
   v5 = (char **)BG_LoadWeaponDefInternal(a1, "defaultweapon_mp");
   if ( !v5 )
     Com_Error(1, (char *)&byte_814E800);
-  sub_80F0B8E(v5, s);
+  SetConfigString2(v5, s);
   return v5;
 }
 // 80F0110: using guessed type const char *arg_0;
@@ -97377,7 +97377,7 @@ char *__cdecl sub_80F049E(int a1)
 }
 
 //----- (080F04AE) --------------------------------------------------------
-int sub_80F04AE()
+int BG_LoadWeaponStrings()
 {
   int result; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -97387,7 +97387,7 @@ int sub_80F04AE()
     result = i;
     if ( i >= dword_8576FC4 )
       break;
-    sub_80D49D8(i, (int)(&dword_8576FE0)[i]);
+    BG_InitWeaponString(i, (int)(&dword_8576FE0)[i]);
   }
   return result;
 }
@@ -97448,7 +97448,7 @@ int __cdecl sub_80F065E(char *s1, int a2, int a3)
 }
 
 //----- (080F06B4) --------------------------------------------------------
-int __cdecl sub_80F06B4(_DWORD *a1, char *s1, int a3)
+int __cdecl BG_ParseWeaponDefSpecificFieldType(_DWORD *a1, char *s1, int a3)
 {
   int v4; // [esp+20h] [ebp-8h]
   int v5; // [esp+20h] [ebp-8h]
@@ -97569,7 +97569,7 @@ void __cdecl sub_80F0AA6(int a1)
 }
 
 //----- (080F0B8E) --------------------------------------------------------
-char *__cdecl sub_80F0B8E(char **a1, char *s)
+char *__cdecl SetConfigString2(char **a1, char *s)
 {
   char *result; // eax
   size_t v3; // eax
@@ -97594,7 +97594,7 @@ char *__cdecl sub_80F0B8E(char **a1, char *s)
 //----- (080F0BE2) --------------------------------------------------------
 char *__cdecl sub_80F0BE2(char **a1, char *s)
 {
-  return sub_80F0B8E(a1, s);
+  return SetConfigString2(a1, s);
 }
 
 //----- (080F0BFC) --------------------------------------------------------
@@ -97649,14 +97649,14 @@ int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2)
         FS_FCloseFile(v5);
         if ( Info_Validate(s1) )
         {
-          sub_80F0B8E((char **)v6, a2);
-          if ( sub_80B645E(
+          SetConfigString2((char **)v6, a2);
+          if ( ParseConfigStringToStruct(
                  v6,
                  (int)&off_81665C0,
                  366,
                  s1,
                  16,
-                 (int (__cdecl *)(int, char *, _DWORD))sub_80F06B4,
+                 (int (__cdecl *)(int, char *, _DWORD))BG_ParseWeaponDefSpecificFieldType,
                  (void (__cdecl *)(int, char *))sub_80F0BE2) )
           {
             sub_80F09D6((int *)v6);
@@ -98251,7 +98251,7 @@ int __cdecl sub_80F1F7E(int a1)
 // 81676E8: using guessed type char *off_81676E8[2];
 
 //----- (080F20C8) --------------------------------------------------------
-int __cdecl sub_80F20C8(int a1)
+int __cdecl P_DamageFeedback(int a1)
 {
   int result; // eax
   int v2; // ebx
@@ -98394,7 +98394,7 @@ int __cdecl sub_80F24C6(int a1)
   {
     sub_80F559E((float *)(*(_DWORD *)(a1 + 344) + 20), flt_81676F4, v5);
     sub_80F555A((float *)(*(_DWORD *)(a1 + 344) + 20), flt_81676F4, v4);
-    v8 = sub_805E782((int)v5, (int)v4, (int)v7, 1024, 1079771144);
+    v8 = CM_AreaEntities((int)v5, (int)v4, (int)v7, 1024, 1079771144);
     sub_80F555A((float *)(*(_DWORD *)(a1 + 344) + 20), (float *)(a1 + 260), v5);
     sub_80F555A((float *)(*(_DWORD *)(a1 + 344) + 20), (float *)(a1 + 272), v4);
     sub_80A64CE(v5, v4);
@@ -98597,7 +98597,7 @@ int __cdecl sub_80F2B86(int *a1, int a2)
             v3 = a1[86];
             a1[101] = 0;
             *(_DWORD *)(v3 + 300) = 0;
-            sub_80FF2CA((int)a1, a1, a1, 100000, 0xCu, 0, 0, 0, 0);
+            player_die((int)a1, a1, a1, 100000, 0xCu, 0, 0, 0, 0);
           }
           break;
         default:
@@ -98617,7 +98617,7 @@ int __cdecl sub_80F2B86(int *a1, int a2)
       {
         v5 = (long double)(int)v6[77] * v5;
         sub_80F5506(v4, 0, 0, 1065353216);
-        sub_80FF7C8(a1, 0, 0, 0, 0, (int)v5, 0, 0xBu, 0, 0);
+        G_Damage(a1, 0, 0, 0, 0, (int)v5, 0, 0xBu, 0, 0);
       }
     }
   }
@@ -98752,7 +98752,7 @@ void __cdecl G_PlayerStateToEntityStateExtrapolate(int a1, int a2, int a3, int a
   if ( PM_GetEffectiveStance(a1) == 1 )
   {
     v6 = (long double)(*(_DWORD *)a1 - *(_DWORD *)(a1 + 252))
-       / (long double)sub_80E1522(a1, *(_DWORD *)(a1 + 256), *(_DWORD *)(a1 + 260));
+       / (long double)PM_GetViewHeightLerpTime(a1, *(_DWORD *)(a1 + 256), *(_DWORD *)(a1 + 260));
     if ( v6 >= 0.0 )
     {
       if ( v6 > 1.0 )
@@ -98950,7 +98950,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
             AnglesToAxis(v12, (int)v7);
             AnglesToAxis((float *)v13, (int)v6);
             sub_80A358E(v7, v6, v5);
-            sub_80A71F4((int)v5, (int)v13);
+            AxisToAngles((int)v5, (int)v13);
           }
           sub_80F552A(v15, (_DWORD *)(v41 + 10352));
           *(_DWORD *)(v41 + 10364) = v16;
@@ -99238,7 +99238,7 @@ int __cdecl sub_80F4696(int a1, _DWORD *a2)
 }
 
 //----- (080F474A) --------------------------------------------------------
-int __cdecl sub_80F474A(int a1)
+int __cdecl StuckInClient(int a1)
 {
   long double v1; // fst7
   long double v2; // fst7
@@ -99320,7 +99320,7 @@ int __cdecl sub_80F474A(int a1)
 // 8793DC4: using guessed type int g_playerCollisionEjectSpeed;
 
 //----- (080F4B46) --------------------------------------------------------
-int __cdecl sub_80F4B46(int *a1, int a2)
+int __cdecl G_PlayerController(int *a1, int a2)
 {
   int v2; // eax
   int v4; // [esp+14h] [ebp-4h]
@@ -99333,7 +99333,7 @@ int __cdecl sub_80F4B46(int *a1, int a2)
 // 859B5F4: using guessed type int dword_859B5F4;
 
 //----- (080F4BA4) --------------------------------------------------------
-int __cdecl sub_80F4BA4(int a1)
+int __cdecl G_UpdateClientInfo(int a1)
 {
   int v2; // [esp+14h] [ebp-24h]
   int v3; // [esp+18h] [ebp-20h]
@@ -99403,7 +99403,7 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
   v10 = *(_DWORD *)(a2 + 344);
   *(_BYTE *)(a2 + 358) = 10;
   *(_DWORD *)(v10 + 1956) = 0;
-  v11 = sub_80F4BA4(a2);
+  v11 = G_UpdateClientInfo(a2);
   if ( *(_DWORD *)(v10 + 9924) == 2 )
   {
     if ( *(_DWORD *)(v10 + 9896) == 3 )
@@ -99456,9 +99456,9 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
       *(_DWORD *)(v10 + 72) = (int)*(float *)(g_gravity + 8);
       *(_DWORD *)(v10 + 80) = *(_DWORD *)(g_speed + 8);
       *(float *)(v10 + 10256) = *(float *)(v10 + 1492) / 255.0;
-      sub_811FB7A((int *)a2);
-      sub_811F736(a2);
-      sub_80F20C8(a2);
+      Player_UpdateLookAtEntity((int *)a2);
+      Player_UpdateCursorHints(a2);
+      P_DamageFeedback(a2);
       if ( dword_859B5EC - *(_DWORD *)(v10 + 10168) <= 1000 )
         v3 = *(_DWORD *)(a2 + 8) & 0xFFFFFF7F;
       else
@@ -99470,7 +99470,7 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
         G_PlayerStateToEntityStateExtrapolate(v10, a2, *(_DWORD *)v10, 1);
       else
         BG_PlayerStateToEntityState(v10, a2, 1, 1u);
-      if ( *(int *)(a2 + 404) > 0 && sub_80F474A(a2) )
+      if ( *(int *)(a2 + 404) > 0 && StuckInClient(a2) )
         *(_DWORD *)(a2 + 284) = 0x4000000;
       G_GetPlayerViewOrigin(a2, v14);
       *(_DWORD *)(v10 + 1444) = G_GetNonPVSFriendlyInfo(a2, v14, *(_DWORD *)(v10 + 10296));
@@ -99500,12 +99500,12 @@ int __usercall ClientEndFrame@<eax>(long double a1@<st0>, int a2)
         v13[249] = *(_DWORD *)(a2 + 212);
         sub_80F552A((_DWORD *)(v10 + 232), v13 + 250);
         if ( v11 )
-          Com_SafeServerDObjFree((int *)a2);
+          G_SafeDObjFree((int *)a2);
         v7 = Com_GetServerDObj(*(_DWORD *)a2);
-        sub_80D978C(v7, (_DWORD *)a2, (int)v13, *(unsigned __int8 *)(a2 + 357));
-        sub_80D9698(v7, (_DWORD *)a2, v13);
+        BG_UpdatePlayerDObj(v7, (_DWORD *)a2, (int)v13, *(unsigned __int8 *)(a2 + 357));
+        BG_PlayerAnimation(v7, (_DWORD *)a2, v13);
         if ( (*(_DWORD *)(v10 + 12) & 0x800000) != 0 && (*(_DWORD *)(v10 + 160) & 0x300) != 0 )
-          sub_8109672((_DWORD *)(dword_859B404 + 560 * *(_DWORD *)(v10 + 1428)));
+          turret_think_client((_DWORD *)(dword_859B404 + 560 * *(_DWORD *)(v10 + 1428)));
         if ( *(_BYTE *)(g_debugLocDamage + 8) )
         {
           if ( SV_DObjExists((int *)a2) )
@@ -100146,9 +100146,9 @@ void __cdecl G_GetPlayerViewOrigin(int a1, float *a2)
     v6 = sub_80EE506(v8, v4, v3, *(float *)(bg_bobMax + 8));
     a2[2] = a2[2] + v6;
     v5 = sub_80EE5C6(v8, v4, v3, *(float *)(bg_bobMax + 8));
-    sub_80F63A0(a1, 0, (float *)v7, 0);
+    G_GetPlayerViewDirection(a1, 0, (float *)v7, 0);
     sub_80F73CA(a2, v5, (float *)v7, a2);
-    sub_80B66C0(a2, *(_DWORD *)(v8 + 236), *(float *)(v8 + 76), 16.0, 20.0);
+    AddLeanToPosition(a2, *(_DWORD *)(v8 + 236), *(float *)(v8 + 76), 16.0, 20.0);
     if ( *(float *)(v8 + 28) + 8.0 > a2[2] )
       a2[2] = *(float *)(v8 + 28) + 8.0;
   }
@@ -100158,7 +100158,7 @@ void __cdecl G_GetPlayerViewOrigin(int a1, float *a2)
 // 87A233A: using guessed type __int16 word_87A233A;
 
 //----- (080F63A0) --------------------------------------------------------
-void __cdecl sub_80F63A0(int a1, int a2, float *a3, float *a4)
+void __cdecl G_GetPlayerViewDirection(int a1, int a2, float *a3, float *a4)
 {
   AngleVectors((float *)(*(_DWORD *)(a1 + 344) + 232), a2, a3, a4);
 }
@@ -100492,7 +100492,7 @@ int __cdecl G_GetNonPVSFriendlyInfo(int a1, float *a2, int a3)
         && !*(_DWORD *)(*((_DWORD *)v9 + 86) + 9896)
         && *(_DWORD *)(*((_DWORD *)v9 + 86) + 10060) == v8
         && (char *)a1 != v9
-        && !sub_808FFBC(a2, *(_DWORD *)v9) )
+        && !SV_inSnapshot(a2, *(_DWORD *)v9) )
       {
         break;
       }
@@ -101721,7 +101721,7 @@ int __cdecl PlayerCmd_Suicide(int a1)
   v2 = v4[86];
   v4[101] = 0;
   *(_DWORD *)(v2 + 300) = 0;
-  return sub_80FF2CA((int)v4, v4, v4, 100000, 0xCu, 0, 0, 0, 0);
+  return player_die((int)v4, v4, v4, 100000, 0xCu, 0, 0, 0, 0);
 }
 
 //----- (080F9528) --------------------------------------------------------
@@ -102001,7 +102001,7 @@ int __cdecl PlayerCmd_GetWeaponSlotAmmo(int a1)
   v9 = *(char *)(v10 + *((_DWORD *)v6 + 86) + 1364);
   if ( !*(_BYTE *)(v10 + *((_DWORD *)v6 + 86) + 1364) )
     return Scr_AddInt(0);
-  if ( sub_80EACAE(v9) )
+  if ( BG_WeaponIsClipOnly(v9) )
   {
     v7 = sub_80EAC7A(v9);
     return Scr_AddInt(*(_DWORD *)(*((_DWORD *)v6 + 86) + 4 * v7 + 836));
@@ -102057,7 +102057,7 @@ int __cdecl PlayerCmd_SetWeaponSlotAmmo(int a1)
   v10 = result;
   if ( *(_BYTE *)(v11 + *((_DWORD *)v6 + 86) + 1364) )
   {
-    if ( sub_80EACAE(result) )
+    if ( BG_WeaponIsClipOnly(result) )
     {
       result = sub_80EAC7A(v10);
       v7 = result;
@@ -102905,7 +102905,7 @@ int __cdecl ScrCmd_PlayLocalSound(int a1)
     Scr_ObjectError((int)v1);
   }
   s2 = (char *)Scr_GetString(0);
-  v2 = sub_811B1D8(s2);
+  v2 = G_SoundAliasIndex(s2);
   v3 = va("%c %i", 115, v2);
   return SV_GameSendServerCommand((unsigned __int16)a1, 0, v3);
 }
@@ -103452,7 +103452,7 @@ LABEL_48:
                     sub_8103CB2(v11, (_WORD *)s + 180);
                     G_SpawnItem(a1, (int)s, (int)v11);
                     *((_BYTE *)s + 354) = 1;
-                    sub_810381C(a1, (unsigned __int16 *)s, a2, 1);
+                    Touch_Item(a1, (unsigned __int16 *)s, a2, 1);
                     *((_BYTE *)s + 354) = 0;
                     result = (char *)s;
                     if ( *((_BYTE *)s + 252) )
@@ -103763,7 +103763,7 @@ int __cdecl sub_80FCA4C(int *a1)
     v2 = a1[86];
     a1[101] = 0;
     *(_DWORD *)(v2 + 300) = 0;
-    return sub_80FF2CA((int)a1, a1, a1, 100000, 0xCu, 0, 0, 0, 0);
+    return player_die((int)a1, a1, a1, 100000, 0xCu, 0, 0, 0, 0);
   }
   return result;
 }
@@ -103790,7 +103790,7 @@ _DWORD *__cdecl sub_80FCAE6(char *a1)
   if ( result )
   {
     G_GetPlayerViewOrigin((int)a1, (float *)v9);
-    sub_80F63A0((int)a1, (int)v8, 0, (float *)v7);
+    G_GetPlayerViewDirection((int)a1, (int)v8, 0, (float *)v7);
     sub_80FEE3C(v11 + 58, v10);
     v2 = v10[0] + 15.0;
     v10[0] = v2;
@@ -104705,7 +104705,7 @@ _BOOL4 G_ParseHitLocDmgTable()
   FS_FCloseFile(v2);
   if ( !Info_Validate(s1) )
     Com_Error(1, (char *)&byte_81525E0, src);
-  result = sub_80B645E((int)dword_8577F60, (int)v5, 19, s1, 0, 0, (void (__cdecl *)(int, char *))sub_80FEEC0);
+  result = ParseConfigStringToStruct((int)dword_8577F60, (int)v5, 19, s1, 0, 0, (void (__cdecl *)(int, char *))sub_80FEEC0);
   if ( !result )
     Com_Error(1, (char *)&byte_8152620, src);
   return result;
@@ -104761,7 +104761,7 @@ int __cdecl G_IndexForMeansOfDeath(char *a1)
 }
 
 //----- (080FF2CA) --------------------------------------------------------
-int __cdecl sub_80FF2CA(int a1, int *a2, int *a3, int a4, unsigned int a5, int a6, _DWORD *a7, int a8, int a9)
+int __cdecl player_die(int a1, int *a2, int *a3, int a4, unsigned int a5, int a6, _DWORD *a7, int a8, int a9)
 {
   int result; // eax
   int v10; // [esp+34h] [ebp-44h]
@@ -104849,7 +104849,7 @@ int __cdecl sub_80FF2CA(int a1, int *a2, int *a3, int a4, unsigned int a5, int a
 // 80FF2CA: using guessed type _DWORD var_38[2];
 
 //----- (080FF652) --------------------------------------------------------
-long double __cdecl sub_80FF652(int a1, int a2)
+long double __cdecl G_GetWeaponHitLocationMultiplier(int a1, int a2)
 {
   int v4; // [esp+14h] [ebp-4h]
 
@@ -104869,7 +104869,7 @@ long double __cdecl sub_80FF652(int a1, int a2)
 // 8577F60: using guessed type float dword_8577F60[18];
 
 //----- (080FF6B0) --------------------------------------------------------
-__int16 __cdecl sub_80FF6B0(
+__int16 __cdecl G_DamageClient(
         int a1,
         int *a2,
         int *a3,
@@ -104913,7 +104913,7 @@ __int16 __cdecl sub_80FF6B0(
             v15 = 0;
           }
           v13 = (float)a6;
-          v11 = sub_80FF652(a9, v15);
+          v11 = G_GetWeaponHitLocationMultiplier(a9, v15);
           LOWORD(v10) = v14 | 0xC00;
           v16 = (int)(v11 * v13);
           if ( v16 > 0 )
@@ -104927,7 +104927,7 @@ __int16 __cdecl sub_80FF6B0(
 // 80FF75B: variable 'v14' is possibly undefined
 
 //----- (080FF7C8) --------------------------------------------------------
-__int16 __cdecl sub_80FF7C8(
+__int16 __cdecl G_Damage(
         int *a1,
         int *a2,
         int *a3,
@@ -104944,7 +104944,7 @@ __int16 __cdecl sub_80FF7C8(
 
   if ( a1[86] )
   {
-    LOWORD(v10) = sub_80FF6B0((int)a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+    LOWORD(v10) = G_DamageClient((int)a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
   }
   else
   {
@@ -105130,7 +105130,7 @@ int __cdecl G_RadiusDamage(float *a1, int *a2, int *a3, float a4, float a5, floa
     v8 = a1[i] + v14;
     v21[i] = v8;
   }
-  v23 = sub_805E782((int)v22, (int)v21, (int)v24, 1024, -1);
+  v23 = CM_AreaEntities((int)v22, (int)v21, (int)v24, 1024, -1);
   for ( j = 0; j < v23; ++j )
   {
     v25 = (float *)((char *)&unk_8665480 + 560 * v24[j]);
@@ -105191,7 +105191,7 @@ int __cdecl G_RadiusDamage(float *a1, int *a2, int *a3, float a4, float a5, floa
               sub_81004B2(v25 + 78, a1, v18);
               v19 = v19 + 24.0;
               v8 = v28 * 0.1;
-              sub_80FF7C8((int *)v25, a2, a3, v18, a1, (int)v8, 1, a8, 0, 0);
+              G_Damage((int *)v25, a2, a3, v18, a1, (int)v8, 1, a8, 0, 0);
             }
           }
         }
@@ -105202,7 +105202,7 @@ int __cdecl G_RadiusDamage(float *a1, int *a2, int *a3, float a4, float a5, floa
           sub_81004B2(v25 + 78, a1, v18);
           v19 = v19 + 24.0;
           v8 = v28 * v26;
-          sub_80FF7C8((int *)v25, a2, a3, v18, a1, (int)v8, 1, a8, 0, 0);
+          G_Damage((int *)v25, a2, a3, v18, a1, (int)v8, 1, a8, 0, 0);
         }
       }
     }
@@ -106605,7 +106605,7 @@ int __cdecl sub_8102704(int a1, int a2, int a3, int a4)
   v11 = *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v14 + 324);
   v10 = *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v13 + 836);
   *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v14 + 324) = v11 + a3;
-  if ( sub_80EACAE(a2) )
+  if ( BG_WeaponIsClipOnly(a2) )
   {
     sub_811E696(*(_DWORD *)(a1 + 344), a2);
     v12 = 1;
@@ -106642,7 +106642,7 @@ int __cdecl sub_8102704(int a1, int a2, int a3, int a4)
          - v10
          + *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v14 + 324)
          - v11;
-  if ( !sub_80EACAE(a2) )
+  if ( !BG_WeaponIsClipOnly(a2) )
   {
     *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v14 + 324) += v15;
     if ( *(int *)(*(_DWORD *)(a1 + 344) + 4 * v14 + 324) < 0 )
@@ -106680,7 +106680,7 @@ int __cdecl sub_81029D4(int a1, int *a2)
     v2 = sub_8102704((int)a2, *((_DWORD *)v9 + 8), *((_DWORD *)v9 + 6), 0);
   if ( !v2 )
     return 0;
-  if ( sub_80EACAE(*((_DWORD *)v9 + 8)) )
+  if ( BG_WeaponIsClipOnly(*((_DWORD *)v9 + 8)) )
   {
     v3 = BG_WeaponDefs(*((_DWORD *)v9 + 8));
     v4 = va(aCGamePickupCli, 102, *(_DWORD *)(v3 + 4));
@@ -106894,7 +106894,7 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
     v33 = sub_8102704((int)a2, v34, v38, 0);
     if ( v33 )
     {
-      if ( sub_80EACAE(v34) )
+      if ( BG_WeaponIsClipOnly(v34) )
         v14 = va(aCGamePickupCli, 102, v31[1]);
       else
         v14 = va(aCGamePickupAmm, 102, v31[1]);
@@ -107008,14 +107008,14 @@ int __cdecl sub_8103530(int a1, int *a2)
 // 87A22F4: using guessed type __int16 word_87A22F4;
 
 //----- (081037F0) --------------------------------------------------------
-int __usercall sub_81037F0@<eax>(long double a1@<st0>, int a2, int *a3, int a4)
+int __usercall Touch_Item_Auto@<eax>(long double a1@<st0>, int a2, int *a3, int a4)
 {
   *(_BYTE *)(a2 + 354) = 1;
-  return sub_810381C(a1, (unsigned __int16 *)a2, a3, a4);
+  return Touch_Item(a1, (unsigned __int16 *)a2, a3, a4);
 }
 
 //----- (0810381C) --------------------------------------------------------
-int __usercall sub_810381C@<eax>(long double a1@<st0>, unsigned __int16 *s, int *a3, int a4)
+int __usercall Touch_Item@<eax>(long double a1@<st0>, unsigned __int16 *s, int *a3, int a4)
 {
   int result; // eax
   int v5; // eax
@@ -107043,7 +107043,7 @@ int __usercall sub_810381C@<eax>(long double a1@<st0>, unsigned __int16 *s, int 
       if ( a3[101] > 0 && !dword_859B420 )
       {
         v13 = (char *)&unk_8164C20 + 44 * s[214];
-        result = sub_80DCC7A(s, (_DWORD *)a3[86], a4);
+        result = BG_CanItemBeGrabbed(s, (_DWORD *)a3[86], a4);
         if ( result )
         {
           I_strncpyz(dest, (char *)(a3[86] + 10116), 64);
@@ -107389,7 +107389,7 @@ float *__cdecl sub_810404E(int a1, int a2, int a3)
         sub_80DEB7A((float *)v15, v19, s[0], v25 + 6);
         sub_8105DE2((_DWORD *)v25 + 6, (_DWORD *)v25 + 78);
         *((_DWORD *)v25 + 4) = dword_859B5EC;
-        sub_80A71F4((int)v18, (int)v16);
+        AxisToAngles((int)v18, (int)v16);
       }
       else
       {
@@ -107488,7 +107488,7 @@ int __cdecl FinishSpawningItem(_DWORD *a1)
       AngleVectors((float *)a1 + 81, (int)v7, 0, 0);
       sub_80A1ED8(v9, v7, v8);
       sub_80A1ED8(v8, v9, v7);
-      sub_80A71F4((int)v7, (int)v10);
+      AxisToAngles((int)v7, (int)v10);
       if ( dword_8164C3C[11 * a1[35]] == 1 )
         v11 = v11 + 90.0;
       G_SetAngle(a1, v10);
@@ -107626,9 +107626,9 @@ int __cdecl G_RegisterWeapon(int a1)
   dword_859EA00 = 1;
   dword_859E9FC = 1;
   v2 = BG_WeaponDefs(a1);
-  if ( **(_BYTE **)(v2 + 1388) && !sub_810FFAA((_DWORD *)(v2 + 1396), *(char **)(v2 + 1388)) )
+  if ( **(_BYTE **)(v2 + 1388) && !G_GetHintStringIndex((_DWORD *)(v2 + 1396), *(char **)(v2 + 1388)) )
     Com_Error(1, (char *)&byte_8153420, 32);
-  if ( **(_BYTE **)(v2 + 1392) && !sub_810FFAA((_DWORD *)(v2 + 1400), *(char **)(v2 + 1392)) )
+  if ( **(_BYTE **)(v2 + 1392) && !G_GetHintStringIndex((_DWORD *)(v2 + 1400), *(char **)(v2 + 1392)) )
     Com_Error(1, (char *)&byte_8153420, 32);
   v3 = G_ModelIndex(*(char **)(v2 + 436));
   if ( v3 && G_XModelBad(v3) )
@@ -107725,7 +107725,7 @@ int __cdecl sub_81050FE(int a1, int a2, int a3, _DWORD *a4)
       AngleVectors((float *)(a1 + 324), (int)v6, 0, 0);
       sub_80A1ED8(v8, v6, v7);
       sub_80A1ED8(v7, v8, v6);
-      sub_80A71F4((int)v6, (int)v5);
+      AxisToAngles((int)v6, (int)v5);
       G_SetAngle((_DWORD *)a1, v5);
     }
     return SV_LinkEntity(a1);
@@ -107755,7 +107755,7 @@ int __cdecl sub_81052AA(int a1, int a2)
   AngleVectors((float *)(a1 + 324), (int)v5, 0, 0);
   sub_80A1ED8(v7, v5, v6);
   sub_80A1ED8(v6, v7, v5);
-  sub_80A71F4((int)v5, (int)v3);
+  AxisToAngles((int)v5, (int)v3);
   if ( dword_8164C3C[11 * *(_DWORD *)(a1 + 140)] == 1 )
     v4 = v4 + 90.0;
   return G_SetAngle((_DWORD *)a1, v3);
@@ -107898,10 +107898,10 @@ int __cdecl sub_81058A0(int *a1)
 
   v3 = 1224 * sub_811C830(a1) + 142202936;
   v1 = Com_GetServerDObj(*a1);
-  sub_80D978C(v1, a1, v3 + 12, 0);
+  BG_UpdatePlayerDObj(v1, a1, v3 + 12, 0);
   result = Com_GetServerDObj(*a1);
   if ( result )
-    return sub_80D9698(result, a1, (int *)(v3 + 12));
+    return BG_PlayerAnimation(result, a1, (int *)(v3 + 12));
   return result;
 }
 
@@ -108255,7 +108255,7 @@ int __cdecl sub_8106968(int a1)
 // 859D154: using guessed type int dword_859D154;
 
 //----- (08106976) --------------------------------------------------------
-long double sub_8106976()
+long double G_GetFogOpaqueDistSqrd()
 {
   return *(float *)&dword_859D1DC;
 }
@@ -108287,7 +108287,7 @@ int __cdecl G_SetClientArchiveTime(int a1, int a2)
 // 859B400: using guessed type int dword_859B400;
 
 //----- (081069E2) --------------------------------------------------------
-int __cdecl sub_81069E2(int a1)
+int __cdecl G_GetClientState(int a1)
 {
   return dword_859B400 + 10404 * a1 + 10056;
 }
@@ -108417,7 +108417,7 @@ int __usercall G_InitGame@<eax>(long double a1@<st0>, int a2, unsigned int seed,
   G_ProcessIPBans();
   dword_865262C = (int)SV_XModelGet;
   dword_8652630 = (int)G_CreateDObj;
-  dword_8652634 = (int)Com_ServerDObjFree;
+  dword_8652634 = (int)Com_SafeServerDObjFree;
   dword_8652638 = (int)Hunk_AllocXAnimServer;
   dword_8652628 = 1;
   if ( **(_BYTE **)(g_log + 8) )
@@ -108858,7 +108858,7 @@ void sub_8107A40()
   if ( *(int *)(g_dumpAnims + 8) >= 0 )
   {
     Com_Printf("server:\n");
-    sub_80908FC((int *)(dword_859B404 + 560 * *(_DWORD *)(g_dumpAnims + 8)));
+    SV_DObjDisplayAnim((int *)(dword_859B404 + 560 * *(_DWORD *)(g_dumpAnims + 8)));
   }
 }
 // 859B404: using guessed type int dword_859B404;
@@ -108993,7 +108993,7 @@ void __usercall G_RunFrame(long double a1@<st0>, int a2)
     {
       a1 = (long double)dword_859B5F4 * 0.001;
       v5 = a1;
-      sub_80907BC(v11, v5);
+      SV_DObjInitServerTime(v11, v5);
     }
     ++v12[0];
     v11 += 140;
@@ -109046,7 +109046,7 @@ void __usercall G_RunFrame(long double a1@<st0>, int a2)
     ++v12[0];
     v11 += 140;
   }
-  sub_8084F9A();
+  Scr_IncTime();
   v11 = (int *)&unk_8665480;
   dword_859EA04 = 0;
   while ( dword_859EA04 < *(int *)dword_859B40C )
@@ -109244,7 +109244,7 @@ float *__cdecl sub_81083E8(int a1, int a2, int a3)
     Com_Error(1, (char *)&byte_8153AE0, "tag_flash", *(_DWORD *)a1, v3);
   }
   G_GetPlayerViewOrigin(a2, (float *)v7);
-  sub_80F63A0(a2, a3, (float *)(a3 + 12), (float *)(a3 + 24));
+  G_GetPlayerViewDirection(a2, a3, (float *)(a3 + 12), (float *)(a3 + 24));
   sub_810A912((_DWORD *)a3, (_DWORD *)(a3 + 48));
   sub_810A986(&v9, (float *)v7, v6);
   v5 = Vec3Normalize(v6);
@@ -109364,14 +109364,14 @@ void __cdecl sub_81085B8(int a1, int a2)
       v40 = dword_86525F4;
       v39 = *(_DWORD *)(v64 + 16) & 0xFFFFFDFF;
       sub_80A913C(v42, v43);
-      v62 = sub_80A2A84(v43);
+      v62 = vectosignedyaw(v43);
       AnglesToAxis((float *)(a2 + 324), (int)v49);
       sub_810A912((_DWORD *)(a2 + 312), v51);
       sub_810A986((float *)(a1 + 312), v51, v35);
       v48 = sub_810AA1E(v35, &v50);
       v61 = v48 - v42[6];
-      sub_80BF482((_DWORD *)v41, v39, 0.0);
-      v69 = sub_80BE8E4(v40, v39);
+      XAnimClearTreeGoalWeightsStrict((_DWORD *)v41, v39, 0.0);
+      v69 = XAnimGetNumChildren(v40, v39);
       v60 = 0.0;
       v59 = 0.0;
       v67 = 0;
@@ -109384,9 +109384,9 @@ void __cdecl sub_81085B8(int a1, int a2)
       v71 = 0;
       do
       {
-        v36 = sub_80BE8F4(v40, v39, v71);
-        sub_80C0354((_DWORD *)v41, v36, 1.0, 1065353216, 1065353216, 0, 0, 0);
-        v68 = sub_80BE8E4(v40, v36);
+        v36 = XAnimGetChildAt(v40, v39, v71);
+        XAnimSetGoalWeight((_DWORD *)v41, v36, 1.0, 1065353216, 1065353216, 0, 0, 0);
+        v68 = XAnimGetNumChildren(v40, v36);
         if ( !v68 )
         {
           v3 = XAnimGetAnimDebugName(v40, v36);
@@ -109404,15 +109404,15 @@ void __cdecl sub_81085B8(int a1, int a2)
         }
         v66 = (int)v57;
         v57 = v57 - (long double)v66;
-        v38 = sub_80BE8F4(v40, v36, v66);
+        v38 = XAnimGetChildAt(v40, v36, v66);
         v18 = 1.0 - v57;
-        sub_80C0354((_DWORD *)v41, v38, v18, 1065353216, 1065353216, 0, 0, 0);
+        XAnimSetGoalWeight((_DWORD *)v41, v38, v18, 1065353216, 1065353216, 0, 0, 0);
         if ( v57 != 0.0 )
         {
-          v37 = sub_80BE8F4(v40, v36, v66 + 1);
-          sub_80C0354((_DWORD *)v41, v37, v57, 1065353216, 1065353216, 0, 0, 0);
+          v37 = XAnimGetChildAt(v40, v36, v66 + 1);
+          XAnimSetGoalWeight((_DWORD *)v41, v37, v57, 1065353216, 1065353216, 0, 0, 0);
         }
-        sub_80BEFE2(v41, v36, v54, v52);
+        XAnimCalcAbsDelta(v41, v36, v54, v52);
         if ( v53 >= (long double)v61 )
           break;
         v60 = v53;
@@ -109421,8 +109421,8 @@ void __cdecl sub_81085B8(int a1, int a2)
         ++v71;
       }
       while ( v71 < v69 );
-      sub_80BF482((_DWORD *)v41, v39, 0.0);
-      v4 = sub_80BE816(v41, v38);
+      XAnimClearTreeGoalWeightsStrict((_DWORD *)v41, v39, 0.0);
+      v4 = XAnimGetWeight(v41, v38);
       v11 = v4 - (1.0 - v57);
       v56 = sub_810A840(v11) * (1000.0 / (long double)dword_859B5F4);
       if ( v56 <= 0.0 )
@@ -109430,39 +109430,39 @@ void __cdecl sub_81085B8(int a1, int a2)
       else
         *(float *)&v28 = 1.0 / v56;
       v19 = 1.0 - v57;
-      sub_80C0354((_DWORD *)v41, v38, v19, v28, 1065353216, 0, 0, 0);
+      XAnimSetGoalWeight((_DWORD *)v41, v38, v19, v28, 1065353216, 0, 0, 0);
       if ( v57 != 0.0 )
       {
-        v5 = sub_80BE816(v41, v37);
+        v5 = XAnimGetWeight(v41, v37);
         v12 = v5 - v57;
         v56 = sub_810A840(v12) * (1000.0 / (long double)dword_859B5F4);
         if ( v56 <= 0.0 )
         {
-          sub_80C0354((_DWORD *)v41, v37, v57, COERCE_INT(0.0), 1065353216, 0, 0, 0);
+          XAnimSetGoalWeight((_DWORD *)v41, v37, v57, COERCE_INT(0.0), 1065353216, 0, 0, 0);
         }
         else
         {
           *(float *)&v27 = 1.0 / v56;
-          sub_80C0354((_DWORD *)v41, v37, v57, v27, 1065353216, 0, 0, 0);
+          XAnimSetGoalWeight((_DWORD *)v41, v37, v57, v27, 1065353216, 0, 0, 0);
         }
       }
       if ( v71 && v71 != v69 )
       {
         v55 = (v61 - v60) / (v53 - v60);
-        v6 = sub_80BE816(v41, v36);
+        v6 = XAnimGetWeight(v41, v36);
         v14 = v6 - v55;
         v56 = sub_810A840(v14) * (1000.0 / (long double)dword_859B5F4);
         if ( v56 <= 0.0 )
         {
-          sub_80C0354((_DWORD *)v41, v36, v55, COERCE_INT(0.0), 1065353216, 0, 0, 0);
+          XAnimSetGoalWeight((_DWORD *)v41, v36, v55, COERCE_INT(0.0), 1065353216, 0, 0, 0);
         }
         else
         {
           *(float *)&v25 = 1.0 / v56;
-          sub_80C0354((_DWORD *)v41, v36, v55, v25, 1065353216, 0, 0, 0);
+          XAnimSetGoalWeight((_DWORD *)v41, v36, v55, v25, 1065353216, 0, 0, 0);
         }
-        v36 = sub_80BE8F4(v40, v39, v71 - 1);
-        v7 = sub_80BE816(v41, v36);
+        v36 = XAnimGetChildAt(v40, v39, v71 - 1);
+        v7 = XAnimGetWeight(v41, v36);
         v15 = v7 - (1.0 - v55);
         v56 = sub_810A840(v15) * (1000.0 / (long double)dword_859B5F4);
         if ( v56 <= 0.0 )
@@ -109470,9 +109470,9 @@ void __cdecl sub_81085B8(int a1, int a2)
         else
           *(float *)&v24 = 1.0 / v56;
         v20 = 1.0 - v55;
-        sub_80C0354((_DWORD *)v41, v36, v20, v24, 1065353216, 0, 0, 0);
-        v38 = sub_80BE8F4(v40, v36, v67);
-        v8 = sub_80BE816(v41, v38);
+        XAnimSetGoalWeight((_DWORD *)v41, v36, v20, v24, 1065353216, 0, 0, 0);
+        v38 = XAnimGetChildAt(v40, v36, v67);
+        v8 = XAnimGetWeight(v41, v38);
         v16 = v8 - (1.0 - v59);
         v56 = sub_810A840(v16) * (1000.0 / (long double)dword_859B5F4);
         if ( v56 <= 0.0 )
@@ -109480,39 +109480,39 @@ void __cdecl sub_81085B8(int a1, int a2)
         else
           *(float *)&v23 = 1.0 / v56;
         v21 = 1.0 - v59;
-        sub_80C0354((_DWORD *)v41, v38, v21, v23, 1065353216, 0, 0, 0);
+        XAnimSetGoalWeight((_DWORD *)v41, v38, v21, v23, 1065353216, 0, 0, 0);
         if ( v59 != 0.0 )
         {
-          v37 = sub_80BE8F4(v40, v36, v67 + 1);
-          v9 = sub_80BE816(v41, v37);
+          v37 = XAnimGetChildAt(v40, v36, v67 + 1);
+          v9 = XAnimGetWeight(v41, v37);
           v17 = v9 - v59;
           v56 = sub_810A840(v17) * (1000.0 / (long double)dword_859B5F4);
           if ( v56 <= 0.0 )
           {
-            sub_80C0354((_DWORD *)v41, v37, v59, COERCE_INT(0.0), 1065353216, 0, 0, 0);
+            XAnimSetGoalWeight((_DWORD *)v41, v37, v59, COERCE_INT(0.0), 1065353216, 0, 0, 0);
           }
           else
           {
             *(float *)&v22 = 1.0 / v56;
-            sub_80C0354((_DWORD *)v41, v37, v59, v22, 1065353216, 0, 0, 0);
+            XAnimSetGoalWeight((_DWORD *)v41, v37, v59, v22, 1065353216, 0, 0, 0);
           }
         }
       }
       else
       {
-        v13 = sub_80BE816(v41, v36) - 1.0;
+        v13 = XAnimGetWeight(v41, v36) - 1.0;
         v56 = sub_810A840(v13) * (1000.0 / (long double)dword_859B5F4);
         if ( v56 <= 0.0 )
         {
-          sub_80C0354((_DWORD *)v41, v36, 1.0, COERCE_INT(0.0), 1065353216, 0, 0, 0);
+          XAnimSetGoalWeight((_DWORD *)v41, v36, 1.0, COERCE_INT(0.0), 1065353216, 0, 0, 0);
         }
         else
         {
           *(float *)&v26 = 1.0 / v56;
-          sub_80C0354((_DWORD *)v41, v36, 1.0, v26, 1065353216, 0, 0, 0);
+          XAnimSetGoalWeight((_DWORD *)v41, v36, 1.0, v26, 1065353216, 0, 0, 0);
         }
       }
-      sub_80BEFE2(v41, v39, v54, v52);
+      XAnimCalcAbsDelta(v41, v39, v54, v52);
       sub_80A530C((float *)v52, v62);
       sub_810A898((float *)v52, v42 + 4, v47);
       v47[2] = v48;
@@ -109533,7 +109533,7 @@ void __cdecl sub_81085B8(int a1, int a2)
       }
       BG_PlayerStateToEntityState(*(_DWORD *)(a1 + 344), a1, 1, 1u);
       sub_810A912((_DWORD *)(*(_DWORD *)(a1 + 344) + 20), (_DWORD *)(a1 + 312));
-      sub_80A71F4((int)v44, a1 + 324);
+      AxisToAngles((int)v44, a1 + 324);
       SV_LinkEntity(a1);
     }
     else
@@ -109555,7 +109555,7 @@ void __cdecl sub_81085B8(int a1, int a2)
 // 81085B8: using guessed type int anonymous_0[3];
 
 //----- (08109236) --------------------------------------------------------
-int __cdecl sub_8109236(int a1, int a2)
+int __cdecl turret_clientaim(int a1, int a2)
 {
   int result; // eax
   int v3; // [esp+Ch] [ebp-Ch]
@@ -109599,14 +109599,14 @@ int *__cdecl sub_8109348(int a1, int *a2)
 }
 
 //----- (081093B8) --------------------------------------------------------
-int __cdecl sub_81093B8(_DWORD *a1, int *a2)
+int __cdecl turret_track(_DWORD *a1, int *a2)
 {
   int result; // eax
   int v3; // [esp+10h] [ebp-8h]
   int v4; // [esp+14h] [ebp-4h]
 
   v4 = a1[87];
-  sub_8109236((int)a1, (int)a2);
+  turret_clientaim((int)a1, (int)a2);
   sub_81085B8((int)a2, (int)a1);
   v3 = BG_WeaponDefs(a1[50]);
   *(_DWORD *)(a2[86] + 1424) = 1;
@@ -109648,7 +109648,7 @@ int __cdecl sub_810948E(_DWORD *a1)
       if ( *(_BYTE *)(v2 + 66) )
       {
         a1[33] = 0;
-        return sub_811CE9E(a1, *(unsigned __int8 *)(v2 + 66));
+        return G_PlaySoundAlias(a1, *(unsigned __int8 *)(v2 + 66));
       }
     }
   }
@@ -109696,14 +109696,14 @@ unsigned int __cdecl G_ClientStopUsingTurret(int a1)
 }
 
 //----- (08109672) --------------------------------------------------------
-int __cdecl sub_8109672(_DWORD *a1)
+int __cdecl turret_think_client(_DWORD *a1)
 {
   char *v2; // [esp+14h] [ebp-4h]
 
   v2 = (char *)&unk_8665480 + 560 * a1[84];
   if ( v2[354] != 1 || *(_DWORD *)(*((_DWORD *)v2 + 86) + 9896) )
     return G_ClientStopUsingTurret((int)a1);
-  sub_81093B8(a1, (int *)v2);
+  turret_track(a1, (int *)v2);
   return sub_810948E(a1);
 }
 
@@ -109816,7 +109816,7 @@ int __cdecl sub_8109984(int a1, int a2)
 }
 
 //----- (081099D6) --------------------------------------------------------
-char *__cdecl sub_81099D6(_DWORD *a1)
+char *__cdecl turret_think(_DWORD *a1)
 {
   char *result; // eax
 
@@ -109834,7 +109834,7 @@ char *__cdecl sub_81099D6(_DWORD *a1)
 }
 
 //----- (08109A68) --------------------------------------------------------
-int __cdecl sub_8109A68(int a1)
+int __cdecl turret_think_init(int a1)
 {
   int result; // eax
   int i; // [esp+2Ch] [ebp-FCh] BYREF
@@ -109900,7 +109900,7 @@ int __cdecl sub_8109A68(int a1)
 // 8109A68: using guessed type int anonymous_0[3];
 
 //----- (08109C76) --------------------------------------------------------
-int __cdecl sub_8109C76(int *a1, int a2)
+int __cdecl turret_controller(int *a1, int a2)
 {
   int v3; // [esp+1Ch] [ebp-1Ch]
   int v4; // [esp+20h] [ebp-18h] BYREF
@@ -109980,7 +109980,7 @@ _BOOL4 __cdecl G_IsTurretUsable(int a1, int a2)
 }
 
 //----- (08109F46) --------------------------------------------------------
-void __cdecl sub_8109F46(int a1, int a2)
+void __cdecl turret_use(int a1, int a2)
 {
   float v2; // [esp+0h] [ebp-18h]
   float v3; // [esp+0h] [ebp-18h]
@@ -110074,19 +110074,19 @@ int __cdecl G_SpawnTurret(int a1, char *s1)
   s[9] = -1;
   s[10] = 0;
   if ( *(_DWORD *)(v8 + 176) && **(_BYTE **)(v8 + 176) )
-    *((_BYTE *)s + 64) = sub_811B1D8(*(char **)(v8 + 176));
+    *((_BYTE *)s + 64) = G_SoundAliasIndex(*(char **)(v8 + 176));
   else
     *((_BYTE *)s + 64) = 0;
   if ( *(_DWORD *)(v8 + 180) && **(_BYTE **)(v8 + 180) )
-    *((_BYTE *)s + 65) = sub_811B1D8(*(char **)(v8 + 180));
+    *((_BYTE *)s + 65) = G_SoundAliasIndex(*(char **)(v8 + 180));
   else
     *((_BYTE *)s + 65) = 0;
   if ( *(_DWORD *)(v8 + 184) && **(_BYTE **)(v8 + 184) )
-    *((_BYTE *)s + 66) = sub_811B1D8(*(char **)(v8 + 184));
+    *((_BYTE *)s + 66) = G_SoundAliasIndex(*(char **)(v8 + 184));
   else
     *((_BYTE *)s + 66) = 0;
   if ( *(_DWORD *)(v8 + 188) && **(_BYTE **)(v8 + 188) )
-    *((_BYTE *)s + 67) = sub_811B1D8(*(char **)(v8 + 188));
+    *((_BYTE *)s + 67) = G_SoundAliasIndex(*(char **)(v8 + 188));
   else
     *((_BYTE *)s + 67) = 0;
   if ( !byte_859C748 || !sub_8117F76("rightarc", (int)&unk_8153CDC, (float *)s + 4) )
@@ -110464,9 +110464,9 @@ int __usercall sub_810B07A@<eax>(long double a1@<st0>, int a2, int a3, int a4, f
       v12 = *(_DWORD *)(a2 + 412);
       v10 = (_DWORD *)(a2 + 312);
       if ( *(_DWORD *)(a2 + 336) == 1023 )
-        sub_80FF7C8((int *)v19, (int *)a2, 0, v17, v10, v12, 0, v15, 0, 0);
+        G_Damage((int *)v19, (int *)a2, 0, v17, v10, v12, 0, v15, 0, 0);
       else
-        sub_80FF7C8(
+        G_Damage(
           (int *)v19,
           (int *)a2,
           (int *)(560 * *(_DWORD *)(a2 + 336) + 140924032),
@@ -110534,7 +110534,7 @@ int __usercall sub_810B07A@<eax>(long double a1@<st0>, int a2, int a3, int a4, f
 // 86F1020: using guessed type int dword_86F1020;
 
 //----- (0810B4D8) --------------------------------------------------------
-int __cdecl sub_810B4D8(int a1)
+int __cdecl G_ExplodeMissile(int a1)
 {
   int result; // eax
   long double v2; // fst7
@@ -111278,7 +111278,7 @@ int __cdecl sub_810D058(int a1, float *a2, float *a3, _DWORD *a4)
       v8[i] = v8[i] + a2[i];
   }
   SV_UnlinkEntity(a1);
-  v11 = sub_805E782((int)v9, (int)v8, (int)v13, 1024, 33554816);
+  v11 = CM_AreaEntities((int)v9, (int)v8, (int)v13, 1024, 33554816);
   sub_810DC60((float *)(a1 + 312), a2, (float *)(a1 + 312));
   sub_810DC60((float *)(a1 + 324), a3, (float *)(a1 + 324));
   SV_LinkEntity(a1);
@@ -111316,7 +111316,7 @@ int __cdecl sub_810D058(int a1, float *a2, float *a3, _DWORD *a4)
     }
     else if ( *(_DWORD *)(a1 + 12) == 4 || *(_DWORD *)(a1 + 48) == 4 )
     {
-      sub_80FF7C8(v16, (int *)a1, (int *)a1, 0, 0, 99999, 0, 9u, 0, 0);
+      G_Damage(v16, (int *)a1, (int *)a1, 0, 0, 99999, 0, 9u, 0, 0);
     }
     else
     {
@@ -111594,7 +111594,7 @@ int __cdecl Scr_GetFunctionHandle(char *a1, char *s, int a3)
 
   if ( !Scr_LoadScript(a1) && a3 )
     Com_Error(1, (char *)&byte_8153EC0, a1);
-  v4 = sub_8075874(a1, s);
+  v4 = Scr_GetFunctionHandleInternal(a1, s);
   if ( !v4 && a3 )
     Com_Error(1, (char *)&byte_8153EE0, s, a1);
   return v4;
@@ -112228,7 +112228,7 @@ int __cdecl GScr_GetAmmoCount(int a1)
   v4 = G_GetWeaponIndexForName(s1);
   if ( !v4 )
     return Scr_AddInt(0);
-  v2 = sub_80EACC8(*(_DWORD *)(v3 + 344), v4);
+  v2 = BG_WeaponAmmo(*(_DWORD *)(v3 + 344), v4);
   return Scr_AddInt(v2);
 }
 
@@ -112243,9 +112243,9 @@ int GScr_GetAnimLength()
   Scr_GetAnim((unsigned __int16 *)&v2, 0, 0);
   v4 = v2;
   v3 = Scr_GetAnims(HIWORD(v2));
-  if ( !sub_80C00CA(v3, (unsigned __int16)v4) )
+  if ( !XAnimIsPrimitive(v3, (unsigned __int16)v4) )
     Scr_ParamError(0, (int)"non-primitive animation has no concept of length");
-  *(float *)&v1 = sub_80BE760(v3, (unsigned __int16)v4);
+  *(float *)&v1 = XAnimGetLength(v3, (unsigned __int16)v4);
   return Scr_AddFloat(v1);
 }
 
@@ -112262,7 +112262,7 @@ int GScr_AnimHasNotetrack()
   v5 = v3;
   v4 = Scr_GetConstString(1u);
   v0 = Scr_GetAnims(HIWORD(v5));
-  v1 = sub_80C044E(v0, (unsigned __int16)v5, v4);
+  v1 = XAnimNotetrackExists(v0, (unsigned __int16)v5, v4);
   return Scr_AddBool(v1);
 }
 // 810ED66: using guessed type int var_C;
@@ -112676,7 +112676,7 @@ int __cdecl ScrCmd_PlaySound(int a1)
 
   v6 = Scr_EntityForRef(a1);
   s2 = (char *)Scr_GetString(0);
-  v4 = sub_811B1D8(s2);
+  v4 = G_SoundAliasIndex(s2);
   v1 = G_TempEntity((_DWORD *)(v6 + 312), 179);
   *((_BYTE *)v1 + 242) |= 8u;
   v2 = v1;
@@ -112697,7 +112697,7 @@ int __cdecl ScrCmd_PlaySoundAsMaster(int a1)
 
   v6 = Scr_EntityForRef(a1);
   s2 = (char *)Scr_GetString(0);
-  v4 = sub_811B1D8(s2);
+  v4 = G_SoundAliasIndex(s2);
   v1 = G_TempEntity((_DWORD *)(v6 + 312), 180);
   *((_BYTE *)v1 + 242) |= 8u;
   v2 = v1;
@@ -112715,7 +112715,7 @@ int __cdecl ScrCmd_PlayLoopSound(int a1)
 
   v3 = Scr_EntityForRef(a1);
   s2 = (char *)Scr_GetString(0);
-  LOBYTE(result) = sub_811B1D8(s2);
+  LOBYTE(result) = G_SoundAliasIndex(s2);
   *(_DWORD *)(v3 + 256) = -1;
   result = (unsigned __int8)result;
   *(_DWORD *)(v3 + 132) = (unsigned __int8)result;
@@ -112939,7 +112939,7 @@ void __cdecl GScr_SetCursorHint(int a1)
 // 87A22F8: using guessed type __int16 word_87A22F8;
 
 //----- (0810FFAA) --------------------------------------------------------
-int __cdecl sub_810FFAA(_DWORD *a1, char *s1)
+int __cdecl G_GetHintStringIndex(_DWORD *a1, char *s1)
 {
   char s2[1036]; // [esp+20h] [ebp-418h] BYREF
   int i; // [esp+42Ch] [ebp-Ch]
@@ -112983,7 +112983,7 @@ int __cdecl GScr_SetHintString(int a1)
   {
     v3 = Scr_GetNumParam();
     Scr_ConstructMessageString(0, v3 - 1, "Hint String", (int)s1, 1024);
-    if ( !sub_810FFAA(v8, s1) )
+    if ( !G_GetHintStringIndex(v8, s1) )
     {
       v4 = va("Too many different hintstring values. Max allowed is %i different strings", 32);
       Scr_Error((int)v4);
@@ -113524,7 +113524,7 @@ int GScr_positionWouldTelefrag()
   Scr_GetVector(0, v1);
   sub_811623A(v1, (float *)dword_8167700, v3);
   sub_811623A(v1, (float *)dword_816770C, v2);
-  v6 = sub_805E782((int)v3, (int)v2, (int)v5, 1024, 0x2000000);
+  v6 = CM_AreaEntities((int)v3, (int)v2, (int)v5, 1024, 0x2000000);
   for ( i = 0; i < v6; ++i )
   {
     v4 = (int)&unk_8665480 + 560 * v5[i];
@@ -114033,7 +114033,7 @@ void GScr_CastInt()
     Scr_AddInt(v2);
     return;
   }
-  v3 = (const char *)sub_80849F8(0);
+  v3 = (const char *)Scr_GetTypeName(0);
   v4 = va("cannot cast %s to int", v3);
   Scr_ParamError(0, (int)v4);
 }
@@ -114683,7 +114683,7 @@ int Scr_LoadFX()
 }
 
 //----- (08112BAC) --------------------------------------------------------
-void __cdecl sub_8112BAC(const char *a1, int a2)
+void __cdecl Scr_FxParamError(const char *a1, int a2)
 {
   char *v2; // eax
   char dest[1032]; // [esp+10h] [ebp-408h] BYREF
@@ -114733,7 +114733,7 @@ int __usercall Scr_PlayFX@<eax>(long double a1@<st0>)
     sub_8116362((float *)v7);
     v11 = a1;
     if ( v11 == 0.0 )
-      sub_8112BAC("playFx called with (0 0 0) forward direction", v13);
+      Scr_FxParamError("playFx called with (0 0 0) forward direction", v13);
     v2 = 1.0 / v11;
     v4 = v2;
     sub_81162C2((float *)v7, v4, (float *)v7);
@@ -114747,7 +114747,7 @@ int __usercall Scr_PlayFX@<eax>(long double a1@<st0>)
       sub_8116362(v9);
       v11 = v2;
       if ( v11 == 0.0 )
-        sub_8112BAC("playFx called with (0 0 0) up direction", v13);
+        Scr_FxParamError("playFx called with (0 0 0) up direction", v13);
       v3 = 1.0 / v11;
       v5 = v3;
       sub_81162C2(v9, v5, v9);
@@ -114765,9 +114765,9 @@ int __usercall Scr_PlayFX@<eax>(long double a1@<st0>)
       }
       else
       {
-        sub_8112BAC("playFx called an up direction 0 or 180 degrees from forward", v13);
+        Scr_FxParamError("playFx called an up direction 0 or 180 degrees from forward", v13);
       }
-      return sub_80A71F4((int)v7, (int)(v14 + 15));
+      return AxisToAngles((int)v7, (int)(v14 + 15));
     }
   }
   return result;
@@ -116122,7 +116122,7 @@ void *GScr_SetArchive()
   int v0; // eax
 
   v0 = Scr_GetInt(0);
-  return sub_80919F4(v0);
+  return SV_EnableArchivedSnapshot(v0);
 }
 
 //----- (08115490) --------------------------------------------------------
@@ -116786,7 +116786,7 @@ int __cdecl sub_81163C0(int a1, int a2, float a3, float a4, float a5, float *a6,
 }
 
 //----- (081165A0) --------------------------------------------------------
-int __cdecl sub_81165A0(int a1)
+int __cdecl Reached_ScriptMover(int a1)
 {
   int result; // eax
   int v2; // [esp+20h] [ebp-8h]
@@ -116843,7 +116843,7 @@ int __cdecl sub_81165A0(int a1)
 // 87A22E0: using guessed type __int16 word_87A22E0;
 
 //----- (081167BA) --------------------------------------------------------
-float *__cdecl sub_81167BA(
+float *__cdecl ScriptMover_SetupMove(
         int a1,
         float *a2,
         float a3,
@@ -117018,9 +117018,9 @@ float *__cdecl sub_8116B6E(
 // 8116B6E: using guessed type int anonymous_1[8];
 
 //----- (08116F18) --------------------------------------------------------
-int __cdecl sub_8116F18(int a1, float *a2, float a3, float a4, float a5)
+int __cdecl ScriptMover_Move(int a1, float *a2, float a3, float a4, float a5)
 {
-  sub_81167BA(
+  ScriptMover_SetupMove(
     a1 + 12,
     a2,
     a3,
@@ -117051,7 +117051,7 @@ int __cdecl sub_8116FAA(_DWORD *a1, _DWORD *a2, float a3)
 //----- (08117050) --------------------------------------------------------
 int __cdecl sub_8117050(int a1, float *a2, float a3, float a4, float a5)
 {
-  sub_81167BA(
+  ScriptMover_SetupMove(
     a1 + 48,
     a2,
     a3,
@@ -117170,7 +117170,7 @@ int __cdecl sub_8117398(int a1)
 }
 
 //----- (081173F6) --------------------------------------------------------
-void __cdecl sub_81173F6(float *a1, float *a2, float *a3)
+void __cdecl ScriptEntCmdGetCommandTimes(float *a1, float *a2, float *a3)
 {
   int v3; // [esp+14h] [ebp-4h]
 
@@ -117230,8 +117230,8 @@ int __cdecl ScriptEntCmd_MoveTo(int a1)
     }
   }
   Scr_GetVector(0, v4);
-  sub_81173F6(v7, &v6, &v5);
-  return sub_8116F18((int)v3, (float *)v4, v7[0], v6, v5);
+  ScriptEntCmdGetCommandTimes(v7, &v6, &v5);
+  return ScriptMover_Move((int)v3, (float *)v4, v7[0], v6, v5);
 }
 // 87A22E2: using guessed type __int16 word_87A22E2;
 // 87A22E4: using guessed type __int16 word_87A22E4;
@@ -117298,10 +117298,10 @@ int __cdecl sub_81176A6(int a1, int a2)
     }
   }
   v9 = Scr_GetFloat(0);
-  sub_81173F6(&v8, &v7, &v6);
+  ScriptEntCmdGetCommandTimes(&v8, &v7, &v6);
   sub_8117DEE((_DWORD *)v4 + 78, v5);
   v5[a2] = v5[a2] + v9;
-  return sub_8116F18((int)v4, v5, v8, v7, v6);
+  return ScriptMover_Move((int)v4, v5, v8, v7, v6);
 }
 // 87A22E2: using guessed type __int16 word_87A22E2;
 // 87A22E4: using guessed type __int16 word_87A22E4;
@@ -117357,7 +117357,7 @@ int __cdecl ScriptEntCmd_RotateTo(int a1)
     }
   }
   Scr_GetVector(0, v7);
-  sub_81173F6(&v10, &v9, &v8);
+  ScriptEntCmdGetCommandTimes(&v10, &v9, &v8);
   for ( i = 0; i <= 2; ++i )
   {
     v2 = i;
@@ -117400,7 +117400,7 @@ int __cdecl sub_8117938(int a1, int a2)
     }
   }
   v9 = Scr_GetFloat(0);
-  sub_81173F6(&v8, &v7, &v6);
+  ScriptEntCmdGetCommandTimes(&v8, &v7, &v6);
   sub_8117DEE((_DWORD *)v4 + 81, v5);
   v5[a2] = v5[a2] + v9;
   return sub_8117050((int)v4, v5, v8, v7, v6);
@@ -117455,7 +117455,7 @@ int __cdecl ScriptEntCmd_RotateVelocity(int a1)
     }
   }
   Scr_GetVector(0, v4);
-  sub_81173F6(v7, &v6, &v5);
+  ScriptEntCmdGetCommandTimes(v7, &v6, &v5);
   return sub_81170E2((int)v3, (float *)v4, v7[0], v6, v5);
 }
 // 87A22E2: using guessed type __int16 word_87A22E2;
@@ -118249,7 +118249,7 @@ int __cdecl sub_8118D98(unsigned int a1)
 //----- (08118DF4) --------------------------------------------------------
 int __cdecl Scr_ExecEntThread(int *a1, int a2, int a3)
 {
-  return (unsigned __int16)sub_8083A1A(*a1, 0, a2, a3);
+  return (unsigned __int16)Scr_ExecEntThreadNum(*a1, 0, a2, a3);
 }
 
 //----- (08118E22) --------------------------------------------------------
@@ -118261,7 +118261,7 @@ int __cdecl sub_8118E22(int *a1, int a2, int a3)
 //----- (08118E4E) --------------------------------------------------------
 int __cdecl Scr_Notify(int *a1, unsigned __int16 a2, int a3)
 {
-  return sub_8083426(*a1, 0, a2, a3);
+  return Scr_NotifyNum(*a1, 0, a2, a3);
 }
 
 //----- (08118E82) --------------------------------------------------------
@@ -118852,7 +118852,7 @@ int __cdecl TeamplayInfoMessage(int a1)
   if ( *(_DWORD *)(*(_DWORD *)(a1 + 344) + 9896) )
   {
     G_GetPlayerViewOrigin(a1, (float *)v5);
-    sub_80F63A0(a1, (int)v7, 0, 0);
+    G_GetPlayerViewDirection(a1, (int)v7, 0, 0);
     if ( *(float *)(*(_DWORD *)(a1 + 344) + 248) < 8.0 )
       v6 = 8.0 - *(float *)(*(_DWORD *)(a1 + 344) + 248) + v6;
     sub_8119F76((float *)v5, 8192.0, (float *)v7, (float *)v4);
@@ -118867,7 +118867,7 @@ int __cdecl TeamplayInfoMessage(int a1)
       return result;
     }
     G_GetPlayerViewOrigin(a1, (float *)v5);
-    sub_80F63A0(a1, (int)v7, 0, 0);
+    G_GetPlayerViewDirection(a1, (int)v7, 0, 0);
     sub_8119F76((float *)v5, 8192.0, (float *)v7, (float *)v4);
   }
   G_TraceCapsule(s, (float *)v5, flt_8145E68, flt_8145E68, (float *)v4, *(_DWORD *)(*(_DWORD *)(a1 + 344) + 204), 33554433);
@@ -118935,7 +118935,7 @@ float *__cdecl sub_8119F76(float *a1, float a2, float *a3, float *a4)
 }
 
 //----- (08119FCC) --------------------------------------------------------
-int __cdecl sub_8119FCC(int *a1, int *a2)
+int __cdecl G_Trigger(int *a1, int *a2)
 {
   int result; // eax
   int v3; // [esp+14h] [ebp-4h]
@@ -119014,14 +119014,14 @@ int __cdecl sub_811A1B8(int *a1)
 
   result = a1[92] & 0x10;
   if ( result )
-    return sub_811CB00(a1);
+    return G_FreeEntityDelay(a1);
   return result;
 }
 
 //----- (0811A1DE) --------------------------------------------------------
-int __cdecl sub_811A1DE(int *a1, int *a2)
+int __cdecl Touch_Multi(int *a1, int *a2)
 {
-  sub_8119FCC(a1, a2);
+  G_Trigger(a1, a2);
   return sub_811A1B8(a1);
 }
 
@@ -119115,7 +119115,7 @@ int __cdecl sub_811A3F0(int a1)
 }
 
 //----- (0811A4FC) --------------------------------------------------------
-int __cdecl sub_811A4FC(int a1, int a2)
+int __cdecl hurt_touch(int a1, int a2)
 {
   int result; // eax
 
@@ -119125,15 +119125,15 @@ int __cdecl sub_811A4FC(int a1, int a2)
     result = *(_DWORD *)(a1 + 432);
     if ( result <= dword_859B5EC )
     {
-      sub_8119FCC((int *)a1, (int *)a2);
+      G_Trigger((int *)a1, (int *)a2);
       if ( (*(_DWORD *)(a1 + 368) & 0x10) != 0 )
         *(_DWORD *)(a1 + 432) = dword_859B5EC + 1000;
       else
         *(_DWORD *)(a1 + 432) = dword_859B5EC + 50;
       if ( (*(_DWORD *)(a1 + 368) & 8) != 0 )
-        sub_80FF7C8((int *)a2, (int *)a1, (int *)a1, 0, 0, *(_DWORD *)(a1 + 412), 16, 0xDu, 0, 0);
+        G_Damage((int *)a2, (int *)a1, (int *)a1, 0, 0, *(_DWORD *)(a1 + 412), 16, 0xDu, 0, 0);
       else
-        sub_80FF7C8((int *)a2, (int *)a1, (int *)a1, 0, 0, *(_DWORD *)(a1 + 412), 0, 0xDu, 0, 0);
+        G_Damage((int *)a2, (int *)a1, (int *)a1, 0, 0, *(_DWORD *)(a1 + 412), 0, 0xDu, 0, 0);
       result = *(_DWORD *)(a1 + 368) & 0x20;
       if ( result )
       {
@@ -119205,11 +119205,11 @@ int __cdecl sub_811A826(int *a1, int *a2, int a3, int a4)
       if ( !a1[107] || (result = (int)a1, 32000 - a1[101] >= a1[107]) )
       {
         if ( a4 != -1 )
-          sub_8119FCC(a1, a2);
+          G_Trigger(a1, a2);
         a1[101] = 32000;
         result = a1[92] & 0x200;
         if ( result )
-          return sub_811CB00(a1);
+          return G_FreeEntityDelay(a1);
       }
     }
   }
@@ -119217,13 +119217,13 @@ int __cdecl sub_811A826(int *a1, int *a2, int a3, int a4)
 }
 
 //----- (0811A8D2) --------------------------------------------------------
-int __cdecl sub_811A8D2(int *a1, int *a2)
+int __cdecl Use_trigger_damage(int *a1, int *a2)
 {
   return sub_811A826(a1, a2, a1[107] + 1, -1);
 }
 
 //----- (0811A902) --------------------------------------------------------
-int *__cdecl sub_811A902(int *a1, int *a2, int a3, int a4, int a5)
+int *__cdecl Pain_trigger_damage(int *a1, int *a2, int a3, int a4, int a5)
 {
   int *result; // eax
 
@@ -119238,7 +119238,7 @@ int *__cdecl sub_811A902(int *a1, int *a2, int a3, int a4, int a5)
 }
 
 //----- (0811A944) --------------------------------------------------------
-int *__cdecl sub_811A944(int *a1, int a2, int *a3, int a4, int a5)
+int *__cdecl Die_trigger_damage(int *a1, int a2, int *a3, int a4, int a5)
 {
   int *result; // eax
 
@@ -119281,7 +119281,7 @@ int __cdecl sub_811AA18(int *a1, _DWORD *a2, float *a3, int a4, int a5)
   sub_811ADFA(a2, v10);
   sub_811ADFA(a2, v9);
   sub_80A660A(a3, v10, v9);
-  v12 = sub_805E782((int)v10, (int)v9, (int)v11, 1024, 0x400000);
+  v12 = CM_AreaEntities((int)v10, (int)v9, (int)v11, 1024, 0x400000);
   for ( i = 0; ; ++i )
   {
     result = i;
@@ -119328,7 +119328,7 @@ int __cdecl sub_811AC06(int *a1, _DWORD *a2, float *a3, int a4, int a5)
   sub_811ADFA(a2, v8);
   sub_811ADFA(a2, v7);
   sub_80A660A(a3, v8, v7);
-  v10 = sub_805E782((int)v8, (int)v7, (int)v9, 1024, 0x400000);
+  v10 = CM_AreaEntities((int)v8, (int)v7, (int)v9, 1024, 0x400000);
   for ( i = 0; ; ++i )
   {
     result = i;
@@ -119520,7 +119520,7 @@ int __cdecl G_ShellShockIndex(char *s2)
 }
 
 //----- (0811B1D8) --------------------------------------------------------
-int __cdecl sub_811B1D8(char *s2)
+int __cdecl G_SoundAliasIndex(char *s2)
 {
   return (unsigned __int8)G_FindConfigstringIndex(s2, 590, 256, 1, 0);
 }
@@ -119539,7 +119539,7 @@ _DWORD *__usercall G_DObjUpdate@<eax>(long double a1@<st0>, int a2)
   result = (_DWORD *)a2;
   if ( !*(_DWORD *)(a2 + 344) )
   {
-    Com_SafeServerDObjFree((int *)a2);
+    G_SafeDObjFree((int *)a2);
     v8 = *(unsigned __int8 *)(a2 + 356);
     if ( v8 )
     {
@@ -119838,8 +119838,8 @@ float *__cdecl sub_811BB3A(int a1, int a2)
   {
     AnglesToAxis(v8 + 81, (int)v6);
     sub_811D0FC((_DWORD *)v8 + 78, v7);
-    sub_811BFC4((int)v8, *(_DWORD *)(v9 + 12));
-    v2 = sub_80908D8((int *)v8);
+    G_DObjCalcBone((int)v8, *(_DWORD *)(v9 + 12));
+    v2 = SV_DObjGetMatrixArray((int *)v8);
     v4 = (float *)(32 * *(_DWORD *)(v9 + 12) + v2);
     sub_80A913C(v4, v5);
     sub_80A358E(v5, v6, (float *)a2);
@@ -119919,7 +119919,7 @@ void __cdecl sub_811BD52(int a1, int a2)
   {
     sub_80A3C8E((float *)(v5 + 16), v2, v3);
     sub_811D0FC(v4, (_DWORD *)(a1 + 312));
-    sub_80A71F4((int)v3, a1 + 324);
+    AxisToAngles((int)v3, a1 + 324);
   }
 }
 // 811BD52: using guessed type float var_78[12];
@@ -119937,9 +119937,9 @@ int __cdecl sub_811BE86(_DWORD *a1)
 }
 
 //----- (0811BEEE) --------------------------------------------------------
-int __cdecl Com_SafeServerDObjFree(int *a1)
+int __cdecl G_SafeDObjFree(int *a1)
 {
-  return Com_ServerDObjFree(*a1);
+  return Com_SafeServerDObjFree(*a1);
 }
 
 //----- (0811BF04) --------------------------------------------------------
@@ -119974,16 +119974,16 @@ int *__cdecl G_DObjCalcPose(int a1)
 // 816789C: using guessed type int dword_816789C[];
 
 //----- (0811BFC4) --------------------------------------------------------
-int *__cdecl sub_811BFC4(int a1, int a2)
+int *__cdecl G_DObjCalcBone(int a1, int a2)
 {
   int *result; // eax
   char v3[28]; // [esp+10h] [ebp-28h] BYREF
   void (__cdecl *v4)(int, char *); // [esp+2Ch] [ebp-Ch]
 
-  result = (int *)sub_8090666((int *)a1, a2);
+  result = (int *)SV_DObjCreateSkelForBone((int *)a1, a2);
   if ( !result )
   {
-    sub_80907EE((int *)a1, a2, (int)v3);
+    SV_DObjGetHierarchyBits((int *)a1, a2, (int)v3);
     SV_DObjCalcAnim((int *)a1, (int)v3);
     v4 = (void (__cdecl *)(int, char *))dword_816789C[10 * *(unsigned __int8 *)(a1 + 358)];
     if ( v4 )
@@ -120002,8 +120002,8 @@ int __cdecl G_DObjGetLocalTagMatrix(int *a1, int a2)
   v4 = SV_DObjGetBoneIndex(a1, a2);
   if ( v4 < 0 )
     return 0;
-  sub_811BFC4((int)a1, v4);
-  return sub_80908D8(a1) + 32 * v4;
+  G_DObjCalcBone((int)a1, v4);
+  return SV_DObjGetMatrixArray(a1) + 32 * v4;
 }
 
 //----- (0811C0B2) --------------------------------------------------------
@@ -120362,7 +120362,7 @@ int __usercall G_FreeEntity@<eax>(long double a1@<st0>, int *s)
   v3 = (_DWORD *)SV_DObjGetTree(s);
   if ( v3 )
     XAnimClearTree(v3);
-  Com_ServerDObjFree(*s);
+  Com_SafeServerDObjFree(*s);
   G_FreeEntityRefs(s);
   if ( s[87] )
     G_FreeTurret((int)s);
@@ -120390,7 +120390,7 @@ int __usercall G_FreeEntity@<eax>(long double a1@<st0>, int *s)
 // 859B414: using guessed type int dword_859B414;
 
 //----- (0811CB00) --------------------------------------------------------
-int __cdecl sub_811CB00(int *a1)
+int __cdecl G_FreeEntityDelay(int *a1)
 {
   unsigned __int16 v2; // [esp+16h] [ebp-2h]
 
@@ -120436,7 +120436,7 @@ int __cdecl sub_811CC24(int a1)
 
   sub_811D12C((float *)(*(_DWORD *)(a1 + 344) + 20), (float *)(a1 + 260), v3);
   sub_811D12C((float *)(*(_DWORD *)(a1 + 344) + 20), (float *)(a1 + 272), v2);
-  v6 = sub_805E782((int)v3, (int)v2, (int)v5, 1024, 0x2000000);
+  v6 = CM_AreaEntities((int)v3, (int)v2, (int)v5, 1024, 0x2000000);
   for ( i = 0; ; ++i )
   {
     result = i;
@@ -120446,7 +120446,7 @@ int __cdecl sub_811CC24(int a1)
     if ( v4[86] )
     {
       if ( *((_BYTE *)v4 + 240) )
-        sub_80FF7C8(v4, (int *)a1, (int *)a1, 0, 0, 100000, 16, 0xAu, 0, 0);
+        G_Damage(v4, (int *)a1, (int *)a1, 0, 0, 100000, 16, 0xAu, 0, 0);
     }
   }
   return result;
@@ -120504,7 +120504,7 @@ int __cdecl sub_811CE66(_DWORD *a1, int a2)
 }
 
 //----- (0811CE9E) --------------------------------------------------------
-int __cdecl sub_811CE9E(_DWORD *a1, int a2)
+int __cdecl G_PlaySoundAlias(_DWORD *a1, int a2)
 {
   int result; // eax
 
@@ -120519,8 +120519,8 @@ int __cdecl G_AnimScriptSound(int a1, char **a2)
 {
   unsigned __int8 v2; // al
 
-  v2 = sub_811B1D8(*a2);
-  sub_811CE9E((_DWORD *)(560 * a1 + 140924032), v2);
+  v2 = G_SoundAliasIndex(*a2);
+  G_PlaySoundAlias((_DWORD *)(560 * a1 + 140924032), v2);
   return 0;
 }
 
@@ -120694,7 +120694,7 @@ __int16 __cdecl sub_811D3B4(int *a1, float *a2, float a3, float a4, float a5)
       if ( *((_BYTE *)v12 + 353) )
       {
         v7 = rand();
-        LOWORD(v5) = sub_80FF7C8(v12, a1, a1, a2, v9, v10 + v7 % 5, 0, 7u, v16, 0);
+        LOWORD(v5) = G_Damage(v12, a1, a1, a2, v9, v10 + v7 % 5, 0, 7u, v16, 0);
       }
     }
   }
@@ -120956,7 +120956,7 @@ void __cdecl sub_811DA00(int *a1, int *a2, float *a3, float *a4, float a5, int a
         sub_811EB66(v24);
         v23 = v9;
         v22 = (int)((long double)sub_811D6EC(a7, v23) * a5);
-        sub_80FF7C8(v25, a2, a2, (float *)a7, v19, v22, v21, v20, v32, dword_859B5EC - a9);
+        G_Damage(v25, a2, a2, (float *)a7, v19, v22, v21, v20, v32, dword_859B5EC - a9);
         if ( v25[86] )
         {
           if ( (v21 & 0x20) != 0 && (Dvar_GetInt("scr_friendlyfire") || !sub_8119C40((int)v25, (int)a2)) )
@@ -121164,7 +121164,7 @@ __int16 __cdecl sub_811E5E0(int a1)
   {
     LODWORD(v5[6]) = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
     G_GetPlayerViewOrigin(a1, v5);
-    sub_80F63A0(a1, (int)v2, &v3, &v4);
+    G_GetPlayerViewDirection(a1, (int)v2, &v3, &v4);
     return sub_811D3B4(
              (int *)a1,
              (float *)v2,
@@ -121201,7 +121201,7 @@ int __cdecl sub_811E696(int a1, int a2)
   {
     if ( *(_DWORD *)(a1 + 208) )
     {
-      if ( sub_80EACC8(a1, *(_DWORD *)(a1 + 208)) <= 0 )
+      if ( BG_WeaponAmmo(a1, *(_DWORD *)(a1 + 208)) <= 0 )
       {
         v6 = BG_WeaponDefs(*(_DWORD *)(a1 + 208));
         v4 = sub_80E963A(a1, *(_DWORD *)(v6 + 132));
@@ -121263,7 +121263,7 @@ void G_SetupWeaponDef()
 int __cdecl G_GetWeaponIndexForName(char *s1)
 {
   if ( dword_859B41C )
-    return sub_80E94F0(s1, (void (__cdecl *)(int))G_RegisterWeapon);
+    return BG_GetWeaponIndexForName(s1, (void (__cdecl *)(int))G_RegisterWeapon);
   else
     return BG_FindWeaponIndexForName(s1);
 }
@@ -121530,12 +121530,12 @@ int __cdecl sub_811F004(float *a1, _DWORD *base)
   v4 = 0;
   v21 = *((_DWORD *)a1 + 86);
   G_GetPlayerViewOrigin((int)a1, v16);
-  sub_80F63A0((int)a1, (int)v19, 0, 0);
+  G_GetPlayerViewDirection((int)a1, (int)v19, 0, 0);
   sub_811FEEA((float *)(v21 + 20), (float *)(v21 + 1388), v6);
   sub_811FEEA((float *)(v21 + 20), (float *)(v21 + 1400), v5);
   sub_811FF2E(v16, flt_8157DAC, v18);
   sub_811FEEA(v16, flt_8157DAC, v17);
-  v10 = sub_805E782((int)v18, (int)v17, (int)v11, 1024, 0x200000);
+  v10 = CM_AreaEntities((int)v18, (int)v17, (int)v11, 1024, 0x200000);
   nmemb = 0;
   for ( i = 0; i < v10; ++i )
   {
@@ -121571,7 +121571,7 @@ int __cdecl sub_811F004(float *a1, _DWORD *base)
           *(float *)&base[2 * nmemb + 1] = v12 * 256.0;
           if ( *((_WORD *)v20 + 180) == word_87A22F6 )
             *(float *)&base[2 * nmemb + 1] = *(float *)&base[2 * nmemb + 1] - 256.0;
-          if ( *((_DWORD *)v20 + 1) == 3 && !sub_80DCC7A(v20, *((_DWORD **)a1 + 86), 0) )
+          if ( *((_DWORD *)v20 + 1) == 3 && !BG_CanItemBeGrabbed(v20, *((_DWORD **)a1 + 86), 0) )
           {
             *(float *)&base[2 * nmemb + 1] = *(float *)&base[2 * nmemb + 1] + 10000.0;
             ++v4;
@@ -121656,7 +121656,7 @@ _BYTE *__cdecl sub_811F6A6(int a1)
 // 859B404: using guessed type int dword_859B404;
 
 //----- (0811F736) --------------------------------------------------------
-int *__cdecl sub_811F736(int a1)
+int *__cdecl Player_UpdateCursorHints(int a1)
 {
   int *result; // eax
   int v2; // [esp+10h] [ebp-2028h]
@@ -121780,7 +121780,7 @@ int __cdecl sub_811FABE(float *s, float *a2, float *a3, int a4, int a5, int a6, 
 }
 
 //----- (0811FB7A) --------------------------------------------------------
-void __cdecl sub_811FB7A(int *a1)
+void __cdecl Player_UpdateLookAtEntity(int *a1)
 {
   float v1; // [esp+20h] [ebp-98h]
   float v2; // [esp+24h] [ebp-94h]
@@ -121800,7 +121800,7 @@ void __cdecl sub_811FB7A(int *a1)
   v12[3] &= 0xFFCFFFFF;
   *(_DWORD *)(a1[86] + 10284) = 0;
   G_GetPlayerViewOrigin((int)a1, (float *)v8);
-  sub_80F63A0((int)a1, (int)v6, 0, 0);
+  G_GetPlayerViewDirection((int)a1, (int)v6, 0, 0);
   if ( (v12[40] & 0x300) != 0 )
     v13 = BG_WeaponDefs(dword_8665548[140 * v12[357]]);
   else
@@ -121815,7 +121815,7 @@ void __cdecl sub_811FB7A(int *a1)
   {
     if ( *((_WORD *)v11 + 180) != word_87A22FC
       || (*(_DWORD *)(a1[86] + 10284) = v11,
-          sub_8119FCC((int *)v11, a1),
+          G_Trigger((int *)v11, a1),
           (v11 = (float *)sub_811FABE(s, (float *)v8, (float *)v7, *a1, 41953281, (int)v4, (float *)v6)) != 0) )
     {
       if ( *((_DWORD *)v11 + 1) == 1 && (v10 & 0x10) == 0 )

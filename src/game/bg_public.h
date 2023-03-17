@@ -3,6 +3,16 @@
 #include "../clientscript/clientscript_public.h"
 #include "../xanim/xanim_public.h"
 
+//==================================================================
+// New Animation Scripting Defines
+
+#define MAX_ANIMSCRIPT_MODELS               32
+#define MAX_ANIMSCRIPT_ITEMS_PER_MODEL      2048
+#define MAX_MODEL_ANIMATIONS                512     // animations per model
+#define MAX_ANIMSCRIPT_ANIMCOMMANDS         8
+#define MAX_ANIMSCRIPT_ITEMS                128
+// NOTE: these must all be in sync with string tables in bg_animation.c
+
 #define MAX_ANIMSCRIPT_ANIMCOMMANDS         8
 
 typedef enum
@@ -59,9 +69,6 @@ typedef enum
 	ANIM_MT_STUMBLE_CROUCH_FORWARD,
 	ANIM_MT_STUMBLE_CROUCH_BACKWARD,
 
-	ANIM_MT_SNEAK,
-	ANIM_MT_AFTERBATTLE,
-
 	NUM_ANIM_MOVETYPES
 } scriptAnimMoveTypes_t;
 
@@ -104,6 +111,15 @@ typedef enum
 
 	NUM_ANIM_CONDITIONS
 } scriptAnimConditions_t;
+
+typedef enum
+{
+	PARSEMODE_DEFINES,
+	PARSEMODE_ANIMATION,
+	PARSEMODE_CANNED_ANIMATIONS,
+	PARSEMODE_STATECHANGES,
+	PARSEMODE_EVENTS
+} animScriptParseMode_t;
 
 typedef struct
 {
@@ -157,12 +173,13 @@ typedef struct
 
 typedef struct animScriptData_s
 {
-	animation_s animations[512];
-	unsigned int numAnimations;
+	animation_s animations[MAX_MODEL_ANIMATIONS];
+	int numAnimations;
 	animScript_t scriptAnims[MAX_AISTATES][NUM_ANIM_MOVETYPES];
 	animScript_t scriptCannedAnims[MAX_AISTATES][NUM_ANIM_MOVETYPES];
+	animScript_t scriptStateChange[MAX_AISTATES][MAX_AISTATES];
 	animScript_t scriptEvents[NUM_ANIM_EVENTTYPES];
-	animScriptItem_t scriptItems[2048];
+	animScriptItem_t scriptItems[MAX_ANIMSCRIPT_ITEMS_PER_MODEL];
 	int numScriptItems;
 	scr_animtree_t animTree;
 	unsigned short torsoAnim;

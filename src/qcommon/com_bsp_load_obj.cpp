@@ -24,11 +24,7 @@ typedef struct comBspGlob_s
 } comBspGlob_t;
 static_assert((sizeof(comBspGlob_t) == 0xC), "ERROR: comBspGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define comBspGlob (*((comBspGlob_t*)( 0x08185BC8 )))
-#else
 comBspGlob_t comBspGlob;
-#endif
 
 qboolean Com_IsBspLoaded()
 {

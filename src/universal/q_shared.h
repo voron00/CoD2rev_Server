@@ -352,3 +352,4 @@ bool COM_BitTest(int array[], int bitNum);
 void COM_BitSet(int array[], int bitNum);
 long double GetLeanFraction(const float fFrac);
 long double UnGetLeanFraction(const float fFrac);
+void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);

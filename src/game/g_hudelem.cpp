@@ -174,17 +174,17 @@ void HudElem_SetLocalizedString(game_hudelem_t *hud, int offset)
 	const char *string;
 
 	string = Scr_GetIString(0);
-	*(int *)(&hud + g_hudelem_fields[offset].ofs) = G_LocalizedStringIndex(string);
+	*(int *)((byte *)&hud->elem.type + g_hudelem_fields[offset].ofs) = G_LocalizedStringIndex(string);
 }
 
 void HudElem_SetBoolean(game_hudelem_t *hud, int offset)
 {
-	*(int *)(&hud + g_hudelem_fields[offset].ofs) = Scr_GetInt(0);
+	*(int *)((byte *)&hud->elem.type + g_hudelem_fields[offset].ofs) = Scr_GetInt(0);
 }
 
 void HudElem_AddString(game_hudelem_t *hud, const game_hudelem_field_t *field, const char **names)
 {
-	Scr_AddString(names[field->size & (*(int *)(&hud + field->ofs) >> field->shift)]);
+	Scr_AddString(names[field->size & (*(int *)((byte *)&hud->elem.type + field->ofs) >> field->shift)]);
 }
 
 void HudElem_GetFont(game_hudelem_t *hud, int offset)

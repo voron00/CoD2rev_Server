@@ -446,6 +446,11 @@ unsigned int GetNewVariableIndexInternal2(unsigned int parentId, unsigned int na
 	return siblingId;
 }
 
+unsigned int GetVariableName(unsigned int id)
+{
+	return scrVarGlob.variableList[id].w.name >> 8;
+}
+
 unsigned int GetVariableIndexInternal(unsigned int parentId, unsigned int name)
 {
 	unsigned int index;

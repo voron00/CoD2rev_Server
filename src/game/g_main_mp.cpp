@@ -94,3 +94,8 @@ void CalculateRanks()
 	qsort(level.sortedClients, level.numConnectedClients, 4, SortRanks);
 	level.bUpdateScoresForIntermission = 1;
 }
+
+float G_GetFogOpaqueDistSqrd()
+{
+	return level.fFogOpaqueDistSqrd;
+}

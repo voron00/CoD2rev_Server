@@ -469,9 +469,9 @@ void* TempMalloc(int size)
 	return buf;
 }
 
-void* TempMemorySetPos(int pos)
+void* TempMemorySetPos(char *pos)
 {
-	currentPos -= (int)TempMalloc(0) - pos;
+	currentPos -= (char *)TempMalloc(0) - pos;
 	return Hunk_ReallocateTempMemoryInternal(currentPos);
 }
 

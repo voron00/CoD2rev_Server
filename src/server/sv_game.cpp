@@ -111,6 +111,89 @@ gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt )
 	return SV_GentityNum( num );
 }
 
+qboolean SV_inSnapshot(const float *origin, int iEntityNum)
+{
+	int clientcluster;
+	float fogOpaqueDistSqrd;
+	svEntity_s *svEnt;
+	int l;
+	int leafnum;
+	gentity_s *ent;
+	int i;
+	byte *bitvector;
+
+	ent = SV_GentityNum(iEntityNum);
+
+	if ( !ent->r.linked )
+	{
+		return 0;
+	}
+
+	if ( ent->r.broadcastTime )
+	{
+		return 1;
+	}
+
+	if ( ent->r.svFlags & 1 )
+	{
+		return 0;
+	}
+
+	if ( ent->r.svFlags & 0x18 )
+	{
+		return 1;
+	}
+
+	svEnt = SV_SvEntityForGentity(ent);
+	leafnum = CM_PointLeafnum(origin);
+
+	if ( !svEnt->numClusters )
+	{
+		return 0;
+	}
+
+	clientcluster = CM_LeafCluster(leafnum);
+	bitvector = CM_ClusterPVS(clientcluster);
+	l = 0;
+
+	for ( i = 0; i < svEnt->numClusters; ++i )
+	{
+		l = svEnt->clusternums[i];
+
+		if ( (1 << (l & 7)) & (uint8_t)bitvector[l >> 3] )
+		{
+			break;
+		}
+	}
+
+	if ( i == svEnt->numClusters )
+	{
+		if ( !svEnt->lastCluster )
+		{
+			return 0;
+		}
+
+		while ( l <= svEnt->lastCluster && !((1 << (l & 7)) & (uint8_t)bitvector[l >> 3]) )
+		{
+			++l;
+		}
+
+		if ( l == svEnt->lastCluster )
+		{
+			return 0;
+		}
+	}
+
+	fogOpaqueDistSqrd = G_GetFogOpaqueDistSqrd();
+
+	if ( fogOpaqueDistSqrd != 3.4028235e38 )
+	{
+		return BoxDistSqrdExceeds(ent->r.absmin, ent->r.absmax, origin, fogOpaqueDistSqrd) == 0;
+	}
+
+	return 1;
+}
+
 void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify)
 {
 	DObj_s *obj;

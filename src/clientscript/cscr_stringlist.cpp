@@ -127,6 +127,42 @@ unsigned int SL_ConvertFromString(const char *str)
 	return SL_ConvertFromRefString(GetRefString(str));
 }
 
+unsigned int SL_GetLowercaseStringOfLen(const char *upperstring, unsigned char user, unsigned int len)
+{
+	unsigned int i;
+	char buffer[8192];
+
+	if ( len > 8192 )
+		Com_Error(ERR_DROP, "max string length exceeded: \"%s\"", upperstring);
+
+	for ( i = 0; i < len; ++i )
+		buffer[i] = tolower(upperstring[i]);
+
+	return SL_GetStringOfLen(buffer, user, len);
+}
+
+unsigned int SL_GetLowercaseString_(const char *str, unsigned char user)
+{
+	return SL_GetLowercaseStringOfLen(str, user, I_strlen(str) + 1);
+}
+
+unsigned int SL_FindLowercaseString(const char *upperstring)
+{
+	signed int len;
+	signed int i;
+	char lwrstr[8192];
+
+	len = I_strlen(upperstring) + 1;
+
+	if ( len > 8192 )
+		return 0;
+
+	for ( i = 0; i < len; ++i )
+		lwrstr[i] = tolower(upperstring[i]);
+
+	return SL_FindStringOfLen(lwrstr, len);
+}
+
 unsigned int GetHashCode(const char *str, unsigned int len)
 {
 	unsigned int i;
