@@ -1,14 +1,6 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
-#ifdef TESTING_LIBRARY
-#define cm (*((clipMap_t*)( 0x08185BE0 )))
-#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
-#else
-extern clipMap_t cm;
-extern clipMapExtra_t cme;
-#endif
-
 /*
 ==================
 CM_PointLeafnum_r
@@ -22,7 +14,7 @@ int CM_PointLeafnum_r( const vec3_t p, int num )
 
 	while ( num >= 0 )
 	{
-		node = cm.nodes + num;
+		node = &cm.nodes[num];
 		plane = node->plane;
 
 		if ( plane->type < 3 )
@@ -150,4 +142,27 @@ byte *CM_ClusterPVS( int cluster )
 	}
 
 	return cm.visibility + cluster * cm.clusterBytes;
+}
+
+int CM_PointContents(const float *p, unsigned int model)
+{
+	int i;
+	cLeaf_s *leaf;
+
+	if ( model )
+		leaf = &CM_ClipHandleToModel(model)->leaf;
+	else
+		leaf = &cm.leafs[CM_PointLeafnum_r(p, 0)];
+	if ( !leaf->leafBrushNode )
+		return 0;
+
+	for ( i = 0; i <= 2; ++i )
+	{
+		if ( leaf->mins[i] >= p[i] )
+			return 0;
+		if ( p[i] >= leaf->maxs[i] )
+			return 0;
+	}
+
+	return CM_PointContentsLeafBrushNode_r(p, &cm.leafbrushNodes[leaf->leafBrushNode]);
 }

@@ -20,46 +20,15 @@ typedef struct
 void test2()
 {
 	/*
-	static int printed = 0;
-	if (printed)
-		return;
-	printed = 1;
-	// Just print stuff until program segfaults
-	for(int i = 0; i < 16384; i++)
-	{
-		if (net_fields[i].szName == NULL)
-			return;
-		Com_Printf("{ \"%s\", %i, %i, },\n", net_fields[i].szName, net_fields[i].iOffset, net_fields[i].iFieldType);
-	}
+	vec3_t start = { 1321, 369, 37 };
+	vec3_t end = { 146, 723, 44 };
+
+	vec3_t mins = { 0, 0, 0 };
+	vec3_t maxs = { 0, 0, 0 };
+
+	int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
+	Com_Printf("%i\n", hitnum);
 	*/
-
-	static int printed = 0;
-
-	if (printed)
-		return;
-
-	printed = 1;
-
-
-	for(int i = 0; i < 9; i++)
-	{
-		//if (net_fields[i].szName == NULL)
-		//	return;
-		Com_Printf("{ %i, %p },\n", net_fields[i].type, net_fields[i].values);
-	}
-
-
-	/*
-	for(int i = 0; i < 16384; i++)
-	{
-		if (animstrings[i].string == NULL)
-			return;
-		Com_Printf("{ \"%s\", %i, },\n", animstrings[i].string, animstrings[i].hash);
-	}
-	*/
-
-	Com_Printf("%s\n", testdata->animations[0].name);
-	Com_Printf("%s\n", level_bgs.animData.animScriptData.animations[0].name);
 }
 
 void Sys_RedirectFunctions()
@@ -70,7 +39,7 @@ void Sys_RedirectFunctions()
 
 
 
-
+	// All referenced bsp funcs
 	SetJump(0x08051C90, (DWORD)Com_LoadBsp);
 	SetJump(0x08051E5C, (DWORD)Com_UnloadBsp);
 	SetJump(0x08051C54, (DWORD)Com_IsBspLoaded);
@@ -79,12 +48,70 @@ void Sys_RedirectFunctions()
 
 
 
-
+	// ALL referenced cm. funcs
+	SetJump(0x08051E9C, (DWORD)CM_InitThreadData);
 	SetJump(0x08051F9E, (DWORD)CM_LoadMap);
-
-
-
-
+	SetJump(0x080524EA, (DWORD)CM_EntityString);
+	SetJump(0x080524F4, (DWORD)CM_LeafCluster);
+	SetJump(0x080525E0, (DWORD)CMod_LoadMaterials);
+	SetJump(0x08052768, (DWORD)CMod_LoadSubmodels);
+	SetJump(0x080529AE, (DWORD)CMod_GetPartitionScore);
+	SetJump(0x08052B12, (DWORD)CMod_PartionLeafBrushes_r);
+	SetJump(0x08052FD4, (DWORD)CMod_PartionLeafBrushes);
+	SetJump(0x0805319E, (DWORD)CMod_GetLeafTerrainContents);
+	SetJump(0x08053200, (DWORD)CMod_LoadSubmodelBrushNodes);
+	SetJump(0x08053354, (DWORD)CMod_LoadNodes);
+	SetJump(0x080534B8, (DWORD)CMod_LoadBrushes);
+	SetJump(0x080538BC, (DWORD)CMod_LoadLeafs);
+	SetJump(0x08053A80, (DWORD)CMod_LoadLeafBrushNodes);
+	SetJump(0x08053D34, (DWORD)CMod_LoadLeafBrushes);
+	SetJump(0x08053E0E, (DWORD)CMod_LoadLeafSurfaces);
+	SetJump(0x08053EC2, (DWORD)CMod_LoadCollisionVerts);
+	SetJump(0x08053FC0, (DWORD)CMod_LoadCollisionEdges);
+	SetJump(0x08054220, (DWORD)CMod_LoadCollisionTriangles);
+	SetJump(0x0805448C, (DWORD)CMod_LoadCollisionBorders);
+	SetJump(0x0805461E, (DWORD)CMod_LoadCollisionPartitions);
+	SetJump(0x0805474E, (DWORD)CMod_LoadCollisionAabbTrees);
+	SetJump(0x080548DC, (DWORD)CMod_LoadEntityString);
+	SetJump(0x08054936, (DWORD)CMod_LoadVisibility);
+	SetJump(0x08054A26, (DWORD)CMod_LoadBrushRelated);
+	SetJump(0x08054B6C, (DWORD)CM_LoadMapFromBsp);
+	SetJump(0x08054D08, (DWORD)CM_InitBoxHull);
+	SetJump(0x08054E4A, (DWORD)CM_Cleanup);
+	SetJump(0x0805DD50, (DWORD)CM_AddStaticModelToNode);
+	SetJump(0x080583FA, (DWORD)CM_LoadStaticModels);
+	SetJump(0x0805DDD0, (DWORD)CM_SortNode);
+	SetJump(0x0805E51A, (DWORD)CM_LinkAllStaticModels);
+	SetJump(0x0805E7C6, (DWORD)CM_PointTraceStaticModels_r);
+	SetJump(0x0805EAD0, (DWORD)CM_PointTraceStaticModelsComplete_r);
+	SetJump(0x080553B2, (DWORD)CM_PositionTestCapsuleInTriangle);
+	SetJump(0x080558EC, (DWORD)CM_TraceThroughAabbTree_r);
+	SetJump(0x08055B48, (DWORD)CM_PositionTestInAabbTree_r);
+	SetJump(0x08055C74, (DWORD)CM_TraceThroughAabbTree);
+	SetJump(0x08055CFE, (DWORD)CM_SightTraceThroughAabbTree);
+	SetJump(0x08055D4C, (DWORD)CM_MeshTestInLeaf);
+	SetJump(0x0805628C, (DWORD)CM_TraceCapsuleThroughTriangle);
+	SetJump(0x0805898C, (DWORD)CM_PointLeafnum_r);
+	SetJump(0x08058A48, (DWORD)CM_StoreLeafs);
+	SetJump(0x08058ABE, (DWORD)CM_BoxLeafnums_r);
+	SetJump(0x08058BD8, (DWORD)CM_PointContentsLeafBrushNode_r);
+	SetJump(0x08058D88, (DWORD)CM_PointContents);
+	SetJump(0x08058F82, (DWORD)CM_ClusterPVS);
+	SetJump(0x08059154, (DWORD)CM_ClipHandleToModel);
+	SetJump(0x08059432, (DWORD)CM_TestInLeafBrushNode_r);
+	SetJump(0x080595CA, (DWORD)CM_TestInLeafBrushNode);
+	SetJump(0x08059A48, (DWORD)CM_PositionTest);
+	SetJump(0x08059BBC, (DWORD)CM_TraceThroughBrush);
+	SetJump(0x08059FDC, (DWORD)CM_TraceThroughLeafBrushNode_r);
+	SetJump(0x0805A3A4, (DWORD)CM_TraceThroughLeafBrushNode);
+	SetJump(0x0805A4AA, (DWORD)CM_TraceThroughLeaf);
+	SetJump(0x0805AE54, (DWORD)CM_TraceThroughTree);
+	SetJump(0x0805B9E2, (DWORD)CM_SightTraceThroughBrush);
+	SetJump(0x0805BCEE, (DWORD)CM_SightTraceThroughLeafBrushNode_r);
+	SetJump(0x0805C0BC, (DWORD)CM_SightTraceThroughLeafBrushNode);
+	SetJump(0x0805C16E, (DWORD)CM_SightTraceThroughLeaf);
+	SetJump(0x0805C9DE, (DWORD)CM_SightTraceThroughTree);
+	SetJump(0x0805CCFA, (DWORD)CM_BoxSightTrace);
 
 
 	// Don't hook that for now, just init
@@ -598,7 +625,6 @@ void Sys_RedirectFunctions()
 	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
 	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
 
-
 	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
 	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
 	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
@@ -683,8 +709,11 @@ void Sys_RedirectFunctions()
 	SetJump(0x08118822, (DWORD)Scr_SetEntityField);
 	SetJump(0x08118A22, (DWORD)Scr_GetEntityField);
 
-	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
 
+
+	// DO NOT REMOVE
+	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
+	SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
 
 
 
@@ -697,6 +726,82 @@ void Sys_RedirectFunctions()
 	SetJump(0x0806CF7E, (DWORD)ConnectScriptToAnim);
 	*/
 
+
+
+
+
+	// !!! TEMP MEMORY !!!
+	SetJump(0x08079C94, (DWORD)TempMalloc);
+	SetJump(0x08079CC8, (DWORD)TempMallocAlign);
+	SetJump(0x08079CDC, (DWORD)TempMallocAlignStrict);
+	SetJump(0x08079CF0, (DWORD)TempMemorySetPos);
+	SetJump(0x08079C84, (DWORD)TempMemoryReset);
+
+
+
+
+
+	// !!! COMPILER !!!
+	SetJump(0x080759F2, (DWORD)Scr_GetCanonicalStringIndex);
+
+	extern int GetExpressionCount(sval_u exprlist);
+	SetJump(0x0806F96C, (DWORD)GetExpressionCount);
+	extern void Scr_CompileRemoveRefToString(unsigned int stringValue);
+	SetJump(0x0806D9EC, (DWORD)Scr_CompileRemoveRefToString);
+	extern void EmitCanonicalString(unsigned int stringValue);
+	SetJump(0x0806DA0A, (DWORD)EmitCanonicalString);
+	extern void CompileTransferRefToString(unsigned int stringValue, unsigned char user);
+	SetJump(0x0806DA94, (DWORD)CompileTransferRefToString);
+	extern void EmitCodepos(const char *pos);
+	SetJump(0x0806DF0E, (DWORD)EmitCodepos);
+	extern void EmitShort(short value);
+	SetJump(0x0806DFDE, (DWORD)EmitShort);
+	SetJump(0x0806DF60, (DWORD)EmitShort);
+	SetJump(0x0806DF32, (DWORD)EmitShort);
+
+	SetJump(0x08076D92, (DWORD)AddOpcodePos);
+	SetJump(0x08076FAE, (DWORD)RemoveOpcodePos);
+
+	SetJump(0x0806DAD8, (DWORD)EmitOpcode);
+
+	extern void LinkThread(unsigned int threadCountId, VariableValue *pos, bool allowFarCall);
+	SetJump(0x0807098C, (DWORD)LinkThread);
+
+	extern void EmitIncludeList(sval_u val);
+	SetJump(0x080753A6, (DWORD)EmitIncludeList);
+
+	extern void Scr_RegisterLocalVar(unsigned int name, sval_u sourcePos, scr_block_s *block);
+	SetJump(0x0806E638, (DWORD)Scr_RegisterLocalVar);
+
+	extern void Scr_CalcLocalVarsArrayPrimitiveExpressionRef(sval_u expr, scr_block_s *block);
+	SetJump(0x08071D66, (DWORD)Scr_CalcLocalVarsArrayPrimitiveExpressionRef);
+
+	extern void Scr_CopyBlock(scr_block_s *from, scr_block_s **to);
+	SetJump(0x0806E69A, (DWORD)Scr_CopyBlock);
+
+	extern void Scr_MergeChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_s *block);
+	SetJump(0x0806E94E, (DWORD)Scr_MergeChildBlocks);
+
+	extern void Scr_AppendChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_s *block);
+	SetJump(0x0806E846, (DWORD)Scr_AppendChildBlocks);
+
+	extern void Scr_CreateVector(VariableCompileValue *constValue, VariableValue *value);
+	SetJump(0x08070DF8, (DWORD)Scr_CreateVector);
+
+	extern void Scr_AddContinueBlock(scr_block_s *block);
+	SetJump(0x0807270E, (DWORD)Scr_AddContinueBlock);
+
+	extern bool EvalPrimitiveExpression(sval_u expr, VariableCompileValue *constValue);
+	SetJump(0x08071180, (DWORD)EvalPrimitiveExpression);
+
+	extern char EvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue);
+	SetJump(0x080716CE, (DWORD)EvalBinaryOperatorExpression);
+
+	SetJump(0x08074842, (DWORD)Scr_CalcLocalVarsStatement);
+	SetJump(0x08074ED8, (DWORD)Scr_CalcLocalVarsThread);
+
+	extern unsigned int Scr_GetBuiltin(sval_u func_name);
+	SetJump(0x080702D8, (DWORD)Scr_GetBuiltin);
 }
 
 class cCallOfDuty2Pro

@@ -7,6 +7,12 @@
 extern scrVarPub_t scrVarPub;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
+#else
+extern scrCompilePub_t scrCompilePub;
+#endif
+
 typedef struct scrParserGlob_s
 {
 	struct OpcodeLookup *opcodeLookup;
@@ -206,6 +212,89 @@ void Scr_PrintPrevCodePos(conChannel_t channel, const char *codePos, unsigned in
 	}
 }
 
+void AddOpcodePos(unsigned int sourcePos, int type)
+{
+	int sourcePosLookupIndex;
+	SourceLookup *opcodeLookup;
+	OpcodeLookup *sourcePosLookup;
+	SourceLookup *newSourcePosLookup;
+	OpcodeLookup *newOpcodeLookup;
+
+	if ( scrVarPub.developer && scrCompilePub.developer_statement != 2 )
+	{
+		if ( !scrCompilePub.allowedBreakpoint )
+			type &= ~1u;
+
+		if ( scrParserGlob.opcodeLookupLen >= scrParserGlob.opcodeLookupMaxLen )
+		{
+			scrParserGlob.opcodeLookupMaxLen *= 2;
+			newOpcodeLookup = (OpcodeLookup *)Z_MallocInternal(sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupMaxLen);
+			memcpy(newOpcodeLookup, scrParserGlob.opcodeLookup, sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupLen);
+			Z_FreeInternal(scrParserGlob.opcodeLookup);
+			scrParserGlob.opcodeLookup = newOpcodeLookup;
+		}
+
+		if ( scrParserGlob.sourcePosLookupLen >= scrParserGlob.sourcePosLookupMaxLen )
+		{
+			scrParserGlob.sourcePosLookupMaxLen *= 2;
+			newSourcePosLookup = (SourceLookup *)Z_MallocInternal(sizeof(SourceLookup) * scrParserGlob.sourcePosLookupMaxLen);
+			memcpy(newSourcePosLookup, scrParserGlob.sourcePosLookup, sizeof(SourceLookup) * scrParserGlob.sourcePosLookupLen);
+			Z_FreeInternal(scrParserGlob.sourcePosLookup);
+			scrParserGlob.sourcePosLookup = newSourcePosLookup;
+		}
+
+		if ( scrParserGlob.currentCodePos == scrCompilePub.opcodePos )
+		{
+			sourcePosLookup = &scrParserGlob.opcodeLookup[--scrParserGlob.opcodeLookupLen];
+		}
+		else
+		{
+			scrParserGlob.currentSourcePosCount = 0;
+			scrParserGlob.currentCodePos = scrCompilePub.opcodePos;
+			sourcePosLookup = &scrParserGlob.opcodeLookup[scrParserGlob.opcodeLookupLen];
+			sourcePosLookup->sourcePosIndex = scrParserGlob.sourcePosLookupLen;
+			sourcePosLookup->codePos = scrParserGlob.currentCodePos;
+		}
+
+		sourcePosLookupIndex = sourcePosLookup->sourcePosIndex + scrParserGlob.currentSourcePosCount;
+		opcodeLookup = &scrParserGlob.sourcePosLookup[sourcePosLookupIndex];
+		opcodeLookup->sourcePos = sourcePos;
+
+		if ( sourcePos == -1 )
+		{
+			scrParserGlob.delayedSourceIndex = sourcePosLookupIndex;
+		}
+		else if ( sourcePos == -2 )
+		{
+			scrParserGlob.threadStartSourceIndex = sourcePosLookupIndex;
+		}
+		else if ( scrParserGlob.delayedSourceIndex >= 0 && (type & 1) != 0 )
+		{
+			scrParserGlob.sourcePosLookup[scrParserGlob.delayedSourceIndex].sourcePos = sourcePos;
+			scrParserGlob.delayedSourceIndex = -1;
+		}
+
+		opcodeLookup->type |= type;
+		sourcePosLookup->sourcePosCount = ++scrParserGlob.currentSourcePosCount;
+		++scrParserGlob.opcodeLookupLen;
+		++scrParserGlob.sourcePosLookupLen;
+	}
+}
+
+void RemoveOpcodePos()
+{
+	if ( scrVarPub.developer && scrCompilePub.developer_statement != 2 )
+	{
+		--scrParserGlob.sourcePosLookupLen;
+		--scrParserGlob.opcodeLookupLen;
+
+		if ( !--scrParserGlob.currentSourcePosCount )
+			scrParserGlob.currentCodePos = 0;
+
+		scrParserGlob.opcodeLookup[scrParserGlob.opcodeLookupLen].sourcePosCount = scrParserGlob.currentSourcePosCount;
+	}
+}
+
 void CompileError(unsigned int sourcePos, const char *format, ...)
 {
 	char buf[MAX_STRING_CHARS];
@@ -236,4 +325,71 @@ void CompileError(unsigned int sourcePos, const char *format, ...)
 
 	if ( !scrVarPub.error_message )
 		scrVarPub.error_message = va("%s", buf);
+}
+
+void CompileError2(const char *codePos, const char *format, ...)
+{
+	char buf[MAX_STRING_CHARS];
+	va_list argptr;
+
+	Com_Printf("\n");
+	Com_Printf("******* script compile error *******\n");
+	va_start( argptr, format );
+	Q_vsnprintf( buf, sizeof( buf ), format, argptr );
+	va_end( argptr );
+	Com_Printf("%s: ", buf);
+	Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, codePos, 0);
+	Com_Printf("************************************\n");
+	Com_Error(ERR_SCRIPT_DROP, "script compile error\n(see console for details)\n");
+}
+
+int QDECL Scr_ScanFile(char *buf, int max_size)
+{
+	char c;
+	int i;
+	char ptr;
+
+	ptr = 42;
+
+	for ( i = 0; i < max_size; ++i )
+	{
+		c = *scrCompilePub.in_ptr++;
+		ptr = c;
+
+		if ( !c || c == 10 )
+			break;
+
+		buf[i] = c;
+	}
+
+	if ( ptr == 10 )
+	{
+		buf[i++] = 10;
+	}
+	else if ( !ptr )
+	{
+		if ( scrCompilePub.parseBuf )
+		{
+			scrCompilePub.in_ptr = scrCompilePub.parseBuf;
+			scrCompilePub.parseBuf = 0;
+		}
+		else
+		{
+			--scrCompilePub.in_ptr;
+		}
+	}
+
+	return i;
+}
+
+void QDECL Scr_YYACError(const char* fmt, ...)
+{
+	va_list argptr;
+	char msg[MAXPRINTMSG];
+
+	va_start(argptr, fmt);
+	Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+
+	Com_Error(ERR_SCRIPT, "%s", msg);
 }

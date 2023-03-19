@@ -708,7 +708,7 @@ struct scr_gametype_data_t
 	gameTypeScript_t list[32];
 };
 
-#include "bg_public.h"
+#include "../bgame/bg_public.h"
 typedef struct
 {
 	int levelscript;

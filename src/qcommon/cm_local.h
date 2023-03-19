@@ -326,6 +326,18 @@ typedef struct worldSector_s
 	worldTree_t tree;
 } worldSector_t;
 
+struct locTraceWork_t
+{
+	int contents;
+	TraceExtents extents;
+};
+
+struct staticmodeltrace_t
+{
+	TraceExtents extents;
+	int contents;
+};
+
 struct cm_world_t
 {
 	float mins[3];

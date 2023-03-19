@@ -825,6 +825,7 @@ SetJump(0x08051E7C, (DWORD)Com_CleanupBsp);
 SetJump(0x08051E5C, (DWORD)Com_UnloadBsp);
 SetJump(0x0809E970, (DWORD)FS_ResetFiles);
 SetJump(0x08054E4A, (DWORD)CM_Cleanup);
+SetJump(0x0805DD50, (DWORD)CM_AddStaticModelToNode);
 SetJump(0x080B3A76, (DWORD)Com_ResetParseSessions);
 SetJump(0x08051F7E, (DWORD)CM_LoadMapData);
 SetJump(0x08051F9E, (DWORD)CM_LoadMap);
@@ -1141,7 +1142,7 @@ SetJump(0x0807071E, (DWORD)EmitMethod);
 SetJump(0x0810236E, (DWORD)HudElem_GetMethod);
 SetJump(0x080FB640, (DWORD)Player_GetMethod);
 SetJump(0x08117D6A, (DWORD)ScriptEnt_GetMethod);
-SetJump(0x081158C2, (DWORD)Script_GetMethod);
+SetJump(0x081158C2, (DWORD)BuiltIn_GetMethod);
 SetJump(0x0811579A, (DWORD)GScr_ReleaseClaimedTrigger);
 SetJump(0x081156CC, (DWORD)GScr_ClientReleaseTrigger);
 SetJump(0x081155E4, (DWORD)GScr_ClientClaimTrigger);
@@ -1651,6 +1652,36 @@ SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
 SetJump(0x0805F61E, (DWORD)CM_PointTraceToEntities);
 SetJump(0x0805F42C, (DWORD)CM_PointTraceToEntities_r);
 SetJump(0x0809AD2C, (DWORD)SV_PointTraceToEntity);
+SetJump(0x0809C18C, (DWORD)SV_PointContents);
+SetJump(0x08058D88, (DWORD)CM_PointContents);
+SetJump(0x08058BD8, (DWORD)CM_PointContentsLeafBrushNode_r);
+SetJump(0x08058E94, (DWORD)CM_TransformedPointContents);
+SetJump(0x080F166C, (DWORD)CG_PointContents);
+SetJump(0x080EC2BA, (DWORD)PM_AdjustAimSpreadScale);
+SetJump(0x080EABAA, (DWORD)PM_InteruptWeaponWithProneMove);
+SetJump(0x080ED212, (DWORD)PM_Weapon_Idle);
+SetJump(0x080E9210, (DWORD)PM_StartWeaponAnim);
+SetJump(0x080EA53E, (DWORD)PM_ExitAimDownSight);
+SetJump(0x080DED2E, (DWORD)PM_AddEvent);
+SetJump(0x080E4794, (DWORD)PM_UpdateViewAngles);
+SetJump(0x080F15AA, (DWORD)CG_Trace);
+SetJump(0x080F10F4, (DWORD)CG_ClipMoveToEntities);
+SetJump(0x0805B972, (DWORD)CM_TransformedBoxTraceExternal);
+SetJump(0x0805919A, (DWORD)CM_ContentsOfModel);
+SetJump(0x080591BC, (DWORD)CM_RadiusOfModel);
+SetJump(0x080E5902, (DWORD)PM_ClearLadderFlag);
+SetJump(0x080EAC94, (DWORD)BG_AmmoForWeapon);
+SetJump(0x080EAC7A, (DWORD)BG_ClipForWeapon);
+SetJump(0x080E98CA, (DWORD)BG_TakePlayerWeapon);
+SetJump(0x080E9B54, (DWORD)BG_PlayerHasWeapon);
+SetJump(0x080EA40E, (DWORD)PM_UpdateAimDownSightFlag);
+SetJump(0x080EA2B6, (DWORD)PM_IsAdsAllowed);
+SetJump(0x080EE212, (DWORD)PM_ResetWeaponState);
+SetJump(0x080E1F20, (DWORD)PM_CheckDuck);
+SetJump(0x080E117E, (DWORD)PM_GroundTrace);
+SetJump(0x080DEC3C, (DWORD)PM_playerTrace);
+SetJump(0x080F53E0, (DWORD)G_PlayerEvent);
+SetJump(0x080EE226, (DWORD)BG_WeaponFireRecoil);
 
 
 
@@ -2327,6 +2358,28 @@ SetJump(0x0811B528, (DWORD)G_EntDetach);
 SetJump(0x081173F6, (DWORD)ScriptEntCmdGetCommandTimes);
 SetJump(0x08116F18, (DWORD)ScriptMover_Move);
 SetJump(0x081167BA, (DWORD)ScriptMover_SetupMove);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -104,6 +104,9 @@ void Hunk_ClearTempMemoryHigh();
 void Hunk_ClearTempMemory();
 void Hunk_Shutdown();
 void* TempMalloc(int size);
+char* TempMallocAlign(int size);
+char* TempMallocAlignStrict(int size);
+void* TempMemorySetPos(char *pos);
 void TempMemoryReset();
 int Hunk_HideTempMemory();
 void Hunk_ShowTempMemory(int memory);
@@ -128,9 +131,6 @@ void QDECL Hunk_UserDestroy(HunkUser *user);
 
 #define Hunk_Alloc Hunk_AllocInternal
 #define Hunk_AllocateTempMemory Hunk_AllocateTempMemoryInternal
-
-#define TempMallocAlign TempMalloc
-#define TempMallocAlignStrict TempMallocAlign
 
 #define CopyString CopyStringInternal
 #define ReplaceString ReplaceStringInternal

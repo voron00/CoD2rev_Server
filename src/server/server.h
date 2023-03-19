@@ -6,6 +6,7 @@
 
 #include "../game/g_shared.h"
 
+#define MAX_SNAPSHOT_ENTITIES	1024
 #define MAX_NAME_LENGTH	32
 
 typedef struct
@@ -242,6 +243,12 @@ typedef struct
 } server_t;
 static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
 
+struct snapshotEntityNumbers_t
+{
+	int numSnapshotEntities;
+	int snapshotEntities[1024];
+};
+
 extern dvar_t *nextmap;
 extern dvar_t *sv_maxclients;
 
@@ -280,3 +287,5 @@ qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 
 void SV_LinkEntity( gentity_t *gEnt );
 void SV_UnlinkEntity( gentity_t *gEnt );
+
+void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);

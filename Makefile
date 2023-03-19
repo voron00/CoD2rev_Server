@@ -4,7 +4,7 @@ CXX = g++
 NASM = nasm
 WINDRES=windres
 CFLAGS=-m32 -g -Wall -std=gnu++11
-CFLAGS_TESTLIB=-m32 -g -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
+CFLAGS_TESTLIB=-m32 -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
 CFLAGS_ZLIB=-m32
 CFLAGS_ZLIB_TEST=-m32 -fPIC
 LFLAGS=-m32
@@ -50,6 +50,8 @@ endif
 BOTLIB_DIR=$(SRC_DIR)/botlib
 CLIENTSCR_DIR=$(SRC_DIR)/clientscript
 GAME_DIR=$(SRC_DIR)/game
+BGAME_DIR=$(SRC_DIR)/bgame
+CGAME_DIR=$(SRC_DIR)/cgame
 QCOMMON_DIR=$(SRC_DIR)/qcommon
 SERVER_DIR=$(SRC_DIR)/server
 STRINGED_DIR=$(SRC_DIR)/stringed
@@ -64,6 +66,8 @@ TARGET_TESTLIB=$(addprefix $(BIN_DIR)/,$(LIB_NAME)$(LIB_EXT))
 BOTLIB_SOURCES=$(wildcard $(BOTLIB_DIR)/*.cpp)
 CLIENTSCR_SOURCES=$(wildcard $(CLIENTSCR_DIR)/*.cpp)
 GAME_SOURCES=$(wildcard $(GAME_DIR)/*.cpp)
+BGAME_SOURCES=$(wildcard $(BGAME_DIR)/*.cpp)
+CGAME_SOURCES=$(wildcard $(CGAME_DIR)/*.cpp)
 QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/*.cpp)
 SERVER_SOURCES=$(wildcard $(SERVER_DIR)/*.cpp)
 STRINGED_SOURCES=$(wildcard $(STRINGED_DIR)/*.cpp)
@@ -79,6 +83,8 @@ ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 ASM_BOTLIB_SOURCES=$(wildcard $(BOTLIB_DIR)/asm/*.asm)
 ASM_CLIENTSCR_SOURCES=$(wildcard $(CLIENTSCR_DIR)/asm/*.asm)
 ASM_GAME_SOURCES=$(wildcard $(GAME_DIR)/asm/*.asm)
+ASM_BGAME_SOURCES=$(wildcard $(BGAME_DIR)/asm/*.asm)
+ASM_CGAME_SOURCES=$(wildcard $(CGAME_DIR)/asm/*.asm)
 ASM_QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/asm/*.asm)
 ASM_SERVER_SOURCES=$(wildcard $(SERVER_DIR)/asm/*.asm)
 ASM_STRINGED_SOURCES=$(wildcard $(STRINGED_DIR)/asm/*.asm)
@@ -89,6 +95,8 @@ ASM_XANIM_SOURCES=$(wildcard $(XANIM_DIR)/asm/*.asm)
 BOTLIB_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
 CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
 GAME_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(GAME_SOURCES))
+BGAME_OBJ=$(patsubst $(BGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BGAME_SOURCES))
+CGAME_OBJ=$(patsubst $(CGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CGAME_SOURCES))
 QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
 SERVER_OBJ=$(patsubst $(SERVER_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SERVER_SOURCES))
 STRINGED_OBJ=$(patsubst $(STRINGED_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(STRINGED_SOURCES))
@@ -99,6 +107,8 @@ XANIM_OBJ=$(patsubst $(XANIM_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(XANIM_SOURCES))
 ASM_BOTLIB_OBJ=$(patsubst $(BOTLIB_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_BOTLIB_SOURCES))
 ASM_CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_CLIENTSCR_SOURCES))
 ASM_GAME_OBJ=$(patsubst $(GAME_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_GAME_SOURCES))
+ASM_BGAME_OBJ=$(patsubst $(BGAME_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_BGAME_SOURCES))
+ASM_CGAME_OBJ=$(patsubst $(CGAME_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_CGAME_SOURCES))
 ASM_QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_QCOMMON_SOURCES))
 ASM_SERVER_OBJ=$(patsubst $(SERVER_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_SERVER_SOURCES))
 ASM_STRINGED_OBJ=$(patsubst $(STRINGED_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_STRINGED_SOURCES))
@@ -118,6 +128,8 @@ ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 BOTLIB_TEST_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
 CLIENTSCR_TEST_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
 GAME_TEST_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(GAME_SOURCES))
+BGAME_TEST_OBJ=$(patsubst $(BGAME_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(BGAME_SOURCES))
+CGAME_TEST_OBJ=$(patsubst $(CGAME_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(CGAME_SOURCES))
 QCOMMON_TEST_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
 SERVER_TEST_OBJ=$(patsubst $(SERVER_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(SERVER_SOURCES))
 STRINGED_TEST_OBJ=$(patsubst $(STRINGED_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(STRINGED_SOURCES))
@@ -131,6 +143,8 @@ TESTLIB_OBJ=$(patsubst $(TESTLIB_DIR)/%.cpp,$(TEST_OBJ_DIR)/%.o,$(TESTLIB_SOURCE
 ASM_BOTLIB_TEST_OBJ=$(patsubst $(BOTLIB_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_BOTLIB_SOURCES))
 ASM_CLIENTSCR_TEST_OBJ=$(patsubst $(CLIENTSCR_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_CLIENTSCR_SOURCES))
 ASM_GAME_TEST_OBJ=$(patsubst $(GAME_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_GAME_SOURCES))
+ASM_BGAME_TEST_OBJ=$(patsubst $(BGAME_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_BGAME_SOURCES))
+ASM_CGAME_TEST_OBJ=$(patsubst $(CGAME_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_CGAME_SOURCES))
 ASM_QCOMMON_TEST_OBJ=$(patsubst $(QCOMMON_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_QCOMMON_SOURCES))
 ASM_SERVER_TEST_OBJ=$(patsubst $(SERVER_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_SERVER_SOURCES))
 ASM_STRINGED_TEST_OBJ=$(patsubst $(STRINGED_DIR)/asm/%.asm,$(TEST_OBJ_DIR)/%.o,$(ASM_STRINGED_SOURCES))
@@ -148,18 +162,18 @@ ZLIB_TEST_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(TEST_OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 # Default rule.
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
-	$(ASM_BOTLIB_OBJ) $(ASM_CLIENTSCR_OBJ) $(ASM_GAME_OBJ) $(ASM_QCOMMON_OBJ) $(ASM_SERVER_OBJ) $(ASM_STRINGED_OBJ) \
-	$(ASM_UNIVERSAL_OBJ) $(ASM_XANIM_OBJ) \
-	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
+	$(ASM_BOTLIB_OBJ) $(ASM_CLIENTSCR_OBJ) $(ASM_GAME_OBJ) $(ASM_BGAME_OBJ) $(ASM_CGAME_OBJ) \
+	$(ASM_QCOMMON_OBJ) $(ASM_SERVER_OBJ) $(ASM_STRINGED_OBJ) $(ASM_UNIVERSAL_OBJ) $(ASM_XANIM_OBJ) \
+	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(BGAME_OBJ) $(CGAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
 	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ)
 	$(CXX) $(LFLAGS) -o $@ $^ $(LLIBS)
 
 test: mkdir_test $(TARGET_TESTLIB)
     $(TARGET_TESTLIB): \
-	$(ASM_BOTLIB_TEST_OBJ) $(ASM_CLIENTSCR_TEST_OBJ) $(ASM_GAME_TEST_OBJ) $(ASM_QCOMMON_TEST_OBJ) $(ASM_SERVER_TEST_OBJ) \
-	$(ASM_STRINGED_TEST_OBJ) $(ASM_UNIVERSAL_TEST_OBJ) $(ASM_XANIM_TEST_OBJ) \
-	$(BOTLIB_TEST_OBJ) $(CLIENTSCR_TEST_OBJ) $(GAME_TEST_OBJ) $(QCOMMON_TEST_OBJ) $(SERVER_TEST_OBJ) \
-	$(STRINGED_TEST_OBJ) $(UNIVERSAL_TEST_OBJ) $(XANIM_TEST_OBJ) \
+	$(ASM_BOTLIB_TEST_OBJ) $(ASM_CLIENTSCR_TEST_OBJ) $(ASM_GAME_TEST_OBJ) $(ASM_BGAME_TEST_OBJ) $(ASM_CGAME_TEST_OBJ) \
+	$(ASM_QCOMMON_TEST_OBJ) $(ASM_SERVER_TEST_OBJ) $(ASM_STRINGED_TEST_OBJ) $(ASM_UNIVERSAL_TEST_OBJ) $(ASM_XANIM_TEST_OBJ) \
+	$(BOTLIB_TEST_OBJ) $(CLIENTSCR_TEST_OBJ) $(GAME_TEST_OBJ) $(BGAME_TEST_OBJ) $(CGAME_TEST_OBJ) \
+	$(QCOMMON_TEST_OBJ) $(SERVER_TEST_OBJ) $(STRINGED_TEST_OBJ) $(UNIVERSAL_TEST_OBJ) $(XANIM_TEST_OBJ) \
 	$(LINUX_TEST_OBJ) $(WIN32_TEST_OBJ) $(TESTLIB_OBJ) $(ZLIB_TEST_OBJ)
 	$(CXX) $(LFLAGS_TESTLIB) -o $@ $^ $(LLIBS)
 
@@ -212,6 +226,26 @@ $(OBJ_DIR)/%.o: $(GAME_DIR)/%.cpp
 
 # A rule to build game source code (test).
 $(TEST_OBJ_DIR)/%.o: $(GAME_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS_TESTLIB) -o $@ $<
+
+# A rule to build bgame source code.
+$(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS) -o $@ $<
+
+# A rule to build bgame source code (test).
+$(TEST_OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS_TESTLIB) -o $@ $<
+
+# A rule to build cgame source code.
+$(OBJ_DIR)/%.o: $(CGAME_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS) -o $@ $<
+
+# A rule to build cgame source code (test).
+$(TEST_OBJ_DIR)/%.o: $(CGAME_DIR)/%.cpp
 	@echo $(CXX)  $@
 	@$(CXX) -c $(CFLAGS_TESTLIB) -o $@ $<
 
@@ -336,6 +370,26 @@ $(OBJ_DIR)/%.o: $(GAME_DIR)/asm/%.asm
 
 # A rule to build game source code (test).
 $(TEST_OBJ_DIR)/%.o: $(GAME_DIR)/asm/%.asm
+	@echo $(NASM) $@
+	@$(NASM) $(NASMFLAGS) $< -o $@
+
+# A rule to build bgame source code.
+$(OBJ_DIR)/%.o: $(BGAME_DIR)/asm/%.asm
+	@echo $(NASM) $@
+	@$(NASM) $(NASMFLAGS) $< -o $@
+
+# A rule to build bgame source code (test).
+$(TEST_OBJ_DIR)/%.o: $(BGAME_DIR)/asm/%.asm
+	@echo $(NASM) $@
+	@$(NASM) $(NASMFLAGS) $< -o $@
+
+# A rule to build cgame source code.
+$(OBJ_DIR)/%.o: $(CGAME_DIR)/asm/%.asm
+	@echo $(NASM) $@
+	@$(NASM) $(NASMFLAGS) $< -o $@
+
+# A rule to build cgame source code (test).
+$(TEST_OBJ_DIR)/%.o: $(CGAME_DIR)/asm/%.asm
 	@echo $(NASM) $@
 	@$(NASM) $(NASMFLAGS) $< -o $@
 

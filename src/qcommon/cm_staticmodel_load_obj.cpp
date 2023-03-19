@@ -1,14 +1,6 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
-#ifdef TESTING_LIBRARY
-#define cm (*((clipMap_t*)( 0x08185BE0 )))
-#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
-#else
-extern clipMap_t cm;
-extern clipMapExtra_t cme;
-#endif
-
 void CM_InitStaticModel(cStaticModel_s *model, const float *origin, const float *angles, const float *modelscale_vec)
 {
 	vec3_t scale[3];

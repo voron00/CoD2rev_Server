@@ -1,5 +1,5 @@
 #include "../qcommon/qcommon.h"
-#include "bg_public.h"
+#include "../bgame/bg_public.h"
 
 scr_const_t scr_const;
 

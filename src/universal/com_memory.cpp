@@ -460,13 +460,23 @@ void Hunk_Shutdown()
 void* TempMalloc(int size)
 {
 	int pos;
-	byte *buf;
+	char *buf;
 
 	pos = currentPos + size;
-	buf = (byte*)Hunk_ReallocateTempMemoryInternal(currentPos + size) + currentPos;
+	buf = (char *)Hunk_ReallocateTempMemoryInternal(currentPos + size) + currentPos;
 	currentPos = pos;
 
 	return buf;
+}
+
+char* TempMallocAlign(int size)
+{
+	return (char *)TempMalloc(size);
+}
+
+char* TempMallocAlignStrict(int size)
+{
+	return (char *)TempMalloc(size);
 }
 
 void* TempMemorySetPos(char *pos)
@@ -496,6 +506,7 @@ void QDECL Hunk_UserDestroy(HunkUser *user)
 {
 	Hunk_ClearTempMemoryHighInternal();
 }
+// VoroN: End of Hunk User hacks.
 
 int Hunk_HideTempMemory()
 {

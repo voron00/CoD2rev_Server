@@ -274,6 +274,12 @@ struct SourceBufferInfo
 	bool archive;
 };
 
+struct SaveSourceBufferInfo
+{
+	char *sourceBuf;
+	int len;
+};
+
 typedef struct scrParserPub_s
 {
 	struct SourceBufferInfo *sourceBufferLookup;
@@ -431,18 +437,18 @@ enum scr_enum_t
 	ENUM_NOP = 0x0,
 	ENUM_program = 0x1,
 	ENUM_assignment = 0x2,
-	ENUM_duplicate_variable = 0x3,
+	ENUM_unknown_variable = 0x3,
 	ENUM_local_variable = 0x4,
 	ENUM_local_variable_frozen = 0x5,
-	ENUM_duplicate_expression = 0x6,
-	ENUM_primitive_expression = 0x7,
-	ENUM_integer = 0x8,
-	ENUM_float = 0x9,
-	ENUM_minus_integer = 0xA,
-	ENUM_minus_float = 0xB,
-	ENUM_string = 0xC,
-	ENUM_istring = 0xD,
-	ENUM_array_variable = 0xE,
+	ENUM_primitive_expression = 0x6,
+	ENUM_integer = 0x7,
+	ENUM_float = 0x8,
+	ENUM_minus_integer = 0x9,
+	ENUM_minus_float = 0xA,
+	ENUM_string = 0xB,
+	ENUM_istring = 0xC,
+	ENUM_array_variable = 0xD,
+	ENUM_unknown_field = 0xE,
 	ENUM_field_variable = 0xF,
 	ENUM_field_variable_frozen = 0x10,
 	ENUM_variable = 0x11,
@@ -517,10 +523,21 @@ enum scr_enum_t
 	ENUM_argument = 0x56,
 };
 
-struct scr_localVar_t
+enum scr_call_type_t
 {
-	unsigned int name;
-	unsigned int sourcePos;
+	CALL_NONE = 0x0,
+	CALL_BUILTIN = 0x1,
+	CALL_THREAD = 0x2,
+	CALL_FUNCTION = 0x3,
+};
+
+enum scr_abort_t
+{
+	SCR_ABORT_NONE = 0x0,
+	SCR_ABORT_CONTINUE = 0x1,
+	SCR_ABORT_BREAK = 0x2,
+	SCR_ABORT_RETURN = 0x3,
+	SCR_ABORT_MAX = 0x3,
 };
 
 struct scr_block_s
@@ -530,7 +547,7 @@ struct scr_block_s
 	int localVarsPublicCount;
 	int localVarsCount;
 	int localVarsInitBits[2];
-	scr_localVar_t localVars[32];
+	unsigned int localVars[64];
 };
 static_assert((sizeof(scr_block_s) == 280), "ERROR: scr_block_s size is invalid!");
 
@@ -553,6 +570,8 @@ struct VariableCompileValue
 	VariableValue value;
 	sval_u sourcePos;
 };
+
+extern const char *var_typename[];
 
 void Scr_Error(const char *error);
 void Scr_ObjectError(const char *error);
@@ -806,7 +825,7 @@ void Var_FreeTempVariables();
 void Var_Init();
 
 void SetAnimCheck(int bAnimCheck);
-void ConnectScriptToAnim(unsigned int names, int index, unsigned int filename, unsigned short name, int treeIndex);
+void Scr_UsingTree(const char *filename, unsigned int sourcePos);
 
 qboolean Scr_IsInOpcodeMemory(const char *pos);
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset);
@@ -822,9 +841,20 @@ extern "C" {
 
 void Scr_PrintPrevCodePos(conChannel_t channel, const char *codePos, unsigned int index);
 void CompileError(unsigned int sourcePos, const char *format, ...);
+void CompileError2(const char *codePos, const char *format, ...);
 int Scr_ScanFile(char *buf, int max_size);
+void AddOpcodePos(unsigned int sourcePos, int type);
+void RemoveOpcodePos();
 void QDECL Scr_YYACError(const char* fmt, ...);
 void QDECL ScriptParse(sval_u *source, char user);
+
+void EmitOpcode(unsigned int op, int offset, int callType);
+void Scr_CalcLocalVarsArrayPrimitiveExpressionRef(sval_u expr, scr_block_s *block);
+bool EvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, VariableCompileValue *constValue);
+bool EvalExpression(sval_u expr, VariableCompileValue *constValue);
+void Scr_CalcLocalVarsStatement(sval_u val, scr_block_s *block);
+void Scr_CalcLocalVarsThread(sval_u exprlist, sval_u stmtlist, sval_u *stmttblock);
+void EmitPrimitiveExpressionFieldObject(sval_u expr, sval_u sourcePos, scr_block_s *block);
 
 #ifdef __cplusplus
 }

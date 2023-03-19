@@ -3,14 +3,6 @@
 #include "../server/server.h"
 
 #ifdef TESTING_LIBRARY
-#define cm (*((clipMap_t*)( 0x08185BE0 )))
-#define cme (*((clipMapExtra_t*)( 0x08185CF4 )))
-#else
-extern clipMap_t cm;
-extern clipMapExtra_t cme;
-#endif
-
-#ifdef TESTING_LIBRARY
 #define svs (*((serverStatic_t*)( 0x0841FB00 )))
 #define sv (*((server_t*)( 0x0842BC80 )))
 #else
@@ -461,6 +453,179 @@ void CM_ClearWorld()
 	Vector2Subtract(cm_world.maxs, cm_world.mins, bounds);
 	cm_world.sectors[1].tree.axis = bounds[1] >= bounds[0];
 	cm_world.sectors[1].tree.dist = (cm_world.maxs[bounds[1] >= bounds[0]] + cm_world.mins[bounds[1] >= bounds[0]]) * 0.5;
+}
+
+int CM_PointTraceStaticModelsComplete_r(staticmodeltrace_t *clip, unsigned short nodeIndex, const float *p1_, const float *p2)
+{
+	float v5;
+	int side;
+	worldSector_s *node;
+	unsigned short modelnum;
+	float t1;
+	float frac;
+	float p1[3];
+	float t2;
+	float mid[3];
+	cStaticModel_s *check;
+
+	p1[0] = *p1_;
+	p1[1] = p1_[1];
+
+	for ( p1[2] = p1_[2]; ; p1[2] = mid[2] )
+	{
+		while ( 1 )
+		{
+			node = &cm_world.sectors[nodeIndex];
+
+			if ( (clip->contents & node->contents.contentsStaticModels) == 0 )
+				return 1;
+
+			for ( modelnum = node->contents.staticModels; modelnum; modelnum = check->writable.nextModelInWorldSector )
+			{
+				check = &cm.staticModelList[modelnum - 1];
+
+				if ( (clip->contents & XModelGetContents(check->xmodel)) != 0
+				        && !CM_TraceBox(&clip->extents, check->absmin, check->absmax, 1.0)
+				        && !CM_TraceStaticModelComplete(check, clip->extents.start, clip->extents.end, clip->contents) )
+				{
+					return 0;
+				}
+			}
+
+			t1 = p1[node->tree.axis] - node->tree.dist;
+			t2 = p2[node->tree.axis] - node->tree.dist;
+
+			if ( (float)(t1 * t2) < 0.0 )
+				break;
+
+			if ( (float)(t2 - t1) < 0.0 )
+				v5 = t2;
+			else
+				v5 = t1;
+
+			nodeIndex = node->tree.child[v5 < 0.0];
+		}
+
+		frac = t1 / (float)(t1 - t2);
+
+		mid[0] = (float)((float)(*p2 - p1[0]) * frac) + p1[0];
+		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
+		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
+
+		side = t2 >= 0.0;
+
+		if ( !CM_PointTraceStaticModelsComplete_r(clip, node->tree.child[side], p1, mid) )
+			break;
+
+		nodeIndex = node->tree.child[1 - side];
+
+		p1[0] = mid[0];
+		p1[1] = mid[1];
+	}
+
+	return 0;
+}
+
+int CM_PointTraceStaticModelsComplete(const float *start, const float *end, int contentmask)
+{
+	staticmodeltrace_t clip;
+
+	clip.contents = contentmask;
+	VectorCopy(start, clip.extents.start);
+	VectorCopy(end, clip.extents.end);
+	CM_CalcTraceExtents(&clip.extents);
+
+	return CM_PointTraceStaticModelsComplete_r(&clip, 1, clip.extents.start, clip.extents.end);
+}
+
+void CM_PointTraceStaticModels_r(locTraceWork_t *tw, unsigned short nodeIndex, const float *p1_, const float *p2, trace_t *trace)
+{
+	float v5;
+	int side;
+	worldSector_s *node;
+	unsigned short modelnum;
+	float t1;
+	float frac;
+	float p1[4];
+	float t2;
+	float mid[4];
+	cStaticModel_s *check;
+
+	p1[0] = *p1_;
+	p1[1] = p1_[1];
+	p1[2] = p1_[2];
+	p1[3] = p1_[3];
+
+	while ( 1 )
+	{
+		node = &cm_world.sectors[nodeIndex];
+
+		if ( (tw->contents & node->contents.contentsStaticModels) == 0 )
+			break;
+
+		for ( modelnum = node->contents.staticModels; modelnum; modelnum = check->writable.nextModelInWorldSector )
+		{
+			check = &cm.staticModelList[modelnum - 1];
+
+			if ( (tw->contents & XModelGetContents(check->xmodel)) != 0
+			        && !CM_TraceBox(&tw->extents, check->absmin, check->absmax, trace->fraction) )
+			{
+				CM_TraceStaticModel(check, trace, tw->extents.start, tw->extents.end, tw->contents);
+			}
+		}
+
+		t1 = p1[node->tree.axis] - node->tree.dist;
+		t2 = p2[node->tree.axis] - node->tree.dist;
+
+		if ( (float)(t1 * t2) < 0.0 )
+		{
+			if ( p1[3] >= trace->fraction )
+				return;
+
+			frac = t1 / (float)(t1 - t2);
+
+			mid[0] = (float)((float)(*p2 - p1[0]) * frac) + p1[0];
+			mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
+			mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
+			mid[3] = (float)((float)(p2[3] - p1[3]) * frac) + p1[3];
+			side = t2 >= 0.0;
+
+			CM_PointTraceStaticModels_r(tw, node->tree.child[side], p1, mid, trace);
+			nodeIndex = node->tree.child[1 - side];
+
+			p1[0] = mid[0];
+			p1[1] = mid[1];
+			p1[2] = mid[2];
+			p1[3] = mid[3];
+		}
+		else
+		{
+			if ( (float)(t2 - t1) < 0.0 )
+				v5 = t2;
+			else
+				v5 = t1;
+
+			nodeIndex = node->tree.child[v5 < 0.0];
+		}
+	}
+}
+
+void CM_PointTraceStaticModels(trace_t *results, const float *start, const float *end, int contentmask)
+{
+	vec4_t end_;
+	vec4_t start_;
+	locTraceWork_t tw;
+
+	tw.contents = contentmask;
+	VectorCopy(start, tw.extents.start);
+	VectorCopy(end, tw.extents.end);
+	CM_CalcTraceExtents(&tw.extents);
+	VectorCopy(tw.extents.start, start_);
+	start_[3] = 0.0;
+	VectorCopy(tw.extents.end, end_);
+	end_[3] = results->fraction;
+
+	CM_PointTraceStaticModels_r(&tw, 1, tw.extents.start, tw.extents.end, results);
 }
 
 void CM_LinkStaticModel(cStaticModel_s *staticModel)

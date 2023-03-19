@@ -165,6 +165,8 @@ typedef int	clipHandle_t;
 #define MAX_QPATH           64
 #define MAX_OSPATH          256
 
+#define MAX_EVENTS          4   // max events per frame before we drop events
+
 typedef struct usercmd_s
 {
 	int serverTime;
@@ -350,6 +352,7 @@ bool Com_ValidXModelName(const char *name);
 qboolean Info_Validate( const char *s );
 bool COM_BitTest(int array[], int bitNum);
 void COM_BitSet(int array[], int bitNum);
+void COM_BitClear(int array[], int bitNum);
 long double GetLeanFraction(const float fFrac);
 long double UnGetLeanFraction(const float fFrac);
 void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);

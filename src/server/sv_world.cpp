@@ -25,8 +25,6 @@ void SV_LinkEntity( gentity_t *gEnt )
 	vec3_t min, max;
 	clipHandle_t clip;
 
-	assert(gEnt->r.inuse);
-
 	ent = SV_SvEntityForGentity( gEnt );
 	/*
 		// Ridah, sanity check for possible currentOrigin being reset bug
