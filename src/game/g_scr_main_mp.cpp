@@ -16,6 +16,24 @@ extern gentity_t g_entities[];
 
 extern game_hudelem_t g_hudelems[];
 
+#ifdef TESTING_LIBRARY
+#define builtin_methods (((scr_method_t*)( 0x08168280 )))
+#else
+scr_method_t builtin_methods[] =
+{
+
+};
+#endif
+
+#ifdef TESTING_LIBRARY
+#define functions (((scr_function_t*)( 0x08167BC0 )))
+#else
+scr_function_t functions[] =
+{
+
+};
+#endif
+
 gentity_t* Scr_EntityForRef(scr_entref_t entRef)
 {
 	if ( entRef.classnum == CLASS_NUM_ENTITY )
@@ -260,4 +278,80 @@ int GScr_GetStatusIconIndex(const char *pszIcon)
 
 	Scr_Error(va("Status icon '%s' was not precached\n", pszIcon));
 	return 0;
+}
+
+void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t)
+{
+	const char *name;
+	unsigned int i;
+
+	name = *pName;
+
+#ifdef TESTING_LIBRARY
+	for ( i = 0; i < 59; ++i )
+#else
+	for ( i = 0; i < COUNT_OF(builtin_methods); ++i )
+#endif
+	{
+		if ( !strcmp(name, builtin_methods[i].name) )
+		{
+			*pName = builtin_methods[i].name;
+			*type = builtin_methods[i].developer;
+			return builtin_methods[i].call;
+		}
+	}
+
+	return NULL;
+}
+
+void (*Scr_GetMethod(const char **pName, int *type))(scr_entref_t)
+{
+	void (*scriptent_meth)(scr_entref_t);
+	void (*scr_meth)(scr_entref_t);
+	void (*hud_meth)(scr_entref_t);
+	void (*meth)(scr_entref_t);
+
+	*type = 0;
+
+	meth = Player_GetMethod(pName);
+	scriptent_meth = ScriptEnt_GetMethod(pName);
+
+	if ( !meth )
+		meth = scriptent_meth;
+
+	scr_meth = BuiltIn_GetMethod(pName, type);
+
+	if ( !meth )
+		meth = scr_meth;
+
+	hud_meth = HudElem_GetMethod(pName);
+
+	if ( !meth )
+		return hud_meth;
+
+	return meth;
+}
+
+void (*Scr_GetFunction(const char **pName, int *type))()
+{
+	const char *name;
+	unsigned int i;
+
+	name = *pName;
+
+#ifdef TESTING_LIBRARY
+	for ( i = 0; i < 144; ++i )
+#else
+	for ( i = 0; i < COUNT_OF(builtin_methods); ++i )
+#endif
+	{
+		if ( !strcmp(name, functions[i].name) )
+		{
+			*pName = functions[i].name;
+			*type = functions[i].developer;
+			return functions[i].call;
+		}
+	}
+
+	return NULL;
 }

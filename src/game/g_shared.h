@@ -865,8 +865,6 @@ void HECmd_MoveOverTime(scr_entref_t entRef);
 void HECmd_Reset(scr_entref_t entRef);
 void HECmd_Destroy(scr_entref_t entRef);
 
-void (*HudElem_GetMethod(const char **pName))(scr_entref_t);
-
 void Scr_LocalizationError(int iParm, const char *pszErrorMessage);
 void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, unsigned int stringLimit);
 void CalculateRanks();
@@ -908,6 +906,14 @@ void G_SetAngle(gentity_s *ent, const float *angle);
 
 void SetClientViewAngle(gentity_s *ent, const float *angle);
 void ClientUserinfoChanged(int clientNum);
+
+void (*Player_GetMethod(const char **pName))(scr_entref_t);
+void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t);
+void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t);
+void (*HudElem_GetMethod(const char **pName))(scr_entref_t);
+void (*Scr_GetMethod(const char **pName, int *type))(scr_entref_t);
+
+void (*Scr_GetFunction(const char **pName, int *type))();
 
 void ClientScr_ReadOnly(gclient_s *pSelf, const game_client_field_t *pField);
 void ClientScr_SetSessionTeam(gclient_s *pSelf, const game_client_field_t *pField);

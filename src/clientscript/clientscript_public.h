@@ -808,6 +808,8 @@ void SetVariableValue(unsigned int id, VariableValue *value);
 void ClearVariableValue(unsigned int id);
 bool IsFieldObject(unsigned int id);
 bool IsValidArrayIndex(unsigned int index);
+bool IsObjectFree(unsigned int id);
+int Scr_GetClassnumForCharId(char charId);
 unsigned int GetInternalVariableIndex(unsigned int index);
 void CopyArray(unsigned int parentId, unsigned int newParentId);
 void ClearArray(unsigned int parentId, VariableValue *value);
@@ -826,6 +828,7 @@ void Var_Init();
 
 void SetAnimCheck(int bAnimCheck);
 void Scr_UsingTree(const char *filename, unsigned int sourcePos);
+void Scr_EmitAnimation(char *pos, unsigned int animName, unsigned int sourcePos);
 
 qboolean Scr_IsInOpcodeMemory(const char *pos);
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset);
@@ -854,7 +857,15 @@ bool EvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, VariableComp
 bool EvalExpression(sval_u expr, VariableCompileValue *constValue);
 void Scr_CalcLocalVarsStatement(sval_u val, scr_block_s *block);
 void Scr_CalcLocalVarsThread(sval_u exprlist, sval_u stmtlist, sval_u *stmttblock);
+
 void EmitPrimitiveExpressionFieldObject(sval_u expr, sval_u sourcePos, scr_block_s *block);
+void EmitExpression(sval_u expr, scr_block_s *block);
+void EmitPrimitiveExpression(sval_u expr, scr_block_s *block);
+bool EmitOrEvalExpression(sval_u expr, VariableCompileValue *constValue, scr_block_s *block);
+void EmitVariableExpression(sval_u expr, scr_block_s *block);
+void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *block);
+void EmitFunction(sval_u func, sval_u sourcePos);
+void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourcePos, bool bStatement, scr_block_s *block);
 
 #ifdef __cplusplus
 }

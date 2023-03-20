@@ -13,6 +13,12 @@ scrCompilePub_t scrCompilePub;
 extern scrVarPub_t scrVarPub;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define scrAnimPub (*((scrAnimPub_t*)( 0x08202440 )))
+#else
+extern scrAnimPub_t scrAnimPub;
+#endif
+
 struct CaseStatementInfo
 {
 	unsigned int name;
@@ -1351,6 +1357,17 @@ void Scr_CalcLocalVarsStatement(sval_u val, scr_block_s *block)
 	}
 }
 
+sval_u *GetSingleParameter(sval_u exprlist)
+{
+	if ( !exprlist.node->node )
+		return 0;
+
+	if ( exprlist.node->node[1].node )
+		return 0;
+
+	return exprlist.node->node;
+}
+
 void EmitCastFieldObject(sval_u sourcePos)
 {
 	EmitOpcode(OP_CastFieldObject, -1, CALL_NONE);
@@ -1375,17 +1392,741 @@ void EmitAnimObject(sval_u sourcePos)
 	AddOpcodePos(sourcePos.sourcePosValue, 1);
 }
 
-/*
-sval_u *GetSingleParameter(sval_u exprlist)
+void EmitBoolComplement(sval_u sourcePos)
 {
-	if ( !exprlist.node->node )
-		return 0;
-
-	if ( exprlist.node->node[1].node )
-		return 0;
-
-	return exprlist.node->node;
+	EmitOpcode(OP_BoolComplement, 0, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
 }
+
+void EmitBoolNot(sval_u sourcePos)
+{
+	EmitOpcode(OP_BoolNot, 0, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
+}
+
+void EmitDecTop()
+{
+	EmitOpcode(OP_DecTop, -1, CALL_NONE);
+}
+
+void EmitCanonicalStringConst(unsigned int stringValue)
+{
+	bool count;
+
+	count = scrCompileGlob.bConstRefCount;
+	scrCompileGlob.bConstRefCount = 1;
+	EmitCanonicalString(stringValue);
+	scrCompileGlob.bConstRefCount = count;
+}
+
+void EmitEvalArray(sval_u sourcePos, sval_u indexSourcePos)
+{
+	EmitOpcode(OP_EvalArray, -1, CALL_NONE);
+	AddOpcodePos(indexSourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+unsigned int Scr_GetBuiltin(sval_u func_name)
+{
+	sval_u *func_namea;
+	sval_u *func_nameb;
+
+	if ( func_name.node->type != ENUM_script_call )
+		return 0;
+
+	func_namea = func_name.node[1].node;
+
+	if ( func_namea->type != ENUM_function )
+		return 0;
+
+	func_nameb = func_namea[1].node;
+
+	if ( func_nameb->type != ENUM_local_function )
+		return 0;
+
+	if ( FindVariable(scrCompileGlob.filePosId, func_nameb[1].idValue) )
+		return 0;
+
+	return func_nameb[1].idValue;
+}
+
+int Scr_FindLocalVarIndex(unsigned int name, sval_u sourcePos, bool create, scr_block_s *block)
+{
+	const char *s;
+	int i;
+
+	if ( !block )
+		goto unreachable;
+	for ( i = 0; ; ++i )
+	{
+		if ( i >= block->localVarsCount )
+			goto out;
+		if ( i == block->localVarsCreateCount )
+		{
+			++block->localVarsCreateCount;
+			EmitOpcode(OP_CreateLocalVariable, 0, CALL_NONE);
+			EmitCanonicalStringConst(block->localVars[i]);
+		}
+		if ( block->localVars[i] == name )
+			break;
+	}
+	Scr_CompileRemoveRefToString(name);
+	if ( (*((byte *)block->localVarsInitBits + (i >> 3)) & (unsigned char)(1 << (i & 7))) != 0 )
+		return block->localVarsCreateCount - i - 1;
+	if ( create && !scrCompileGlob.forceNotCreate )
+	{
+		*((byte *)block->localVarsInitBits + (i >> 3)) |= 1 << (i & 7);
+		return block->localVarsCreateCount - i - 1;
+	}
+out:
+	if ( !create || scrCompileGlob.forceNotCreate )
+	{
+		s = SL_ConvertToString(name);
+		CompileError(sourcePos.sourcePosValue, "uninitialised variable '%s'", s);
+		return 0;
+	}
+	else
+	{
+unreachable:
+		CompileError(sourcePos.sourcePosValue, "unreachable code");
+		return 0;
+	}
+}
+
+void AddExpressionListOpcodePos(sval_u exprlist)
+{
+	sval_u *node;
+
+	if ( scrVarPub.developer )
+	{
+		for ( node = exprlist.node->node; node; node = node[1].node )
+			AddOpcodePos(node->node[1].sourcePosValue, 0);
+	}
+}
+
+void Scr_BeginDevScript(int *type, char **savedPos)
+{
+	if ( scrCompilePub.developer_statement )
+	{
+		*type = 0;
+	}
+	else
+	{
+		if ( scrVarPub.developer_script )
+		{
+			scrCompilePub.developer_statement = 1;
+		}
+		else
+		{
+			*savedPos = (char *)TempMalloc(0);
+			scrCompilePub.developer_statement = 2;
+		}
+
+		*type = 1;
+	}
+}
+
+void Scr_EndDevScript(int type, char **savedPos)
+{
+	if ( type == 1 )
+	{
+		scrCompilePub.developer_statement = 0;
+
+		if ( !scrVarPub.developer_script )
+			TempMemorySetPos(*savedPos);
+	}
+}
+
+int Scr_GetCacheType(int type)
+{
+	if ( type )
+		return 12;
+	else
+		return 7;
+}
+
+bool Scr_IsVariable(int type)
+{
+	return type != VAR_CODEPOS;
+}
+
+void EmitCallBuiltinOpcode(int param_count, sval_u sourcePos)
+{
+	int opcode;
+
+	if ( param_count > 5 )
+		opcode = OP_CallBuiltin;
+	else
+		opcode = param_count + 62;
+
+	EmitOpcode(opcode, 1 - param_count, CALL_BUILTIN);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+
+	if ( opcode == OP_CallBuiltin )
+		EmitByte(param_count);
+}
+
+void EmitCallBuiltinMethodOpcode(int param_count, sval_u sourcePos)
+{
+	int opcode;
+
+	if ( param_count > 5 )
+		opcode = OP_CallBuiltinMethod;
+	else
+		opcode = param_count + 69;
+
+	EmitOpcode(opcode, -param_count, CALL_BUILTIN);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+
+	if ( opcode == OP_CallBuiltinMethod )
+		EmitByte(param_count);
+}
+
+void EmitSelf(sval_u sourcePos)
+{
+	EmitOpcode(OP_GetSelf, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+void EmitLevel(sval_u sourcePos)
+{
+	EmitOpcode(OP_GetLevel, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+void EmitGame(sval_u sourcePos)
+{
+	EmitOpcode(OP_GetGame, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+void EmitAnim(sval_u sourcePos)
+{
+	EmitOpcode(OP_GetAnim, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+void EmitEmptyArray(sval_u sourcePos)
+{
+	EmitOpcode(OP_EmptyArray, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+void EmitAnimation(sval_u anim, sval_u sourcePos)
+{
+	EmitOpcode(OP_GetAnimation, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	EmitCodepos((const char *)0xFFFFFFFF);
+	Scr_EmitAnimation(scrCompileGlob.codePos, anim.stringValue, sourcePos.sourcePosValue);
+	Scr_CompileRemoveRefToString(anim.stringValue);
+}
+
+void EmitCastBool(sval_u sourcePos)
+{
+	EmitOpcode(OP_CastBool, 0, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
+}
+
+void EmitAnimTree(sval_u sourcePos)
+{
+	if ( scrAnimPub.animTreeIndex )
+		EmitGetInteger(scrAnimPub.animTreeIndex, sourcePos);
+	else
+		CompileError(sourcePos.sourcePosValue, "#using_animtree was not specified");
+}
+
+void Scr_PushValue(VariableCompileValue *constValue)
+{
+	int index;
+
+	if ( scrCompilePub.value_count <= 31 )
+	{
+		index = scrCompilePub.value_count;
+		scrCompileGlob.value_start[index].value.type = constValue->value.u.intValue;
+		scrCompileGlob.value_start[index].sourcePos.stringValue = constValue->value.type;
+		scrCompileGlob.value_start[index + 1].value.u.intValue = constValue->sourcePos.intValue;
+		++scrCompilePub.value_count;
+	}
+	else
+	{
+		CompileError(constValue->sourcePos.stringValue, "VALUE_STACK_SIZE exceeded");
+	}
+}
+
+void Scr_PopValue()
+{
+	--scrCompilePub.value_count;
+}
+
+bool EmitOrEvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, VariableCompileValue *constValue, scr_block_s *block)
+{
+	VariableCompileValue constValue2;
+	bool success;
+	sval_u *node;
+	int expr_count;
+
+	expr_count = GetExpressionCount(exprlist);
+
+	if ( expr_count == 1 )
+		return EmitOrEvalExpression(*exprlist.node->node->node, constValue, block);
+
+	if ( expr_count == 3 )
+	{
+		success = 1;
+
+		for ( node = exprlist.node->node; node; node = node[1].node )
+		{
+			if ( success )
+			{
+				success = EmitOrEvalExpression(*node->node, &constValue2, block);
+
+				if ( success )
+					Scr_PushValue(&constValue2);
+			}
+			else
+			{
+				EmitExpression(*node->node, block);
+			}
+		}
+		if ( success )
+		{
+			scrCompilePub.value_count -= 3;
+			Scr_CreateVector((VariableCompileValue *)(const char *)(&scrCompileGlob.value_start[scrCompilePub.value_count].sourcePos.codePosValue - 1), &constValue->value);
+			constValue->sourcePos = sourcePos;
+			return 1;
+		}
+		else
+		{
+			EmitOpcode(OP_vector, -2, CALL_NONE);
+			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddExpressionListOpcodePos(exprlist);
+			return 0;
+		}
+	}
+	else
+	{
+		CompileError(sourcePos.sourcePosValue, "expression list must have 1 or 3 parameters");
+		return 0;
+	}
+}
+
+void EmitBoolOrExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sval_u expr2sourcePos, scr_block_s *block)
+{
+	unsigned short nextPos;
+	char *pos;
+
+	EmitExpression(expr1, block);
+	EmitOpcode(OP_JumpOnTrueExpr, -1, CALL_NONE);
+	AddOpcodePos(expr1sourcePos.stringValue, 0);
+	EmitShort(0);
+	pos = scrCompileGlob.codePos;
+	nextPos = (intptr_t)TempMalloc(0);
+	EmitExpression(expr2, block);
+	EmitCastBool(expr2sourcePos);
+	*(uint16_t *)pos = (intptr_t)TempMalloc(0) - nextPos;
+}
+
+void EmitBoolAndExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sval_u expr2sourcePos, scr_block_s *block)
+{
+	unsigned short nextPos;
+	char *pos;
+
+	EmitExpression(expr1, block);
+	EmitOpcode(OP_JumpOnFalseExpr, -1, CALL_NONE);
+	AddOpcodePos(expr1sourcePos.stringValue, 0);
+	EmitShort(0);
+	pos = scrCompileGlob.codePos;
+	nextPos = (intptr_t)TempMalloc(0);
+	EmitExpression(expr2, block);
+	EmitCastBool(expr2sourcePos);
+	*(uint16_t *)pos = (intptr_t)TempMalloc(0) - nextPos;
+}
+
+char EmitOrEvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue, scr_block_s *block)
+{
+	VariableCompileValue constValue2;
+	VariableCompileValue constValue1;
+
+	if ( !EmitOrEvalExpression(expr1, &constValue1, block) )
+	{
+		EmitExpression(expr2, block);
+emitOpcode:
+		EmitOpcode(SLOBYTE(opcode.sourcePosValue), -1, CALL_NONE);
+		AddOpcodePos(sourcePos.stringValue, 0);
+		return 0;
+	}
+
+	Scr_PushValue(&constValue1);
+
+	if ( !EmitOrEvalExpression(expr2, &constValue2, block) )
+		goto emitOpcode;
+
+	Scr_PopValue();
+	Scr_EvalBinaryOperator(opcode.type, &constValue1.value, &constValue2.value);
+
+	if ( scrVarPub.error_message )
+	{
+		CompileError(sourcePos.stringValue, "%s", scrVarPub.error_message);
+		return 0;
+	}
+	else
+	{
+		constValue->value.u.intValue = constValue1.value.u.intValue;
+		constValue->value.type = constValue1.value.type;
+		constValue->sourcePos = sourcePos;
+		return 1;
+	}
+}
+
+void EmitSize(sval_u expr, sval_u sourcePos, scr_block_s *block)
+{
+	EmitPrimitiveExpression(expr, block);
+	EmitOpcode(OP_size, 0, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
+}
+
+void EmitGetFunction(sval_u func, sval_u sourcePos)
+{
+	EmitOpcode(OP_GetFunction, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 3);
+	EmitFunction(func, sourcePos);
+}
+
+void EmitCallExpression(sval_u expr, bool bStatement, scr_block_s *block)
+{
+	if ( expr.node->type == ENUM_call )
+	{
+		EmitCall(expr.node[1], expr.node[2], bStatement, block);
+	}
+	else if ( expr.node->type == ENUM_method )
+	{
+		EmitMethod(expr.node[1], expr.node[2], expr.node[3], expr.node[4], bStatement, block);
+	}
+}
+
+bool EmitOrEvalPrimitiveExpression(sval_u expr, VariableCompileValue *constValue, scr_block_s *block)
+{
+	bool result;
+
+	switch ( expr.node->type )
+	{
+	case ENUM_variable:
+		EmitVariableExpression(expr.node[1], block);
+		result = 0;
+		break;
+
+	case ENUM_function:
+		EmitGetFunction(expr.node[1], expr.node[2]);
+		result = 0;
+		break;
+
+	case ENUM_call_expression:
+		EmitCallExpression(expr.node[1], 0, block);
+		result = 0;
+		break;
+
+	case ENUM_self:
+		EmitSelf(expr.node[1]);
+		result = 0;
+		break;
+
+	case ENUM_level:
+		EmitLevel(expr.node[1]);
+		result = 0;
+		break;
+
+	case ENUM_game:
+		EmitGame(expr.node[1]);
+		result = 0;
+		break;
+
+	case ENUM_anim:
+		EmitAnim(expr.node[1]);
+		result = 0;
+		break;
+
+	case ENUM_expression_list:
+		result = EmitOrEvalPrimitiveExpressionList(expr.node[1], expr.node[2], constValue, block);
+		break;
+
+	case ENUM_size_field:
+		EmitSize(expr.node[1], expr.node[2], block);
+		result = 0;
+		break;
+
+	case ENUM_empty_array:
+		EmitEmptyArray(expr.node[1]);
+		result = 0;
+		break;
+
+	case ENUM_animation:
+		EmitAnimation(expr.node[1], expr.node[2]);
+		result = 0;
+		break;
+
+	case ENUM_animtree:
+		EmitAnimTree(expr.node[1]);
+		result = 0;
+		break;
+
+	default:
+		result = EvalPrimitiveExpression(expr, constValue);
+		break;
+	}
+
+	return result;
+}
+
+bool EmitOrEvalExpression(sval_u expr, VariableCompileValue *constValue, scr_block_s *block)
+{
+	bool result;
+
+	switch ( expr.node->type )
+	{
+	case ENUM_primitive_expression:
+		result = EmitOrEvalPrimitiveExpression(expr.node[1], constValue, block);
+		break;
+
+	case ENUM_bool_or:
+		EmitBoolOrExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], block);
+		result = 0;
+		break;
+
+	case ENUM_bool_and:
+		EmitBoolAndExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], block);
+		result = 0;
+		break;
+
+	case ENUM_binary:
+		result = EmitOrEvalBinaryOperatorExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], constValue, block);
+		break;
+
+	case ENUM_bool_not:
+		EmitExpression(expr.node[1], block);
+		EmitBoolNot(expr.node[2]);
+		result = 0;
+		break;
+
+	case ENUM_bool_complement:
+		EmitExpression(expr.node[1], block);
+		EmitBoolComplement(expr.node[2]);
+		result = 0;
+		break;
+
+	default:
+		result = 0;
+		break;
+	}
+
+	return result;
+}
+
+void EmitPostScriptFunction(sval_u func, int param_count, bool bMethod, sval_u nameSourcePos)
+{
+	if ( bMethod )
+		EmitOpcode(OP_ScriptMethodCall, -param_count - 1, CALL_FUNCTION);
+	else
+		EmitOpcode(OP_ScriptFunctionCall, -param_count, CALL_FUNCTION);
+
+	AddOpcodePos(nameSourcePos.sourcePosValue, 3);
+	EmitFunction(func, nameSourcePos);
+}
+
+void EmitPostScriptFunctionPointer(sval_u expr, int param_count, bool bMethod, sval_u nameSourcePos, sval_u sourcePos, scr_block_s *block)
+{
+	EmitExpression(expr, block);
+
+	if ( bMethod )
+		EmitOpcode(OP_ScriptMethodCallPointer, -param_count - 2, CALL_FUNCTION);
+	else
+		EmitOpcode(OP_ScriptFunctionCallPointer, -param_count - 1, CALL_FUNCTION);
+
+	AddOpcodePos(sourcePos.stringValue, 0);
+	AddOpcodePos(nameSourcePos.sourcePosValue, 1);
+}
+
+void EmitPostScriptFunctionCall(sval_u func_name, int param_count, bool bMethod, sval_u nameSourcePos, scr_block_s *block)
+{
+	if ( func_name.node->type == ENUM_function )
+	{
+		EmitPostScriptFunction(func_name.node[1], param_count, bMethod, nameSourcePos);
+	}
+	else if ( func_name.node->type == ENUM_function_pointer )
+	{
+		EmitPostScriptFunctionPointer(func_name.node[1], param_count, bMethod, nameSourcePos, func_name.node[2], block);
+	}
+}
+
+void EmitPostScriptThread(sval_u func, int param_count, bool bMethod, sval_u sourcePos)
+{
+	if ( bMethod )
+		EmitOpcode(OP_ScriptMethodThreadCall, -param_count, CALL_THREAD);
+	else
+		EmitOpcode(OP_ScriptThreadCall, 1 - param_count, CALL_THREAD);
+
+	AddOpcodePos(sourcePos.sourcePosValue, 3);
+	EmitFunction(func, sourcePos);
+	EmitCodepos((const char *)param_count);
+}
+
+void EmitPostScriptThreadPointer(sval_u expr, int param_count, bool bMethod, sval_u sourcePos, scr_block_s *block)
+{
+	EmitExpression(expr, block);
+
+	if ( bMethod )
+		EmitOpcode(OP_ScriptMethodThreadCallPointer, -param_count - 1, CALL_THREAD);
+	else
+		EmitOpcode(OP_ScriptThreadCallPointer, -param_count, CALL_THREAD);
+
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	EmitCodepos((const char *)param_count);
+}
+
+
+void EmitPostScriptThreadCall(sval_u func_name, int param_count, bool bMethod, sval_u sourcePos, sval_u nameSourcePos, scr_block_s *block)
+{
+	if ( func_name.node->type == ENUM_function )
+	{
+		EmitPostScriptThread(func_name.node[1], param_count, bMethod, nameSourcePos);
+	}
+	else if ( func_name.node->type == ENUM_function_pointer )
+	{
+		EmitPostScriptThreadPointer(func_name.node[1], param_count, bMethod, func_name.node[2], block);
+	}
+
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
+}
+
+void EmitFieldVariable(sval_u expr, sval_u field, sval_u sourcePos, scr_block_s *block)
+{
+	EmitPrimitiveExpressionFieldObject(expr, sourcePos, block);
+	EmitOpcode(OP_EvalFieldVariable, 1, CALL_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	EmitCanonicalString(field.stringValue);
+}
+
+void EmitCallExpressionFieldObject(sval_u expr, scr_block_s *block)
+{
+	if ( expr.node->type == ENUM_call )
+	{
+		EmitCall(expr.node[1], expr.node[2], 0, block);
+		EmitCastFieldObject(expr.node[3]);
+	}
+	else if ( expr.node->type == ENUM_method )
+	{
+		EmitMethod(expr.node[1], expr.node[2], expr.node[3], expr.node[4], 0, block);
+		EmitCastFieldObject(expr.node[5]);
+	}
+}
+
+void EmitObject(sval_u expr, sval_u sourcePos)
+{
+	int type;
+	const char *s;
+	unsigned int idValue;
+	const char *entnum;
+	const char *classnum;
+
+	if ( scrCompilePub.script_loading )
+	{
+		CompileError(sourcePos.stringValue, "$ can only be used in the script debugger");
+		return;
+	}
+
+	s = SL_ConvertToString(expr.stringValue);
+
+	if ( *s == 116 )
+	{
+		idValue = atoi(s + 1);
+
+		if ( idValue )
+		{
+			if ( idValue <= 0xFFFD && !IsObjectFree((unsigned short)idValue) )
+			{
+				type = GetVarType((unsigned short)idValue);
+
+				if ( type >= VAR_THREAD && (type <= VAR_CHILD_THREAD || type == VAR_REMOVED_THREAD) )
+				{
+					EmitOpcode(OP_thread_object, 1, CALL_NONE);
+					EmitShort(idValue);
+					return;
+				}
+			}
+		}
+		goto out;
+	}
+
+	classnum = (const char *)Scr_GetClassnumForCharId(*s);
+
+	if ( (int)classnum < 0 || (entnum = (const char *)atoi(s + 1)) == 0 && s[1] != 48 )
+	{
+out:
+		CompileError(sourcePos.stringValue, "bad expression");
+		return;
+	}
+
+	EmitOpcode(OP_object, 1, CALL_NONE);
+	EmitCodepos(classnum);
+	EmitCodepos(entnum);
+}
+
+void EmitLocalVariable(sval_u expr, sval_u sourcePos, scr_block_s *block)
+{
+	int opcode;
+	int index;
+
+	index = Scr_FindLocalVarIndex(expr.stringValue, sourcePos, 0, block);
+
+	if ( index > 5 )
+		opcode = OP_EvalLocalVariableCached;
+	else
+		opcode = index + 24;
+
+	EmitOpcode(opcode, 1, CALL_NONE);
+
+	if ( opcode == OP_EvalLocalVariableCached )
+		EmitByte(index);
+
+	AddOpcodePos(sourcePos.sourcePosValue, 1);
+}
+
+void EmitArrayVariable(sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block)
+{
+	EmitExpression(index, block);
+	EmitPrimitiveExpression(expr, block);
+	EmitEvalArray(sourcePos, indexSourcePos);
+}
+
+void EmitVariableExpression(sval_u expr, scr_block_s *block)
+{
+	if ( expr.node->type == ENUM_field_variable )
+	{
+		EmitFieldVariable(expr.node[1], expr.node[2], expr.node[3], block);
+	}
+	else if ( expr.node->type > ENUM_field_variable )
+	{
+		if ( expr.node->type == ENUM_self_field )
+		{
+			if ( scrCompilePub.script_loading )
+				CompileError(expr.node[2].stringValue, "self field can only be used in the script debugger");
+			else
+				CompileError(expr.node[2].stringValue, "self field in assignment expression not currently supported");
+		}
+		else if ( expr.node->type == ENUM_object )
+		{
+			EmitObject(expr.node[1], expr.node[2]);
+		}
+	}
+	else if ( expr.node->type == ENUM_local_variable )
+	{
+		EmitLocalVariable(expr.node[1], expr.node[2], block);
+	}
+	else if ( expr.node->type == ENUM_array_variable )
+	{
+		EmitArrayVariable(expr.node[1], expr.node[2], expr.node[3], expr.node[4], block);
+	}
+}
+
 
 void EmitExpressionFieldObject(sval_u expr, sval_u sourcePos, scr_block_s *block)
 {
@@ -1441,28 +2182,344 @@ void EmitPrimitiveExpressionFieldObject(sval_u expr, sval_u sourcePos, scr_block
 		break;
 	}
 }
-*/
 
-unsigned int Scr_GetBuiltin(sval_u func_name)
+void EmitPreFunctionCall(sval_u func_name)
 {
-	sval_u *func_namea;
-	sval_u *func_nameb;
+	if ( func_name.node->type == ENUM_script_call )
+		EmitOpcode(OP_PreScriptCall, 1, CALL_NONE);
+}
 
-	if ( func_name.node->type != ENUM_script_call )
-		return 0;
+void EmitExpression(sval_u expr, scr_block_s *block)
+{
+	VariableCompileValue constValue;
 
-	func_namea = func_name.node[1].node;
+	if ( EmitOrEvalExpression(expr, &constValue, block) )
+		EmitValue(&constValue);
+}
 
-	if ( func_namea->type != ENUM_function )
-		return 0;
+void EmitPrimitiveExpression(sval_u expr, scr_block_s *block)
+{
+	VariableCompileValue constValue;
 
-	func_nameb = func_namea[1].node;
+	if ( EmitOrEvalPrimitiveExpression(expr, &constValue, block) )
+		EmitValue(&constValue);
+}
 
-	if ( func_nameb->type != ENUM_local_function )
-		return 0;
+int EmitExpressionList(sval_u exprlist, scr_block_s *block)
+{
+	sval_u *node;
+	int expr_count;
 
-	if ( FindVariable(scrCompileGlob.filePosId, func_nameb[1].idValue) )
-		return 0;
+	expr_count = 0;
 
-	return func_nameb[1].idValue;
+	for ( node = exprlist.node->node; node; node = node[1].node )
+	{
+		EmitExpression(*node->node, block);
+		++expr_count;
+	}
+
+	return expr_count;
+}
+
+void EmitPostFunctionCall(sval_u func_name, int param_count, bool bMethod, scr_block_s *block)
+{
+	if ( func_name.node->type == ENUM_script_call )
+	{
+		EmitPostScriptFunctionCall(func_name.node[1], param_count, bMethod, func_name.node[2], block);
+	}
+	else if ( func_name.node->type == ENUM_script_thread_call )
+	{
+		EmitPostScriptThreadCall(func_name.node[1], param_count, bMethod, func_name.node[2], func_name.node[3], block);
+	}
+}
+
+int AddFunction(int func)
+{
+	int i;
+
+	for ( i = 0; i < scrCompilePub.func_table_size; ++i )
+	{
+		if ( scrCompilePub.func_table[i] == func )
+			return i;
+	}
+
+	if ( scrCompilePub.func_table_size == 1024 )
+		Com_Error(ERR_DROP, "SCR_FUNC_TABLE_SIZE exceeded");
+
+	scrCompilePub.func_table[scrCompilePub.func_table_size++] = func;
+	return i;
+}
+
+void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *block)
+{
+	short newFuncIndex;
+	VariableValue lValue;
+	VariableValue value;
+	unsigned int funcId;
+	char *savedPos;
+	void (*func)();
+	int type;
+	const char *pName;
+	sval_u sourcePos;
+	unsigned int index;
+	int param_count;
+	bool statement;
+
+	statement = bStatement;
+	index = Scr_GetBuiltin(func_name);
+
+	if ( !index )
+		goto script_function;
+
+	pName = SL_ConvertToString(index);
+	sourcePos.sourcePosValue = func_name.node[2].sourcePosValue;
+	funcId = FindVariable(scrCompilePub.builtinFunc, index);
+
+	if ( funcId )
+	{
+		Scr_EvalVariable(&lValue, funcId);
+		value = lValue;
+		type = Scr_IsVariable(lValue.type);
+		func = (void (*)())value.u.intValue;
+	}
+	else
+	{
+		type = 0;
+		func = Scr_GetFunction(&pName, &type);
+		funcId = GetNewVariable(scrCompilePub.builtinFunc, index);
+		value.type = Scr_GetCacheType(type);
+		value.u.intValue = (int)func;
+		SetVariableValue(funcId, &value);
+	}
+	if ( func )
+	{
+		if ( type == 1 && (Scr_BeginDevScript(&type, &savedPos), type == 1) && !statement )
+		{
+			CompileError(
+			    sourcePos.sourcePosValue,
+			    "return value of developer command can not be accessed if not in a /# ... #/ comment");
+		}
+		else
+		{
+			param_count = EmitExpressionList(params, block);
+			if ( param_count <= 255 )
+			{
+				Scr_CompileRemoveRefToString(index);
+				EmitCallBuiltinOpcode(param_count, sourcePos);
+				newFuncIndex = AddFunction((int)func);
+				EmitShort(newFuncIndex);
+				AddExpressionListOpcodePos(params);
+				if ( statement )
+					EmitDecTop();
+				Scr_EndDevScript(type, &savedPos);
+			}
+			else
+			{
+				CompileError(sourcePos.sourcePosValue, "parameter count exceeds 256");
+			}
+		}
+	}
+	else
+	{
+script_function:
+		EmitPreFunctionCall(func_name);
+		param_count = EmitExpressionList(params, block);
+		EmitPostFunctionCall(func_name, param_count, 0, block);
+		AddExpressionListOpcodePos(params);
+		if ( statement )
+			EmitDecTop();
+	}
+}
+
+void EmitFunction(sval_u func, sval_u sourcePos)
+{
+	const char *funcName;
+	unsigned int Variable;
+	VariableValue evalValue2;
+	VariableValue evalValue;
+	VariableValue val;
+	int scope;
+	VariableValue lValue;
+	unsigned int index;
+	bool defined;
+	unsigned int name;
+	unsigned int parentId;
+	unsigned int id;
+	unsigned int countId;
+	int varIndex;
+	unsigned int object;
+	VariableValue value;
+	VariableValue value2;
+
+	if ( scrCompilePub.developer_statement == 2 )
+	{
+		Scr_CompileRemoveRefToString(func.node[1].stringValue);
+		if ( func.node->type == ENUM_far_function )
+		{
+			Scr_CompileRemoveRefToString(func.node[2].stringValue);
+			--scrCompilePub.far_function_count;
+		}
+		return;
+	}
+
+	object = 0;
+
+	if ( func.node->type == ENUM_local_function )
+	{
+		scope = 0;
+		varIndex = GetVariable(scrCompileGlob.filePosId, func.node[1].idValue);
+		CompileTransferRefToString(func.node[1].stringValue, 2u);
+		object = GetObjectA(varIndex);
+	}
+	else
+	{
+		scope = 1;
+		funcName = SL_ConvertToString(func.node[1].stringValue);
+		name = Scr_CreateCanonicalFilename(funcName);
+		Scr_CompileRemoveRefToString(func.node[1].stringValue);
+		Variable = FindVariable(scrCompilePub.loadedscripts, name);
+		Scr_EvalVariable(&val, Variable);
+		value = val;
+		defined = val.type != VAR_UNDEFINED;
+		parentId = AddFilePrecache(name, sourcePos.sourcePosValue, 0);
+		if ( defined )
+		{
+			varIndex = FindVariable(parentId, func.node[2].idValue);
+			if ( !varIndex || GetVarType(varIndex) != VAR_OBJECT )
+			{
+				CompileError(sourcePos.sourcePosValue, "unknown function");
+				return;
+			}
+		}
+		else
+		{
+			varIndex = GetVariable(parentId, func.node[2].idValue);
+		}
+		CompileTransferRefToString(func.node[2].stringValue, 2u);
+		object = GetObjectA(varIndex);
+		index = FindVariable(object, 1u);
+		if ( index )
+		{
+			Scr_EvalVariable(&evalValue, index);
+			lValue = evalValue;
+			if ( evalValue.type == VAR_INCLUDE_CODEPOS )
+			{
+				CompileError(sourcePos.sourcePosValue, "unknown function");
+				return;
+			}
+			if ( lValue.u.intValue )
+			{
+				if ( lValue.type == VAR_CODEPOS || scrCompilePub.developer_statement )
+					EmitCodepos(lValue.u.codePosValue);
+				else
+					CompileError(sourcePos.sourcePosValue, "normal script cannot reference a function in a /# ... #/ comment");
+				return;
+			}
+		}
+	}
+
+	EmitCodepos((const char *)scope);
+	countId = GetVariable(object, 0);
+	Scr_EvalVariable(&evalValue2, countId);
+	value2 = evalValue2;
+	if ( evalValue2.type == VAR_UNDEFINED )
+	{
+		value2.type = VAR_INTEGER;
+		value2.u.intValue = 0;
+	}
+	id = GetNewVariable(object, value2.u.intValue + 2);
+	value.u.codePosValue = scrCompileGlob.codePos;
+	if ( scrCompilePub.developer_statement )
+		value.type = VAR_DEVELOPER_CODEPOS;
+	else
+		value.type = VAR_CODEPOS;
+	SetNewVariableValue(id, &value);
+	++value2.u.intValue;
+	SetVariableValue(countId, &value2);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
+}
+
+void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourcePos, bool bStatement, scr_block_s *block)
+{
+	short newFuncIndex;
+	VariableValue lValue;
+	VariableValue value;
+	unsigned int funcId;
+	char *savedPos;
+	void (*meth)(scr_entref_t);
+	int type;
+	const char *pName;
+	sval_u sourcePos;
+	unsigned int index;
+	int param_count;
+	bool statement;
+
+	statement = bStatement;
+	index = Scr_GetBuiltin(func_name);
+
+	if ( !index )
+		goto script_method;
+
+	pName = SL_ConvertToString(index);
+	sourcePos.sourcePosValue = func_name.node[2].sourcePosValue;
+	funcId = FindVariable(scrCompilePub.builtinMeth, index);
+
+	if ( funcId )
+	{
+		Scr_EvalVariable(&lValue, funcId);
+		value = lValue;
+		type = Scr_IsVariable(lValue.type);
+		meth = (void (*)(scr_entref_t))value.u.intValue;
+	}
+	else
+	{
+		type = 0;
+		meth = Scr_GetMethod(&pName, &type);
+		funcId = GetNewVariable(scrCompilePub.builtinMeth, index);
+		value.type = Scr_GetCacheType(type);
+		value.u.intValue = (int)meth;
+		SetVariableValue(funcId, &value);
+	}
+	if ( meth )
+	{
+		if ( type == 1 && (Scr_BeginDevScript(&type, &savedPos), type == 1) && !statement )
+		{
+			CompileError(
+			    sourcePos.sourcePosValue,
+			    "return value of developer command can not be accessed if not in a /# ... #/ comment");
+		}
+		else
+		{
+			param_count = EmitExpressionList(params, block);
+			EmitPrimitiveExpression(expr, block);
+			if ( param_count <= 255 )
+			{
+				Scr_CompileRemoveRefToString(index);
+				EmitCallBuiltinMethodOpcode(param_count, sourcePos);
+				newFuncIndex = AddFunction((int)meth);
+				EmitShort(newFuncIndex);
+				AddOpcodePos(methodSourcePos.sourcePosValue, 0);
+				AddExpressionListOpcodePos(params);
+				if ( statement )
+					EmitDecTop();
+				Scr_EndDevScript(type, &savedPos);
+			}
+			else
+			{
+				CompileError(sourcePos.sourcePosValue, "parameter count exceeds 256");
+			}
+		}
+	}
+	else
+	{
+script_method:
+		EmitPreFunctionCall(func_name);
+		param_count = EmitExpressionList(params, block);
+		EmitPrimitiveExpression(expr, block);
+		EmitPostFunctionCall(func_name, param_count, 1, block);
+		AddOpcodePos(methodSourcePos.sourcePosValue, 0);
+		AddExpressionListOpcodePos(params);
+		if ( statement )
+			EmitDecTop();
+	}
 }

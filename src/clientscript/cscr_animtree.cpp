@@ -90,3 +90,36 @@ void Scr_UsingTree(const char *filename, unsigned int sourcePos)
 	else
 		CompileError(sourcePos, "bad anim tree name");
 }
+
+void Scr_EmitAnimationInternal(char *pos, unsigned int animName, unsigned int names)
+{
+	VariableValueInternal_u *adr;
+	unsigned int animId;
+	unsigned int newAnimId;
+	VariableValue tempValue;
+
+	animId = FindVariable(names, animName);
+
+	if ( animId )
+	{
+		adr = GetVariableValueAddress(animId);
+		*(VariableValueInternal_u *)pos = *adr;
+		adr->u.codePosValue = pos;
+	}
+	else
+	{
+		newAnimId = GetNewVariable(names, animName);
+		*(int *)pos = 0;
+		tempValue.type = VAR_CODEPOS;
+		tempValue.u.codePosValue = pos;
+		SetVariableValue(newAnimId, &tempValue);
+	}
+}
+
+void Scr_EmitAnimation(char *pos, unsigned int animName, unsigned int sourcePos)
+{
+	if ( scrAnimPub.animTreeNames )
+		Scr_EmitAnimationInternal(pos, animName, scrAnimPub.animTreeNames);
+	else
+		CompileError(sourcePos, "#using_animtree was not specified");
+}

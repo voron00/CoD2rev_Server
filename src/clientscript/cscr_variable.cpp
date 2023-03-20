@@ -1157,6 +1157,24 @@ unsigned int FindArrayVariable(unsigned int parentId, unsigned int index)
 	return scrVarGlob.variableList[FindArrayVariableIndex(parentId, index)].hash.id;
 }
 
+bool IsObjectFree(unsigned int id)
+{
+	return (scrVarGlob.variableList[id].w.status & 0x60) == 0;
+}
+
+int Scr_GetClassnumForCharId(char charId)
+{
+	int i;
+
+	for ( i = 0; i < CLASS_NUM_COUNT; ++i )
+	{
+		if ( scrClassMap[i].charId == charId )
+			return i;
+	}
+
+	return -1;
+}
+
 unsigned int Scr_FindArrayIndex(unsigned int parentId, VariableValue *index)
 {
 	unsigned int varIndex;

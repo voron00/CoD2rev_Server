@@ -745,7 +745,13 @@ void Sys_RedirectFunctions()
 	SetJump(0x08079C84, (DWORD)TempMemoryReset);
 
 
-
+	// !!! SCRIPT METHODS !!!
+	SetJump(0x080FB640, (DWORD)Player_GetMethod);
+	SetJump(0x08117D6A, (DWORD)ScriptEnt_GetMethod);
+	SetJump(0x081158C2, (DWORD)BuiltIn_GetMethod);
+	SetJump(0x0811595C, (DWORD)Scr_GetMethod);
+	
+	SetJump(0x08115824, (DWORD)Scr_GetFunction);
 
 
 	// !!! COMPILER !!!
@@ -809,6 +815,15 @@ void Sys_RedirectFunctions()
 
 	extern unsigned int Scr_GetBuiltin(sval_u func_name);
 	SetJump(0x080702D8, (DWORD)Scr_GetBuiltin);
+	
+	extern int Scr_FindLocalVarIndex(unsigned int name, sval_u sourcePos, bool create, scr_block_s *block);
+	SetJump(0x0806E36A, (DWORD)Scr_FindLocalVarIndex);
+	
+	SetJump(0x0806CA94, (DWORD)Scr_EmitAnimation);
+	
+	SetJump(0x080704FA, (DWORD)EmitCall);
+	SetJump(0x0806FADC, (DWORD)EmitFunction);
+	SetJump(0x0807071E, (DWORD)EmitMethod);
 }
 
 class cCallOfDuty2Pro
