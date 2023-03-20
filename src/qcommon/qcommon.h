@@ -375,7 +375,7 @@ void CM_UnlinkEntity(svEntity_t *ent);
 clipHandle_t CM_TempBoxModel(const vec3_t mins, const vec3_t maxs, int capsule);
 int CM_LeafCluster( int leafnum );
 void CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
-int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, uint16_t *list, int listsize, int *lastLeaf );
+int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsize, int *lastLeaf );
 byte *CM_ClusterPVS( int cluster );
 int CM_PointLeafnum( const vec3_t p );
 

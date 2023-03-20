@@ -1220,51 +1220,6 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	Cbuf_Execute();
 }
 
-#ifndef TESTING_LIBRARY
-void playground()
-{
-	int checksum;
-	Com_Printf("Playground loaded. Test your stuff here. Remove when all is complete.");
-	Com_Printf("Loading map: mp_toujane\n");
-	Com_LoadBsp("maps/mp/mp_toujane.d3dbsp");
-	CM_LoadMap("maps/mp/mp_toujane.d3dbsp", &checksum);
-	Com_UnloadBsp();
-	CM_LinkWorld();
-	Com_Printf("name: %s\n", cm.name);
-	Com_Printf("numStaticModels: %i\n", cm.numStaticModels);
-	Com_Printf("numMaterials: %i\n", cm.numMaterials);
-	Com_Printf("numBrushSides: %i\n", cm.numBrushSides);
-	Com_Printf("numNodes: %i\n", cm.numNodes);
-	Com_Printf("numLeafs: %i\n", cm.numLeafs);
-	Com_Printf("leafbrushNodesCount: %i\n", cm.leafbrushNodesCount);
-	Com_Printf("numLeafBrushes: %i\n", cm.numLeafBrushes);
-	Com_Printf("numLeafSurfaces: %i\n", cm.numLeafSurfaces);
-	Com_Printf("vertCount: %i\n", cm.vertCount);
-	Com_Printf("edgeCount: %i\n", cm.edgeCount);
-	Com_Printf("triCount: %i\n", cm.triCount);
-	Com_Printf("borderCount: %i\n", cm.borderCount);
-	Com_Printf("partitionCount: %i\n", cm.partitionCount);
-	Com_Printf("aabbTreeCount: %i\n", cm.aabbTreeCount);
-	Com_Printf("numSubModels: %i\n", cm.numSubModels);
-	Com_Printf("numBrushes: %i\n", cm.numBrushes);
-	Com_Printf("numClusters: %i\n", cm.numClusters);
-	Com_Printf("clusterBytes: %i\n", cm.clusterBytes);
-	Com_Printf("vised: %i\n", cm.vised);
-	Com_Printf("numEntityChars: %i\n", cm.numEntityChars);
-	Com_Printf("checksum: %i\n", cm.checksum);
-	Com_Printf("Loading map: mp_toujane has been loaded!\n");
-	
-	vec3_t start = { 1321, 369, 37 };
-	vec3_t end = { 146, 723, 44 };
-	
-	vec3_t mins = { 0, 0, 0 };
-	vec3_t maxs = { 0, 0, 0 };
-	
-	int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
-	Com_Printf("%i\n", hitnum);
-}
-#endif
-
 void Com_Init(char* commandLine)
 {
 	jmp_buf* abortframe = (jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR);
@@ -1273,8 +1228,4 @@ void Com_Init(char* commandLine)
 		Sys_Error(va("Error during Initialization:\n%s\n", com_errorMessage));
 
 	Com_Init_Try_Block_Function(commandLine);
-	
-#ifndef TESTING_LIBRARY
-	playground();
-#endif
 }

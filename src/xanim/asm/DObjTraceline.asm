@@ -5,10 +5,10 @@ extern XModelSetTransArray
 extern SL_ConvertToString
 
 
-extern sub_80A8B5A
-extern sub_80A9094
-
-
+global sub_80A8B5B
+global sub_80A9095
+global sub_80A913D
+global sub_80A8E2D
 global DObjTraceline
 global VectorClear188
 global sub_80B9BA0
@@ -26,7 +26,215 @@ global Vec2Normalize962
 
 section .text
 
-  
+
+sub_80A8E2D:
+   push    ebp
+   mov     ebp, esp
+   mov     edx, [ebp+10h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp+0Ch]
+   fmul    dword [eax]
+   fstp    dword [edx]
+   mov     edx, [ebp+10h]
+   add     edx, 4
+   mov     eax, [ebp+8]
+   add     eax, 4
+   fld     dword [ebp+0Ch]
+   fmul    dword [eax]
+   fstp    dword [edx]
+   mov     edx, [ebp+10h]
+   add     edx, 8
+   mov     eax, [ebp+8]
+   add     eax, 8
+   fld     dword [ebp+0Ch]
+   fmul    dword [eax]
+   fstp    dword [edx]
+   pop     ebp
+   retn 
+
+
+sub_80A913D:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 58h
+   lea     eax, [ebp-48h]
+   mov     [esp+8], eax
+   mov     eax, [ebp+8]
+   mov     eax, [eax+1Ch]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    sub_80A8E2D
+   mov     eax, [ebp+8]
+   fld     dword [ebp-48h]
+   fmul    dword [eax]
+   fstp    dword [ebp-0Ch]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-48h]
+   fmul    dword [eax+4]
+   fstp    dword [ebp-10h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-48h]
+   fmul    dword [eax+8]
+   fstp    dword [ebp-14h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-48h]
+   fmul    dword [eax+0Ch]
+   fstp    dword [ebp-18h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-44h]
+   fmul    dword [eax+4]
+   fstp    dword [ebp-1Ch]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-44h]
+   fmul    dword [eax+8]
+   fstp    dword [ebp-20h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-44h]
+   fmul    dword [eax+0Ch]
+   fstp    dword [ebp-24h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-40h]
+   fmul    dword [eax+8]
+   fstp    dword [ebp-28h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-40h]
+   fmul    dword [eax+0Ch]
+   fstp    dword [ebp-2Ch]
+   mov     eax, [ebp+0Ch]
+   fld     dword [ebp-1Ch]
+   fadd    dword [ebp-28h]
+   fld1    
+   fsubrp  st1, st0
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 4
+   fld     dword [ebp-10h]
+   fadd    dword [ebp-2Ch]
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 8
+   fld     dword [ebp-14h]
+   fsub    dword [ebp-24h]
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 0Ch
+   fld     dword [ebp-10h]
+   fsub    dword [ebp-2Ch]
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 10h
+   fld     dword [ebp-0Ch]
+   fadd    dword [ebp-28h]
+   fld1    
+   fsubrp  st1, st0
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 14h
+   fld     dword [ebp-20h]
+   fadd    dword [ebp-18h]
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 18h
+   fld     dword [ebp-14h]
+   fadd    dword [ebp-24h]
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 1Ch
+   fld     dword [ebp-20h]
+   fsub    dword [ebp-18h]
+   fstp    dword [eax]
+   mov     eax, [ebp+0Ch]
+   add     eax, 20h
+   fld     dword [ebp-0Ch]
+   fadd    dword [ebp-1Ch]
+   fld1    
+   fsubrp  st1, st0
+   fstp    dword [eax]
+   leave   
+   retn  
+
+
+sub_80A9095:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 48h
+   lea     eax, [ebp-38h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+0Ch]
+   mov     [esp], eax
+   call    sub_80A913D
+   mov     edx, [ebp+10h]
+   mov     eax, [ebp+8]
+   fld     dword [eax]
+   fmul    dword [ebp-38h]
+   mov     eax, [ebp+8]
+   add     eax, 4
+   fld     dword [eax]
+   fmul    dword [ebp-2Ch]
+   faddp   st1, st0
+   mov     eax, [ebp+8]
+   add     eax, 8
+   fld     dword [eax]
+   fmul    dword [ebp-20h]
+   faddp   st1, st0
+   mov     eax, [ebp+0Ch]
+   fadd    dword [eax+10h]
+   fstp    dword [edx]
+   mov     edx, [ebp+10h]
+   add     edx, 4
+   mov     eax, [ebp+8]
+   fld     dword [eax]
+   fmul    dword [ebp-34h]
+   mov     eax, [ebp+8]
+   add     eax, 4
+   fld     dword [eax]
+   fmul    dword [ebp-28h]
+   faddp   st1, st0
+   mov     eax, [ebp+8]
+   add     eax, 8
+   fld     dword [eax]
+   fmul    dword [ebp-1Ch]
+   faddp   st1, st0
+   mov     eax, [ebp+0Ch]
+   fadd    dword [eax+14h]
+   fstp    dword [edx]
+   mov     edx, [ebp+10h]
+   add     edx, 8
+   mov     eax, [ebp+8]
+   fld     dword [eax]
+   fmul    dword [ebp-30h]
+   mov     eax, [ebp+8]
+   add     eax, 4
+   fld     dword [eax]
+   fmul    dword [ebp-24h]
+   faddp   st1, st0
+   mov     eax, [ebp+8]
+   add     eax, 8
+   fld     dword [eax]
+   fmul    dword [ebp-18h]
+   faddp   st1, st0
+   mov     eax, [ebp+0Ch]
+   fadd    dword [eax+18h]
+   fstp    dword [edx]
+   leave   
+   retn  
+
+
+sub_80A8B5B:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 18h
+   fld     dword [ebp+8]
+   fstp    qword [esp]
+   call    sqrt
+   fstp    dword [ebp-4]
+   mov     eax, [ebp-4]
+   mov     [ebp-8], eax
+   fld     dword [ebp-8]
+   leave   
+   retn  
+
 Vec2Normalize962:
    push    ebp
    mov     ebp, esp
@@ -45,7 +253,7 @@ Vec2Normalize962:
    fstp    dword [ebp-4]
    mov     eax, [ebp-4]
    mov     [esp], eax
-   call    sub_80A8B5A
+   call    sub_80A8B5B
    fstp    dword [ebp-4]
    fld     dword [ebp-4]
    fldz    
@@ -579,7 +787,7 @@ loc_80B8FDA:
    mov     eax, [ebp-140h]
    add     eax, 18h
    mov     [esp], eax
-   call    sub_80A9094
+   call    sub_80A9095
    lea     eax, [ebp-88h]
    mov     [esp+8], eax
    lea     eax, [ebp-78h]

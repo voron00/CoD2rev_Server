@@ -363,7 +363,7 @@ typedef struct leafList_s
 	int count;
 	int maxcount;
 	qboolean overflowed;
-	uint16_t *list;
+	int *list;
 	vec3_t bounds[2];
 	int lastLeaf;
 } leafList_t;

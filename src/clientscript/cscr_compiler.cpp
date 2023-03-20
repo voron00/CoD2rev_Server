@@ -3287,7 +3287,6 @@ void EmitProfEndStatement(sval_u profileName, sval_u sourcePos)
 
 void EmitStatementList(sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block)
 {
-	printf("test\n");
 	bool isLastStatement;
 	sval_u *node;
 	sval_u *nextNode;

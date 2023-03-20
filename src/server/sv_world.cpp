@@ -27,7 +27,7 @@ SV_LinkEntity
 #define MAX_TOTAL_ENT_LEAFS     128
 void SV_LinkEntity( gentity_t *gEnt )
 {
-	uint16_t leafs[MAX_TOTAL_ENT_LEAFS];
+	int leafs[MAX_TOTAL_ENT_LEAFS];
 	int cluster;
 	int num_leafs;
 	int i, j, k;

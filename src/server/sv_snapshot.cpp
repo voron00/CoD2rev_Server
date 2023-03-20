@@ -38,7 +38,7 @@ void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_
 	byte    *clientpvs;
 	byte    *bitvector;
 	float fogOpaqueDistSqrd;
-	uint16_t clusternums[128];
+	int clusternums[128];
 	int lastLeaf;
 	archivedEntity_t *aent;
 

@@ -113,7 +113,7 @@ void Sys_RedirectFunctions()
 	SetJump(0x0805C9DE, (DWORD)CM_SightTraceThroughTree);
 	SetJump(0x0805CCFA, (DWORD)CM_BoxSightTrace);
 	SetJump(0x0805B210, (DWORD)CM_Trace);
-	
+
 	SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
 
 	// DO NOT REMOVE
@@ -624,7 +624,7 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x080B955A, (DWORD)DObjGeomTraceline);
 	SetJump(0x080B8CA6, (DWORD)DObjTraceline);
-	
+
 
 	SetJump(0x08062A66, (DWORD)Com_ServerDObjCreate);
 	SetJump(0x08062B4C, (DWORD)Com_SafeServerDObjFree);
@@ -635,8 +635,8 @@ void Sys_RedirectFunctions()
 
 
 
-	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
-	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
+	//SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
+	//SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
 
 	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
 	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
@@ -750,7 +750,7 @@ void Sys_RedirectFunctions()
 	SetJump(0x08117D6A, (DWORD)ScriptEnt_GetMethod);
 	SetJump(0x081158C2, (DWORD)BuiltIn_GetMethod);
 	SetJump(0x0811595C, (DWORD)Scr_GetMethod);
-	
+
 	SetJump(0x08115824, (DWORD)Scr_GetFunction);
 
 
@@ -815,16 +815,16 @@ void Sys_RedirectFunctions()
 
 	extern unsigned int Scr_GetBuiltin(sval_u func_name);
 	SetJump(0x080702D8, (DWORD)Scr_GetBuiltin);
-	
+
 	extern int Scr_FindLocalVarIndex(unsigned int name, sval_u sourcePos, bool create, scr_block_s *block);
 	SetJump(0x0806E36A, (DWORD)Scr_FindLocalVarIndex);
-	
+
 	SetJump(0x0806CA94, (DWORD)Scr_EmitAnimation);
-	
+
 	SetJump(0x080704FA, (DWORD)EmitCall);
 	SetJump(0x0806FADC, (DWORD)EmitFunction);
 	SetJump(0x0807071E, (DWORD)EmitMethod);
-	
+
 	SetJump(0x080742D2, (DWORD)EmitStatement);
 }
 

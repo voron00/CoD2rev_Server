@@ -109,7 +109,7 @@ void CM_BoxLeafnums_r( leafList_t *ll, int nodenum )
 CM_BoxLeafnums
 ==================
 */
-int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, uint16_t *list, int listsize, int *lastLeaf )
+int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsize, int *lastLeaf )
 {
 	leafList_t ll;
 

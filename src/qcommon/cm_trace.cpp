@@ -150,7 +150,7 @@ void CM_PositionTest(traceWork_t *tw, trace_t *trace)
 {
 	leafList_s ll;
 	int i;
-	uint16_t leafs[1024];
+	int leafs[1024];
 
 	if ( !trace->allsolid )
 	{
