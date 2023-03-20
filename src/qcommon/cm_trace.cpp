@@ -1238,3 +1238,232 @@ int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const 
 
 	return hitNum;
 }
+
+void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask)
+{
+	vec_t radius;
+	vec4_t _end;
+	vec4_t _start;
+	cmodel_s *cmodel;
+	vec3_t offset;
+	traceWork_t tw;
+	int i;
+
+	cmodel = CM_ClipHandleToModel(model);
+	tw.contents = brushmask;
+
+	for ( i = 0; i <= 2; ++i )
+	{
+		offset[i] = (mins[i] + maxs[i]) * 0.5;
+		tw.size[i] = maxs[i] - offset[i];
+		tw.extents.start[i] = start[i] + offset[i];
+		tw.delta[i - 6] = end[i] + offset[i];
+		tw.midpoint[i] = (tw.extents.start[i] + tw.delta[i - 6]) * 0.5;
+		tw.delta[i] = tw.delta[i - 6] - tw.extents.start[i];
+		tw.halfDelta[i] = tw.delta[i] * 0.5;
+		tw.halfDeltaAbs[i] = fabs(tw.halfDelta[i]);
+	}
+
+	CM_CalcTraceExtents(&tw.extents);
+	tw.deltaLenSq = VectorLengthSquared(tw.delta);
+	tw.deltaLen = sqrt(tw.deltaLenSq);
+
+	if ( tw.size[0] <= tw.size[2] )
+		radius = tw.size[0];
+	else
+		radius = tw.size[2];
+
+	tw.radius = radius;
+	tw.offsetZ = tw.size[2] - radius;
+
+	for ( i = 0; i <= 1; ++i )
+	{
+		if ( tw.delta[i - 6] <= tw.extents.start[i] )
+		{
+			tw.bounds[0][i] = tw.delta[i - 6] - tw.radius;
+			tw.bounds[1][i] = tw.extents.start[i] + tw.radius;
+		}
+		else
+		{
+			tw.bounds[0][i] = tw.extents.start[i] - tw.radius;
+			tw.bounds[1][i] = tw.delta[i - 6] + tw.radius;
+		}
+	}
+
+	if ( tw.extents.end[2] <= tw.extents.start[2] )
+	{
+		tw.bounds[0][2] = tw.extents.end[2] - tw.offsetZ - tw.radius;
+		tw.bounds[1][2] = tw.extents.start[2] + tw.offsetZ + tw.radius;
+	}
+	else
+	{
+		tw.bounds[0][2] = tw.extents.start[2] - tw.offsetZ - tw.radius;
+		tw.bounds[1][2] = tw.extents.end[2] + tw.offsetZ + tw.radius;
+	}
+
+	CM_SetAxialCullOnly(&tw);
+	CM_GetTraceThreadInfo(&tw.threadInfo);
+
+	if ( VectorCompare(start, end) )
+	{
+		tw.isPoint = 0;
+
+		if ( model )
+		{
+			if ( model == 1023 )
+			{
+				if ( (tw.contents & tw.threadInfo.box_brush->contents) != 0 )
+					CM_TestCapsuleInCapsule(&tw, results);
+			}
+			else if ( !results->allsolid )
+			{
+				CM_TestInLeaf(&tw, &cmodel->leaf, results);
+			}
+		}
+		else
+		{
+			CM_PositionTest(&tw, results);
+		}
+	}
+	else
+	{
+		tw.isPoint = 0.0 == tw.size[0] + tw.size[1] + tw.size[2];
+		tw.radiusOffset[0] = tw.radius;
+		tw.radiusOffset[1] = tw.radius;
+		tw.radiusOffset[2] = tw.radius + tw.offsetZ;
+
+		if ( model )
+		{
+			if ( model == 1023 )
+			{
+				if ( (tw.contents & tw.threadInfo.box_brush->contents) != 0 )
+					CM_TraceCapsuleThroughCapsule(&tw, results);
+			}
+			else
+			{
+				CM_TraceThroughLeaf(&tw, &cmodel->leaf, results);
+			}
+		}
+		else
+		{
+			VectorCopy(tw.extents.start, _start);
+			_start[3] = 0.0;
+			VectorCopy(tw.extents.end, _end);
+			_end[3] = results->fraction;
+			CM_TraceThroughTree(&tw, 0, _start, _end, results);
+		}
+	}
+}
+
+void CM_BoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask)
+{
+	memset(results, 0, sizeof(trace_t));
+	results->fraction = 1.0;
+	CM_Trace(results, start, end, mins, maxs, model, brushmask);
+}
+
+void TransposeMatrix(const float (*matrix)[3], float (*transpose)[3])
+{
+	int j;
+	int i;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		for ( j = 0; j < 3; ++j )
+		{
+			*(&(*transpose)[3 * i] + j) = *(&(*matrix)[3 * j] + i);
+		}
+	}
+}
+
+void RotatePoint(float *point, const float (*mat)[3])
+{
+	vec3_t tvec;
+
+	VectorCopy(point, tvec);
+
+	point[0] = (*mat)[0] * tvec[0] + (*mat)[1] * tvec[1] + (*mat)[2] * tvec[2];
+	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
+	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
+}
+
+void CM_TransformedBoxTraceRotated(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask, const float *origin, const float (*matrix)[3])
+{
+	vec3_t transpose[3];
+	float halfheight;
+	vec3_t symetricSize[2];
+	vec3_t offset;
+	vec3_t end_l;
+	vec3_t start_l;
+	int i;
+	float oldFraction;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		offset[i] = (mins[i] + maxs[i]) * 0.5;
+		symetricSize[0][i] = mins[i] - offset[i];
+		symetricSize[1][i] = maxs[i] - offset[i];
+		start_l[i] = start[i] + offset[i];
+		end_l[i] = end[i] + offset[i];
+	}
+
+	VectorSubtract(start_l, origin, start_l);
+	VectorSubtract(end_l, origin, end_l);
+	halfheight = symetricSize[1][2];
+	RotatePoint(start_l, matrix);
+	RotatePoint(end_l, matrix);
+	oldFraction = results->fraction;
+
+	CM_Trace(results, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask);
+
+	if ( oldFraction > results->fraction )
+	{
+		TransposeMatrix(matrix, transpose);
+		RotatePoint(results->normal, transpose);
+	}
+}
+
+void CM_TransformedBoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles)
+{
+	vec3_t matrix[3];
+	float halfwidth;
+	float halfheight;
+	vec3_t symetricSize[2];
+	vec3_t offset;
+	vec3_t end_l;
+	vec3_t start_l;
+	int i;
+	float oldFraction;
+
+	if ( 0.0 != *angles || 0.0 != angles[1] || 0.0 != angles[2] )
+	{
+		AnglesToAxis(angles, matrix);
+		CM_TransformedBoxTraceRotated(results, start, end, mins, maxs, model, brushmask, origin, matrix);
+	}
+	else
+	{
+		for ( i = 0; i < 3; ++i )
+		{
+			offset[i] = (mins[i] + maxs[i]) * 0.5;
+			symetricSize[0][i] = mins[i] - offset[i];
+			symetricSize[1][i] = maxs[i] - offset[i];
+			start_l[i] = start[i] + offset[i];
+			end_l[i] = end[i] + offset[i];
+		}
+
+		VectorSubtract(start_l, origin, start_l);
+		VectorSubtract(end_l, origin, end_l);
+		halfwidth = symetricSize[1][0];
+		halfheight = symetricSize[1][2];
+		oldFraction = results->fraction;
+
+		CM_Trace(results, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask);
+	}
+}
+
+void CM_TransformedBoxTraceExternal(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles)
+{
+	memset(results, 0, sizeof(trace_t));
+	results->fraction = 0.0;
+	CM_TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, origin, angles);
+}

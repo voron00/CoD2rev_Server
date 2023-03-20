@@ -338,6 +338,16 @@ struct staticmodeltrace_t
 	int contents;
 };
 
+struct pointtrace_t
+{
+	TraceExtents extents;
+	int passEntNum;
+	int ignoreEntNum;
+	int contentmask;
+	int bLocational;
+	char *priorityMap;
+};
+
 struct cm_world_t
 {
 	float mins[3];

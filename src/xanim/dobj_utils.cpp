@@ -24,3 +24,11 @@ int DObjGetBoneIndex(const DObj_s *obj, unsigned int name)
 
 	return -1;
 }
+
+DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj)
+{
+	if ( obj->skel.partBits )
+		return &obj->skel.partBits->Mat;
+	else
+		return 0;
+}

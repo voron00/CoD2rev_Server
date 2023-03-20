@@ -50,6 +50,10 @@ void CM_TraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, tra
 void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 void CM_PositionTestInAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask);
+void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);
+void CM_BoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);
+void CM_TransformedBoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles);
+void CM_TransformedBoxTraceExternal(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles);
 int CM_SightTraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf);
 void CM_PointTraceStaticModels_r(locTraceWork_t *tw, unsigned short nodeIndex, const float *p1_, const float *p2, trace_t *trace);
 int CM_PointTraceStaticModelsComplete_r(staticmodeltrace_t *clip, unsigned short nodeIndex, const float *p1_, const float *p2);

@@ -1,7 +1,15 @@
 #include "../qcommon/qcommon.h"
 
-vec2_t actorLocationalMins = { -64.0, -32.0 };
-vec2_t actorLocationalMaxs = { 64.0, 72.0 };
+#ifdef TESTING_LIBRARY
+#define svs (*((serverStatic_t*)( 0x0841FB00 )))
+#define sv (*((server_t*)( 0x0842BC80 )))
+#else
+extern server_t sv;
+extern serverStatic_t svs;
+#endif
+
+vec3_t actorLocationalMins = { -64.0, -64.0, -32.0 };
+vec3_t actorLocationalMaxs = { 64.0, 64.0, 72.0 };
 
 clipHandle_t SV_ClipHandleForEntity(gentity_s *touch)
 {
@@ -11,6 +19,11 @@ clipHandle_t SV_ClipHandleForEntity(gentity_s *touch)
 		return CM_TempBoxModel(touch->r.mins, touch->r.maxs, touch->r.contents);
 }
 
+/*
+===============
+SV_LinkEntity
+===============
+*/
 #define MAX_TOTAL_ENT_LEAFS     128
 void SV_LinkEntity( gentity_t *gEnt )
 {
@@ -199,3 +212,4 @@ void SV_UnlinkEntity( gentity_t *gEnt )
 	gEnt->r.linked = 0;
 	CM_UnlinkEntity(ent);
 }
+

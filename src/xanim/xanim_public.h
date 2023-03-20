@@ -333,6 +333,15 @@ struct XAnimDeltaInfo
 };
 #pragma pack(pop)
 
+struct DObjTrace_s
+{
+	float fraction;
+	int sflags;
+	float normal[3];
+	unsigned short modelIndex;
+	unsigned short partName;
+};
+
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum);
 void DObjCreateDuplicateParts(DObj_s *obj);
 void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs);
@@ -375,6 +384,9 @@ unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *mod
 void QDECL XAnimCalcParts(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
 void QDECL XAnimCalcParts2(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
 void QDECL XAnimCalcNonLoopEnd(const XAnimParts_s *parts, const unsigned char *animToModel, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
+
+DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
+void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, char *priorityMap, DObjTrace_s *trace);
 
 #ifdef __cplusplus
 }
@@ -419,4 +431,6 @@ void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWei
 void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *syncState, float dtime, bool parentHasWeight, bool *childHasTimeForParent1, bool *childHasTimeForParent2);
 void XAnimSetupSyncNodes(XAnim_s *anims);
 
+int DObjHasContents(DObj_s *obj, int contentmask);
 void DObjCalcAnim(const DObj_s *obj, int *partBits);
+void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results);

@@ -3,6 +3,59 @@
 
 unsigned int g_empty;
 
+int DObjHasContents(DObj_s *obj, int contentmask)
+{
+	int i;
+
+	for ( i = 0; i < obj->numModels; ++i )
+	{
+		if ( (contentmask & XModelGetContents(obj->models[i])) != 0 )
+			return 1;
+	}
+
+	return 0;
+}
+
+void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results)
+{
+	int boneIndex;
+	unsigned short *boneName;
+	int i;
+	DObjAnimMat *pose;
+	XModelParts_s *modelParts;
+	XModel *model;
+	trace_t trace;
+
+	results->modelIndex = 0;
+	results->partName = 0;
+	trace.fraction = results->fraction;
+	trace.surfaceFlags = 0;
+	VectorClear(trace.normal);
+
+	pose = DObjGetRotTransArray(obj);
+
+	if ( pose )
+	{
+		for ( i = 0; i < obj->numModels; ++i )
+		{
+			model = obj->models[i];
+			modelParts = model->modelParts;
+			boneName = *model->modelParts->boneNames;
+			boneIndex = XModelTraceLine(model, &trace, pose, localStart, localEnd, contentmask);
+
+			if ( boneIndex >= 0 )
+				results->modelIndex = boneName[boneIndex];
+
+			pose += modelParts->numBones;
+		}
+	}
+
+	results->fraction = trace.fraction;
+	results->sflags = trace.surfaceFlags;
+
+	VectorCopy(trace.normal, results->normal);
+}
+
 void DObjCreateDuplicateParts(DObj *obj)
 {
 	const char *name;

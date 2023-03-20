@@ -230,8 +230,8 @@ typedef struct
 	int contents;
 	dmaterial_t *material;
 	unsigned short hitId;
+	unsigned short modelIndex;
 	unsigned short partName;
-	unsigned short partGroup;
 	byte allsolid;
 	byte startsolid;
 } trace_t;

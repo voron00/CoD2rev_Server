@@ -952,6 +952,7 @@ SetJump(0x080D6EDC, (DWORD)BG_AnimScriptCannedAnimation);
 SetJump(0x080D71FC, (DWORD)BG_GetAnimScriptEvent);
 SetJump(0x080D4970, (DWORD)BG_CopyStringIntoBuffer);
 SetJump(0x08078CEA, (DWORD)SL_FindLowercaseString);
+SetJump(0x080A142E, (DWORD)G_crandom);
 
 
 
@@ -1437,6 +1438,9 @@ SetJump(0x080C0354, (DWORD)XAnimSetGoalWeight);
 SetJump(0x080BEFE2, (DWORD)XAnimCalcAbsDelta);
 SetJump(0x080BE1F4, (DWORD)XAnimCalcDeltaTree);
 SetJump(0x080BB682, (DWORD)XAnim_CalcDelta3DForTime);
+SetJump(0x080A5194, (DWORD)MatrixTransposeTransformVector43);
+SetJump(0x080B955A, (DWORD)DObjGeomTraceline);
+SetJump(0x080B8CA6, (DWORD)DObjTraceline);
 
 
 
@@ -1682,6 +1686,8 @@ SetJump(0x080E117E, (DWORD)PM_GroundTrace);
 SetJump(0x080DEC3C, (DWORD)PM_playerTrace);
 SetJump(0x080F53E0, (DWORD)G_PlayerEvent);
 SetJump(0x080EE226, (DWORD)BG_WeaponFireRecoil);
+SetJump(0x081079C8, (DWORD)G_RunThink);
+SetJump(0x08107AC4, (DWORD)G_RunFrameForEntity);
 
 
 

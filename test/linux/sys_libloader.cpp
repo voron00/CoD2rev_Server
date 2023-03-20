@@ -112,6 +112,14 @@ void Sys_RedirectFunctions()
 	SetJump(0x0805C16E, (DWORD)CM_SightTraceThroughLeaf);
 	SetJump(0x0805C9DE, (DWORD)CM_SightTraceThroughTree);
 	SetJump(0x0805CCFA, (DWORD)CM_BoxSightTrace);
+	SetJump(0x0805B210, (DWORD)CM_Trace);
+	
+	SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
+
+	// DO NOT REMOVE
+	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
+	SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
+
 
 
 	// Don't hook that for now, just init
@@ -613,6 +621,11 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x080B7EFC, (DWORD)DObjCreate);
 
+
+	SetJump(0x080B955A, (DWORD)DObjGeomTraceline);
+	SetJump(0x080B8CA6, (DWORD)DObjTraceline);
+	
+
 	SetJump(0x08062A66, (DWORD)Com_ServerDObjCreate);
 	SetJump(0x08062B4C, (DWORD)Com_SafeServerDObjFree);
 	SetJump(0x0806289C, (DWORD)Com_GetServerDObj);
@@ -708,12 +721,6 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x08118822, (DWORD)Scr_SetEntityField);
 	SetJump(0x08118A22, (DWORD)Scr_GetEntityField);
-
-
-
-	// DO NOT REMOVE
-	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
-	SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
 
 
 
