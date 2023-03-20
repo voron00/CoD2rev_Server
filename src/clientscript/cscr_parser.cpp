@@ -295,6 +295,22 @@ void RemoveOpcodePos()
 	}
 }
 
+void AddThreadStartOpcodePos(unsigned int sourcePos)
+{
+	SourceLookup *lookup;
+
+	if ( scrVarPub.developer )
+	{
+		if ( scrCompilePub.developer_statement != 2 )
+		{
+			lookup = &scrParserGlob.sourcePosLookup[scrParserGlob.threadStartSourceIndex];
+			lookup->sourcePos = sourcePos;
+			lookup->type = 4;
+			scrParserGlob.threadStartSourceIndex = -1;
+		}
+	}
+}
+
 void CompileError(unsigned int sourcePos, const char *format, ...)
 {
 	char buf[MAX_STRING_CHARS];

@@ -824,6 +824,8 @@ void Sys_RedirectFunctions()
 	SetJump(0x080704FA, (DWORD)EmitCall);
 	SetJump(0x0806FADC, (DWORD)EmitFunction);
 	SetJump(0x0807071E, (DWORD)EmitMethod);
+	
+	SetJump(0x080742D2, (DWORD)EmitStatement);
 }
 
 class cCallOfDuty2Pro

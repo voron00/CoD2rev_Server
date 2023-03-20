@@ -837,6 +837,7 @@ unsigned int Scr_GetCanonicalStringIndex(unsigned int index);
 unsigned int SL_GetCanonicalString(const char *str);
 
 bool Scr_IsIdentifier(const char *token);
+unsigned int Scr_GetSourceBuffer(const char *codePos);
 
 #ifdef __cplusplus
 extern "C" {
@@ -848,6 +849,7 @@ void CompileError2(const char *codePos, const char *format, ...);
 int Scr_ScanFile(char *buf, int max_size);
 void AddOpcodePos(unsigned int sourcePos, int type);
 void RemoveOpcodePos();
+void AddThreadStartOpcodePos(unsigned int sourcePos);
 void QDECL Scr_YYACError(const char* fmt, ...);
 void QDECL ScriptParse(sval_u *source, char user);
 
@@ -857,6 +859,11 @@ bool EvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, VariableComp
 bool EvalExpression(sval_u expr, VariableCompileValue *constValue);
 void Scr_CalcLocalVarsStatement(sval_u val, scr_block_s *block);
 void Scr_CalcLocalVarsThread(sval_u exprlist, sval_u stmtlist, sval_u *stmttblock);
+int Scr_FindLocalVarIndex(unsigned int name, sval_u sourcePos, bool create, scr_block_s *block);
+
+void EmitArrayPrimitiveExpressionRef(sval_u expr, sval_u sourcePos, scr_block_s *block);
+void EmitStatement(sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block);
+void EmitStatementList(sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block);
 
 void EmitPrimitiveExpressionFieldObject(sval_u expr, sval_u sourcePos, scr_block_s *block);
 void EmitExpression(sval_u expr, scr_block_s *block);
