@@ -30,12 +30,21 @@ void test2()
 	//int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
 	Com_Printf("(%f %f %f)\n", test[3], test[4], test[5]);
 	*/
+	
+	//static int printed = 0;
+	
+	//if (printed)
+	//	return;
+	
+	//printed = 1;
+	
+	//Scr_DumpScriptThreads();
 }
 
 void Sys_RedirectFunctions()
 {
 	//SetJump(0x08094F02, (DWORD)test);
-	//SetJump(0x08094F02, (DWORD)test2);
+	SetJump(0x08094F02, (DWORD)test2);
 
 
 

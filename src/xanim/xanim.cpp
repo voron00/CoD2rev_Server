@@ -18,6 +18,11 @@ void *Hunk_AllocXAnimPrecache(int size)
 	return Hunk_AllocAlignInternal(size, 4);
 }
 
+void *Hunk_AllocXAnimServer(int size)
+{
+	return Hunk_AllocLowInternal(size);
+}
+
 bool XanimIsDefaultPart(XAnimParts *animParts)
 {
 	return animParts->isDefault;

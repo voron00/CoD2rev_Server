@@ -2206,6 +2206,10 @@ SetJump(0x0807F6F2, (DWORD)Scr_GetClassnumForCharId);
 SetJump(0x0806F75A, (DWORD)EmitArrayVariable);
 SetJump(0x0806F30C, (DWORD)EmitEvalArray);
 SetJump(0x08070AA8, (DWORD)LinkFile);
+SetJump(0x080845E4, (DWORD)Scr_GetDebugString);
+SetJump(0x08106AAC, (DWORD)BG_PostLoadAnim);
+SetJump(0x080BA7E4, (DWORD)XAnimCreateTree);
+SetJump(0x080BA7BC, (DWORD)XAnimTreeSize);
 
 SetJump(0x0805C534, (DWORD)CM_SightTraceCapsuleThroughCapsule);
 SetJump(0x0805C23C, (DWORD)CM_SightTraceSphereThroughSphere);

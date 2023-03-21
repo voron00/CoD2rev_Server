@@ -583,6 +583,14 @@ struct VariableCompileValue
 	sval_u sourcePos;
 };
 
+struct ThreadDebugInfo
+{
+	const char *pos[32];
+	int posSize;
+	float varUsage;
+	float endonUsage;
+};
+
 extern const char *var_typename[];
 
 void Scr_Error(const char *error);
@@ -822,6 +830,8 @@ void SafeRemoveVariable(unsigned int parentId, unsigned int name);
 unsigned int Scr_EvalArrayIndex(unsigned int parentId, VariableValue *var);
 unsigned int Scr_GetVariableField(unsigned int fieldId, unsigned int index);
 void ClearVariableField(unsigned int parentId, unsigned int name, VariableValue *value);
+float Scr_GetEntryUsage(unsigned int type, VariableUnion u);
+float Scr_GetObjectUsage(unsigned int parentId);
 void SetVariableValue(unsigned int id, VariableValue *value);
 void ClearVariableValue(unsigned int id);
 bool IsFieldObject(unsigned int id);

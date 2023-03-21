@@ -27,8 +27,8 @@ void SV_LinkEntity(gentity_s *ent)
 	float max;
 	float max2d;
 	clipHandle_t handle;
-	vec3_t player_maxs;
-	vec3_t player_mins;
+	vec3_t maxs;
+	vec3_t mins;
 	DObj_s *obj;
 	svEntity_t *svEnt;
 	float *angles;
@@ -164,16 +164,16 @@ unlink:
 	{
 		if ( (ent->r.svFlags & 2) != 0 )
 		{
-			Vector2Add(currentOrigin, actorLocationalMins, player_mins);
-			Vector2Add(currentOrigin, actorLocationalMaxs, player_maxs);
+			Vector2Add(currentOrigin, actorLocationalMins, mins);
+			Vector2Add(currentOrigin, actorLocationalMaxs, maxs);
 		}
 		else
 		{
-			DObjGetBounds(obj, player_mins, player_maxs);
-			Vector2Add(currentOrigin, player_mins, player_mins);
-			Vector2Add(currentOrigin, player_maxs, player_maxs);
+			DObjGetBounds(obj, mins, maxs);
+			Vector2Add(currentOrigin, mins, mins);
+			Vector2Add(currentOrigin, maxs, maxs);
 		}
-		CM_LinkEntity(svEnt, player_mins, player_maxs, handle);
+		CM_LinkEntity(svEnt, mins, maxs, handle);
 	}
 	else
 	{

@@ -27,7 +27,7 @@ extern bgs_t level_bgs;
 
 void SetClientViewAngle(gentity_s *ent, const float *angle)
 {
-	long double direction;
+	float direction;
 	float proneDirection;
 	float torsoPitch;
 	vec3_t angles;

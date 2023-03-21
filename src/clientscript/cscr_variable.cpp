@@ -1691,7 +1691,7 @@ void Scr_EvalLess(VariableValue *value1, VariableValue *value2)
 	if ( type == VAR_FLOAT )
 	{
 		value1->type = VAR_INTEGER;
-		value1->u.intValue = value2->u.floatValue > (long double)value1->u.floatValue;
+		value1->u.intValue = value2->u.floatValue > (float)value1->u.floatValue;
 	}
 	else if ( type == VAR_INTEGER )
 	{
@@ -1713,7 +1713,7 @@ void Scr_EvalGreater(VariableValue *value1, VariableValue *value2)
 	if ( type == VAR_FLOAT )
 	{
 		value1->type = VAR_INTEGER;
-		value1->u.intValue = value1->u.floatValue > (long double)value2->u.floatValue;
+		value1->u.intValue = value1->u.floatValue > (float)value2->u.floatValue;
 	}
 	else if ( type == VAR_INTEGER )
 	{
@@ -1983,7 +1983,7 @@ void Scr_EvalDivide(VariableValue *value1, VariableValue *value2)
 
 			if ( value2->u.intValue )
 			{
-				value1->u.floatValue = (long double)value1->u.intValue / (long double)value2->u.intValue;
+				value1->u.floatValue = (float)value1->u.intValue / (float)value2->u.intValue;
 				return;
 			}
 
@@ -2609,14 +2609,227 @@ void Scr_SetClassMap(unsigned int classnum)
 	scrClassMap[classnum].id = Scr_AllocArray();
 }
 
+float Scr_GetObjectEntryUsage(VariableValueInternal *entryValue)
+{
+	return Scr_GetEntryUsage(entryValue->w.status & 0x1F, entryValue->u.u) + 1.0;
+}
+
+float Scr_GetEntryUsage(unsigned int type, VariableUnion u)
+{
+	if ( type == 1 && (scrVarGlob.variableList[u.intValue].w.status & 0x1F) == 22 )
+		return Scr_GetObjectUsage(u.pointerValue) / ((float)scrVarGlob.variableList[u.intValue].u.refCount + 1.0);
+	else
+		return 0.0;
+}
+
+float Scr_GetObjectUsage(unsigned int parentId)
+{
+	float usage;
+	unsigned int i;
+
+	usage = 1.0;
+
+	for ( i = FindNextSibling(parentId); i; i = FindNextSibling(i) )
+		usage = Scr_GetObjectEntryUsage((VariableValueInternal *)(16 * i + 136921088)) + usage;
+
+	return usage;
+}
+
+float Scr_GetEndonUsage(unsigned int parentId)
+{
+	unsigned int id;
+	unsigned int localId;
+
+	localId = FindObjectVariable(scrVarPub.pauseArrayId, parentId);
+
+	if ( localId )
+	{
+		id = FindObject(localId);
+		return Scr_GetObjectUsage(id);
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+
+float Scr_GetThreadUsage(VariableStackBuffer *stackBuf, float *endonUsage)
+{
+	unsigned int localId;
+	float usage;
+	int size;
+	char *buf;
+	char *pos;
+	VariableUnion u;
+
+	size = stackBuf->size;
+	buf = &stackBuf->buf[5 * size];
+	usage = Scr_GetObjectUsage(stackBuf->localId);
+	*endonUsage = Scr_GetEndonUsage(stackBuf->localId);
+	localId = stackBuf->localId;
+
+	while ( size )
+	{
+		pos = buf - 4;
+		u.intValue = *(int *)pos;
+		buf = pos - 1;
+		--size;
+		if ( *buf == 7 )
+		{
+			localId = GetParentLocalId(localId);
+			usage = Scr_GetObjectUsage(localId) + usage;
+			*endonUsage = Scr_GetEndonUsage(localId) + *endonUsage;
+		}
+		else
+		{
+			usage = Scr_GetEntryUsage((uint8_t)*buf, u) + usage;
+		}
+	}
+
+	return usage;
+}
+
+static int ThreadInfoCompare(const void *ainfo1, const void *ainfo2)
+{
+	const char *pos1;
+	int i;
+	const char *pos2;
+	ThreadDebugInfo *info1, *info2;
+	info1 = (ThreadDebugInfo *)ainfo1;
+	info2 = (ThreadDebugInfo *)ainfo2;
+
+	for ( i = 0; ; ++i )
+	{
+		if ( i >= info1->posSize || i >= info2->posSize )
+		{
+			return info1->posSize - info2->posSize;
+		}
+		pos1 = info1->pos[i];
+		pos2 = info2->pos[i];
+		if ( pos1 != pos2 )
+		{
+			break;
+		}
+	}
+	return pos1 - pos2;
+}
+
 void Scr_DumpScriptThreads()
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	ThreadDebugInfo *info;
+	float usage;
+	const char *currentPos;
+	char type;
+	char *buf;
+	char *nextPos;
+	const char *pos;
+	int size;
+	VariableStackBuffer *stackBuf;
+	ThreadDebugInfo threadInfo;
+	unsigned int id;
+	unsigned int k;
+	int count;
+	int j;
+	int arrayIndex;
+	ThreadDebugInfo *pInfo;
+	int num;
+	ThreadDebugInfo *infoArray;
+	VariableValueInternal *entryValue;
+	unsigned int i;
+
+	infoArray = (ThreadDebugInfo *)Z_TryMallocInternal(0x8BFEE8u);
+
+	if ( infoArray )
+	{
+		num = 0;
+		for ( i = 1; i <= 0xFFFD; ++i )
+		{
+			entryValue = &scrVarGlob.variableList[i];
+			if ( (entryValue->w.status & 0x60) != 0 && (entryValue->w.status & 0x1F) == 10 )
+			{
+				pInfo = &infoArray[num++];
+				threadInfo.posSize = 0;
+				stackBuf = entryValue->u.u.stackValue;
+				size = stackBuf->size;
+				pos = stackBuf->pos;
+				buf = stackBuf->buf;
+				while ( size )
+				{
+					--size;
+					type = *buf;
+					nextPos = buf + 1;
+					currentPos = *(const char **)nextPos;
+					buf = nextPos + 4;
+					if ( type == 7 )
+						threadInfo.pos[threadInfo.posSize++] = currentPos;
+				}
+				threadInfo.pos[threadInfo.posSize++] = pos;
+				info = pInfo;
+				info->varUsage = Scr_GetThreadUsage(stackBuf, &pInfo->endonUsage);
+				pInfo->posSize = threadInfo.posSize--;
+				for ( j = 0; j < pInfo->posSize; ++j )
+					pInfo->pos[j] = threadInfo.pos[threadInfo.posSize - j];
+			}
+		}
+		qsort(infoArray, num, sizeof(ThreadDebugInfo), ThreadInfoCompare);
+		Com_Printf("********************************\n");
+		arrayIndex = 0;
+		while ( arrayIndex < num )
+		{
+			pInfo = &infoArray[arrayIndex];
+			count = 0;
+			threadInfo.varUsage = 0.0;
+			threadInfo.endonUsage = 0.0;
+			do
+			{
+				++count;
+				threadInfo.varUsage = threadInfo.varUsage + infoArray[arrayIndex].varUsage;
+				threadInfo.endonUsage = threadInfo.endonUsage + infoArray[arrayIndex++].endonUsage;
+			}
+			while ( arrayIndex < num && !ThreadInfoCompare(pInfo, &infoArray[arrayIndex]) );
+			Com_Printf(
+			    "count: %d, var usage: %d, endon usage: %d\n",
+			    count,
+			    (int)threadInfo.varUsage,
+			    (int)threadInfo.endonUsage);
+			Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, pInfo->pos[0], 0);
+			for ( j = 1; j < pInfo->posSize; ++j )
+			{
+				Com_Printf("called from:\n");
+				Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, pInfo->pos[j], 0);
+			}
+		}
+		Z_FreeInternal(infoArray);
+		Com_Printf("********************************\n");
+		for ( k = 0; k <= 3; ++k )
+		{
+			if ( scrClassMap[k].entArrayId )
+			{
+				threadInfo.varUsage = 0.0;
+				count = 0;
+				for ( id = FindNextSibling(scrClassMap[k].entArrayId); id; id = FindNextSibling(id) )
+				{
+					++count;
+					if ( (scrVarGlob.variableList[id].w.status & 0x1F) == 1 )
+					{
+						usage = Scr_GetObjectUsage(scrVarGlob.variableList[id].u.u.intValue);
+						threadInfo.varUsage = usage + threadInfo.varUsage;
+					}
+				}
+				Com_Printf("ent type '%s'... count: %d, var usage: %d\n", scrClassMap[k].name, count, (int)threadInfo.varUsage);
+			}
+		}
+		Com_Printf("********************************\n");
+	}
+	else
+	{
+		Com_Printf("Cannot dump script threads: out of memory\n");
+	}
 }
 
 void Scr_DumpScriptVariables()
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	;
 }
 
 void Scr_AddFieldsForFile(const char *filename)

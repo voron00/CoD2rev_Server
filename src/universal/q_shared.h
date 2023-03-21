@@ -30,9 +30,9 @@
 #endif
 #else
 #ifdef _M_IX86
-#define	CPUSTRING	"win-x86-debug"
+#define	CPUSTRING	"win-x86"
 #elif defined _M_ALPHA
-#define	CPUSTRING	"win-AXP-debug"
+#define	CPUSTRING	"win-AXP"
 #endif
 #endif
 
