@@ -16,6 +16,7 @@ typedef struct
 #define animstrings (((animStringItem_t*)( 0x08164740 )))
 #define testdata (((animScriptData_t*)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
+#define test (*((vec3_t*)( 0x0815D6E8 )))
 
 void test2()
 {
@@ -26,8 +27,8 @@ void test2()
 	vec3_t mins = { 0, 0, 0 };
 	vec3_t maxs = { 0, 0, 0 };
 
-	int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
-	Com_Printf("%i\n", hitnum);
+	//int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
+	Com_Printf("(%f %f %f)\n", test[3], test[4], test[5]);
 	*/
 }
 
@@ -120,21 +121,20 @@ void Sys_RedirectFunctions()
 	SetJump(0x080596DA, (DWORD)CM_TestCapsuleInCapsule);
 	SetJump(0x08059674, (DWORD)CM_TestInLeaf);
 	SetJump(0x0805AA0E, (DWORD)CM_TraceCapsuleThroughCapsule);
-	
-	
+
+
 	SetJump(0x0805D668, (DWORD)CM_CalcTraceExtents);
 	SetJump(0x0805B198, (DWORD)CM_SetAxialCullOnly);
-	
+
 
 	SetJump(0x0805B210, (DWORD)CM_Trace);
 	SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
 
-	// DO NOT REMOVE
-	//SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
-	//SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
+	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
+	SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
 
-	//SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
-	//SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
+	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
+	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
 
 
 
@@ -838,10 +838,10 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x080742D2, (DWORD)EmitStatement);
 	SetJump(0x080751B4, (DWORD)EmitThread);
-	
+
 	SetJump(0x0807799E, (DWORD)Scr_AddSourceBuffer);
 	SetJump(0x0810DF86, (DWORD)GScr_LoadScripts);
-	
+
 	SetJump(0x080837EC, (DWORD)VM_Execute);
 	SetJump(0x08084FD2, (DWORD)Scr_RunCurrentThreads);
 	SetJump(0x08083E96, (DWORD)Scr_InitSystem);

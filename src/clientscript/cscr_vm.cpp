@@ -731,7 +731,7 @@ void VM_UnarchiveStack(unsigned int startLocalId, function_stack_t *stack, const
 		}
 		else
 		{
-			startTop->u.intValue = *(_DWORD *)nextPos;
+			startTop->u.intValue = *(uint32_t *)nextPos;
 		}
 
 		stackPos = nextPos + 4;

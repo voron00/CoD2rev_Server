@@ -19,197 +19,173 @@ clipHandle_t SV_ClipHandleForEntity(gentity_s *touch)
 		return CM_TempBoxModel(touch->r.mins, touch->r.maxs, touch->r.contents);
 }
 
-/*
-===============
-SV_LinkEntity
-===============
-*/
-#define MAX_TOTAL_ENT_LEAFS     128
-void SV_LinkEntity( gentity_t *gEnt )
+void SV_LinkEntity(gentity_s *ent)
 {
-	int leafs[MAX_TOTAL_ENT_LEAFS];
-	int cluster;
-	int num_leafs;
-	int i, j, k;
+	svEntity_t *writeEnt;
+	int j;
+	int i;
+	float max;
+	float max2d;
+	clipHandle_t handle;
+	vec3_t player_maxs;
+	vec3_t player_mins;
+	DObj_s *obj;
+	svEntity_t *svEnt;
+	float *angles;
+	float *currentOrigin;
 	int lastLeaf;
-	float       *origin, *angles;
-	struct svEntity_s  *ent;
-	struct DObj_s* dobj;
-	vec3_t min, max;
-	clipHandle_t clip;
+	int c;
+	int b;
+	int a;
+	int num_leafs;
+	int cluster;
+	int leafs[128];
 
-	ent = SV_SvEntityForGentity( gEnt );
-	/*
-		// Ridah, sanity check for possible currentOrigin being reset bug
-		if ( !gEnt->r.bmodel && VectorCompare( gEnt->r.currentOrigin, vec3_origin ) ) {
-			Com_DPrintf( "WARNING: BBOX entity is being linked at world origin, this is probably a bug\n" );
-		}
-		if ( ent->worldSector ) {
-			SV_UnlinkEntity( gEnt );    // unlink from old position
-		}
-	*/
-	// encode the size into the entityState_t for client prediction
-	if ( gEnt->r.bmodel )
+	svEnt = SV_SvEntityForGentity(ent);
+
+	if ( ent->r.bmodel )
 	{
-		gEnt->s.solid = SOLID_BMODEL;       // a solid_box will never create this value
+		ent->s.solid = 0xFFFFFF;
 	}
-	else if ( gEnt->r.contents & ( CONTENTS_SOLID | CONTENTS_BODY ) )
+	else if ( (ent->r.contents & 0x2000001) != 0 )
 	{
-		// assume that x/y are equal and symetric
-		i = gEnt->r.maxs[0];
-		if ( i < 1 )
-		{
-			i = 1;
-		}
-		if ( i > 255 )
-		{
-			i = 255;
-		}
+		a = (int)ent->r.maxs[0];
 
-		// z is not symetric
-		j = ( 1.0 - gEnt->r.mins[2] );
-		if ( j < 1 )
-		{
-			j = 1;
-		}
-		if ( j > 255 )
-		{
-			j = 255;
-		}
+		if ( a <= 0 )
+			a = 1;
 
-		// and z maxs can be negative...
-		k = ( gEnt->r.maxs[2] + 32 );
-		if ( k < 1 )
-		{
-			k = 1;
-		}
-		if ( k > 255 )
-		{
-			k = 255;
-		}
-		gEnt->s.solid = ( k << 16 ) | ( j << 8 ) | i;
-		/*
-		BLACKOPS
-				if ( gEnt->s.solid == 0xFFFFFF )
-				{
-					gEnt->s.solid = 1;
-				}
-		*/
+		if ( a > 255 )
+			a = 255;
+
+		b = (int)(1.0 - ent->r.mins[2]);
+
+		if ( b <= 0 )
+			b = 1;
+
+		if ( b > 255 )
+			b = 255;
+
+		c = (int)(ent->r.maxs[2] + 32.0);
+
+		if ( c <= 0 )
+			c = 1;
+
+		if ( c > 255 )
+			c = 255;
+
+		ent->s.solid = a | (c << 16) | (b << 8);
 	}
 	else
 	{
-		gEnt->s.solid = 0;
+		ent->s.solid = 0;
 	}
 
-	// get the position
-	origin = gEnt->r.currentOrigin;
-	angles = gEnt->r.currentAngles;
+	angles = ent->r.currentAngles;
+	currentOrigin = ent->r.currentOrigin;
+	SnapAngles(ent->r.currentAngles);
 
-	SnapAngles(angles);
-
-	// set the abs box
-	if ( gEnt->r.bmodel && ( angles[0] || angles[1] || angles[2] ) )
+	if ( !ent->r.bmodel || *angles == 0.0 && angles[1] == 0.0 && angles[2] == 0.0 )
 	{
-		// expand for rotation
-		float max;
-		int i;
+		VectorAdd(currentOrigin, ent->r.mins, ent->r.absmin);
+		VectorAdd(currentOrigin, ent->r.maxs, ent->r.absmax);
+	}
+	else if ( *angles == 0.0 && angles[2] == 0.0 )
+	{
+		max2d = RadiusFromBounds2D(ent->r.mins, ent->r.maxs);
 
-		max = RadiusFromBounds( gEnt->r.mins, gEnt->r.maxs );
-		for ( i = 0 ; i < 3 ; i++ )
+		for ( i = 0; i <= 1; ++i )
 		{
-			gEnt->r.absmin[i] = origin[i] - max;
-			gEnt->r.absmax[i] = origin[i] + max;
+			ent->r.absmin[i] = currentOrigin[i] - max2d;
+			ent->r.absmax[i] = currentOrigin[i] + max2d;
 		}
+
+		ent->r.absmin[2] = currentOrigin[2] + ent->r.mins[2];
+		ent->r.absmax[2] = currentOrigin[2] + ent->r.maxs[2];
 	}
 	else
 	{
-		// normal
-		VectorAdd( origin, gEnt->r.mins, gEnt->r.absmin );
-		VectorAdd( origin, gEnt->r.maxs, gEnt->r.absmax );
+		max = RadiusFromBounds(ent->r.mins, ent->r.maxs);
+
+		for ( j = 0; j <= 2; ++j )
+		{
+			ent->r.absmin[j] = currentOrigin[j] - max;
+			ent->r.absmax[j] = currentOrigin[j] + max;
+		}
 	}
 
-	// because movement is clipped an epsilon away from an actual edge,
-	// we must fully check even when bounding boxes don't quite touch
-	gEnt->r.absmin[0] -= 1;
-	gEnt->r.absmin[1] -= 1;
-	gEnt->r.absmin[2] -= 1;
-	gEnt->r.absmax[0] += 1;
-	gEnt->r.absmax[1] += 1;
-	gEnt->r.absmax[2] += 1;
+	ent->r.absmin[0] = ent->r.absmin[0] - 1.0;
+	ent->r.absmin[1] = ent->r.absmin[1] - 1.0;
+	ent->r.absmin[2] = ent->r.absmin[2] - 1.0;
+	ent->r.absmax[0] = ent->r.absmax[0] + 1.0;
+	ent->r.absmax[1] = ent->r.absmax[1] + 1.0;
+	ent->r.absmax[2] = ent->r.absmax[2] + 1.0;
+	svEnt->numClusters = 0;
+	svEnt->lastCluster = 0;
 
-	// link to PVS leafs
-	ent->numClusters = 0;
-	ent->lastCluster = 0;
-
-	if ( !(gEnt->r.svFlags & 0x19) )
+	if ( (ent->r.svFlags & 0x19) == 0 )
 	{
-		//get all leafs, including solids
-		num_leafs = CM_BoxLeafnums( gEnt->r.absmin, gEnt->r.absmax, leafs, MAX_TOTAL_ENT_LEAFS, &lastLeaf );
+		num_leafs = CM_BoxLeafnums(ent->r.absmin, ent->r.absmax, leafs, 128, &lastLeaf);
 
-		// if none of the leafs were inside the map, the
-		// entity is outside the world and can be considered unlinked
 		if ( !num_leafs )
 		{
-			CM_UnlinkEntity(ent);
+unlink:
+			CM_UnlinkEntity(svEnt);
 			return;
 		}
 
-		// store as many explicit clusters as we can
-		for ( i = 0 ; i < num_leafs ; i++ )
+		for ( a = 0; a < num_leafs; ++a )
 		{
-			cluster = CM_LeafCluster( leafs[i] );
+			cluster = CM_LeafCluster(leafs[a]);
+
 			if ( cluster != -1 )
 			{
-				ent->clusternums[ent->numClusters++] = cluster;
-				if ( ent->numClusters == MAX_ENT_CLUSTERS )
-				{
+				writeEnt = svEnt;
+				svEnt->clusternums[svEnt->numClusters] = cluster;
+				++writeEnt->numClusters;
+
+				if ( svEnt->numClusters == 16 )
 					break;
-				}
 			}
 		}
 
-		// store off a last cluster if we need to
-		if ( i != num_leafs )
-		{
-			ent->lastCluster = CM_LeafCluster( lastLeaf );
-		}
+		if ( a != num_leafs )
+			svEnt->lastCluster = CM_LeafCluster(lastLeaf);
 	}
-	gEnt->r.linked = qtrue;
 
-	if ( !gEnt->r.contents )
+	ent->r.linked = 1;
+
+	if ( !ent->r.contents )
+		goto unlink;
+
+	handle = SV_ClipHandleForEntity(ent);
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj && (ent->r.svFlags & 6) != 0 )
 	{
-		CM_UnlinkEntity(ent);
-		return;
-	}
-	clip = SV_ClipHandleForEntity(gEnt);
-	dobj = Com_GetServerDObj(gEnt->s.number);
-	if ( dobj && gEnt->r.svFlags & 6 )
-	{
-		if ( gEnt->r.svFlags & 2 )
+		if ( (ent->r.svFlags & 2) != 0 )
 		{
-			VectorAdd(origin, actorLocationalMins, min);
-			VectorAdd(origin, actorLocationalMaxs, max);
+			Vector2Add(currentOrigin, actorLocationalMins, player_mins);
+			Vector2Add(currentOrigin, actorLocationalMaxs, player_maxs);
 		}
 		else
 		{
-			DObjGetBounds(dobj, min, max);
-			VectorAdd(origin, min, min);
-			VectorAdd(origin, max, max);
+			DObjGetBounds(obj, player_mins, player_maxs);
+			Vector2Add(currentOrigin, player_mins, player_mins);
+			Vector2Add(currentOrigin, player_maxs, player_maxs);
 		}
-		CM_LinkEntity(ent, min, max, clip);
+		CM_LinkEntity(svEnt, player_mins, player_maxs, handle);
 	}
 	else
 	{
-		CM_LinkEntity(ent, gEnt->r.absmin, gEnt->r.absmax, clip);
+		CM_LinkEntity(svEnt, ent->r.absmin, ent->r.absmax, handle);
 	}
 }
 
-void SV_UnlinkEntity( gentity_t *gEnt )
+void SV_UnlinkEntity(gentity_s *ent)
 {
-	svEntity_t *ent;
+	svEntity_t *svEnt;
 
-	ent = SV_SvEntityForGentity(gEnt);
-	gEnt->r.linked = 0;
-	CM_UnlinkEntity(ent);
+	svEnt = SV_SvEntityForGentity(ent);
+	ent->r.linked = 0;
+	CM_UnlinkEntity(svEnt);
 }
-
