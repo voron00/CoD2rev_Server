@@ -12,11 +12,6 @@ extern XModelDataReadShort
 extern XModelDataReadFloat
 
 
-global sub_80C1718
-global sub_80C2C6E
-global sub_80C2C4E
-global sub_80C17FA
-global sub_80C2CD4
 global XAnimLoadNotifyInfo
 global XAnimLoadFile
 

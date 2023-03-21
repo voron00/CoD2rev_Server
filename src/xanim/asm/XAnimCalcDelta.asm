@@ -2,16 +2,12 @@ extern SL_GetStringOfLen
 
 
 global XAnim_CalcDeltaForTime
-global sub_80C0FE8
-global sub_80C11C4
 global XAnim_CalcDelta3DForTime
 global XAnim_CalcRotDeltaForQuats
 global XAnim_CalcRotDeltaQuat
 global XAnimSetDeltaQuatFrames
 global XAnim_CalcPosDeltaForTrans
-global VectorClear875
 global XAnim_CalcPosDeltaTrans
-global VectorCopy925
 global XAnim_CalcDynamicIndicesForQuats_s
 global XAnim_CalcDynamicIndexForQuat_s
 global XAnim_SetTime
@@ -29,26 +25,9 @@ global XAnim_GetTimeIndex_b
 global XAnim_CalcDynamicIndicesForTrans_b
 global XAnim_CalcDynamicIndexForTrans_b
 global XAnimGetAbsDelta
-global Vector2Copy713
-global Vector2Clear651
 global XAnimCalcParts
-global sub_80C0B94
-global sub_80C13AA
-global sub_80C150E
-global sub_80C0C3A
-global sub_80C1544
-global sub_80C1422
-global sub_80C0CE0
-global sub_80C1608
-global sub_80C1706
 global XAnimCalcParts2
-global sub_80C0820
-global sub_80C08C6
-global sub_80C096C
 global XAnimCalcNonLoopEnd
-global sub_80BAB16
-global sub_80BAB6C
-global sub_80BABCE
 global XAnimCalc_GetLowestElement
 global XAnimSetModel
 

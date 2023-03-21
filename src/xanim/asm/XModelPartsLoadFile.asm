@@ -13,16 +13,6 @@ extern XModelDataReadFloat
 
 
 global XModelPartsLoadFile
-global sub_80C3B60
-global sub_80C51F0
-global sub_80C3C42
-global sub_80C5210
-global sub_80A5372
-global sub_80B9D76
-global sub_80B9D30
-global sub_80A9094
-global sub_80A913C
-global sub_80A8E2C
 
 
 section .text

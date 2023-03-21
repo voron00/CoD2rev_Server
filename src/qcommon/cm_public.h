@@ -32,13 +32,12 @@ void CM_LoadMapFromBsp(const char *name, bool usePvs);
 
 BspHeader* Com_GetBspHeader(unsigned int *size, unsigned int *checksum);
 cmodel_t *CM_ClipHandleToModel( clipHandle_t handle );
+void CM_SetAxialCullOnly(traceWork_t *tw);
 bool CM_CullBox(traceWork_t *tw, const float *origin, const float *halfSize);
 void CM_MeshTestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_BoxLeafnums_r( leafList_t *ll, int nodenum );
-void CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace);
 int CM_TraceSphereThroughSphere(traceWork_t *tw, const float *vStart, const float *vEnd, const float *vStationary, float radius, trace_t *trace);
 int CM_TraceCylinderThroughCylinder(traceWork_t *tw, const float *vStationary, float fStationaryHalfHeight, float radius, trace_t *trace);
-void CM_TraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace);
 void CM_TraceThroughAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 int CM_TestInLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *start, const float *end, int contentmask);
@@ -47,6 +46,7 @@ int CM_PointTraceStaticModelsComplete(const float *start, const float *end, int 
 void CM_PointTraceStaticModels(trace_t *results, const float *start, const float *end, int contentmask);
 int CM_AreaEntities(const vec3_t *mins, const vec3_t *maxs, int *entityList, int maxcount, int contentmask);
 void CM_TraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
+void CM_TestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 void CM_PositionTestInAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask);
@@ -87,6 +87,9 @@ void QDECL CM_TraceThroughTree(traceWork_t *tw, int num, const float *p1_, const
 void QDECL CM_TraceThroughBrush(traceWork_t *tw, cbrush_s *brush, trace_t *trace);
 void QDECL CM_TestInLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, trace_t *trace);
 void QDECL CM_TestBoxInBrush(traceWork_t *tw, cbrush_s *brush, trace_t *trace);
+void QDECL CM_TracePointThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, trace_t *trace);
+void QDECL CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace);
+void QDECL CM_TraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace);
 
 #ifdef __cplusplus
 }

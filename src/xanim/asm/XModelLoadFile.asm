@@ -17,10 +17,6 @@ global XModelIsValidModelFile
 global XModelDataReadInt
 global XModelDataReadShort
 global XModelDataReadFloat
-global sub_80C525E
-global sub_80C528E
-global sub_80C52D2
-global sub_80C532E
 
 
 section .text

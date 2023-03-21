@@ -116,8 +116,18 @@ void Sys_RedirectFunctions()
 
 
 
-	//SetJump(0x0805B210, (DWORD)CM_Trace);
-	//SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
+
+	SetJump(0x080596DA, (DWORD)CM_TestCapsuleInCapsule);
+	SetJump(0x08059674, (DWORD)CM_TestInLeaf);
+	SetJump(0x0805AA0E, (DWORD)CM_TraceCapsuleThroughCapsule);
+	
+	
+	SetJump(0x0805D668, (DWORD)CM_CalcTraceExtents);
+	SetJump(0x0805B198, (DWORD)CM_SetAxialCullOnly);
+	
+
+	SetJump(0x0805B210, (DWORD)CM_Trace);
+	SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
 
 	// DO NOT REMOVE
 	//SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
@@ -834,6 +844,8 @@ void Sys_RedirectFunctions()
 	
 	SetJump(0x080837EC, (DWORD)VM_Execute);
 	SetJump(0x08084FD2, (DWORD)Scr_RunCurrentThreads);
+	SetJump(0x08083E96, (DWORD)Scr_InitSystem);
+	SetJump(0x0807FA00, (DWORD)Scr_ErrorInternal);
 }
 
 class cCallOfDuty2Pro

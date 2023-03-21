@@ -19,8 +19,35 @@ extern scrVmGlob_t scrVmGlob;
 extern scrVarPub_t scrVarPub;
 #endif
 
-extern int g_script_error_level;
-extern jmp_buf g_script_error[];
+int g_script_error_level;
+jmp_buf g_script_error[33];
+
+void Scr_InitSystem()
+{
+	scrVarPub.timeArrayId = AllocObject();
+	scrVarPub.pauseArrayId = Scr_AllocArray();
+	scrVarPub.levelId = AllocObject();
+	scrVarPub.animId = AllocObject();
+	scrVarPub.time = 0;
+	g_script_error_level = -1;
+}
+
+void Scr_ErrorInternal()
+{
+	if ( !scrVarPub.evaluate && !scrCompilePub.script_loading )
+	{
+		if ( scrVarPub.developer && scrVmGlob.loading )
+			scrVmPub.terminal_error = 1;
+
+		if ( scrVmPub.function_count || scrVmPub.debugCode )
+			longjmp(g_script_error[g_script_error_level], -1);
+
+		Com_Error(ERR_DROP, "%s", scrVarPub.error_message);
+	}
+
+	if ( scrVmPub.terminal_error )
+		Com_Error(ERR_DROP, "%s", scrVarPub.error_message);
+}
 
 unsigned int QDECL VM_GetLocalVar(int a1)
 {
@@ -1549,42 +1576,3 @@ LABEL_250:
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

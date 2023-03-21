@@ -27,26 +27,6 @@ extern const char *var_typename[];
 scrVmGlob_t scrVmGlob;
 #endif
 
-int g_script_error_level;
-jmp_buf g_script_error[33];
-
-void Scr_ErrorInternal()
-{
-	if ( !scrVarPub.evaluate && !scrCompilePub.script_loading )
-	{
-		if ( scrVarPub.developer && scrVmGlob.loading )
-			scrVmPub.terminal_error = 1;
-
-		if ( scrVmPub.function_count || scrVmPub.debugCode )
-			longjmp(g_script_error[g_script_error_level], -1);
-
-		Com_Error(ERR_DROP, "%s", scrVarPub.error_message);
-	}
-
-	if ( scrVmPub.terminal_error )
-		Com_Error(ERR_DROP, "%s", scrVarPub.error_message);
-}
-
 void Scr_Error(const char *error)
 {
 	if ( !scrVarPub.error_message )

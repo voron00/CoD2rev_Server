@@ -5,46 +5,1382 @@ extern CM_SightTraceThroughBrush
 extern CM_TestBoxInBrush
 
 
-global VectorSubtract63262
-global DotProduct123
-global VectorMA712
-global CM_Fabs3
-global VectorCopy834
-global VectorLengthSquared
-global VectorScale715
-global CM_Sqrt923
-global Vec2Multiply271
-global Vec3Normalize
-global sub_80A8B5A
-global Dot2Product824
-global Vector2Subtract261
-global VectorSet821
-global DotProduct584
-global sub_805D3EE
-global sub_805D34E
-global sub_805D434
-global CM_Fabs
-global CM_VectorCopy2
-global Vector4Copy712
-global sub_805D3CA
-global I_fispos2
-
-
-; // Recursion in a loop, idk how to compile that with a modern gcc
+; // Recursion in a loop, gcc doesn't like that im some cases
 global CM_TraceThroughLeafBrushNode_r
 global CM_PointContentsLeafBrushNode_r
 global CM_SightTraceThroughLeafBrushNode_r
 global CM_TestInLeafBrushNode_r
 
 
-; // Way too many differences from CoD4x/black ops code, lots of fpu ops, hard to decompile.
+; // Way too many differences from CoD4x/black ops code, hard to decompile.
 global CM_PositionTestCapsuleInTriangle
 global CM_TraceCapsuleThroughTriangle
 global CM_TraceCapsuleThroughBorder
 global CM_TraceThroughBrush
 
 
+; // Stuff that has problems or just generally not sure about
+global CM_TracePointThroughTriangle
+global CM_TestCapsuleInCapsule
+global CM_TraceCapsuleThroughCapsule
+global CM_TraceSphereThroughSphere
+global CM_TraceCylinderThroughCylinder
+
+
 section .text
+
+
+sub_805D412:
+   push    ebp
+   mov     ebp, esp
+   mov     eax, [ebp+8]
+   mov     edx, [ebp+0Ch]
+   fld     dword [eax]
+   fmul    dword [edx]
+   mov     eax, [ebp+8]
+   add     eax, 4
+   mov     edx, [ebp+0Ch]
+   add     edx, 4
+   fld     dword [eax]
+   fmul    dword [edx]
+   faddp   st1, st0
+   pop     ebp
+   retn    
+
+
+CM_TraceCylinderThroughCylinder:
+   push    ebp
+   mov     ebp, esp
+   push    ebx
+   sub     esp, 64h
+   lea     eax, [ebp-18h]
+   mov     [esp+8], eax
+   mov     eax, [ebp+0Ch]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   mov     eax, [ebp+8]
+   fld     dword [ebp+14h]
+   fadd    dword [eax+8Ch]
+   mov     eax, [ebp+8]
+   fld     dword [ebp+14h]
+   fadd    dword [eax+8Ch]
+   fmulp   st1, st0
+   fstp    dword [ebp-2Ch]
+   lea     eax, [ebp-18h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    sub_805D412
+   fsub    dword [ebp-2Ch]
+   fstp    dword [ebp-24h]
+   fld     dword [ebp-24h]
+   fldz    
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805A7C0
+   jmp     loc_805A882
+loc_805A7C0:
+   mov     eax, [ebp+8]
+   mov     edx, [ebp+8]
+   fld     dword [eax+64h]
+   fsub    dword [edx+8Ch]
+   fadd    dword [ebp+10h]
+   fstp    dword [ebp-4Ch]
+   mov     eax, [ebp-10h]
+   mov     [esp], eax
+   call    CM_Fabs
+   fld     dword [ebp-4Ch]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805A7EE
+   jmp     loc_805A7FA
+loc_805A7EE:
+   mov     dword [ebp-54h], 1
+   jmp     loc_805AA04
+loc_805A7FA:
+   mov     edx, [ebp+18h]
+   mov     eax, 0
+   mov     [edx], eax
+   mov     eax, [ebp+18h]
+   mov     byte [eax+23h], 1
+   mov     eax, 0
+   mov     [ebp-10h], eax
+   mov     eax, [ebp+18h]
+   add     eax, 4
+   mov     [esp+4], eax
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    Vec3NormalizeTo
+   fstp    st0
+   mov     edx, [ebp+18h]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B0h]
+   mov     eax, [eax+0Ch]
+   mov     [edx+14h], eax
+   lea     eax, [ebp-18h]
+   mov     [esp+8], eax
+   mov     eax, [ebp+0Ch]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   mov     eax, [ebp-10h]
+   mov     [esp], eax
+   call    CM_Fabs
+   fld     dword [ebp-4Ch]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805A86F
+   jmp     loc_805A876
+loc_805A86F:
+   mov     eax, [ebp+18h]
+   mov     byte [eax+22h], 1
+loc_805A876:
+   mov     dword [ebp-54h], 0
+   jmp     loc_805AA04
+loc_805A882:
+   lea     eax, [ebp-18h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 24h
+   mov     [esp], eax
+   call    sub_805D412
+   fstp    dword [ebp-20h]
+   fld     dword [ebp-20h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805A8AA
+   jmp     loc_805A8B6
+loc_805A8AA:
+   mov     dword [ebp-54h], 1
+   jmp     loc_805AA04
+loc_805A8B6:
+   mov     eax, [ebp+8]
+   add     eax, 24h
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 24h
+   mov     [esp], eax
+   call    sub_805D412
+   fstp    dword [ebp-1Ch]
+   fld     dword [ebp-20h]
+   fmul    dword [ebp-20h]
+   fld     dword [ebp-1Ch]
+   fmul    dword [ebp-24h]
+   fsubp   st1, st0
+   fstp    dword [ebp-28h]
+   fld     dword [ebp-28h]
+   fldz    
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805A8F0
+   jmp     loc_805A8FC
+loc_805A8F0:
+   mov     dword [ebp-54h], 1
+   jmp     loc_805AA04
+loc_805A8FC:
+   mov     eax, 0
+   mov     [ebp-10h], eax
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    Vec3NormalizeTo
+   fstp    dword [ebp-38h]
+   fld     dword [ebp-38h]
+   fld     dword [flt_813BA9C]
+   fmulp   st1, st0
+   fdiv    dword [ebp-20h]
+   fstp    dword [ebp-34h]
+   mov     eax, [ebp-20h]
+   xor     eax, 80000000h
+   mov     [ebp-58h], eax
+   mov     eax, [ebp-28h]
+   mov     [esp], eax
+   call    CM_Sqrt923
+   fsubr   dword [ebp-58h]
+   fdiv    dword [ebp-1Ch]
+   fadd    dword [ebp-34h]
+   fstp    dword [ebp-30h]
+   mov     eax, [ebp+18h]
+   fld     dword [ebp-30h]
+   fld     dword [eax]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805A960
+   jmp     loc_805A9FD
+loc_805A960:
+   mov     eax, [ebp+8]
+   mov     edx, [ebp+8]
+   fld     dword [eax+64h]
+   fsub    dword [edx+8Ch]
+   fadd    dword [ebp+10h]
+   fstp    dword [ebp-4Ch]
+   mov     edx, [ebp+8]
+   fld     dword [ebp-30h]
+   fsub    dword [ebp-34h]
+   mov     eax, [ebp+8]
+   fmul    dword [eax+2Ch]
+   fadd    dword [edx+8]
+   mov     eax, [ebp+0Ch]
+   add     eax, 8
+   fsub    dword [eax]
+   fstp    dword [ebp-50h]
+   mov     eax, [ebp-50h]
+   mov     [esp], eax
+   call    CM_Fabs
+   fld     dword [ebp-4Ch]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805A9AB
+   jmp     loc_805A9B4
+loc_805A9AB:
+   mov     dword [ebp-54h], 1
+   jmp     loc_805AA04
+loc_805A9B4:
+   mov     ebx, [ebp+18h]
+   mov     eax, 0
+   mov     [esp+4], eax
+   mov     eax, [ebp-30h]
+   mov     [esp], eax
+   call    sub_805D3CA
+   fstp    dword [ebx]
+   mov     eax, [ebp+18h]
+   add     eax, 4
+   mov     [esp+4], eax
+   lea     eax, [ebp-48h]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     edx, [ebp+18h]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B0h]
+   mov     eax, [eax+0Ch]
+   mov     [edx+14h], eax
+   mov     dword [ebp-54h], 0
+   jmp     loc_805AA04
+loc_805A9FD:
+   mov     dword [ebp-54h], 1
+loc_805AA04:
+   mov     eax, [ebp-54h]
+   add     esp, 64h
+   pop     ebx
+   pop     ebp
+   retn    
+
+
+sub_80A8D26:
+   push    ebp
+   mov     ebp, esp
+   mov     edx, [ebp+8]
+   mov     eax, 0
+   mov     [edx], eax
+   mov     edx, [ebp+8]
+   add     edx, 4
+   mov     eax, 0
+   mov     [edx], eax
+   mov     edx, [ebp+8]
+   add     edx, 8
+   mov     eax, 0
+   mov     [edx], eax
+   pop     ebp
+   retn    
+
+
+Vec3NormalizeTo:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 18h
+   mov     eax, [ebp+8]
+   mov     edx, [ebp+8]
+   fld     dword [eax]
+   fmul    dword [edx]
+   mov     eax, [ebp+8]
+   add     eax, 4
+   mov     edx, [ebp+8]
+   add     edx, 4
+   fld     dword [eax]
+   fmul    dword [edx]
+   faddp   st1, st0
+   mov     eax, [ebp+8]
+   add     eax, 8
+   mov     edx, [ebp+8]
+   add     edx, 8
+   fld     dword [eax]
+   fmul    dword [edx]
+   faddp   st1, st0
+   fstp    dword [ebp-4]
+   mov     eax, [ebp-4]
+   mov     [esp], eax
+   call    sub_80A8B5A
+   fstp    dword [ebp-4]
+   fld     dword [ebp-4]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnz     loc_80A22EF
+   jp      loc_80A22EF
+   jmp     loc_80A232C
+loc_80A22EF:
+   fld1    
+   fdiv    dword [ebp-4]
+   fstp    dword [ebp-8]
+   mov     edx, [ebp+0Ch]
+   mov     eax, [ebp+8]
+   fld     dword [eax]
+   fmul    dword [ebp-8]
+   fstp    dword [edx]
+   mov     edx, [ebp+0Ch]
+   add     edx, 4
+   mov     eax, [ebp+8]
+   add     eax, 4
+   fld     dword [eax]
+   fmul    dword [ebp-8]
+   fstp    dword [edx]
+   mov     edx, [ebp+0Ch]
+   add     edx, 8
+   mov     eax, [ebp+8]
+   add     eax, 8
+   fld     dword [eax]
+   fmul    dword [ebp-8]
+   fstp    dword [edx]
+   jmp     loc_80A2337
+loc_80A232C:
+   mov     eax, [ebp+0Ch]
+   mov     [esp], eax
+   call    sub_80A8D26
+loc_80A2337:
+   mov     eax, [ebp-4]
+   mov     [ebp-0Ch], eax
+   fld     dword [ebp-0Ch]
+   leave   
+   retn    
+
+
+CM_TraceSphereThroughSphere:
+   push    ebp
+   mov     ebp, esp
+   push    ebx
+   sub     esp, 64h
+   lea     eax, [ebp-18h]
+   mov     [esp+8], eax
+   mov     eax, [ebp+14h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+0Ch]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   mov     eax, [ebp+8]
+   fld     dword [ebp+18h]
+   fadd    dword [eax+8Ch]
+   mov     eax, [ebp+8]
+   fld     dword [ebp+18h]
+   fadd    dword [eax+8Ch]
+   fmulp   st1, st0
+   fstp    dword [ebp-2Ch]
+   lea     eax, [ebp-18h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    DotProduct123
+   fsub    dword [ebp-2Ch]
+   fstp    dword [ebp-24h]
+   fld     dword [ebp-24h]
+   fldz    
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805A5C7
+   jmp     loc_805A644
+loc_805A5C7:
+   mov     edx, [ebp+1Ch]
+   mov     eax, 0
+   mov     [edx], eax
+   mov     eax, [ebp+1Ch]
+   mov     byte [eax+23h], 1
+   mov     eax, [ebp+1Ch]
+   add     eax, 4
+   mov     [esp+4], eax
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    Vec3NormalizeTo
+   fstp    st0
+   mov     edx, [ebp+1Ch]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B0h]
+   mov     eax, [eax+0Ch]
+   mov     [edx+14h], eax
+   lea     eax, [ebp-18h]
+   mov     [esp+8], eax
+   mov     eax, [ebp+14h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+10h]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    CM_VectorLengthSquared
+   fld     dword [ebp-2Ch]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805A631
+   jmp     loc_805A638
+loc_805A631:
+   mov     eax, [ebp+1Ch]
+   mov     byte [eax+22h], 1
+loc_805A638:
+   mov     dword [ebp-4Ch], 0
+   jmp     loc_805A751
+loc_805A644:
+   lea     eax, [ebp-18h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 24h
+   mov     [esp], eax
+   call    DotProduct123
+   fstp    dword [ebp-20h]
+   fld     dword [ebp-20h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805A66C
+   jmp     loc_805A678
+loc_805A66C:
+   mov     dword [ebp-4Ch], 1
+   jmp     loc_805A751
+loc_805A678:
+   mov     eax, [ebp+8]
+   mov     eax, [eax+34h]
+   mov     [ebp-1Ch], eax
+   fld     dword [ebp-20h]
+   fmul    dword [ebp-20h]
+   fld     dword [ebp-1Ch]
+   fmul    dword [ebp-24h]
+   fsubp   st1, st0
+   fstp    dword [ebp-28h]
+   fld     dword [ebp-28h]
+   fldz    
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805A6A0
+   jmp     loc_805A6AC
+loc_805A6A0:
+   mov     dword [ebp-4Ch], 1
+   jmp     loc_805A751
+loc_805A6AC:
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-18h]
+   mov     [esp], eax
+   call    Vec3NormalizeTo
+   fstp    dword [ebp-34h]
+   mov     eax, [ebp-20h]
+   xor     eax, 80000000h
+   mov     [ebp-50h], eax
+   mov     eax, [ebp-28h]
+   mov     [esp], eax
+   call    CM_Sqrt923
+   fsubr   dword [ebp-50h]
+   fdiv    dword [ebp-1Ch]
+   fld     dword [ebp-34h]
+   fld     dword [flt_813BA98]
+   fmulp   st1, st0
+   fdiv    dword [ebp-20h]
+   faddp   st1, st0
+   fstp    dword [ebp-30h]
+   mov     eax, [ebp+1Ch]
+   fld     dword [ebp-30h]
+   fld     dword [eax]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805A701
+   jmp     loc_805A74A
+loc_805A701:
+   mov     ebx, [ebp+1Ch]
+   mov     eax, 0
+   mov     [esp+4], eax
+   mov     eax, [ebp-30h]
+   mov     [esp], eax
+   call    sub_805D3CA
+   fstp    dword [ebx]
+   mov     eax, [ebp+1Ch]
+   add     eax, 4
+   mov     [esp+4], eax
+   lea     eax, [ebp-48h]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     edx, [ebp+1Ch]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B0h]
+   mov     eax, [eax+0Ch]
+   mov     [edx+14h], eax
+   mov     dword [ebp-4Ch], 0
+   jmp     loc_805A751
+loc_805A74A:
+   mov     dword [ebp-4Ch], 1
+loc_805A751:
+   mov     eax, [ebp-4Ch]
+   add     esp, 64h
+   pop     ebx
+   pop     ebp
+   retn    
+
+
+CM_TraceCapsuleThroughCapsule:
+   push    ebp
+   mov     ebp, esp
+   push    esi
+   push    ebx
+   sub     esp, 0E0h
+   mov     edx, [ebp+8]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B4h]
+   fld     dword [eax+0Ch]
+   fld1    
+   faddp   st1, st0
+   fld     dword [edx+68h]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE49
+   mov     edx, [ebp+8]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B4h]
+   fld     dword [eax+10h]
+   fld1    
+   faddp   st1, st0
+   fld     dword [edx+6Ch]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE49
+   mov     edx, [ebp+8]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B4h]
+   fld     dword [eax+14h]
+   fld1    
+   faddp   st1, st0
+   fld     dword [edx+70h]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE49
+   mov     edx, [ebp+8]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B4h]
+   fld     dword [eax]
+   fld1    
+   fsubp   st1, st0
+   fld     dword [edx+74h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE49
+   mov     edx, [ebp+8]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B4h]
+   fld     dword [eax+4]
+   fld1    
+   fsubp   st1, st0
+   fld     dword [edx+78h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE49
+   mov     edx, [ebp+8]
+   mov     eax, [ebp+8]
+   mov     eax, [eax+0B4h]
+   fld     dword [eax+8]
+   fld1    
+   fsubp   st1, st0
+   fld     dword [edx+7Ch]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE49
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     eax, [ebp+8]
+   fld     dword [ebp-40h]
+   fadd    dword [eax+90h]
+   fstp    dword [ebp-40h]
+   lea     eax, [ebp-58h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     eax, [ebp+8]
+   fld     dword [ebp-50h]
+   fsub    dword [eax+90h]
+   fstp    dword [ebp-50h]
+   lea     eax, [ebp-68h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     eax, [ebp+8]
+   fld     dword [ebp-60h]
+   fadd    dword [eax+90h]
+   fstp    dword [ebp-60h]
+   lea     eax, [ebp-78h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     eax, [ebp+8]
+   fld     dword [ebp-70h]
+   fsub    dword [eax+90h]
+   fstp    dword [ebp-70h]
+   mov     dword [ebp-0Ch], 0
+loc_805AB75:
+   cmp     dword [ebp-0Ch], 2
+   jle     loc_805AB80
+   jmp     loc_805AC02
+loc_805AB80:
+   mov     esi, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     ebx, [eax+0B4h]
+   mov     ecx, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     edx, [eax+0B4h]
+   mov     eax, [ebp-0Ch]
+   fld     dword [ebx+ecx*4]
+   fadd    dword [edx+eax*4+0Ch]
+   fld     dword [flt_813BAA0]
+   fmulp   st1, st0
+   fstp    dword [ebp+esi*4-88h]
+   mov     ebx, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     ecx, [eax+0B4h]
+   mov     eax, [ebp-0Ch]
+   mov     edx, [ebp-0Ch]
+   fld     dword [ecx+eax*4]
+   fsub    dword [ebp+edx*4-88h]
+   fstp    dword [ebp+ebx*4-0A8h]
+   mov     ebx, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     ecx, [eax+0B4h]
+   mov     eax, [ebp-0Ch]
+   mov     edx, [ebp-0Ch]
+   fld     dword [ecx+eax*4+0Ch]
+   fsub    dword [ebp+edx*4-88h]
+   fstp    dword [ebp+ebx*4-9Ch]
+   lea     eax, [ebp-0Ch]
+   inc     dword [eax]
+   jmp     loc_805AB75
+loc_805AC02:
+   mov     eax, [ebp-9Ch]
+   mov     [ebp-0B0h], eax
+   mov     eax, [ebp-94h]
+   mov     [ebp-0B4h], eax
+   fld     dword [ebp-0B0h]
+   fld     dword [ebp-0B4h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AC31
+   jmp     loc_805AC3F
+loc_805AC31:
+   fld     dword [ebp-0B4h]
+   fstp    dword [ebp-0BCh]
+   jmp     loc_805AC4B
+loc_805AC3F:
+   fld     dword [ebp-0B0h]
+   fstp    dword [ebp-0BCh]
+loc_805AC4B:
+   fld     dword [ebp-0BCh]
+   fstp    dword [ebp-0ACh]
+   fld     dword [ebp-0B4h]
+   fsub    dword [ebp-0ACh]
+   fstp    dword [ebp-0B8h]
+   lea     eax, [ebp-28h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-88h]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   fld     dword [ebp-20h]
+   fadd    dword [ebp-0B8h]
+   fstp    dword [ebp-20h]
+   lea     eax, [ebp-38h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-88h]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   fld     dword [ebp-30h]
+   fsub    dword [ebp-0B8h]
+   fstp    dword [ebp-30h]
+   fld     dword [ebp-50h]
+   fld     dword [ebp-20h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805ACBC
+   jmp     loc_805AD0D
+loc_805ACBC:
+   mov     eax, [ebp+0Ch]
+   mov     [esp+14h], eax
+   mov     eax, [ebp-0ACh]
+   mov     [esp+10h], eax
+   lea     eax, [ebp-28h]
+   mov     [esp+0Ch], eax
+   lea     eax, [ebp-78h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-58h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_TraceSphereThroughSphere
+   test    eax, eax
+   jnz     loc_805ACF6
+   jmp     loc_805AE49
+loc_805ACF6:
+   mov     eax, [ebp+8]
+   fld     dword [eax+2Ch]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805AE49
+   jmp     loc_805AD69
+loc_805AD0D:
+   fld     dword [ebp-40h]
+   fld     dword [ebp-30h]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AD1C
+   jmp     loc_805AD69
+loc_805AD1C:
+   mov     eax, [ebp+0Ch]
+   mov     [esp+14h], eax
+   mov     eax, [ebp-0ACh]
+   mov     [esp+10h], eax
+   lea     eax, [ebp-38h]
+   mov     [esp+0Ch], eax
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_TraceSphereThroughSphere
+   test    eax, eax
+   jnz     loc_805AD56
+   jmp     loc_805AE49
+loc_805AD56:
+   mov     eax, [ebp+8]
+   fld     dword [eax+2Ch]
+   fldz    
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805AE49
+loc_805AD69:
+   mov     eax, [ebp+0Ch]
+   mov     [esp+10h], eax
+   mov     eax, [ebp-0ACh]
+   mov     [esp+0Ch], eax
+   mov     eax, [ebp-0B8h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-88h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_TraceCylinderThroughCylinder
+   test    eax, eax
+   jnz     loc_805ADA2
+   jmp     loc_805AE49
+loc_805ADA2:
+   fld     dword [ebp-70h]
+   fld     dword [ebp-20h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805ADB3
+   jmp     loc_805ADF8
+loc_805ADB3:
+   fld     dword [ebp-50h]
+   fld     dword [ebp-20h]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805ADC5
+   jmp     loc_805AE49
+loc_805ADC5:
+   mov     eax, [ebp+0Ch]
+   mov     [esp+14h], eax
+   mov     eax, [ebp-0ACh]
+   mov     [esp+10h], eax
+   lea     eax, [ebp-28h]
+   mov     [esp+0Ch], eax
+   lea     eax, [ebp-78h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-58h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_TraceSphereThroughSphere
+   jmp     loc_805AE49
+loc_805ADF8:
+   fld     dword [ebp-60h]
+   fld     dword [ebp-30h]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805AE07
+   jmp     loc_805AE49
+loc_805AE07:
+   fld     dword [ebp-40h]
+   fld     dword [ebp-30h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_805AE18
+   jmp     loc_805AE49
+loc_805AE18:
+   mov     eax, [ebp+0Ch]
+   mov     [esp+14h], eax
+   mov     eax, [ebp-0ACh]
+   mov     [esp+10h], eax
+   lea     eax, [ebp-38h]
+   mov     [esp+0Ch], eax
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_TraceSphereThroughSphere
+loc_805AE49:
+   add     esp, 0E0h
+   pop     ebx
+   pop     esi
+   pop     ebp
+   retn    
+
+
+CM_VectorLengthSquared:
+   push    ebp
+   mov     ebp, esp
+   mov     eax, [ebp+8]
+   mov     edx, [ebp+8]
+   fld     dword [eax]
+   fmul    dword [edx]
+   mov     eax, [ebp+8]
+   add     eax, 4
+   mov     edx, [ebp+8]
+   add     edx, 4
+   fld     dword [eax]
+   fmul    dword [edx]
+   faddp   st1, st0
+   mov     eax, [ebp+8]
+   add     eax, 8
+   mov     edx, [ebp+8]
+   add     edx, 8
+   fld     dword [eax]
+   fmul    dword [edx]
+   faddp   st1, st0
+   pop     ebp
+   retn    
+
+
+CM_VectorSubtract:
+   push    ebp
+   mov     ebp, esp
+   mov     ecx, [ebp+10h]
+   mov     eax, [ebp+8]
+   mov     edx, [ebp+0Ch]
+   fld     dword [eax]
+   fsub    dword [edx]
+   fstp    dword [ecx]
+   mov     ecx, [ebp+10h]
+   add     ecx, 4
+   mov     eax, [ebp+8]
+   add     eax, 4
+   mov     edx, [ebp+0Ch]
+   add     edx, 4
+   fld     dword [eax]
+   fsub    dword [edx]
+   fstp    dword [ecx]
+   mov     ecx, [ebp+10h]
+   add     ecx, 8
+   mov     eax, [ebp+8]
+   add     eax, 8
+   mov     edx, [ebp+0Ch]
+   add     edx, 8
+   fld     dword [eax]
+   fsub    dword [edx]
+   fstp    dword [ecx]
+   pop     ebp
+   retn    
+
+
+CM_TestCapsuleInCapsule:
+   push    ebp
+   mov     ebp, esp
+   push    esi
+   push    ebx
+   sub     esp, 0C0h
+   lea     eax, [ebp-28h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     eax, [ebp+8]
+   fld     dword [ebp-20h]
+   fadd    dword [eax+90h]
+   fstp    dword [ebp-20h]
+   lea     eax, [ebp-38h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   mov     eax, [ebp+8]
+   fld     dword [ebp-30h]
+   fsub    dword [eax+90h]
+   fstp    dword [ebp-30h]
+   mov     dword [ebp-0Ch], 0
+loc_805972E:
+   cmp     dword [ebp-0Ch], 2
+   jle     loc_8059736
+   jmp     loc_80597AC
+loc_8059736:
+   mov     esi, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     ebx, [eax+0B4h]
+   mov     ecx, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     edx, [eax+0B4h]
+   mov     eax, [ebp-0Ch]
+   fld     dword [ebx+ecx*4]
+   fadd    dword [edx+eax*4+0Ch]
+   fld     dword [flt_813BA88]
+   fmulp   st1, st0
+   fstp    dword [ebp+esi*4-78h]
+   mov     ebx, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     ecx, [eax+0B4h]
+   mov     eax, [ebp-0Ch]
+   mov     edx, [ebp-0Ch]
+   fld     dword [ecx+eax*4]
+   fsub    dword [ebp+edx*4-78h]
+   fstp    dword [ebp+ebx*4-98h]
+   mov     ebx, [ebp-0Ch]
+   mov     eax, [ebp+8]
+   mov     ecx, [eax+0B4h]
+   mov     eax, [ebp-0Ch]
+   mov     edx, [ebp-0Ch]
+   fld     dword [ecx+eax*4+0Ch]
+   fsub    dword [ebp+edx*4-78h]
+   fstp    dword [ebp+ebx*4-8Ch]
+   lea     eax, [ebp-0Ch]
+   inc     dword [eax]
+   jmp     loc_805972E
+loc_80597AC:
+   mov     eax, [ebp-8Ch]
+   mov     [ebp-0A0h], eax
+   mov     eax, [ebp-84h]
+   mov     [ebp-0A4h], eax
+   fld     dword [ebp-0A0h]
+   fld     dword [ebp-0A4h]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_80597DB
+   jmp     loc_80597E9
+loc_80597DB:
+   fld     dword [ebp-0A4h]
+   fstp    dword [ebp-0B8h]
+   jmp     loc_80597F5
+loc_80597E9:
+   fld     dword [ebp-0A0h]
+   fstp    dword [ebp-0B8h]
+loc_80597F5:
+   fld     dword [ebp-0B8h]
+   fstp    dword [ebp-9Ch]
+   fld     dword [ebp-0A4h]
+   fsub    dword [ebp-9Ch]
+   fstp    dword [ebp-0A8h]
+   mov     eax, [ebp+8]
+   fld     dword [eax+8Ch]
+   fadd    dword [ebp-9Ch]
+   mov     eax, [ebp+8]
+   fld     dword [eax+8Ch]
+   fadd    dword [ebp-9Ch]
+   fmulp   st1, st0
+   fstp    dword [ebp-0ACh]
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-78h]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   fld     dword [ebp-40h]
+   fadd    dword [ebp-0A8h]
+   fstp    dword [ebp-40h]
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-28h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-48h]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   lea     eax, [ebp-68h]
+   mov     [esp], eax
+   call    CM_VectorLengthSquared
+   fld     dword [ebp-0ACh]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805988A
+   jmp     loc_80598A2
+loc_805988A:
+   mov     edx, [ebp+0Ch]
+   mov     eax, [ebp+0Ch]
+   mov     byte [eax+22h], 1
+   mov     byte [edx+23h], 1
+   mov     edx, [ebp+0Ch]
+   mov     eax, 0
+   mov     [edx], eax
+loc_80598A2:
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-38h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-48h]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   lea     eax, [ebp-68h]
+   mov     [esp], eax
+   call    CM_VectorLengthSquared
+   fld     dword [ebp-0ACh]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_80598D5
+   jmp     loc_80598ED
+loc_80598D5:
+   mov     edx, [ebp+0Ch]
+   mov     eax, [ebp+0Ch]
+   mov     byte [eax+22h], 1
+   mov     byte [edx+23h], 1
+   mov     edx, [ebp+0Ch]
+   mov     eax, 0
+   mov     [edx], eax
+loc_80598ED:
+   lea     eax, [ebp-58h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-78h]
+   mov     [esp], eax
+   call    CM_VectorCopy2
+   fld     dword [ebp-50h]
+   fsub    dword [ebp-0A8h]
+   fstp    dword [ebp-50h]
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-28h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-58h]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   lea     eax, [ebp-68h]
+   mov     [esp], eax
+   call    CM_VectorLengthSquared
+   fld     dword [ebp-0ACh]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_805993E
+   jmp     loc_8059956
+loc_805993E:
+   mov     edx, [ebp+0Ch]
+   mov     eax, [ebp+0Ch]
+   mov     byte [eax+22h], 1
+   mov     byte [edx+23h], 1
+   mov     edx, [ebp+0Ch]
+   mov     eax, 0
+   mov     [edx], eax
+loc_8059956:
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-38h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-58h]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   lea     eax, [ebp-68h]
+   mov     [esp], eax
+   call    CM_VectorLengthSquared
+   fld     dword [ebp-0ACh]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_8059989
+   jmp     loc_80599A1
+loc_8059989:
+   mov     edx, [ebp+0Ch]
+   mov     eax, [ebp+0Ch]
+   mov     byte [eax+22h], 1
+   mov     byte [edx+23h], 1
+   mov     edx, [ebp+0Ch]
+   mov     eax, 0
+   mov     [edx], eax
+loc_80599A1:
+   mov     eax, [ebp+8]
+   fld     dword [eax+8]
+   fsub    dword [ebp-70h]
+   fstp    dword [ebp-0B0h]
+   mov     eax, [ebp+8]
+   fld     dword [ebp-0A8h]
+   fadd    dword [eax+64h]
+   mov     eax, [ebp+8]
+   fsub    dword [eax+8Ch]
+   fstp    dword [ebp-0B4h]
+   mov     eax, [ebp-0B0h]
+   mov     [esp], eax
+   call    CM_Fabs
+   fld     dword [ebp-0B4h]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_80599E8
+   jmp     loc_8059A3E
+loc_80599E8:
+   mov     eax, 0
+   mov     [ebp-40h], eax
+   mov     [ebp-20h], eax
+   lea     eax, [ebp-68h]
+   mov     [esp+8], eax
+   lea     eax, [ebp-48h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-28h]
+   mov     [esp], eax
+   call    CM_VectorSubtract
+   lea     eax, [ebp-68h]
+   mov     [esp], eax
+   call    CM_VectorLengthSquared
+   fld     dword [ebp-0ACh]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      loc_8059A26
+   jmp     loc_8059A3E
+loc_8059A26:
+   mov     edx, [ebp+0Ch]
+   mov     eax, [ebp+0Ch]
+   mov     byte [eax+22h], 1
+   mov     byte [edx+23h], 1
+   mov     edx, [ebp+0Ch]
+   mov     eax, 0
+   mov     [edx], eax
+loc_8059A3E:
+   add     esp, 0C0h
+   pop     ebx
+   pop     esi
+   pop     ebp
+   retn    
+
+
+sub_80574AC:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 4
+   fld     dword [ebp+8]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     loc_80574C2
+   jmp     loc_80574CA
+loc_80574C2:
+   fld     dword [ebp+0Ch]
+   fstp    dword [ebp-4]
+   jmp     loc_80574D0
+loc_80574CA:
+   fld     dword [ebp+10h]
+   fstp    dword [ebp-4]
+loc_80574D0:
+   fld     dword [ebp-4]
+   leave   
+   retn    
+
+
+I_fmax123:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 18h
+   mov     eax, [ebp+0Ch]
+   mov     [esp+8], eax
+   mov     eax, [ebp+8]
+   mov     [esp+4], eax
+   fld     dword [ebp+8]
+   fsub    dword [ebp+0Ch]
+   fstp    dword [esp]
+   call    sub_80574AC
+   leave   
+   retn    
+
+
+CM_TracePointThroughTriangle:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 48h
+   mov     eax, [ebp+0Ch]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    DotProduct123
+   mov     eax, [ebp+0Ch]
+   fsub    dword [eax+0Ch]
+   fstp    dword [ebp-10h]
+   fld     dword [ebp-10h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     locret_805628A
+   mov     eax, [ebp+0Ch]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    DotProduct123
+   mov     eax, [ebp+0Ch]
+   fsub    dword [eax+0Ch]
+   fstp    dword [ebp-0Ch]
+   fld     dword [ebp-0Ch]
+   fldz    
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     locret_805628A
+   fld     dword [ebp-0Ch]
+   fld     dword [flt_813B83C]
+   fsubp   st1, st0
+   fld     dword [ebp-0Ch]
+   fsub    dword [ebp-10h]
+   fdivp   st1, st0
+   fstp    dword [ebp-14h]
+   mov     eax, 0
+   mov     [esp+4], eax
+   mov     eax, [ebp-14h]
+   mov     [esp], eax
+   call    I_fmax123
+   fstp    dword [ebp-14h]
+   mov     eax, [ebp+10h]
+   fld     dword [ebp-14h]
+   fld     dword [eax]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnb     locret_805628A
+   fld     dword [ebp-0Ch]
+   fsub    dword [ebp-10h]
+   fld     dword [ebp-0Ch]
+   fdivrp  st1, st0
+   fstp    dword [ebp-18h]
+   lea     eax, [ebp-28h]
+   mov     [esp+0Ch], eax
+   mov     eax, [ebp+8]
+   add     eax, 24h
+   mov     [esp+8], eax
+   mov     eax, [ebp-18h]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    VectorMA712
+   mov     eax, [ebp+0Ch]
+   add     eax, 10h
+   mov     [esp+4], eax
+   lea     eax, [ebp-28h]
+   mov     [esp], eax
+   call    DotProduct123
+   mov     eax, [ebp+0Ch]
+   fsub    dword [eax+1Ch]
+   fstp    dword [ebp-2Ch]
+   fld     dword [ebp-2Ch]
+   fld     dword [flt_813B840]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      locret_805628A
+   fld     dword [ebp-2Ch]
+   fld     dword [flt_813B844]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      locret_805628A
+   mov     eax, [ebp+0Ch]
+   add     eax, 20h
+   mov     [esp+4], eax
+   lea     eax, [ebp-28h]
+   mov     [esp], eax
+   call    DotProduct123
+   mov     eax, [ebp+0Ch]
+   fsub    dword [eax+2Ch]
+   fstp    dword [ebp-30h]
+   fld     dword [ebp-30h]
+   fld     dword [flt_813B840]
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      locret_805628A
+   fld     dword [ebp-2Ch]
+   fadd    dword [ebp-30h]
+   fld     dword [flt_813B844]
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   ja      locret_805628A
+   mov     edx, [ebp+10h]
+   mov     eax, [ebp-14h]
+   mov     [edx], eax
+   mov     eax, [ebp+10h]
+   add     eax, 4
+   mov     [esp+4], eax
+   mov     eax, [ebp+0Ch]
+   mov     [esp], eax
+   call    VectorCopy834
+locret_805628A:
+   leave   
+   retn    
 
 
 CM_TestInLeafBrushNode_r:
@@ -3792,3 +5128,10 @@ flt_813BACC     dd 0.125
 flt_813BAD0     dd 4.7683716e-7
 flt_813BAB8     dd 0.125
 flt_813BABC     dd 4.7683716e-7
+flt_813B83C     dd 0.125
+flt_813B840     dd -0.001
+flt_813B844     dd 1.001
+flt_813BA88     dd 0.5
+flt_813BAA0     dd 0.5
+flt_813BA98     dd 0.125
+flt_813BA9C     dd 0.125

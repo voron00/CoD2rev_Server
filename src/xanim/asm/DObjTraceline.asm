@@ -5,23 +5,7 @@ extern XModelSetTransArray
 extern SL_ConvertToString
 
 
-global sub_80A8B5B
-global sub_80A9095
-global sub_80A913D
-global sub_80A8E2D
 global DObjTraceline
-global VectorClear188
-global sub_80B9BA0
-global sub_80B9CA4
-global sub_80B9C70
-global sub_80B9C1C
-global sub_80B8C18
-global sub_80B9ABC
-global sub_80B9A9C
-global sub_80B9A48
-global sub_80B9D06
-global sub_80B9BE4
-global Vec2Normalize962
 
 
 section .text

@@ -5,15 +5,6 @@ extern CM_TraceBox
 
 global XModelTraceLine
 global XModelSetTransArray
-global VectorScale714
-global VectorSubtract173
-global sub_80C3AB4
-global sub_80C3974
-global I_fmax7
-global sub_80C39A8
-global sub_80C3920
-global VectorCopy434
-global sub_80C3A0A
 
 
 section .text

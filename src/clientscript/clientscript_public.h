@@ -586,6 +586,7 @@ struct VariableCompileValue
 extern const char *var_typename[];
 
 void Scr_Error(const char *error);
+void Scr_ErrorInternal();
 void Scr_ObjectError(const char *error);
 void Scr_ParamError(int paramNum, const char *error);
 int Scr_GetType(unsigned int param);
@@ -636,6 +637,7 @@ void Scr_TerminalError(const char *error);
 void Scr_ClearErrorMessage();
 void Scr_Abort();
 void Scr_Shutdown();
+void Scr_InitSystem();
 void Scr_Init();
 
 void MT_Init();

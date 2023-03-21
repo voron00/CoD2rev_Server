@@ -722,7 +722,7 @@ int Scr_FindLocalVar(scr_block_s *block, int startIndex, unsigned int name)
 
 void Scr_CalcLocalVarsSafeSetVariableField(sval_u expr, sval_u sourcePos, scr_block_s *block)
 {
-	Scr_RegisterLocalVar(expr.stringValue, sourcePos, block);
+	Scr_RegisterLocalVar(expr.sourcePosValue, sourcePos, block);
 }
 
 void Scr_CalcLocalVarsFormalParameterListInternal(sval_u *node, scr_block_s *block)
@@ -740,7 +740,7 @@ void Scr_CalcLocalVarsFormalParameterListInternal(sval_u *node, scr_block_s *blo
 
 void Scr_CalcLocalVarsSafeSetVariableField2(sval_u expr, sval_u sourcePos, scr_block_s *block)
 {
-	Scr_RegisterLocalVar(expr.stringValue, sourcePos, block);
+	Scr_RegisterLocalVar(expr.sourcePosValue, sourcePos, block);
 }
 
 void Scr_CalcLocalVarsWaittillStatement(sval_u exprlist, scr_block_s *block)
@@ -972,7 +972,7 @@ void Scr_CreateVector(VariableCompileValue *constValue, VariableValue *value)
 		{
 			if ( type != VAR_INTEGER )
 			{
-				CompileError(constValue[i].sourcePos.stringValue, "type %s is not a float", var_typename[type]);
+				CompileError(constValue[i].sourcePos.sourcePosValue, "type %s is not a float", var_typename[type]);
 				return;
 			}
 
@@ -1077,7 +1077,7 @@ char EvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sva
 
 	if ( scrVarPub.error_message )
 	{
-		CompileError(sourcePos.stringValue, "%s", scrVarPub.error_message);
+		CompileError(sourcePos.sourcePosValue, "%s", scrVarPub.error_message);
 		return 0;
 	}
 	else
@@ -1575,7 +1575,7 @@ void EmitSafeSetVariableField(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	int opcode;
 	int index;
 
-	index = Scr_FindLocalVarIndex(expr.stringValue, sourcePos, 1, block);
+	index = Scr_FindLocalVarIndex(expr.sourcePosValue, sourcePos, 1, block);
 
 	if ( index )
 		opcode = OP_SafeSetVariableFieldCached;
@@ -1824,13 +1824,13 @@ void Scr_PushValue(VariableCompileValue *constValue)
 	{
 		index = scrCompilePub.value_count;
 		scrCompileGlob.value_start[index].value.type = constValue->value.u.intValue;
-		scrCompileGlob.value_start[index].sourcePos.stringValue = constValue->value.type;
+		scrCompileGlob.value_start[index].sourcePos.type = constValue->value.type;
 		scrCompileGlob.value_start[index + 1].value.u.intValue = constValue->sourcePos.intValue;
 		++scrCompilePub.value_count;
 	}
 	else
 	{
-		CompileError(constValue->sourcePos.stringValue, "VALUE_STACK_SIZE exceeded");
+		CompileError(constValue->sourcePos.sourcePosValue, "VALUE_STACK_SIZE exceeded");
 	}
 }
 
@@ -1898,7 +1898,7 @@ void EmitBoolOrExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sva
 
 	EmitExpression(expr1, block);
 	EmitOpcode(OP_JumpOnTrueExpr, -1, CALL_NONE);
-	AddOpcodePos(expr1sourcePos.stringValue, 0);
+	AddOpcodePos(expr1sourcePos.sourcePosValue, 0);
 	EmitShort(0);
 	pos = scrCompileGlob.codePos;
 	nextPos = (intptr_t)TempMalloc(0);
@@ -1914,7 +1914,7 @@ void EmitBoolAndExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sv
 
 	EmitExpression(expr1, block);
 	EmitOpcode(OP_JumpOnFalseExpr, -1, CALL_NONE);
-	AddOpcodePos(expr1sourcePos.stringValue, 0);
+	AddOpcodePos(expr1sourcePos.sourcePosValue, 0);
 	EmitShort(0);
 	pos = scrCompileGlob.codePos;
 	nextPos = (intptr_t)TempMalloc(0);
@@ -1933,7 +1933,7 @@ char EmitOrEvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcod
 		EmitExpression(expr2, block);
 emitOpcode:
 		EmitOpcode(SLOBYTE(opcode.sourcePosValue), -1, CALL_NONE);
-		AddOpcodePos(sourcePos.stringValue, 0);
+		AddOpcodePos(sourcePos.sourcePosValue, 0);
 		return 0;
 	}
 
@@ -1947,7 +1947,7 @@ emitOpcode:
 
 	if ( scrVarPub.error_message )
 	{
-		CompileError(sourcePos.stringValue, "%s", scrVarPub.error_message);
+		CompileError(sourcePos.sourcePosValue, "%s", scrVarPub.error_message);
 		return 0;
 	}
 	else
@@ -2122,7 +2122,7 @@ void EmitPostScriptFunctionPointer(sval_u expr, int param_count, bool bMethod, s
 	else
 		EmitOpcode(OP_ScriptFunctionCallPointer, -param_count - 1, CALL_FUNCTION);
 
-	AddOpcodePos(sourcePos.stringValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
 	AddOpcodePos(nameSourcePos.sourcePosValue, 1);
 }
 
@@ -2210,7 +2210,7 @@ void EmitObject(sval_u expr, sval_u sourcePos)
 
 	if ( scrCompilePub.script_loading )
 	{
-		CompileError(sourcePos.stringValue, "$ can only be used in the script debugger");
+		CompileError(sourcePos.sourcePosValue, "$ can only be used in the script debugger");
 		return;
 	}
 
@@ -2242,7 +2242,7 @@ void EmitObject(sval_u expr, sval_u sourcePos)
 	if ( (int)classnum < 0 || (entnum = (const char *)atoi(s + 1)) == 0 && s[1] != 48 )
 	{
 out:
-		CompileError(sourcePos.stringValue, "bad expression");
+		CompileError(sourcePos.sourcePosValue, "bad expression");
 		return;
 	}
 
@@ -2256,7 +2256,7 @@ void EmitLocalVariable(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	int opcode;
 	int index;
 
-	index = Scr_FindLocalVarIndex(expr.stringValue, sourcePos, 0, block);
+	index = Scr_FindLocalVarIndex(expr.sourcePosValue, sourcePos, 0, block);
 
 	if ( index > 5 )
 		opcode = OP_EvalLocalVariableCached;
@@ -2454,9 +2454,9 @@ bool EmitClearVariableExpression(sval_u expr, sval_u rhsSourcePos, scr_block_s *
 		if ( expr.node->type == ENUM_self_field || expr.node->type == ENUM_object )
 		{
 			if ( scrCompilePub.script_loading )
-				CompileError(expr.node[2].stringValue, "$ and self field can only be used in the script debugger");
+				CompileError(expr.node[2].sourcePosValue, "$ and self field can only be used in the script debugger");
 			else
-				CompileError(expr.node[2].stringValue, "not an lvalue");
+				CompileError(expr.node[2].sourcePosValue, "not an lvalue");
 		}
 		return 1;
 	}
@@ -2534,7 +2534,7 @@ void EmitIfStatement(sval_u expr, sval_u stmt, sval_u sourcePos, bool lastStatem
 
 	EmitExpression(expr, block);
 	EmitOpcode(OP_JumpOnFalse, -1, CALL_NONE);
-	AddOpcodePos(sourcePos.stringValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
 	EmitShort(0);
 	pos = scrCompileGlob.codePos;
 	nextPos = (intptr_t)TempMalloc(0);
@@ -2581,7 +2581,7 @@ void EmitCaseStatementInfo(unsigned int name, sval_u sourcePos)
 	{
 		statement = (sval_u *)Hunk_AllocateTempMemoryHighInternal(16);
 		statement->idValue = name;
-		statement[1].stringValue = (unsigned int)TempMalloc(0);
+		statement[1].idValue = (unsigned int)TempMalloc(0);
 		statement[2].sourcePosValue = sourcePos.sourcePosValue;
 		statement[3].codePosValue = (const char *)scrCompileGlob.currentCaseStatement;
 		scrCompileGlob.currentCaseStatement = (CaseStatementInfo *)statement;
@@ -2599,9 +2599,9 @@ void EmitCaseStatement(sval_u expr, sval_u sourcePos)
 
 	if ( expr.node->type == ENUM_integer )
 	{
-		if ( !IsValidArrayIndex(expr.node[1].stringValue) )
+		if ( !IsValidArrayIndex(expr.node[1].idValue) )
 		{
-			CompileError(sourcePos.sourcePosValue, va("case index %d out of range", expr.node[1].stringValue));
+			CompileError(sourcePos.sourcePosValue, va("case index %d out of range", expr.node[1].idValue));
 			return;
 		}
 
@@ -2615,7 +2615,7 @@ void EmitCaseStatement(sval_u expr, sval_u sourcePos)
 			return;
 		}
 
-		index = expr.node[1].stringValue;
+		index = expr.node[1].idValue;
 		CompileTransferRefToString(index, 1u);
 	}
 
@@ -2774,7 +2774,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	else
 	{
 		EmitOpcode(OP_JumpOnFalse, -1, CALL_NONE);
-		AddOpcodePos(sourcePos.stringValue, 0);
+		AddOpcodePos(sourcePos.sourcePosValue, 0);
 		EmitShort(0);
 		codePos = scrCompileGlob.codePos;
 		nextPos2 = (char *)TempMalloc(0);
@@ -2797,7 +2797,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	Scr_InitFromChildBlocks(childBlocks, newContinueChildCount, forStatPostBlock->block);
 	EmitStatement(stmt2, 0, 0, forStatPostBlock->block);
 	EmitOpcode(OP_jumpback, 0, CALL_NONE);
-	AddOpcodePos(forSourcePos.stringValue, 0);
+	AddOpcodePos(forSourcePos.sourcePosValue, 0);
 	if ( *(uint32_t *)stmt.type == 44 )
 		AddOpcodePos(stmt.node[3].sourcePosValue, 1);
 	EmitShort(0);
@@ -3122,7 +3122,7 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 	scrCompileGlob.firstThread[2] = 0;
 	scrCompileGlob.bCanBreak[1] = 0;
 	EmitOpcode(OP_endswitch, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.stringValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, 0);
 	EmitShort(0);
 	pos2 = scrCompileGlob.codePos;
 	*(uint32_t *)pos1 = scrCompileGlob.codePos - nextPos;
@@ -3346,7 +3346,7 @@ void EmitDeveloperStatementList(sval_u val, sval_u sourcePos, scr_block_s *block
 
 	if ( scrCompilePub.developer_statement )
 	{
-		CompileError(sourcePos.stringValue, "cannot recurse /#");
+		CompileError(sourcePos.sourcePosValue, "cannot recurse /#");
 	}
 	else
 	{
@@ -3546,9 +3546,9 @@ void EmitVariableExpression(sval_u expr, scr_block_s *block)
 		if ( expr.node->type == ENUM_self_field )
 		{
 			if ( scrCompilePub.script_loading )
-				CompileError(expr.node[2].stringValue, "self field can only be used in the script debugger");
+				CompileError(expr.node[2].sourcePosValue, "self field can only be used in the script debugger");
 			else
-				CompileError(expr.node[2].stringValue, "self field in assignment expression not currently supported");
+				CompileError(expr.node[2].sourcePosValue, "self field in assignment expression not currently supported");
 		}
 		else if ( expr.node->type == ENUM_object )
 		{
@@ -4073,7 +4073,7 @@ void EmitThread(sval_u val)
 			}
 			else
 			{
-				Scr_UsingTree(SL_ConvertToString(val.node[1].stringValue), val.node[3].stringValue);
+				Scr_UsingTree(SL_ConvertToString(val.node[1].stringValue), val.node[3].sourcePosValue);
 				Scr_CompileRemoveRefToString(val.node[1].stringValue);
 			}
 		}
