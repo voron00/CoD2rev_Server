@@ -269,7 +269,7 @@ void ClientScr_GetHeadIcon(gclient_s *pSelf, const game_client_field_t *pField)
 	{
 		if ( iHeadIcon < 16 )
 		{
-			SV_GetConfigstring(iHeadIcon + 30, string, 0);
+			SV_GetConfigstring(iHeadIcon + 30, string, sizeof(string));
 			Scr_AddString(string);
 		}
 	}

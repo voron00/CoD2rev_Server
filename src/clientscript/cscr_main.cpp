@@ -8,9 +8,15 @@ extern scrVarPub_t scrVarPub;
 #endif
 
 #ifdef TESTING_LIBRARY
-#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
+#define scrAnimPub (*((scrAnimPub_t*)( 0x08202440 )))
 #else
-extern scrCompilePub_t scrCompilePub;
+extern scrAnimPub_t scrAnimPub;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define scrParserPub (*((scrParserPub_t*)( 0x08283ED4 )))
+#else
+extern scrParserPub_t scrParserPub;
 #endif
 
 qboolean Scr_IsInOpcodeMemory(const char *pos)
@@ -129,4 +135,168 @@ bool Scr_IsIdentifier(const char *token)
 	}
 
 	return true;
+}
+
+int Scr_GetFunctionHandleInternal(const char *filename, const char *name)
+{
+	VariableValue val;
+	unsigned int index;
+	unsigned int object;
+	const char *pos;
+	unsigned int fileName;
+	unsigned int str;
+	unsigned int posId;
+	unsigned int filePosId;
+	unsigned int id;
+
+	fileName = Scr_CreateCanonicalFilename(filename);
+	id = FindVariable(scrCompilePub.scriptsPos, fileName);
+	SL_RemoveRefToString(fileName);
+
+	if ( !id )
+		return 0;
+
+	posId = FindObject(id);
+	str = SL_FindLowercaseString(name);
+
+	if ( !str )
+		return 0;
+
+	filePosId = FindVariable(posId, str);
+
+	if ( !filePosId )
+		return 0;
+
+	if ( GetVarType(filePosId) != VAR_OBJECT )
+		return 0;
+
+	object = FindObject(filePosId);
+	index = FindVariable(object, 1u);
+	Scr_EvalVariable(&val, index);
+	pos = val.u.codePosValue;
+
+	if ( !Scr_IsInOpcodeMemory(val.u.codePosValue) )
+		return 0;
+
+	return pos - scrVarPub.programBuffer;
+}
+
+int Scr_GetFunctionHandle(const char *filename, const char *name, qboolean errorIfMissing)
+{
+	int handle;
+
+	if ( !Scr_LoadScript(filename) && errorIfMissing )
+		Com_Error(ERR_DROP, "Could not find script '%s'", filename);
+
+	handle = Scr_GetFunctionHandleInternal(filename, name);
+
+	if ( !handle && errorIfMissing )
+		Com_Error(ERR_DROP, "Could not find label '%s' in script '%s'", name, filename);
+
+	return handle;
+}
+
+unsigned int Scr_LoadScript(const char *filename)
+{
+	const char *fileName;
+	const char *codePos;
+	const char *name;
+	unsigned int var;
+	unsigned int id;
+	unsigned int scriptPosIdIndex;
+	unsigned int loadedScriptsIdIndex;
+	const char *sourceBuf;
+	const char *scriptfilename;
+	char scriptName[64];
+	unsigned int index;
+	sval_u parseData;
+	char *sourceBuffer;
+
+	index = Scr_CreateCanonicalFilename(filename);
+
+	if ( FindVariable(scrCompilePub.loadedscripts, index) )
+	{
+		SL_RemoveRefToString(index);
+		id = FindVariable(scrCompilePub.scriptsPos, index);
+		if ( id )
+			return FindObject(id);
+		else
+			return 0;
+	}
+	else
+	{
+		loadedScriptsIdIndex = GetNewVariable(scrCompilePub.loadedscripts, index);
+		SL_RemoveRefToString(index);
+		fileName = SL_ConvertToString(index);
+		Com_sprintf(scriptName, sizeof(scriptName), "%s.gsc", fileName);
+		sourceBuf = scrParserPub.sourceBuf;
+		codePos = (const char *)TempMalloc(0);
+		name = SL_ConvertToString(index);
+		sourceBuffer = Scr_AddSourceBuffer(name, scriptName, codePos, 1);
+
+		if ( sourceBuffer )
+		{
+			scrAnimPub.animTreeNames = 0;
+			scrCompilePub.far_function_count = 0;
+			scriptfilename = scrParserPub.scriptfilename;
+			scrParserPub.scriptfilename = scriptName;
+			scrCompilePub.in_ptr = "+";
+			scrCompilePub.parseBuf = sourceBuffer;
+			ScriptParse(&parseData, 0);
+			var = GetVariable(scrCompilePub.scriptsPos, index);
+			scriptPosIdIndex = GetObjectA(var);
+			ScriptCompile(parseData, scriptPosIdIndex, loadedScriptsIdIndex);
+			scrParserPub.scriptfilename = scriptfilename;
+			scrParserPub.sourceBuf = sourceBuf;
+			return scriptPosIdIndex;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+}
+
+void Scr_EndLoadScripts()
+{
+	Scr_ClearStrings();
+	SL_ShutdownSystem(2u);
+	scrCompilePub.script_loading = 0;
+	ClearObject(scrCompilePub.loadedscripts);
+	RemoveRefToObject(scrCompilePub.loadedscripts);
+	scrCompilePub.loadedscripts = 0;
+	ClearObject(scrCompilePub.scriptsPos);
+	RemoveRefToObject(scrCompilePub.scriptsPos);
+	scrCompilePub.scriptsPos = 0;
+	ClearObject(scrCompilePub.builtinFunc);
+	RemoveRefToObject(scrCompilePub.builtinFunc);
+	scrCompilePub.builtinFunc = 0;
+	ClearObject(scrCompilePub.builtinMeth);
+	RemoveRefToObject(scrCompilePub.builtinMeth);
+	scrCompilePub.builtinMeth = 0;
+}
+
+void Scr_PostCompileScripts()
+{
+	Hunk_ConvertTempToPermLowInternal();
+}
+
+void Scr_BeginLoadScripts()
+{
+	scrCompilePub.script_loading = 1;
+	Scr_InitOpcodeLookup();
+	scrCompilePub.loadedscripts = Scr_AllocArray();
+	scrCompilePub.scriptsPos = Scr_AllocArray();
+	scrCompilePub.builtinFunc = Scr_AllocArray();
+	scrCompilePub.builtinMeth = Scr_AllocArray();
+	scrVarPub.programBuffer = (const char *)Hunk_AllocLowInternal(0);
+	scrCompilePub.programLen = 0;
+	scrVarPub.endScriptBuffer = 0;
+	Scr_AllocStrings();
+	scrVarPub.fieldBuffer = 0;
+	scrCompilePub.value_count = 0;
+	Scr_ClearErrorMessage();
+	scrCompilePub.func_table_size = 0;
+	Scr_AllocAnims(1);
+	TempMemoryReset();
 }

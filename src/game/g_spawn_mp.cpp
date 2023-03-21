@@ -34,6 +34,11 @@ void GScr_AddFieldsForEntity()
 	GScr_AddFieldsForClient();
 }
 
+void GScr_AddFieldsForRadiant()
+{
+	Scr_AddFields("radiant", "txt");
+}
+
 gentity_t* Scr_GetEntity(unsigned int index)
 {
 	scr_entref_t entRef;

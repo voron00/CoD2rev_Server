@@ -145,6 +145,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	case WM_CLOSE:
 		Cbuf_AddText("quit\n");
+		PostQuitMessage(0);
 		return 0;
 	case WM_CTLCOLORSTATIC:
 		if ( ( HWND ) lParam == s_wcd.hwndBuffer ) {

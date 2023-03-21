@@ -1,11 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
-#else
 scrCompilePub_t scrCompilePub;
-#endif
 
 #ifdef TESTING_LIBRARY
 #define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
@@ -2314,39 +2310,6 @@ bool Scr_IsLastStatement(sval_u *node)
 	return 1;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 bool IsUndefinedPrimitiveExpression(sval_u expr)
 {
 	return expr.node->type == ENUM_undefined;
@@ -2715,7 +2678,7 @@ void ConnectContinueStatements()
 	codePos = (char *)TempMalloc(0);
 
 	for ( statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
-		*(_DWORD *)statement->codePos = codePos - statement->nextCodePos;
+		*(uint32_t *)statement->codePos = codePos - statement->nextCodePos;
 }
 
 void ConnectBreakStatements()
@@ -2726,7 +2689,7 @@ void ConnectBreakStatements()
 	codePos = (char *)TempMalloc(0);
 
 	for ( statement = scrCompileGlob.currentBreakStatement; statement; statement = statement->next )
-		*(_DWORD *)statement->codePos = codePos - statement->nextCodePos;
+		*(uint32_t *)statement->codePos = codePos - statement->nextCodePos;
 }
 
 void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval_u sourcePos, sval_u forSourcePos, scr_block_s *block, sval_u *forStatBlock, sval_u *forStatPostBlock)
@@ -2835,7 +2798,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	EmitStatement(stmt2, 0, 0, forStatPostBlock->block);
 	EmitOpcode(OP_jumpback, 0, CALL_NONE);
 	AddOpcodePos(forSourcePos.stringValue, 0);
-	if ( *(_DWORD *)stmt.type == 44 )
+	if ( *(uint32_t *)stmt.type == 44 )
 		AddOpcodePos(stmt.node[3].sourcePosValue, 1);
 	EmitShort(0);
 	*(uint16_t *)scrCompileGlob.codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos;
@@ -3025,7 +2988,7 @@ void EmitIfElseStatement(sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourceP
 	if ( !last )
 	{
 		pos = pos2;
-		*(_DWORD *)pos = (char *)TempMalloc(0) - nextPos;
+		*(uint32_t *)pos = (char *)TempMalloc(0) - nextPos;
 	}
 	Scr_InitFromChildBlocks(childBlocks, childCount, block);
 }
@@ -3117,8 +3080,8 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 
 int CompareCaseInfo(const void *elem1, const void *elem2)
 {
-	if ( *(_DWORD *)elem1 <= *(_DWORD *)elem2 )
-		return *(_DWORD *)elem1 < *(_DWORD *)elem2;
+	if ( *(uint32_t *)elem1 <= *(uint32_t *)elem2 )
+		return *(uint32_t *)elem1 < *(uint32_t *)elem2;
 	else
 		return -1;
 }
@@ -3162,7 +3125,7 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 	AddOpcodePos(sourcePos.stringValue, 0);
 	EmitShort(0);
 	pos2 = scrCompileGlob.codePos;
-	*(_DWORD *)pos1 = scrCompileGlob.codePos - nextPos;
+	*(uint32_t *)pos1 = scrCompileGlob.codePos - nextPos;
 	pos3 = TempMallocAlignStrict(0);
 	num = 0;
 	currentStatement = scrCompileGlob.currentCaseStatement;
@@ -3173,15 +3136,15 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 		currentStatement = currentStatement->next;
 		++num;
 	}
-	*(_WORD *)pos2 = num;
+	*(uint16_t *)pos2 = num;
 	qsort(pos3, num, 8u, CompareCaseInfo);
 	while ( num > 1 )
 	{
-		if ( *(_DWORD *)pos3 == *((_DWORD *)pos3 + 2) )
+		if ( *(uint32_t *)pos3 == *((uint32_t *)pos3 + 2) )
 		{
 			for ( nextStatement = scrCompileGlob.currentCaseStatement; nextStatement; nextStatement = nextStatement->next )
 			{
-				if ( nextStatement->name == *(_DWORD *)pos3 )
+				if ( nextStatement->name == *(uint32_t *)pos3 )
 				{
 					CompileError(nextStatement->sourcePos, "duplicate case expression");
 					return;
@@ -3276,15 +3239,6 @@ void EmitProfEndStatement(sval_u profileName, sval_u sourcePos)
 	EmitProfStatement(profileName, sourcePos, OP_prof_end);
 }
 
-
-
-
-
-
-
-
-
-
 void EmitStatementList(sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block)
 {
 	bool isLastStatement;
@@ -3301,24 +3255,6 @@ void EmitStatementList(sval_u val, bool lastStatement, unsigned int endSourcePos
 
 		EmitStatement(*nextNode, isLastStatement, endSourcePos, block);
 	}
-}
-
-void EmitThreadInternal(unsigned int id, sval_u val, sval_u sourcePos, sval_u endSourcePos, scr_block_s *block)
-{
-	scrCompileGlob.fileCountId = id;
-	AddThreadStartOpcodePos(sourcePos.sourcePosValue);
-	scrCompileGlob.cumulOffset = 0;
-	scrCompileGlob.maxOffset = 0;
-	scrCompileGlob.maxCallOffset = 0;
-	CompileTransferRefToString(val.node[1].stringValue, 2u);
-	EmitFormalParameterList(val.node[2], sourcePos, block);
-	EmitStatementList(val.node[3], 1, endSourcePos.sourcePosValue, block);
-	EmitEnd();
-	AddOpcodePos(endSourcePos.sourcePosValue, 1);
-	AddOpcodePos(0xFFFFFFFE, 0);
-
-	if ( scrCompileGlob.maxOffset + 32 * scrCompileGlob.maxCallOffset > 2047 )
-		CompileError(sourcePos.sourcePosValue, "function exceeds operand stack size");
 }
 
 void EmitWaittillFrameEnd(sval_u sourcePos)
@@ -3403,7 +3339,6 @@ void EmitWaittillmatchStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, s
 	EmitOpcode(OP_clearparams, 0, CALL_NONE);
 }
 
-
 void EmitDeveloperStatementList(sval_u val, sval_u sourcePos, scr_block_s *block, sval_u *devStatBlock)
 {
 	char *pos;
@@ -3476,13 +3411,6 @@ void EmitWaittillStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u
 	EmitOpcode(OP_clearparams, 0, CALL_NONE);
 }
 
-
-
-
-
-
-
-
 void EmitStatement(sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block)
 {
 	switch ( val.node->type )
@@ -3490,105 +3418,115 @@ void EmitStatement(sval_u val, bool lastStatement, unsigned int endSourcePos, sc
 	case ENUM_assignment:
 		EmitAssignmentStatement(val.node[1], val.node[2], val.node[3], val.node[4], block);
 		break;
+
 	case ENUM_call_expression_statement:
 		EmitCallExpressionStatement(val.node[1], block);
 		break;
+
 	case ENUM_return:
 		EmitReturnStatement(val.node[1], val.node[2], block);
 		break;
+
 	case ENUM_return2:
 		EmitEndStatement(val.node[1], block);
 		break;
+
 	case ENUM_wait:
 		EmitWaitStatement(val.node[1], val.node[2], val.node[3], block);
 		break;
+
 	case ENUM_if:
 		EmitIfStatement(val.node[1], val.node[2], val.node[3], lastStatement, endSourcePos, block, &val.node[4]);
 		break;
+
 	case ENUM_if_else:
 		EmitIfElseStatement(val.node[1], val.node[2], val.node[3], val.node[4], val.node[5], lastStatement, endSourcePos, block, &val.node[6], &val.node[7]);
 		break;
+
 	case ENUM_while:
 		EmitWhileStatement(val.node[1], val.node[2], val.node[3], val.node[4], block, &val.node[5]);
 		break;
+
 	case ENUM_for:
 		EmitForStatement(val.node[1], val.node[2], val.node[3], val.node[4], val.node[5], val.node[6], block, &val.node[7], &val.node[8]);
 		break;
+
 	case ENUM_inc:
 		EmitIncStatement(val.node[1], val.node[2], block);
 		break;
+
 	case ENUM_dec:
 		EmitDecStatement(val.node[1], val.node[2], block);
 		break;
+
 	case ENUM_binary_equals:
 		EmitBinaryEqualsOperatorExpression(val.node[1], val.node[2], val.node[3], val.node[4], block);
 		break;
+
 	case ENUM_statement_list:
 		EmitStatementList(val.node[1], lastStatement, endSourcePos, block);
 		break;
+
 	case ENUM_developer_statement_list:
 		EmitDeveloperStatementList(val.node[1], val.node[2], block, &val.node[3]);
 		break;
+
 	case ENUM_waittill:
 		EmitWaittillStatement(val.node[1], val.node[2], val.node[3], val.node[4], block);
 		break;
+
 	case ENUM_waittillmatch:
 		EmitWaittillmatchStatement(val.node[1], val.node[2], val.node[3], val.node[4], block);
 		break;
+
 	case ENUM_waittillFrameEnd:
 		EmitWaittillFrameEnd(val.node[1]);
 		break;
+
 	case ENUM_notify:
 		EmitNotifyStatement(val.node[1], val.node[2], val.node[3], val.node[4], block);
 		break;
+
 	case ENUM_endon:
 		EmitEndOnStatement(val.node[1], val.node[2], val.node[3], val.node[4], block);
 		break;
+
 	case ENUM_switch:
 		EmitSwitchStatement(val.node[1], val.node[2], val.node[3], lastStatement, endSourcePos, block);
 		break;
+
 	case ENUM_case:
 		CompileError(val.node[2].sourcePosValue, "illegal case statement");
 		break;
+
 	case ENUM_default:
 		CompileError(val.node[1].sourcePosValue, "illegal default statement");
 		break;
+
 	case ENUM_break:
 		EmitBreakStatement(val.node[1], block);
 		break;
+
 	case ENUM_continue:
 		EmitContinueStatement(val.node[1], block);
 		break;
+
 	case ENUM_breakpoint:
 		EmitBreakpointStatement();
 		break;
+
 	case ENUM_prof_begin:
 		EmitProfBeginStatement(val.node[1], val.node[2]);
 		break;
+
 	case ENUM_prof_end:
 		EmitProfEndStatement(val.node[1], val.node[2]);
 		break;
+
 	default:
 		return;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void EmitArrayVariable(sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block)
 {
@@ -3626,7 +3564,6 @@ void EmitVariableExpression(sval_u expr, scr_block_s *block)
 		EmitArrayVariable(expr.node[1], expr.node[2], expr.node[3], expr.node[4], block);
 	}
 }
-
 
 void EmitExpressionFieldObject(sval_u expr, sval_u sourcePos, scr_block_s *block)
 {
@@ -4024,3 +3961,264 @@ script_method:
 	}
 }
 
+void InitThread(int type)
+{
+	scrCompileGlob.firstThread[2] = 0;
+	scrCompileGlob.currentCaseStatement = 0;
+	scrCompileGlob.bCanBreak[0] = 0;
+	scrCompileGlob.bCanBreak[1] = 0;
+	scrCompileGlob.currentBreakStatement = 0;
+	scrCompileGlob.bCanContinue[0] = 0;
+	scrCompileGlob.bCanContinue[1] = 0;
+	scrCompileGlob.currentContinueStatement = 0;
+	scrCompileGlob.breakChildBlocks = 0;
+	scrCompileGlob.continueChildBlocks = 0;
+
+	if ( scrCompileGlob.firstThread[type] )
+	{
+		scrCompileGlob.firstThread[type] = 0;
+		EmitEnd();
+		AddOpcodePos(0, 0);
+		AddOpcodePos(0xFFFFFFFE, 0);
+	}
+}
+
+void SetThreadPosition(unsigned int posId)
+{
+	unsigned int nextPosId;
+	VariableValueInternal_u *adr;
+
+	nextPosId = FindVariable(posId, 1u);
+	adr = GetVariableValueAddress(nextPosId);
+	adr->u.codePosValue = (const char *)TempMalloc(0);
+}
+
+void EmitThreadInternal(unsigned int id, sval_u val, sval_u sourcePos, sval_u endSourcePos, scr_block_s *block)
+{
+	scrCompileGlob.fileCountId = id;
+	AddThreadStartOpcodePos(sourcePos.sourcePosValue);
+	scrCompileGlob.cumulOffset = 0;
+	scrCompileGlob.maxOffset = 0;
+	scrCompileGlob.maxCallOffset = 0;
+	CompileTransferRefToString(val.node[1].stringValue, 2u);
+	EmitFormalParameterList(val.node[2], sourcePos, block);
+	EmitStatementList(val.node[3], 1, endSourcePos.sourcePosValue, block);
+	EmitEnd();
+	AddOpcodePos(endSourcePos.sourcePosValue, 1);
+	AddOpcodePos(0xFFFFFFFE, 0);
+
+	if ( scrCompileGlob.maxOffset + 32 * scrCompileGlob.maxCallOffset > 2047 )
+		CompileError(sourcePos.sourcePosValue, "function exceeds operand stack size");
+}
+
+void EmitNormalThread(sval_u val, sval_u *stmttblock)
+{
+	unsigned int posId;
+	unsigned int parentId;
+
+	InitThread(0);
+	posId = FindVariable(scrCompileGlob.filePosId, val.node[1].sourcePosValue);
+	parentId = FindObject(posId);
+	SetThreadPosition(parentId);
+	EmitThreadInternal(parentId, val, val.node[4], val.node[5], stmttblock->block);
+}
+
+void EmitDeveloperThread(sval_u val, sval_u *stmttblock)
+{
+	unsigned int posId;
+	char *pos;
+	unsigned int parentId;
+	unsigned int checksum;
+
+	if ( scrVarPub.developer_script )
+	{
+		scrCompilePub.developer_statement = 1;
+		InitThread(1);
+		posId = FindVariable(scrCompileGlob.filePosId, val.node[1].sourcePosValue);
+		parentId = FindObject(posId);
+		SetThreadPosition(parentId);
+		EmitThreadInternal(parentId, val, val.node[4], val.node[5], stmttblock->block);
+	}
+	else
+	{
+		pos = (char *)TempMalloc(0);
+		checksum = scrVarPub.checksum;
+		scrCompilePub.developer_statement = 2;
+		InitThread(1);
+		EmitThreadInternal(0, val, val.node[4], val.node[5], stmttblock->block);
+		TempMemorySetPos(pos);
+		scrVarPub.checksum = checksum;
+	}
+
+	scrCompilePub.developer_statement = 0;
+}
+
+void EmitThread(sval_u val)
+{
+	if ( val.node->type == ENUM_begin_developer_thread )
+	{
+		scrCompileGlob.in_developer_thread = 1;
+	}
+	else if ( val.node->type > ENUM_begin_developer_thread )
+	{
+		if ( val.node->type == ENUM_end_developer_thread )
+		{
+			scrCompileGlob.in_developer_thread = 0;
+		}
+		else if ( val.node->type == ENUM_usingtree )
+		{
+			if ( scrCompileGlob.in_developer_thread )
+			{
+				CompileError(val.node[2].sourcePosValue, "cannot put #using_animtree inside /# ... #/ comment");
+			}
+			else
+			{
+				Scr_UsingTree(SL_ConvertToString(val.node[1].stringValue), val.node[3].stringValue);
+				Scr_CompileRemoveRefToString(val.node[1].stringValue);
+			}
+		}
+	}
+	else if ( val.node->type == ENUM_thread )
+	{
+		Scr_CalcLocalVarsThread(val.node[2], val.node[3], &val.node[6]);
+
+		if ( scrCompileGlob.in_developer_thread )
+			EmitDeveloperThread(val, &val.node[6]);
+		else
+			EmitNormalThread(val, &val.node[6]);
+	}
+}
+
+void EmitThreadList(sval_u val)
+{
+	sval_u *node;
+	sval_u *node2;
+
+	scrCompileGlob.in_developer_thread = 0;
+
+	for ( node = val.node->node[1].node; node; node = node[1].node )
+		SpecifyThread(*node);
+
+	if ( scrCompileGlob.in_developer_thread )
+		CompileError(scrCompileGlob.developer_thread_sourcePos, "/# has no matching #/");
+
+	scrCompileGlob.firstThread[0] = 1;
+	scrCompileGlob.firstThread[1] = 1;
+
+	for ( node2 = val.node->node[1].node; node2; node2 = node2[1].node )
+		EmitThread(*node2);
+}
+
+void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
+{
+	const char *scriptName;
+	const char *scriptName2;
+	unsigned int Variable;
+	VariableValueInternal_u *adr;
+	PrecacheEntry *newEntry;
+	VariableValue lValue;
+	unsigned int includePosId;
+	unsigned int threadCountId;
+	VariableValue pValue;
+	unsigned int index;
+	unsigned short name;
+	VariableValue value;
+	unsigned int parentId;
+	unsigned int k;
+	unsigned int id;
+	PrecacheEntry *precachescript2;
+	PrecacheEntry *precachescript;
+	unsigned short string;
+	int func_count;
+	int j;
+	int i;
+	PrecacheEntry *entry;
+
+	scrCompileGlob.filePosId = filePosId;
+	scrCompileGlob.bConstRefCount = 0;
+	scrAnimPub.animTreeIndex = 0;
+	scrCompilePub.developer_statement = 0;
+
+	if ( scrCompilePub.far_function_count )
+		newEntry = (PrecacheEntry *)Z_MallocInternal(sizeof(PrecacheEntry) * scrCompilePub.far_function_count);
+	else
+		newEntry = 0;
+
+	entry = newEntry;
+	scrCompileGlob.precachescriptList = newEntry;
+
+	if ( newEntry )
+	{
+		entry->latchedValue = scrCompileGlob.value_start[0].value.u.intValue;
+		scrCompileGlob.value_start[0].value.u.intValue = (int)entry;
+	}
+
+	EmitIncludeList(*val.node);
+	EmitThreadList(val.node[1]);
+	scrCompilePub.programLen = (char *)TempMalloc(0) - scrVarPub.programBuffer;
+	Hunk_ClearTempMemoryHighInternal();
+	func_count = scrCompilePub.far_function_count;
+
+	for ( i = 0; i < func_count; ++i )
+	{
+		precachescript = &entry[i];
+		string = precachescript->filename;
+		scriptName = SL_ConvertToString(string);
+		id = Scr_LoadScript(scriptName);
+		if ( !id )
+		{
+			scriptName2 = SL_ConvertToString(string);
+			CompileError(precachescript->sourcePos, "Could not find script '%s'", scriptName2);
+			return;
+		}
+		SL_RemoveRefToString(string);
+		if ( precachescript->include )
+		{
+			for ( j = i + 1; j < func_count; ++j )
+			{
+				precachescript2 = &entry[j];
+				if ( !precachescript2->include )
+					break;
+				if ( precachescript2->filename == string )
+				{
+					CompileError(precachescript2->sourcePos, "Duplicate #include");
+					return;
+				}
+			}
+			precachescript->include = 0;
+			for ( k = FindNextSibling(id); k; k = FindNextSibling(k) )
+			{
+				if ( GetVarType(k) == VAR_OBJECT )
+				{
+					parentId = FindObject(k);
+					index = FindVariable(parentId, 1u);
+					if ( index )
+					{
+						Scr_EvalVariable(&lValue, index);
+						pValue = lValue;
+						if ( lValue.type != VAR_INCLUDE_CODEPOS )
+						{
+							name = GetVariableName(k);
+							Variable = GetVariable(filePosId, name);
+							threadCountId = GetObjectA(Variable);
+							includePosId = SpecifyThreadPosition(threadCountId, name, precachescript->sourcePos, VAR_INCLUDE_CODEPOS);
+							adr = GetVariableValueAddress(includePosId);
+							*adr = *GetVariableValueAddress(index);
+							LinkThread(threadCountId, &pValue, 0);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if ( entry )
+	{
+		scrCompileGlob.value_start[0].value.u.intValue = entry->latchedValue;
+		Z_FreeInternal(entry);
+	}
+
+	LinkFile(filePosId);
+	value.type = VAR_INTEGER;
+	SetVariableValue(scriptId, &value);
+}

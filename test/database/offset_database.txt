@@ -1366,7 +1366,7 @@ SetJump(0x0807C6AE, (DWORD)Scr_EvalVariableObject);
 SetJump(0x0807CC38, (DWORD)Scr_CastBool);
 SetJump(0x0807CBAA, (DWORD)Scr_EvalBoolNot);
 SetJump(0x0807CBD8, (DWORD)Scr_EvalBoolComplement);
-SetJump(0x0807CA16, (DWORD)FindPrevSibling);
+SetJump(0x0807CA16, (DWORD)FindLastSibling);
 SetJump(0x0807A3E8, (DWORD)GetVariableKeyObject);
 SetJump(0x0811EE84, (DWORD)Player_UpdateActivate);
 SetJump(0x0811ECE4, (DWORD)Player_ActivateHoldCmdAllowed);
@@ -1688,7 +1688,8 @@ SetJump(0x080F53E0, (DWORD)G_PlayerEvent);
 SetJump(0x080EE226, (DWORD)BG_WeaponFireRecoil);
 SetJump(0x081079C8, (DWORD)G_RunThink);
 SetJump(0x08107AC4, (DWORD)G_RunFrameForEntity);
-
+SetJump(0x080825C2, (DWORD)VM_UnarchiveStack);
+SetJump(0x08082572, (DWORD)Scr_AddLocalVars);
 
 
 
@@ -1864,7 +1865,7 @@ SetJump(0x08090A48, (DWORD)SV_ResetEntityParsePoint);
 SetJump(0x080524EA, (DWORD)CM_EntityString);
 SetJump(0x08115E94, (DWORD)Scr_StartupGameType);
 SetJump(0x08084FD2, (DWORD)Scr_RunCurrentThreads);
-SetJump(0x08083C5C, (DWORD)Scr_RunCurrentThreadsInternal);
+SetJump(0x08083C5C, (DWORD)VM_SetTime);
 SetJump(0x080836CA, (DWORD)VM_Resume);
 SetJump(0x0807C290, (DWORD)SafeRemoveVariable);
 SetJump(0x0811BF04, (DWORD)G_DObjUpdateServerTime);

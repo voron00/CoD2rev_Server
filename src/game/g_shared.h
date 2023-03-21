@@ -907,6 +907,9 @@ void G_SetAngle(gentity_s *ent, const float *angle);
 void SetClientViewAngle(gentity_s *ent, const float *angle);
 void ClientUserinfoChanged(int clientNum);
 
+void GScr_AddFieldsForEntity();
+void GScr_AddFieldsForRadiant();
+
 void (*Player_GetMethod(const char **pName))(scr_entref_t);
 void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t);
 void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t);
@@ -938,3 +941,4 @@ void Scr_SetClientField(gclient_s *client, int offset);
 void GScr_AddFieldsForClient();
 
 void GScr_LoadConsts();
+void GScr_LoadScripts();

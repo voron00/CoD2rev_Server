@@ -2,12 +2,6 @@
 #include "clientscript_public.h"
 
 #ifdef TESTING_LIBRARY
-#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
-#else
-extern scrCompilePub_t scrCompilePub;
-#endif
-
-#ifdef TESTING_LIBRARY
 #define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
 #else
 extern scrVarPub_t scrVarPub;

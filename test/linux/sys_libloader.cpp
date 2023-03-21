@@ -112,13 +112,19 @@ void Sys_RedirectFunctions()
 	SetJump(0x0805C16E, (DWORD)CM_SightTraceThroughLeaf);
 	SetJump(0x0805C9DE, (DWORD)CM_SightTraceThroughTree);
 	SetJump(0x0805CCFA, (DWORD)CM_BoxSightTrace);
-	SetJump(0x0805B210, (DWORD)CM_Trace);
 
-	SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
+
+
+
+	//SetJump(0x0805B210, (DWORD)CM_Trace);
+	//SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
 
 	// DO NOT REMOVE
-	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
-	SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
+	//SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
+	//SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
+
+	//SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
+	//SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
 
 
 
@@ -633,11 +639,6 @@ void Sys_RedirectFunctions()
 	SetJump(0x08062C26, (DWORD)Com_ShutdownDObj);
 	SetJump(0x08062C40, (DWORD)Com_AbortDObj);
 
-
-
-	//SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
-	//SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
-
 	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
 	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
 	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
@@ -826,6 +827,13 @@ void Sys_RedirectFunctions()
 	SetJump(0x0807071E, (DWORD)EmitMethod);
 
 	SetJump(0x080742D2, (DWORD)EmitStatement);
+	SetJump(0x080751B4, (DWORD)EmitThread);
+	
+	SetJump(0x0807799E, (DWORD)Scr_AddSourceBuffer);
+	SetJump(0x0810DF86, (DWORD)GScr_LoadScripts);
+	
+	SetJump(0x080837EC, (DWORD)VM_Execute);
+	SetJump(0x08084FD2, (DWORD)Scr_RunCurrentThreads);
 }
 
 class cCallOfDuty2Pro

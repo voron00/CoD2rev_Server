@@ -518,7 +518,7 @@ void Com_SetErrorMessage(const char *errorMessage)
 	Dvar_SetString(ui_errorMessage, errorMessage);
 }
 
-void UpdateScrSettings()
+void Scr_UpdateSettings()
 {
 	qboolean developer = 0;
 
@@ -537,7 +537,7 @@ void Com_Restart()
 	CM_Shutdown();
 	Hunk_Clear();
 	Scr_Init();
-	UpdateScrSettings();
+	Scr_UpdateSettings();
 	com_fixedConsolePosition = 0;
 	XAnimInit();
 	DObjInit();
@@ -1207,7 +1207,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	Sys_Init();
 	Netchan_Init(Com_Milliseconds());
 	Scr_Init();
-	UpdateScrSettings();
+	Scr_UpdateSettings();
 	XAnimInit();
 	DObjInit();
 	SV_Init();

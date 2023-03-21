@@ -7,12 +7,6 @@
 extern scrVarPub_t scrVarPub;
 #endif
 
-#ifdef TESTING_LIBRARY
-#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
-#else
-extern scrCompilePub_t scrCompilePub;
-#endif
-
 typedef struct scrParserGlob_s
 {
 	struct OpcodeLookup *opcodeLookup;
@@ -309,6 +303,172 @@ void AddThreadStartOpcodePos(unsigned int sourcePos)
 			scrParserGlob.threadStartSourceIndex = -1;
 		}
 	}
+}
+
+void Scr_InitOpcodeLookup()
+{
+	if ( scrVarPub.developer )
+	{
+		scrParserGlob.delayedSourceIndex = -1;
+		scrParserGlob.opcodeLookupMaxLen = 0x10000;
+		scrParserGlob.opcodeLookupLen = 0;
+		scrParserGlob.opcodeLookup = (OpcodeLookup *)Z_MallocInternal(0x140000u);
+		memset(scrParserGlob.opcodeLookup, 0, sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupMaxLen);
+		scrParserGlob.sourcePosLookupMaxLen = 0x10000;
+		scrParserGlob.sourcePosLookupLen = 0;
+		scrParserGlob.sourcePosLookup = (SourceLookup *)Z_MallocInternal(0x80000u);
+		scrParserGlob.currentCodePos = 0;
+		scrParserGlob.currentSourcePosCount = 0;
+		scrParserGlob.sourceBufferLookupMaxLen = 16;
+		scrParserPub.sourceBufferLookupLen = 0;
+		scrParserPub.sourceBufferLookup = (SourceBufferInfo *)Z_MallocInternal(0x180u);
+	}
+}
+
+SourceBufferInfo *Scr_GetNewSourceBuffer()
+{
+	SourceBufferInfo *newBuffer;
+
+	if ( scrParserPub.sourceBufferLookupLen >= scrParserGlob.sourceBufferLookupMaxLen )
+	{
+		scrParserGlob.sourceBufferLookupMaxLen *= 2;
+		newBuffer = (SourceBufferInfo *)Z_MallocInternal(sizeof(SourceBufferInfo) * scrParserGlob.sourceBufferLookupMaxLen);
+		Com_Memcpy(newBuffer, scrParserPub.sourceBufferLookup, sizeof(SourceBufferInfo) * scrParserPub.sourceBufferLookupLen);
+		Z_FreeInternal(scrParserPub.sourceBufferLookup);
+		scrParserPub.sourceBufferLookup = newBuffer;
+	}
+
+	return &scrParserPub.sourceBufferLookup[scrParserPub.sourceBufferLookupLen++];
+}
+
+void Scr_AddSourceBufferInternal(const char *extFilename, const char *codePos, char *sourceBuf, int len, bool doEolFixup, bool archive)
+{
+	SourceBufferInfo *newBuffer;
+	const char *source;
+	char *buf;
+	char c;
+	char count;
+	int i;
+	int j;
+	char *tmp;
+	size_t size;
+	char *dest;
+
+	if ( scrParserPub.sourceBufferLookup )
+	{
+		size = strlen(extFilename) + 1;
+		dest = (char *)Z_MallocInternal(size + len + 2);
+		strcpy(dest, extFilename);
+		if ( sourceBuf )
+			source = &dest[size];
+		else
+			source = 0;
+		buf = sourceBuf;
+		tmp = (char *)source;
+		if ( doEolFixup )
+		{
+			for ( i = 0; i <= len; ++i )
+			{
+				c = *buf++;
+				if ( c == 10 || c == 13 && *buf != 10 )
+					*tmp = 0;
+				else
+					*tmp = c;
+				++tmp;
+			}
+		}
+		else
+		{
+			for ( j = 0; j <= len; ++j )
+			{
+				count = *buf++;
+				*tmp++ = count;
+			}
+		}
+		newBuffer = Scr_GetNewSourceBuffer();
+		newBuffer->codePos = codePos;
+		newBuffer->buf = dest;
+		newBuffer->sourceBuf = source;
+		newBuffer->len = len;
+		newBuffer->sortedIndex = -1;
+		newBuffer->archive = archive;
+		if ( source )
+			scrParserPub.sourceBuf = source;
+	}
+	else
+	{
+		scrParserPub.sourceBuf = 0;
+	}
+}
+
+char* Scr_ReadFile(const char *filename, const char *extFilename, const char *codePos, bool archive)
+{
+	fileHandle_t f;
+	int len;
+	char *buffer;
+
+	len = FS_FOpenFileByMode(extFilename, &f, FS_READ);
+
+	if ( len >= 0 )
+	{
+		buffer = (char *)Hunk_AllocateTempMemoryHighInternal(len + 1);
+		FS_Read(buffer, len, f);
+		buffer[len] = 0;
+		FS_FCloseFile(f);
+		Scr_AddSourceBufferInternal(extFilename, codePos, buffer, len, 1, archive);
+		return buffer;
+	}
+	else
+	{
+		Scr_AddSourceBufferInternal(extFilename, codePos, 0, -1, 1, archive);
+		return 0;
+	}
+}
+
+char* Scr_AddSourceBuffer(const char *filename, const char *extFilename, const char *codePos, bool archive)
+{
+	char eol;
+	SaveSourceBufferInfo *infoLookup;
+	char *source;
+	int len;
+	char *sourceBuf;
+	char c;
+	int i;
+	char *dest;
+
+	if ( !archive || !scrParserGlob.saveSourceBufferLookup )
+		return Scr_ReadFile(filename, extFilename, codePos, archive);
+
+	infoLookup = &scrParserGlob.saveSourceBufferLookup[--scrParserGlob.saveSourceBufferLookupLen];
+	len = infoLookup->len;
+
+	if ( len >= 0 )
+	{
+		sourceBuf = (char *)Hunk_AllocateTempMemoryHighInternal(len + 1);
+		source = infoLookup->sourceBuf;
+		dest = sourceBuf;
+
+		for ( i = 0; i < len; ++i )
+		{
+			c = *source++;
+			eol = c;
+			if ( !c )
+				eol = 10;
+			*dest++ = eol;
+		}
+
+		*dest = 0;
+
+		if ( infoLookup->sourceBuf )
+			Z_FreeInternal(scrParserGlob.saveSourceBufferLookup[scrParserGlob.saveSourceBufferLookupLen].sourceBuf);
+	}
+	else
+	{
+		sourceBuf = 0;
+	}
+
+	Scr_AddSourceBufferInternal(extFilename, codePos, sourceBuf, len, 1, archive);
+	return sourceBuf;
 }
 
 void CompileError(unsigned int sourcePos, const char *format, ...)

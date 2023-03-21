@@ -106,7 +106,7 @@ unsigned int FindNextSibling(unsigned int id)
 		return scrVarGlob.variableList[scrVarGlob.variableList[id].nextSibling].hash.id;
 }
 
-unsigned int FindPrevSibling(unsigned int id)
+unsigned int FindLastSibling(unsigned int id)
 {
 	if ( (scrVarGlob.variableList[scrVarGlob.variableList[scrVarGlob.variableList[scrVarGlob.variableList[scrVarGlob.variableList[id].nextSibling].hash.u.prev].hash.u.prev].hash.id].w.status & VAR_MASK) > VAR_THREAD_LIST )
 		return 0;
@@ -2603,6 +2603,12 @@ bool Scr_CastString(VariableValue *value)
 	}
 }
 
+void Scr_SetClassMap(unsigned int classnum)
+{
+	scrClassMap[classnum].entArrayId = Scr_AllocArray();
+	scrClassMap[classnum].id = Scr_AllocArray();
+}
+
 void Scr_DumpScriptThreads()
 {
 	UNIMPLEMENTED(__FUNCTION__);
@@ -2611,6 +2617,125 @@ void Scr_DumpScriptThreads()
 void Scr_DumpScriptVariables()
 {
 	UNIMPLEMENTED(__FUNCTION__);
+}
+
+void Scr_AddFieldsForFile(const char *filename)
+{
+	size_t strsize;
+	char *lwr;
+	fileHandle_t f;
+	int dataType;
+	int i;
+	int size;
+	unsigned int index;
+	int type;
+	char *targetPos;
+	char *token;
+	const char *sourcePos;
+	char *buffer;
+	int len;
+
+	len = FS_FOpenFileByMode(filename, &f, FS_READ);
+
+	if ( len < 0 )
+	{
+		Com_Error(ERR_DROP, va("cannot find '%s'", filename));
+	}
+
+	buffer = (char *)Hunk_AllocateTempMemoryHighInternal(len + 1);
+	FS_Read(buffer, len, f);
+	buffer[len] = 0;
+	FS_FCloseFile(f);
+	sourcePos = buffer;
+
+	Com_BeginParseSession("Scr_AddFields");
+
+	while ( 1 )
+	{
+		token = Com_Parse(&sourcePos);
+
+		if ( !sourcePos )
+			break;
+
+		if ( !strcmp(token, "float") )
+		{
+			type = VAR_FLOAT;
+		}
+		else if ( !strcmp(token, "int") )
+		{
+			type = VAR_INTEGER;
+		}
+		else if ( !strcmp(token, "string") )
+		{
+			type = VAR_STRING;
+		}
+		else
+		{
+			if ( strcmp(token, "vector") )
+			{
+				Com_Error(ERR_DROP, va("unknown type '%s' in '%s'", token, filename));
+			}
+			type = VAR_VECTOR;
+		}
+
+		token = Com_Parse(&sourcePos);
+
+		if ( !sourcePos )
+		{
+			Com_Error(ERR_DROP, va("missing field name in '%s'", filename));
+		}
+
+		strsize = strlen(token);
+		len = strsize + 1;
+
+		for ( i = strsize; i >= 0; --i )
+		{
+			lwr = &token[i];
+			*lwr = tolower(token[i]);
+		}
+
+		index = SL_GetCanonicalString(token);
+
+		if ( Scr_FindField(token, &dataType) )
+			Com_Error(ERR_DROP, "duplicate key '%s' in '%s'", token, filename);
+
+		size = len + 3;
+		targetPos = (char *)TempMalloc(len + 3);
+		strcpy(targetPos, token);
+		targetPos += len;
+		*(uint16_t *)targetPos = index;
+		targetPos += 2;
+		*targetPos++ = type;
+		*targetPos = 0;
+	}
+
+	Com_EndParseSession();
+	Hunk_ClearTempMemoryHighInternal();
+}
+
+void Scr_AddFields(const char *path, const char *extension)
+{
+	char s[MAX_QPATH];
+	int i;
+	char **fields;
+	int numfields;
+
+	fields = FS_ListFiles(path, extension, FS_LIST_PURE_ONLY, &numfields);
+	TempMemoryReset();
+	scrVarPub.fieldBuffer = (const char *)Hunk_AllocLowInternal(0);
+	*(char *)scrVarPub.fieldBuffer = 0;
+
+	for ( i = 0; i < numfields; ++i )
+	{
+		sprintf(s, "%s/%s", path, fields[i]);
+		Scr_AddFieldsForFile(s);
+	}
+
+	if ( fields )
+		FS_FreeFileList(fields);
+
+	*(char *)TempMalloc(1) = 0;
+	Hunk_ConvertTempToPermLowInternal();
 }
 
 void Var_ResetAll()

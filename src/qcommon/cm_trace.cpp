@@ -1239,6 +1239,8 @@ int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const 
 	return hitNum;
 }
 
+
+// Broken, need to be fixed.
 void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask)
 {
 	vec_t radius;

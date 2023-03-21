@@ -14,28 +14,12 @@ extern scrAnimPub_t scrAnimPub;
 #endif
 
 #ifdef TESTING_LIBRARY
-#define scrCompilePub (*((scrCompilePub_t*)( 0x08202A40 )))
-#else
-extern scrCompilePub_t scrCompilePub;
-#endif
-
-#ifdef TESTING_LIBRARY
 #define scrVmPub (*((scrVmPub_t*)( 0x083D7600 )))
 #else
 scrVmPub_t scrVmPub;
 #endif
 
 extern const char *var_typename[];
-
-typedef struct scrVmGlob_s
-{
-	VariableValue eval_stack[2];
-	const char *dialog_error_message;
-	int loading;
-	int starttime;
-	unsigned int localVarsStack[2048];
-} scrVmGlob_t;
-static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
 
 #ifdef TESTING_LIBRARY
 #define scrVmGlob (*((scrVmGlob_t*)( 0x083D5580 )))
@@ -53,11 +37,8 @@ void Scr_ErrorInternal()
 		if ( scrVarPub.developer && scrVmGlob.loading )
 			scrVmPub.terminal_error = 1;
 
-// !!! REMOVE ME WHEN COMPLETE
-#ifndef TESTING_LIBRARY
 		if ( scrVmPub.function_count || scrVmPub.debugCode )
 			longjmp(g_script_error[g_script_error_level], -1);
-#endif
 
 		Com_Error(ERR_DROP, "%s", scrVarPub.error_message);
 	}
@@ -723,6 +704,116 @@ void Scr_TerminateThread(unsigned int localId)
 	}
 }
 
+int Scr_AddLocalVars(unsigned int localId)
+{
+	int count;
+	unsigned int fieldIndex;
+
+	count = 0;
+
+	for ( fieldIndex = FindLastSibling(localId); fieldIndex; fieldIndex = FindLastSibling(fieldIndex) )
+	{
+		*++scrVmPub.localVars = fieldIndex;
+		++count;
+	}
+
+	return count;
+}
+
+void VM_UnarchiveStack(unsigned int startLocalId, function_stack_t *stack, const char **pos)
+{
+	int function_count;
+	unsigned int localId;
+	VariableValue *startTop;
+	int count;
+	const char *stackPos;
+	const char *nextPos;
+
+	scrVmPub.function_frame->fs.pos = *pos;
+	++scrVmPub.function_count;
+	++scrVmPub.function_frame;
+	count = *((uint16_t *)pos + 2);
+	stackPos = (char *)pos + 11;
+	startTop = stack->startTop;
+
+	while ( count )
+	{
+		++startTop;
+		--count;
+		startTop->type = *(uint8_t *)stackPos;
+		nextPos = stackPos + 1;
+
+		if ( startTop->type == VAR_CODEPOS )
+		{
+			scrVmPub.function_frame->fs.pos = *(const char **)nextPos;
+			++scrVmPub.function_count;
+			++scrVmPub.function_frame;
+		}
+		else
+		{
+			startTop->u.intValue = *(_DWORD *)nextPos;
+		}
+
+		stackPos = nextPos + 4;
+	}
+
+	stack->pos = *pos;
+	stack->top = startTop;
+	localId = *((uint16_t *)pos + 4);
+	stack->localId = localId;
+	Scr_ClearWaitTime(startLocalId);
+	function_count = scrVmPub.function_count;
+
+	while ( 1 )
+	{
+		scrVmPub.function_frame_start[function_count--].fs.localId = localId;
+		if ( !function_count )
+			break;
+		localId = GetParentLocalId(localId);
+	}
+
+	while ( ++function_count != scrVmPub.function_count )
+		scrVmPub.stack[3 * function_count - 95].u.intValue = Scr_AddLocalVars(scrVmPub.function_frame_start[function_count].fs.localId);
+
+	stack->localVarCount = Scr_AddLocalVars(stack->localId);
+
+	if ( *((uint8_t *)pos + 10) != LOBYTE(scrVarPub.time) )
+		Scr_ResetTimeout();
+
+	MT_Free(pos, *((uint16_t *)pos + 3));
+}
+
+void VM_Resume(unsigned int timeId)
+{
+	unsigned int id;
+	const char **codePos;
+	unsigned int parentId;
+	unsigned int localId;
+	function_stack_t stack;
+
+	Scr_ResetTimeout();
+	AddRefToObject(timeId);
+
+	for ( stack.startTop = scrVmPub.stack; ; RemoveRefToValue(stack.startTop + 1) )
+	{
+		localId = FindNextSibling(timeId);
+
+		if ( !localId )
+			break;
+
+		parentId = GetVariableKeyObject(localId);
+		codePos = (const char **)GetVariableValueAddress(localId)->u.codePosValue;
+		RemoveObjectVariable(timeId, parentId);
+		VM_UnarchiveStack(parentId, &stack, codePos);
+		id = VM_ExecuteInternal(stack.pos, stack.localId, stack.localVarCount, stack.top, stack.startTop);
+		RemoveRefToObject(id);
+	}
+
+	RemoveRefToObject(timeId);
+	ClearVariableValue(scrVarPub.tempVariable);
+	scrVmPub.top = scrVmPub.stack;
+}
+
 void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top)
 {
 	unsigned int object;
@@ -734,7 +825,7 @@ void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, Variabl
 	VariableValue nextValue;
 	VariableValue value2;
 	bool isPreCodePos;
-	int prevSibling;
+	int lastSibling;
 	unsigned int id;
 	unsigned int self;
 	int numBytes;
@@ -760,20 +851,20 @@ void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, Variabl
 			localId = FindObject(localId);
 			AddRefToObject(localId);
 			scrVarPub.evaluate = 1;
-			prevSibling = localId;
+			lastSibling = localId;
 LABEL_4:
 			while ( 1 )
 			{
-				prevSibling = FindPrevSibling(prevSibling);
-				if ( !prevSibling )
+				lastSibling = FindLastSibling(lastSibling);
+				if ( !lastSibling )
 					break;
-				startLocalId = GetVariableKeyObject(prevSibling);
+				startLocalId = GetVariableKeyObject(lastSibling);
 				self = Scr_GetSelf(startLocalId);
 				object = FindObjectVariable(scrVarPub.pauseArrayId, self);
 				id = FindObject(object);
-				if ( GetVarType(prevSibling) )
+				if ( GetVarType(lastSibling) )
 				{
-					VariableValueAddress = GetVariableValueAddress(prevSibling);
+					VariableValueAddress = GetVariableValueAddress(lastSibling);
 					secondStack = VariableValueAddress->u.stackValue;
 					if ( *((byte *)secondStack->pos - 1) == 119 )
 					{
@@ -829,7 +920,7 @@ LABEL_4:
 					Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
 					if ( isPreCodePos )
 					{
-						prevSibling = localId;
+						lastSibling = localId;
 					}
 					else
 					{
@@ -867,7 +958,7 @@ LABEL_4:
 							--secondStackSize;
 						}
 						while ( secondStackSize );
-						prevSibling = localId;
+						lastSibling = localId;
 					}
 				}
 				else
@@ -878,7 +969,7 @@ LABEL_4:
 					if ( !GetArraySize(id) )
 						RemoveObjectVariable(scrVarPub.pauseArrayId, self);
 					Scr_TerminateThread(self);
-					prevSibling = localId;
+					lastSibling = localId;
 				}
 			}
 			RemoveRefToObject(localId);
@@ -995,7 +1086,6 @@ ERROR:
 	}
 }
 
-#if 0
 unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int numArgs)
 {
 	int varType;
@@ -1056,7 +1146,29 @@ unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int numA
 		return parentId;
 	}
 }
-#endif
+
+void VM_SetTime()
+{
+	unsigned int localId;
+	unsigned int id;
+
+	if ( scrVarPub.timeArrayId )
+	{
+		id = FindVariable(scrVarPub.timeArrayId, scrVarPub.time);
+
+		if ( id )
+		{
+			localId = FindObject(id);
+			VM_Resume(localId);
+			SafeRemoveVariable(scrVarPub.timeArrayId, scrVarPub.time);
+		}
+	}
+}
+
+void Scr_RunCurrentThreads()
+{
+	VM_SetTime();
+}
 
 void Scr_Settings(int developer, int developer_script, int abort_on_error)
 {
@@ -1095,6 +1207,29 @@ void Scr_ClearErrorMessage()
 	scrVarPub.error_message = 0;
 	scrVmGlob.dialog_error_message = 0;
 	scrVarPub.error_index = 0;
+}
+
+void Scr_ClearStrings()
+{
+	scrCompilePub.canonicalStrings = 0;
+	Hunk_ClearHigh(scrVarPub.canonicalStrMark);
+}
+
+void Scr_AllocAnims(int num)
+{
+	scrAnimPub.animtree_loading = 1;
+	scrAnimPub.xanim_num[num] = 0;
+	scrAnimPub.xanim_lookup[num][0].anims = 0;
+	scrAnimPub.animtrees = Scr_AllocArray();
+	scrAnimPub.animtree_node = 0;
+	scrCompilePub.developer_statement = 0;
+}
+
+void Scr_AllocStrings()
+{
+	scrVarPub.canonicalStrMark = Hunk_SetMark();
+	scrCompilePub.canonicalStrings = (uint16_t *)Hunk_AllocInternal(0x20000u);
+	scrVarPub.canonicalStrCount = 0;
 }
 
 void Scr_VM_Init()

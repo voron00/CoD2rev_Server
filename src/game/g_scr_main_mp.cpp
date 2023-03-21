@@ -355,3 +355,53 @@ void (*Scr_GetFunction(const char **pName, int *type))()
 
 	return NULL;
 }
+
+extern dvar_t * sv_gametype;
+void GScr_LoadGameTypeScript()
+{
+	char s[64];
+
+	Com_sprintf(s, sizeof(s), "maps/mp/gametypes/%s", sv_gametype->current.string);
+
+	g_scr_data.gametype.main = Scr_GetFunctionHandle(s, "main", 1);
+	g_scr_data.gametype.startupgametype = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_StartGameType", 1);
+	g_scr_data.gametype.playerconnect = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerConnect", 1);
+	g_scr_data.gametype.playerdisconnect = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerDisconnect", 1);
+	g_scr_data.gametype.playerdamage = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerDamage", 1);
+	g_scr_data.gametype.playerkilled = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerKilled", 1);
+}
+
+void GScr_LoadLevelScript()
+{
+	dvar_t *mapname;
+	char s[64];
+
+	mapname = Dvar_RegisterString("mapname", "", 0x1044u);
+	Com_sprintf(s, sizeof(s), "maps/mp/%s", mapname->current.string);
+	g_scr_data.levelscript = Scr_GetFunctionHandle(s, "main", 0);
+}
+
+void GScr_LoadFields()
+{
+	int classnum;
+
+	for ( classnum = 0; classnum < CLASS_NUM_COUNT; classnum++ )
+		Scr_SetClassMap(classnum);
+
+	GScr_AddFieldsForEntity();
+	GScr_AddFieldsForHudElems();
+	GScr_AddFieldsForRadiant();
+}
+
+void GScr_LoadScripts()
+{
+	Scr_BeginLoadScripts();
+	g_scr_data.deletestruct = Scr_GetFunctionHandle("codescripts/delete", "main", 1);
+	g_scr_data.initstructs = Scr_GetFunctionHandle("codescripts/struct", "initstructs", 1);
+	g_scr_data.createstruct = Scr_GetFunctionHandle("codescripts/struct", "createstruct", 1);
+	GScr_LoadGameTypeScript();
+	GScr_LoadLevelScript();
+	Scr_PostCompileScripts();
+	GScr_LoadFields();
+	Scr_EndLoadScripts();
+}

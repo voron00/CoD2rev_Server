@@ -207,6 +207,16 @@ typedef struct __attribute__((aligned(128))) scrVmPub_s
 } scrVmPub_t;
 static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
 
+typedef struct scrVmGlob_s
+{
+	VariableValue eval_stack[2];
+	const char *dialog_error_message;
+	int loading;
+	int starttime;
+	unsigned int localVarsStack[2048];
+} scrVmGlob_t;
+static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
+
 struct scr_animtree_t
 {
 	struct XAnim_s *anims;
@@ -245,6 +255,7 @@ typedef struct scrCompilePub_s
 } scrCompilePub_t;
 static_assert((sizeof(scrCompilePub_t) == 0x1038), "ERROR: scrCompilePub_t size is invalid!");
 
+extern scrCompilePub_t scrCompilePub;
 extern char g_EndPos;
 
 struct SourceLookup
@@ -273,6 +284,7 @@ struct SourceBufferInfo
 	int sortedIndex;
 	bool archive;
 };
+static_assert((sizeof(SourceBufferInfo) == 24), "ERROR: SourceBufferInfo size is invalid!");
 
 struct SaveSourceBufferInfo
 {
@@ -609,7 +621,10 @@ void Scr_GetVector(unsigned int index, float *vector);
 void VM_CancelNotify(unsigned int notifyListOwnerId, unsigned int startLocalId);
 void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top);
 void Scr_NotifyNum(int entnum, unsigned int classnum, unsigned int stringValue, unsigned int paramcount);
-unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int varCount, VariableValue *top, VariableValue *startTop);
+
+unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int numArgs);
+unsigned int QDECL VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int varCount, VariableValue *top, VariableValue *startTop);
+
 void Scr_TerminateThread(unsigned int localId);
 void runtimeError(conChannel_t channel, const char *codePos, unsigned int index, const char *errorMessage);
 void scriptError(const char *codePos, unsigned int index, const char *errorMsg, const char *format);
@@ -699,6 +714,7 @@ void SL_RemoveRefToString(unsigned int stringValue);
 void SL_TransferRefToUser(unsigned int stringIndex, unsigned char user);
 void SL_ChangeUser(unsigned char from, unsigned char to);
 void SL_AddRefToString(unsigned int stringValue);
+void SL_ShutdownSystem(unsigned char user);
 void SL_Shutdown();
 void SL_CheckInit();
 
@@ -709,7 +725,7 @@ unsigned int Scr_CreateCanonicalFilename(const char *name);
 #endif
 
 unsigned int FindNextSibling(unsigned int id);
-unsigned int FindPrevSibling(unsigned int id);
+unsigned int FindLastSibling(unsigned int id);
 unsigned int FindVariable(unsigned int parentId, unsigned int name);
 unsigned int FindVariableIndex(unsigned int parentId, unsigned int name);
 unsigned int FindObjectVariable(unsigned int parentId, unsigned int id);
@@ -818,8 +834,10 @@ unsigned int GetArray(unsigned int id);
 void Scr_SetThreadWaitTime(unsigned int startLocalId, unsigned int waitTime);
 void Scr_SetThreadNotifyName(unsigned int startLocalId, unsigned int stringValue);
 unsigned int Scr_FindField(const char *name, int *type);
+void Scr_AddFields(const char *path, const char *extension);
 void Scr_AddClassField(unsigned int classnum, const char *name, unsigned short offset);
 bool Scr_CastString(VariableValue *value);
+void Scr_SetClassMap(unsigned int classnum);
 void Scr_DumpScriptThreads();
 void Scr_DumpScriptVariables();
 void Var_Shutdown();
@@ -836,8 +854,22 @@ void Scr_SetGenericField(byte *data, int fieldtype, int offset);
 unsigned int Scr_GetCanonicalStringIndex(unsigned int index);
 unsigned int SL_GetCanonicalString(const char *str);
 
+void Scr_ClearStrings();
+void Scr_AllocAnims(int num);
+void Scr_AllocStrings();
+
 bool Scr_IsIdentifier(const char *token);
 unsigned int Scr_GetSourceBuffer(const char *codePos);
+char* Scr_AddSourceBuffer(const char *filename, const char *extFilename, const char *codePos, bool archive);
+
+int Scr_GetFunctionHandle(const char *filename, const char *name, qboolean errorIfMissing);
+unsigned int Scr_LoadScript(const char *filename);
+void Scr_BeginLoadScripts();
+void Scr_PostCompileScripts();
+void Scr_EndLoadScripts();
+
+void Scr_RunCurrentThreads();
+void Scr_ClearOutParams();
 
 #ifdef __cplusplus
 extern "C" {
@@ -850,6 +882,7 @@ int Scr_ScanFile(char *buf, int max_size);
 void AddOpcodePos(unsigned int sourcePos, int type);
 void RemoveOpcodePos();
 void AddThreadStartOpcodePos(unsigned int sourcePos);
+void Scr_InitOpcodeLookup();
 void QDECL Scr_YYACError(const char* fmt, ...);
 void QDECL ScriptParse(sval_u *source, char user);
 
@@ -873,6 +906,9 @@ void EmitVariableExpression(sval_u expr, scr_block_s *block);
 void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *block);
 void EmitFunction(sval_u func, sval_u sourcePos);
 void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourcePos, bool bStatement, scr_block_s *block);
+void EmitThread(sval_u val);
+
+void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId);
 
 #ifdef __cplusplus
 }
