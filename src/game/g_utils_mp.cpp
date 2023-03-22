@@ -154,3 +154,8 @@ void G_SetAngle(gentity_s *ent, const float *angle)
 	VectorSet(ent->s.pos.trDelta, 0, 0, 0);
 	VectorCopy(angle, ent->r.currentAngles);
 }
+
+float G_random()
+{
+	return (float)rand() / 2147483600.0;
+}

@@ -855,6 +855,24 @@ void Sys_RedirectFunctions()
 	SetJump(0x08084FD2, (DWORD)Scr_RunCurrentThreads);
 	SetJump(0x08083E96, (DWORD)Scr_InitSystem);
 	SetJump(0x0807FA00, (DWORD)Scr_ErrorInternal);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	SetJump(0x080EE226, (DWORD)BG_WeaponFireRecoil);
 }
 
 class cCallOfDuty2Pro

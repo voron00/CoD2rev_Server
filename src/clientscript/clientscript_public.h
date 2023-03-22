@@ -895,8 +895,10 @@ void AddOpcodePos(unsigned int sourcePos, int type);
 void RemoveOpcodePos();
 void AddThreadStartOpcodePos(unsigned int sourcePos);
 void Scr_InitOpcodeLookup();
+
 void QDECL Scr_YYACError(const char* fmt, ...);
-void QDECL ScriptParse(sval_u *source, char user);
+void QDECL yyparse();
+void QDECL ScriptParse(sval_u *parseData, unsigned char user);
 
 void EmitOpcode(unsigned int op, int offset, int callType);
 void Scr_CalcLocalVarsArrayPrimitiveExpressionRef(sval_u expr, scr_block_s *block);

@@ -452,7 +452,7 @@ SetJump(0x08084DB4, (DWORD)Scr_Error);
 SetJump(0x0811AE70, (DWORD)G_FindConfigstringIndex);
 SetJump(0x08091108, (DWORD)SV_GetConfigstringConst);
 SetJump(0x08064ECC, (DWORD)FS_iwIwd);
-SetJump(0x080E9270, (DWORD)BG_WeaponDefs);
+SetJump(0x080E9270, (DWORD)BG_GetWeaponDef);
 SetJump(0x080E949C, (DWORD)BG_FindWeaponIndexForName);
 SetJump(0x080E9322, (DWORD)BG_GetNumWeapons);
 SetJump(0x08078282, (DWORD)scriptError);
@@ -2210,6 +2210,9 @@ SetJump(0x080845E4, (DWORD)Scr_GetDebugString);
 SetJump(0x08106AAC, (DWORD)BG_PostLoadAnim);
 SetJump(0x080BA7E4, (DWORD)XAnimCreateTree);
 SetJump(0x080BA7BC, (DWORD)XAnimTreeSize);
+SetJump(0x0808F288, (DWORD)SV_ClientCommand);
+SetJump(0x0808BACE, (DWORD)SV_Heartbeat_f);
+SetJump(0x080E95EE, (DWORD)BG_GetViewmodelWeaponIndex);
 
 SetJump(0x0805C534, (DWORD)CM_SightTraceCapsuleThroughCapsule);
 SetJump(0x0805C23C, (DWORD)CM_SightTraceSphereThroughSphere);

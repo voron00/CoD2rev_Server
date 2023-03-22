@@ -2630,7 +2630,7 @@ float Scr_GetObjectUsage(unsigned int parentId)
 	usage = 1.0;
 
 	for ( i = FindNextSibling(parentId); i; i = FindNextSibling(i) )
-		usage = Scr_GetObjectEntryUsage((VariableValueInternal *)(16 * i + 136921088)) + usage;
+		usage = Scr_GetObjectEntryUsage(&scrVarGlob.variableList[i]) + usage;
 
 	return usage;
 }

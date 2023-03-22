@@ -377,9 +377,9 @@ struct gclient_s
 	playerState_t ps;
 	clientSession_t sess;
 	int spectatorClient;
-	int noclip;
-	int ufo;
-	int bFrozen;
+	qboolean noclip;
+	qboolean ufo;
+	qboolean bFrozen;
 	int lastCmdTime;
 	int buttons;
 	int oldbuttons;
@@ -390,35 +390,39 @@ struct gclient_s
 	float fGunYaw;
 	int damage_blood;
 	vec3_t damage_from;
-	int damage_fromWorld;
-	int accurateCount; // N/A
-	int accuracy_shots; // N/A
-	int accuracy_hits; // N/A
+	qboolean damage_fromWorld;
+	int accurateCount;
+	int accuracy_shots;
+	int accuracy_hits;
 	int inactivityTime;
-	int inactivityWarning;
-	int playerTalkTime;
-	int rewardTime; // N/A
+	qboolean inactivityWarning;
+	int lastVoiceTime;
+	int switchTeamTime;
 	float currentAimSpreadScale;
-	int sniperRifleFiredTime; // N/A
-	float sniperRifleMuzzleYaw; // N/A
-	int unknownClientEndFrameVar;
-	vec3_t unknownVector;  // N/A
-	gentity_s *lookAtEntity;
-	int activateEntNumber;
-	int activateTime;
-	int nonPVSFriendlyEntNum;
-	int pingPlayerTime;
-	int damageFeedBackTime;
-	vec2_t damageFeedBackDir;
+	gentity_s *persistantPowerup;
+	int portalID;
+	int dropWeaponTime;
+	int sniperRifleFiredTime;
+	float sniperRifleMuzzleYaw;
+	int PCSpecialPickedUpCount;
+	gentity_s *pLookatEnt;
+	int useHoldEntity;
+	int useHoldTime;
+	int iLastCompassFriendlyInfoEnt;
+	int compassPingTime;
+	int damageTime;
+	float v_dmg_roll;
+	float v_dmg_pitch;
 	vec3_t swayViewAngles;
 	vec3_t swayOffset;
 	vec3_t swayAngles;
 	vec3_t vLastMoveAng;
-	vec3_t vGunOffset;
-	vec3_t vGunSpeed;
-	int vGunAngle[2];
+	float fLastIdleFactor;
+	vec3_t recoilAngles;
+	vec3_t recoilSpeed;
+	int weapIdleTime;
 	int lastServerTime;
-	int lastActivateTime;
+	int lastSpawnTime;
 };
 static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
 
@@ -909,6 +913,8 @@ void ClientUserinfoChanged(int clientNum);
 
 void GScr_AddFieldsForEntity();
 void GScr_AddFieldsForRadiant();
+
+float G_random();
 
 void (*Player_GetMethod(const char **pName))(scr_entref_t);
 void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t);

@@ -62,7 +62,6 @@
 	global yy_last_accepting_state
 	global yy_accept
 	global yy_ec
-	global ScriptParse
 	global yyparse
 	global yychar
 	global yyin
@@ -74,52 +73,6 @@
 
 
 SECTION .text
-
-
-;ScriptParse(sval_u*, unsigned char)
-ScriptParse:
-	push ebp
-	mov ebp, esp
-	sub esp, 0x38
-	mov dword [g_out_pos], 0xffffffff
-	mov dword [g_sourcePos], 0x0
-	mov eax, [ebp+0xc]
-	mov [g_parse_user], al
-	mov dword [g_dummyVal], 0x0
-	mov dword [yy_init], 0x1
-	mov dword [ebp-0x24], 0x4000
-	mov dword [ebp-0x2c], ch_buf
-	mov dword [ebp-0x1c], 0x0
-	mov dword [ebp-0x20], 0x0
-	mov byte [ch_buf], 0x0
-	mov byte [ch_buf+0x1], 0x0
-	mov dword [ebp-0x28], ch_buf
-	mov dword [ebp-0x14], 0x1
-	mov dword [ebp-0xc], 0x0
-	lea edx, [ebp-0x30]
-	cmp edx, [yy_current_buffer]
-	jz ScriptParse_10
-ScriptParse_20:
-	mov dword [ebp-0x30], 0x0
-	mov dword [ebp-0x10], 0x1
-	mov dword [ebp-0x18], 0x0
-	mov [yy_current_buffer], edx
-	mov dword [yy_start], 0x3
-	call yyparse
-	mov edx, [yaccResult]
-	mov eax, [ebp+0x8]
-	mov [eax], edx
-	leave
-	ret
-ScriptParse_10:
-	mov dword [yy_n_chars], 0x0
-	mov dword [yy_c_buf_p], ch_buf
-	mov dword [yytext], ch_buf
-	mov eax, [ebp-0x30]
-	mov [yyin], eax
-	mov byte [yy_hold_char], 0x0
-	jmp ScriptParse_20
-	add [eax], al
 
 
 ;yyparse()
@@ -4480,7 +4433,6 @@ yytext: resb 0x4
 
 ;All cstrings:
 SECTION .rdata
-_cstring_out_of_dynamic_m:		db "out of dynamic memory in yy_create_buffer()",0
 _cstring_s:		db "%s",0ah,0
 _cstring_bad_syntax:		db "bad syntax",0
 _cstring_fatal_flex_scann:		db "fatal flex scanner internal error--no action found",0

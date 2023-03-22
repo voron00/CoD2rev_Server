@@ -15,6 +15,9 @@
 
 #define MAX_ANIMSCRIPT_ANIMCOMMANDS         8
 
+#define ANIM_BITS           10
+#define ANIM_TOGGLEBIT      ( 1 << ( ANIM_BITS - 1 ) )
+
 typedef enum
 {
 	AISTATE_RELAXED,
@@ -746,3 +749,4 @@ static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!")
 
 unsigned int BG_GetNumWeapons();
 WeaponDef* BG_GetWeaponDef(int weaponIndex);
+void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);
