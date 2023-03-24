@@ -3,11 +3,12 @@
 #include "../qcommon/cmd.h"
 #include "../qcommon/netchan.h"
 #include "../qcommon/qcommon.h"
-
 #include "../game/g_shared.h"
 
+#define MAX_CHALLENGES  1024
 #define MAX_SNAPSHOT_ENTITIES	1024
 #define MAX_NAME_LENGTH	32
+
 
 typedef struct
 {
@@ -249,6 +250,17 @@ struct snapshotEntityNumbers_t
 	int snapshotEntities[1024];
 };
 
+struct moveclip_t
+{
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t outerSize;
+	TraceExtents extents;
+	int passEntityNum;
+	int passOwnerNum;
+	int contentmask;
+};
+
 extern dvar_t *nextmap;
 extern dvar_t *sv_maxclients;
 
@@ -260,6 +272,9 @@ void SV_ShutdownGameProgs();
 void SV_Netchan_AddOOBProfilePacket(int iLength);
 void SV_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to);
 qboolean SV_Netchan_TransmitNextFragment(netchan_t *chan);
+bool SV_Netchan_Transmit(client_t *client, byte *data, int length);
+void SV_Netchan_Encode( client_t *client, byte *data, int cursize );
+void SV_Netchan_Decode( client_t *client, byte *data, int remaining );
 void SV_Netchan_UpdateProfileStats();
 void SV_Netchan_PrintProfileStats(qboolean format);
 void SV_AddServerCommand(client_t *client, int type, const char *cmd);
@@ -272,6 +287,8 @@ void SV_SetConfigstring(unsigned int index, const char *val);
 void SV_GetConfigstring( int index, char *buffer, int bufferSize );
 const char* SV_GetConfigstringConst(int index);
 void SV_GetUserinfo( int index, char *buffer, int bufferSize );
+
+void SV_AuthorizeIpPacket( netadr_t from );
 
 qboolean SV_IsLocalClient(int clientNum);
 qboolean SV_MapExists(const char *name);
@@ -287,5 +304,6 @@ qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 
 void SV_LinkEntity( gentity_t *gEnt );
 void SV_UnlinkEntity( gentity_t *gEnt );
+void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace);
 
 void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);

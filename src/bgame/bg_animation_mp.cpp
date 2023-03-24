@@ -1,6 +1,16 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
+uint16_t* controller_names[] =
+{
+	&scr_const.back_low,
+	&scr_const.back_mid,
+	&scr_const.back_up,
+	&scr_const.neck,
+	&scr_const.head,
+	&scr_const.pelvis
+};
+
 animStringItem_t animStateStr[] =
 {
 	{"RELAXED", -1},
@@ -160,7 +170,7 @@ static animStringItem_t animConditionLeaningStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t weaponStrings[128];
+extern animStringItem_t weaponStrings[];
 
 typedef enum
 {
@@ -189,19 +199,21 @@ static animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
 	{ ANIM_CONDTYPE_VALUE,    animConditionLeaningStr },
 };
 
+#ifdef TESTING_LIBRARY
+#define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
+#else
 // this is used globally within this file to reduce redundant params
 static animScriptData_t *globalScriptData = NULL;
+#endif
 
 #define MAX_ANIM_DEFINES    16
 
 static const char *globalFilename = "mp/playeranim.script";  		  // to prevent redundant params
-static const char *globalTypesFilename = "mp/playeranimtypes.txt";    // to prevent redundant params
 
-// VoroN: iDK if these should be in this file or not, but whatever.
-unsigned int g_playerAnimTypeNamesCount;
-char *g_playerAnimTypeNames;
 loadAnim_t *g_pLoadAnims;
 unsigned int *g_piNumLoadAnims;
+
+unsigned int iNumPlayerAnims;
 
 static int parseMovetype;
 static int parseEvent;
@@ -212,6 +224,12 @@ static char defineStrings[10000];       // stores the actual strings
 static int defineStringsOffset;
 static animStringItem_t defineStr[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES];
 static int defineBits[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES][2];
+
+#ifdef TESTING_LIBRARY
+#define bgs (*((bgs_t**)( 0x0855A4E0 )))
+#else
+extern bgs_t *bgs;
+#endif
 
 /*
 ================
@@ -309,13 +327,13 @@ int BG_IndexForString( char *token, animStringItem_t *strings, qboolean allowFai
 	int i, hash;
 	animStringItem_t *strav;
 
-	hash = BG_StringHashValue_Lwr( token );
+	hash = BG_StringHashValue( token );
 
 	for ( i = 0, strav = strings; strav->string; strav++, i++ )
 	{
 		if ( strav->hash == -1 )
 		{
-			strav->hash = BG_StringHashValue_Lwr( strav->string );
+			strav->hash = BG_StringHashValue( strav->string );
 		}
 		if ( ( hash == strav->hash ) && !Q_stricmp( token, strav->string ) )
 		{
@@ -342,15 +360,14 @@ void BG_ParseConditionBits( const char **text_pp, animStringItem_t *stringTable,
 {
 	qboolean endFlag = qfalse;
 	int indexFound;
-	int /*indexBits,*/ tempBits[2];
+	int tempBits[2];
 	char currentString[MAX_QPATH];
 	qboolean minus = qfalse;
 	char *token;
 
-	//indexBits = 0;
 	currentString[0] = '\0';
-	memset( result, 0, sizeof( result ) );
-	memset( tempBits, 0, sizeof( tempBits ) );
+	memset( result, 0, sizeof( int ) * 2 );
+	memset( tempBits, 0, sizeof( int ) * 2 );
 
 	while ( !endFlag )
 	{
@@ -570,81 +587,1793 @@ char *BG_CopyStringIntoBuffer( const char *string, char *buffer, int bufSize, in
 }
 
 /*
-============
-BG_LoadPlayerAnimTypes
-============
+===============
+BG_PlayAnim
+===============
 */
-void BG_LoadPlayerAnimTypes()
+int BG_PlayAnim(playerState_s *ps, int animNum, int bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force)
 {
-	unsigned int count;
-	int len;
-	fileHandle_t f;
-	char buffer[4096];
-	char *s;
-	const char *data_p;
+	int wasSet;
+	int duration;
 
-	g_playerAnimTypeNamesCount = 0;
-	len = FS_FOpenFileByMode(globalTypesFilename, &f, FS_READ);
+	wasSet = 0;
 
-	if ( len < 0 )
-		Com_Error(ERR_DROP, "Couldn't load file ", globalTypesFilename);
+	if ( forceDuration )
+		duration = forceDuration;
+	else
+		duration = globalScriptData->animations[animNum].duration + 50;
 
-	if ( len > 4095 )
+	if ( bodyPart == ANIM_BP_TORSO )
 	{
-		FS_FCloseFile(f);
-		Com_Error(ERR_DROP, "%s max size exceeded", globalTypesFilename);
+retry:
+		if ( ps->torsoTimer <= 49 || force )
+		{
+			if ( isContinue && (ps->torsoAnim & 0xFFFFFDFF) == animNum )
+			{
+				if ( setTimer && (globalScriptData->animations[animNum].flags & 0x80) != 0 )
+					ps->torsoTimer = duration;
+			}
+			else
+			{
+				ps->torsoAnim = animNum | ps->torsoAnim & 0x200 ^ 0x200;
+
+				if ( setTimer )
+					ps->torsoTimer = duration;
+
+				ps->torsoAnimDuration = duration;
+			}
+		}
+		goto out;
 	}
 
-	FS_Read(buffer, len, f);
-	buffer[len] = 0;
-	FS_FCloseFile(f);
-	data_p = buffer;
-
-	Com_BeginParseSession("BG_AnimParseAnimScript");
-
-	while ( 1 )
+	if ( bodyPart > ANIM_BP_TORSO )
 	{
-		s = Com_Parse(&data_p);
-
-		if ( !s || !*s )
-			break;
-
-		if ( g_playerAnimTypeNamesCount > 63 )
-			Com_Error(ERR_DROP, "Player anim type array size exceeded");
-
-		count = g_playerAnimTypeNamesCount;
-		(&g_playerAnimTypeNames)[count] = (char *)Hunk_AllocLowInternal(strlen(s) + 1);
-		strcpy((&g_playerAnimTypeNames)[g_playerAnimTypeNamesCount], s);
-		++g_playerAnimTypeNamesCount;
+		if ( bodyPart != ANIM_BP_BOTH )
+			goto out;
+	}
+	else if ( bodyPart != ANIM_BP_LEGS )
+	{
+		goto out;
 	}
 
-	Com_EndParseSession();
+	if ( ps->legsTimer <= 49 || force )
+	{
+		if ( isContinue && (ps->legsAnim & 0xFFFFFDFF) == animNum )
+		{
+			if ( setTimer && (globalScriptData->animations[animNum].flags & 0x80) != 0 )
+				ps->legsTimer = duration;
+		}
+		else
+		{
+			wasSet = 1;
+			ps->legsAnimDuration = duration;
+			ps->legsAnim = animNum | ps->legsAnim & 0x200 ^ 0x200;
+
+			if ( setTimer )
+				ps->legsTimer = duration;
+		}
+	}
+
+	if ( bodyPart == ANIM_BP_BOTH )
+	{
+		animNum = 0;
+		goto retry;
+	}
+out:
+	if ( wasSet )
+		return duration;
+	else
+		return -1;
 }
 
 /*
-============
-BG_InitWeaponStrings
-  Builds the list of weapon names from the item list. This is done here rather
-  than hardcoded to ease the process of modifying the weapons.
-============
+===============
+BG_ExecuteCommand
+  returns the duration of the animation, -1 if no anim was set
+===============
 */
-void BG_InitWeaponString(int index, const char *name)
+int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qboolean setTimer, qboolean isContinue, qboolean force )
 {
-	weaponStrings[index].string = name;
-	weaponStrings[index].hash = BG_StringHashValue_Lwr(name);
+	int duration = -1;
+	qboolean playedLegsAnim = qfalse;
+
+	if ( scriptCommand->bodyPart[0] )
+	{
+		duration = scriptCommand->animDuration[0] + 50;
+		// FIXME: how to sync torso/legs anims accounting for transition blends, etc
+		if ( scriptCommand->bodyPart[0] == ANIM_BP_BOTH || scriptCommand->bodyPart[0] == ANIM_BP_LEGS )
+		{
+			playedLegsAnim = ( BG_PlayAnim( ps, scriptCommand->animIndex[0], scriptCommand->bodyPart[0], duration, setTimer, isContinue, force ) > -1 );
+		}
+		else
+		{
+			BG_PlayAnim( ps, scriptCommand->animIndex[0], scriptCommand->bodyPart[0], duration, setTimer, isContinue, force );
+		}
+	}
+
+	if ( scriptCommand->bodyPart[1] )
+	{
+		duration = scriptCommand->animDuration[0] + 50;
+		// FIXME: how to sync torso/legs anims accounting for transition blends, etc
+		// just play the animation for the torso
+		if ( scriptCommand->bodyPart[1] == ANIM_BP_BOTH || scriptCommand->bodyPart[1] == ANIM_BP_LEGS )
+		{
+			playedLegsAnim = ( BG_PlayAnim( ps, scriptCommand->animIndex[1], scriptCommand->bodyPart[1], duration, setTimer, isContinue, force ) > -1 );
+		}
+		else
+		{
+			BG_PlayAnim( ps, scriptCommand->animIndex[1], scriptCommand->bodyPart[1], duration, setTimer, isContinue, force );
+		}
+	}
+
+	if ( scriptCommand->soundAlias )
+	{
+		globalScriptData->playSoundAlias( ps->clientNum, scriptCommand->soundAlias );
+	}
+
+	if ( !playedLegsAnim )
+	{
+		return -1;
+	}
+
+	return duration;
 }
 
-void BG_LoadWeaponStrings()
+/*
+===============
+BG_EvaluateConditions
+  returns qfalse if the set of conditions fails, qtrue otherwise
+===============
+*/
+qboolean BG_EvaluateConditions( clientInfo_t *ci, animScriptItem_t *scriptItem )
 {
+	int i;
+	animScriptCondition_t *cond;
+
+	for ( i = 0, cond = scriptItem->conditions; i < scriptItem->numConditions; i++, cond++ )
+	{
+		switch ( animConditionsTable[cond->index].type )
+		{
+		case ANIM_CONDTYPE_BITFLAGS:
+			if ( !( ci->clientConditions[cond->index][0] & cond->value[0] ) &&
+			        !( ci->clientConditions[cond->index][1] & cond->value[1] ) )
+			{
+				return qfalse;
+			}
+			break;
+		case ANIM_CONDTYPE_VALUE:
+			if ( !( ci->clientConditions[cond->index][0] == cond->value[0] ) )
+			{
+				return qfalse;
+			}
+			break;
+		default: // TTimo NUM_ANIM_CONDTYPES not handled
+			break;
+		}
+	}
+	//
+	// all conditions must have passed
+	return qtrue;
+}
+
+/*
+===============
+BG_FirstValidItem
+  scroll through the script items, returning the first script found to pass all conditions
+  returns NULL if no match found
+===============
+*/
+animScriptItem_t *BG_FirstValidItem( int client, animScript_t *script )
+{
+	animScriptItem_t **ppScriptItem;
+
+	int i;
+
+	for ( i = 0, ppScriptItem = script->items; i < script->numItems; i++, ppScriptItem++ )
+	{
+		if ( BG_EvaluateConditions( &bgs->clientinfo[client], *ppScriptItem ) )
+		{
+			return *ppScriptItem;
+		}
+	}
+	//
+	return NULL;
+}
+
+/*
+================
+BG_AnimScriptEvent
+  returns the duration in milliseconds that this model should be paused. -1 if no event found
+================
+*/
+int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force )
+{
+	animScriptCommand_t *script;
+	animScriptItem_t *item;
+
+	if ( event != ANIM_ET_DEATH && ps->pm_type > 5 )
+		return -1;
+
+	if ( !globalScriptData->scriptEvents[event].numItems )
+		return -1;
+
+	item = BG_FirstValidItem(ps->clientNum, &globalScriptData->scriptEvents[event]);
+
+	if ( !item )
+		return -1;
+
+	if ( !item->numCommands )
+		return -1;
+
+	script = &item->commands[rand() % item->numCommands];
+	return BG_ExecuteCommand(ps, script, 1, isContinue, force);
+}
+
+/*
+==============
+BG_UpdateConditionValue
+==============
+*/
+void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion)
+{
+	if ( !checkConversion || animConditionsTable[condition].type )
+	{
+		bgs->clientinfo[client].clientConditions[condition][0] = value;
+	}
+	else
+	{
+		bgs->clientinfo[client].clientConditions[condition][0] = 0;
+		bgs->clientinfo[client].clientConditions[condition][1] = 0;
+		COM_BitSet(bgs->clientinfo[client].clientConditions[condition], value);
+	}
+}
+
+/*
+==============
+BG_GetConditionValue
+==============
+*/
+unsigned int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion)
+{
+	unsigned int i;
+
+	if ( !checkConversion || animConditionsTable[condition].type )
+		return ci->clientConditions[condition][0];
+
+	for ( i = 0; i < MAX_CLIENTS; ++i )
+	{
+		if ( COM_BitTest(ci->clientConditions[condition], i) )
+			return i;
+	}
+
+	return 0;
+}
+
+/*
+==============
+BG_UpdateConditionValue
+==============
+*/
+void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci)
+{
+	WeaponDef *weaponDef;
+	int legsAnim;
+
+	weaponDef = BG_GetWeaponDef(es->weapon);
+
+	BG_UpdateConditionValue(es->clientNum, ANIM_COND_PLAYERANIMTYPE, weaponDef->playerAnimType, 1);
+	BG_UpdateConditionValue(es->clientNum, ANIM_COND_WEAPONCLASS, weaponDef->weaponClass, 1);
+
+	if ( (es->eFlags & 0x40000) != 0 )
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_WEAPON_POSITION, 1, 1);
+	else
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_WEAPON_POSITION, 0, 1);
+
+	if ( (es->eFlags & 0x300) != 0 )
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_MOUNTED, 1, 1);
+	else
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_MOUNTED, 0, 1);
+
+	BG_UpdateConditionValue(es->clientNum, ANIM_COND_UNDERHAND, ci->playerAngles[0] > 0.0, 1);
+
+	if ( (es->eFlags & 4) != 0 )
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_CROUCHING, 1, 1);
+	else
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_CROUCHING, 0, 1);
+
+	if ( (es->eFlags & 0x40) != 0 )
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_FIRING, 1, 1);
+	else
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_FIRING, 0, 1);
+
+	legsAnim = es->legsAnim & 0xFFFFFDFF;
+
+	if ( bgs->animData.animScriptData.animations[legsAnim].movetype && BG_GetConditionValue(ci, 3, 0) != bgs->animData.animScriptData.animations[legsAnim].movetype )
+	{
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_MOVETYPE, bgs->animData.animScriptData.animations[legsAnim].movetype, 0);
+	}
+
+	if ( (bgs->animData.animScriptData.animations[legsAnim].flags & 0x10) != 0 )
+	{
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, 1, 1);
+	}
+	else if ( (bgs->animData.animScriptData.animations[legsAnim].flags & 0x20) != 0 )
+	{
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, 2, 1);
+	}
+	else
+	{
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, 0, 1);
+	}
+}
+
+/*
+================
+BG_AnimScriptAnimation
+  runs the normal locomotive animations
+  returns 1 if an animation was set, -1 if no animation was found, 0 otherwise
+================
+*/
+int BG_AnimScriptAnimation(playerState_s *ps, int state, scriptAnimMoveTypes_t movetype, qboolean force)
+{
+	animScriptItem_t *item;
+
+	item = 0;
+
+	if ( ps->pm_type > 5 )
+		return -1;
+
+	while ( !item && state >= AISTATE_RELAXED )
+	{
+		if ( globalScriptData->scriptAnims[state][movetype].numItems )
+		{
+			item = BG_FirstValidItem(ps->clientNum, &globalScriptData->scriptAnims[state][movetype]);
+
+			if ( !item )
+				--state;
+		}
+		else
+		{
+			--state;
+		}
+	}
+
+	if ( !item )
+		return -1;
+
+	if ( !item->numCommands )
+		return -1;
+
+	BG_UpdateConditionValue(ps->clientNum, ANIM_COND_MOVETYPE, movetype, 1);
+	return BG_ExecuteCommand(ps, &item->commands[ps->clientNum % item->numCommands], 0, force, 0) != -1;
+}
+
+/*
+=================
+BG_AnimationIndexForString
+=================
+*/
+unsigned int BG_AnimationIndexForString(const char *string)
+{
+	animation_s *animation;
+	int count;
+	int value;
+	int hash;
+	int i;
+	loadAnim_t *loadAnim;
+
+	if ( g_pLoadAnims )
+	{
+		hash = BG_StringHashValue(string);
+		count = 0;
+		loadAnim = g_pLoadAnims;
+
+		while ( count < *g_piNumLoadAnims )
+		{
+			if ( hash == loadAnim->nameHash && !I_stricmp(string, loadAnim->name) )
+				return count;
+
+			++count;
+			++loadAnim;
+		}
+
+		loadAnim = &g_pLoadAnims[*g_piNumLoadAnims];
+		Scr_FindAnim("multiplayer", string, &loadAnim->anim, bgs->anim_user);
+		strcpy(loadAnim->name, string);
+		loadAnim->nameHash = hash;
+
+		return (*g_piNumLoadAnims)++;
+	}
+	else
+	{
+		value = BG_StringHashValue(string);
+		i = 0;
+
+		for ( animation = globalScriptData->animations; ; ++animation )
+		{
+			if ( i >= globalScriptData->numAnimations )
+				BG_AnimParseError("BG_AnimationIndexForString: unknown player animation '%s'", string);
+
+			if ( value == animation->nameHash && !I_stricmp(string, animation->name) )
+				break;
+
+			++i;
+		}
+
+		return i;
+	}
+}
+
+/*
+=================
+BG_ParseCommands
+=================
+*/
+void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData)
+{
+	char    *token;
+	// TTimo gcc: might be used uninitialized
+	animScriptCommand_t *command = NULL;
+	int partIndex = 0;
+	int i;
+
+	while ( 1 )
+	{
+		// parse the body part
+		token = Com_ParseExt( input, ( partIndex < 1 ) );
+		if ( !token || !*token )
+		{
+			break;
+		}
+		if ( !Q_stricmp( token, "}" ) )
+		{
+			// unget the bracket and get out of here
+			*input -= strlen( token );
+			break;
+		}
+
+		// new command?
+		if ( partIndex == 0 )
+		{
+			// have we exceeded the maximum number of commands?
+			if ( scriptItem->numCommands >= MAX_ANIMSCRIPT_ANIMCOMMANDS )
+			{
+				BG_AnimParseError( "BG_ParseCommands: exceeded maximum number of animations (%i)", MAX_ANIMSCRIPT_ANIMCOMMANDS );
+			}
+			command = &scriptItem->commands[scriptItem->numCommands++];
+			memset( command, 0, sizeof( command ) );
+		}
+
+		command->bodyPart[partIndex] = BG_IndexForString( token, animBodyPartsStr, qtrue );
+		if ( command->bodyPart[partIndex] > 0 )
+		{
+			// parse the animation
+			token = Com_ParseExt( input, qfalse );
+			if ( !token || !token[0] )
+			{
+				BG_AnimParseError( "BG_ParseCommands: expected animation" );
+			}
+			command->animIndex[partIndex] = BG_AnimationIndexForString( token );
+			command->animDuration[partIndex] = scriptData->animations[command->animIndex[partIndex]].duration;
+			if ( !g_pLoadAnims )
+			{
+				// if this is a locomotion, set the movetype of the animation so we can reverse engineer the movetype from the animation, on the client
+				if ( parseMovetype != ANIM_MT_UNUSED && command->bodyPart[partIndex] != ANIM_BP_TORSO )
+				{
+					scriptData->animations[command->animIndex[partIndex]].movetype |= ( 1 << parseMovetype );
+
+					int *pStance;
+					int64_t temp;
+					temp = 1LL << parseMovetype;
+					pStance = &scriptData->animations[command->animIndex[partIndex]].stance;
+					*pStance |= HIDWORD(temp);
+					//scriptData->animations[command->animIndex[partIndex]].stance |= ( 1 << parseMovetype );
+
+					if ( (parseMovetype == 18 || parseMovetype == 19)
+					        && scriptData->animations[command->animIndex[partIndex]].moveSpeed != 0.0 )
+					{
+						scriptData->animations[command->animIndex[partIndex]].flags |= 2u;
+					}
+					for ( i = 0; ; ++i )
+					{
+						if ( i >= scriptItem->numConditions )
+							goto parse_event;
+						if ( scriptItem->conditions[i].index == 8 )
+							break;
+					}
+					if ( scriptItem->conditions[i].value[0] == 1 )
+					{
+						scriptData->animations[command->animIndex[partIndex]].flags |= 0x10u;
+					}
+					else if ( scriptItem->conditions[i].value[0] == 2 )
+					{
+						scriptData->animations[command->animIndex[partIndex]].flags |= 0x20u;
+					}
+				}
+parse_event:
+				switch ( parseEvent )
+				{
+				case 2:
+					scriptData->animations[command->animIndex[partIndex]].flags |= 8u;
+					scriptData->animations[command->animIndex[partIndex]].initialLerp = 30;
+					break;
+				case 1:
+					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0.0;
+					scriptData->animations[command->animIndex[partIndex]].flags |= 0x40u;
+					break;
+				case 10:
+					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0.0;
+					break;
+				default:
+					if ( parseMovetype > 20 && parseMovetype <= 30 )
+						scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0.0;
+					break;
+				}
+			}
+			// check for a duration for this animation instance
+			token = Com_ParseExt( input, qfalse );
+			if ( token && token[0] )
+			{
+				if ( !Q_stricmp( token, "duration" ) )
+				{
+					// read the duration
+					token = Com_ParseExt( input, qfalse );
+					if ( !token || !token[0] )
+					{
+						BG_AnimParseError( "BG_ParseCommands: expected duration value" );
+					}
+					command->animDuration[partIndex] = atoi( token );
+
+					token = Com_ParseExt( input, qfalse );
+
+					if ( !Q_stricmp( token, "blendtime" ) )
+					{
+						// read the blendtime
+						token = Com_ParseExt( input, qfalse );
+						if ( !token || !token[0] )
+						{
+							BG_AnimParseError( "BG_ParseCommands: expected blendtime value" );
+						}
+						scriptData->animations[command->animIndex[partIndex]].initialLerp = atoi( token );
+						//Com_UngetToken();
+					}
+				}
+				else if ( !Q_stricmp( token, "turretanim" ) )
+				{
+					if ( !g_pLoadAnims )
+						scriptData->animations[command->animIndex[partIndex]].flags |= 4u;
+					if ( command->bodyPart[partIndex] != 3 )
+						BG_AnimParseError("BG_ParseCommands: Turret animations can only be played on the 'both' body part");
+				}
+				else if ( !Q_stricmp( token, "blendtime" ) )
+				{
+					// read the blendtime
+					token = Com_ParseExt( input, qfalse );
+					if ( !token || !token[0] )
+					{
+						BG_AnimParseError( "BG_ParseCommands: expected blendtime value" );
+					}
+
+					scriptData->animations[command->animIndex[partIndex]].initialLerp = atoi( token );
+				}
+				else        // unget the token
+				{
+					//Com_UngetToken();
+				}
+			}
+			else
+			{
+				//Com_UngetToken();
+			}
+
+			if ( command->bodyPart[partIndex] != ANIM_BP_BOTH && partIndex++ < 1 )
+			{
+				continue;   // allow parsing of another bodypart
+			}
+		}
+		else
+		{
+			// unget the token
+			Com_UngetToken();
+		}
+
+		// parse optional parameters (sounds, etc)
+		while ( 1 )
+		{
+			token = Com_ParseExt( input, qfalse );
+			if ( !token || !token[0] )
+			{
+				break;
+			}
+
+			if ( !Q_stricmp( token, "sound" ) )
+			{
+				token = Com_ParseExt( input, qfalse );
+				if ( !token || !token[0] )
+				{
+					BG_AnimParseError( "BG_ParseCommands: expected sound" );
+				}
+				// NOTE: only sound script are supported at this stage
+				if ( strstr( token, ".wav" ) )
+				{
+					BG_AnimParseError( "BG_ParseCommands: wav files not supported, only sound scripts" );    // RF mod
+				}
+				// ydnar: this was crashing because soundIndex wasn't initialized
+				// FIXME: find the reason
+				// Gordon: hmmm, soundindex is setup on both client and server :/
+				//	cgs.animScriptData.soundIndex = CG_SoundScriptPrecache;
+				//	level.animScriptData.soundIndex = G_SoundIndex;
+				command->soundAlias = globalScriptData->soundAlias( token );
+			}
+			else
+			{
+				// unknown??
+				BG_AnimParseError( "BG_ParseCommands: unknown parameter '%s'", token );
+			}
+		}
+
+		partIndex = 0;
+	}
+}
+
+/*
+=================
+BG_AnimParseAnimScript
+  Parse the animation script for this model, converting it into run-time structures
+=================
+*/
+void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims, unsigned int *piNumAnims)
+{
+#define MAX_INDENT_LEVELS   3
+
+	// FIXME: change this to use the botlib parser
+	const char *text_p;
+	char *token;
+	int parseMode;
+	animScript_t            *currentScript;
+	animScriptItem_t tempScriptItem;
+	// TTimo gcc: might be used unitialized
+	animScriptItem_t        *currentScriptItem = NULL;
+	int indexes[MAX_INDENT_LEVELS], indentLevel, oldState, newParseMode;
+	int i, defineType;
+
+	static int bScriptFileLoaded = 0;
+	static char ScriptFileBuffer[100000];
+	fileHandle_t f;
+	int length;
+
+	if ( !bScriptFileLoaded )
+	{
+		length = FS_FOpenFileByMode(globalFilename, &f, FS_READ);
+
+		if ( length < 0 )
+			Com_Error(ERR_DROP, "Couldn't load player animation script %s\n", globalFilename);
+
+		if ( length > 99998 )
+			Com_Error(ERR_DROP, "Couldn't load player animation script %s\n", globalFilename);
+
+		FS_Read(ScriptFileBuffer, length, f);
+		ScriptFileBuffer[length] = 0;
+		FS_FCloseFile(f);
+		bScriptFileLoaded = 1;
+	}
+
+	// the scriptData passed into here must be the one this binary is using
+	globalScriptData = scriptData;
+
+	g_pLoadAnims = pLoadAnims;
+	g_piNumLoadAnims = piNumAnims;
+
+	// start at the defines
+	parseMode = PARSEMODE_DEFINES;
+
+	BG_LoadPlayerAnimTypes();
+	BG_InitWeaponStrings();
+
+	// init the global defines
+	memset( defineStr, 0, sizeof( defineStr ) );
+	memset( defineStrings, 0, sizeof( defineStrings ) );
+	memset( numDefines, 0, sizeof( numDefines ) );
+	defineStringsOffset = 0;
+
+	for ( i = 0; i < MAX_INDENT_LEVELS; i++ )
+		indexes[i] = -1;
+	indentLevel = 0;
+	currentScript = NULL;
+
+	text_p = ScriptFileBuffer;
+	Com_BeginParseSession( "BG_AnimParseAnimScript" );
+
+	// read in the weapon defines
+	while ( 1 )
+	{
+		token = Com_Parse( &text_p );
+		if ( !token || !*token )
+		{
+			if ( indentLevel )
+			{
+				BG_AnimParseError( "BG_AnimParseAnimScript: unexpected end of file: %s" );
+			}
+			break;
+		}
+
+		// check for a new section
+		newParseMode = BG_IndexForString( token, animParseModesStr, qtrue );
+		if ( newParseMode >= 0 )
+		{
+			if ( indentLevel )
+			{
+				BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+			}
+
+			parseMode = newParseMode;
+			parseMovetype = ANIM_MT_UNUSED;
+			parseEvent = -1;
+			continue;
+		}
+
+		switch ( parseMode )
+		{
+
+		case PARSEMODE_DEFINES:
+
+			if ( !Q_stricmp( token, "set" ) )
+			{
+				// read in the define type
+				token = Com_ParseExt( &text_p, qfalse );
+				if ( !token || !*token )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected condition type string" );   // RF mod
+				}
+				defineType = BG_IndexForString( token, animConditionsStr, qfalse );
+
+				// read in the define
+				token = Com_ParseExt( &text_p, qfalse );
+				if ( !token || !*token )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected condition define string" ); // RF mod
+				}
+
+				// copy the define to the strings list
+				defineStr[defineType][numDefines[defineType]].string = BG_CopyStringIntoBuffer( token, defineStrings, sizeof( defineStrings ), &defineStringsOffset );
+				defineStr[defineType][numDefines[defineType]].hash = BG_StringHashValue( defineStr[defineType][numDefines[defineType]].string );
+				// expecting an =
+				token = Com_ParseExt( &text_p, qfalse );
+				if ( !token )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected '=', found end of line" );  // RF mod
+				}
+				if ( Q_stricmp( token, "=" ) )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected '=', found '%s'", token );  // RF mod
+				}
+
+				// parse the bits
+				BG_ParseConditionBits( &text_p, animConditionsTable[defineType].values, defineType, defineBits[defineType][numDefines[defineType]] );
+				numDefines[defineType]++;
+
+				// copy the weapon defines over to the enemy_weapon defines
+				/*
+				memcpy( &defineStr[ANIM_COND_ENEMY_WEAPON][0], &defineStr[ANIM_COND_WEAPON][0], sizeof( animStringItem_t ) * MAX_ANIM_DEFINES );
+				memcpy( &defineBits[ANIM_COND_ENEMY_WEAPON][0], &defineBits[ANIM_COND_WEAPON][0], sizeof( defineBits[ANIM_COND_ENEMY_WEAPON][0] ) * MAX_ANIM_DEFINES );
+				numDefines[ANIM_COND_ENEMY_WEAPON] = numDefines[ANIM_COND_WEAPON];
+				*/
+			}
+
+			break;
+
+		case PARSEMODE_ANIMATION:
+		case PARSEMODE_CANNED_ANIMATIONS:
+
+			if ( !Q_stricmp( token, "{" ) )
+			{
+				// about to increment indent level, check that we have enough information to do this
+				if ( indentLevel >= MAX_INDENT_LEVELS )   // too many indentations
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+				}
+				if ( indexes[indentLevel] < 0 )       // we havent found out what this new group is yet
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+				}
+				//
+				indentLevel++;
+			}
+			else if ( !Q_stricmp( token, "}" ) )
+			{
+				// reduce the indentLevel
+				indentLevel--;
+				if ( indentLevel < 0 )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+				}
+				if ( indentLevel == 1 )
+				{
+					currentScript = NULL;
+				}
+				// make sure we read a new index before next indent
+				indexes[indentLevel] = -1;
+			}
+			else if ( indentLevel == 0 && ( indexes[indentLevel] < 0 ) )
+			{
+
+				if ( Q_stricmp( token, "state" ) )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected 'state'" ); // RF mod
+				}
+
+				// read in the state type
+				token = Com_ParseExt( &text_p, qfalse );
+				if ( !token )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected state type" );  // RF mod
+				}
+				indexes[indentLevel] = BG_IndexForString( token, animStateStr, qfalse );
+
+//----(SA) // RF mod
+				// check for the open bracket
+				token = Com_ParseExt( &text_p, qtrue );
+				if ( !token || Q_stricmp( token, "{" ) )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: expected '{'" );
+				}
+				indentLevel++;
+//----(SA) // RF mod
+			}
+			else if ( ( indentLevel == 1 ) && ( indexes[indentLevel] < 0 ) )
+			{
+				// we are expecting a movement type
+				indexes[indentLevel] = BG_IndexForString( token, animMoveTypesStr, qfalse );
+				if ( parseMode == PARSEMODE_ANIMATION )
+				{
+					currentScript = &scriptData->scriptAnims[indexes[0]][indexes[1]];
+					parseMovetype = indexes[1];
+				}
+				else if ( parseMode == PARSEMODE_CANNED_ANIMATIONS )
+				{
+					currentScript = &scriptData->scriptCannedAnims[indexes[0]][indexes[1]];
+				}
+				memset( currentScript, 0, sizeof( *currentScript ) );
+			}
+			else if ( ( indentLevel == 2 ) && ( indexes[indentLevel] < 0 ) )
+			{
+				// we are expecting a condition specifier
+				// move the text_p backwards so we can read in the last token again
+				text_p -= strlen( token );
+				// sanity check that
+				if ( Q_strncmp( text_p, token, strlen( token ) ) )
+				{
+					// this should never happen, just here to check that this operation is correct before code goes live
+					BG_AnimParseError( "BG_AnimParseAnimScript: internal error" );
+				}
+				//
+				memset( &tempScriptItem, 0, sizeof( tempScriptItem ) );
+				indexes[indentLevel] = BG_ParseConditions( &text_p, &tempScriptItem );
+				// do we have enough room in this script for another item?
+				if ( currentScript->numItems >= MAX_ANIMSCRIPT_ITEMS )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: exceeded maximum items per script (%i)", MAX_ANIMSCRIPT_ITEMS ); // RF mod
+				}
+				// are there enough items left in the global list?
+				if ( scriptData->numScriptItems >= MAX_ANIMSCRIPT_ITEMS_PER_MODEL )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: exceeded maximum global items (%i)", MAX_ANIMSCRIPT_ITEMS_PER_MODEL );   // RF mod
+				}
+				// it was parsed ok, so grab an item from the global list to use
+				currentScript->items[currentScript->numItems] = &scriptData->scriptItems[ scriptData->numScriptItems++ ];
+				currentScriptItem = currentScript->items[currentScript->numItems];
+				currentScript->numItems++;
+				// copy the data across from the temp script item
+				*currentScriptItem = tempScriptItem;
+			}
+			else if ( indentLevel == 3 )
+			{
+				// we are reading the commands, so parse this line as if it were a command
+				// move the text_p backwards so we can read in the last token again
+				text_p -= strlen( token );
+				// sanity check that
+				if ( Q_strncmp( text_p, token, strlen( token ) ) )
+				{
+					// this should never happen, just here to check that this operation is correct before code goes live
+					BG_AnimParseError( "BG_AnimParseAnimScript: internal error" );
+				}
+				//
+				BG_ParseCommands( &text_p, currentScriptItem, scriptData );
+			}
+			else
+			{
+				// huh ??
+				BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+			}
+
+			break;
+
+		case PARSEMODE_STATECHANGES:
+		case PARSEMODE_EVENTS:
+
+			if ( !Q_stricmp( token, "{" ) )
+			{
+				// about to increment indent level, check that we have enough information to do this
+				if ( indentLevel >= MAX_INDENT_LEVELS )   // too many indentations
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+				}
+				if ( indexes[indentLevel] < 0 )       // we havent found out what this new group is yet
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+				}
+				//
+				indentLevel++;
+			}
+			else if ( !Q_stricmp( token, "}" ) )
+			{
+				// reduce the indentLevel
+				indentLevel--;
+				if ( indentLevel < 0 )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+				}
+				if ( indentLevel == 0 )
+				{
+					currentScript = NULL;
+				}
+				// make sure we read a new index before next indent
+				indexes[indentLevel] = -1;
+			}
+			else if ( indentLevel == 0 && ( indexes[indentLevel] < 0 ) )
+			{
+				if ( parseMode == PARSEMODE_STATECHANGES )
+				{
+					if ( Q_stricmp( token, "statechange" ) )
+					{
+						BG_AnimParseError( "BG_AnimParseAnimScript: expected 'statechange', got '%s'", token );	// RF mod
+					}
+					// read in the old state type
+					token = Com_ParseExt( &text_p, qfalse );
+					if ( !token )
+					{
+						BG_AnimParseError( "BG_AnimParseAnimScript: expected <state type>" );	// RF mod
+					}
+					oldState = BG_IndexForString( token, animStateStr, qfalse );
+					// read in the new state type
+					token = Com_ParseExt( &text_p, qfalse );
+					if ( !token )
+					{
+						BG_AnimParseError( "BG_AnimParseAnimScript: expected <state type>" );	// RF mod
+					}
+					indexes[indentLevel] = BG_IndexForString( token, animStateStr, qfalse );
+					currentScript = &scriptData->scriptStateChange[oldState][indexes[indentLevel]];
+					//----(SA)		// RF mod
+					// check for the open bracket
+					token = Com_ParseExt( &text_p, qtrue );
+					if ( !token || Q_stricmp( token, "{" ) )
+					{
+						BG_AnimParseError( "BG_AnimParseAnimScript: expected '{'" );
+					}
+					indentLevel++;
+					//----(SA)		// RF mod
+				}
+				else
+				{
+					// read in the event type
+					indexes[indentLevel] = BG_IndexForString( token, animEventTypesStr, qfalse );
+					currentScript = &scriptData->scriptEvents[indexes[0]];
+
+					parseEvent = indexes[indentLevel];
+				}
+
+				memset( currentScript, 0, sizeof( *currentScript ) );
+			}
+			else if ( ( indentLevel == 1 ) && ( indexes[indentLevel] < 0 ) )
+			{
+				// we are expecting a condition specifier
+				// move the text_p backwards so we can read in the last token again
+				text_p -= strlen( token );
+				// sanity check that
+				if ( Q_strncmp( text_p, token, strlen( token ) ) )
+				{
+					// this should never happen, just here to check that this operation is correct before code goes live
+					BG_AnimParseError( "BG_AnimParseAnimScript: internal error" );
+				}
+				//
+				memset( &tempScriptItem, 0, sizeof( tempScriptItem ) );
+				indexes[indentLevel] = BG_ParseConditions( &text_p, &tempScriptItem );
+				// do we have enough room in this script for another item?
+				if ( currentScript->numItems >= MAX_ANIMSCRIPT_ITEMS )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: exceeded maximum items per script (%i)", MAX_ANIMSCRIPT_ITEMS ); // RF mod
+				}
+				// are there enough items left in the global list?
+				if ( scriptData->numScriptItems >= MAX_ANIMSCRIPT_ITEMS_PER_MODEL )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: exceeded maximum global items (%i)", MAX_ANIMSCRIPT_ITEMS_PER_MODEL );   // RF mod
+				}
+				// it was parsed ok, so grab an item from the global list to use
+				currentScript->items[currentScript->numItems] = &scriptData->scriptItems[ scriptData->numScriptItems++ ];
+				currentScriptItem = currentScript->items[currentScript->numItems];
+				currentScript->numItems++;
+				// copy the data across from the temp script item
+				*currentScriptItem = tempScriptItem;
+			}
+			else if ( indentLevel == 2 )
+			{
+				// we are reading the commands, so parse this line as if it were a command
+				// move the text_p backwards so we can read in the last token again
+				text_p -= strlen( token );
+				// sanity check that
+				if ( Q_strncmp( text_p, token, strlen( token ) ) )
+				{
+					// this should never happen, just here to check that this operation is correct before code goes live
+					BG_AnimParseError( "BG_AnimParseAnimScript: internal error" );
+				}
+				//
+				BG_ParseCommands( &text_p, currentScriptItem, scriptData );
+			}
+			else
+			{
+				// huh ??
+				BG_AnimParseError( "BG_AnimParseAnimScript: unexpected '%s'", token );   // RF mod
+			}
+
+		default:
+			break;
+		}
+	}
+
+	globalFilename = NULL;
+	Com_EndParseSession();
+}
+
+animation_s *BG_GetAnimationForIndex(int client, unsigned int index)
+{
+	if ( index >= globalScriptData->numAnimations )
+		Com_Error(ERR_DROP, "BG_GetAnimationForIndex: index out of bounds");
+
+	return &globalScriptData->animations[index];
+}
+
+qboolean BG_IsCrouchingAnim(const clientInfo_t *ci, int animNum)
+{
+	animation_s *index;
+
+	index = BG_GetAnimationForIndex(ci->clientNum, animNum & 0xFFFFFDFF);
+	return (index->stance & 0x180 | index->movetype & 0xC4) != 0;
+}
+
+qboolean BG_IsProneAnim(const clientInfo_t *ci, int animNum)
+{
+	return (BG_GetAnimationForIndex(ci->clientNum, animNum & 0xFFFFFDFF)->movetype & 0x308) != 0;
+}
+
+void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qboolean isComplete)
+{
+	qboolean croucnAnim;
+	qboolean proneAnim;
+	float blendTime;
+	float newGoalTime;
+	float goalTime2;
+	float nextGoalTime;
+	float goalTime;
+	float time1;
+	float time2;
+	int hasTime;
+	qboolean proneMatch;
+	qboolean crouchMatch;
+	unsigned int index;
+	int length;
+	XAnim_s *anim;
+	XAnimTree_s *tree;
+	float fStartTime;
+	float oldTime;
+	int firstAnim;
+	int animNum;
+	int transitionMin;
+	animation_s *animation;
+	animation_s *anim2;
+	unsigned int animIndex;
+
+	transitionMin = -1;
+	firstAnim = 0;
+	fStartTime = 0.0;
+	animation = lf->animation;
+	animNum = lf->animationNumber;
+	if ( !animation )
+		firstAnim = 1;
+	lf->animationNumber = newAnimation;
+	animIndex = newAnimation & 0xFFFFFDFF;
+	if ( animIndex >= bgs->animData.animScriptData.numAnimations )
+		Com_Error(ERR_DROP, "Player animation index out of range (%i): %i", bgs->animData.animScriptData.numAnimations, animIndex);
+	tree = ci->pXAnimTree;
+	anim = bgs->animData.animScriptData.animTree.anims;
+	if ( animIndex )
+	{
+		anim2 = &bgs->animData.animScriptData.animations[animIndex];
+		lf->animation = anim2;
+		lf->animationTime = anim2->initialLerp;
+		croucnAnim = BG_IsCrouchingAnim(ci, animIndex);
+		crouchMatch = croucnAnim == BG_IsCrouchingAnim(ci, animNum);
+		proneAnim = BG_IsProneAnim(ci, animIndex);
+		proneMatch = proneAnim == BG_IsProneAnim(ci, animNum);
+		if ( lf == &ci->legs && (!crouchMatch || !proneMatch) )
+			ci->stanceTransitionTime = bgs->time + 400;
+	}
+	else
+	{
+		anim2 = 0;
+		lf->animation = 0;
+		lf->animationTime = 200;
+	}
+	if ( firstAnim && lf == &ci->legs )
+	{
+		lf->animationTime = 0;
+	}
+	else
+	{
+		if ( !anim2 || lf->animationTime <= 0 )
+		{
+			if ( !anim2 || anim2->moveSpeed == 0.0 )
+			{
+				if ( !animation || animation->moveSpeed == 0.0 )
+					transitionMin = 170;
+				else
+					transitionMin = 250;
+			}
+			else
+			{
+				transitionMin = 120;
+			}
+		}
+		if ( ci->stanceTransitionTime - bgs->time > transitionMin )
+			transitionMin = ci->stanceTransitionTime - bgs->time;
+		if ( lf->animationTime < transitionMin )
+			lf->animationTime = transitionMin;
+	}
+	if ( anim2 && anim2->moveSpeed != 0.0 && XAnimIsLooped(anim, animIndex) )
+	{
+		index = animNum & 0xFFFFFDFF;
+		if ( animation && animation->moveSpeed != 0.0 && XAnimIsLooped(anim, index) )
+		{
+			fStartTime = XAnimGetTime(tree, index);
+		}
+		else
+		{
+			if ( XAnimIsPrimitive(anim, index) )
+				length = XAnimGetLengthMsec(anim, index) + 200;
+			else
+				length = 1000;
+			oldTime = (long double)(bgs->time % length) / (long double)length + (long double)ci->clientNum * 0.36000001;
+			fStartTime = oldTime - (long double)(int)oldTime;
+		}
+	}
+	if ( animation )
+	{
+		blendTime = (long double)lf->animationTime * 0.001;
+		XAnimClearGoalWeight(tree, animNum & 0xFFFFFDFF, blendTime);
+	}
+	if ( animIndex )
+	{
+		if ( lf != &ci->legs )
+		{
+			ci->leftHandGun = 0;
+			ci->dobjDirty = 1;
+		}
+		if ( (anim2->flags & 0x40) != 0 )
+		{
+			if ( XAnimIsLooped(anim, animIndex) )
+				Com_Error(ERR_DROP, "death animation '%s' is looping", anim2->name);
+			if ( isComplete )
+			{
+				newGoalTime = (long double)lf->animationTime * 0.001;
+				XAnimSetCompleteGoalWeight(tree, animIndex, 1.0, newGoalTime, 1.0, 0, 0, 0);
+			}
+			else
+			{
+				XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, bgs->animData.generic_human.root.index, 1.0, 0.0, 1.0, 0, 0);
+				XAnimSetTime(tree, animIndex, 1.0);
+			}
+		}
+		else
+		{
+			hasTime = 0;
+			if ( anim2->moveSpeed != 0.0 && XAnimGetWeight(tree, animIndex) == 0.0 )
+				hasTime = 1;
+			goalTime2 = (long double)lf->animationTime * 0.001;
+			XAnimSetCompleteGoalWeight(tree, animIndex, 1.0, goalTime2, 1.0, 0, anim2->noteType, lf != &ci->legs);
+			if ( hasTime )
+				XAnimSetTime(tree, animIndex, fStartTime);
+		}
+		if ( lf != &ci->legs )
+		{
+			nextGoalTime = (long double)lf->animationTime * 0.001;
+			XAnimSetCompleteGoalWeight(
+			    tree,
+			    bgs->animData.animScriptData.torsoAnim,
+			    1.0,
+			    nextGoalTime,
+			    1.0,
+			    0,
+			    anim2->noteType,
+			    0);
+			goalTime = (long double)lf->animationTime * 0.001;
+			XAnimSetCompleteGoalWeight(
+			    tree,
+			    bgs->animData.animScriptData.legsAnim,
+			    0.0099999998,
+			    goalTime,
+			    1.0,
+			    0,
+			    anim2->noteType,
+			    0);
+		}
+	}
+	else if ( lf != &ci->legs )
+	{
+		time1 = (long double)lf->animationTime * 0.001;
+		XAnimSetCompleteGoalWeight(tree, bgs->animData.animScriptData.torsoAnim, 0.0, time1, 1.0, 0, 0, 0);
+		time2 = (long double)lf->animationTime * 0.001;
+		XAnimSetCompleteGoalWeight(tree, bgs->animData.animScriptData.legsAnim, 1.0, time2, 1.0, 0, 0, 0);
+	}
+}
+
+void BG_SetAnimRate(XAnimTree_s *tree, unsigned int animIndex, float rate)
+{
+	XAnimSetAnimRate(tree, animIndex, rate);
+}
+
+void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_s *es)
+{
+	float oldPos;
+	int bNewAnim;
+	float newSpeedScale;
+	float dist;
+	float newPos;
+	XAnimTree_s *tree;
+	animation_s *animation;
+
+	bNewAnim = 0;
+	if ( lf->animation && (lf->animation->flags & 2) != 0 )
+		bNewAnim = 1;
+	tree = ci->pXAnimTree;
+	if ( newAnimation != lf->animationNumber || !lf->animation && (newAnimation & 0xFFFFFDFF) != 0 )
+		BG_SetNewAnimation(ci, lf, newAnimation, ((unsigned int)es->eFlags >> 19) & 1);
+	if ( (newAnimation & 0xFFFFFDFF) != 0 )
+	{
+		animation = lf->animation;
+		if ( animation->moveSpeed == 0.0 || !lf->oldFrameSnapshotTime )
+		{
+			lf->animSpeedScale = 1.0;
+			lf->oldFrameSnapshotTime = bgs->latestSnapshotTime;
+			VectorCopy(es->pos.trBase, lf->oldFramePos);
+		}
+		else if ( bgs->latestSnapshotTime != lf->oldFrameSnapshotTime )
+		{
+			if ( bNewAnim )
+			{
+				oldPos = lf->oldFramePos[2] - es->pos.trBase[2];
+				dist = fabs(oldPos);
+			}
+			else
+			{
+				dist = vec3Distance(lf->oldFramePos, es->pos.trBase);
+			}
+			newPos = dist / ((long double)(bgs->latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001);
+			lf->animSpeedScale = newPos / animation->moveSpeed;
+			lf->oldFrameSnapshotTime = bgs->latestSnapshotTime;
+			VectorCopy(es->pos.trBase, lf->oldFramePos);
+			if ( lf->animSpeedScale >= 0.1 )
+			{
+				if ( lf->animSpeedScale > 2.0 )
+				{
+					if ( (animation->flags & 2) != 0 )
+					{
+						if ( lf->animSpeedScale > 4.0 )
+							lf->animSpeedScale = 4.0;
+					}
+					else if ( animation->moveSpeed <= 150.0 )
+					{
+						if ( animation->moveSpeed >= 20.0 )
+						{
+							newSpeedScale = 3.0 - (animation->moveSpeed - 20.0) / 130.0;
+							if ( lf->animSpeedScale > (long double)newSpeedScale )
+								lf->animSpeedScale = newSpeedScale;
+						}
+						else if ( lf->animSpeedScale > 3.0 )
+						{
+							lf->animSpeedScale = 3.0;
+						}
+					}
+					else
+					{
+						lf->animSpeedScale = 2.0;
+					}
+				}
+			}
+			else if ( lf->animSpeedScale < 0.0099999998 && bNewAnim )
+			{
+				lf->animSpeedScale = 0.0;
+			}
+			else
+			{
+				lf->animSpeedScale = 0.1;
+			}
+		}
+		if ( lf->animationNumber )
+			BG_SetAnimRate(tree, lf->animationNumber & 0xFFFFFDFF, lf->animSpeedScale);
+	}
+}
+
+/*
+==================
+BG_SwingAngles
+==================
+*/
+void BG_SwingAngles( float destination,  float swingTolerance, float clampTolerance, float speed, float *angle, qboolean *swinging )
+{
+	float	swing;
+	float	move;
+	float	scale;
+
+	if ( !*swinging )
+	{
+		// see if a swing should be started
+		swing = AngleSubtract( *angle, destination );
+		if ( swing > swingTolerance || swing < -swingTolerance )
+		{
+			*swinging = qtrue;
+		}
+	}
+
+	if ( !*swinging )
+	{
+		return;
+	}
+
+	// modify the speed depending on the delta
+	// so it doesn't seem so linear
+	swing = AngleSubtract( destination, *angle );
+	scale = fabs( swing );
+	if ( scale < swingTolerance * 0.5 )
+	{
+		scale = 0.5;
+	}
+	else if ( scale < swingTolerance )
+	{
+		scale = 1.0;
+	}
+	else
+	{
+		scale = 2.0;
+	}
+
+	// swing towards the destination angle
+	if ( swing >= 0 )
+	{
+		move = bgs->frametime * scale * speed;
+		if ( move >= swing )
+		{
+			move = swing;
+			*swinging = qfalse;
+		}
+		*angle = AngleMod( *angle + move );
+	}
+	else if ( swing < 0 )
+	{
+		move = bgs->frametime * scale * -speed;
+		if ( move <= swing )
+		{
+			move = swing;
+			*swinging = qfalse;
+		}
+		*angle = AngleMod( *angle + move );
+	}
+
+	// clamp to no more than tolerance
+	swing = AngleSubtract( destination, *angle );
+	if ( swing > clampTolerance )
+	{
+		*angle = AngleMod( destination - (clampTolerance - 1) );
+	}
+	else if ( swing < -clampTolerance )
+	{
+		*angle = AngleMod( destination + (clampTolerance - 1) );
+	}
+}
+
+void BG_PlayerAnimation_VerifyAnim(XAnimTree_s *pAnimTree, lerpFrame_t *lf)
+{
+	if ( lf->animationNumber )
+	{
+		if ( XAnimGetWeight(pAnimTree, lf->animationNumber & 0xFFFFFDFF) == 0.0 )
+		{
+			lf->animationNumber = 0;
+			lf->animation = 0;
+			lf->animationTime = 150;
+		}
+	}
+}
+
+extern dvar_t *bg_swingSpeed;
+void BG_PlayerAngles(const entityState_s *es, clientInfo_t *ci)
+{
+	vec3_t headAngles;
+	vec3_t torsoAngles;
+	vec3_t legsAngles;
+	float lerpMoveDir;
+	float fraction;
+	float clampTolerance;
+	float destination;
+
+	fraction = GetLeanFraction(ci->lerpLean);
+	lerpMoveDir = ci->lerpMoveDir;
+	VectorCopy(ci->playerAngles, headAngles);
+	headAngles[1] = AngleMod(headAngles[1]);
+	VectorClear(legsAngles);
+	VectorClear(torsoAngles);
+	if ( (es->eFlags & 0x300) != 0 )
+	{
+		ci->torso.yawing = 1;
+		ci->torso.pitching = 1;
+		ci->legs.yawing = 1;
+	}
+	else if ( (BG_GetConditionValue(ci, 3, 0) & 0xC0000) != 0 )
+	{
+		ci->torso.yawing = 1;
+		ci->torso.pitching = 1;
+		ci->legs.yawing = 1;
+	}
+	else if ( (es->eFlags & 0x4000) != 0 )
+	{
+		ci->torso.yawing = 1;
+		ci->torso.pitching = 1;
+		ci->legs.yawing = 1;
+	}
+	else if ( (BG_GetConditionValue(ci, 3, 0) & 6) != 0 )
+	{
+		if ( BG_GetConditionValue(ci, 6, 1) )
+		{
+			ci->torso.yawing = 1;
+			ci->torso.pitching = 1;
+		}
+	}
+	else
+	{
+		ci->torso.yawing = 1;
+		ci->torso.pitching = 1;
+		ci->legs.yawing = 1;
+	}
+	legsAngles[1] = headAngles[1] + lerpMoveDir;
+	if ( (es->eFlags & 0x20000) != 0 )
+	{
+		legsAngles[1] = headAngles[1];
+		torsoAngles[1] = headAngles[1];
+		clampTolerance = 90.0;
+	}
+	else if ( (BG_GetConditionValue(ci, 3, 0) & 0xC0000) != 0 )
+	{
+		torsoAngles[1] = legsAngles[1];
+		clampTolerance = 0.0;
+	}
+	else if ( (es->eFlags & 0x4000) != 0 )
+	{
+		torsoAngles[1] = headAngles[1];
+		legsAngles[1] = headAngles[1];
+		torsoAngles[0] = 90.0;
+		clampTolerance = 90.0;
+	}
+	else if ( (es->eFlags & 8) != 0 )
+	{
+		torsoAngles[1] = headAngles[1];
+		clampTolerance = 90.0;
+	}
+	else if ( (es->eFlags & 0x40) != 0 )
+	{
+		torsoAngles[1] = headAngles[1];
+		clampTolerance = 45.0;
+	}
+	else
+	{
+		if ( (es->eFlags & 0x40000) != 0 )
+			torsoAngles[1] = headAngles[1];
+		else
+			torsoAngles[1] = lerpMoveDir * 0.30000001 + headAngles[1];
+		clampTolerance = 90.0;
+	}
+	BG_SwingAngles(
+	    torsoAngles[1],
+	    0.0,
+	    clampTolerance,
+	    bg_swingSpeed->current.decimal,
+	    &ci->torso.yawAngle,
+	    &ci->torso.yawing);
+	clampTolerance = 150.0;
+	if ( (es->eFlags & 0x20000) != 0 )
+		goto LABEL_26;
+	if ( (es->eFlags & 8) != 0 )
+	{
+		ci->legs.yawing = 0;
+		ci->legs.yawAngle = headAngles[1] + lerpMoveDir;
+	}
+	else if ( (bgs->animData.animScriptData.animations[es->legsAnim & 0xFFFFFDFF].flags & 0x30) != 0 )
+	{
+		ci->legs.yawing = 0;
+		legsAngles[1] = headAngles[1];
+		BG_SwingAngles(
+		    headAngles[1],
+		    0.0,
+		    clampTolerance,
+		    bg_swingSpeed->current.decimal,
+		    &ci->legs.yawAngle,
+		    &ci->legs.yawing);
+	}
+	else
+	{
+		if ( ci->legs.yawing )
+		{
+LABEL_26:
+			BG_SwingAngles(
+			    legsAngles[1],
+			    0.0,
+			    clampTolerance,
+			    bg_swingSpeed->current.decimal,
+			    &ci->legs.yawAngle,
+			    &ci->legs.yawing);
+			goto LABEL_33;
+		}
+		BG_SwingAngles(
+		    legsAngles[1],
+		    40.0,
+		    clampTolerance,
+		    bg_swingSpeed->current.decimal,
+		    &ci->legs.yawAngle,
+		    &ci->legs.yawing);
+	}
+LABEL_33:
+	if ( (es->eFlags & 0x300) != 0 )
+	{
+		ci->torso.yawAngle = headAngles[1];
+		ci->legs.yawAngle = headAngles[1];
+	}
+	else if ( (BG_GetConditionValue(ci, 3, 0) & 0xC0000) != 0 )
+	{
+		ci->torso.yawAngle = headAngles[1] + lerpMoveDir;
+		ci->legs.yawAngle = headAngles[1] + lerpMoveDir;
+	}
+	if ( (es->eFlags & 0x20000) != 0 )
+	{
+		destination = 0.0;
+	}
+	else if ( (es->eFlags & 0x300) != 0 )
+	{
+		destination = 0.0;
+	}
+	else if ( (BG_GetConditionValue(ci, 3, 0) & 0xC0000) != 0 )
+	{
+		destination = 0.0;
+	}
+	else if ( es->eFlags == 0x4000 )
+	{
+		destination = 0.0;
+	}
+	else if ( headAngles[0] <= 180.0 )
+	{
+		destination = headAngles[0] * 0.60000002;
+	}
+	else
+	{
+		destination = (headAngles[0] + -360.0) * 0.60000002;
+	}
+	BG_SwingAngles(destination, 0.0, 45.0, 0.15000001, &ci->torso.pitchAngle, &ci->torso.pitching);
+}
+
+void BG_PlayerAnimation(const DObj_s *pDObj, entityState_s *es, clientInfo_t *ci)
+{
+	BG_PlayerAngles(es, ci);
+	BG_AnimPlayerConditions(es, ci);
+	BG_PlayerAnimation_VerifyAnim(ci->pXAnimTree, &ci->legs);
+	BG_PlayerAnimation_VerifyAnim(ci->pXAnimTree, &ci->torso);
+
+	if ( ci->leftHandGun && (ci->torso.animationNumber & 0xFFFFFDFF) == 0 )
+	{
+		ci->leftHandGun = 0;
+		ci->dobjDirty = 1;
+	}
+
+	BG_RunLerpFrameRate(ci, &ci->legs, es->legsAnim, es);
+	BG_RunLerpFrameRate(ci, &ci->torso, es->torsoAnim, es);
+}
+
+loadAnim_t* BG_GetAnim(unsigned int index)
+{
+	loadAnim_t *animation;
+	signed int i;
+
+	if ( index >= globalScriptData->numAnimations )
+		Com_Error(ERR_DROP, "Player animation index %i out of 0 to %i range", index, globalScriptData->numAnimations);
+
+	i = 0;
+	animation = g_pLoadAnims;
+
+	while ( i < *g_piNumLoadAnims )
+	{
+		if ( index == animation->anim.index )
+			return animation;
+
+		++i;
+		++animation;
+	}
+
+	return 0;
+}
+
+void BG_SetupAnimNoteTypes(animScriptData_t *scriptData)
+{
+	int k;
+	int i;
+	int j;
+	animScriptItem_t *item;
+	animScript_t *script;
+
+	for ( i = 0; i < scriptData->numAnimations; ++i )
+		scriptData->animations[i].noteType = 0;
+
+	if ( !bgs->anim_user )
+	{
+		script = &scriptData->scriptEvents[10];
+
+		for ( j = 0; j < script->numItems; ++j )
+		{
+			item = script->items[j];
+
+			for ( k = 0; k < item->numCommands; ++k )
+			{
+				if ( item->commands[k].bodyPart[0] )
+					scriptData->animations[item->commands[k].animIndex[0]].noteType = 1;
+				if ( item->commands[k].bodyPart[1] )
+					scriptData->animations[item->commands[k].animIndex[1]].noteType = 1;
+			}
+		}
+	}
+}
+
+void BG_FinalizePlayerAnims()
+{
+	const char *name;
+	long double lenMsec;
+	float length;
+	loadAnim_t *loadAnim;
+	vec3_t vDelta;
+	vec2_t vRot;
+	XAnim_s *xanim;
+	animation_s *animation;
+	int size;
 	int index;
 
-	for ( index = 0; index < g_playerAnimTypeNamesCount; ++index )
-		BG_InitWeaponString(index, (&g_playerAnimTypeNames)[index]);
+	animation = globalScriptData->animations;
+	xanim = globalScriptData->animTree.anims;
+	size = XAnimGetAnimTreeSize(xanim);
+	globalScriptData->numAnimations = size;
+	animation->flags |= 0x101u;
+	I_strncpyz(animation->name, "root", 64);
+	animation->nameHash = 0;
+	++animation;
+	index = 1;
+
+	while ( index < size )
+	{
+		loadAnim = BG_GetAnim(index);
+
+		if ( loadAnim )
+		{
+			if ( XAnimIsPrimitive(xanim, index) )
+			{
+				name = XAnimGetAnimName(xanim, index);
+				I_strncpyz(animation->name, name, 64);
+				animation->nameHash = BG_StringHashValue_Lwr(animation->name);
+
+				if ( !animation->initialLerp )
+					animation->initialLerp = -1;
+
+				length = XAnimGetLength(xanim, index);
+
+				if ( length == 0.0 )
+				{
+					animation->duration = 500;
+					animation->moveSpeed = 0.0;
+				}
+				else
+				{
+					lenMsec = length * 1000.0;
+					animation->duration = (int)lenMsec;
+					XAnimGetRelDelta(xanim, index, vRot, vDelta, 0.0, 1.0);
+					VectorLength(vDelta);
+					animation->moveSpeed = lenMsec / length;
+
+					if ( animation->duration <= 499 )
+						animation->duration = 500;
+				}
+				if ( XAnimIsLooped(xanim, index) )
+					animation->flags |= 0x80u;
+			}
+			else
+			{
+				animation->flags |= 1u;
+				I_strncpyz(animation->name, loadAnim->name, 64);
+				animation->nameHash = loadAnim->nameHash;
+
+				if ( !animation->initialLerp )
+					animation->initialLerp = -1;
+
+				animation->duration = 0;
+				animation->moveSpeed = 0.0;
+			}
+		}
+		else
+		{
+			animation->flags |= 0x100u;
+			I_strncpyz(animation->name, "unused", 64);
+			animation->nameHash = 0;
+		}
+
+		++index;
+		++animation;
+	}
+
+	BG_AnimParseAnimScript(globalScriptData, 0, 0);
+	BG_SetupAnimNoteTypes(globalScriptData);
 }
 
-void BG_InitWeaponStrings()
+void BG_FindAnimTree(scr_animtree_t *pTree, const char *filename, int bEnforceExists)
 {
-	memset(weaponStrings, 0, sizeof(weaponStrings));
-	BG_LoadWeaponStrings();
+	scr_animtree_t tree;
+
+	Scr_FindAnimTreeInternal(&tree, filename);
+	pTree->anims = tree.anims;
+
+	if ( !pTree->anims )
+	{
+		if ( bEnforceExists )
+			Com_Error(ERR_DROP, "Could not find animation tree '%s'", filename);
+	}
 }
 
+void BG_FindAnimTrees()
+{
+	scr_animtree_t *animTree;
+	scr_animtree_t loadAnimTree;
+
+	animTree = &bgs->animData.generic_human.tree;
+	BG_FindAnimTree(&loadAnimTree, "multiplayer", 1);
+	animTree->anims = loadAnimTree.anims;
+	bgs->animData.animScriptData.animTree.anims = bgs->animData.generic_human.tree.anims;
+	bgs->animData.animScriptData.torsoAnim = bgs->animData.generic_human.torso.index;
+	bgs->animData.animScriptData.legsAnim = bgs->animData.generic_human.legs.index;
+	bgs->animData.animScriptData.turningAnim = bgs->animData.generic_human.turning.index;
+}
+
+void BG_FindAnims()
+{
+	Scr_FindAnim("multiplayer", "root", &bgs->animData.generic_human.root, bgs->anim_user);
+	Scr_FindAnim("multiplayer", "torso", &bgs->animData.generic_human.torso, bgs->anim_user);
+	Scr_FindAnim("multiplayer", "legs", &bgs->animData.generic_human.legs, bgs->anim_user);
+	Scr_FindAnim("multiplayer", "turning", &bgs->animData.generic_human.turning, bgs->anim_user);
+}
+
+void BG_LoadAnim()
+{
+	loadAnim_t (*playerAnims)[MAX_MODEL_ANIMATIONS];
+	LargeLocal playerAnims_large_local(sizeof(loadAnim_t) * MAX_MODEL_ANIMATIONS);
+
+	playerAnims = (loadAnim_t (*)[MAX_MODEL_ANIMATIONS])playerAnims_large_local.GetBuf();
+
+	BG_FindAnims();
+	BG_AnimParseAnimScript(&bgs->animData.animScriptData, *playerAnims, &iNumPlayerAnims);
+	Scr_PrecacheAnimTrees(bgs->AllocXAnim, bgs->anim_user);
+	BG_FindAnimTrees();
+	Scr_EndLoadAnimTrees();
+	BG_FinalizePlayerAnims();
+
+	playerAnims_large_local.~LargeLocal();
+
+	//for (int i = 0; i < 512; i++)
+	//	Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
+}

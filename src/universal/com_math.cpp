@@ -583,3 +583,11 @@ int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *or
 
 	return 0;
 }
+
+float vec3Distance(const float* pointA, const float* pointB)
+{
+	float diffx = pointA[0]-pointB[0];
+	float diffy = pointA[1]-pointB[1];
+	float diffz = pointA[2]-pointB[2];
+	return sqrtf(diffx*diffx + diffy*diffy + diffz*diffz);
+}

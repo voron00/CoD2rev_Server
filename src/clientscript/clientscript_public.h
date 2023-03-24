@@ -616,6 +616,8 @@ void Scr_AddArray();
 void Scr_AddArrayStringIndexed(unsigned int stringValue);
 int Scr_GetPointerType(unsigned int index);
 void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index);
+unsigned short Scr_ExecEntThreadNum(int entnum, unsigned int classnum, int handle, unsigned int paramcount);
+void Scr_FreeThread(unsigned short handle);
 int Scr_GetInt(unsigned int index);
 double Scr_GetFloat(unsigned int index);
 unsigned int Scr_GetConstString(unsigned int index);
@@ -752,6 +754,7 @@ unsigned int GetNewArrayVariableIndex(unsigned int parentId, unsigned int index)
 unsigned int GetNewArrayVariable(unsigned int parentId, unsigned int index);
 void FreeVariable(unsigned int id);
 unsigned int GetVariableName(unsigned int id);
+unsigned int GetArrayVariable(unsigned int parentId, unsigned int index);
 void SetNewVariableValue(unsigned int id, VariableValue *value);
 unsigned int GetNewVariable(unsigned int parentId, unsigned int name);
 void RemoveRefToEmptyObject(unsigned int id);
@@ -859,6 +862,13 @@ void Var_Init();
 void SetAnimCheck(int bAnimCheck);
 void Scr_UsingTree(const char *filename, unsigned int sourcePos);
 void Scr_EmitAnimation(char *pos, unsigned int animName, unsigned int sourcePos);
+void Scr_FindAnim(const char *filename, const char *animName, scr_anim_s *anim, int user);
+void Scr_LoadAnimTreeAtIndex(unsigned int index, void *(*Alloc)(int), int user);
+void Scr_EndLoadAnimTrees();
+void Scr_PrecacheAnimTrees(void *(*Alloc)(int), int user);
+
+void Scr_FindAnimTreeInternal(scr_animtree_t *pTree, const char *filename);
+scr_animtree_t Scr_FindAnimTree( const char *filename);
 
 qboolean Scr_IsInOpcodeMemory(const char *pos);
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset);

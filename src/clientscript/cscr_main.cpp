@@ -300,3 +300,25 @@ void Scr_BeginLoadScripts()
 	Scr_AllocAnims(1);
 	TempMemoryReset();
 }
+
+void Scr_PrecacheAnimTrees(void *(*Alloc)(int), int user)
+{
+	int index;
+
+	for ( index = 1; index <= scrAnimPub.xanim_num[user]; ++index )
+		Scr_LoadAnimTreeAtIndex(index, Alloc, user);
+}
+
+void Scr_EndLoadAnimTrees()
+{
+	ClearObject(scrAnimPub.animtrees);
+	RemoveRefToObject(scrAnimPub.animtrees);
+	scrAnimPub.animtrees = 0;
+
+	if ( scrAnimPub.animtree_node )
+		RemoveRefToObject(scrAnimPub.animtree_node);
+
+	SL_ShutdownSystem(2u);
+	scrVarPub.endScriptBuffer = (const char *)Hunk_AllocLowInternal(0);
+	scrAnimPub.animtree_loading = 0;
+}

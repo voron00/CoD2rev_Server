@@ -14,7 +14,7 @@ typedef struct
 
 #define net_fields (((animConditionTable_t*)( 0x081647C0 )))
 #define animstrings (((animStringItem_t*)( 0x08164740 )))
-#define testdata (((animScriptData_t*)( 0x0855A4E4 )))
+#define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
 #define test (*((vec3_t*)( 0x0815D6E8 )))
 
@@ -30,21 +30,25 @@ void test2()
 	//int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
 	Com_Printf("(%f %f %f)\n", test[3], test[4], test[5]);
 	*/
-	
-	//static int printed = 0;
-	
-	//if (printed)
-	//	return;
-	
-	//printed = 1;
-	
+
+	static int printed = 0;
+
+	if (printed)
+		return;
+
+	printed = 1;
+
 	//Scr_DumpScriptThreads();
+
+	for (int i = 0; i < 512; i++)
+		Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
+
 }
 
 void Sys_RedirectFunctions()
 {
 	//SetJump(0x08094F02, (DWORD)test);
-	SetJump(0x08094F02, (DWORD)test2);
+	//SetJump(0x08094F02, (DWORD)test2);
 
 
 
@@ -124,7 +128,7 @@ void Sys_RedirectFunctions()
 	SetJump(0x0805CCFA, (DWORD)CM_BoxSightTrace);
 
 
-
+	SetJump(0x0805F0A4, (DWORD)CM_ClipMoveToEntities);
 
 
 	SetJump(0x080596DA, (DWORD)CM_TestCapsuleInCapsule);
@@ -144,7 +148,7 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
 	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
-
+	SetJump(0x0809AB88, (DWORD)SV_ClipMoveToEntity);
 
 
 	// Don't hook that for now, just init
@@ -505,6 +509,12 @@ void Sys_RedirectFunctions()
 	SetJump(0x08095696, (DWORD)SV_Netchan_UpdateProfileStats);
 	SetJump(0x08095742, (DWORD)SV_Netchan_PrintProfileStats);
 
+	SetJump(0x080955A2, (DWORD)SV_Netchan_Transmit);
+	SetJump(0x08095454, (DWORD)SV_Netchan_Encode);
+	SetJump(0x080954DE, (DWORD)SV_Netchan_Decode);
+
+	SetJump(0x0808C7CA, (DWORD)SV_AuthorizeIpPacket);
+
 	// Server
 	SV_Init(); // <-- FIX ME
 	Com_InitDvars(); // <-- FIX ME
@@ -609,8 +619,6 @@ void Sys_RedirectFunctions()
 	SetJump(0x08082F56, (DWORD)VM_Notify);
 
 
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING
-	//SetJump(0x0807FB08, (DWORD)VM_ExecuteInternal);
 
 
 	SetJump(0x08077DBA, (DWORD)Scr_PrintPrevCodePos);
@@ -637,20 +645,18 @@ void Sys_RedirectFunctions()
 
 
 
+	// Dobj
 	SetJump(0x080B6F64, (DWORD)DObjAbort);
 	SetJump(0x080B6F34, (DWORD)DObjShutdown);
 	SetJump(0x080B6EE8, (DWORD)DObjInit);
 	SetJump(0x080B819E, (DWORD)DObjFree);
 	SetJump(0x080B71A8, (DWORD)DObjCreateDuplicateParts);
-
-
 	SetJump(0x080B7EFC, (DWORD)DObjCreate);
-
-
 	SetJump(0x080B955A, (DWORD)DObjGeomTraceline);
 	SetJump(0x080B8CA6, (DWORD)DObjTraceline);
 
 
+	// Dobj management
 	SetJump(0x08062A66, (DWORD)Com_ServerDObjCreate);
 	SetJump(0x08062B4C, (DWORD)Com_SafeServerDObjFree);
 	SetJump(0x0806289C, (DWORD)Com_GetServerDObj);
@@ -658,6 +664,13 @@ void Sys_RedirectFunctions()
 	SetJump(0x08062C26, (DWORD)Com_ShutdownDObj);
 	SetJump(0x08062C40, (DWORD)Com_AbortDObj);
 
+
+	// SV Dobj stuff will be here
+	SetJump(0x08090776, (DWORD)SV_DObjUpdateServerTime);
+
+
+
+	// Random client stuff
 	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
 	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
 	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
@@ -665,93 +678,42 @@ void Sys_RedirectFunctions()
 	SetJump(0x080F6506, (DWORD)ClientUserinfoChanged);
 
 
-	SetJump(0x080C063C, (DWORD)XAnimCloneAnimTree);
+
+
+	// All referenced XAnim stuff
+	SetJump(0x080BA0EC, (DWORD)XAnimInit);
+	SetJump(0x080BBA62, (DWORD)XAnimFreeInfo);
 	SetJump(0x080BBAD0, (DWORD)XAnimGetAverageRateFrequency);
-	SetJump(0x080BD2FC, (DWORD)XAnimProcessServerNotify);
-	SetJump(0x080BBF7C, (DWORD)XAnimProcessClientNotify);
-
-	extern void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth);
-	SetJump(0x080BDE00, (DWORD)XAnimDisplay);
-
-	extern void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bool update, XAnimState *state, float dtime);
 	SetJump(0x080BC382, (DWORD)XAnimUpdateInfoSyncInternal);
-	extern void XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update);
 	SetJump(0x080BC52E, (DWORD)XAnimUpdateInfoInternal);
-	extern float XAnimGetNotifyFracServer(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, const XAnimState *state, const XAnimState *nextState, float dtime);
-	SetJump(0x080BBDC8, (DWORD)XAnimGetNotifyFracServer);
-	extern float XAnimGetServerNotifyFracSyncTotal(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, const XAnimState *state, const XAnimState *nextState, float dtime);
-	SetJump(0x080BCE56, (DWORD)XAnimGetServerNotifyFracSyncTotal);
-	extern float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime);
-	SetJump(0x080BCF74, (DWORD)XAnimFindServerNoteTrack);
-	//extern void DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
-	//SetJump(0x080BEB76, (DWORD)DObjUpdateServerInfo);
-
-
-	SetJump(0x08090776, (DWORD)SV_DObjUpdateServerTime);
-
-	SetJump(0x080C01C8, (DWORD)XAnimRestart);
-	SetJump(0x080C04C6, (DWORD)XAnimSetCompleteGoalWeight);
-	SetJump(0x080BF6AC, (DWORD)XAnimSetCompleteGoalWeightKnobAll);
-
-
-
-
-
-	/*
-	extern void XAnim_GetTimeIndex_s(const XAnimTime *animTime, uint16_t *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
-	SetJump(0x080BB29E, (DWORD)XAnim_GetTimeIndex_s);
-	extern void XAnim_GetTimeIndex_b(const XAnimTime *animTime, byte *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
-	SetJump(0x080BAEEC, (DWORD)XAnim_GetTimeIndex_b);
-
-	extern void XAnim_CalcRotDeltaForQuats(const XAnimDeltaPart *animDelta, float *rotDelta);
-	SetJump(0x080BAE2E, (DWORD)XAnim_CalcRotDeltaForQuats);
-	extern void XAnim_CalcPosDeltaForTrans(const XAnimDeltaPart *animDelta, float *posDelta);
-	SetJump(0x080BAEBA, (DWORD)XAnim_CalcPosDeltaForTrans);
-
-	extern void XAnim_CalcDynamicIndicesForQuats_s(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
-	SetJump(0x080BB542, (DWORD)XAnim_CalcDynamicIndicesForQuats_s);
-
-	extern void XAnim_CalcDynamicIndicesForTrans_s(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
-	SetJump(0x080BB642, (DWORD)XAnim_CalcDynamicIndicesForTrans_s);
-
-	extern void XAnim_CalcDynamicIndicesForQuats_b(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
-	SetJump(0x080BB15E, (DWORD)XAnim_CalcDynamicIndicesForQuats_b);
-
-	//extern void XAnim_CalcDynamicIndicesForTrans_b(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
-	//SetJump(0x080BB25E, (DWORD)XAnim_CalcDynamicIndicesForTrans_b);
-
-	//extern void XAnim_CalcDelta3DForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
-	//SetJump(0x080BB682, (DWORD)XAnim_CalcDelta3DForTime);
-	*/
-
-	SetJump(0x080BB9A8, (DWORD)XAnim_CalcDeltaForTime);
 	SetJump(0x080BCB3A, (DWORD)XAnimUpdateOldTime);
+	SetJump(0x080BCE56, (DWORD)XAnimGetServerNotifyFracSyncTotal);
+	SetJump(0x080BCF74, (DWORD)XAnimFindServerNoteTrack);
+	SetJump(0x080BD62C, (DWORD)XAnimCalc);
+	SetJump(0x080BDE00, (DWORD)XAnimDisplay);
+	SetJump(0x080BE1F4, (DWORD)XAnimCalcDeltaTree);
+	SetJump(0x080BE7D2, (DWORD)XAnimGetTime);
+	SetJump(0x080BF2AE, (DWORD)XAnimGetInfo);
+	SetJump(0x080BF346, (DWORD)XAnimClearGoalWeight);
+	SetJump(0x080BFB06, (DWORD)XAnimSetGoalWeightInternal);
+	SetJump(0x080C00E2, (DWORD)XAnimSetTime);
+	SetJump(0x080C01C8, (DWORD)XAnimRestart);
+	SetJump(0x080C063C, (DWORD)XAnimCloneAnimTree);
 
-	//SetJump(0x080BD62C, (DWORD)XAnimCalc);
-	SetJump(0x080BEC88, (DWORD)DObjCalcAnim);
-
-	SetJump(0x080C006C, (DWORD)XAnimSetupSyncNodes);
 
 
+	// Not referenced XAnim stuff, just for testing
+	SetJump(0x080BA57A, (DWORD)XAnimBlend);
+	SetJump(0x080BA626, (DWORD)XAnimCreateAnims);
 
+
+
+	// Fields
 	SetJump(0x080F5E1E, (DWORD)Scr_GetClientField);
 	SetJump(0x080F5DBC, (DWORD)Scr_SetClientField);
 	SetJump(0x080F5D66, (DWORD)GScr_AddFieldsForClient);
-
-
 	SetJump(0x08118822, (DWORD)Scr_SetEntityField);
 	SetJump(0x08118A22, (DWORD)Scr_GetEntityField);
-
-
-
-
-	/*
-	extern void Scr_FindAnimInternal(scr_anim_s *anim, unsigned int stringIndex, unsigned int animIndex);
-	SetJump(0x0806CA12, (DWORD)Scr_FindAnimInternal);
-
-	SetJump(0x08075828, (DWORD)Scr_IsIdentifier);
-	SetJump(0x0806CF7E, (DWORD)ConnectScriptToAnim);
-	*/
 
 
 
@@ -855,24 +817,38 @@ void Sys_RedirectFunctions()
 	SetJump(0x08084FD2, (DWORD)Scr_RunCurrentThreads);
 	SetJump(0x08083E96, (DWORD)Scr_InitSystem);
 	SetJump(0x0807FA00, (DWORD)Scr_ErrorInternal);
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+	SetJump(0x08075ECE, (DWORD)Scr_PrecacheAnimTrees);
+	SetJump(0x0806D8CE, (DWORD)Scr_FindAnimTree);
+
+
+
+	SetJump(0x080B645E, (DWORD)ParseConfigStringToStruct);
+
+
+
+
+
+	// DO NOT REMOVE
+	SetJump(0x08120068, (DWORD)GScr_LoadConsts);
+
+
+
+
+	// BGS
 	SetJump(0x080EE226, (DWORD)BG_WeaponFireRecoil);
+	SetJump(0x080D69B2, (DWORD)BG_PlayAnim);
+	SetJump(0x080D6BC4, (DWORD)BG_ExecuteCommand);
+	SetJump(0x080D6FCA, (DWORD)BG_AnimScriptEvent);
+	SetJump(0x080D8882, (DWORD)BG_AnimPlayerConditions);
+	SetJump(0x080D75DC, (DWORD)BG_SetNewAnimation);
+	SetJump(0x080D7D06, (DWORD)BG_RunLerpFrameRate);
+	SetJump(0x080D80B8, (DWORD)BG_SwingAngles);
+	SetJump(0x080D9698, (DWORD)BG_PlayerAnimation);
+	SetJump(0x080DCEB0, (DWORD)BG_EvaluateTrajectory);
+
+
+	G_RegisterDvars(); // <-- FIX ME
 }
 
 class cCallOfDuty2Pro

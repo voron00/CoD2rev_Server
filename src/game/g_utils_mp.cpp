@@ -8,6 +8,12 @@
 extern level_locals_t level;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define g_entities ((gentity_t*)( 0x08665480 ))
+#else
+extern gentity_t g_entities[];
+#endif
+
 XModel* cached_models[MAX_MODELS];
 
 const char* G_ModelName(int modelIndex)
@@ -158,4 +164,20 @@ void G_SetAngle(gentity_s *ent, const float *angle)
 float G_random()
 {
 	return (float)rand() / 2147483600.0;
+}
+
+float G_crandom()
+{
+	return G_random() * 2.0 - 1.0;
+}
+
+void G_InitGentity(gentity_s *ent)
+{
+	ent->nextFree = 0;
+	ent->r.inuse = 1;
+	Scr_SetString(&ent->classname, scr_const.noclass);
+	ent->s.number = ent - g_entities;
+	ent->r.ownerNum = 1023;
+	ent->eventTime = 0;
+	ent->freeAfterEvent = 0;
 }

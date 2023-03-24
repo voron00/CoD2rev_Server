@@ -12,7 +12,6 @@ extern XModelDataReadShort
 extern XModelDataReadFloat
 
 
-global XAnimLoadNotifyInfo
 global XAnimLoadFile
 
 

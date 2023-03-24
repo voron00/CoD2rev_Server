@@ -235,6 +235,14 @@ void Scr_SetHealth(gentity_s *ent, int offset)
 	}
 }
 
+void Scr_PlayerConnect(gentity_s *self)
+{
+	unsigned short callback;
+
+	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerconnect, 0);
+	Scr_FreeThread(callback);
+}
+
 unsigned int GScr_AllocString(const char *string)
 {
 	return Scr_AllocString(string);

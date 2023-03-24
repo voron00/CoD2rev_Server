@@ -63,7 +63,10 @@ typedef enum
 	TR_LINEAR,
 	TR_LINEAR_STOP,
 	TR_SINE,
-	TR_GRAVITY
+	TR_GRAVITY,
+	TR_GRAVITY_PAUSED,
+	TR_ACCELERATE,
+	TR_DECCELERATE
 } trType_t;
 
 typedef struct
@@ -818,6 +821,8 @@ typedef struct
 	unsigned short pelvis;
 } scr_const_t;
 
+extern scr_const_t scr_const;
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
@@ -891,6 +896,7 @@ void Scr_AddHudElem(game_hudelem_t *hud);
 void Scr_FreeHudElem(game_hudelem_s *hud);
 
 char* Scr_GetGameTypeNameForScript(const char *pszGameTypeScript);
+bool G_ParseWeaponAccurayGraphs(WeaponDef *weaponDef);
 
 void Scr_ReadOnlyField(gentity_s *ent, int offset);
 void Scr_SetOrigin(gentity_s *ent, int offset);
@@ -904,6 +910,9 @@ void Scr_GetObjectField(unsigned int classnum, int entnum, int offset);
 int Scr_SetEntityField(int entnum, int offset);
 void Scr_GetEntityField(int entnum, int offset);
 void Scr_Notify(gentity_s *ent, unsigned short stringValue, unsigned int paramcount);
+unsigned short Scr_ExecEntThread(gentity_s *ent, int handle, unsigned int paramcount);
+void Scr_PlayerConnect(gentity_s *self);
+void G_InitGentity(gentity_s *ent);
 
 void G_SetOrigin(gentity_s *ent, const float *origin);
 void G_SetAngle(gentity_s *ent, const float *angle);
@@ -915,6 +924,7 @@ void GScr_AddFieldsForEntity();
 void GScr_AddFieldsForRadiant();
 
 float G_random();
+float G_crandom();
 
 void (*Player_GetMethod(const char **pName))(scr_entref_t);
 void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t);
@@ -948,3 +958,5 @@ void GScr_AddFieldsForClient();
 
 void GScr_LoadConsts();
 void GScr_LoadScripts();
+
+void G_RegisterDvars();

@@ -124,7 +124,7 @@ void Hunk_OverrideDataForFile(int type, const char *name, void *data)
 	}
 }
 
-void Hunk_AddData(unsigned char type, void *data, int (*alloc)(int))
+void Hunk_AddData(unsigned char type, void *data, void *(*alloc)(int))
 {
 	fileData_t *fileData;
 

@@ -220,3 +220,57 @@ void ClientUserinfoChanged(int clientNum)
 
 	I_strncpyz(level_bgs.clientinfo[clientNum].name, client->sess.state.name, 32);
 }
+
+/*
+extern dvar_t *g_password;
+const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId)
+{
+	XAnimTree_s *tree;
+	clientInfo_t *ci;
+	gentity_s *ent;
+	char userinfo[1024];
+	gclient_s *gclient;
+	const char *password;
+	uint16_t id;
+
+	id = scriptPersId;
+	ent = &g_entities[clientNum];
+	gclient = &level.clients[clientNum];
+	memset(gclient, 0, sizeof(gclient_s));
+	ci = (clientInfo_t *)(1208 * clientNum + 140846652);
+	tree = level_bgs.clientinfo[clientNum].pXAnimTree;
+	memset(ci, 0, sizeof(clientInfo_t));
+	ci->pXAnimTree = tree;
+	ci->infoValid = 1;
+	ci->nextValid = 1;
+	gclient->sess.connected = CS_ZOMBIE;
+	gclient->sess.pers = id;
+	gclient->sess.state.team = TEAM_SPECTATOR;
+	gclient->sess.sessionState = STATE_SPECTATOR;
+	gclient->spectatorClient = -1;
+	gclient->sess.forceSpectatorClient = -1;
+	G_InitGentity(ent);
+	ent->handler = 0;
+	ent->client = gclient;
+	gclient->useHoldEntity = 1023;
+	gclient->sess.state.clientIndex = clientNum;
+	gclient->ps.clientNum = clientNum;
+	ClientUserinfoChanged(clientNum);
+	SV_GetUserinfo(clientNum, userinfo, 1024);
+
+	if ( gclient->sess.localClient
+	        || (password = Info_ValueForKey(userinfo, "password"), !*g_password->current.string)
+	        || !I_stricmp((char *)g_password->current.integer, "none")
+	        || !strcmp(g_password->current.string, password) )
+	{
+		Scr_PlayerConnect(ent);
+		CalculateRanks();
+		return 0;
+	}
+	else
+	{
+		G_FreeEntity(ent);
+		return "GAME_INVALIDPASSWORD";
+	}
+}
+*/

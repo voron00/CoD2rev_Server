@@ -193,3 +193,8 @@ void Scr_Notify(gentity_s *ent, unsigned short stringValue, unsigned int paramco
 {
 	Scr_NotifyNum(ent->s.number, 0, stringValue, paramcount);
 }
+
+unsigned short Scr_ExecEntThread(gentity_s *ent, int handle, unsigned int paramcount)
+{
+	return Scr_ExecEntThreadNum(ent->s.number, 0, handle, paramcount);
+}

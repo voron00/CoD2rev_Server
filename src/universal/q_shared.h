@@ -338,6 +338,26 @@ void Com_StripExtension(const char *in, char *out);
 int Q_vsnprintf(char *str, size_t size, const char *format, va_list args);
 #define I_vsnprintf Q_vsnprintf
 
+struct cspField_t
+{
+	const char *szName;
+	int iOffset;
+	int iFieldType;
+};
+
+enum csParseFieldType_t
+{
+	CSPFT_STRING = 0x0,
+	CSPFT_STRING_MAX_STRING_CHARS = 0x1,
+	CSPFT_STRING_MAX_QPATH = 0x2,
+	CSPFT_STRING_MAX_OSPATH = 0x3,
+	CSPFT_INT = 0x4,
+	CSPFT_QBOOLEAN = 0x5,
+	CSPFT_FLOAT = 0x6,
+	CSPFT_MILLISECONDS = 0x7,
+	CSPFT_NUM_BASE_FIELD_TYPES = 0x8,
+};
+
 char *va(const char *format, ...);
 void Info_RemoveKey( char *s, const char *key );
 void Info_RemoveKey_Big( char *s, const char *key );
@@ -356,3 +376,6 @@ void COM_BitClear(int array[], int bitNum);
 long double GetLeanFraction(const float fFrac);
 long double UnGetLeanFraction(const float fFrac);
 void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
+qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes, int (*parseSpecialFieldType)(unsigned char *, const char *, const int), void (*parseStrCpy)(unsigned char *, const char *));
+void SetConfigString(char **ppszConfigString, const char *pszKeyValue);
+void SetConfigString2(unsigned char *pMember, const char *pszKeyValue);

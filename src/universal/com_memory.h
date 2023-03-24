@@ -78,7 +78,7 @@ void Z_FreeInternal( void *ptr );
 char* CopyStringInternal(const char *in);
 void* Hunk_FindDataForFile(int type, const char *name);
 void Hunk_OverrideDataForFile(int type, const char *name, void *data);
-void Hunk_AddData(unsigned char type, void *data, int (*alloc)(int));
+void Hunk_AddData(unsigned char type, void *data, void *(*alloc)(int));
 const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*alloc)(int));
 qboolean Hunk_DataOnHunk(void *data);
 void ReplaceStringInternal(char **string, char *replacement);

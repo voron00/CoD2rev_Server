@@ -6,12 +6,7 @@ unsigned int g_end;
 
 XAnimClientNotify g_notifyList[128];
 int g_notifyListSize = 0;
-
-#ifdef TESTING_LIBRARY
-#define g_xAnimInfo (((XAnimInfo*)( 0x08527A80 )))
-#else
 XAnimInfo g_xAnimInfo[1024];
-#endif
 
 void *Hunk_AllocXAnimPrecache(int size)
 {
@@ -23,9 +18,108 @@ void *Hunk_AllocXAnimServer(int size)
 	return Hunk_AllocLowInternal(size);
 }
 
+void *Hunk_AllocXAnimTreePrecache(int size)
+{
+	return Hunk_AllocAlignInternal(size, 4);
+}
+
+void XAnimCreate(XAnim_s *anims, unsigned int animIndex, const char *name)
+{
+	size_t len;
+	char *dest;
+	XAnimParts_s *parts;
+
+	parts = XAnimFindData(name);
+
+	if ( !parts )
+		Com_Error(ERR_DROP, "Cannot find xanim '%s'", name);
+
+	anims->entries[animIndex].numAnims = 0;
+	anims->entries[animIndex].u.parts = parts;
+
+	if ( anims->debugAnimNames )
+	{
+		len = strlen(name);
+		dest = (char *)Z_MallocInternal(len + 1);
+		strcpy(dest, name);
+		anims->debugAnimNames[animIndex] = dest;
+	}
+}
+
+XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int))
+{
+	size_t len;
+	char *dest;
+	XAnim_s *newAnim;
+
+	newAnim = (XAnim_s *)Alloc(8 * size + 12);
+	newAnim->size = size;
+
+	if ( g_anim_developer )
+	{
+		len = strlen(debugName);
+		dest = (char *)Z_MallocInternal(len + 1);
+		strcpy(dest, debugName);
+		newAnim->debugName = dest;
+		newAnim->debugAnimNames = (const char **)Z_MallocInternal(4 * size);
+	}
+
+	if ( Hunk_DataOnHunk(newAnim) )
+		Hunk_AddData(FILEDATA_XANIMLIST, newAnim, Alloc);
+
+	return newAnim;
+}
+
+void XAnimBlend(XAnim_s *anims, unsigned int animIndex,const char *name, unsigned int children, unsigned int num, unsigned int flags)
+{
+	size_t len;
+	char *dest;
+	unsigned int i;
+
+	anims->entries[animIndex].numAnims = num;
+	anims->entries[animIndex].u.animParent.flags = flags;
+	anims->entries[animIndex].u.animParent.children = children;
+
+	for ( i = 0; i < num; ++i )
+		anims->entries[i + anims->entries[animIndex].u.animParent.children].parent = animIndex;
+
+	if ( anims->debugAnimNames )
+	{
+		len = strlen(name);
+		dest = (char *)Z_MallocInternal(len + 1);
+		strcpy(dest, name);
+		anims->debugAnimNames[animIndex] = dest;
+	}
+}
+
 bool XanimIsDefaultPart(XAnimParts *animParts)
 {
 	return animParts->isDefault;
+}
+
+unsigned int XAnimGetAnimTreeSize(const XAnim_s *anims)
+{
+	return anims->size;
+}
+
+const char* XAnimGetAnimName(const XAnim_s *anims, unsigned int animIndex)
+{
+	if ( anims->entries[animIndex].numAnims )
+		return "";
+	else
+		return anims->entries[animIndex].u.parts->name;
+}
+
+float XAnimGetTime(const XAnimTree_s *tree, unsigned int animIndex)
+{
+	uint16_t childIndex;
+
+	childIndex = tree->children[animIndex];
+
+	if ( childIndex )
+		return g_xAnimInfo[childIndex].state.time;
+	else
+		return 0.0;
 }
 
 const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex)

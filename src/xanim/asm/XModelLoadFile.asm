@@ -12,8 +12,8 @@ extern XModelPartsLoad
 
 
 global XModelLoadFile
-global XModelLoadCollision
-global XModelIsValidModelFile
+
+; Needed for XmodelPartsLoad
 global XModelDataReadInt
 global XModelDataReadShort
 global XModelDataReadFloat

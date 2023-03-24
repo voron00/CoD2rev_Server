@@ -373,20 +373,19 @@ int QDECL XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *po
 void QDECL XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update);
 float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime);
 
+void QDECL DObjCalcAnim(const DObj_s *obj, int *partBits);
+
 // This function has some weird bs and breaks the decompiler. Moved to assembly.
 void QDECL DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
 
-void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *parts, const float weightScale, float time, XAnimSimpleRotPos *rotPos);
-
-float QDECL XAnimCalc_GetLowestElement(float value);
-unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels);
-
-void QDECL XAnimCalcParts(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
-void QDECL XAnimCalcParts2(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
-void QDECL XAnimCalcNonLoopEnd(const XAnimParts_s *parts, const unsigned char *animToModel, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);
-
 DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
 void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, char *priorityMap, DObjTrace_s *trace);
+
+void QDECL XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *rot, float *trans, float startTime, float endTime);
+
+void QDECL XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAnimMat *rotTransArray, bool bClear, bool bNormQuat, XAnimCalcAnimInfo *animInfo, int buffer);
+void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
+void QDECL XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos);
 
 #ifdef __cplusplus
 }
@@ -418,19 +417,33 @@ bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex);
 bool XAnimIsPrimitive(XAnim_s *anim, unsigned int animIndex);
 float XAnimGetLength(const XAnim_s *anims, unsigned int animIndex);
 int XAnimGetLengthMsec(const XAnim_s *anim, unsigned int animIndex);
+void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth);
 void XAnimClearGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
 void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time);
 void XAnimRestart(XAnimTree_s *tree, unsigned int infoIndex);
+float XAnimGetServerNotifyFracSyncTotal(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, const XAnimState *state, const XAnimState *nextState, float dtime);
 void XAnimSetCompleteGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
 void XAnimSetCompleteGoalWeightKnobAll(XAnimTree_s *tree, unsigned int animIndex, unsigned int rootIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart);
 void XAnimClearTreeGoalWeights(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
 void XAnimClearTreeGoalWeightsStrict(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
 int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex);
 unsigned int XAnimGetChildAt(const XAnim_s *anim, unsigned int animIndex, unsigned int childIndex);
+void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bool update, XAnimState *state, float dtime);
 void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
 void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *syncState, float dtime, bool parentHasWeight, bool *childHasTimeForParent1, bool *childHasTimeForParent2);
+int XAnimSetGoalWeightInternal(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, bool useGoalWeight, unsigned int notifyName, unsigned int notifyType);
 void XAnimSetupSyncNodes(XAnim_s *anims);
+void XAnimCreate(XAnim_s *anims, unsigned int animIndex, const char *name);
+void XAnimBlend(XAnim_s *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int));
+void *Hunk_AllocXAnimTreePrecache(int size);
+XAnimParts_s *XAnimFindData(const char *name);
+XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex);
+void XAnimFreeInfo(XAnimTree_s *tree, unsigned int infoIndex);
+unsigned int XAnimGetAnimTreeSize(const XAnim_s *anims);
+const char* XAnimGetAnimName(const XAnim_s *anims, unsigned int animIndex);
+void *Hunk_AllocXAnimServer(int size);
+float XAnimGetTime(const XAnimTree_s *tree, unsigned int animIndex);
 
 int DObjHasContents(DObj_s *obj, int contentmask);
-void DObjCalcAnim(const DObj_s *obj, int *partBits);
 void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results);

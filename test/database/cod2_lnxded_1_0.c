@@ -1577,7 +1577,7 @@ int __cdecl SV_FreeClientScriptId(int a1);
 // int __usercall SV_CheckTimeouts@<eax>(long double a1@<st0>);
 int SV_CheckPaused();
 // void __usercall sub_8094780(long double a1@<st0>);
-// int __usercall sub_809479A@<eax>(long double a1@<st0>, int a2);
+// int __usercall SV_BotUserMove@<eax>(long double a1@<st0>, int a2);
 // int __usercall sub_8094980@<eax>(long double a1@<st0>);
 // void __usercall SV_Frame(long double a1@<st0>, int a2);
 int *sub_8094E38();
@@ -2917,7 +2917,7 @@ int __cdecl sub_80E9188(int a1, void (__cdecl *a2)(int));
 int sub_80E91DC();
 int __cdecl PM_StartWeaponAnim(int a1, int a2);
 int __cdecl sub_80E9240(int a1, int a2);
-int __cdecl BG_WeaponDefs(int a1);
+int __cdecl BG_GetWeaponDef(int a1);
 int *__cdecl sub_80E9280(int a1);
 int BG_GetNumWeapons();
 int __cdecl sub_80E9336(int a1);
@@ -2929,7 +2929,7 @@ int __cdecl BG_FindWeaponIndexForName(char *a1);
 int __cdecl BG_GetWeaponIndexForName(char *s1, void (__cdecl *a2)(int));
 int __cdecl sub_80E958C(char *s1); // idb
 int sub_80E95A8();
-int __cdecl sub_80E95EE(_DWORD *a1);
+int __cdecl BG_GetViewmodelWeaponIndex(_DWORD *a1);
 int __cdecl sub_80E963A(int a1, int a2);
 int __cdecl sub_80E973E(int a1);
 int __cdecl sub_80E9758(int a1);
@@ -3086,12 +3086,12 @@ int __cdecl SpectatorThink(int a1, int **a2);
 // int __usercall sub_80F29CA@<eax>(long double a1@<st0>, int a2);
 int __cdecl sub_80F2B22(int a1);
 int __cdecl sub_80F2B86(int *a1, int a2);
-int __cdecl sub_80F2EC0(int a1, int a2);
+int __cdecl G_SetLastServerTime(int a1, int a2);
 int __cdecl sub_80F2F2E(int a1);
 void __cdecl G_PlayerStateToEntityStateExtrapolate(int a1, int a2, int a3, int a4);
 int __cdecl sub_80F34E0(_DWORD *a1, int a2, int a3);
 // int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3);
-// int __usercall sub_80F3EA4@<eax>(long double a1@<st0>, int a2);
+// int __usercall ClientThink@<eax>(long double a1@<st0>, int a2);
 // int __usercall sub_80F3F74@<eax>(long double a1@<st0>, int *a2);
 int __cdecl ClientIntermission(int a1);
 _DWORD *__cdecl SpectatorClientEndFrame(int a1);
@@ -3351,7 +3351,7 @@ int __cdecl sub_8103530(int a1, int *a2);
 int __cdecl sub_8103CB2(char **a1, _WORD *a2);
 // int __usercall sub_8103D3C@<eax>(long double a1@<st0>, int a2, _DWORD *a3, _DWORD *a4, int a5);
 int __cdecl sub_8103F44(int, int, float, int); // idb
-float *__cdecl sub_810404E(int a1, int a2, int a3);
+float *__cdecl Drop_Weapon(int a1, int a2, int a3);
 int __cdecl FinishSpawningItem(_DWORD *a1);
 void *ClearRegisteredItems();
 int SaveRegisteredWeapons();
@@ -3363,9 +3363,9 @@ int __cdecl IsItemRegistered(int a1);
 int __cdecl sub_81050FE(int a1, int a2, int a3, _DWORD *a4);
 int __cdecl sub_81052AA(int a1, int a2);
 int __cdecl sub_8105382(int a1, int *a2, _DWORD *a3);
-int *__cdecl sub_81053B6(float *a1);
-int __cdecl sub_81058A0(int *a1);
-int __cdecl sub_810592C(float *a1);
+int *__cdecl G_RunCorpseMove(float *a1);
+int __cdecl G_RunCorpseAnimate(int *a1);
+int __cdecl G_RunCorpse(float *a1);
 void __cdecl sub_8105956(_DWORD *a1);
 int __cdecl sub_8105D5E(float); // idb
 int __cdecl sub_8105D94(_DWORD *a1);
@@ -3824,7 +3824,7 @@ int __cdecl G_Trigger(int *a1, int *a2);
 int __cdecl sub_811A074(int a1);
 void __cdecl sub_811A0AE(int a1, int a2);
 int __cdecl sub_811A106(int a1);
-int __cdecl sub_811A1B8(int *a1);
+int __cdecl multi_trigger(int *a1);
 int __cdecl Touch_Multi(int *a1, int *a2);
 int __cdecl sub_811A20A(int a1);
 int __cdecl sub_811A250(int a1);
@@ -13701,7 +13701,7 @@ int sv_serverid; // weak
 int sv_maxRate; // weak
 int sv_minPing; // weak
 int sv_maxPing; // weak
-int g_gametype; // idb
+int dword_848B1F4; // idb
 int sv_debugRate; // weak
 int sv_debugReliableCmds; // weak
 int sv_pure; // weak
@@ -14080,7 +14080,7 @@ _WORD word_86F1188[4]; // weak
 int dword_86F1190; // weak
 _UNKNOWN unk_86F1250; // weak
 _UNKNOWN unk_86F1480; // weak
-int sv_gametype; // weak
+int dword_8793D80; // weak
 int g_password; // weak
 int g_maxclients; // weak
 int dedicated; // weak
@@ -50281,9 +50281,9 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
   if ( *(_BYTE *)(com_sv_running + 8) )
   {
     SV_SetGametype(a1);
-    I_strncpyz(byte_848B174, *(char **)(g_gametype + 8), 64);
+    I_strncpyz(byte_848B174, *(char **)(dword_848B1F4 + 8), 64);
     v4 = G_GetSavePersist();
-    if ( !*(_BYTE *)(sv_maxclients + 7) && !strcasecmp(byte_848B174, *(const char **)(g_gametype + 8)) && a2 )
+    if ( !*(_BYTE *)(sv_maxclients + 7) && !strcasecmp(byte_848B174, *(const char **)(dword_848B1F4 + 8)) && a2 )
     {
       if ( com_frameTime != dword_842BC88 )
       {
@@ -50423,10 +50423,10 @@ void __usercall sub_808B06A(long double a1@<st0>)
     Com_Printf("Setting g_gametype: %s.\n", s1a);
     if ( *(_BYTE *)(com_sv_running + 8) )
     {
-      if ( strcasecmp(*(const char **)(g_gametype + 8), s1a) )
+      if ( strcasecmp(*(const char **)(dword_848B1F4 + 8), s1a) )
         sub_8106968(0);
     }
-    Dvar_SetString(g_gametype, s1a);
+    Dvar_SetString(dword_848B1F4, s1a);
 LABEL_19:
     s1 = sub_808B008();
   }
@@ -52419,8 +52419,8 @@ int __usercall SV_ClientThink@<eax>(long double a1@<st0>, char *a2, int *a3)
   result = (int)a2;
   if ( *(_DWORD *)a2 == 4 )
   {
-    sub_80F2EC0(-1653759219 * ((a2 - (_BYTE *)dword_841FB0C) >> 2), *a3);
-    return sub_80F3EA4(a1, -1653759219 * ((a2 - (_BYTE *)dword_841FB0C) >> 2));
+    G_SetLastServerTime(-1653759219 * ((a2 - (_BYTE *)dword_841FB0C) >> 2), *a3);
+    return ClientThink(a1, -1653759219 * ((a2 - (_BYTE *)dword_841FB0C) >> 2));
   }
   return result;
 }
@@ -53259,7 +53259,7 @@ void __usercall SV_SetGametype(long double a1@<st0>)
   if ( *(_BYTE *)(com_sv_running + 8) && G_GetSavePersist() )
     I_strncpyz(dest, byte_848B174, 64);
   else
-    I_strncpyz(dest, *(char **)(g_gametype + 8), 64);
+    I_strncpyz(dest, *(char **)(dword_848B1F4 + 8), 64);
   for ( i = dest; *i; ++i )
   {
     v1 = i;
@@ -53270,7 +53270,7 @@ void __usercall SV_SetGametype(long double a1@<st0>)
     Com_Printf("g_gametype %s is not a valid gametype, defaulting to dm\n", dest);
     strcpy(dest, "dm");
   }
-  Dvar_SetString(g_gametype, dest);
+  Dvar_SetString(dword_848B1F4, dest);
 }
 // 819EF14: using guessed type int com_sv_running;
 
@@ -53877,7 +53877,7 @@ void __usercall SV_SpawnServer(long double a1@<st0>, char *a2)
     {
       if ( *v16 > 2 )
       {
-        Com_sprintf(s, 0x40u, "loadingnewmap\n%s\n%s", a2, *(const char **)(g_gametype + 8));
+        Com_sprintf(s, 0x40u, "loadingnewmap\n%s\n%s", a2, *(const char **)(dword_848B1F4 + 8));
         NET_OutOfBandPrint(1, v16[113009], v16[113010], v16[113011], v16[113012], v16[113013], s);
       }
       ++i;
@@ -53903,7 +53903,7 @@ void __usercall SV_SpawnServer(long double a1@<st0>, char *a2)
     sub_80915D0(a1);
   else
     sub_80914E6(a1);
-  I_strncpyz(byte_848B174, *(char **)(g_gametype + 8), 64);
+  I_strncpyz(byte_848B174, *(char **)(dword_848B1F4 + 8), 64);
   v2 = sub_80D37B0();
   srand(v2);
   v3 = rand() << 16;
@@ -54020,7 +54020,7 @@ char *__usercall SV_Init@<eax>(long double a1@<st0>)
   char *result; // eax
 
   SV_AddOperatorCommands();
-  g_gametype = (int)Dvar_RegisterString(a1, "g_gametype", "dm", 4132);
+  dword_848B1F4 = (int)Dvar_RegisterString(a1, "g_gametype", "dm", 4132);
   Dvar_RegisterString(a1, "sv_keywords", (char *)&byte_8143FC3, 4100);
   Dvar_RegisterInt(a1, "protocol", (char *)0x73, 115, 115, 4164);
   mapname = (int)Dvar_RegisterString(a1, "mapname", (char *)&byte_8143FC3, 4164);
@@ -54705,7 +54705,7 @@ _BOOL4 __cdecl SVC_Info(int a1, int a2, int a3, int a4, int a5)
     v8 = va("%i", *(_DWORD *)v23);
     Info_SetValueForKey(src, "sv_maxclients", (int)v8);
   }
-  Info_SetValueForKey(src, "gametype", *(_DWORD *)(g_gametype + 8));
+  Info_SetValueForKey(src, "gametype", *(_DWORD *)(dword_848B1F4 + 8));
   if ( *(_BYTE *)(sv_pure + 8) || fs_numServerIwds )
     Info_SetValueForKey(src, "pure", (int)"1");
   if ( *(_DWORD *)(sv_minPing + 8) )
@@ -55071,7 +55071,7 @@ void __usercall sub_8094780(long double a1@<st0>)
 }
 
 //----- (0809479A) --------------------------------------------------------
-int __usercall sub_809479A@<eax>(long double a1@<st0>, int a2)
+int __usercall SV_BotUserMove@<eax>(long double a1@<st0>, int a2)
 {
   int result; // eax
   int s; // [esp+20h] [ebp-28h] BYREF
@@ -55146,7 +55146,7 @@ int __usercall sub_8094980@<eax>(long double a1@<st0>)
     if ( *i )
     {
       if ( !i[113009] )
-        sub_809479A(a1, (int)i);
+        SV_BotUserMove(a1, (int)i);
     }
     ++v3;
   }
@@ -85963,8 +85963,8 @@ int __cdecl BG_AnimUpdatePlayerStateConditions(int *a1)
   float *v4; // [esp+14h] [ebp-4h]
 
   v4 = (float *)*a1;
-  v1 = sub_80E95EE((_DWORD *)*a1);
-  v3 = BG_WeaponDefs(v1);
+  v1 = BG_GetViewmodelWeaponIndex((_DWORD *)*a1);
+  v3 = BG_GetWeaponDef(v1);
   BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 0, *(_DWORD *)(v3 + 116), 1);
   BG_UpdateConditionValue(*((_DWORD *)v4 + 51), 1, *(_DWORD *)(v3 + 124), 1);
   if ( ((_DWORD)v4[40] & 0x40000) != 0 )
@@ -86499,7 +86499,7 @@ int __cdecl BG_AnimPlayerConditions(_DWORD *a1, int a2)
   int v3; // [esp+18h] [ebp-10h]
   unsigned int v4; // [esp+1Ch] [ebp-Ch]
 
-  v3 = BG_WeaponDefs(a1[50]);
+  v3 = BG_GetWeaponDef(a1[50]);
   BG_UpdateConditionValue(a1[36], 0, *(_DWORD *)(v3 + 116), 1);
   BG_UpdateConditionValue(a1[36], 1, *(_DWORD *)(v3 + 124), 1);
   if ( (a1[2] & 0x40000) != 0 )
@@ -89294,8 +89294,8 @@ long double __cdecl sub_80DF534(int *a1, int a2)
         v12 = (v8 * 0.15000001 + (1.0 - v8) * 0.64999998) * v12;
       }
     }
-    if ( *(_DWORD *)(v10 + 212) && *(float *)(BG_WeaponDefs(*(_DWORD *)(v10 + 212)) + 612) > 0.0 )
-      v12 = v12 * *(float *)(BG_WeaponDefs(*(_DWORD *)(v10 + 212)) + 612);
+    if ( *(_DWORD *)(v10 + 212) && *(float *)(BG_GetWeaponDef(*(_DWORD *)(v10 + 212)) + 612) > 0.0 )
+      v12 = v12 * *(float *)(BG_GetWeaponDef(*(_DWORD *)(v10 + 212)) + 612);
     if ( (*(_DWORD *)(a2 + 4) & 0x800) != 0 )
       return (float)(v12 * 0.40000001);
     return v12;
@@ -93385,7 +93385,7 @@ int __cdecl sub_80E88F0(int a1)
   int result; // eax
   _DWORD *v3; // [esp+10h] [ebp-8h]
 
-  v1 = (_DWORD *)BG_WeaponDefs(a1);
+  v1 = (_DWORD *)BG_GetWeaponDef(a1);
   v3 = (_DWORD *)((char *)&unk_8164C20 + 44 * a1);
   v3[1] = v1[38];
   v3[2] = v1[109];
@@ -93432,7 +93432,7 @@ int __cdecl BG_FillInAmmoItems(void (__cdecl *a1)(int))
       v6 = BG_GetWeaponIndexForName(dest, a1);
       if ( v6 )
       {
-        v5 = BG_WeaponDefs(v6);
+        v5 = BG_GetWeaponDef(v6);
         *(_DWORD *)(v4 + 32) = v6;
         *(_DWORD *)(v4 + 36) = *(_DWORD *)(v5 + 456);
         result = *(_DWORD *)(v5 + 464);
@@ -93443,7 +93443,7 @@ int __cdecl BG_FillInAmmoItems(void (__cdecl *a1)(int))
       v6 = BG_GetWeaponIndexForName("defaultweapon_mp", a1);
       if ( !v6 )
         Com_Error(1, (char *)&byte_814E260);
-      v5 = BG_WeaponDefs(v6);
+      v5 = BG_GetWeaponDef(v6);
       *(_DWORD *)(v4 + 32) = 1;
       *(_DWORD *)(v4 + 36) = *(_DWORD *)(v5 + 456);
       *(_DWORD *)(v4 + 40) = *(_DWORD *)(v5 + 464);
@@ -93461,7 +93461,7 @@ int __cdecl sub_80E8B16(int a1)
   int i; // [esp+30h] [ebp-8h]
   int v5; // [esp+34h] [ebp-4h]
 
-  v5 = BG_WeaponDefs(a1);
+  v5 = BG_GetWeaponDef(a1);
   for ( i = 0; ; ++i )
   {
     if ( i >= dword_8576560 )
@@ -93514,7 +93514,7 @@ _BYTE *__cdecl sub_80E8C8C(int a1)
   _DWORD *v4; // [esp+30h] [ebp-8h]
   int i; // [esp+34h] [ebp-4h]
 
-  v4 = (_DWORD *)BG_WeaponDefs(a1);
+  v4 = (_DWORD *)BG_GetWeaponDef(a1);
   v4[121] = -1;
   result = (_BYTE *)v4[120];
   if ( *result )
@@ -93566,7 +93566,7 @@ int __cdecl sub_80E8E44(int a1)
   int v4; // [esp+30h] [ebp-8h]
   int i; // [esp+34h] [ebp-4h]
 
-  v4 = BG_WeaponDefs(a1);
+  v4 = BG_GetWeaponDef(a1);
   for ( i = 0; ; ++i )
   {
     if ( i >= dword_85769A0 )
@@ -93618,7 +93618,7 @@ _BYTE *__cdecl sub_80E8FBA(int a1, int a2)
   _DWORD *v4; // [esp+20h] [ebp-8h]
   int v5; // [esp+24h] [ebp-4h]
 
-  v4 = (_DWORD *)BG_WeaponDefs(a1);
+  v4 = (_DWORD *)BG_GetWeaponDef(a1);
   v4[219] = 0;
   result = (_BYTE *)v4[218];
   if ( *result )
@@ -93733,7 +93733,7 @@ int __cdecl sub_80E9240(int a1, int a2)
 }
 
 //----- (080E9270) --------------------------------------------------------
-int __cdecl BG_WeaponDefs(int a1)
+int __cdecl BG_GetWeaponDef(int a1)
 {
   return dword_8576160[a1];
 }
@@ -93876,7 +93876,7 @@ int sub_80E95A8()
 // 8576160: using guessed type int dword_8576160[128];
 
 //----- (080E95EE) --------------------------------------------------------
-int __cdecl sub_80E95EE(_DWORD *a1)
+int __cdecl BG_GetViewmodelWeaponIndex(_DWORD *a1)
 {
   if ( (a1[3] & 0x20000) != 0 )
     return sub_80E95A8();
@@ -93894,7 +93894,7 @@ int __cdecl sub_80E963A(int a1, int a2)
   v4 = BG_GetNumWeapons();
   for ( i = 1; i <= v4; ++i )
   {
-    if ( *(_DWORD *)(BG_WeaponDefs(i) + 132) == a2 && (unsigned __int8)sub_80D9E84(a1 + 1348, i) && BG_WeaponAmmo(a1, i) )
+    if ( *(_DWORD *)(BG_GetWeaponDef(i) + 132) == a2 && (unsigned __int8)sub_80D9E84(a1 + 1348, i) && BG_WeaponAmmo(a1, i) )
       return i;
   }
   return 0;
@@ -93903,7 +93903,7 @@ int __cdecl sub_80E963A(int a1, int a2)
 //----- (080E973E) --------------------------------------------------------
 int __cdecl sub_80E973E(int a1)
 {
-  return *(_DWORD *)(BG_WeaponDefs(a1) + 812);
+  return *(_DWORD *)(BG_GetWeaponDef(a1) + 812);
 }
 
 //----- (080E9758) --------------------------------------------------------
@@ -93923,7 +93923,7 @@ int __cdecl sub_80E9782(int a1)
   int v2; // [esp+10h] [ebp-8h]
   _DWORD *v3; // [esp+14h] [ebp-4h]
 
-  v3 = (_DWORD *)(BG_WeaponDefs(a1) + 128);
+  v3 = (_DWORD *)(BG_GetWeaponDef(a1) + 128);
   v2 = 0;
   if ( *v3 == 1 || *v3 == 2 )
     return 1;
@@ -93950,7 +93950,7 @@ _BOOL4 __cdecl BG_IsWeaponValid(int a1, int a2)
   v4 = (unsigned __int8)sub_80E9758(a2) != 0;
   if ( !(unsigned __int8)sub_80D9E84(a1 + 1348, a2) )
     v4 = 0;
-  v3 = BG_WeaponDefs(a2);
+  v3 = BG_GetWeaponDef(a2);
   if ( !*(_DWORD *)(v3 + 132) && *(char *)(a1 + 1365) != a2 && *(char *)(a1 + 1366) != a2 && *(_DWORD *)(v3 + 876) != a2 )
     return 0;
   return v4;
@@ -93961,7 +93961,7 @@ _BOOL4 __cdecl sub_80E9882(int a1)
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = BG_WeaponDefs(a1);
+  v3 = BG_GetWeaponDef(a1);
   return *(_DWORD *)(v3 + 124) != 9 && *(_DWORD *)(v3 + 132) == 0;
 }
 
@@ -93976,7 +93976,7 @@ int __cdecl BG_TakePlayerWeapon(int a1, int a2)
 
   if ( !(unsigned __int8)sub_80D9E84(a1 + 1348, a2) )
     return 0;
-  v5 = (_DWORD *)BG_WeaponDefs(a2);
+  v5 = (_DWORD *)BG_GetWeaponDef(a2);
   v6 = BG_PlayerHasWeapon(a1, a2, 1);
   if ( v6 )
   {
@@ -93984,7 +93984,7 @@ int __cdecl BG_TakePlayerWeapon(int a1, int a2)
     {
       for ( i = 1; i <= dword_8576140; ++i )
       {
-        v4 = BG_WeaponDefs(a2);
+        v4 = BG_GetWeaponDef(a2);
         if ( *(_DWORD *)(v4 + 136)
           && *(_DWORD *)(v4 + 128) == v5[32]
           && (unsigned __int8)sub_80D9E84(a1 + 1348, i)
@@ -94003,7 +94003,7 @@ int __cdecl BG_TakePlayerWeapon(int a1, int a2)
     }
   }
   sub_80F0400(a1 + 1348, a2);
-  for ( j = v5[219]; j && (unsigned __int8)sub_80D9E84(a1 + 1348, j); j = *(_DWORD *)(BG_WeaponDefs(j) + 876) )
+  for ( j = v5[219]; j && (unsigned __int8)sub_80D9E84(a1 + 1348, j); j = *(_DWORD *)(BG_GetWeaponDef(j) + 876) )
     sub_80F0400(a1 + 1348, j);
   if ( a2 == *(_DWORD *)(a1 + 212) )
     *(_DWORD *)(a1 + 212) = 0;
@@ -94016,7 +94016,7 @@ int __cdecl sub_80E9A9E(int a1, int a2, int a3)
 {
   if ( !(unsigned __int8)sub_80D9E84(a1 + 1348, a3) )
     return 0;
-  if ( (unsigned int)(*(_DWORD *)(BG_WeaponDefs(a3) + 128) - 1) > 1 )
+  if ( (unsigned int)(*(_DWORD *)(BG_GetWeaponDef(a3) + 128) - 1) > 1 )
     return 0;
   if ( a2 != 1 && a2 != 2 )
     return 0;
@@ -94037,7 +94037,7 @@ int __cdecl BG_PlayerHasWeapon(int a1, int a2, int a3)
   v6 = a2;
   do
   {
-    v5 = BG_WeaponDefs(v6);
+    v5 = BG_GetWeaponDef(v6);
     if ( (unsigned int)(*(_DWORD *)(v5 + 128) - 1) > 1 )
       return 0;
     if ( *(char *)(a1 + 1365) == v6 )
@@ -94054,7 +94054,7 @@ int __cdecl BG_PlayerHasWeapon(int a1, int a2, int a3)
 //----- (080E9C10) --------------------------------------------------------
 int __cdecl sub_80E9C10(int a1, int a2)
 {
-  if ( (unsigned int)(*(_DWORD *)(BG_WeaponDefs(a2) + 128) - 1) > 1 )
+  if ( (unsigned int)(*(_DWORD *)(BG_GetWeaponDef(a2) + 128) - 1) > 1 )
     return 0;
   if ( *(_BYTE *)(a1 + 1365) )
   {
@@ -94070,7 +94070,7 @@ int __cdecl sub_80E9C6A(int a1, int a2, int a3)
 {
   int v5; // [esp+14h] [ebp-4h]
 
-  v5 = BG_WeaponDefs(a2);
+  v5 = BG_GetWeaponDef(a2);
   if ( *(_DWORD *)(v5 + 136) )
   {
     if ( (unsigned int)(*(_DWORD *)(v5 + 128) - 1) <= 1 )
@@ -94079,16 +94079,16 @@ int __cdecl sub_80E9C6A(int a1, int a2, int a3)
       {
         if ( !*(_BYTE *)(a3 + a1 + 1364) )
           return a3;
-        if ( *(_DWORD *)(BG_WeaponDefs(*(char *)(a3 + a1 + 1364)) + 136) )
+        if ( *(_DWORD *)(BG_GetWeaponDef(*(char *)(a3 + a1 + 1364)) + 136) )
           return a3;
       }
       if ( !*(_BYTE *)(a1 + 1365) )
         return 1;
-      if ( *(_DWORD *)(BG_WeaponDefs(*(char *)(a1 + 1365)) + 136) )
+      if ( *(_DWORD *)(BG_GetWeaponDef(*(char *)(a1 + 1365)) + 136) )
         return 1;
       if ( !*(_BYTE *)(a1 + 1366) )
         return 2;
-      if ( *(_DWORD *)(BG_WeaponDefs(*(char *)(a1 + 1366)) + 136) )
+      if ( *(_DWORD *)(BG_GetWeaponDef(*(char *)(a1 + 1366)) + 136) )
         return 2;
     }
     return 0;
@@ -94114,7 +94114,7 @@ int __cdecl sub_80E9DE0(int a1, int a2)
 
   memset(s, 0, 0x200u);
   memset(v7, 0, sizeof(v7));
-  v13 = BG_WeaponDefs(a2);
+  v13 = BG_GetWeaponDef(a2);
   v10 = BG_AmmoForWeapon(a2);
   v9 = BG_ClipForWeapon(a2);
   if ( *(int *)(v13 + 484) < 0 )
@@ -94137,7 +94137,7 @@ int __cdecl sub_80E9DE0(int a1, int a2)
     {
       if ( (unsigned __int8)sub_80D9E84(a1 + 1348, i) )
       {
-        v12 = BG_WeaponDefs(i);
+        v12 = BG_GetWeaponDef(i);
         if ( *(_DWORD *)(v12 + 484) == *(_DWORD *)(v13 + 484) )
         {
           if ( BG_WeaponIsClipOnly(i) )
@@ -94184,7 +94184,7 @@ int __cdecl sub_80E9FD2(int a1, int a2)
   v7 = BG_ClipForWeapon(a2);
   memset(s, 0, 0x200u);
   memset(v5, 0, sizeof(v5));
-  v11 = BG_WeaponDefs(a2);
+  v11 = BG_GetWeaponDef(a2);
   if ( *(int *)(v11 + 484) < 0 )
   {
     if ( BG_WeaponIsClipOnly(a2) )
@@ -94198,7 +94198,7 @@ int __cdecl sub_80E9FD2(int a1, int a2)
     {
       if ( (unsigned __int8)sub_80D9E84(a1 + 1348, i) )
       {
-        v10 = BG_WeaponDefs(i);
+        v10 = BG_GetWeaponDef(i);
         if ( *(_DWORD *)(v10 + 484) == *(_DWORD *)(v11 + 484) )
         {
           if ( BG_WeaponIsClipOnly(i) )
@@ -94234,7 +94234,7 @@ float *__cdecl sub_80EA198(int a1, int a2, float *a3, float *a4)
   float v6; // [esp+10h] [ebp-8h]
   float *v7; // [esp+14h] [ebp-4h]
 
-  v7 = (float *)BG_WeaponDefs(a2);
+  v7 = (float *)BG_GetWeaponDef(a2);
   if ( *(float *)(a1 + 248) <= 40.0 )
   {
     v6 = (*(float *)(a1 + 248) - 11.0) / 29.0;
@@ -94279,8 +94279,8 @@ _BOOL4 __cdecl PM_IsAdsAllowed(_DWORD *a1, int a2)
   {
     return 0;
   }
-  v5 = sub_80E95EE(a1);
-  if ( !*(_DWORD *)(BG_WeaponDefs(v5) + 812) )
+  v5 = BG_GetViewmodelWeaponIndex(a1);
+  if ( !*(_DWORD *)(BG_GetWeaponDef(v5) + 812) )
     return 0;
   if ( (int)a1[54] > 11 && (int)a1[54] <= 16 )
     return 0;
@@ -94357,8 +94357,8 @@ void __cdecl sub_80EA568(int *a1, int a2)
   int v6; // [esp+20h] [ebp-8h]
 
   v3 = *a1;
-  v5 = sub_80E95EE((_DWORD *)*a1);
-  v6 = BG_WeaponDefs(v5);
+  v5 = BG_GetViewmodelWeaponIndex((_DWORD *)*a1);
+  v6 = BG_GetWeaponDef(v5);
   if ( *(_BYTE *)(player_scopeExitOnDamage + 8) && *(_DWORD *)(v3 + 296) && *(_DWORD *)(v6 + 632) )
   {
     PM_ExitAimDownSight(v3);
@@ -94444,8 +94444,8 @@ void __cdecl sub_80EA868(int a1)
   int v2; // [esp+Ch] [ebp-Ch]
   int v3; // [esp+14h] [ebp-4h]
 
-  v1 = sub_80E95EE((_DWORD *)a1);
-  v2 = BG_WeaponDefs(v1);
+  v1 = BG_GetViewmodelWeaponIndex((_DWORD *)a1);
+  v2 = BG_GetWeaponDef(v1);
   if ( *(float *)(a1 + 220) == 1.0 && *(_DWORD *)(v2 + 632) && *(_DWORD *)(v2 + 124) != 9 )
   {
     v3 = (int)(*(float *)(player_breath_hold_time + 8) * 1000.0);
@@ -94476,8 +94476,8 @@ void __cdecl sub_80EA950(int *a1, int a2)
   int v11; // [esp+30h] [ebp-8h]
 
   v3 = *a1;
-  v10 = sub_80E95EE((_DWORD *)*a1);
-  v11 = BG_WeaponDefs(v10);
+  v10 = BG_GetViewmodelWeaponIndex((_DWORD *)*a1);
+  v11 = BG_GetWeaponDef(v10);
   v5 = (int)(*(float *)(player_breath_hold_time + 8) * 1000.0);
   v4 = (int)(*(float *)(player_breath_gasp_time + 8) * 1000.0);
   if ( v5 > 0 )
@@ -94547,19 +94547,19 @@ int __cdecl PM_InteruptWeaponWithProneMove(_DWORD *a1)
 //----- (080EAC7A) --------------------------------------------------------
 int __cdecl BG_ClipForWeapon(int a1)
 {
-  return *(_DWORD *)(BG_WeaponDefs(a1) + 464);
+  return *(_DWORD *)(BG_GetWeaponDef(a1) + 464);
 }
 
 //----- (080EAC94) --------------------------------------------------------
 int __cdecl BG_AmmoForWeapon(int a1)
 {
-  return *(_DWORD *)(BG_WeaponDefs(a1) + 456);
+  return *(_DWORD *)(BG_GetWeaponDef(a1) + 456);
 }
 
 //----- (080EACAE) --------------------------------------------------------
 int __cdecl BG_WeaponIsClipOnly(int a1)
 {
-  return *(_DWORD *)(BG_WeaponDefs(a1) + 832);
+  return *(_DWORD *)(BG_GetWeaponDef(a1) + 832);
 }
 
 //----- (080EACC8) --------------------------------------------------------
@@ -94582,7 +94582,7 @@ int __cdecl sub_80EAD0C(int a1)
   int v6; // [esp+18h] [ebp-10h]
   int v7; // [esp+1Ch] [ebp-Ch]
 
-  v7 = BG_WeaponDefs(*(_DWORD *)(a1 + 212));
+  v7 = BG_GetWeaponDef(*(_DWORD *)(a1 + 212));
   if ( *(_DWORD *)(a1 + 216) != 7 && *(_DWORD *)(a1 + 216) != 8 || (result = v7, *(_DWORD *)(v7 + 868)) )
   {
     v6 = BG_AmmoForWeapon(*(_DWORD *)(a1 + 212));
@@ -94672,7 +94672,7 @@ int __cdecl sub_80EAF58(int a1, int a2)
 {
   _DWORD *v4; // [esp+14h] [ebp-4h]
 
-  v4 = (_DWORD *)BG_WeaponDefs(*(_DWORD *)(a1 + 212));
+  v4 = (_DWORD *)BG_GetWeaponDef(*(_DWORD *)(a1 + 212));
   if ( *(int *)(a1 + 216) > 16 && *(int *)(a1 + 216) <= 22 )
     return 0;
   if ( *(int *)(a1 + 216) <= 11 || *(int *)(a1 + 216) > 16 )
@@ -94728,7 +94728,7 @@ int __cdecl sub_80EB180(_DWORD *a1)
   int v2; // [esp+10h] [ebp-8h]
   _DWORD *v3; // [esp+14h] [ebp-4h]
 
-  v3 = (_DWORD *)BG_WeaponDefs(a1[53]);
+  v3 = (_DWORD *)BG_GetWeaponDef(a1[53]);
   if ( a1[54] == 7 || a1[54] == 8 )
   {
     if ( v3[138] )
@@ -94777,7 +94777,7 @@ int __cdecl sub_80EB2E8(_DWORD *a1)
 {
   _DWORD *v2; // [esp+14h] [ebp-4h]
 
-  v2 = (_DWORD *)BG_WeaponDefs(a1[53]);
+  v2 = (_DWORD *)BG_GetWeaponDef(a1[53]);
   if ( a1[BG_ClipForWeapon(a1[53]) + 209] || v2[30] )
   {
     PM_StartWeaponAnim((int)a1, 11);
@@ -94803,7 +94803,7 @@ int __cdecl sub_80EB3D0(_DWORD *a1)
   int result; // eax
   int v2; // [esp+10h] [ebp-8h]
 
-  v2 = BG_WeaponDefs(a1[53]);
+  v2 = BG_GetWeaponDef(a1[53]);
   if ( !a1[54] || a1[54] == 3 || (result = (int)a1, a1[54] == 4) )
   {
     result = (int)a1;
@@ -94852,7 +94852,7 @@ int __cdecl sub_80EB4FC(_DWORD *a1, int a2)
       v5 = a1[53];
       if ( v5 && (unsigned __int8)sub_80D9E84((int)(a1 + 337), v5) && (int)a1[15] <= 0 )
       {
-        v6 = (_DWORD *)BG_WeaponDefs(v5);
+        v6 = (_DWORD *)BG_GetWeaponDef(v5);
         v4 = 0;
         if ( a2 && a2 == v6[219] )
           v4 = 1;
@@ -94910,7 +94910,7 @@ int __cdecl sub_80EB738(unsigned __int8 *a1)
   int v7; // [esp+28h] [ebp-10h]
 
   v5 = *(float **)a1;
-  BG_WeaponDefs(*(_DWORD *)(*(_DWORD *)a1 + 212));
+  BG_GetWeaponDef(*(_DWORD *)(*(_DWORD *)a1 + 212));
   if ( sub_80DBEB0((int)v5)
     || ((_DWORD)v5[3] & 0x20) != 0
     || !(unsigned __int8)sub_80D9E84((int)(v5 + 337), a1[12])
@@ -94931,7 +94931,7 @@ int __cdecl sub_80EB738(unsigned __int8 *a1)
     v6 = 0;
   v7 = *((_DWORD *)v5 + 53);
   *((_DWORD *)v5 + 53) = (unsigned __int8)v6;
-  BG_WeaponDefs(*((_DWORD *)v5 + 53));
+  BG_GetWeaponDef(*((_DWORD *)v5 + 53));
   if ( v7 == v6 )
   {
     v5[54] = 0.0;
@@ -94942,21 +94942,21 @@ int __cdecl sub_80EB738(unsigned __int8 *a1)
     *((_DWORD *)v5 + 54) = 1;
     sub_80E5820((int)v5);
     v3 = 0;
-    if ( v6 && v6 == *(_DWORD *)(BG_WeaponDefs(v7) + 876) )
+    if ( v6 && v6 == *(_DWORD *)(BG_GetWeaponDef(v7) + 876) )
       v3 = 1;
     if ( v3 )
     {
-      v5[13] = *(float *)(BG_WeaponDefs(v6) + 572);
+      v5[13] = *(float *)(BG_GetWeaponDef(v6) + 572);
     }
     else
     {
       PM_AddEvent((int)v5, 154);
-      v5[13] = *(float *)(BG_WeaponDefs(v6) + 564);
+      v5[13] = *(float *)(BG_GetWeaponDef(v6) + 564);
     }
-    v4 = BG_WeaponDefs(v6);
+    v4 = BG_GetWeaponDef(v6);
     BG_UpdateConditionValue(*((_DWORD *)v5 + 51), 0, *(_DWORD *)(v4 + 116), 1);
     BG_UpdateConditionValue(*((_DWORD *)v5 + 51), 1, *(_DWORD *)(v4 + 124), 1);
-    if ( v6 && v6 == *(_DWORD *)(BG_WeaponDefs(v7) + 876) )
+    if ( v6 && v6 == *(_DWORD *)(BG_GetWeaponDef(v7) + 876) )
     {
       if ( v5[373] < 128.0 )
         v5[373] = 128.0;
@@ -94972,7 +94972,7 @@ int __cdecl sub_80EB738(unsigned __int8 *a1)
   else
   {
     *((_DWORD *)v5 + 54) = 1;
-    v5[13] = *(float *)(BG_WeaponDefs(v6) + 564);
+    v5[13] = *(float *)(BG_GetWeaponDef(v6) + 564);
     v5[373] = 255.0;
     PM_StartWeaponAnim((int)v5, 10);
     return sub_80E5820((int)v5);
@@ -94992,7 +94992,7 @@ int __cdecl sub_80EBA9E(int a1)
   int v3; // [esp+18h] [ebp-10h]
   int v4; // [esp+1Ch] [ebp-Ch]
 
-  v4 = BG_WeaponDefs(*(_DWORD *)(a1 + 212));
+  v4 = BG_GetWeaponDef(*(_DWORD *)(a1 + 212));
   v3 = BG_ClipForWeapon(*(_DWORD *)(a1 + 212));
   if ( !*(_DWORD *)(a1 + 4 * BG_AmmoForWeapon(*(_DWORD *)(a1 + 212)) + 324)
     || *(_DWORD *)(a1 + 4 * v3 + 836) >= sub_80E9356(v3) )
@@ -95015,7 +95015,7 @@ int __cdecl sub_80EBBA8(_DWORD *a1)
   int v4; // [esp+10h] [ebp-8h]
   _DWORD *v5; // [esp+14h] [ebp-4h]
 
-  v5 = (_DWORD *)BG_WeaponDefs(a1[53]);
+  v5 = (_DWORD *)BG_GetWeaponDef(a1[53]);
   if ( !v5[202] || !(unsigned __int8)sub_80D9E84((int)(a1 + 343), a1[53]) )
     return sub_80EAD0C((int)a1);
   sub_80F0400((int)(a1 + 343), a1[53]);
@@ -95054,7 +95054,7 @@ int __cdecl sub_80EBD80(_DWORD *a1, int a2)
   int result; // eax
   int v3; // [esp+10h] [ebp-8h]
 
-  v3 = BG_WeaponDefs(a1[53]);
+  v3 = BG_GetWeaponDef(a1[53]);
   if ( a2 )
     sub_80EBBA8(a1);
   result = (int)a1;
@@ -95090,7 +95090,7 @@ int __cdecl sub_80EBE96(_DWORD *a1, int a2)
   int result; // eax
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = BG_WeaponDefs(a1[53]);
+  v3 = BG_GetWeaponDef(a1[53]);
   if ( !a2 || (sub_80EBBA8(a1), result = (int)a1, !a1[13]) )
   {
     result = (int)a1;
@@ -95139,7 +95139,7 @@ char __cdecl sub_80EBFF0(int a1)
 
   v6 = 0;
   v3 = *(_DWORD **)a1;
-  v8 = BG_WeaponDefs(*(_DWORD *)(*(_DWORD *)a1 + 212));
+  v8 = BG_GetWeaponDef(*(_DWORD *)(*(_DWORD *)a1 + 212));
   if ( (int)v3[54] <= 16 || (LOBYTE(v1) = (_BYTE)v3, (int)v3[54] > 22) )
   {
     if ( (int)v3[54] <= 11 || (LOBYTE(v1) = (_BYTE)v3, (int)v3[54] > 16) )
@@ -95253,7 +95253,7 @@ void __cdecl PM_AdjustAimSpreadScale(_BYTE *a1, int a2)
   float *v13; // [esp+34h] [ebp-4h]
 
   v6 = *(_DWORD *)a1;
-  v13 = (float *)BG_WeaponDefs(*(_DWORD *)(*(_DWORD *)a1 + 212));
+  v13 = (float *)BG_GetWeaponDef(*(_DWORD *)(*(_DWORD *)a1 + 212));
   v7 = v13[169];
   if ( v7 == 0.0 )
   {
@@ -95329,7 +95329,7 @@ int __cdecl sub_80EC560(_BYTE *a1, int a2)
   _DWORD *v5; // [esp+10h] [ebp-8h]
 
   v4 = *(_DWORD **)a1;
-  v5 = (_DWORD *)BG_WeaponDefs(*(_DWORD *)(*(_DWORD *)a1 + 212));
+  v5 = (_DWORD *)BG_GetWeaponDef(*(_DWORD *)(*(_DWORD *)a1 + 212));
   if ( (int)v4[16] > 0 )
   {
     v4[16] -= *(_DWORD *)(a2 + 40);
@@ -95464,7 +95464,7 @@ int __cdecl sub_80ECA78(int a1, int a2)
 {
   int v3; // [esp+20h] [ebp-8h]
 
-  v3 = BG_WeaponDefs(*(_DWORD *)(a1 + 212));
+  v3 = BG_GetWeaponDef(*(_DWORD *)(a1 + 212));
   if ( *(_DWORD *)(v3 + 120) == 1 )
   {
     if ( !a2 )
@@ -95515,7 +95515,7 @@ int __cdecl sub_80ECC4C(_DWORD *a1)
   int v6; // [esp+20h] [ebp-8h]
 
   v3 = 1;
-  v6 = BG_WeaponDefs(a1[53]);
+  v6 = BG_GetWeaponDef(a1[53]);
   v5 = sub_80ECC42();
   if ( v5 <= sub_80EAEC8((int)a1) )
     return 1;
@@ -95562,7 +95562,7 @@ void __cdecl sub_80ECDD6(int a1)
 {
   int v1; // [esp+4h] [ebp-4h]
 
-  v1 = BG_WeaponDefs(*(_DWORD *)(a1 + 212));
+  v1 = BG_GetWeaponDef(*(_DWORD *)(a1 + 212));
   if ( *(float *)(a1 + 220) != 1.0 )
   {
     *(float *)(a1 + 1492) = *(float *)(v1 + 680) * 255.0 + *(float *)(a1 + 1492);
@@ -95578,7 +95578,7 @@ int __cdecl sub_80ECE56(_DWORD *a1, int a2)
   int v3; // eax
   int v4; // [esp+14h] [ebp-4h]
 
-  v4 = BG_WeaponDefs(a1[53]);
+  v4 = BG_GetWeaponDef(a1[53]);
   sub_80ECA78((int)a1, a2);
   result = sub_80ECC4C(a1);
   if ( result )
@@ -95611,7 +95611,7 @@ int __cdecl sub_80ECF70(_DWORD *a1)
 {
   int v2; // [esp+10h] [ebp-8h]
 
-  v2 = BG_WeaponDefs(a1[53]);
+  v2 = BG_GetWeaponDef(a1[53]);
   if ( a1[13] < *(_DWORD *)(v2 + 532) - *(_DWORD *)(v2 + 512) )
     a1[13] = *(_DWORD *)(v2 + 532) - *(_DWORD *)(v2 + 512);
   PM_AddEvent((int)a1, 164);
@@ -95639,7 +95639,7 @@ int __cdecl sub_80ED01A(int *a1, int a2)
   _DWORD *v5; // [esp+24h] [ebp-4h]
 
   v4 = *a1;
-  v5 = (_DWORD *)BG_WeaponDefs(*(_DWORD *)(*a1 + 212));
+  v5 = (_DWORD *)BG_GetWeaponDef(*(_DWORD *)(*a1 + 212));
   if ( *(int *)(v4 + 216) <= 16 || (result = v4, *(int *)(v4 + 216) > 22) )
   {
     if ( *(int *)(v4 + 216) <= 11 || (result = v4, *(int *)(v4 + 216) > 16) )
@@ -95716,7 +95716,7 @@ int __cdecl sub_80ED282(_DWORD *a1)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  v2 = BG_WeaponDefs(a1[53]);
+  v2 = BG_GetWeaponDef(a1[53]);
   a1[54] = 12;
   a1[13] = *(_DWORD *)(v2 + 576);
   a1[14] = 0;
@@ -95730,7 +95730,7 @@ int __cdecl sub_80ED2F2(_DWORD *a1)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  v2 = BG_WeaponDefs(a1[52]);
+  v2 = BG_GetWeaponDef(a1[52]);
   a1[54] = 13;
   a1[13] = *(_DWORD *)(v2 + 528);
   a1[14] = 0;
@@ -95746,7 +95746,7 @@ int __cdecl sub_80ED382(_DWORD *a1)
   int v1; // eax
   int result; // eax
 
-  v1 = BG_WeaponDefs(a1[52]);
+  v1 = BG_GetWeaponDef(a1[52]);
   a1[54] = 14;
   a1[13] = 0;
   a1[14] = 0;
@@ -95771,7 +95771,7 @@ int __cdecl sub_80ED3DE(int *a1)
   }
   else
   {
-    v3 = BG_WeaponDefs(v2[52]);
+    v3 = BG_GetWeaponDef(v2[52]);
     v2[54] = 15;
     v2[13] = *(_DWORD *)(v3 + 516);
     v2[14] = 0;
@@ -95794,7 +95794,7 @@ unsigned int __cdecl sub_80ED50A(_DWORD *a1)
 
   if ( a1[53] )
   {
-    a1[13] = *(_DWORD *)(BG_WeaponDefs(a1[53]) + 580);
+    a1[13] = *(_DWORD *)(BG_GetWeaponDef(a1[53]) + 580);
     a1[14] = 0;
     PM_StartWeaponAnim((int)a1, 18);
   }
@@ -95853,7 +95853,7 @@ int __cdecl sub_80ED5AE(int *a1)
           {
             BG_AddPredictableEventToPlayerstate(167, v2, (int)v5);
             v5[52] = v4;
-            v3 = (const char **)BG_WeaponDefs(v5[52]);
+            v3 = (const char **)BG_GetWeaponDef(v5[52]);
             if ( v3[30] != (const char *)1 )
               Com_Error(1, "[%s] Only grenades are currently supported for off hand use\n", *v3);
             if ( !v3[33] )
@@ -95883,7 +95883,7 @@ int __cdecl sub_80ED780(_DWORD *a1, int a2)
   if ( (a1[3] & 0x10) == 0 )
     return 0;
   v4 = a1[52];
-  v5 = BG_WeaponDefs(v4);
+  v5 = BG_GetWeaponDef(v4);
   if ( *(_DWORD *)(v5 + 120) != 1 )
     return 0;
   if ( (int)a1[15] <= 0 )
@@ -95925,7 +95925,7 @@ _DWORD *__cdecl sub_80ED8D2(_DWORD *a1)
   _DWORD *result; // eax
   int v2; // [esp+4h] [ebp-4h]
 
-  v2 = BG_WeaponDefs(a1[53]);
+  v2 = BG_GetWeaponDef(a1[53]);
   PM_ExitAimDownSight((int)a1);
   a1[13] = 0;
   a1[14] = *(_DWORD *)(v2 + 708) + *(_DWORD *)(player_adsExitDelay + 8);
@@ -95940,7 +95940,7 @@ int __cdecl sub_80ED928(_DWORD *a1)
 {
   int v2; // [esp+14h] [ebp-4h]
 
-  v2 = BG_WeaponDefs(a1[53]);
+  v2 = BG_GetWeaponDef(a1[53]);
   a1[54] = 18;
   a1[13] = *(_DWORD *)(v2 + 576);
   a1[14] = 0;
@@ -95954,7 +95954,7 @@ int __cdecl sub_80ED97E(_DWORD *a1)
   int v3; // [esp+14h] [ebp-4h]
 
   v2 = sub_80E95A8();
-  v3 = BG_WeaponDefs(v2);
+  v3 = BG_GetWeaponDef(v2);
   a1[54] = 19;
   a1[13] = *(_DWORD *)(v3 + 704);
   a1[14] = 0;
@@ -95981,7 +95981,7 @@ int __cdecl sub_80EDA06(_DWORD *a1)
   int v3; // [esp+14h] [ebp-4h]
 
   v2 = sub_80E95A8();
-  v3 = BG_WeaponDefs(v2);
+  v3 = BG_GetWeaponDef(v2);
   a1[54] = 21;
   a1[13] = *(_DWORD *)(v3 + 708) + *(_DWORD *)(player_adsExitDelay + 8);
   a1[14] = 0;
@@ -96001,7 +96001,7 @@ int __cdecl sub_80EDA78(int a1)
   sub_80ED87A((int)v2);
   if ( *(_BYTE *)(a1 + 12) )
   {
-    v2[13] = *(_DWORD *)(BG_WeaponDefs(v2[53]) + 580);
+    v2[13] = *(_DWORD *)(BG_GetWeaponDef(v2[53]) + 580);
     v2[14] = 0;
     return PM_StartWeaponAnim((int)v2, 18);
   }
@@ -96032,7 +96032,7 @@ int __cdecl sub_80EDB00(int a1)
 
   v10 = *(_DWORD *)a1;
   if ( *(int *)(*(_DWORD *)a1 + 216) > 16 && *(int *)(v10 + 216) <= 22
-    || (*(float *)(v10 + 220) <= 0.0 || (result = BG_WeaponDefs(*(_DWORD *)(v10 + 212)), !*(_DWORD *)(result + 632)))
+    || (*(float *)(v10 + 220) <= 0.0 || (result = BG_GetWeaponDef(*(_DWORD *)(v10 + 212)), !*(_DWORD *)(result + 632)))
     && (result = *(_DWORD *)(a1 + 8) & 0x30015) == 0 )
   {
     result = v10;
@@ -96345,8 +96345,8 @@ float *__cdecl BG_WeaponFireRecoil(int a1, float *a2, int a3)
   float v22; // [esp+3Ch] [ebp-Ch]
   float *v23; // [esp+40h] [ebp-8h]
 
-  v13 = sub_80E95EE((_DWORD *)a1);
-  v23 = (float *)BG_WeaponDefs(v13);
+  v13 = BG_GetViewmodelWeaponIndex((_DWORD *)a1);
+  v23 = (float *)BG_GetWeaponDef(v13);
   v14 = *(float *)(a1 + 220);
   v12 = 1.0;
   if ( *(int *)(a1 + 64) > 0 )
@@ -96480,8 +96480,8 @@ void __cdecl sub_80EE640(float *a1, float *a2)
   int i; // [esp+3Ch] [ebp-Ch]
 
   v4 = *(float **)a1;
-  v2 = sub_80E95EE(*(_DWORD **)a1);
-  v3 = BG_WeaponDefs(v2);
+  v2 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+  v3 = BG_GetWeaponDef(v2);
   if ( ((_DWORD)v4[40] & 8) != 0 )
   {
     v6 = *(float *)(v3 + 432);
@@ -96567,8 +96567,8 @@ void __cdecl sub_80EEA0C(float *a1, float *a2)
   int v4; // [esp+10h] [ebp-8h]
 
   v4 = *(_DWORD *)a1;
-  v2 = sub_80E95EE(*(_DWORD **)a1);
-  v3 = BG_WeaponDefs(v2);
+  v2 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+  v3 = BG_GetWeaponDef(v2);
   if ( sub_80E973E(v2) )
     *a2 = *(float *)(v4 + 220) * *(float *)(v3 + 1132) + *a2;
   sub_80EE640(a1, a2);
@@ -96590,8 +96590,8 @@ float *__cdecl sub_80EEA7C(float *a1, float *a2)
   int v12; // [esp+30h] [ebp-8h]
 
   v5 = *(float **)a1;
-  v4 = sub_80E95EE(*(_DWORD **)a1);
-  v12 = BG_WeaponDefs(v4);
+  v4 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+  v12 = BG_GetWeaponDef(v4);
   if ( sub_80E973E(v4) )
   {
     v7 = (*(float *)(v12 + 712) - *(float *)(v12 + 716)) * v5[55] + *(float *)(v12 + 716);
@@ -96668,8 +96668,8 @@ float *__cdecl sub_80EED76(int *a1, float *a2)
   float v17; // [esp+5Ch] [ebp-Ch]
 
   v10 = *a1;
-  v8 = sub_80E95EE((_DWORD *)*a1);
-  v9 = BG_WeaponDefs(v8);
+  v8 = BG_GetViewmodelWeaponIndex((_DWORD *)*a1);
+  v9 = BG_GetWeaponDef(v8);
   v11 = (long double)*(unsigned __int8 *)(v10 + 8) / 255.0 * 3.141592653589793
       + (long double)*(unsigned __int8 *)(v10 + 8) / 255.0 * 3.141592653589793
       + 6.283185307179586;
@@ -96722,8 +96722,8 @@ void __cdecl sub_80EEF38(float *a1, float *a2)
   if ( *((_DWORD *)a1 + 8) )
   {
     v5 = *(float **)a1;
-    v3 = sub_80E95EE(*(_DWORD **)a1);
-    v4 = BG_WeaponDefs(v3);
+    v3 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+    v4 = BG_GetWeaponDef(v3);
     v8 = v5[55] * 0.5 + 0.5;
     v7 = v8 * 100.0;
     v6 = v8 * 400.0;
@@ -96838,8 +96838,8 @@ float *__cdecl sub_80EF336(float *a1, float *a2)
   float v14; // [esp+54h] [ebp-4h]
 
   v6 = *(float **)a1;
-  v4 = sub_80E95EE(*(_DWORD **)a1);
-  v5 = (float *)BG_WeaponDefs(v4);
+  v4 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+  v5 = (float *)BG_GetWeaponDef(v4);
   result = (float *)sub_80E973E(v4);
   if ( result )
   {
@@ -96921,8 +96921,8 @@ void __cdecl sub_80EF61E(float *a1, float *a2)
   if ( *((_DWORD *)a1 + 1) )
   {
     v5 = *(float **)a1;
-    v3 = sub_80E95EE(*(_DWORD **)a1);
-    v4 = BG_WeaponDefs(v3);
+    v3 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+    v4 = BG_GetWeaponDef(v3);
     v6 = 1.0 - v5[55] * 0.5;
     if ( v5[55] != 0.0 && *(_DWORD *)(v4 + 632) )
       v6 = (v5[55] * 0.5 + 1.0) * v6;
@@ -96967,8 +96967,8 @@ int __cdecl sub_80EF7AA(float *a1, float *a2)
   int v13; // [esp+30h] [ebp-8h]
 
   v5 = *(float **)a1;
-  v4 = sub_80E95EE(*(_DWORD **)a1);
-  result = BG_WeaponDefs(v4);
+  v4 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
+  result = BG_GetWeaponDef(v4);
   v13 = result;
   if ( *(_DWORD *)(result + 632) )
   {
@@ -97047,8 +97047,8 @@ float *__cdecl sub_80EFA86(int *a1, float *a2)
   float v16; // [esp+5Ch] [ebp-Ch]
 
   v9 = *a1;
-  v7 = sub_80E95EE((_DWORD *)*a1);
-  result = (float *)BG_WeaponDefs(v7);
+  v7 = BG_GetViewmodelWeaponIndex((_DWORD *)*a1);
+  result = (float *)BG_GetWeaponDef(v7);
   v8 = result;
   if ( *((_DWORD *)result + 158) )
   {
@@ -97094,8 +97094,8 @@ void __cdecl sub_80EFC4A(_DWORD **a1, float *a2)
   float v9; // [esp+34h] [ebp-4h]
 
   v4 = (int)*a1;
-  v2 = sub_80E95EE(*a1);
-  v3 = BG_WeaponDefs(v2);
+  v2 = BG_GetViewmodelWeaponIndex(*a1);
+  v3 = BG_GetWeaponDef(v2);
   if ( (*(_DWORD *)(v4 + 160) & 0x300) == 0 && *(float *)(v4 + 220) != 0.0 && *(float *)(v3 + 648) != 0.0 )
   {
     v5 = (long double)*(unsigned __int8 *)(v4 + 8) / 255.0 * 3.141592653589793
@@ -97149,8 +97149,8 @@ int __cdecl sub_80EFDF0(int a1, float *a2, int a3, float *a4, float a5, int a6)
   v11 = *(float *)&result;
   if ( a6 )
   {
-    v9 = sub_80E95EE((_DWORD *)a1);
-    v26 = BG_WeaponDefs(v9);
+    v9 = BG_GetViewmodelWeaponIndex((_DWORD *)a1);
+    v26 = BG_GetWeaponDef(v9);
     v10 = (long double)a6 * 0.001;
     if ( !sub_80E973E(v9) )
     {
@@ -98632,7 +98632,7 @@ int __cdecl sub_80F2B86(int *a1, int a2)
 // 80F2B86: using guessed type int var_38[7];
 
 //----- (080F2EC0) --------------------------------------------------------
-int __cdecl sub_80F2EC0(int a1, int a2)
+int __cdecl G_SetLastServerTime(int a1, int a2)
 {
   int result; // eax
   char *v3; // [esp+0h] [ebp-4h]
@@ -98916,7 +98916,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
           v31 = v41 + 10392;
           sub_80EFD94((float *)v24, v12);
           sub_80F555A((float *)(v41 + 232), v12, (float *)v13);
-          v11 = BG_WeaponDefs(*(_DWORD *)(v41 + 212));
+          v11 = BG_GetWeaponDef(*(_DWORD *)(v41 + 212));
           v8 = *(_DWORD *)(v41 + 1500) + *(_DWORD *)(v41 + 1504) - v25;
           if ( v8 <= 0 )
           {
@@ -99001,7 +99001,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
 // 80F35DA: using guessed type int anonymous_1[5];
 
 //----- (080F3EA4) --------------------------------------------------------
-int __usercall sub_80F3EA4@<eax>(long double a1@<st0>, int a2)
+int __usercall ClientThink@<eax>(long double a1@<st0>, int a2)
 {
   _DWORD *v2; // ecx
   _DWORD *v3; // edx
@@ -100659,11 +100659,11 @@ int __cdecl PlayerCmd_giveWeapon(int a1)
   v10 = G_GetWeaponIndexForName(s1);
   v8 = *((_DWORD *)v7 + 86);
   v9 = (unsigned __int8)sub_80D9E84(v8 + 1348, v10);
-  v12 = BG_WeaponDefs(v10);
+  v12 = BG_GetWeaponDef(v10);
   if ( sub_80E9882(v10) && !sub_80E9C10(v8, v10) )
   {
-    v2 = BG_WeaponDefs(*(char *)(v8 + 1366));
-    v3 = BG_WeaponDefs(*(char *)(v8 + 1365));
+    v2 = BG_GetWeaponDef(*(char *)(v8 + 1366));
+    v3 = BG_GetWeaponDef(*(char *)(v8 + 1365));
     v4 = va(
            "Cannot give %s weapon %s without having an empty weapon slot - player currently has a %s and a %s\n",
            (const char *)(*((_DWORD *)v7 + 86) + 10116),
@@ -100788,7 +100788,7 @@ int __cdecl PlayerCmd_getCurrentWeapon(int a1)
   v4 = *(_DWORD *)(*((_DWORD *)v3 + 86) + 212);
   if ( v4 <= 0 )
     return Scr_AddString("none");
-  v5 = (char **)BG_WeaponDefs(v4);
+  v5 = (char **)BG_GetWeaponDef(v4);
   return Scr_AddString(*v5);
 }
 
@@ -100815,7 +100815,7 @@ int __cdecl PlayerCmd_getCurrentOffhand(int a1)
   }
   if ( !sub_80F77E2((int)v3) || *(int *)(*((_DWORD *)v3 + 86) + 208) <= 0 )
     return Scr_AddString("none");
-  v4 = (char **)BG_WeaponDefs(*(_DWORD *)(*((_DWORD *)v3 + 86) + 208));
+  v4 = (char **)BG_GetWeaponDef(*(_DWORD *)(*((_DWORD *)v3 + 86) + 208));
   return Scr_AddString(*v4);
 }
 
@@ -100950,7 +100950,7 @@ int __cdecl PlayerCmd_giveStartAmmo(int a1)
   result = sub_80D9E84(*((_DWORD *)v3 + 86) + 1348, v4);
   if ( (_BYTE)result )
   {
-    v6 = BG_WeaponDefs(v4);
+    v6 = BG_GetWeaponDef(v4);
     result = *(_DWORD *)(v6 + 448) - *(_DWORD *)(*((_DWORD *)v3 + 86) + 4 * *(_DWORD *)(v6 + 456) + 324);
     if ( result > 0 )
       return sub_8102704((int)v3, v4, result, 0);
@@ -100987,7 +100987,7 @@ int __cdecl PlayerCmd_giveMaxAmmo(int a1)
   result = sub_80D9E84(*((_DWORD *)v3 + 86) + 1348, v4);
   if ( (_BYTE)result )
   {
-    v6 = BG_WeaponDefs(v4);
+    v6 = BG_GetWeaponDef(v4);
     result = sub_80E9336(*(_DWORD *)(v6 + 456)) - *(_DWORD *)(*((_DWORD *)v3 + 86) + 4 * *(_DWORD *)(v6 + 456) + 324);
     if ( result > 0 )
       return sub_8102704((int)v3, v4, result, 0);
@@ -101023,7 +101023,7 @@ int __cdecl PlayerCmd_getFractionStartAmmo(int a1)
   v5 = G_GetWeaponIndexForName(s1);
   if ( !(unsigned __int8)sub_80D9E84(*((_DWORD *)v3 + 86) + 1348, v5) )
     return Scr_AddFloat(1065353216);
-  v7 = BG_WeaponDefs(v5);
+  v7 = BG_GetWeaponDef(v5);
   if ( *(int *)(v7 + 448) <= 0 )
     return Scr_AddFloat(1065353216);
   if ( *(int *)(*((_DWORD *)v3 + 86) + 4 * *(_DWORD *)(v7 + 456) + 324) <= 0 )
@@ -101062,7 +101062,7 @@ int __cdecl PlayerCmd_getFractionMaxAmmo(int a1)
   v6 = G_GetWeaponIndexForName(s1);
   if ( !(unsigned __int8)sub_80D9E84(*((_DWORD *)v4 + 86) + 1348, v6) )
     return Scr_AddFloat(1065353216);
-  v8 = BG_WeaponDefs(v6);
+  v8 = BG_GetWeaponDef(v6);
   if ( sub_80E9336(*(_DWORD *)(v8 + 456)) <= 0 )
     return Scr_AddFloat(1065353216);
   if ( *(int *)(*((_DWORD *)v4 + 86) + 4 * *(_DWORD *)(v8 + 456) + 324) <= 0 )
@@ -101452,12 +101452,12 @@ int __cdecl PlayerCmd_dropItem(int a1)
   {
     if ( (unsigned int)Scr_GetNumParam() <= 1 )
     {
-      v2 = (int *)sub_810404E((int)v4, v8, (unsigned __int16)word_87A2346);
+      v2 = (int *)Drop_Weapon((int)v4, v8, (unsigned __int16)word_87A2346);
     }
     else
     {
       v7 = Scr_GetConstLowercaseString(1u);
-      v2 = (int *)sub_810404E((int)v4, v8, v7);
+      v2 = (int *)Drop_Weapon((int)v4, v8, v7);
     }
     return GScr_AddEntity(v2);
   }
@@ -101603,9 +101603,9 @@ int __cdecl PlayerCmd_finishPlayerDamage(int a1)
     result = *((_DWORD *)v10 + 93) & 1;
     if ( !(_BYTE)result )
     {
-      if ( v24 && !*(_DWORD *)(BG_WeaponDefs(v24) + 120) )
+      if ( v24 && !*(_DWORD *)(BG_GetWeaponDef(v24) + 120) )
       {
-        if ( *(_DWORD *)(BG_WeaponDefs(v24) + 796) )
+        if ( *(_DWORD *)(BG_GetWeaponDef(v24) + 796) )
           v6 = G_TempEntity(v29, 183);
         else
           v6 = G_TempEntity(v29, 182);
@@ -101615,7 +101615,7 @@ int __cdecl PlayerCmd_finishPlayerDamage(int a1)
         v16[34] = 7;
         v16[29] = *v32;
         v16[(*(int *)(*((_DWORD *)v10 + 86) + 204) >> 5) + 61] |= 1 << (*(_BYTE *)(*((_DWORD *)v10 + 86) + 204) & 0x1F);
-        if ( *(_DWORD *)(BG_WeaponDefs(v24) + 796) )
+        if ( *(_DWORD *)(BG_GetWeaponDef(v24) + 796) )
           v7 = G_TempEntity(v29, 186);
         else
           v7 = G_TempEntity(v29, 185);
@@ -101865,7 +101865,7 @@ int __cdecl PlayerCmd_GetWeaponSlotWeapon(int a1)
   }
   if ( !*(_BYTE *)(v8 + *((_DWORD *)v6 + 86) + 1364) )
     return Scr_AddConstString((unsigned __int16)word_87A2314);
-  v7 = (char **)BG_WeaponDefs(*(char *)(v8 + *((_DWORD *)v6 + 86) + 1364));
+  v7 = (char **)BG_GetWeaponDef(*(char *)(v8 + *((_DWORD *)v6 + 86) + 1364));
   return Scr_AddString(*v7);
 }
 // 87A2314: using guessed type __int16 word_87A2314;
@@ -101924,7 +101924,7 @@ int __cdecl PlayerCmd_SetWeaponSlotWeapon(int a1)
       v5 = va("Unknown weapon %s.", s1);
       Scr_ParamError(1, (int)v5);
     }
-    v13 = (int *)BG_WeaponDefs(v15);
+    v13 = (int *)BG_GetWeaponDef(v15);
     if ( v13[32] != v16 && (v13[32] != 1 && v13[32] != 2 || v16 != 1 && v16 != 2) )
     {
       v6 = sub_80F049E(v16);
@@ -104151,7 +104151,7 @@ LABEL_29:
       v11 = va("%c \"GAME_INVALIDGAMETYPE\"", 101);
       return SV_GameSendServerCommand(-1963413621 * (((char *)a2 - (char *)&unk_8665480) >> 4), 0, v11);
     }
-    if ( !I_stricmp(nptr, *(char **)(sv_gametype + 8)) )
+    if ( !I_stricmp(nptr, *(char **)(dword_8793D80 + 8)) )
       nptr[0] = 0;
     SV_Cmd_ArgvBuffer(3, v27, 256);
     if ( !SV_MapExists(v27) )
@@ -104285,7 +104285,7 @@ LABEL_33:
 // 859B400: using guessed type int dword_859B400;
 // 859B5E4: using guessed type int dword_859B5E4;
 // 859BF20: using guessed type int dword_859BF20;
-// 8793D80: using guessed type int sv_gametype;
+// 8793D80: using guessed type int dword_8793D80;
 // 8793DF4: using guessed type int g_allowVote;
 // 8793E50: using guessed type int g_oldVoting;
 
@@ -104855,7 +104855,7 @@ long double __cdecl G_GetWeaponHitLocationMultiplier(int a1, int a2)
 
   if ( a2 )
   {
-    v4 = BG_WeaponDefs(a2);
+    v4 = BG_GetWeaponDef(a2);
     if ( v4 && !*(_DWORD *)(v4 + 120) )
       return *(float *)(v4 + 4 * a1 + 1456);
     else
@@ -106631,7 +106631,7 @@ int __cdecl sub_8102704(int a1, int a2, int a3, int a4)
     v7 = *(_DWORD *)(a1 + 344);
     *(_DWORD *)(v7 + 4 * v13 + 836) = sub_80E9356(v13);
   }
-  if ( *(int *)(BG_WeaponDefs(a2) + 484) < 0 )
+  if ( *(int *)(BG_GetWeaponDef(a2) + 484) < 0 )
     return *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v13 + 836)
          - v10
          + *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v14 + 324)
@@ -106682,18 +106682,18 @@ int __cdecl sub_81029D4(int a1, int *a2)
     return 0;
   if ( BG_WeaponIsClipOnly(*((_DWORD *)v9 + 8)) )
   {
-    v3 = BG_WeaponDefs(*((_DWORD *)v9 + 8));
+    v3 = BG_GetWeaponDef(*((_DWORD *)v9 + 8));
     v4 = va(aCGamePickupCli, 102, *(_DWORD *)(v3 + 4));
   }
   else
   {
-    v5 = BG_WeaponDefs(*((_DWORD *)v9 + 8));
+    v5 = BG_GetWeaponDef(*((_DWORD *)v9 + 8));
     v4 = va(aCGamePickupAmm, 102, *(_DWORD *)(v5 + 4));
   }
   SV_GameSendServerCommand(-1963413621 * (((char *)a2 - (char *)&unk_8665480) >> 4), 0, v4);
   Scr_AddEntity(a2);
   Scr_Notify((int *)a1, word_87A22F4, 1);
-  if ( *(_DWORD *)(BG_WeaponDefs(*((_DWORD *)v9 + 8)) + 132) )
+  if ( *(_DWORD *)(BG_GetWeaponDef(*((_DWORD *)v9 + 8)) + 132) )
     v6 = va("%c \"%i\"", 73, 4);
   else
     v6 = va("%c \"%i\"", 73, 1);
@@ -106741,7 +106741,7 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
 
   v32 = 0;
   v34 = *((_DWORD *)&unk_8164C20 + 11 * *(unsigned __int16 *)(a1 + 428) + 8);
-  v31 = (_DWORD *)BG_WeaponDefs(v34);
+  v31 = (_DWORD *)BG_GetWeaponDef(v34);
   if ( *(int *)(a1 + 416) >= 0 )
   {
     if ( !*(_DWORD *)(a1 + 416) )
@@ -106832,7 +106832,7 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
           return 0;
         if ( !BG_PlayerHasWeapon(a2[86], *(_DWORD *)(a2[86] + 212), 1) )
         {
-          v11 = BG_WeaponDefs(*(_DWORD *)(a2[86] + 212));
+          v11 = BG_GetWeaponDef(*(_DWORD *)(a2[86] + 212));
           if ( !sub_80E9C6A(a2[86], *(_DWORD *)(a2[86] + 212), *(_DWORD *)(v11 + 128)) && !sub_80E9C10(a2[86], v34) )
           {
             Com_Printf("WARNING: cannot swap out a debug weapon (can result from too many weapons given to the player)\n");
@@ -106842,12 +106842,12 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
       }
       if ( !sub_80E9C10(a2[86], v34) )
       {
-        v12 = BG_WeaponDefs(*(_DWORD *)(a2[86] + 212));
+        v12 = BG_GetWeaponDef(*(_DWORD *)(a2[86] + 212));
         if ( !sub_80E9C6A(a2[86], v34, *(_DWORD *)(v12 + 128)) )
         {
-          if ( v31[32] == *(_DWORD *)(BG_WeaponDefs(*(_DWORD *)(a2[86] + 212)) + 128) )
+          if ( v31[32] == *(_DWORD *)(BG_GetWeaponDef(*(_DWORD *)(a2[86] + 212)) + 128) )
           {
-            v32 = sub_810404E((int)a2, *(_DWORD *)(a2[86] + 212), 0);
+            v32 = Drop_Weapon((int)a2, *(_DWORD *)(a2[86] + 212), 0);
           }
           else
           {
@@ -106858,7 +106858,7 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
               v25 = BG_ClipForWeapon(v34);
               if ( !*(_DWORD *)(a2[86] + 4 * v26 + 324) && !*(_DWORD *)(a2[86] + 4 * v25 + 836) )
               {
-                v32 = sub_810404E((int)a2, v30, 0);
+                v32 = Drop_Weapon((int)a2, v30, 0);
                 break;
               }
             }
@@ -107050,7 +107050,7 @@ int __usercall Touch_Item@<eax>(long double a1@<st0>, unsigned __int16 *s, int *
           sub_80B587C(dest);
           if ( *((_DWORD *)v13 + 7) == 1 )
           {
-            v10 = (const char **)BG_WeaponDefs(*((_DWORD *)v13 + 8));
+            v10 = (const char **)BG_GetWeaponDef(*((_DWORD *)v13 + 8));
             v11 = sub_8090AFE(*a3);
             G_LogPrintf("Weapon;%d;%d;%s;%s\n", v11, *a3, dest, *v10);
           }
@@ -107098,13 +107098,13 @@ int __usercall Touch_Item@<eax>(long double a1@<st0>, unsigned __int16 *s, int *
             {
               if ( (unsigned __int8)sub_80D9E84(a3[86] + 1348, *((_DWORD *)v13 + 8)) )
               {
-                v5 = BG_WeaponDefs(*((_DWORD *)v13 + 8));
+                v5 = BG_GetWeaponDef(*((_DWORD *)v13 + 8));
                 v6 = va(aCGamePickupCan, 102, *(_DWORD *)(v5 + 4));
                 return SV_GameSendServerCommand(-1963413621 * (((char *)a3 - (char *)&unk_8665480) >> 4), 0, v6);
               }
               else
               {
-                v7 = *(_DWORD *)(BG_WeaponDefs(*((_DWORD *)v13 + 8)) + 128);
+                v7 = *(_DWORD *)(BG_GetWeaponDef(*((_DWORD *)v13 + 8)) + 128);
                 v8 = v7 == 1;
                 result = v7 - 1;
                 if ( v8 || result == 1 )
@@ -107179,7 +107179,7 @@ int __cdecl sub_8103CB2(char **a1, _WORD *a2)
   v5 = -1171354717 * (((char *)a1 - (char *)&unk_8164C20) >> 2);
   if ( v5 > BG_GetNumWeapons() )
     return sub_811D098(a2, *a1);
-  v4 = (const char **)BG_WeaponDefs(v5);
+  v4 = (const char **)BG_GetWeaponDef(v5);
   Com_sprintf(s, 0x100u, "weapon_%s", *v4);
   return sub_811D098(a2, s);
 }
@@ -107265,7 +107265,7 @@ int __cdecl sub_8103F44(int a1, int a2, float a3, int a4)
 // 8103F44: using guessed type _DWORD var_38[2];
 
 //----- (0810404E) --------------------------------------------------------
-float *__cdecl sub_810404E(int a1, int a2, int a3)
+float *__cdecl Drop_Weapon(int a1, int a2, int a3)
 {
   int v3; // eax
   float v5; // [esp+0h] [ebp-118h]
@@ -107295,7 +107295,7 @@ float *__cdecl sub_810404E(int a1, int a2, int a3)
 
   v24 = (int)&unk_8164C20 + 44 * a2;
   if ( *(_DWORD *)(a1 + 344) && !(unsigned __int8)sub_80D9E84(*(_DWORD *)(a1 + 344) + 1348, a2)
-    || (v27 = BG_AmmoForWeapon(a2), v26 = BG_ClipForWeapon(a2), *(_DWORD *)(BG_WeaponDefs(a2) + 832))
+    || (v27 = BG_AmmoForWeapon(a2), v26 = BG_ClipForWeapon(a2), *(_DWORD *)(BG_GetWeaponDef(a2) + 832))
     && !*(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v26 + 836) )
   {
     BG_TakePlayerWeapon(*(_DWORD *)(a1 + 344), a2);
@@ -107314,12 +107314,12 @@ float *__cdecl sub_810404E(int a1, int a2, int a3)
     }
     else
     {
-      v22 = *(_DWORD *)(BG_WeaponDefs(a2) + 884);
-      v21 = *(_DWORD *)(BG_WeaponDefs(a2) + 880);
+      v22 = *(_DWORD *)(BG_GetWeaponDef(a2) + 884);
+      v21 = *(_DWORD *)(BG_GetWeaponDef(a2) + 880);
       if ( v22 < v21 )
       {
         v22 = v21;
-        v21 = *(_DWORD *)(BG_WeaponDefs(a2) + 884);
+        v21 = *(_DWORD *)(BG_GetWeaponDef(a2) + 884);
       }
       if ( v22 || v21 )
       {
@@ -107526,7 +107526,7 @@ int SaveRegisteredWeapons()
   {
     if ( v1 )
       I_strncat(s1, 0x2000, " ");
-    v1 = (char **)BG_WeaponDefs(i);
+    v1 = (char **)BG_GetWeaponDef(i);
     I_strncat(s1, 0x2000, *v1);
   }
   return SV_SetConfigstring(7u, s1);
@@ -107625,7 +107625,7 @@ int __cdecl G_RegisterWeapon(int a1)
   dword_859B000[a1] = 1;
   dword_859EA00 = 1;
   dword_859E9FC = 1;
-  v2 = BG_WeaponDefs(a1);
+  v2 = BG_GetWeaponDef(a1);
   if ( **(_BYTE **)(v2 + 1388) && !G_GetHintStringIndex((_DWORD *)(v2 + 1396), *(char **)(v2 + 1388)) )
     Com_Error(1, (char *)&byte_8153420, 32);
   if ( **(_BYTE **)(v2 + 1392) && !G_GetHintStringIndex((_DWORD *)(v2 + 1400), *(char **)(v2 + 1392)) )
@@ -107774,7 +107774,7 @@ int __cdecl sub_8105382(int a1, int *a2, _DWORD *a3)
 // 8105382: using guessed type int var_18[6];
 
 //----- (081053B6) --------------------------------------------------------
-int *__cdecl sub_81053B6(float *a1)
+int *__cdecl G_RunCorpseMove(float *a1)
 {
   int *result; // eax
   int v2; // eax
@@ -107890,7 +107890,7 @@ int *__cdecl sub_81053B6(float *a1)
 }
 
 //----- (081058A0) --------------------------------------------------------
-int __cdecl sub_81058A0(int *a1)
+int __cdecl G_RunCorpseAnimate(int *a1)
 {
   int v1; // eax
   int result; // eax
@@ -107906,10 +107906,10 @@ int __cdecl sub_81058A0(int *a1)
 }
 
 //----- (0810592C) --------------------------------------------------------
-int __cdecl sub_810592C(float *a1)
+int __cdecl G_RunCorpse(float *a1)
 {
-  sub_81053B6(a1);
-  sub_81058A0((int *)a1);
+  G_RunCorpseMove(a1);
+  G_RunCorpseAnimate((int *)a1);
   return G_RunThink((int)a1);
 }
 
@@ -108127,7 +108127,7 @@ char *__usercall G_RegisterDvars@<eax>(long double a1@<st0>)
   Dvar_RegisterString(a1, "gamename", "Call of Duty 2", 4164);
   Dvar_RegisterString(a1, "gamedate", "Oct 24 2005", 4160);
   Dvar_RegisterString(a1, "sv_mapname", (char *)&byte_81534F7, 4164);
-  sv_gametype = (int)Dvar_RegisterString(a1, "g_gametype", "dm", 4132);
+  dword_8793D80 = (int)Dvar_RegisterString(a1, "g_gametype", "dm", 4132);
   g_maxclients = (int)Dvar_RegisterInt(a1, "sv_maxclients", (char *)0x14, 1, 64, 4133);
   g_synchronousClients = (int)Dvar_RegisterBool(a1, "g_synchronousClients", 0, 4104);
   g_log = (int)Dvar_RegisterString(a1, "g_log", "games_mp.log", 4097);
@@ -108183,7 +108183,7 @@ char *__usercall G_RegisterDvars@<eax>(long double a1@<st0>)
   g_mantleBlockTimeBuffer = (int)Dvar_RegisterInt(a1, "g_mantleBlockTimeBuffer", (char *)0x1F4, 0, 60000, 4224);
   return BG_RegisterDvars(a1);
 }
-// 8793D80: using guessed type int sv_gametype;
+// 8793D80: using guessed type int dword_8793D80;
 // 8793D84: using guessed type int g_password;
 // 8793D88: using guessed type int g_maxclients;
 // 8793D8C: using guessed type int dedicated;
@@ -108935,7 +108935,7 @@ LABEL_24:
           sub_8105956(s);
           return;
         case 2:
-          sub_810592C((float *)s);
+          G_RunCorpse((float *)s);
           return;
       }
       if ( *((_BYTE *)s + 352) )
@@ -109266,7 +109266,7 @@ int __cdecl sub_81084EA(int a1, int *a2)
   else
     v3 = a2;
   sub_81083E8(a1, (int)v3, (int)v4);
-  v5 = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+  v5 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
   if ( *(_DWORD *)(v5 + 120) )
     sub_811E18A((float *)a1, 0.0, (int)v4);
   else
@@ -109359,7 +109359,7 @@ void __cdecl sub_81085B8(int a1, int a2)
     v42 = (float *)G_DObjGetLocalTagMatrix((int *)a2, (unsigned __int16)word_87A2338);
     if ( v42 )
     {
-      v63 = BG_WeaponDefs(*(_DWORD *)(a2 + 200));
+      v63 = BG_GetWeaponDef(*(_DWORD *)(a2 + 200));
       v41 = *(_DWORD *)(v65 + 1188);
       v40 = dword_86525F4;
       v39 = *(_DWORD *)(v64 + 16) & 0xFFFFFDFF;
@@ -109587,7 +109587,7 @@ int *__cdecl sub_8109348(int a1, int *a2)
   int *result; // eax
 
   v2 = *(_DWORD *)(a1 + 348);
-  *(_DWORD *)(v2 + 40) = 3 * *(_DWORD *)(BG_WeaponDefs(*(_DWORD *)(a1 + 200)) + 516);
+  *(_DWORD *)(v2 + 40) = 3 * *(_DWORD *)(BG_GetWeaponDef(*(_DWORD *)(a1 + 200)) + 516);
   result = a2;
   if ( a2[86] )
   {
@@ -109608,7 +109608,7 @@ int __cdecl turret_track(_DWORD *a1, int *a2)
   v4 = a1[87];
   turret_clientaim((int)a1, (int)a2);
   sub_81085B8((int)a2, (int)a1);
-  v3 = BG_WeaponDefs(a1[50]);
+  v3 = BG_GetWeaponDef(a1[50]);
   *(_DWORD *)(a2[86] + 1424) = 1;
   a1[2] &= ~0x40u;
   *(_DWORD *)(v4 + 8) -= 50;
@@ -109727,8 +109727,8 @@ int __cdecl sub_81096DE(int a1, int a2, int a3)
   *(float *)(a1 + 104) = v6 + *(float *)(a1 + 112);
   if ( a3 )
   {
-    v11 = *(float *)(BG_WeaponDefs(*(_DWORD *)(a1 + 200)) + 1356);
-    v12 = *(_DWORD *)(BG_WeaponDefs(*(_DWORD *)(a1 + 200)) + 1360);
+    v11 = *(float *)(BG_GetWeaponDef(*(_DWORD *)(a1 + 200)) + 1356);
+    v12 = *(_DWORD *)(BG_GetWeaponDef(*(_DWORD *)(a1 + 200)) + 1360);
   }
   else
   {
@@ -110056,7 +110056,7 @@ int __cdecl G_SpawnTurret(int a1, char *s1)
   *(_DWORD *)(a1 + 200) = G_GetWeaponIndexForName(s1);
   if ( !*(_DWORD *)(a1 + 200) )
     Com_Error(1, (char *)&byte_8153C20, s1);
-  v8 = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+  v8 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
   if ( *(_DWORD *)(v8 + 124) != 7 )
   {
     v2 = va(
@@ -110359,7 +110359,7 @@ _BOOL4 __cdecl sub_810AD10(int a1, int a2)
   int v13[7]; // [esp+60h] [ebp-28h] BYREF
   int v14; // [esp+7Ch] [ebp-Ch]
 
-  v14 = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+  v14 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
   v6 = SV_PointContents((float *)(a1 + 312), -1, 32);
   v5 = (*(_DWORD *)(a2 + 16) & 0x1F00000) >> 20;
   sub_80DD224(
@@ -110438,7 +110438,7 @@ int __usercall sub_810B07A@<eax>(long double a1@<st0>, int a2, int a3, int a4, f
   *(_DWORD *)(a2 + 136) = (*(_DWORD *)(a3 + 16) & 0x1F00000) >> 20;
   if ( *(_BYTE *)(v19 + 353) || (*(_DWORD *)(a2 + 8) & 0x1000000) == 0 )
   {
-    v16 = (int *)BG_WeaponDefs(*(_DWORD *)(a2 + 200));
+    v16 = (int *)BG_GetWeaponDef(*(_DWORD *)(a2 + 200));
     v15 = dword_81678A0[10 * *(unsigned __int8 *)(a2 + 358)];
     if ( *(_BYTE *)(v19 + 353) )
     {
@@ -110557,7 +110557,7 @@ int __cdecl G_ExplodeMissile(int a1)
   int v20; // [esp+94h] [ebp-14h]
   int v21; // [esp+98h] [ebp-10h]
 
-  v8 = (_DWORD *)BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+  v8 = (_DWORD *)BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
   if ( v8[33] == 2 && *(_DWORD *)(a1 + 124) == 1023 )
   {
     result = a1;
@@ -110685,7 +110685,7 @@ int __cdecl sub_810B9B6(int a1)
   result = *(_DWORD *)(a1 + 16) + (int)*(float *)(a1 + 424);
   if ( result < dword_859B5EC )
   {
-    v4 = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+    v4 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
     sub_810C716((_DWORD *)(a1 + 36), v8);
     Vec3Normalize((float *)v8);
     v5 = sub_810B988(*(float *)(v4 + 1448));
@@ -110811,7 +110811,7 @@ unsigned __int8 *__cdecl sub_810BC36(unsigned __int8 *a1)
     }
   }
   SV_LinkEntity((int)a1);
-  v2 = BG_WeaponDefs(*((_DWORD *)a1 + 50));
+  v2 = BG_GetWeaponDef(*((_DWORD *)a1 + 50));
   if ( v4 == 3 )
     sub_811AC06((int *)a1, v5, (float *)a1 + 78, *(_DWORD *)(v2 + 892), 3);
   if ( s[0] == 1.0 )
@@ -110863,7 +110863,7 @@ int __cdecl sub_810C1F6(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5)
   *(_DWORD *)(v8 + 200) = a4;
   *(_DWORD *)(v8 + 336) = *a1;
   *(_DWORD *)(v8 + 396) = a1;
-  v7 = BG_WeaponDefs(a4);
+  v7 = BG_GetWeaponDef(a4);
   Scr_SetString((_WORD *)(v8 + 360), (unsigned __int16)word_87A22BA);
   *(_DWORD *)(v8 + 412) = *(_DWORD *)(v7 + 492);
   *(_DWORD *)(v8 + 8) = 0x1000000;
@@ -110898,7 +110898,7 @@ int __cdecl sub_810C4A0(_DWORD *a1, _DWORD *a2, float *a3)
   int v6; // [esp+24h] [ebp-4h]
 
   Vec3Normalize(a3);
-  v5 = (_DWORD *)BG_WeaponDefs(a1[50]);
+  v5 = (_DWORD *)BG_GetWeaponDef(a1[50]);
   v6 = G_Spawn();
   Scr_SetString((_WORD *)(v6 + 360), (unsigned __int16)word_87A22DE);
   *(_DWORD *)(v6 + 400) = dword_859B5EC + 30000;
@@ -111607,7 +111607,7 @@ int GScr_LoadGameTypeScript()
   int result; // eax
   char s[72]; // [esp+10h] [ebp-48h] BYREF
 
-  Com_sprintf(s, 0x40u, "maps/mp/gametypes/%s", *(const char **)(sv_gametype + 8));
+  Com_sprintf(s, 0x40u, "maps/mp/gametypes/%s", *(const char **)(dword_8793D80 + 8));
   dword_879C788 = Scr_GetFunctionHandle(s, "main", 1);
   dword_879C78C = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_StartGameType", 1);
   dword_879C790 = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerConnect", 1);
@@ -111617,7 +111617,7 @@ int GScr_LoadGameTypeScript()
   dword_879C79C = result;
   return result;
 }
-// 8793D80: using guessed type int sv_gametype;
+// 8793D80: using guessed type int dword_8793D80;
 // 879C788: using guessed type int dword_879C788;
 // 879C78C: using guessed type int dword_879C78C;
 // 879C790: using guessed type int dword_879C790;
@@ -112198,7 +112198,7 @@ int Scr_GetWeaponModel()
   v3 = G_GetWeaponIndexForName(s1);
   if ( v3 )
   {
-    v2 = BG_WeaponDefs(v3);
+    v2 = BG_GetWeaponDef(v3);
     return Scr_AddString(*(char **)(v2 + 436));
   }
   else
@@ -116564,7 +116564,7 @@ int __cdecl Scr_PlayerDamage(
   Scr_AddConstString(v11);
   GScr_AddVector(a9);
   GScr_AddVector(a8);
-  v12 = (char **)BG_WeaponDefs(a7);
+  v12 = (char **)BG_GetWeaponDef(a7);
   Scr_AddString(*v12);
   if ( a6 < 0xF )
     Scr_AddString((&off_81677C0)[a6]);
@@ -116601,7 +116601,7 @@ int __cdecl Scr_PlayerKilled(
   v10 = G_GetHitLocationString(a8);
   Scr_AddConstString(v10);
   GScr_AddVector(a7);
-  v11 = (char **)BG_WeaponDefs(a6);
+  v11 = (char **)BG_GetWeaponDef(a6);
   Scr_AddString(*v11);
   if ( a5 < 0xF )
     Scr_AddString((&off_81677C0)[a5]);
@@ -117868,7 +117868,7 @@ int __cdecl G_GetItemForClassname(char *s1)
 
   if ( !strncmp(s1, "weapon_", 7u) && (v4 = G_GetWeaponIndexForName(s1 + 7)) != 0 )
   {
-    BG_WeaponDefs(v4);
+    BG_GetWeaponDef(v4);
     return BG_FindItemForWeapon(v4);
   }
   else
@@ -119008,7 +119008,7 @@ int __cdecl sub_811A106(int a1)
 }
 
 //----- (0811A1B8) --------------------------------------------------------
-int __cdecl sub_811A1B8(int *a1)
+int __cdecl multi_trigger(int *a1)
 {
   int result; // eax
 
@@ -119022,7 +119022,7 @@ int __cdecl sub_811A1B8(int *a1)
 int __cdecl Touch_Multi(int *a1, int *a2)
 {
   G_Trigger(a1, a2);
-  return sub_811A1B8(a1);
+  return multi_trigger(a1);
 }
 
 //----- (0811A20A) --------------------------------------------------------
@@ -120674,7 +120674,7 @@ __int16 __cdecl sub_811D3B4(int *a1, float *a2, float a3, float a4, float a5)
   unsigned __int16 v15; // [esp+6Ch] [ebp-1Ch]
   unsigned __int16 v16; // [esp+70h] [ebp-18h]
 
-  v10 = *(_DWORD *)(BG_WeaponDefs(a1[50]) + 500);
+  v10 = *(_DWORD *)(BG_GetWeaponDef(a1[50]) + 500);
   LOWORD(v5) = sub_811D220(a1, a2, v10, a3, a4, a5, &s, (float *)v9);
   if ( (_BYTE)v5 )
   {
@@ -121106,7 +121106,7 @@ float *__cdecl sub_811E3E0(int a1, int a2)
 
   if ( (*(_DWORD *)(*(_DWORD *)(a1 + 344) + 160) & 0x300) == 0 || (result = (float *)a1, !*(_BYTE *)(a1 + 354)) )
   {
-    v8 = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+    v8 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
     sub_811E35C(a1, (float *)v7);
     v6 = *(float *)(*(_DWORD *)(a1 + 344) + 10256);
     sub_80EA198(*(_DWORD *)(a1 + 344), *(_DWORD *)(a1 + 200), &v4, &v3);
@@ -121146,7 +121146,7 @@ int __cdecl sub_811E586(_DWORD *a1)
 {
   float v2[18]; // [esp+10h] [ebp-48h] BYREF
 
-  LODWORD(v2[15]) = BG_WeaponDefs(*(_DWORD *)(a1[86] + 208));
+  LODWORD(v2[15]) = BG_GetWeaponDef(*(_DWORD *)(a1[86] + 208));
   sub_811E35C((int)a1, v2);
   return sub_811E0C2(a1, *(_DWORD *)(a1[86] + 208), (int)v2);
 }
@@ -121162,7 +121162,7 @@ __int16 __cdecl sub_811E5E0(int a1)
 
   if ( (*(_DWORD *)(*(_DWORD *)(a1 + 344) + 160) & 0x300) == 0 || (result = a1, !*(_BYTE *)(a1 + 354)) )
   {
-    LODWORD(v5[6]) = BG_WeaponDefs(*(_DWORD *)(a1 + 200));
+    LODWORD(v5[6]) = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
     G_GetPlayerViewOrigin(a1, v5);
     G_GetPlayerViewDirection(a1, (int)v2, &v3, &v4);
     return sub_811D3B4(
@@ -121188,7 +121188,7 @@ int __cdecl sub_811E696(int a1, int a2)
 
   if ( (unsigned __int8)sub_80D9E84(a1 + 1348, a2) )
     return 0;
-  v7 = (_DWORD *)BG_WeaponDefs(a2);
+  v7 = (_DWORD *)BG_GetWeaponDef(a2);
   if ( v7[31] == 7 )
     return 0;
   if ( v7[31] == 8 )
@@ -121203,7 +121203,7 @@ int __cdecl sub_811E696(int a1, int a2)
     {
       if ( BG_WeaponAmmo(a1, *(_DWORD *)(a1 + 208)) <= 0 )
       {
-        v6 = BG_WeaponDefs(*(_DWORD *)(a1 + 208));
+        v6 = BG_GetWeaponDef(*(_DWORD *)(a1 + 208));
         v4 = sub_80E963A(a1, *(_DWORD *)(v6 + 132));
         if ( v4 )
           *(_DWORD *)(a1 + 208) = v4;
@@ -121233,7 +121233,7 @@ int __cdecl sub_811E696(int a1, int a2)
         *(_BYTE *)(a1 + 1365) = a2;
       }
     }
-    for ( i = v7[219]; i && !(unsigned __int8)sub_80D9E84(a1 + 1348, i); i = *(_DWORD *)(BG_WeaponDefs(i) + 876) )
+    for ( i = v7[219]; i && !(unsigned __int8)sub_80D9E84(a1 + 1348, i); i = *(_DWORD *)(BG_GetWeaponDef(i) + 876) )
     {
       sub_80D9EAA(a1 + 1348, i);
       sub_80F0400(a1 + 1372, a2);
@@ -121626,7 +121626,7 @@ int __cdecl sub_811F61A(int a1, int a2)
   v4 = (char *)&unk_8164C20 + 44 * *(unsigned __int16 *)(a2 + 428);
   v3 = 0;
   if ( *((_DWORD *)v4 + 7) == 1
-    && *(_DWORD *)(BG_WeaponDefs(*((_DWORD *)v4 + 8)) + 120) != 1
+    && *(_DWORD *)(BG_GetWeaponDef(*((_DWORD *)v4 + 8)) + 120) != 1
     && !(unsigned __int8)sub_80D9E84(a1 + 1348, *((_DWORD *)v4 + 8)) )
   {
     return *((_DWORD *)v4 + 8) + 4;
@@ -121643,12 +121643,12 @@ _BYTE *__cdecl sub_811F6A6(int a1)
 
   v2 = *(_DWORD **)(a1 + 344);
   v3 = dword_859B404 + 560 * v2[357];
-  result = *(_BYTE **)(BG_WeaponDefs(*(_DWORD *)(v3 + 200)) + 1392);
+  result = *(_BYTE **)(BG_GetWeaponDef(*(_DWORD *)(v3 + 200)) + 1392);
   if ( *result )
   {
     v2[360] = 1023;
     v2[358] = *(_DWORD *)(v3 + 200) + 4;
-    result = *(_BYTE **)(BG_WeaponDefs(*(_DWORD *)(v3 + 200)) + 1400);
+    result = *(_BYTE **)(BG_GetWeaponDef(*(_DWORD *)(v3 + 200)) + 1400);
     v2[359] = result;
   }
   return result;
@@ -121726,8 +121726,8 @@ LABEL_31:
                 if ( v2 == 9 && G_IsTurretUsable(v8, a1) )
                 {
                   v7 = *(_DWORD *)(v8 + 200) + 4;
-                  if ( **(_BYTE **)(BG_WeaponDefs(*(_DWORD *)(v8 + 200)) + 1388) )
-                    v5 = *(_DWORD *)(BG_WeaponDefs(*(_DWORD *)(v8 + 200)) + 1396);
+                  if ( **(_BYTE **)(BG_GetWeaponDef(*(_DWORD *)(v8 + 200)) + 1388) )
+                    v5 = *(_DWORD *)(BG_GetWeaponDef(*(_DWORD *)(v8 + 200)) + 1396);
                   goto LABEL_31;
                 }
               }
@@ -121802,9 +121802,9 @@ void __cdecl Player_UpdateLookAtEntity(int *a1)
   G_GetPlayerViewOrigin((int)a1, (float *)v8);
   G_GetPlayerViewDirection((int)a1, (int)v6, 0, 0);
   if ( (v12[40] & 0x300) != 0 )
-    v13 = BG_WeaponDefs(dword_8665548[140 * v12[357]]);
+    v13 = BG_GetWeaponDef(dword_8665548[140 * v12[357]]);
   else
-    v13 = BG_WeaponDefs(*(_DWORD *)(a1[86] + 212));
+    v13 = BG_GetWeaponDef(*(_DWORD *)(a1[86] + 212));
   if ( *(_DWORD *)(a1[86] + 212) && *(_DWORD *)(v13 + 796) )
     v4 = &unk_816779F;
   else

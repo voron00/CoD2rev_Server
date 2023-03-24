@@ -18,6 +18,18 @@
 #define ANIM_BITS           10
 #define ANIM_TOGGLEBIT      ( 1 << ( ANIM_BITS - 1 ) )
 
+#define DEFAULT_GRAVITY     800
+
+typedef enum
+{
+	ANIM_BP_UNUSED,
+	ANIM_BP_LEGS,
+	ANIM_BP_TORSO,
+	ANIM_BP_BOTH,
+
+	NUM_ANIM_BODYPARTS
+} animBodyPart_t;
+
 typedef enum
 {
 	AISTATE_RELAXED,
@@ -138,8 +150,8 @@ typedef struct animation_s
 	int duration;
 	int nameHash;
 	int flags;
-	int32_t movetype; // This should be int64 BUT Windows / Linux have different type size.
-	int pad;
+	int32_t movetype;
+	int stance;
 	int noteType;
 } animation_t;
 static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
@@ -285,17 +297,10 @@ typedef struct __attribute__((aligned(8))) bgs_s
 	XModel *(*GetXModel)(const char *);
 	void (*CreateDObj)(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle);
 	void (*SafeDObjFree)(int);
-	void *(*AllocXAnim)(size_t);
+	void *(*AllocXAnim)(int);
 	clientInfo_t clientinfo[64];
 } bgs_t;
 static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
-
-struct cspField_t
-{
-	const char *szName;
-	int iOffset;
-	int iFieldType;
-};
 
 enum weapType_t
 {
@@ -360,6 +365,19 @@ enum weapProjExposion_t
 	WEAPPROJEXP_NUM = 0x3
 };
 
+enum weapFieldType_t
+{
+	WFT_WEAPONTYPE = 0x8,
+	WFT_WEAPONCLASS = 0x9,
+	WFT_OVERLAYRETICLE = 0xA,
+	WFT_SLOT = 0xB,
+	WFT_STANCE = 0xC,
+	WFT_PROJ_EXPLOSION = 0xD,
+	WFT_OFFHAND_CLASS = 0xE,
+	WFT_ANIMTYPE = 0xF,
+	WFT_NUM_FIELD_TYPES = 0x10,
+};
+
 typedef struct
 {
 	const char *szInternalName;
@@ -392,12 +410,12 @@ typedef struct
 	const char *adsDownAnim;
 	const char *modeName;
 	int playerAnimType;
-	weapType_t weaponType;
-	weapClass_t weaponClass;
-	weapSlot_t weaponSlot;
-	OffhandClass_t offhandClass;
+	int weaponType;
+	int weaponClass;
+	int weaponSlot;
+	int offhandClass;
 	int slotStackable;
-	weapStance_t stance;
+	int stance;
 	const char *viewFlashEffect;
 	const char *worldFlashEffect;
 	const char *pickupSound;
@@ -520,7 +538,7 @@ typedef struct
 	float adsZoomInFrac;
 	float adsZoomOutFrac;
 	const char *adsOverlayShader;
-	weapOverlayReticle_t adsOverlayReticle;
+	int adsOverlayReticle;
 	float adsOverlayWidth;
 	float adsOverlayHeight;
 	float adsBobFactor;
@@ -590,7 +608,7 @@ typedef struct
 	int projectileSpeed;
 	int projectileSpeedUp;
 	const char *projectileModel;
-	weapProjExposion_t projExplosionType;
+	int projExplosionType;
 	const char *projExplosionEffect;
 	const char *projExplosionSound;
 	int projImpactExplode;
@@ -685,8 +703,7 @@ typedef struct
 	float hipViewScatterMax;
 	float fightDist;
 	float maxDist;
-	const char *aiVsAiAccuracyGraph;
-	const char *aiVsPlayerAccuracyGraph;
+	const char *accuracyGraphName[2];
 	int accuracyGraphKnotCount[2];
 	int originalAccuracyGraphKnotCount[2];
 	int adsReloadTransTime;
@@ -747,6 +764,32 @@ typedef struct
 } WeaponDef;
 static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
 
+void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
+void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_s *es);
+void BG_SwingAngles( float destination,  float swingTolerance, float clampTolerance, float speed, float *angle, qboolean *swinging );
+void BG_PlayerAnimation(const DObj_s *pDObj, entityState_s *es, clientInfo_t *ci);
+int BG_PlayAnim(playerState_s *ps, int animNum, int bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force);
+void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qboolean isComplete);
+int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qboolean setTimer, qboolean isContinue, qboolean force );
+int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
+void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
+unsigned int BG_AnimationIndexForString(const char *string);
+void BG_LoadAnim();
+
+void BG_LoadPlayerAnimTypes();
+void BG_InitWeaponStrings();
+
+void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
+
+long BG_StringHashValue( const char *fname );
+long BG_StringHashValue_Lwr( const char *fname );
+
 unsigned int BG_GetNumWeapons();
 WeaponDef* BG_GetWeaponDef(int weaponIndex);
 void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);
+
+WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
+
+void Mantle_RegisterDvars();
+void Jump_RegisterDvars();
+void BG_RegisterDvars();

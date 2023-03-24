@@ -189,3 +189,46 @@ void SV_UnlinkEntity(gentity_s *ent)
 	ent->r.linked = 0;
 	CM_UnlinkEntity(svEnt);
 }
+
+void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace)
+{
+	vec3_t maxs;
+	vec3_t mins;
+	float fraction;
+	int num;
+	float *angles;
+	unsigned int model;
+	gentity_s *touch;
+
+	num = entity - sv.svEntities;
+	touch = SV_GentityNum(num);
+	if ( (clip->contentmask & touch->r.contents) != 0
+	        && (clip->passEntityNum == 1023
+	            || num != clip->passEntityNum
+	            && touch->r.ownerNum != clip->passEntityNum
+	            && touch->r.ownerNum != clip->passOwnerNum) )
+	{
+		VectorAdd(touch->r.absmin, clip->mins, mins);
+		VectorAdd(touch->r.absmax, clip->maxs, maxs);
+		if ( !CM_TraceBox(&clip->extents, mins, maxs, trace->fraction) )
+		{
+			model = SV_ClipHandleForEntity(touch);
+			angles = touch->r.currentAngles;
+			if ( !touch->r.bmodel )
+				angles = vec3_origin;
+			fraction = trace->fraction;
+			CM_TransformedBoxTrace(
+			    trace,
+			    clip->extents.start,
+			    clip->extents.end,
+			    clip->mins,
+			    clip->maxs,
+			    model,
+			    clip->contentmask,
+			    touch->r.currentOrigin,
+			    angles);
+			if ( trace->fraction < fraction )
+				trace->hitId = touch->s.number;
+		}
+	}
+}

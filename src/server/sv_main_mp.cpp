@@ -8,22 +8,33 @@ extern server_t sv;
 extern serverStatic_t svs;
 #endif
 
-void SV_PacketEvent( netadr_t from, msg_t *msg )
+char *SV_ExpandNewlines( char *in )
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	static	char string[1024];
+	int l;
+
+	l = 0;
+
+	while ( *in && l < sizeof(string) - 3 )
+	{
+		if ( *in == '\n' )
+		{
+			string[l++] = '\\';
+			string[l++] = 'n';
+		}
+		else
+		{
+			string[l++] = *in;
+		}
+		in++;
+	}
+
+	string[l] = 0;
+
+	return string;
 }
 
-void SV_Frame(int msec)
-{
-	// UNIMPLEMENTED(__FUNCTION__);
-}
-
-void SV_Shutdown( const char* finalmsg )
-{
-	UNIMPLEMENTED(__FUNCTION__);
-}
-
-int SV_CopyReliableCommands(client_t *client)
+int SV_CullIgnorableServerCommands(client_t *client)
 {
 	int sequence;
 	int i;
@@ -46,7 +57,7 @@ int SV_CopyReliableCommands(client_t *client)
 	return sequence - 1;
 }
 
-int SV_GetReliableSequence(client_t *client, const char *command)
+int SV_CanReplaceServerCommand(client_t *client, const char *command)
 {
 	int i;
 
@@ -99,9 +110,9 @@ void SV_AddServerCommand(client_t *client, int type, const char *cmd)
 	if ( client->bot )
 		return;
 
-	if ( client->reliableSequence - client->reliableAcknowledge < MAX_RELIABLE_COMMANDS / 2 && client->state == CS_ACTIVE || (SV_CopyReliableCommands(client), type) )
+	if ( client->reliableSequence - client->reliableAcknowledge < MAX_RELIABLE_COMMANDS / 2 && client->state == CS_ACTIVE || (SV_CullIgnorableServerCommands(client), type) )
 	{
-		sequence = SV_GetReliableSequence(client, cmd);
+		sequence = SV_CanReplaceServerCommand(client, cmd);
 
 		if ( sequence < 0 )
 		{
@@ -142,53 +153,27 @@ void SV_AddServerCommand(client_t *client, int type, const char *cmd)
 	}
 }
 
-char *SV_ExpandNewlines( char *in )
-{
-	static	char string[1024];
-	int l;
-
-	l = 0;
-
-	while ( *in && l < sizeof(string) - 3 )
-	{
-		if ( *in == '\n' )
-		{
-			string[l++] = '\\';
-			string[l++] = 'n';
-		}
-		else
-		{
-			string[l++] = *in;
-		}
-		in++;
-	}
-
-	string[l] = 0;
-
-	return string;
-}
-
 void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... )
 {
 	va_list argptr;
-	byte message[MAX_MSGLEN];
+	char message[MAX_MSGLEN];
 	client_t    *client;
 	int j;
 
 	va_start( argptr,fmt );
-	Q_vsnprintf( (char *)message, sizeof( message ), fmt, argptr );
+	Q_vsnprintf( message, sizeof( message ), fmt, argptr );
 	va_end( argptr );
 
 	if ( cl != NULL )
 	{
-		SV_AddServerCommand( cl, type, (char *)message );
+		SV_AddServerCommand( cl, type, message );
 		return;
 	}
 
 	// hack to echo broadcast prints to console
-	if ( com_dedicated->current.integer && !strncmp( (char *)message, "print", 5 ) )
+	if ( com_dedicated->current.integer && !strncmp( message, "print", 5 ) )
 	{
-		Com_Printf( "broadcast: %s\n", SV_ExpandNewlines( (char *)message ) );
+		Com_Printf( "broadcast: %s\n", SV_ExpandNewlines( message ) );
 	}
 
 	// send the data to all relevent clients
@@ -199,6 +184,21 @@ void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... )
 			continue;
 		}
 		// done.
-		SV_AddServerCommand( client, type, (char *)message );
+		SV_AddServerCommand( client, type, message );
 	}
+}
+
+void SV_PacketEvent( netadr_t from, msg_t *msg )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+}
+
+void SV_Frame(int msec)
+{
+	// UNIMPLEMENTED(__FUNCTION__);
+}
+
+void SV_Shutdown( const char* finalmsg )
+{
+	UNIMPLEMENTED(__FUNCTION__);
 }

@@ -208,3 +208,4 @@ float AngleMod( float a );
 float AngleSubtract( float a1, float a2 );
 double vectosignedyaw(float *vec);
 int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *org, const float fogOpaqueDistSqrd);
+float vec3Distance(const float* pointA, const float* pointB);

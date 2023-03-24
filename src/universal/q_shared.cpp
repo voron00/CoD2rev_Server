@@ -1235,3 +1235,93 @@ void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanF
 		VectorMA(position, v * fLeanDist, right, position);
 	}
 }
+
+void SetConfigString(char **ppszConfigString, const char *pszKeyValue)
+{
+	size_t len;
+	char *dest;
+
+	if ( *pszKeyValue )
+	{
+		len = strlen(pszKeyValue);
+		dest = (char *)Hunk_AllocLowAlignInternal(len + 1, 1);
+		strcpy(dest, pszKeyValue);
+		*ppszConfigString = dest;
+	}
+	else
+	{
+		*ppszConfigString = "";
+	}
+}
+
+void SetConfigString2(unsigned char *pMember, const char *pszKeyValue)
+{
+	SetConfigString((char **)pMember, pszKeyValue);
+}
+
+qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes, int (*parseSpecialFieldType)(unsigned char *, const char *, const int), void (*parseStrCpy)(unsigned char *, const char *))
+{
+	const char *pszKeyValue;
+	int iField;
+
+	for ( iField = 0; iField < iNumFields; ++iField )
+	{
+		pszKeyValue = Info_ValueForKey(pszBuffer, pFieldList->szName);
+
+		if ( *pszKeyValue )
+		{
+			if ( pFieldList->iFieldType >= CSPFT_NUM_BASE_FIELD_TYPES )
+			{
+				if ( iMaxFieldTypes <= 0 || pFieldList->iFieldType >= iMaxFieldTypes )
+					Com_Error(ERR_DROP, "Bad field type %i", pFieldList->iFieldType);
+
+				if ( !parseSpecialFieldType(pStruct, pszKeyValue, pFieldList->iFieldType) )
+					return 0;
+			}
+			else
+			{
+				switch ( pFieldList->iFieldType )
+				{
+				case CSPFT_STRING:
+					parseStrCpy(&pStruct[pFieldList->iOffset], pszKeyValue);
+					break;
+
+				case CSPFT_STRING_MAX_STRING_CHARS:
+					I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_STRING_CHARS);
+					break;
+
+				case CSPFT_STRING_MAX_QPATH:
+					I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_QPATH);
+					break;
+
+				case CSPFT_STRING_MAX_OSPATH:
+					I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_OSPATH);
+					break;
+
+				case CSPFT_INT:
+					*(int *)&pStruct[pFieldList->iOffset] = atoi(pszKeyValue);
+					break;
+
+				case CSPFT_QBOOLEAN:
+					*(qboolean *)&pStruct[pFieldList->iOffset] = atoi(pszKeyValue) != 0;
+					break;
+
+				case CSPFT_FLOAT:
+					*(float *)&pStruct[pFieldList->iOffset] = atof(pszKeyValue);
+					break;
+
+				case CSPFT_MILLISECONDS:
+					*(int *)&pStruct[pFieldList->iOffset] = (int)(atof(pszKeyValue) * 1000.0);
+					break;
+
+				default:
+					break;
+				}
+			}
+		}
+
+		++pFieldList;
+	}
+
+	return iField == iNumFields;
+}

@@ -390,6 +390,35 @@ void Scr_SetStructField(unsigned int structId, unsigned int index)
 	--scrVmPub.top;
 }
 
+unsigned short Scr_ExecEntThreadNum(int entnum, unsigned int classnum, int handle, unsigned int paramcount)
+{
+	unsigned int threadId;
+	const char *pos;
+	unsigned int self;
+	unsigned short id;
+
+	pos = &scrVarPub.programBuffer[handle];
+
+	if ( !scrVmPub.function_count )
+		Scr_ResetTimeout();
+
+	self = Scr_GetEntityId(entnum, classnum);
+	AddRefToObject(self);
+	threadId = AllocThread(self);
+	id = VM_Execute(threadId, pos, paramcount);
+	RemoveRefToValue(scrVmPub.top);
+	scrVmPub.top->type = VAR_UNDEFINED;
+	--scrVmPub.top;
+	--scrVmPub.inparamcount;
+
+	return id;
+}
+
+void Scr_FreeThread(unsigned short handle)
+{
+	RemoveRefToObject(handle);
+}
+
 bool SetEntityFieldValue(unsigned int classnum, int entnum, int offset, VariableValue *value)
 {
 	scrVmPub.outparamcount = 1;

@@ -20,12 +20,6 @@ extern gclient_t g_clients[];
 extern level_locals_t level;
 #endif
 
-#ifdef TESTING_LIBRARY
-#define scr_const (*((scr_const_t*)( 0x087A22A0 )))
-#else
-extern scr_const_t scr_const;
-#endif
-
 game_client_field_t g_client_fields[] =
 {
 	{ "name", 10116, 2, ClientScr_ReadOnly, NULL },
