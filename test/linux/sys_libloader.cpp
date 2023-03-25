@@ -139,6 +139,8 @@ void Sys_RedirectFunctions()
 	SetJump(0x0805D668, (DWORD)CM_CalcTraceExtents);
 	SetJump(0x0805B198, (DWORD)CM_SetAxialCullOnly);
 
+	SetJump(0x0805F61E, (DWORD)CM_PointTraceToEntities);
+
 
 	SetJump(0x0805B210, (DWORD)CM_Trace);
 	SetJump(0x0805B6F2, (DWORD)CM_TransformedBoxTrace);
@@ -149,6 +151,17 @@ void Sys_RedirectFunctions()
 	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
 	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
 	SetJump(0x0809AB88, (DWORD)SV_ClipMoveToEntity);
+	SetJump(0x0809AD2C, (DWORD)SV_PointTraceToEntity);
+
+	SetJump(0x0809B30E, (DWORD)SV_PointSightTraceToEntity);
+	SetJump(0x0805D124, (DWORD)CM_TransformedBoxSightTrace);
+
+	SetJump(0x0809B6A8, (DWORD)SV_Trace);
+	SetJump(0x0809B9E2, (DWORD)SV_TracePassed);
+	SetJump(0x0809BC5C, (DWORD)SV_SightTrace);
+
+	SetJump(0x0805EA28, (DWORD)CM_PointTraceStaticModels);
+	SetJump(0x0805F8C6, (DWORD)CM_PointSightTraceToEntities);
 
 
 	// Don't hook that for now, just init
@@ -654,6 +667,10 @@ void Sys_RedirectFunctions()
 	SetJump(0x080B7EFC, (DWORD)DObjCreate);
 	SetJump(0x080B955A, (DWORD)DObjGeomTraceline);
 	SetJump(0x080B8CA6, (DWORD)DObjTraceline);
+	SetJump(0x080B73C0, (DWORD)DObjGetHierarchyBits);
+
+	SetJump(0x0811BF30, (DWORD)G_DObjCalcPose);
+	SetJump(0x0811BFC4, (DWORD)G_DObjCalcBone);
 
 
 	// Dobj management
@@ -667,6 +684,10 @@ void Sys_RedirectFunctions()
 
 	// SV Dobj stuff will be here
 	SetJump(0x08090776, (DWORD)SV_DObjUpdateServerTime);
+	SetJump(0x080905FA, (DWORD)SV_AllocSkelMemory);
+	SetJump(0x080905C8, (DWORD)SV_ResetSkeletonCache);
+	SetJump(0x08090666, (DWORD)SV_DObjCreateSkelForBone);
+	SetJump(0x080906EE, (DWORD)SV_DObjCreateSkelForBones);
 
 
 
@@ -676,6 +697,8 @@ void Sys_RedirectFunctions()
 	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
 	SetJump(0x0811B422, (DWORD)G_OverrideModel);
 	SetJump(0x080F6506, (DWORD)ClientUserinfoChanged);
+
+	SetJump(0x081079C8, (DWORD)G_RunThink);
 
 
 

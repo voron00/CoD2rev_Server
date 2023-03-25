@@ -831,6 +831,17 @@ int QDECL CM_SightTraceThroughTree(traceWork_t *tw, int num, const float *p1_, c
 	return hitNum;
 }
 
+void RotatePoint(float *point, const float (*mat)[3])
+{
+	vec3_t tvec;
+
+	VectorCopy(point, tvec);
+
+	point[0] = (*mat)[0] * tvec[0] + (*mat)[1] * tvec[1] + (*mat)[2] * tvec[2];
+	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
+	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
+}
+
 int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask)
 {
 	float radius;
@@ -848,7 +859,7 @@ int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const 
 	trace.allsolid = 0;
 	tw.contents = brushmask;
 
-	for ( i = 0; i <= 2; ++i )
+	for ( i = 0; i < 3; ++i )
 	{
 		offset[i] = (mins[i] + maxs[i]) * 0.5;
 		tw.size[i] = maxs[i] - offset[i];
@@ -936,6 +947,50 @@ int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const 
 	return hitNum;
 }
 
+int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles)
+{
+	float matrix[3][3];
+	//float halfwidth;
+	//float halfheight;
+	float symetricSize[2][3];
+	float offset[3];
+	float end_l[3];
+	float start_l[3];
+	int rotated;
+	int i;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		offset[i] = (mins[i] + maxs[i]) * 0.5;
+		symetricSize[0][i] = mins[i] - offset[i];
+		symetricSize[1][i] = maxs[i] - offset[i];
+		start_l[i] = start[i] + offset[i];
+		end_l[i] = end[i] + offset[i];
+	}
+
+	start_l[0] = start_l[0] - origin[0];
+	start_l[1] = start_l[1] - origin[1];
+	start_l[2] = start_l[2] - origin[2];
+
+	end_l[0] = end_l[0] - origin[0];
+	end_l[1] = end_l[1] - origin[1];
+	end_l[2] = end_l[2] - origin[2];
+
+	rotated = angles[0] != 0.0 || angles[1] != 0.0 || angles[2] != 0.0;
+
+	//halfwidth = symetricSize[1][0];
+	//halfheight = symetricSize[1][2];
+
+	if ( rotated )
+	{
+		AnglesToAxis(angles, matrix);
+		RotatePoint(start_l, matrix);
+		RotatePoint(end_l, matrix);
+	}
+
+	return CM_BoxSightTrace(hitNum, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask);
+}
+
 void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask)
 {
 	vec_t radius;
@@ -949,7 +1004,7 @@ void CM_Trace(trace_t *results, const float *start, const float *end, const floa
 	cmodel = CM_ClipHandleToModel(model);
 	tw.contents = brushmask;
 
-	for ( i = 0; i <= 2; ++i )
+	for ( i = 0; i < 3; ++i )
 	{
 		offset[i] = (mins[i] + maxs[i]) * 0.5;
 		tw.size[i] = maxs[i] - offset[i];
@@ -1025,6 +1080,7 @@ void CM_Trace(trace_t *results, const float *start, const float *end, const floa
 	else
 	{
 		tw.isPoint = 0.0 == tw.size[0] + tw.size[1] + tw.size[2];
+
 		tw.radiusOffset[0] = tw.radius;
 		tw.radiusOffset[1] = tw.radius;
 		tw.radiusOffset[2] = tw.radius + tw.offsetZ;
@@ -1071,17 +1127,6 @@ void TransposeMatrix(const float (*matrix)[3], float (*transpose)[3])
 			*(&(*transpose)[3 * i] + j) = *(&(*matrix)[3 * j] + i);
 		}
 	}
-}
-
-void RotatePoint(float *point, const float (*mat)[3])
-{
-	vec3_t tvec;
-
-	VectorCopy(point, tvec);
-
-	point[0] = (*mat)[0] * tvec[0] + (*mat)[1] * tvec[1] + (*mat)[2] * tvec[2];
-	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
-	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
 }
 
 void CM_TransformedBoxTraceRotated(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask, const float *origin, const float (*matrix)[3])
@@ -1132,7 +1177,7 @@ void CM_TransformedBoxTrace(trace_t *results, const float *start, const float *e
 	int i;
 	// float oldFraction;
 
-	if ( 0.0 != *angles || 0.0 != angles[1] || 0.0 != angles[2] )
+	if ( 0.0 != angles[0] || 0.0 != angles[1] || 0.0 != angles[2] )
 	{
 		AnglesToAxis(angles, matrix);
 		CM_TransformedBoxTraceRotated(results, start, end, mins, maxs, model, brushmask, origin, matrix);

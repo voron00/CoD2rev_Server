@@ -250,17 +250,6 @@ struct snapshotEntityNumbers_t
 	int snapshotEntities[1024];
 };
 
-struct moveclip_t
-{
-	vec3_t mins;
-	vec3_t maxs;
-	vec3_t outerSize;
-	TraceExtents extents;
-	int passEntityNum;
-	int passOwnerNum;
-	int contentmask;
-};
-
 extern dvar_t *nextmap;
 extern dvar_t *sv_maxclients;
 
@@ -302,8 +291,22 @@ gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
 void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
 qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 
+#include "../qcommon/cm_public.h"
 void SV_LinkEntity( gentity_t *gEnt );
 void SV_UnlinkEntity( gentity_t *gEnt );
 void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace);
+void SV_PointTraceToEntity(pointtrace_t *clip, svEntity_t *check, trace_t *trace);
+int SV_PointSightTraceToEntity(sightpointtrace_t *clip, svEntity_t *check);
+int SV_ClipSightToEntity(sightclip_t *clip, svEntity_t *check);
+void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, char *priorityMap, int staticmodels);
+int SV_TracePassed(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask, int locational, int staticmodels);
+void SV_SightTrace(int *hitNum,const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask);
 
 void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);
+char* SV_AllocSkelMemory(unsigned int size);
+void SV_ResetSkeletonCache();
+int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex);
+int SV_DObjCreateSkelForBones(gentity_s *ent, int *partBits);
+void SV_DObjGetHierarchyBits(gentity_s *ent, int boneIndex, int *partBits);
+void SV_DObjCalcAnim(gentity_s *ent, int *partBits);
+void SV_DObjCalcSkel(gentity_s *ent, int *partBits);

@@ -246,12 +246,17 @@ struct DSkelPartBits_s
 	int anim[4];
 	int control[4];
 	int skel[4];
+};
+
+struct DSkelPart_s
+{
+	DSkelPartBits_s partBits;
 	DObjAnimMat Mat;
 };
 
 struct DSkel_t
 {
-	DSkelPartBits_s *partBits;
+	DSkelPart_s *skelPart;
 	int timeStamp;
 };
 
@@ -259,8 +264,8 @@ typedef struct DObj_s
 {
 	XAnimTree_s *tree;
 	DSkel_t skel;
-	unsigned short *duplicateParts;
-	unsigned short duplicatePartsSize;
+	unsigned short *duplicatePartIndexes;
+	unsigned short duplicateParts;
 	unsigned int ignoreCollision;
 	byte numModels;
 	byte numBones;
@@ -343,7 +348,6 @@ struct DObjTrace_s
 };
 
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum);
-void DObjCreateDuplicateParts(DObj_s *obj);
 void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs);
 void DObjInit();
 void DObjShutdown();
@@ -351,6 +355,12 @@ void DObjFree(DObj_s *obj);
 void DObjAbort();
 
 int DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
+int DObjSkelExists(DObj_s *obj, int timeStamp);
+int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
+int DObjGetAllocSkelSize(const DObj_s *obj);
+void DObjCreateSkel(DObj_s *obj, DSkelPart_s *skelPart, int time);
+int DObjSkelAreBonesUpToDate(const DObj_s *obj, int *partBits);
+void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
 
 void XAnimFree(XAnimParts *parts);
 void XAnimFreeList(XAnim *anims);
@@ -379,6 +389,8 @@ void QDECL DObjCalcAnim(const DObj_s *obj, int *partBits);
 void QDECL DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
 
 DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
+void QDECL DObjCreateDuplicateParts(DObj_s *obj);
+void QDECL DObjCalcSkel(const DObj_s *obj, int *partBits);
 void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, char *priorityMap, DObjTrace_s *trace);
 
 void QDECL XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *rot, float *trans, float startTime, float endTime);

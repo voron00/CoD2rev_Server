@@ -73,9 +73,37 @@ dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
 dvar_t *g_mantleBlockTimeBuffer;
 
+#ifdef TESTING_LIBRARY
+#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
+#else
+const entityHandler_t entityHandlers[] =
+{
+
+};
+#endif
+
 void Scr_LocalizationError(int iParm, const char *pszErrorMessage)
 {
 	Com_Error(ERR_LOCALIZATION, pszErrorMessage);
+}
+
+void G_RunThink(gentity_s *ent)
+{
+	void (*think)(struct gentity_s *);
+	int thinktime;
+
+	thinktime = ent->nextthink;
+
+	if ( thinktime > 0 && thinktime <= level.time )
+	{
+		ent->nextthink = 0;
+		think = entityHandlers[ent->handler].think;
+
+		if ( !think )
+			Com_Error(ERR_DROP, "NULL ent->think");
+
+		think(ent);
+	}
 }
 
 static signed int SortRanks(const void *num1, const void *num2)

@@ -823,6 +823,20 @@ typedef struct
 
 extern scr_const_t scr_const;
 
+struct entityHandler_t
+{
+	void (*think)(struct gentity_s *);
+	void (*reached)(struct gentity_s *);
+	void (*blocked)(struct gentity_s *, struct gentity_s *);
+	void (*touch)(struct gentity_s *, struct gentity_s *, int);
+	void (*use)(struct gentity_s *, struct gentity_s *, struct gentity_s *);
+	void (*pain)(struct gentity_s *, struct gentity_s *, int, const float *, const int, const float *, int);
+	void (*die)(struct gentity_s *, struct gentity_s *, struct gentity_s *, int, int, const int, const float *, int, int);
+	void (*controller)(struct gentity_s *, int *);
+	int methodOfDeath;
+	int splashMethodOfDeath;
+};
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
@@ -885,6 +899,10 @@ int G_TagIndex(const char *name);
 XModel* G_CachedModelForIndex(int modelIndex);
 unsigned int G_ModelIndex(const char *name);
 void G_OverrideModel(int modelIndex, const char *defaultModelName);
+void G_RunThink(gentity_s *ent);
+
+void G_DObjCalcPose(gentity_s *ent);
+void G_DObjCalcBone(gentity_s *ent, int boneIndex);
 
 qboolean G_UpdateClientInfo(gentity_s *ent);
 

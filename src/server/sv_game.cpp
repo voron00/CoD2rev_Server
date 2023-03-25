@@ -8,6 +8,10 @@ extern server_t sv;
 extern serverStatic_t svs;
 #endif
 
+char g_sv_skel_memory[262144];
+char *g_sv_skel_memory_start;
+int g_sv_skel_warn_count;
+
 qboolean ConsoleCommand()
 {
 	UNIMPLEMENTED(__FUNCTION__);
@@ -203,6 +207,108 @@ void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify)
 	if ( obj )
 		DObjUpdateServerInfo(obj, dtime, bNotify);
 }
+
+void SV_ResetSkeletonCache()
+{
+	if ( !++sv.skelTimeStamp )
+		++sv.skelTimeStamp;
+
+	g_sv_skel_memory_start = (char *)((unsigned int)g_sv_skel_memory & ~15);
+	sv.skelMemPos = 0;
+}
+
+char* SV_AllocSkelMemory(unsigned int size)
+{
+	char *pos;
+	unsigned int aligment;
+
+	aligment = (size + 15) & ~15;
+
+	assert(g_sv_skel_memory_start != NULL);
+
+	while ( 1 )
+	{
+		pos = &g_sv_skel_memory_start[sv.skelMemPos];
+		sv.skelMemPos += aligment;
+
+		if ( sv.skelMemPos <= 262128 )
+			break;
+
+		if ( g_sv_skel_warn_count != sv.skelTimeStamp )
+		{
+			g_sv_skel_warn_count = sv.skelTimeStamp;
+			Com_Printf("^3WARNING: SV_SKEL_MEMORY_SIZE exceeded\n");
+		}
+
+		SV_ResetSkeletonCache();
+	}
+
+	assert(pos != NULL);
+
+	return pos;
+}
+
+int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex)
+{
+	DSkelPart_s *skel;
+	int size;
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( DObjSkelExists(obj, sv.skelTimeStamp) )
+		return DObjSkelIsBoneUpToDate(obj, boneIndex);
+
+	size = DObjGetAllocSkelSize(obj);
+	skel = (DSkelPart_s *)SV_AllocSkelMemory(size);
+	DObjCreateSkel(obj, skel, sv.skelTimeStamp);
+
+	return 0;
+}
+
+int SV_DObjCreateSkelForBones(gentity_s *ent, int *partBits)
+{
+	DSkelPart_s *skel;
+	int size;
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( DObjSkelExists(obj, sv.skelTimeStamp) )
+		return DObjSkelAreBonesUpToDate(obj, partBits);
+
+	size = DObjGetAllocSkelSize(obj);
+	skel = (DSkelPart_s *)SV_AllocSkelMemory(size);
+	DObjCreateSkel(obj, skel, sv.skelTimeStamp);
+
+	return 0;
+}
+
+void SV_DObjCalcAnim(gentity_s *ent, int *partBits)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+	DObjCalcAnim(obj, partBits);
+}
+
+void SV_DObjGetHierarchyBits(gentity_s *ent, int boneIndex, int *partBits)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+	DObjGetHierarchyBits(obj, boneIndex, partBits);
+}
+
+void SV_DObjCalcSkel(gentity_s *ent, int *partBits)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+	DObjCalcSkel(obj, partBits);
+}
+
+
 
 void SV_ShutdownGameProgs()
 {

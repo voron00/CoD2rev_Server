@@ -348,6 +348,37 @@ struct pointtrace_t
 	char *priorityMap;
 };
 
+struct moveclip_t
+{
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t outerSize;
+	TraceExtents extents;
+	int passEntityNum;
+	int passOwnerNum;
+	int contentmask;
+};
+
+struct sightpointtrace_t
+{
+	vec3_t start;
+	vec3_t end;
+	int passEntityNum[2];
+	int contentmask;
+	int locational;
+};
+
+struct sightclip_t
+{
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t outerSize;
+	vec3_t start;
+	vec3_t end;
+	int passEntityNum[2];
+	int contentmask;
+};
+
 struct cm_world_t
 {
 	float mins[3];

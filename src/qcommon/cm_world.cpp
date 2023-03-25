@@ -519,6 +519,85 @@ void CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace)
 	CM_ClipMoveToEntities_r(clip, 1, start, end, trace);
 }
 
+void CM_PointTraceToEntities_r(pointtrace_t *clip, unsigned short nodeIndex, const float *p1, const float *p2, trace_t *trace)
+{
+	float v6;
+	worldSector_s *node;
+	float t1;
+	float frac;
+	float t2;
+	unsigned int entnum;
+	float mid[4];
+	svEntity_s *check;
+	float p[4];
+
+	p[0] = *p1;
+	p[1] = p1[1];
+	p[2] = p1[2];
+	p[3] = p1[3];
+
+	while ( 1 )
+	{
+		node = &cm_world.sectors[nodeIndex];
+
+		if ( (clip->contentmask & node->contents.contentsEntities) == 0 )
+			break;
+
+		for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
+		{
+			check = &sv.svEntities[entnum - 1];
+			SV_PointTraceToEntity(clip, check, trace);
+		}
+
+		t1 = p[node->tree.axis] - node->tree.dist;
+		t2 = p2[node->tree.axis] - node->tree.dist;
+
+		if ( (float)(t1 * t2) < 0.0 )
+		{
+			if ( p[3] >= trace->fraction )
+				return;
+
+			frac = t1 / (float)(t1 - t2);
+
+			mid[0] = (float)((float)(*p2 - p[0]) * frac) + p[0];
+			mid[1] = (float)((float)(p2[1] - p[1]) * frac) + p[1];
+			mid[2] = (float)((float)(p2[2] - p[2]) * frac) + p[2];
+			mid[3] = (float)((float)(p2[3] - p[3]) * frac) + p[3];
+
+			CM_PointTraceToEntities_r(clip, node->tree.child[t2 >= 0.0], p, mid, trace);
+			nodeIndex = node->tree.child[t2 < 0.0];
+
+			p[0] = mid[0];
+			p[1] = mid[1];
+			p[2] = mid[2];
+			p[3] = mid[3];
+		}
+		else
+		{
+			if ( (float)(t2 - t1) < 0.0 )
+				v6 = p2[node->tree.axis] - node->tree.dist;
+			else
+				v6 = p[node->tree.axis] - node->tree.dist;
+
+			nodeIndex = node->tree.child[v6 < 0.0];
+		}
+	}
+}
+
+void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace)
+{
+	vec4_t end;
+	vec4_t start;
+
+	VectorCopy(clip->extents.start, start);
+	VectorCopy(clip->extents.end, end);
+
+	start[3] = 0.0;
+	end[3] = trace->fraction;
+
+	CM_PointTraceToEntities_r(clip, 1, start, end, trace);
+}
+
 void CM_AreaEntities_r(unsigned short nodeIndex, areaParms_t *ap)
 {
 	uint16_t entId;
@@ -759,7 +838,191 @@ void CM_PointTraceStaticModels(trace_t *results, const float *start, const float
 	VectorCopy(tw.extents.end, end_);
 	end_[3] = results->fraction;
 
-	CM_PointTraceStaticModels_r(&tw, 1, tw.extents.start, tw.extents.end, results);
+	CM_PointTraceStaticModels_r(&tw, 1, start_, end_, results);
+}
+
+int CM_PointSightTraceToEntities_r(sightpointtrace_t *clip, unsigned short nodeIndex, const float *p1, const float *p2)
+{
+	float v5;
+	worldSector_s *node;
+	float t1;
+	float frac;
+	float t2;
+	unsigned int entnum;
+	int hitNum;
+	float mid[3];
+	svEntity_s *check;
+
+	node = &cm_world.sectors[nodeIndex];
+
+	if ( (clip->contentmask & node->contents.contentsEntities) == 0 )
+		return 0;
+
+	t1 = p1[node->tree.axis] - node->tree.dist;
+	t2 = p2[node->tree.axis] - node->tree.dist;
+
+	if ( (float)(t1 * t2) < 0.0 )
+	{
+		frac = t1 / (float)(t1 - t2);
+
+		mid[0] = (float)((float)(*p2 - *p1) * frac) + *p1;
+		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
+		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
+
+		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[t2 >= 0.0], p1, mid);
+
+		if ( hitNum )
+			return hitNum;
+
+		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[t2 < 0.0], mid, p2);
+
+		if ( hitNum )
+			return hitNum;
+	}
+	else
+	{
+		if ( (float)(t2 - t1) < 0.0 )
+			v5 = p2[node->tree.axis] - node->tree.dist;
+		else
+			v5 = p1[node->tree.axis] - node->tree.dist;
+
+		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[v5 < 0.0], p1, p2);
+
+		if ( hitNum )
+			return hitNum;
+	}
+
+	for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
+	{
+		check = &sv.svEntities[entnum - 1];
+		hitNum = SV_PointSightTraceToEntity(clip, check);
+
+		if ( hitNum )
+			return hitNum;
+	}
+
+	return 0;
+}
+
+int CM_PointSightTraceToEntities(sightpointtrace_t *clip)
+{
+	return CM_PointSightTraceToEntities_r(clip, 1, clip->start, clip->end);
+}
+
+int CM_ClipSightTraceToEntities_r(sightclip_t *clip, unsigned short nodeIndex, const float *p1, const float *p2)
+{
+	float v5;
+	float v6;
+	float v7;
+	float v8;
+	float v9;
+	int side;
+	worldSector_s *node;
+	float diff;
+	float t1;
+	float frac;
+	float offset;
+	float t2;
+	float frac2;
+	float absDiff;
+	unsigned int entnum;
+	int hitNum;
+	float mid[3];
+	svEntity_s *check;
+	float p[3];
+
+	p[0] = *p1;
+	p[1] = p1[1];
+	p[2] = p1[2];
+
+	while ( 1 )
+	{
+		while ( 1 )
+		{
+			while ( 1 )
+			{
+				node = &cm_world.sectors[nodeIndex];
+
+				if ( (clip->contentmask & node->contents.contentsEntities) == 0 )
+					return 0;
+
+				for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
+				{
+					check = &sv.svEntities[entnum - 1];
+					hitNum = SV_ClipSightToEntity(clip, check);
+
+					if ( hitNum )
+						return hitNum;
+				}
+
+				t1 = p[node->tree.axis] - node->tree.dist;
+				t2 = p2[node->tree.axis] - node->tree.dist;
+				offset = clip->outerSize[node->tree.axis];
+				v9 = (float)(t2 - t1) < 0.0 ? p2[node->tree.axis] - node->tree.dist : p[node->tree.axis] - node->tree.dist;
+
+				if ( v9 < offset )
+					break;
+
+				nodeIndex = node->tree.child[0];
+			}
+
+			v8 = (float)(t1 - t2) < 0.0 ? p2[node->tree.axis] - node->tree.dist : p[node->tree.axis] - node->tree.dist;
+
+			if ( -offset < v8 )
+				break;
+
+			nodeIndex = node->tree.child[1];
+		}
+
+		diff = t2 - t1;
+
+		if ( (float)(t2 - t1) == 0.0 )
+		{
+			side = 0;
+			frac = 1.0;
+			frac2 = 0.0;
+		}
+		else
+		{
+			absDiff = fabs(diff);
+
+			if ( diff < 0.0 )
+				v7 = p[node->tree.axis] - node->tree.dist;
+			else
+				v7 = -t1;
+
+			frac2 = (float)(v7 - offset) * (float)(1.0 / absDiff);
+			frac = (float)(v7 + offset) * (float)(1.0 / absDiff);
+			side = diff >= 0.0;
+		}
+
+		v6 = (float)(1.0 - frac) < 0.0 ? 1.0 : frac;
+		mid[0] = (float)((float)(*p2 - p[0]) * v6) + p[0];
+		mid[1] = (float)((float)(p2[1] - p[1]) * v6) + p[1];
+		mid[2] = (float)((float)(p2[2] - p[2]) * v6) + p[2];
+		hitNum = CM_ClipSightTraceToEntities_r(clip, node->tree.child[side], p, mid);
+
+		if ( hitNum )
+			break;
+
+		if ( (float)(frac2 - 0.0) < 0.0 )
+			v5 = 0.0;
+		else
+			v5 = frac2;
+
+		p[0] = (float)((float)(*p2 - p[0]) * v5) + p[0];
+		p[1] = (float)((float)(p2[1] - p[1]) * v5) + p[1];
+		p[2] = (float)((float)(p2[2] - p[2]) * v5) + p[2];
+
+		nodeIndex = node->tree.child[1 - side];
+	}
+
+	return hitNum;
+}
+
+int CM_ClipSightTraceToEntities(sightclip_t *clip)
+{
+	return CM_ClipSightTraceToEntities_r(clip, 1, clip->start, clip->end);
 }
 
 void CM_LinkStaticModel(cStaticModel_s *staticModel)

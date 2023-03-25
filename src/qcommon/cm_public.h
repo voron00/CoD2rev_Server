@@ -44,12 +44,16 @@ void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *star
 unsigned int CM_TraceStaticModelComplete(cStaticModel_s *sm, const float *start, const float *end, int contentmask);
 int CM_PointTraceStaticModelsComplete(const float *start, const float *end, int contentmask);
 void CM_PointTraceStaticModels(trace_t *results, const float *start, const float *end, int contentmask);
+int CM_PointSightTraceToEntities(sightpointtrace_t *clip);
+int CM_ClipSightTraceToEntities(sightclip_t *clip);
 int CM_AreaEntities(const vec3_t *mins, const vec3_t *maxs, int *entityList, int maxcount, int contentmask);
+void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace);
 void CM_TraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 void CM_TestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace);
 void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 void CM_PositionTestInAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
+int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles);
 int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask);
 void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);
 void CM_BoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);

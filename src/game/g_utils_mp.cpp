@@ -1,6 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
+#include "../server/server.h"
 
 #ifdef TESTING_LIBRARY
 #define level (*((level_locals_t*)( 0x0859B400 )))
@@ -12,6 +13,12 @@ extern level_locals_t level;
 #define g_entities ((gentity_t*)( 0x08665480 ))
 #else
 extern gentity_t g_entities[];
+#endif
+
+#ifdef TESTING_LIBRARY
+#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
+#else
+extern entityHandler_t entityHandlers[] = {};
 #endif
 
 XModel* cached_models[MAX_MODELS];
@@ -159,6 +166,45 @@ void G_SetAngle(gentity_s *ent, const float *angle)
 	ent->s.apos.trDuration = 0;
 	VectorSet(ent->s.pos.trDelta, 0, 0, 0);
 	VectorCopy(angle, ent->r.currentAngles);
+}
+
+void G_DObjCalcPose(gentity_s *ent)
+{
+	int partBits[4];
+	void (*controller)(struct gentity_s *, int *);
+
+	memset(partBits, 255, sizeof(partBits));
+
+	if ( !SV_DObjCreateSkelForBones(ent, partBits) )
+	{
+		SV_DObjCalcAnim(ent, partBits);
+
+		controller = entityHandlers[ent->handler].controller;
+
+		if ( controller )
+			controller(ent, partBits);
+
+		SV_DObjCalcSkel(ent, partBits);
+	}
+}
+
+void G_DObjCalcBone(gentity_s *ent, int boneIndex)
+{
+	int partBits[4];
+	void (*controller)(struct gentity_s *, int *);
+
+	if ( !SV_DObjCreateSkelForBone(ent, boneIndex) )
+	{
+		SV_DObjGetHierarchyBits(ent, boneIndex, partBits);
+		SV_DObjCalcAnim(ent, partBits);
+
+		controller = entityHandlers[ent->handler].controller;
+
+		if ( controller )
+			controller(ent, partBits);
+
+		SV_DObjCalcSkel(ent, partBits);
+	}
 }
 
 float G_random()
