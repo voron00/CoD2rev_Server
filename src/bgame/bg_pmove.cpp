@@ -22,3 +22,13 @@ int PM_GetEffectiveStance(const playerState_s *ps)
 	else
 		return ps->viewHeightTarget == 11;
 }
+
+void PM_AddEvent(playerState_s *ps, int newEvent)
+{
+	BG_AddPredictableEventToPlayerstate(newEvent, 0, ps);
+}
+
+int CL_LocalClient_GetActiveCount()
+{
+	return 1;
+}

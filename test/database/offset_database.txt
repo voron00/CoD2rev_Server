@@ -2379,7 +2379,14 @@ SetJump(0x080ED01A, (DWORD)PM_Weapon_CheckForMelee);
 SetJump(0x080DE734, (DWORD)BG_CheckProne);
 SetJump(0x080DDAD0, (DWORD)BG_CheckProneValid);
 SetJump(0x080DEE4A, (DWORD)PM_Friction);
-SetJump(0x080DEE4A, (DWORD)Jump_ReduceFriction);
+SetJump(0x080DBB3C, (DWORD)Mantle_Move);
+SetJump(0x080DA9FC, (DWORD)Mantle_GetUpLength);
+SetJump(0x080DAA36, (DWORD)Mantle_GetOverLength);
+SetJump(0x080DAAF2, (DWORD)Mantle_GetAnimDelta);
+SetJump(0x080DAA8E, (DWORD)Mantle_GetAnim);
+SetJump(0x080DFB3A, (DWORD)PM_FlyMove);
+SetJump(0x080E05C8, (DWORD)PM_UFOMove);
+SetJump(0x080E037E, (DWORD)PM_NoclipMove);
 
 
 

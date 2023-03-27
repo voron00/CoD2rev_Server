@@ -12,7 +12,7 @@ typedef struct
 	animStringItem_t            *values;
 } animConditionTable_t;
 
-#define net_fields (((infoParm_t*)( 0x0816294C )))
+#define net_fields (((MantleAnimTransition*)( 0x08164860 )))
 #define animstrings (((animStringItem_t*)( 0x08164740 )))
 #define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
@@ -45,16 +45,16 @@ void test2()
 	//for (int i = 0; i < 512; i++)
 	//	Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
 
-	/*
 	// Just print stuff until program segfaults
-	for(int i = 0; i < 16384; i++)
+	/*
+	for(int i = 0; i < 9; i++)
 	{
 		//if (net_fields[i].name == NULL)
 		//	return;
-		Com_Printf("{ \"%s\", %d, %d, %d, %d }\n", net_fields[i].name, net_fields[i].clearSolid, net_fields[i].surfaceFlags, net_fields[i].contents, net_fields[i].toolFlags );
+		Com_Printf("{ %d, %d, %f },\n", net_fields[i].upAnimIndex, net_fields[i].overAnimIndex, net_fields[i].height );
 	}
-	*/
 
+	*/
 }
 
 void Sys_RedirectFunctions()
@@ -897,6 +897,12 @@ void Sys_RedirectFunctions()
 	SetJump(0x080DD59E, (DWORD)BG_PlayerStateToEntityState);
 	SetJump(0x080D978C, (DWORD)BG_UpdatePlayerDObj);
 	SetJump(0x080D954C, (DWORD)BG_Player_DoControllers);
+
+
+
+
+	// Pmove
+	SetJump(0x080EDF3A, (DWORD)PM_Weapon);
 
 
 	G_RegisterDvars(); // <-- FIX ME

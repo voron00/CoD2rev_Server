@@ -771,6 +771,145 @@ struct pmoveHandler_t
 	void (*playerEvent)(int, int);
 };
 
+struct pmove_t
+{
+	playerState_s *ps;
+	usercmd_s cmd;
+	usercmd_s oldcmd;
+	int tracemask;
+	int numtouch;
+	int touchents[32];
+	vec3_t mins;
+	vec3_t maxs;
+	float xyspeed;
+	int proneChange;
+	byte handler;
+	byte mantleStarted;
+	vec3_t mantleEndPos;
+	int mantleDuration;
+};
+
+struct pml_t
+{
+	vec3_t forward;
+	vec3_t right;
+	vec3_t up;
+	float frametime;
+	int msec;
+	int walking;
+	int groundPlane;
+	int almostGroundPlane;
+	trace_t groundTrace;
+	float impactSpeed;
+	vec3_t previous_origin;
+	vec3_t previous_velocity;
+	unsigned int holdrand;
+};
+
+enum weaponstate_t
+{
+	WEAPON_READY = 0x0,
+	WEAPON_RAISING = 0x1,
+	WEAPON_DROPPING = 0x2,
+	WEAPON_FIRING = 0x3,
+	WEAPON_RECHAMBERING = 0x4,
+	WEAPON_RELOADING = 0x5,
+	WEAPON_RELOADING_INTERUPT = 0x6,
+	WEAPON_RELOAD_START = 0x7,
+	WEAPON_RELOAD_START_INTERUPT = 0x8,
+	WEAPON_RELOAD_END = 0x9,
+	WEAPON_MELEE_INIT = 0xA,
+	WEAPON_MELEE_FIRE = 0xB,
+	WEAPON_OFFHAND_INIT = 0xC,
+	WEAPON_OFFHAND_PREPARE = 0xD,
+	WEAPON_OFFHAND_HOLD = 0xE,
+	WEAPON_OFFHAND = 0xF,
+	WEAPON_OFFHAND_END = 0x10,
+	WEAPON_BINOCULARS_INIT = 0x11,
+	WEAPON_BINOCULARS_PREPARE = 0x12,
+	WEAPON_BINOCULARS_HOLD = 0x13,
+	WEAPON_BINOCULARS_START = 0x14,
+	WEAPON_BINOCULARS_DROP = 0x15,
+	WEAPON_BINOCULARS_END = 0x16,
+	WEAPONSTATES_NUM = 0x17,
+};
+
+enum weapAnimNumber_t
+{
+	WEAP_IDLE = 0x0,
+	WEAP_FORCE_IDLE = 0x1,
+	WEAP_ATTACK = 0x2,
+	WEAP_ATTACK_LASTSHOT = 0x3,
+	WEAP_RECHAMBER = 0x4,
+	WEAP_ADS_ATTACK = 0x5,
+	WEAP_ADS_ATTACK_LASTSHOT = 0x6,
+	WEAP_ADS_RECHAMBER = 0x7,
+	WEAP_MELEE_ATTACK = 0x8,
+	WEAP_DROP = 0x9,
+	WEAP_RAISE = 0xA,
+	WEAP_RELOAD = 0xB,
+	WEAP_RELOAD_EMPTY = 0xC,
+	WEAP_RELOAD_START = 0xD,
+	WEAP_RELOAD_END = 0xE,
+	WEAP_ALTSWITCH = 0xF,
+	WEAP_EMPTY_DROP = 0x11,
+	WEAP_EMPTY_RAISE = 0x12,
+	WEAP_HOLD_FIRE = 0x13,
+	MAX_WP_ANIMATIONS = 0x14,
+};
+
+extern dvar_t *player_view_pitch_up;
+extern dvar_t *player_view_pitch_down;
+extern dvar_t *bg_ladder_yawcap;
+extern dvar_t *bg_prone_yawcap;
+extern dvar_t *bg_foliagesnd_minspeed;
+extern dvar_t *bg_foliagesnd_maxspeed;
+extern dvar_t *bg_foliagesnd_slowinterval;
+extern dvar_t *bg_foliagesnd_fastinterval;
+extern dvar_t *bg_foliagesnd_resetinterval;
+extern dvar_t *bg_fallDamageMinHeight;
+extern dvar_t *bg_fallDamageMaxHeight;
+extern dvar_t *inertiaMax;
+extern dvar_t *inertiaDebug;
+extern dvar_t *inertiaAngle;
+extern dvar_t *friction;
+extern dvar_t *stopspeed;
+extern dvar_t *bg_swingSpeed;
+extern dvar_t *bg_bobAmplitudeStanding;
+extern dvar_t *bg_bobAmplitudeDucked;
+extern dvar_t *bg_bobAmplitudeProne;
+extern dvar_t *bg_bobMax;
+extern dvar_t *bg_aimSpreadMoveSpeedThreshold;
+extern dvar_t *player_breath_hold_time;
+extern dvar_t *player_breath_gasp_time;
+extern dvar_t *player_breath_fire_delay;
+extern dvar_t *player_breath_gasp_scale;
+extern dvar_t *player_breath_hold_lerp;
+extern dvar_t *player_breath_gasp_lerp;
+extern dvar_t *player_breath_snd_lerp;
+extern dvar_t *player_breath_snd_delay;
+extern dvar_t *player_toggleBinoculars;
+extern dvar_t *player_scopeExitOnDamage;
+extern dvar_t *player_adsExitDelay;
+extern dvar_t *player_moveThreshhold;
+extern dvar_t *player_footstepsThreshhold;
+extern dvar_t *player_strafeSpeedScale;
+extern dvar_t *player_backSpeedScale;
+extern dvar_t *player_spectateSpeedScale;
+extern dvar_t *player_turnAnims;
+extern dvar_t *player_dmgtimer_timePerPoint;
+extern dvar_t *player_dmgtimer_maxTime;
+extern dvar_t *player_dmgtimer_minScale;
+extern dvar_t *player_dmgtimer_stumbleTime;
+extern dvar_t *player_dmgtimer_flinchTime;
+
+struct MantleAnimTransition
+{
+	int upAnimIndex;
+	int overAnimIndex;
+	float height;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -791,6 +930,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qboolean setTimer, qboolean isContinue, qboolean force );
 int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
+void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
 unsigned int BG_AnimationIndexForString(const char *string);
 void BG_LoadAnim();
@@ -798,16 +938,30 @@ void BG_LoadAnim();
 void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
 
-void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
+int CL_LocalClient_GetActiveCount();
 
+void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
+void PM_AddEvent(playerState_s *ps, int newEvent);
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
+int PM_WeaponAmmoAvailable(playerState_s *ps);
+int BG_WeaponAmmo(const playerState_s *ps, int weaponIndex);
+int BG_WeaponIsClipOnly(int weapon);
+int BG_AmmoForWeapon(int weapon);
+int BG_ClipForWeapon(int weapon);
+int BG_GetClipSize(int weaponIndex);
+qboolean PM_WeaponClipEmpty(playerState_s *ps);
 
 long BG_StringHashValue( const char *fname );
 long BG_StringHashValue_Lwr( const char *fname );
 
+bool Mantle_IsWeaponInactive(const playerState_s *ps);
+
+void PM_Weapon(pmove_t *pm, pml_t *pml);
+
 unsigned int BG_GetNumWeapons();
 WeaponDef* BG_GetWeaponDef(int weaponIndex);
 void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);
+void PM_WeaponUseAmmo(playerState_s *ps, int weaponIndex, int amount);
 
 WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
 

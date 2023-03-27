@@ -594,7 +594,109 @@ float vec3Distance(const float* pointA, const float* pointB)
 
 void Vec3Lerp(const float *from, const float *to, float frac, float *result)
 {
-  result[0] = (to[0] - from[0]) * frac + from[0];
-  result[1] = (to[1] - from[1]) * frac + from[1];
-  result[2] = (to[2] - from[2]) * frac + from[2];
+	result[0] = (to[0] - from[0]) * frac + from[0];
+	result[1] = (to[1] - from[1]) * frac + from[1];
+	result[2] = (to[2] - from[2]) * frac + from[2];
+}
+
+double DiffTrack(float tgt, float cur, float rate, float deltaTime)
+{
+	float step;
+	float d, ad;
+
+	d = tgt - cur;
+
+	step = rate * d * deltaTime;
+	ad = fabs(d);
+
+	if( ad <= 0.001 || fabs(step) > ad)
+	{
+		return tgt;
+	}
+
+	return cur + step;
+}
+
+double DiffTrackAngle(float tgt, float cur, float rate, float deltaTime)
+{
+	float angle;
+
+	while ( (tgt - cur) > 180.0 )
+	{
+		tgt = tgt - 360.0;
+	}
+
+	while ( (tgt - cur) < -180.0 )
+	{
+		tgt = tgt + 360.0;
+	}
+
+	angle = DiffTrack(tgt, cur, rate, deltaTime);
+	return AngleNormalize180(angle);
+}
+
+long double AngleNormalize180Accurate(float angle)
+{
+	if ( angle > -180.0 )
+	{
+		if ( angle <= 180.0 )
+		{
+			return angle;
+		}
+		else
+		{
+			do
+				angle = angle - 360.0;
+			while ( angle > 180.0 );
+			return angle;
+		}
+	}
+	else
+	{
+		do
+			angle = angle + 360.0;
+		while ( angle <= -180.0 );
+		return angle;
+	}
+}
+
+long double AngleNormalize360Accurate(float angle)
+{
+	if ( angle >= 0.0 )
+	{
+		if ( angle < 360.0 )
+		{
+			return angle;
+		}
+		else
+		{
+			do
+				angle = angle - 360.0;
+			while ( angle >= 360.0 );
+			return angle;
+		}
+	}
+	else
+	{
+		do
+			angle = angle + 360.0;
+		while ( angle < 0.0 );
+		return angle;
+	}
+}
+
+void VectorAngleMultiply(float *vec, float angle)
+{
+	long double a;
+	float temp;
+	float x;
+	float y;
+
+	a = (angle * 0.017453292);
+	x = cos(a);
+	y = sin(a);
+
+	temp = (vec[0] * x) - (vec[1] * y);
+	vec[1] = (vec[1] * x) + (vec[0] * y);
+	vec[0] = temp;
 }

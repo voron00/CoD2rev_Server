@@ -190,3 +190,8 @@ double vectosignedyaw(float *vec);
 int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *org, const float fogOpaqueDistSqrd);
 float vec3Distance(const float* pointA, const float* pointB);
 void Vec3Lerp(const float *from, const float *to, float frac, float *result);
+double DiffTrack(float tgt, float cur, float rate, float deltaTime);
+double DiffTrackAngle(float tgt, float cur, float rate, float deltaTime);
+long double AngleNormalize180Accurate(float angle);
+long double AngleNormalize360Accurate(float angle);
+void VectorAngleMultiply(float *vec, float angle);

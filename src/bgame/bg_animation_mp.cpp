@@ -2092,8 +2092,6 @@ void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, c
 	clientControllers_t controllers;
 	float maxAngleChange;
 	int i;
-	
-	return;
 
 	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &controllers);
 	maxAngleChange = (float)frametime * 0.36000001;
