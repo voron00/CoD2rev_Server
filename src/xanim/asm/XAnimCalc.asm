@@ -9,9 +9,77 @@ global XAnimCalc
 global XAnimGetRelDelta
 global XAnimCalcDeltaTree
 global XAnim_CalcDeltaForTime
+global XAnimCalcDelta
 
 
 section .text
+
+
+XAnimCalcDelta:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 58h
+   mov     eax, [ebp+18h]
+   mov     [ebp-9], al
+   mov     eax, [ebp+8]
+   mov     byte [eax+6], 0
+   mov     edx, [ebp+8]
+   movzx   eax, byte [ebp-9]
+   mov     [edx+7], al
+   lea     eax, [ebp-38h]
+   mov     [esp+14h], eax
+   mov     dword [esp+10h], 0
+   mov     dword [esp+0Ch], 1
+   mov     eax, 3F800000h
+   mov     [esp+8], eax
+   mov     eax, [ebp+0Ch]
+   mov     [esp+4], eax
+   mov     eax, [ebp+8]
+   mov     [esp], eax
+   call    XAnimCalcDeltaTree
+   fld     dword [ebp-38h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnz     loc_80BEF8D
+   jp      loc_80BEF8D
+   jmp     loc_80BEFB3
+loc_80BEF8D:
+   fld     dword [ebp-34h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnz     loc_80BEF9F
+   jp      loc_80BEF9F
+   jmp     loc_80BEFB3
+loc_80BEF9F:
+   mov     eax, [ebp+10h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-38h]
+   mov     [esp], eax
+   call    Vector2Copy713
+   jmp     loc_80BEFCA
+loc_80BEFB3:
+   mov     edx, [ebp+10h]
+   mov     eax, 0
+   mov     [edx], eax
+   mov     edx, [ebp+10h]
+   add     edx, 4
+   mov     eax, 3F800000h
+   mov     [edx], eax
+loc_80BEFCA:
+   mov     eax, [ebp+14h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-38h]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    VectorCopy925
+   leave   
+   retn    
 
 
 sub_80C0FC2:

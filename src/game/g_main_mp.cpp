@@ -106,6 +106,31 @@ void G_RunThink(gentity_s *ent)
 	}
 }
 
+void G_TraceCapsule(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask)
+{
+	SV_Trace(results, start, mins, maxs, end, passEntityNum, contentmask, 0, 0, 0);
+}
+
+int G_TraceCapsuleComplete(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask)
+{
+	return SV_TracePassed(start, mins, maxs, end, passEntityNum, 1023, contentmask, 0, 0);
+}
+
+void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap)
+{
+	SV_Trace(results, start, vec3_origin, vec3_origin, end, passentitynum, contentmask, 1, priorityMap, 1);
+}
+
+int G_LocationalTracePassed(const float *start, const float *end, int passEntityNum, int contentmask)
+{
+	return SV_TracePassed(start, vec3_origin, vec3_origin, end, passEntityNum, 1023, contentmask, 1, 1);
+}
+
+void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask)
+{
+	SV_SightTrace(hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, 1023, contentmask);
+}
+
 static signed int SortRanks(const void *num1, const void *num2)
 {
 	gclient_t *client1;

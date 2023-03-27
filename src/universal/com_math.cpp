@@ -591,3 +591,10 @@ float vec3Distance(const float* pointA, const float* pointB)
 	float diffz = pointA[2]-pointB[2];
 	return sqrtf(diffx*diffx + diffy*diffy + diffz*diffz);
 }
+
+void Vec3Lerp(const float *from, const float *to, float frac, float *result)
+{
+  result[0] = (to[0] - from[0]) * frac + from[0];
+  result[1] = (to[1] - from[1]) * frac + from[1];
+  result[2] = (to[2] - from[2]) * frac + from[2];
+}

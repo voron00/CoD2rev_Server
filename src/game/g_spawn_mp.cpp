@@ -198,3 +198,27 @@ unsigned short Scr_ExecEntThread(gentity_s *ent, int handle, unsigned int paramc
 {
 	return Scr_ExecEntThreadNum(ent->s.number, 0, handle, paramcount);
 }
+
+void Scr_FreeEntityConstStrings(gentity_s *ent)
+{
+	int i;
+	game_entity_field_t *field;
+
+	for ( field = g_entity_fields; field->name; ++field )
+	{
+		if ( field->type == F_STRING )
+			Scr_SetString((uint16_t *)((char *)ent + field->ofs), 0);
+	}
+
+	for ( i = 0; i <= 6; ++i )
+	{
+		ent->attachModelNames[i] = 0;
+		Scr_SetString(&ent->attachTagNames[i], 0);
+	}
+}
+
+void Scr_FreeEntity(gentity_s *ent)
+{
+	Scr_FreeEntityConstStrings(ent);
+	Scr_FreeEntityNum(ent->s.number, 0);
+}

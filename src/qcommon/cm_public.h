@@ -51,6 +51,7 @@ void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace);
 void CM_TraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 void CM_TestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace);
+int CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles );
 void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 void CM_PositionTestInAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles);

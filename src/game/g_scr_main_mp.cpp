@@ -288,6 +288,70 @@ int GScr_GetStatusIconIndex(const char *pszIcon)
 	return 0;
 }
 
+void Scr_BulletTrace()
+{
+	const char *surfaceName;
+	vec3_t vNorm;
+	vec3_t value;
+	int iSurfaceTypeIndex;
+	trace_t trace;
+	int contentmask;
+	int iIgnoreEntNum;
+	gentity_s *pIgnoreEnt;
+	vec3_t vEnd;
+	vec3_t vStart;
+
+	pIgnoreEnt = 0;
+	iIgnoreEntNum = 1023;
+	contentmask = 41953329;
+
+	Scr_GetVector(0, vStart);
+	Scr_GetVector(1, vEnd);
+
+	if ( !Scr_GetInt(2) )
+		contentmask &= ~0x2000000u;
+
+	if ( Scr_GetType(3) == VAR_OBJECT && Scr_GetPointerType(3) == VAR_ENTITY )
+	{
+		pIgnoreEnt = Scr_GetEntity(3);
+		iIgnoreEntNum = pIgnoreEnt->s.number;
+	}
+
+	G_LocationalTrace(&trace, vStart, vEnd, iIgnoreEntNum, contentmask, 0);
+	Scr_MakeArray();
+	Scr_AddFloat(trace.fraction);
+	Scr_AddArrayStringIndexed(scr_const.fraction);
+	Vec3Lerp(vStart, vEnd, trace.fraction, value);
+	Scr_AddVector(value);
+	Scr_AddArrayStringIndexed(scr_const.position);
+
+	if ( trace.hitId == 1023 || trace.hitId == 1022 )
+		Scr_AddUndefined();
+	else
+		Scr_AddEntity(&g_entities[trace.hitId]);
+
+	Scr_AddArrayStringIndexed(scr_const.entity);
+
+	if ( trace.fraction >= 1.0 )
+	{
+		VectorSubtract(vEnd, vStart, vNorm);
+		Vec3Normalize(vNorm);
+		Scr_AddVector(vNorm);
+		Scr_AddArrayStringIndexed(scr_const.normal);
+		Scr_AddConstString(scr_const.none);
+		Scr_AddArrayStringIndexed(scr_const.surfacetype);
+	}
+	else
+	{
+		Scr_AddVector(trace.normal);
+		Scr_AddArrayStringIndexed(scr_const.normal);
+		iSurfaceTypeIndex = (trace.surfaceFlags & 0x1F00000) >> 20;
+		surfaceName = Com_SurfaceTypeToName(iSurfaceTypeIndex);
+		Scr_AddString(surfaceName);
+		Scr_AddArrayStringIndexed(scr_const.surfacetype);
+	}
+}
+
 void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t)
 {
 	const char *name;

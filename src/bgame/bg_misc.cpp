@@ -13,6 +13,16 @@ bgs_t level_bgs;
 bgs_t *bgs;
 #endif
 
+const pmoveHandler_t pmoveHandlers[] =
+{
+#ifndef DEDICATED
+	{ CG_Trace, CG_PointContents, NULL },
+#endif
+	{ G_TraceCapsule, SV_PointContents, G_PlayerEvent },
+};
+
+extern int singleClientEvents[];
+
 dvar_t *player_view_pitch_up;
 dvar_t *player_view_pitch_down;
 dvar_t *bg_ladder_yawcap;
@@ -142,6 +152,135 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result )
 		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trTime );
 		break;
 	}
+}
+
+void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler)
+{
+	int flags;
+	byte event;
+	int j;
+	float lerpTime;
+	void (*playerEvent)(int, int);
+	int i;
+
+	if ( (ps->pm_flags & 0xC00000) != 0 )
+		s->eType = ET_PLAYER;
+	else
+		s->eType = ET_INVISIBLE;
+
+	s->pos.trType = TR_INTERPOLATE;
+	VectorCopy(ps->origin, s->pos.trBase);
+
+	if ( snap )
+	{
+		s->pos.trBase[0] = (float)(int)s->pos.trBase[0];
+		s->pos.trBase[1] = (float)(int)s->pos.trBase[1];
+		s->pos.trBase[2] = (float)(int)s->pos.trBase[2];
+	}
+
+	s->apos.trType = TR_INTERPOLATE;
+	VectorCopy(ps->viewangles, s->apos.trBase);
+
+	if ( snap )
+	{
+		s->apos.trBase[0] = (float)(int)s->apos.trBase[0];
+		s->apos.trBase[1] = (float)(int)s->apos.trBase[1];
+		s->apos.trBase[2] = (float)(int)s->apos.trBase[2];
+	}
+
+	s->angles2[1] = (float)ps->movementDir;
+	s->legsAnim = ps->legsAnim;
+	s->torsoAnim = ps->torsoAnim;
+	s->clientNum = ps->clientNum;
+	s->eFlags = ps->eFlags;
+
+	if ( (ps->eFlags & 0x300) != 0 )
+		s->otherEntityNum = ps->viewlocked_entNum;
+
+	if ( ps->pm_type <= 5 )
+		flags = s->eFlags & 0xFFFDFFFF;
+	else
+		flags = s->eFlags | 0x20000;
+
+	s->eFlags = flags;
+
+	if ( (ps->pm_flags & 0x40) != 0 )
+		flags = s->eFlags | 0x40000;
+	else
+		flags = s->eFlags & 0xFFFBFFFF;
+
+	s->eFlags = flags;
+	s->leanf = ps->leanf;
+
+	if ( PM_GetEffectiveStance(ps) == 1 )
+	{
+		if ( ps->viewHeightLerpTime )
+		{
+			lerpTime = (float)(ps->commandTime - ps->viewHeightLerpTime)
+			           / (float)PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
+
+			if ( lerpTime >= 0.0 )
+			{
+				if ( lerpTime > 1.0 )
+					lerpTime = 1.0;
+			}
+			else
+			{
+				lerpTime = 0.0;
+			}
+
+			if ( !ps->viewHeightLerpDown )
+				lerpTime = 1.0 - lerpTime;
+		}
+		else
+		{
+			lerpTime = 1.0;
+		}
+
+		s->fTorsoHeight = ps->fTorsoHeight * lerpTime;
+		s->fTorsoPitch = AngleNormalize180(ps->fTorsoPitch) * lerpTime;
+		s->fWaistPitch = AngleNormalize180(ps->fWaistPitch) * lerpTime;
+	}
+	else
+	{
+		s->fTorsoHeight = 0.0;
+		s->fTorsoPitch = 0.0;
+		s->fWaistPitch = 0.0;
+	}
+
+	if ( ps->entityEventSequence - ps->eventSequence >= 0 )
+	{
+		s->eventParm = 0;
+	}
+	else
+	{
+		if ( ps->eventSequence - ps->entityEventSequence > 4 )
+			ps->entityEventSequence = ps->eventSequence - 4;
+
+		s->eventParm = LOBYTE(ps->eventParms[ps->entityEventSequence++ & 3]);
+	}
+
+	for ( i = ps->oldEventSequence; i != ps->eventSequence; ++i )
+	{
+		event = ps->events[i & 3];
+		playerEvent = pmoveHandlers[handler].playerEvent;
+
+		if ( playerEvent )
+			playerEvent(s->number, event);
+
+		for ( j = 0; singleClientEvents[j] > 0 && singleClientEvents[j] != event; ++j )
+			;
+
+		if ( singleClientEvents[j] < 0 )
+		{
+			s->events[s->eventSequence & 3] = event;
+			s->eventParms[s->eventSequence++ & 3] = LOBYTE(ps->eventParms[i & 3]);
+		}
+	}
+
+	ps->oldEventSequence = ps->eventSequence;
+	s->weapon = LOBYTE(ps->weapon);
+	s->groundEntityNum = LOWORD(ps->groundEntityNum);
 }
 
 void BG_RegisterDvars()

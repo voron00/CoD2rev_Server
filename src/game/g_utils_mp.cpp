@@ -28,6 +28,23 @@ const char* G_ModelName(int modelIndex)
 	return SV_GetConfigstringConst(modelIndex + 334);
 }
 
+void G_AddEvent(gentity_s *ent, int event, unsigned int eventParm)
+{
+	if ( ent->client )
+	{
+		ent->client->ps.events[ent->client->ps.eventSequence & ( MAX_EVENTS - 1 )] = event;
+		ent->client->ps.eventParms[ent->client->ps.eventSequence++ & ( MAX_EVENTS - 1 )] = eventParm;
+	}
+	else
+	{
+		ent->s.events[ent->s.eventSequence & ( MAX_EVENTS - 1 )] = event;
+		ent->s.eventParms[ent->s.eventSequence++ & ( MAX_EVENTS - 1 )] = eventParm;
+	}
+
+	ent->eventTime = level.time;
+	ent->r.eventTime = level.time;
+}
+
 int G_FindConfigstringIndex(const char *name, int start, int max, int create, const char *errormsg)
 {
 	const char *s1;
@@ -215,6 +232,144 @@ float G_random()
 float G_crandom()
 {
 	return G_random() * 2.0 - 1.0;
+}
+
+void G_EntUnlink(gentity_s *ent)
+{
+	vec3_t viewAngles;
+	gentity_s *prev;
+	gentity_s *next;
+	gentity_s *parent;
+	tagInfo_s *tag;
+
+	tag = ent->tagInfo;
+
+	if ( tag )
+	{
+		G_SetOrigin(ent, ent->r.currentOrigin);
+		G_SetAngle(ent, ent->r.currentAngles);
+
+		if ( ent->client )
+		{
+			VectorCopy(ent->client->ps.viewangles, viewAngles);
+			viewAngles[2] = 0.0;
+			SetClientViewAngle(ent, viewAngles);
+		}
+
+		parent = tag->parent;
+		prev = 0;
+
+		for ( next = parent->tagChildren; next != ent; next = next->tagInfo->next )
+			prev = next;
+
+		if ( prev )
+			prev->tagInfo->next = tag->next;
+		else
+			parent->tagChildren = tag->next;
+
+		ent->tagInfo = 0;
+		Scr_SetString(&tag->name, 0);
+		MT_Free(tag, sizeof(tagInfo_s));
+	}
+}
+
+void G_FreeEntityRefs(gentity_s *ent)
+{
+	gclient_s *client;
+	int number;
+	int i;
+	int j;
+	int k;
+	gentity_s *other;
+
+	number = ent->s.number;
+
+	for ( i = 0; i < level.num_entities; ++i )
+	{
+		other = &g_entities[i];
+
+		if ( other->r.inuse )
+		{
+			if ( other->parent == ent )
+				other->parent = 0;
+
+			if ( other->r.ownerNum == number )
+			{
+				other->r.ownerNum = 1023;
+				if ( other->s.eType == ET_TURRET )
+					other->active = 0;
+			}
+
+			if ( other->s.groundEntityNum == number )
+				other->s.groundEntityNum = 1023;
+		}
+	}
+
+	for ( j = 0; j < 64; ++j )
+	{
+		if ( g_entities[j].r.inuse )
+		{
+			client = g_entities[j].client;
+			if ( client->pLookatEnt == ent )
+				client->pLookatEnt = 0;
+
+			if ( client->useHoldEntity == number )
+				client->useHoldEntity = 1023;
+
+			if ( client->ps.cursorHintEntIndex == number )
+				client->ps.cursorHintEntIndex = 1023;
+		}
+	}
+
+	for ( k = 0; k < 32; ++k )
+	{
+		if ( level.droppedWeaponCue[k] == ent )
+			level.droppedWeaponCue[k] = 0;
+	}
+}
+
+void G_FreeEntity(gentity_s *ent)
+{
+	XAnimTree_s *tree;
+	int useCount;
+
+	G_EntUnlink(ent);
+
+	while ( ent->tagChildren )
+		G_EntUnlink(ent->tagChildren);
+
+	SV_UnlinkEntity(ent);
+
+	tree = SV_DObjGetTree(ent);
+	if ( tree )
+		XAnimClearTree(tree);
+
+	Com_SafeServerDObjFree(ent->s.number);
+	G_FreeEntityRefs(ent);
+
+	if ( ent->pTurretInfo )
+		G_FreeTurret(ent);
+
+	if ( ent->s.eType == ET_PLAYER_CORPSE )
+		G_CorpseFree(ent);
+
+	Scr_FreeEntity(ent);
+	useCount = ent->useCount;
+	memset(ent, 0, sizeof(gentity_s));
+	ent->eventTime = level.time;
+
+	if ( ent - level.gentities > 71 )
+	{
+		if ( level.lastFreeEnt )
+			level.lastFreeEnt->nextFree = ent;
+		else
+			level.firstFreeEnt = ent;
+
+		level.lastFreeEnt = ent;
+		ent->nextFree = 0;
+	}
+
+	ent->useCount = useCount + 1;
 }
 
 void G_InitGentity(gentity_s *ent)

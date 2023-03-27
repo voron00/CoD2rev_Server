@@ -264,7 +264,7 @@ typedef struct DObj_s
 {
 	XAnimTree_s *tree;
 	DSkel_t skel;
-	unsigned short *duplicatePartIndexes;
+	unsigned short *duplicatePartsIndexes;
 	unsigned short duplicateParts;
 	unsigned int ignoreCollision;
 	byte numModels;
@@ -354,13 +354,16 @@ void DObjShutdown();
 void DObjFree(DObj_s *obj);
 void DObjAbort();
 
-int DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
+void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
+int DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *angles);
+
 int DObjSkelExists(DObj_s *obj, int timeStamp);
 int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 int DObjGetAllocSkelSize(const DObj_s *obj);
 void DObjCreateSkel(DObj_s *obj, DSkelPart_s *skelPart, int time);
 int DObjSkelAreBonesUpToDate(const DObj_s *obj, int *partBits);
 void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
+XAnimTree_s* DObjGetTree(const DObj_s *obj);
 
 void XAnimFree(XAnimParts *parts);
 void XAnimFreeList(XAnim *anims);
@@ -368,6 +371,8 @@ void XAnimFreeList(XAnim *anims);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int QDECL DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
 
 void QDECL XModelPartsFree(XModelParts *modelParts);
 void QDECL XModelFree(XModel *model);
@@ -398,6 +403,7 @@ void QDECL XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *
 void QDECL XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAnimMat *rotTransArray, bool bClear, bool bNormQuat, XAnimCalcAnimInfo *animInfo, int buffer);
 void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
 void QDECL XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos);
+void QDECL XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
 
 #ifdef __cplusplus
 }

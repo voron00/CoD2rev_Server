@@ -290,6 +290,7 @@ svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt );
 gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
 void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
 qboolean SV_inSnapshot(const float *origin, int iEntityNum);
+XAnimTree_s* SV_DObjGetTree(gentity_s *ent);
 
 #include "../qcommon/cm_public.h"
 void SV_LinkEntity( gentity_t *gEnt );
@@ -301,6 +302,7 @@ int SV_ClipSightToEntity(sightclip_t *clip, svEntity_t *check);
 void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, char *priorityMap, int staticmodels);
 int SV_TracePassed(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask, int locational, int staticmodels);
 void SV_SightTrace(int *hitNum,const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask);
+int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask);
 
 void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);
 char* SV_AllocSkelMemory(unsigned int size);

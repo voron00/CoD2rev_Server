@@ -3,6 +3,11 @@
 
 unsigned int g_empty;
 
+XAnimTree_s* DObjGetTree(const DObj_s *obj)
+{
+	return obj->tree;
+}
+
 int DObjHasContents(DObj_s *obj, int contentmask)
 {
 	int i;
@@ -148,8 +153,8 @@ void DObjSetTree(DObj *obj, XAnimTree *tree)
 	if ( tree )
 	{
 		size = tree->anims->size;
-		obj->duplicatePartIndexes = &tree->children[size];
-		part = &obj->duplicatePartIndexes[size];
+		obj->duplicatePartsIndexes = &tree->children[size];
+		part = &obj->duplicatePartsIndexes[size];
 		next = *(byte *)part + 1;
 
 		if ( *(byte *)part == 0 )
@@ -162,7 +167,7 @@ void DObjSetTree(DObj *obj, XAnimTree *tree)
 	}
 	else
 	{
-		obj->duplicatePartIndexes = 0;
+		obj->duplicatePartsIndexes = 0;
 	}
 }
 
@@ -366,7 +371,7 @@ void DObjFree(DObj *obj)
 
 	if ( obj->tree )
 	{
-		obj->duplicatePartIndexes = 0;
+		obj->duplicatePartsIndexes = 0;
 		obj->tree = 0;
 	}
 

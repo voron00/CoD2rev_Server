@@ -1399,18 +1399,6 @@ netField_t clientStateFields[] =
 	{ CSF( attachModelIndex[5] ), 8},
 };
 
-/*
-#define net_fields (((netField_t*)( 0x0815A580 )))
-void MSG_DumpFields()
-{
-	// Just print stuff until program segfaults
-	for(int i = 0; i < 16384; i++)
-	{
-		Com_Printf("{ OBJF( %s ), %d},\n", net_fields[i].name, net_fields[i].bits);
-	}
-}
-*/
-
 void MSG_WriteDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, qboolean force)
 {
 	clientState_t nullstate;

@@ -59,6 +59,7 @@ void SetClientViewAngle(gentity_s *ent, const float *angle)
 		}
 
 		AngleDelta(ent->client->ps.proneTorsoPitch, angles[0]);
+
 		angles[0] = direction;
 		angles[0] = AngleNormalize180(angles[0]);
 
@@ -260,7 +261,7 @@ const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId)
 
 	if ( gclient->sess.localClient
 	        || (password = Info_ValueForKey(userinfo, "password"), !*g_password->current.string)
-	        || !I_stricmp((char *)g_password->current.integer, "none")
+	        || !I_stricmp(g_password->current.integer, "none")
 	        || !strcmp(g_password->current.string, password) )
 	{
 		Scr_PlayerConnect(ent);

@@ -833,7 +833,7 @@ void BG_UpdateConditionValue(int client, int condition, int value, qboolean chec
 BG_GetConditionValue
 ==============
 */
-unsigned int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion)
+unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion)
 {
 	unsigned int i;
 
@@ -1624,6 +1624,57 @@ void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims
 	Com_EndParseSession();
 }
 
+void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision)
+{
+	int numModels;
+	DObjModel_s models[8];
+	XAnimTree_s *tree;
+	int i;
+	int weapon;
+
+	weapon = es->weapon;
+
+	if ( (es->eFlags & 0x300) != 0 )
+		weapon = 0;
+
+	tree = ci->pXAnimTree;
+
+	if ( !ci->infoValid || !ci->model[0] )
+	{
+		XAnimClearTree(tree);
+		bgs->SafeDObjFree(es->number);
+		return;
+	}
+
+	if ( pDObj )
+	{
+		if ( ci->weaponIndex == weapon && !ci->dobjDirty )
+			return;
+
+		bgs->SafeDObjFree(es->number);
+	}
+
+	models->model = bgs->GetXModel(ci->model);
+	models->parentModelName = 0;
+	models->ignoreCollision = 0;
+
+	numModels = 1;
+
+	for ( i = 0; i < 6; ++i )
+	{
+		if ( ci->attachModelNames[i][0] )
+		{
+			models[numModels].model = bgs->GetXModel(ci->attachModelNames[i]);
+			models[numModels].parentModelName = ci->attachTagNames[i];
+			models[numModels++].ignoreCollision = (attachIgnoreCollision >> i) & 1;
+		}
+	}
+
+	ci->weaponIndex = weapon;
+	bgs->CreateDObj(models, numModels, tree, es->number);
+	ci->dobjDirty = 0;
+}
+
 animation_s *BG_GetAnimationForIndex(int client, unsigned int index)
 {
 	if ( index >= globalScriptData->numAnimations )
@@ -1977,6 +2028,86 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	{
 		*angle = AngleMod( destination + (clampTolerance - 1) );
 	}
+}
+
+void BG_LerpAngles(float *angles_goal, float maxAngleChange, float *angles)
+{
+	int i;
+	float diff;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		diff = angles_goal[i] - angles[i];
+
+		if ( diff <= maxAngleChange )
+		{
+			if ( -maxAngleChange <= diff )
+				angles[i] = angles_goal[i];
+			else
+				angles[i] = angles[i] - maxAngleChange;
+		}
+		else
+		{
+			angles[i] = angles[i] + maxAngleChange;
+		}
+	}
+}
+
+void BG_LerpOffset(float *offset_goal, float maxOffsetChange, float *offset)
+{
+	float diff;
+	float diff_4;
+	float diff_8;
+	float error;
+	float error2;
+
+	diff =   offset_goal[0] - offset[1];
+	diff_4 = offset_goal[1] - offset[1];
+	diff_8 = offset_goal[2] - offset[2];
+
+	error = (float)((float)(diff * diff) + (float)(diff_4 * diff_4)) + (float)(diff_8 * diff_8);
+
+	if ( error != 0.0 )
+	{
+		error2 = I_rsqrt(error) * maxOffsetChange;
+
+		if ( error2 >= 1.0 )
+		{
+			offset[0] = offset_goal[0];
+			offset[1] = offset_goal[1];
+			offset[2] = offset_goal[2];
+		}
+		else
+		{
+			offset[0] = (float)(error2 * diff)   + offset[0];
+			offset[1] = (float)(error2 * diff_4) + offset[1];
+			offset[2] = (float)(error2 * diff_8) + offset[2];
+		}
+	}
+}
+
+void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime)
+{
+	float range;
+	clientControllers_t controllers;
+	float maxAngleChange;
+	int i;
+	
+	return;
+
+	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &controllers);
+	maxAngleChange = (float)frametime * 0.36000001;
+
+	for ( i = 0; i < 6; ++i )
+	{
+		BG_LerpAngles(controllers.angles[i], maxAngleChange, ci->control.angles[i]);
+		DObjSetControlTagAngles(obj, partBits, *controller_names[i], ci->control.angles[i]);
+	}
+
+	BG_LerpAngles(controllers.tag_origin_angles, maxAngleChange, ci->control.tag_origin_angles);
+	range = (float)frametime * 0.1;
+	BG_LerpOffset(controllers.tag_origin_offset, range, ci->control.tag_origin_offset);
+	DObjSetLocalTag(obj, partBits, scr_const.tag_origin, ci->control.tag_origin_offset, ci->control.tag_origin_angles);
 }
 
 void BG_PlayerAnimation_VerifyAnim(XAnimTree_s *pAnimTree, lerpFrame_t *lf)

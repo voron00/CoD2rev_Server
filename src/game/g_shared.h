@@ -837,6 +837,225 @@ struct entityHandler_t
 	int splashMethodOfDeath;
 };
 
+typedef enum
+{
+	EV_NONE,
+	EV_FOOTSTEP_RUN_DEFAULT,
+	EV_FOOTSTEP_RUN_BARK,
+	EV_FOOTSTEP_RUN_BRICK,
+	EV_FOOTSTEP_RUN_CARPET,
+	EV_FOOTSTEP_RUN_CLOTH,
+	EV_FOOTSTEP_RUN_CONCRETE,
+	EV_FOOTSTEP_RUN_DIRT,
+	EV_FOOTSTEP_RUN_FLESH,
+	EV_FOOTSTEP_RUN_FOLIAGE,
+	EV_FOOTSTEP_RUN_GLASS,
+	EV_FOOTSTEP_RUN_GRASS,
+	EV_FOOTSTEP_RUN_GRAVEL,
+	EV_FOOTSTEP_RUN_ICE,
+	EV_FOOTSTEP_RUN_METAL,
+	EV_FOOTSTEP_RUN_MUD,
+	EV_FOOTSTEP_RUN_PAPER,
+	EV_FOOTSTEP_RUN_PLASTER,
+	EV_FOOTSTEP_RUN_ROCK,
+	EV_FOOTSTEP_RUN_SAND,
+	EV_FOOTSTEP_RUN_SNOW,
+	EV_FOOTSTEP_RUN_WATER,
+	EV_FOOTSTEP_RUN_WOOD,
+	EV_FOOTSTEP_RUN_ASPHALT,
+	EV_FOOTSTEP_WALK_DEFAULT,
+	EV_FOOTSTEP_WALK_BARK,
+	EV_FOOTSTEP_WALK_BRICK,
+	EV_FOOTSTEP_WALK_CARPET,
+	EV_FOOTSTEP_WALK_CLOTH,
+	EV_FOOTSTEP_WALK_CONCRETE,
+	EV_FOOTSTEP_WALK_DIRT,
+	EV_FOOTSTEP_WALK_FLESH,
+	EV_FOOTSTEP_WALK_FOLIAGE,
+	EV_FOOTSTEP_WALK_GLASS,
+	EV_FOOTSTEP_WALK_GRASS,
+	EV_FOOTSTEP_WALK_GRAVEL,
+	EV_FOOTSTEP_WALK_ICE,
+	EV_FOOTSTEP_WALK_METAL,
+	EV_FOOTSTEP_WALK_MUD,
+	EV_FOOTSTEP_WALK_PAPER,
+	EV_FOOTSTEP_WALK_PLASTER,
+	EV_FOOTSTEP_WALK_ROCK,
+	EV_FOOTSTEP_WALK_SAND,
+	EV_FOOTSTEP_WALK_SNOW,
+	EV_FOOTSTEP_WALK_WATER,
+	EV_FOOTSTEP_WALK_WOOD,
+	EV_FOOTSTEP_WALK_ASPHALT,
+	EV_FOOTSTEP_PRONE_DEFAULT,
+	EV_FOOTSTEP_PRONE_BARK,
+	EV_FOOTSTEP_PRONE_BRICK,
+	EV_FOOTSTEP_PRONE_CARPET,
+	EV_FOOTSTEP_PRONE_CLOTH,
+	EV_FOOTSTEP_PRONE_CONCRETE,
+	EV_FOOTSTEP_PRONE_DIRT,
+	EV_FOOTSTEP_PRONE_FLESH,
+	EV_FOOTSTEP_PRONE_FOLIAGE,
+	EV_FOOTSTEP_PRONE_GLASS,
+	EV_FOOTSTEP_PRONE_GRASS,
+	EV_FOOTSTEP_PRONE_GRAVEL,
+	EV_FOOTSTEP_PRONE_ICE,
+	EV_FOOTSTEP_PRONE_METAL,
+	EV_FOOTSTEP_PRONE_MUD,
+	EV_FOOTSTEP_PRONE_PAPER,
+	EV_FOOTSTEP_PRONE_PLASTER,
+	EV_FOOTSTEP_PRONE_ROCK,
+	EV_FOOTSTEP_PRONE_SAND,
+	EV_FOOTSTEP_PRONE_SNOW,
+	EV_FOOTSTEP_PRONE_WATER,
+	EV_FOOTSTEP_PRONE_WOOD,
+	EV_FOOTSTEP_PRONE_ASPHALT,
+	EV_JUMP_DEFAULT,
+	EV_JUMP_BARK,
+	EV_JUMP_BRICK,
+	EV_JUMP_CARPET,
+	EV_JUMP_CLOTH,
+	EV_JUMP_CONCRETE,
+	EV_JUMP_DIRT,
+	EV_JUMP_FLESH,
+	EV_JUMP_FOLIAGE,
+	EV_JUMP_GLASS,
+	EV_JUMP_GRASS,
+	EV_JUMP_GRAVEL,
+	EV_JUMP_ICE,
+	EV_JUMP_METAL,
+	EV_JUMP_MUD,
+	EV_JUMP_PAPER,
+	EV_JUMP_PLASTER,
+	EV_JUMP_ROCK,
+	EV_JUMP_SAND,
+	EV_JUMP_SNOW,
+	EV_JUMP_WATER,
+	EV_JUMP_WOOD,
+	EV_JUMP_ASPHALT,
+	EV_LANDING_DEFAULT,
+	EV_LANDING_BARK,
+	EV_LANDING_BRICK,
+	EV_LANDING_CARPET,
+	EV_LANDING_CLOTH,
+	EV_LANDING_CONCRETE,
+	EV_LANDING_DIRT,
+	EV_LANDING_FLESH,
+	EV_LANDING_FOLIAGE,
+	EV_LANDING_GLASS,
+	EV_LANDING_GRASS,
+	EV_LANDING_GRAVEL,
+	EV_LANDING_ICE,
+	EV_LANDING_METAL,
+	EV_LANDING_MUD,
+	EV_LANDING_PAPER,
+	EV_LANDING_PLASTER,
+	EV_LANDING_ROCK,
+	EV_LANDING_SAND,
+	EV_LANDING_SNOW,
+	EV_LANDING_WATER,
+	EV_LANDING_WOOD,
+	EV_LANDING_ASPHALT,
+	EV_LANDING_PAIN_DEFAULT,
+	EV_LANDING_PAIN_BARK,
+	EV_LANDING_PAIN_BRICK,
+	EV_LANDING_PAIN_CARPET,
+	EV_LANDING_PAIN_CLOTH,
+	EV_LANDING_PAIN_CONCRETE,
+	EV_LANDING_PAIN_DIRT,
+	EV_LANDING_PAIN_FLESH,
+	EV_LANDING_PAIN_FOLIAGE,
+	EV_LANDING_PAIN_GLASS,
+	EV_LANDING_PAIN_GRASS,
+	EV_LANDING_PAIN_GRAVEL,
+	EV_LANDING_PAIN_ICE,
+	EV_LANDING_PAIN_METAL,
+	EV_LANDING_PAIN_MUD,
+	EV_LANDING_PAIN_PAPER,
+	EV_LANDING_PAIN_PLASTER,
+	EV_LANDING_PAIN_ROCK,
+	EV_LANDING_PAIN_SAND,
+	EV_LANDING_PAIN_SNOW,
+	EV_LANDING_PAIN_WATER,
+	EV_LANDING_PAIN_WOOD,
+	EV_LANDING_PAIN_ASPHALT,
+	EV_FOLIAGE_SOUND,
+	EV_STANCE_FORCE_STAND,
+	EV_STANCE_FORCE_CROUCH,
+	EV_STANCE_FORCE_PRONE,
+	EV_STEP_VIEW,
+	EV_ITEM_PICKUP,
+	EV_AMMO_PICKUP,
+	EV_NOAMMO,
+	EV_EMPTYCLIP,
+	EV_EMPTY_OFFHAND,
+	EV_RESET_ADS,
+	EV_RELOAD,
+	EV_RELOAD_FROM_EMPTY,
+	EV_RELOAD_START,
+	EV_RELOAD_END,
+	EV_RAISE_WEAPON,
+	EV_PUTAWAY_WEAPON,
+	EV_WEAPON_ALT,
+	EV_PULLBACK_WEAPON,
+	EV_FIRE_WEAPON,
+	EV_FIRE_WEAPONB,
+	EV_FIRE_WEAPON_LASTSHOT,
+	EV_RECHAMBER_WEAPON,
+	EV_EJECT_BRASS,
+	EV_MELEE_SWIPE,
+	EV_FIRE_MELEE,
+	EV_PREP_OFFHAND,
+	EV_USE_OFFHAND,
+	EV_SWITCH_OFFHAND,
+	EV_BINOCULAR_ENTER,
+	EV_BINOCULAR_EXIT,
+	EV_BINOCULAR_FIRE,
+	EV_BINOCULAR_RELEASE,
+	EV_BINOCULAR_DROP,
+	EV_MELEE_HIT,
+	EV_MELEE_MISS,
+	EV_FIRE_WEAPON_MG42,
+	EV_FIRE_QUADBARREL_1,
+	EV_FIRE_QUADBARREL_2,
+	EV_BULLET_TRACER,
+	EV_SOUND_ALIAS,
+	EV_SOUND_ALIAS_AS_MASTER,
+	EV_BULLET_HIT_SMALL,
+	EV_BULLET_HIT_LARGE,
+	EV_SHOTGUN_HIT,
+	EV_BULLET_HIT_AP,
+	EV_BULLET_HIT_CLIENT_SMALL,
+	EV_BULLET_HIT_CLIENT_LARGE,
+	EV_GRENADE_BOUNCE,
+	EV_GRENADE_EXPLODE,
+	EV_ROCKET_EXPLODE,
+	EV_ROCKET_EXPLODE_NOMARKS,
+	EV_CUSTOM_EXPLODE,
+	EV_CUSTOM_EXPLODE_NOMARKS,
+	EV_BULLET,
+	EV_PLAY_FX,
+	EV_PLAY_FX_ON_TAG,
+	EV_EARTHQUAKE,
+	EV_GRENADE_SUICIDE,
+	EV_OBITUARY,
+	EV_MAX_EVENTS
+} entity_event_t;
+
+enum entityType_t
+{
+	ET_GENERAL = 0x0,
+	ET_PLAYER = 0x1,
+	ET_PLAYER_CORPSE = 0x2,
+	ET_ITEM = 0x3,
+	ET_MISSILE = 0x4,
+	ET_INVISIBLE = 0x5,
+	ET_SCRIPTMOVER = 0x6,
+	ET_FX = 0x7,
+	ET_LOOP_FX = 0x8,
+	ET_TURRET = 0x9,
+	ET_EVENTS = 0xA,
+};
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
@@ -905,6 +1124,7 @@ void G_DObjCalcPose(gentity_s *ent);
 void G_DObjCalcBone(gentity_s *ent, int boneIndex);
 
 qboolean G_UpdateClientInfo(gentity_s *ent);
+void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap);
 
 gentity_t* Scr_EntityForRef(scr_entref_t entref);
 game_hudelem_t* Scr_HudElemForRef(scr_entref_t entref);
@@ -934,6 +1154,15 @@ void G_InitGentity(gentity_s *ent);
 
 void G_SetOrigin(gentity_s *ent, const float *origin);
 void G_SetAngle(gentity_s *ent, const float *angle);
+void G_PlayerEvent(int clientNum, int event);
+
+void G_TraceCapsule(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask);
+int G_TraceCapsuleComplete(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask);
+void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap);
+int G_LocationalTracePassed(const float *start, const float *end, int passEntityNum, int contentmask);
+void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask);
+
+void Scr_BulletTrace();
 
 void SetClientViewAngle(gentity_s *ent, const float *angle);
 void ClientUserinfoChanged(int clientNum);
@@ -943,6 +1172,18 @@ void GScr_AddFieldsForRadiant();
 
 float G_random();
 float G_crandom();
+
+void G_AddEvent(gentity_s *ent, int event, unsigned int eventParm);
+void TeleportPlayer(gentity_s *player, float *origin, float *angles);
+void G_EntUnlink(gentity_s *ent);
+void G_CorpseFree(gentity_s *ent);
+void G_FreeEntity(gentity_s *ent);
+
+void G_RunCorpseMove(gentity_s *ent);
+void G_RunCorpse(gentity_s *ent);
+
+void G_ClientStopUsingTurret(gentity_s *self);
+void G_FreeTurret(gentity_s *ent);
 
 void (*Player_GetMethod(const char **pName))(scr_entref_t);
 void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t);
@@ -972,6 +1213,7 @@ void ClientScr_GetArchiveTime(gclient_s *pSelf, const game_client_field_t *pFiel
 void ClientScr_GetPSOffsetTime(gclient_s *pSelf, const game_client_field_t *pField);
 void Scr_GetClientField(gclient_s *client, int offset);
 void Scr_SetClientField(gclient_s *client, int offset);
+void Scr_FreeEntity(gentity_s *ent);
 void GScr_AddFieldsForClient();
 
 void GScr_LoadConsts();

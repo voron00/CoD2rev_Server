@@ -295,7 +295,7 @@ typedef struct __attribute__((aligned(8))) bgs_s
 	int frametime;
 	int anim_user;
 	XModel *(*GetXModel)(const char *);
-	void (*CreateDObj)(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle);
+	void (*CreateDObj)(DObjModel_s *, unsigned short, XAnimTree_s *, int);
 	void (*SafeDObjFree)(int);
 	void *(*AllocXAnim)(int);
 	clientInfo_t clientinfo[64];
@@ -764,6 +764,24 @@ typedef struct
 } WeaponDef;
 static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
 
+struct pmoveHandler_t
+{
+	void (*trace)(trace_t *, const float *, const float *, const float *, const float *, int, int);
+	int (*isEntWalkable)(const float *, int, int);
+	void (*playerEvent)(int, int);
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
+void QDECL BG_Player_DoControllersInternal(DObj_s *obj, const entityState_s *es, int *partBits, const clientInfo_t *ci, clientControllers_t *info);
+
+#ifdef __cplusplus
+}
+#endif
+
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_s *es);
 void BG_SwingAngles( float destination,  float swingTolerance, float clampTolerance, float speed, float *angle, qboolean *swinging );
@@ -773,11 +791,14 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qboolean setTimer, qboolean isContinue, qboolean force );
 int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
+void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
 unsigned int BG_AnimationIndexForString(const char *string);
 void BG_LoadAnim();
 
 void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
+
+void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 
@@ -789,6 +810,10 @@ WeaponDef* BG_GetWeaponDef(int weaponIndex);
 void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);
 
 WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
+
+int PM_GetViewHeightLerpTime(const playerState_s *ps, int iTarget, int bDown);
+int PM_GetEffectiveStance(const playerState_s *ps);
+void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler);
 
 void Mantle_RegisterDvars();
 void Jump_RegisterDvars();

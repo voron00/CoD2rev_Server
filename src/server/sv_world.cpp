@@ -685,3 +685,28 @@ void SV_SightTrace(int *hitNum,const float *start, const float *mins, const floa
 		*hitNum = entNum;
 	}
 }
+
+int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask)
+{
+	clipHandle_t handle;
+	int contents;
+	int entities;
+	int i;
+	gentity_s *ent;
+	int entityList[1024];
+
+	contents = CM_PointContents(p, 0);
+	entities = CM_AreaEntities((const vec3_t *)p, (const vec3_t *)p, entityList, 1024, contentmask);
+
+	for ( i = 0; i < entities; ++i )
+	{
+		if ( entityList[i] != passEntityNum )
+		{
+			ent = SV_GentityNum(entityList[i]);
+			handle = SV_ClipHandleForEntity(ent);
+			contents |= CM_TransformedPointContents(p, handle, ent->r.currentOrigin, ent->r.currentAngles);
+		}
+	}
+
+	return contents & contentmask;
+}

@@ -60,26 +60,6 @@ float Q_fabs( float f );
 
 /*
 ==============
-I_fpos
-==============
-*/
-inline bool I_fispos(float x)
-{
-	return x >= 0.0;
-}
-
-/*
-==============
-I_fneg
-==============
-*/
-inline bool I_fisneg(float x)
-{
-	return x < 0.0;
-}
-
-/*
-==============
 I_fmax
 ==============
 */
@@ -209,3 +189,4 @@ float AngleSubtract( float a1, float a2 );
 double vectosignedyaw(float *vec);
 int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *org, const float fogOpaqueDistSqrd);
 float vec3Distance(const float* pointA, const float* pointB);
+void Vec3Lerp(const float *from, const float *to, float frac, float *result);

@@ -308,7 +308,17 @@ void SV_DObjCalcSkel(gentity_s *ent, int *partBits)
 	DObjCalcSkel(obj, partBits);
 }
 
+XAnimTree_s* SV_DObjGetTree(gentity_s *ent)
+{
+	DObj_s *obj;
 
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj )
+		return DObjGetTree(obj);
+	else
+		return 0;
+}
 
 void SV_ShutdownGameProgs()
 {

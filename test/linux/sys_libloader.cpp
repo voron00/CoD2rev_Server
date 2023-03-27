@@ -12,11 +12,13 @@ typedef struct
 	animStringItem_t            *values;
 } animConditionTable_t;
 
-#define net_fields (((animConditionTable_t*)( 0x081647C0 )))
+#define net_fields (((infoParm_t*)( 0x0816294C )))
 #define animstrings (((animStringItem_t*)( 0x08164740 )))
 #define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
 #define test (*((vec3_t*)( 0x0815D6E8 )))
+
+
 
 void test2()
 {
@@ -40,8 +42,18 @@ void test2()
 
 	//Scr_DumpScriptThreads();
 
-	for (int i = 0; i < 512; i++)
-		Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
+	//for (int i = 0; i < 512; i++)
+	//	Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
+
+	/*
+	// Just print stuff until program segfaults
+	for(int i = 0; i < 16384; i++)
+	{
+		//if (net_fields[i].name == NULL)
+		//	return;
+		Com_Printf("{ \"%s\", %d, %d, %d, %d }\n", net_fields[i].name, net_fields[i].clearSolid, net_fields[i].surfaceFlags, net_fields[i].contents, net_fields[i].toolFlags );
+	}
+	*/
 
 }
 
@@ -162,6 +174,8 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x0805EA28, (DWORD)CM_PointTraceStaticModels);
 	SetJump(0x0805F8C6, (DWORD)CM_PointSightTraceToEntities);
+
+	SetJump(0x0809C18C, (DWORD)SV_PointContents);
 
 
 	// Don't hook that for now, just init
@@ -857,6 +871,17 @@ void Sys_RedirectFunctions()
 
 
 
+	// SCR functions
+	SetJump(0x08111390, (DWORD)Scr_BulletTrace);
+
+
+
+	// Game
+	SetJump(0x08108270, (DWORD)TeleportPlayer);
+	SetJump(0x0810950C, (DWORD)G_ClientStopUsingTurret);
+	SetJump(0x0811B928, (DWORD)G_EntUnlink);
+	SetJump(0x0810592C, (DWORD)G_RunCorpse);
+	SetJump(0x080F2FA4, (DWORD)G_PlayerStateToEntityStateExtrapolate);
 
 	// BGS
 	SetJump(0x080EE226, (DWORD)BG_WeaponFireRecoil);
@@ -869,6 +894,9 @@ void Sys_RedirectFunctions()
 	SetJump(0x080D80B8, (DWORD)BG_SwingAngles);
 	SetJump(0x080D9698, (DWORD)BG_PlayerAnimation);
 	SetJump(0x080DCEB0, (DWORD)BG_EvaluateTrajectory);
+	SetJump(0x080DD59E, (DWORD)BG_PlayerStateToEntityState);
+	SetJump(0x080D978C, (DWORD)BG_UpdatePlayerDObj);
+	SetJump(0x080D954C, (DWORD)BG_Player_DoControllers);
 
 
 	G_RegisterDvars(); // <-- FIX ME
