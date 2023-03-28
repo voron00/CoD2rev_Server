@@ -910,6 +910,19 @@ struct MantleAnimTransition
 	float height;
 };
 
+struct MantleResults
+{
+	vec3_t dir;
+	vec3_t startPos;
+	vec3_t ledgePos;
+	vec3_t endPos;
+	int flags;
+	int duration;
+};
+
+extern pmoveHandler_t pmoveHandlers[];
+extern int singleClientEvents[];
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -932,6 +945,7 @@ int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolea
 void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
+int BG_AnimScriptAnimation(playerState_s *ps, int state, scriptAnimMoveTypes_t movetype, qboolean force);
 unsigned int BG_AnimationIndexForString(const char *string);
 void BG_LoadAnim();
 
@@ -957,6 +971,15 @@ long BG_StringHashValue_Lwr( const char *fname );
 bool Mantle_IsWeaponInactive(const playerState_s *ps);
 
 void PM_Weapon(pmove_t *pm, pml_t *pml);
+void PM_trace(pmove_t *pm,trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
+
+void Mantle_GetAnimDelta(MantleState *mstate, int time, float *delta);
+int Mantle_GetAnim(MantleState *mstate);
+void Mantle_Move(pmove_t *pm, playerState_s *ps, pml_t *pml);
+void Mantle_Start(pmove_t *pm, playerState_s *ps, MantleResults *mresults);
+void Mantle_Check(pmove_t *pmove, pml_t *pml);
+void Mantle_CreateAnims(void *(*Alloc)(int));
+void Mantle_ShutdownAnims();
 
 unsigned int BG_GetNumWeapons();
 WeaponDef* BG_GetWeaponDef(int weaponIndex);

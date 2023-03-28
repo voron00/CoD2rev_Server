@@ -404,6 +404,7 @@ void QDECL XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, D
 void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
 void QDECL XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos);
 void QDECL XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
+void QDECL XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float factor);
 
 #ifdef __cplusplus
 }

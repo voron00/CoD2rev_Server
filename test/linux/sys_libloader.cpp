@@ -903,6 +903,16 @@ void Sys_RedirectFunctions()
 
 	// Pmove
 	SetJump(0x080EDF3A, (DWORD)PM_Weapon);
+	SetJump(0x080DEBE4, (DWORD)PM_trace);
+
+	// Mantle
+	SetJump(0x080DAAF2, (DWORD)Mantle_GetAnimDelta);
+	SetJump(0x080DAA8E, (DWORD)Mantle_GetAnim);
+	SetJump(0x080DBB3C, (DWORD)Mantle_Move);
+	SetJump(0x080DAE2E, (DWORD)Mantle_Start);
+	SetJump(0x080DB964, (DWORD)Mantle_Check);
+	SetJump(0x080DB380, (DWORD)Mantle_CreateAnims);
+	SetJump(0x080DB6CA, (DWORD)Mantle_ShutdownAnims);
 
 
 	G_RegisterDvars(); // <-- FIX ME

@@ -2387,6 +2387,12 @@ SetJump(0x080DAA8E, (DWORD)Mantle_GetAnim);
 SetJump(0x080DFB3A, (DWORD)PM_FlyMove);
 SetJump(0x080E05C8, (DWORD)PM_UFOMove);
 SetJump(0x080E037E, (DWORD)PM_NoclipMove);
+SetJump(0x080DEBE4, (DWORD)PM_trace);
+SetJump(0x080DACB8, (DWORD)Mantle_CalcEndPos);
+SetJump(0x080DAE2E, (DWORD)Mantle_Start);
+SetJump(0x080DAC38, (DWORD)Mantle_FindTransition);
+SetJump(0x080DB6DA, (DWORD)Mantle_FindMantleSurface);
+SetJump(0x080DB6CA, (DWORD)Mantle_ShutdownAnims);
 
 
 

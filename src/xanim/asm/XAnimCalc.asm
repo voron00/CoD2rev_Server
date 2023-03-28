@@ -10,9 +10,104 @@ global XAnimGetRelDelta
 global XAnimCalcDeltaTree
 global XAnim_CalcDeltaForTime
 global XAnimCalcDelta
+global XAnimGetAbsDelta
 
 
 section .text
+
+
+XAnimGetAbsDelta:
+   push    ebp
+   mov     ebp, esp
+   sub     esp, 48h
+   mov     eax, [ebp+0Ch]
+   shl     eax, 3
+   add     eax, [ebp+8]
+   add     eax, 0Ch
+   mov     [ebp-2Ch], eax
+   mov     eax, [ebp-2Ch]
+   movzx   eax, word [eax]
+   mov     [ebp-30h], eax
+   cmp     dword [ebp-30h], 0
+   jnz     loc_80BF289
+   mov     eax, [ebp-2Ch]
+   mov     eax, [eax+4]
+   mov     [ebp-34h], eax
+   mov     eax, [ebp-34h]
+   cmp     byte [eax+3], 0
+   jz      loc_80BF289
+   lea     eax, [ebp-28h]
+   mov     [esp], eax
+   call    Vector2Clear651
+   mov     eax, 0
+   mov     [ebp-20h], eax
+   lea     eax, [ebp-28h]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    VectorClear875
+   lea     eax, [ebp-28h]
+   mov     [esp+0Ch], eax
+   mov     eax, [ebp+18h]
+   mov     [esp+8], eax
+   mov     eax, 3F800000h
+   mov     [esp+4], eax
+   mov     eax, [ebp-34h]
+   mov     [esp], eax
+   call    XAnimCalcAbsDeltaParts
+   fld     dword [ebp-28h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnz     loc_80BF247
+   jp      loc_80BF247
+   fld     dword [ebp-24h]
+   fldz    
+   fxch    st1
+   fucompp 
+   fnstsw  ax
+   sahf    
+   jnz     loc_80BF247
+   jp      loc_80BF247
+   jmp     loc_80BF25B
+loc_80BF247:
+   mov     eax, [ebp+10h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-28h]
+   mov     [esp], eax
+   call    Vector2Copy713
+   jmp     loc_80BF272
+loc_80BF25B:
+   mov     edx, [ebp+10h]
+   mov     eax, 0
+   mov     [edx], eax
+   mov     edx, [ebp+10h]
+   add     edx, 4
+   mov     eax, 3F800000h
+   mov     [edx], eax
+loc_80BF272:
+   mov     eax, [ebp+14h]
+   mov     [esp+4], eax
+   lea     eax, [ebp-28h]
+   add     eax, 0Ch
+   mov     [esp], eax
+   call    VectorCopy925
+   jmp     locret_80BF2AB
+loc_80BF289:
+   mov     edx, [ebp+10h]
+   mov     eax, 0
+   mov     [edx], eax
+   mov     edx, [ebp+10h]
+   add     edx, 4
+   mov     eax, 3F800000h
+   mov     [edx], eax
+   mov     eax, [ebp+14h]
+   mov     [esp], eax
+   call    VectorClear875
+locret_80BF2AB:
+   leave   
+   retn    
 
 
 XAnimCalcDelta:

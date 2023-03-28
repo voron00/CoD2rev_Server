@@ -13,16 +13,6 @@ bgs_t level_bgs;
 bgs_t *bgs;
 #endif
 
-const pmoveHandler_t pmoveHandlers[] =
-{
-#ifndef DEDICATED
-	{ CG_Trace, CG_PointContents, NULL },
-#endif
-	{ G_TraceCapsule, SV_PointContents, G_PlayerEvent },
-};
-
-extern int singleClientEvents[];
-
 dvar_t *player_view_pitch_up;
 dvar_t *player_view_pitch_down;
 dvar_t *bg_ladder_yawcap;

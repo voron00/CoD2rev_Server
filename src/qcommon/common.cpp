@@ -1251,4 +1251,5 @@ void Com_Init(char* commandLine)
 	WeaponDef* test = BG_LoadWeaponDef("mp", "thompson_mp");
 	Com_Printf("%s\n", test->szInternalName);
 	*/
+	Mantle_CreateAnims(Hunk_AllocXAnimServer);
 }

@@ -54,6 +54,11 @@ vec_t Vec4LengthSq( const vec4_t v)
 	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
 }
 
+vec_t VectorsLengthSquared(const vec4_t v1, const vec4_t v2)
+{
+	return ( v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2] );
+}
+
 void VectorInverse( vec3_t v )
 {
 	v[0] = -v[0];
@@ -699,4 +704,23 @@ void VectorAngleMultiply(float *vec, float angle)
 	temp = (vec[0] * x) - (vec[1] * y);
 	vec[1] = (vec[1] * x) + (vec[0] * y);
 	vec[0] = temp;
+}
+
+float vectoyaw( const vec3_t vec )
+{
+	float yaw;
+
+	if ( vec[YAW] == 0 && vec[PITCH] == 0 )
+	{
+		return 0.0;
+	}
+
+	yaw = ( atan2( vec[YAW], vec[PITCH] ) * 180 / M_PI );
+
+	if(yaw >= 0.0)
+	{
+		return yaw;
+	}
+
+	return yaw + 360;
 }

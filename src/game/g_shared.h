@@ -232,7 +232,7 @@ typedef struct
 	int timer;
 	int transIndex;
 	int flags;
-} mantleState_t;
+} MantleState;
 
 typedef struct playerState_s
 {
@@ -316,7 +316,7 @@ typedef struct playerState_s
 	float fWaistPitch;
 	float holdBreathScale;
 	int holdBreathTimer;
-	mantleState_t mantleState;
+	MantleState mantleState;
 	int entityEventSequence;
 	int weapAnim;
 	float aimSpreadScale;

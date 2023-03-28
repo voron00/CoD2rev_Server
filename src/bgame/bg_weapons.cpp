@@ -1923,6 +1923,7 @@ void PM_Weapon(pmove_t *pm, pml_t *pml)
 				if ( !PM_UpdateGrenadeThrow(ps, pml) )
 				{
 					delayedAction = PM_Weapon_WeaponTimeAdjust(pm, pml);
+
 					PM_Weapon_CheckForBinoculars(pm);
 					PM_Weapon_CheckForOffHand(pm);
 					PM_Weapon_CheckForChangeWeapon(pm);
