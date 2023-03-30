@@ -920,6 +920,13 @@ struct MantleResults
 	int duration;
 };
 
+struct viewLerpWaypoint_s
+{
+	int iFrac;
+	float fViewHeight;
+	int iOffset;
+};
+
 extern pmoveHandler_t pmoveHandlers[];
 extern int singleClientEvents[];
 
@@ -929,23 +936,51 @@ extern "C" {
 
 unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
 void QDECL BG_Player_DoControllersInternal(DObj_s *obj, const entityState_s *es, int *partBits, const clientInfo_t *ci, clientControllers_t *info);
+void QDECL PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
+void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
+qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm);
+int QDECL BG_CheckProne(int clientNum, const float *vPos, float fSize, float fHeight, float fYaw, float *pfTorsoPitch, float *pfWaistPitch, float *angles, int isAlreadyProne, int isOnGround, float *a11, unsigned char handler, int proneCheckType, float prone_feet_dist);
+int QDECL PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel);
+void QDECL PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
+void QDECL PM_AddTouchEnt(pmove_t *pm, int entityNum);
+void QDECL PM_StepSlideMove(pmove_t *pm, pml_t *pml, int gravity);
+void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out);
+void QDECL PM_AirMove(pmove_t *pm, pml_t *pml);
+float QDECL PM_CmdScale(playerState_s *ps, usercmd_s *cmd);
+void QDECL PM_LadderMove(pmove_t *pm, pml_t *pml);
+int QDECL PM_GroundSurfaceType(pml_t *pml);
+void QDECL PM_AddEvent(playerState_s *ps, int newEvent);
+void QDECL PM_CrashLand(playerState_s *pm, pml_t *pml);
+int QDECL PM_GetEffectiveStance(const playerState_s *ps);
+void QDECL PM_UpdateViewAngles(playerState_s *ps, float msec, usercmd_s *cmd, unsigned char handler);
+void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);
+
+void QDECL Jump_ClearState(playerState_s *ps);
+bool QDECL Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize);
+bool QDECL Jump_IsPlayerAboveMax(playerState_s *ps);
+void QDECL Jump_ClampVelocity(playerState_s *ps, const float *origin);
+void QDECL Jump_ActivateSlowdown(playerState_s *ps);
+bool QDECL Jump_Check(pmove_t *pm, pml_t *pml);
+
+void QDECL BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
+int QDECL BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 
 #ifdef __cplusplus
 }
 #endif
 
-void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
+void PM_ExitAimDownSight(playerState_s *ps);
 void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_s *es);
 void BG_SwingAngles( float destination,  float swingTolerance, float clampTolerance, float speed, float *angle, qboolean *swinging );
 void BG_PlayerAnimation(const DObj_s *pDObj, entityState_s *es, clientInfo_t *ci);
 int BG_PlayAnim(playerState_s *ps, int animNum, int bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force);
 void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qboolean isComplete);
 int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qboolean setTimer, qboolean isContinue, qboolean force );
-int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
-int BG_AnimScriptAnimation(playerState_s *ps, int state, scriptAnimMoveTypes_t movetype, qboolean force);
+int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean force);
+void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove);
 unsigned int BG_AnimationIndexForString(const char *string);
 void BG_LoadAnim();
 
@@ -953,9 +988,21 @@ void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
 
 int CL_LocalClient_GetActiveCount();
+unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
+void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml);
+void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml);
+void PM_CheckDuck(pmove_t *pm, pml_t *pml);
+void PM_SetMovementDir(pmove_t *pm, pml_t *pml);
+void PM_WalkMove(pmove_t *pm, pml_t *pml);
+void PM_NoclipMove(pmove_t *pm, pml_t *pml);
+void PM_UFOMove(pmove_t *pm, pml_t *pml);
+void PM_GroundTrace(pmove_t *pm, pml_t *pml);
+void PM_Footsteps(pmove_t *pm, pml_t *pml);
+void PM_CheckLadderMove(pmove_t *pm, pml_t *pml);
+
+void Pmove(pmove_t *pmove);
 
 void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
-void PM_AddEvent(playerState_s *ps, int newEvent);
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 int PM_WeaponAmmoAvailable(playerState_s *ps);
 int BG_WeaponAmmo(const playerState_s *ps, int weaponIndex);
@@ -964,11 +1011,20 @@ int BG_AmmoForWeapon(int weapon);
 int BG_ClipForWeapon(int weapon);
 int BG_GetClipSize(int weaponIndex);
 qboolean PM_WeaponClipEmpty(playerState_s *ps);
+int PM_InteruptWeaponWithProneMove(playerState_s *ps);
+void PM_ResetWeaponState(playerState_s *ps);
+void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml);
+void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml);
+
+void Jump_ApplySlowdown(playerState_s *ps);
+void Mantle_ClearHint(playerState_s *ps);
 
 long BG_StringHashValue( const char *fname );
 long BG_StringHashValue_Lwr( const char *fname );
 
 bool Mantle_IsWeaponInactive(const playerState_s *ps);
+float Jump_ReduceFriction(playerState_s *ps);
+void PM_FlyMove(pmove_t *pm, pml_t *pml);
 
 void PM_Weapon(pmove_t *pm, pml_t *pml);
 void PM_trace(pmove_t *pm,trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
@@ -989,7 +1045,6 @@ void PM_WeaponUseAmmo(playerState_s *ps, int weaponIndex, int amount);
 WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
 
 int PM_GetViewHeightLerpTime(const playerState_s *ps, int iTarget, int bDown);
-int PM_GetEffectiveStance(const playerState_s *ps);
 void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler);
 
 void Mantle_RegisterDvars();

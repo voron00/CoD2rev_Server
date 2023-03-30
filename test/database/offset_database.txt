@@ -1700,6 +1700,34 @@ SetJump(0x080825C2, (DWORD)VM_UnarchiveStack);
 SetJump(0x08082572, (DWORD)Scr_AddLocalVars);
 SetJump(0x081085B8, (DWORD)G_PlayerTurretPositionAndBlend);
 SetJump(0x08109348, (DWORD)turret_shoot_internal);
+SetJump(0x080E178C, (DWORD)PM_ViewHeightAdjust);
+SetJump(0x080E1562, (DWORD)PM_ViewHeightTableLerp);
+SetJump(0x080E7CC0, (DWORD)PM_StepSlideMove);
+SetJump(0x080E2CDE, (DWORD)PM_FootstepEvent);
+SetJump(0x080DA31C, (DWORD)Jump_Start);
+SetJump(0x080DA2CA, (DWORD)Jump_GetLandFactor);
+SetJump(0x080DA52E, (DWORD)Jump_AddSurfaceEvent);
+SetJump(0x080DA424, (DWORD)Jump_PushOffLadder);
+SetJump(0x080E2EA6, (DWORD)PM_ShouldMakeFootsteps);
+SetJump(0x080E7348, (DWORD)PM_VerifyPronePosition);
+SetJump(0x080F2362, (DWORD)ClientImpacts);
+SetJump(0x080F2B86, (DWORD)ClientEvents);
+SetJump(0x0811E3E0, (DWORD)FireWeapon);
+SetJump(0x080E4060, (DWORD)PM_FoliageSounds);
+SetJump(0x080DFE82, (DWORD)PM_WalkMove);
+SetJump(0x080DFCD4, (DWORD)PM_AirMove);
+SetJump(0x080DF868, (DWORD)PM_SetMovementDir);
+SetJump(0x080E5D4A, (DWORD)PM_LadderMove);
+SetJump(0x080E54DC, (DWORD)PM_UpdatePronePitch);
+SetJump(0x080DEDB0, (DWORD)PM_ClipVelocity);
+SetJump(0x080DF16A, (DWORD)PM_Accelerate);
+SetJump(0x080E750E, (DWORD)PM_SlideMove);
+SetJump(0x080DF2DE, (DWORD)PM_MoveScale);
+SetJump(0x080DF3FA, (DWORD)PM_CmdScale);
+SetJump(0x080DF534, (DWORD)PM_CmdScale_Walk);
+SetJump(0x080DF7FC, (DWORD)PM_DamageScale_Walk);
+SetJump(0x080E02FE, (DWORD)PM_DeadMove);
+SetJump(0x080E5936, (DWORD)PM_CheckLadderMove);
 
 
 

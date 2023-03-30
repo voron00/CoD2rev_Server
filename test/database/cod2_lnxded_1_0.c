@@ -437,7 +437,7 @@ _BOOL4 __cdecl CM_SightTraceCylinderThroughCylinder(float *a1, float *a2, float 
 int __cdecl CM_SightTraceCapsuleThroughCapsule(int a1, float *a2);
 int __cdecl CM_SightTraceThroughTree(int a1, int a2, _DWORD *a3, float *a4, float *a5);
 int __cdecl CM_BoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int a7);
-int __cdecl sub_805D124(int a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9);
+int __cdecl CM_TransformedBoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9);
 long double __cdecl sub_805D34E(float a1, float a2, float a3);
 long double __cdecl CM_Fabs(float a1);
 long double __cdecl CM_Sqrt(float a1);
@@ -1448,14 +1448,14 @@ unsigned int sub_808C46E();
 int __cdecl sub_808C4CE(int a1);
 // void __usercall sub_808C4FA(long double a1@<st0>, int a2);
 void __cdecl sub_808C626(char *a1);
-void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5);
+void __cdecl SV_AuthorizeIpPacket(char a1, int a2, int a3, int a4, int a5);
 // int __usercall SV_FreeClient@<eax>(long double a1@<st0>, int a2);
 // void __usercall SV_FreeClients(long double a1@<st0>);
 // void __usercall SV_DirectConnect(long double a1@<st0>, void *a2, void *a3, void *a4, void *a5, void *a6);
 int SV_FreeClientScriptPers();
 // void __usercall SV_DropClient(long double a1@<st0>, int a2, char *a3);
 _DWORD *__cdecl SV_DelayDropClient(_DWORD *a1, _DWORD *a2);
-// int __usercall sub_808DECA@<eax>(long double a1@<st0>, int a2);
+// int __usercall SV_SendClientGameState@<eax>(long double a1@<st0>, int a2);
 int __cdecl sub_808E1F0(int a1, _DWORD *a2);
 int *__cdecl SV_CloseDownload(int a1);
 int *__cdecl sub_808E348(int a1);
@@ -1467,7 +1467,7 @@ int __cdecl SV_WriteDownloadToClient(int a1, _DWORD *a2);
 // void __usercall sub_808EC4A(long double a1@<st0>, int a2);
 int __cdecl SV_VerifyIwds_f(int a1);
 int __cdecl SV_ResetPureClient_f(int a1);
-int __cdecl sub_808EEFE(int a1);
+int __cdecl SV_UserinfoChanged(int a1);
 int __cdecl sub_808F0E6(int a1);
 void __cdecl sub_808F13C(int a1);
 void __cdecl sub_808F18C(int a1);
@@ -1484,7 +1484,7 @@ int __cdecl SV_GameClientNum(int a1);
 int __cdecl SV_SvEntityForGentity(_DWORD *a1);
 int __cdecl SV_GEntityForSvEntity(int a1);
 int __cdecl SV_GameSendServerCommand(int a1, int a2, const char *a3);
-// void __usercall sub_808FF0A(long double a1@<st0>, int a2, char *a3);
+// void __usercall SV_GameDropClient(long double a1@<st0>, int a2, char *a3);
 int __cdecl SV_SetBrushModel(int a1);
 _BOOL4 __cdecl SV_inSnapshot(float *a1, int a2);
 int __cdecl sub_80901C2(float *a1, float *a2, int a3);
@@ -1566,7 +1566,7 @@ int __cdecl SV_GetReliableSequence(int a1, char *a2);
 int __cdecl SV_CopyReliableCommands(int a1);
 _DWORD *__cdecl SV_AddServerCommand(_DWORD *a1, int a2, char *s);
 int SV_SendServerCommand(_DWORD *a1, int a2, char *format, ...);
-int __cdecl sub_809315A(char a1, int a2, int a3, int a4, int a5, _DWORD *a6);
+int __cdecl SV_VoicePacket(char a1, int a2, int a3, int a4, int a5, _DWORD *a6);
 int __cdecl SVC_Status(int a1, int a2, int a3, int a4, int a5);
 int __cdecl sub_80936D4(int a1, int a2, int a3, int a4, int a5);
 _BOOL4 __cdecl SVC_Info(int a1, int a2, int a3, int a4, int a5);
@@ -1587,10 +1587,10 @@ void SV_MasterShutdown();
 _BOOL4 __cdecl sub_809507C(char *s);
 // int __usercall SVC_RemoteCommand@<eax>(long double a1@<st0>, int a2, int a3, int a4, int a5, int a6);
 void sub_809544E();
-int __cdecl sub_8095454(int a1, _BYTE *a2, int a3);
-int __cdecl sub_80954DE(int a1, _BYTE *a2, int a3);
+int __cdecl SV_Netchan_Encode(int a1, _BYTE *a2, int a3);
+int __cdecl SV_Netchan_Decode(int a1, _BYTE *a2, int a3);
 _BOOL4 __cdecl SV_Netchan_TransmitNextFragment(int a1);
-_BOOL4 __cdecl sub_80955A2(int a1, _BYTE *src, int n);
+_BOOL4 __cdecl SV_Netchan_Transmit(int a1, _BYTE *src, int n);
 int __cdecl SV_Netchan_AddOOBProfilePacket(int a1);
 int __cdecl SV_Netchan_SendOOBPacket(size_t n, _DWORD *src, int a3, int a4, int a5, int a6, int a7);
 int SV_Netchan_UpdateProfileStats();
@@ -1627,15 +1627,15 @@ int __cdecl SV_SendClientVoiceData(int a1);
 int __cdecl sub_809A000(int a1);
 int __cdecl SV_ClientHasClientMuted(int a1, int a2);
 char *__cdecl sub_809A040(char a1, int a2, int a3);
-void __cdecl sub_809A112(int a1, _DWORD *a2);
-void __cdecl sub_809A1EA(int a1, _DWORD *a2);
+void __cdecl SV_UserVoice(int a1, _DWORD *a2);
+void __cdecl SV_PreGameUserVoice(int a1, _DWORD *a2);
 int __cdecl SV_ClipHandleForEntity(int a1);
 int __cdecl SV_UnlinkEntity(int a1);
 void __cdecl sub_809A3E6(int a1);
 int __cdecl SV_LinkEntity(int a1);
 void __cdecl SV_ClipMoveToEntity(int a1, int a2, int a3);
 void __cdecl SV_PointTraceToEntity(int a1, int a2, int a3);
-int __cdecl sub_809B1A0(_DWORD *a1, int a2);
+int __cdecl SV_ClipSightToEntity(_DWORD *a1, int a2);
 int __cdecl SV_PointSightTraceToEntity(_DWORD *a1, int a2);
 void __cdecl SV_Trace(float *s, float *a2, float *a3, float *a4, float *a5, int a6, int a7, int a8, int a9, int a10);
 int __cdecl SV_TracePassed(float *a1, float *a2, float *a3, float *a4, int a5, int a6, int a7, int a8, int a9);
@@ -2228,7 +2228,7 @@ int __cdecl sub_80B6D74(_DWORD *a1, int a2, int a3, int a4);
 float *__cdecl sub_80B6D98(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_80B6DEC(float *a1, float *a2);
 int __cdecl sub_80B6E20(char *s1); // idb
-const char *__cdecl sub_80B6EB2(int a1);
+const char *__cdecl Com_SurfaceTypeToName(int a1);
 int DObjInit();
 int DObjShutdown();
 void DObjAbort();
@@ -2270,7 +2270,7 @@ long double __cdecl sub_80B9698(int a1);
 int __cdecl DObjHasContents(int a1, int a2);
 float *__cdecl sub_80B9748(int a1, _DWORD *a2, float *a3, int a4);
 int __cdecl sub_80B98CC(int a1, int a2, int a3, float *a4);
-int __cdecl sub_80B994A(int a1, int a2, int a3, _DWORD *a4, float *a5);
+int __cdecl DObjSetLocalTag(int a1, int a2, int a3, _DWORD *a4, float *a5);
 int __cdecl sub_80B99C6(int a1, int a2, int a3, _DWORD *a4, float *a5);
 void __cdecl sub_80B9A48(float);
 void __cdecl sub_80B9A6E(float a1, float *a2, float *a3);
@@ -2331,10 +2331,10 @@ __int16 *__cdecl sub_80BB49E(__int16 *a1, float a2, int a3, float *a4);
 int __cdecl sub_80BB542(int a1, float a2, int a3, int a4);
 float *__cdecl sub_80BB590(unsigned __int16 *a1, float a2, int a3, float *a4);
 float *__cdecl sub_80BB642(unsigned __int16 **a1, float a2, int a3, float *a4);
-float *__cdecl XAnim_CalcDelta3DForTime(unsigned __int16 *a1, float a2, int a3, float *a4);
+float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, int a3, float *a4);
 void __cdecl sub_80BB77C(float *a1, float *a2);
 float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, float *a5, int a6);
-float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, float *a4);
+float *__cdecl XAnimCalcAbsDeltaParts(unsigned __int16 *a1, float a2, float a3, float *a4);
 int __cdecl XAnimFreeNotifyStrings(int a1);
 int __cdecl XAnimFreeInfo(int a1, int a2);
 long double __cdecl XAnimGetAverageRateFrequency(_DWORD *a1, int a2);
@@ -2374,7 +2374,7 @@ void __cdecl sub_80BEAEE(_DWORD **a1, float a2);
 int __cdecl DObjUpdateServerInfo(_DWORD **a1, float a2, int a3);
 int __cdecl DObjCalcAnim(int a1, int a2);
 void __cdecl DObjDisplayAnim(int **a1);
-int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5);
+int __cdecl XAnimCalcDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5);
 int __cdecl XAnimCalcAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4);
 int __cdecl XAnimGetRelDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5, float a6);
 int __cdecl XAnimGetAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5);
@@ -2709,10 +2709,10 @@ void __cdecl BG_PlayerAnimation_VerifyAnim(int a1, _DWORD *a2);
 void __cdecl BG_SwingAngles(float a1, float a2, float a3, float a4, float *a5, _DWORD *a6);
 void __cdecl BG_PlayerAngles(int a1, int a2);
 int __cdecl BG_AnimPlayerConditions(_DWORD *a1, int a2);
-void *__cdecl sub_80D8C3E(int a1, int a2, int a3, int a4, void *s);
-int *__cdecl sub_80D93D8(int a1, float a2, int a3);
-void __cdecl sub_80D94B8(float *a1, float a2, float *a3);
-int __cdecl sub_80D954C(int a1, int a2, int a3, int a4, int a5);
+void *__cdecl BG_Player_DoControllersInternal(int a1, int a2, int a3, int a4, void *s);
+int *__cdecl BG_LerpAngles(int a1, float a2, int a3);
+void __cdecl BG_LerpOffset(float *a1, float a2, float *a3);
+int __cdecl BG_Player_DoControllers(int a1, int a2, int a3, int a4, int a5);
 int __cdecl BG_PlayerAnimation(int a1, _DWORD *a2, int *a3);
 int __cdecl BG_UpdatePlayerDObj(int a1, _DWORD *a2, int a3, int a4);
 int BG_FindAnims();
@@ -2741,10 +2741,10 @@ float *__cdecl Jump_ApplySlowdown(int a1);
 long double __cdecl Jump_ReduceFriction(int a1);
 long double __cdecl sub_80DA1F8(int a1);
 void __cdecl Jump_ClampVelocity(int a1, int a2);
-long double __cdecl sub_80DA2CA(int a1);
-void __cdecl sub_80DA31C(int *a1, _DWORD *a2, float a3);
-unsigned int __cdecl sub_80DA424(int a1, int *a2);
-int __cdecl sub_80DA52E(int a1, int a2);
+long double __cdecl Jump_GetLandFactor(int a1);
+void __cdecl Jump_Start(int *a1, _DWORD *a2, float a3);
+unsigned int __cdecl Jump_PushOffLadder(int a1, int *a2);
+int __cdecl Jump_AddSurfaceEvent(int a1, int a2);
 int __cdecl Jump_Check(int *a1, int *a2);
 long double __cdecl sub_80DA70C(float a1);
 float *__cdecl sub_80DA72C(float *a1, float a2, float *a3);
@@ -2756,22 +2756,22 @@ long double __cdecl sub_80DA832(float *a1, float *a2);
 // char *__usercall Mantle_RegisterDvars@<eax>(long double a1@<st0>);
 void *__cdecl MantleXAnimPrecacheAlloc(size_t n);
 void __cdecl Mantle_DebugPrint(const char *a1);
-int __cdecl sub_80DA9FC(int a1);
-int __cdecl sub_80DAA36(int a1);
-int __cdecl sub_80DAA8E(int a1);
-int __cdecl sub_80DAAF2(int a1, int a2, float *a3);
-int __cdecl sub_80DAC38(float, float); // idb
-int __cdecl sub_80DACB8(int **a1, int a2);
-int __cdecl sub_80DAE2E(int a1, int a2, int a3);
+int __cdecl Mantle_GetUpLength(int a1);
+int __cdecl Mantle_GetOverLength(int a1);
+int __cdecl Mantle_GetAnim(int a1);
+int __cdecl Mantle_GetAnimDelta(int a1, int a2, float *a3);
+int __cdecl Mantle_FindTransition(float, float); // idb
+int __cdecl Mantle_CalcEndPos(int **a1, int a2);
+int __cdecl Mantle_Start(int a1, int a2, int a3);
 int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4);
 void __cdecl Mantle_CreateAnims(int (__cdecl *a1)(int));
-void sub_80DB6CA();
-int __cdecl sub_80DB6DA(int *a1, _DWORD *a2, float *s, unsigned int *a4);
+void Mantle_ShutdownAnims();
+int __cdecl Mantle_FindMantleSurface(int *a1, _DWORD *a2, float *s, unsigned int *a4);
 void __cdecl Mantle_Check(int *a1, _DWORD *a2);
-int __cdecl sub_80DBB3C(int a1, int a2, int a3);
+int __cdecl Mantle_Move(int a1, int a2, int a3);
 // void __usercall sub_80DBD56(long double a1@<st0>, int a2);
-int __cdecl sub_80DBE96(int a1);
-_BOOL4 __cdecl sub_80DBEB0(int a1);
+int __cdecl Mantle_ClearHint(int a1);
+_BOOL4 __cdecl Mantle_IsWeaponInactive(int a1);
 long double __cdecl Mantle_Fabs(float a1);
 int __cdecl sub_80DBF30(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80DBF54(_DWORD *a1, _DWORD *a2);
@@ -2791,8 +2791,8 @@ float *__cdecl sub_80DD224(float *a1, int a2, int a3);
 // int __usercall sub_80DD452@<eax>(long double a1@<st0>, _DWORD *a2, float *a3, _DWORD *a4);
 int __cdecl BG_AddPredictableEventToPlayerstate(int a1, unsigned __int8 a2, int a3);
 int __cdecl BG_PlayerStateToEntityState(int a1, int a2, int a3, unsigned __int8 a4);
-int __cdecl sub_80DDAD0(int a1, float *a2, int a3, int a4, float a5, _DWORD *a6, float *a7, float *a8, int a9, int a10, int a11, unsigned __int8 a12, int a13, float a14);
-int __cdecl sub_80DE734(int a1, float *a2, int a3, int a4, float a5, _DWORD *a6, float *a7, float *a8, int a9, int a10, int a11, unsigned __int8 a12, int a13, float a14);
+int __cdecl BG_CheckProneValid(int a1, float *a2, int a3, int a4, float a5, _DWORD *a6, float *a7, float *a8, int a9, int a10, int a11, unsigned __int8 a12, int a13, float a14);
+int __cdecl BG_CheckProne(int a1, float *a2, int a3, int a4, float a5, _DWORD *a6, float *a7, float *a8, int a9, int a10, int a11, unsigned __int8 a12, int a13, float a14);
 int __cdecl sub_80DE918(_DWORD *a1);
 int __cdecl sub_80DE942(_DWORD *a1, int a2, int a3, int a4);
 int __cdecl sub_80DE966(_DWORD *a1, _DWORD *a2);
@@ -2805,28 +2805,28 @@ long double __cdecl sub_80DEAE8(float *a1, float *a2);
 void __cdecl sub_80DEB1C(float *);
 long double __cdecl sub_80DEB5A(float a1);
 float *__cdecl sub_80DEB7A(float *a1, float *a2, float a3, float *a4);
-void __cdecl sub_80DEBE4(int a1, void *s, int a3, int a4, int a5, int a6, int a7, int a8);
+void __cdecl PM_trace(int a1, void *s, int a3, int a4, int a5, int a6, int a7, int a8);
 void __cdecl PM_playerTrace(int a1, unsigned __int16 *s, int a3, int a4, int a5, int a6, int a7, int a8);
 int __cdecl PM_AddEvent(int a1, int a2);
-int __cdecl sub_80DED50(int a1, int a2);
-float *__cdecl sub_80DEDB0(float *a1, float *a2, float *a3);
+int __cdecl PM_AddTouchEnt(int a1, int a2);
+float *__cdecl PM_ClipVelocity(float *a1, float *a2, float *a3);
 int __cdecl PM_GetEffectiveStance(int a1);
-// int __usercall sub_80DEE4A@<eax>(long double a1@<st0>, int a2, int a3);
+// int __usercall PM_Friction@<eax>(long double a1@<st0>, int a2, int a3);
 int __cdecl sub_80DEFE8(int a1, float a2, float *a3);
 long double __cdecl sub_80DF0DA(int a1, float a2, float *a3);
-void __cdecl sub_80DF16A(int a1, int a2, float *a3, float a4, float a5);
-long double __cdecl sub_80DF2DE(int a1, float a2, float a3, float a4);
-long double __cdecl sub_80DF3FA(int a1, int a2);
-long double __cdecl sub_80DF534(int *a1, int a2);
-long double __cdecl sub_80DF7FC(int a1);
-// int __usercall sub_80DF868@<eax>(long double a1@<st0>, int a2, int a3);
+void __cdecl PM_Accelerate(int a1, int a2, float *a3, float a4, float a5);
+long double __cdecl PM_MoveScale(int a1, float a2, float a3, float a4);
+long double __cdecl PM_CmdScale(int a1, int a2);
+long double __cdecl PM_CmdScale_Walk(int *a1, int a2);
+long double __cdecl PM_DamageScale_Walk(int a1);
+// int __usercall PM_SetMovementDir@<eax>(long double a1@<st0>, int a2, int a3);
 int __cdecl PM_GroundSurfaceType(int a1);
-// void __usercall sub_80DFB3A(long double a1@<st0>, int a2, int a3);
-// int __usercall sub_80DFCD4@<eax>(long double a1@<st0>, int a2, int a3);
-// int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3);
-// float *__usercall sub_80E02FE@<eax>(long double a1@<st0>, int a2, int a3);
-// float *__usercall sub_80E037E@<eax>(long double a1@<st0>, int a2, int a3);
-float *__cdecl sub_80E05C8(int a1, int a2);
+// void __usercall PM_FlyMove(long double a1@<st0>, int a2, int a3);
+// int __usercall PM_AirMove@<eax>(long double a1@<st0>, int a2, int a3);
+// int __usercall PM_WalkMove@<eax>(long double a1@<st0>, int a2, int a3);
+// float *__usercall PM_DeadMove@<eax>(long double a1@<st0>, int a2, int a3);
+// float *__usercall PM_NoclipMove@<eax>(long double a1@<st0>, int a2, int a3);
+float *__cdecl PM_UFOMove(int a1, int a2);
 int __cdecl sub_80E088C(int a1, int a2);
 int __cdecl sub_80E0906(int a1);
 int __cdecl sub_80E0938(int a1);
@@ -2837,29 +2837,29 @@ int __cdecl sub_80E0DA2(int *a1, _DWORD *a2, unsigned __int16 *s);
 _DWORD *__cdecl sub_80E0F86(int a1, _DWORD *a2);
 _DWORD *__cdecl PM_GroundTrace(int *a1, int a2);
 int __cdecl PM_GetViewHeightLerpTime(int a1, int a2, int a3);
-long double __cdecl sub_80E1562(int a1, int a2, float *a3);
+long double __cdecl PM_ViewHeightTableLerp(int a1, int a2, float *a3);
 long double __cdecl sub_80E168A(_DWORD *a1, int a2, int a3);
-void __cdecl sub_80E178C(int *a1, int a2);
+void __cdecl PM_ViewHeightAdjust(int *a1, int a2);
 void __cdecl PM_CheckDuck(int a1, int a2);
-char __cdecl sub_80E2CDE(int *a1, int a2, char a3, char a4, int a5);
-_BOOL4 __cdecl sub_80E2EA6(int *a1);
+char __cdecl PM_FootstepEvent(int *a1, int a2, char a3, char a4, int a5);
+_BOOL4 __cdecl PM_ShouldMakeFootsteps(int *a1);
 int __cdecl sub_80E2F4E(float); // idb
 void __cdecl PM_Footsteps(int a1, int a2);
-void __cdecl sub_80E4060(int a1);
-_DWORD *__cdecl sub_80E4212(_DWORD *a1, int a2);
+void __cdecl PM_FoliageSounds(int a1);
+_DWORD *__cdecl PM_DropTimers(_DWORD *a1, int a2);
 void __cdecl sub_80E42D0(int a1, float a2, int a3, void (__cdecl *a4)(float *, _DWORD *, _DWORD *, _DWORD *, int *, _DWORD, int));
 // int __usercall sub_80E4688@<eax>(long double a1@<st0>, int a2, float a3, unsigned __int8 a4);
 void __cdecl PM_UpdateViewAngles(int a1, float a2, int a3, unsigned __int8 a4);
-// void __usercall sub_80E54DC(long double a1@<st0>, _BYTE *a2, int a3);
+// void __usercall PM_UpdatePronePitch(long double a1@<st0>, _BYTE *a2, int a3);
 int __cdecl sub_80E5820(int a1);
-int __cdecl sub_80E5844(int **a1);
+int __cdecl PM_UpdatePlayerWalkingFlag(int **a1);
 int __cdecl sub_80E58EE(int a1);
 int __cdecl PM_ClearLadderFlag(int a1);
-int __cdecl sub_80E5936(int a1, int *a2);
-// int __usercall sub_80E5D4A@<eax>(long double a1@<st0>, int a2, int a3);
+int __cdecl PM_CheckLadderMove(int a1, int *a2);
+// int __usercall PM_LadderMove@<eax>(long double a1@<st0>, int a2, int a3);
 void __cdecl PmoveSingle(int a1);
 int __cdecl Pmove(int **a1);
-// long double __usercall sub_80E6DF4@<st0>(long double a1@<st0>, int a2, int a3);
+// long double __usercall BG_GetSpeed@<st0>(long double a1@<st0>, int a2, int a3);
 long double __cdecl sub_80E6E42(float a1);
 long double __cdecl sub_80E6E5C(float a1);
 void __cdecl sub_80E6E7C(float, float);
@@ -2889,10 +2889,10 @@ void __cdecl sub_80E72B4(float *);
 long double __cdecl sub_80E72F2(float a1, float a2, float a3);
 int __cdecl sub_80E731C(int a1, int a2, int a3);
 unsigned int __cdecl sub_80E733C(unsigned int a1);
-int __cdecl sub_80E7348(unsigned __int8 *a1, _DWORD *a2, _DWORD *a3);
+int __cdecl PM_VerifyPronePosition(unsigned __int8 *a1, _DWORD *a2, _DWORD *a3);
 long double __cdecl sub_80E7448(float *a1, int a2, int a3, _DWORD *a4);
-_BOOL4 __cdecl sub_80E750E(int *a1, int a2, int a3);
-void __cdecl sub_80E7CC0(int *a1, int a2, int a3);
+_BOOL4 __cdecl PM_SlideMove(int *a1, int a2, int a3);
+void __cdecl PM_StepSlideMove(int *a1, int a2, int a3);
 long double __cdecl sub_80E86BE(float a1);
 int __cdecl sub_80E86D8(float); // idb
 float *__cdecl sub_80E870E(float *a1, float *a2, float *a3);
@@ -2921,7 +2921,7 @@ int __cdecl BG_GetWeaponDef(int a1);
 int *__cdecl sub_80E9280(int a1);
 int BG_GetNumWeapons();
 int __cdecl sub_80E9336(int a1);
-int __cdecl sub_80E9356(int a1);
+int __cdecl BG_GetClipSize(int a1);
 int __cdecl sub_80E936C(int a1);
 int __cdecl sub_80E93C4(char *a1);
 int __cdecl sub_80E9430(char *a1);
@@ -2930,15 +2930,15 @@ int __cdecl BG_GetWeaponIndexForName(char *s1, void (__cdecl *a2)(int));
 int __cdecl sub_80E958C(char *s1); // idb
 int sub_80E95A8();
 int __cdecl BG_GetViewmodelWeaponIndex(_DWORD *a1);
-int __cdecl sub_80E963A(int a1, int a2);
-int __cdecl sub_80E973E(int a1);
+int __cdecl BG_PlayerHasOffhand(int a1, int a2);
+int __cdecl BG_IsAimDownSightWeapon(int a1);
 int __cdecl sub_80E9758(int a1);
 int __cdecl sub_80E9782(int a1);
 int __cdecl sub_80E97BE(int a1);
 _BOOL4 __cdecl BG_IsWeaponValid(int a1, int a2);
 _BOOL4 __cdecl sub_80E9882(int a1);
 int __cdecl BG_TakePlayerWeapon(int a1, int a2);
-int __cdecl sub_80E9A9E(int a1, int a2, int a3);
+int __cdecl BG_IsAltSwitch(int a1, int a2, int a3);
 int __cdecl BG_PlayerHasWeapon(int a1, int a2, int a3);
 int __cdecl sub_80E9C10(int a1, int a2);
 int __cdecl sub_80E9C6A(int a1, int a2, int a3);
@@ -2950,68 +2950,68 @@ _BOOL4 __cdecl PM_IsAdsAllowed(_DWORD *a1, int a2);
 int __cdecl sub_80EA3DA(int a1);
 int __cdecl PM_UpdateAimDownSightFlag(int a1, int a2);
 unsigned int __cdecl PM_ExitAimDownSight(int a1);
-void __cdecl sub_80EA568(int *a1, int a2);
+void __cdecl PM_UpdateAimDownSightLerp(int *a1, int a2);
 int __cdecl sub_80EA838(int a1);
 int __cdecl sub_80EA850(int a1);
-void __cdecl sub_80EA868(int a1);
-void __cdecl sub_80EA950(int *a1, int a2);
+void __cdecl PM_HoldBreathFire(int a1);
+void __cdecl PM_UpdateHoldBreath(int *a1, int a2);
 int __cdecl PM_InteruptWeaponWithProneMove(_DWORD *a1);
 int __cdecl BG_ClipForWeapon(int a1);
 int __cdecl BG_AmmoForWeapon(int a1);
 int __cdecl BG_WeaponIsClipOnly(int a1);
 int __cdecl BG_WeaponAmmo(int a1, int a2);
-int __cdecl sub_80EAD0C(int a1);
-int __cdecl sub_80EAE8C(int a1, int a2, int a3);
-int __cdecl sub_80EAEC8(int a1);
-_BOOL4 __cdecl sub_80EAEF2(int a1);
+int __cdecl PM_ReloadClip(int a1);
+int __cdecl PM_WeaponUseAmmo(int a1, int a2, int a3);
+int __cdecl PM_WeaponAmmoAvailable(int a1);
+_BOOL4 __cdecl PM_WeaponClipEmpty(int a1);
 int __cdecl sub_80EAF30(int a1);
-int __cdecl sub_80EAF58(int a1, int a2);
-int __cdecl sub_80EB180(_DWORD *a1);
-int __cdecl sub_80EB2E8(_DWORD *a1);
-int __cdecl sub_80EB3D0(_DWORD *a1);
-int __cdecl sub_80EB4FC(_DWORD *a1, int a2);
+int __cdecl PM_Weapon_CheckForRechamber(int a1, int a2);
+int __cdecl PM_SetWeaponReloadAddAmmoDelay(_DWORD *a1);
+int __cdecl PM_SetReloadingState(_DWORD *a1);
+int __cdecl PM_BeginWeaponReload(_DWORD *a1);
+int __cdecl PM_BeginWeaponChange(_DWORD *a1, int a2);
 int __cdecl sub_80EB738(unsigned __int8 *a1);
 int __cdecl sub_80EBA76(int a1);
-int __cdecl sub_80EBA9E(int a1);
-int __cdecl sub_80EBBA8(_DWORD *a1);
-int __cdecl sub_80EBD80(_DWORD *a1, int a2);
-int __cdecl sub_80EBE96(_DWORD *a1, int a2);
-int __cdecl sub_80EBFC8(int a1);
-char __cdecl sub_80EBFF0(int a1);
-int __cdecl sub_80EC22A(int a1);
+int __cdecl PM_Weapon_AllowReload(int a1);
+int __cdecl PM_Weapon_ReloadDelayedAction(_DWORD *a1);
+int __cdecl PM_Weapon_FinishReloadStart(_DWORD *a1, int a2);
+int __cdecl PM_Weapon_FinishReload(_DWORD *a1, int a2);
+int __cdecl PM_Weapon_FinishReloadEnd(int a1);
+char __cdecl PM_Weapon_CheckForReload(int a1);
+int __cdecl BG_SwitchWeaponsIfEmpty(int a1);
 void __cdecl PM_AdjustAimSpreadScale(_BYTE *a1, int a2);
-int __cdecl sub_80EC560(_BYTE *a1, int a2);
-int __cdecl sub_80EC7D2(unsigned __int8 *a1);
-int __cdecl sub_80ECA14(_BYTE *a1, int a2);
-int __cdecl sub_80ECA78(int a1, int a2);
-int sub_80ECC42();
-int __cdecl sub_80ECC4C(_DWORD *a1);
-int __cdecl sub_80ECD62(int a1);
-void __cdecl sub_80ECDD6(int a1);
-int __cdecl sub_80ECE56(_DWORD *a1, int a2);
-int __cdecl sub_80ECF70(_DWORD *a1);
-int __cdecl sub_80ECFF2(int a1);
-int __cdecl sub_80ED01A(int *a1, int a2);
+int __cdecl PM_Weapon_WeaponTimeAdjust(_BYTE *a1, int a2);
+int __cdecl PM_Weapon_CheckForChangeWeapon(unsigned __int8 *a1);
+int __cdecl PM_Weapon_ShouldBeFiring(_BYTE *a1, int a2);
+int __cdecl PM_Weapon_StartFiring(int a1, int a2);
+int CL_LocalClient_GetActiveCount();
+int __cdecl PM_Weapon_CheckFiringAmmo(_DWORD *a1);
+int __cdecl PM_Weapon_SetFPSFireAnim(int a1);
+void __cdecl PM_Weapon_AddFiringAimSpreadScale(int a1);
+int __cdecl PM_Weapon_FireWeapon(_DWORD *a1, int a2);
+int __cdecl PM_Weapon_MeleeFire(_DWORD *a1);
+int __cdecl PM_Weapon_MeleeEnd(int a1);
+int __cdecl PM_Weapon_CheckForMelee(int *a1, int a2);
 int __cdecl PM_Weapon_Idle(_DWORD *a1);
 int __cdecl sub_80ED282(_DWORD *a1);
 int __cdecl sub_80ED2F2(_DWORD *a1);
-int __cdecl sub_80ED382(_DWORD *a1);
-int __cdecl sub_80ED3DE(int *a1);
-unsigned int __cdecl sub_80ED50A(_DWORD *a1);
+int __cdecl PM_Weapon_OffHandHold(_DWORD *a1);
+int __cdecl PM_Weapon_OffHand(int *a1);
+unsigned int __cdecl PM_Weapon_OffHandEnd(_DWORD *a1);
 int __cdecl sub_80ED592(int a1);
-int __cdecl sub_80ED5AE(int *a1);
-int __cdecl sub_80ED780(_DWORD *a1, int a2);
+int __cdecl PM_Weapon_CheckForOffHand(int *a1);
+int __cdecl PM_UpdateGrenadeThrow(_DWORD *a1, int a2);
 int __cdecl sub_80ED84E(int a1);
 int __cdecl sub_80ED87A(int a1);
 int __cdecl sub_80ED8A6(int a1);
 _DWORD *__cdecl sub_80ED8D2(_DWORD *a1);
-int __cdecl sub_80ED928(_DWORD *a1);
-int __cdecl sub_80ED97E(_DWORD *a1);
-_DWORD *__cdecl sub_80ED9E0(_DWORD *a1);
+int __cdecl PM_Weapon_BinocularsPrepare(_DWORD *a1);
+int __cdecl PM_Weapon_BinocularsHold(_DWORD *a1);
+_DWORD *__cdecl PM_Weapon_Binoculars(_DWORD *a1);
 int __cdecl sub_80EDA06(_DWORD *a1);
-int __cdecl sub_80EDA78(int a1);
-int __cdecl sub_80EDB00(int a1);
-int __cdecl sub_80EDF3A(int a1, int a2);
+int __cdecl PM_Weapon_BinocularsEnd(int a1);
+int __cdecl PM_Weapon_CheckForBinoculars(int a1);
+int __cdecl PM_Weapon(int a1, int a2);
 int __cdecl PM_ResetWeaponState(_DWORD *a1);
 float *__cdecl BG_WeaponFireRecoil(int a1, float *a2, int a3);
 long double __cdecl sub_80EE4AA(int a1);
@@ -3024,14 +3024,14 @@ float *__cdecl sub_80EED76(int *a1, float *a2);
 void __cdecl sub_80EEF38(float *a1, float *a2);
 int __cdecl sub_80EF12E(float *a1, float *a2, float a3, float a4, float a5, float a6, float a7, float a8);
 float *__cdecl sub_80EF336(float *a1, float *a2);
-int __cdecl sub_80EF52C(float *a1, int a2);
+int __cdecl BG_CalculateWeaponAngles(float *a1, int a2);
 void __cdecl sub_80EF61E(float *a1, float *a2);
 int __cdecl sub_80EF7AA(float *a1, float *a2);
 float *__cdecl sub_80EFA86(int *a1, float *a2);
 void __cdecl sub_80EFC4A(_DWORD **a1, float *a2);
 void __cdecl sub_80EFD94(float *a1, float *a2);
-int __cdecl sub_80EFDF0(int a1, float *a2, int a3, float *a4, float a5, int a6);
-char **__cdecl sub_80F0110(const char *a1, char *s);
+int __cdecl BG_CalculateWeaponPosition_Sway(int a1, float *a2, int a3, float *a4, float a5, int a6);
+char **__cdecl BG_LoadWeaponDef(const char *a1, char *s);
 long double __cdecl sub_80F0198(float a1);
 void __cdecl sub_80F01B2(float, float);
 void __cdecl sub_80F01D6(float, float);
@@ -3051,13 +3051,13 @@ int __cdecl sub_80F0450(char *s1); // idb
 char *__cdecl sub_80F049E(int a1);
 int BG_LoadWeaponStrings();
 _DWORD *BG_LoadPlayerAnimTypes();
-int __cdecl sub_80F065E(char *s1, int, int); // idb
+int __cdecl Weapon_GetStringArrayIndex(char *s1, int, int); // idb
 int __cdecl BG_ParseWeaponDefSpecificFieldType(_DWORD *a1, char *s1, int a3);
 int __cdecl sub_80F09D6(int *a1);
 void __cdecl sub_80F0A52(int a1);
 void __cdecl sub_80F0AA6(int a1);
+char *__cdecl SetConfigString(char **a1, char *s);
 char *__cdecl SetConfigString2(char **a1, char *s);
-char *__cdecl sub_80F0BE2(char **a1, char *s);
 char ***__cdecl sub_80F0BFC(char ***a1);
 int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2);
 void *BG_LoadDefaultWeaponDef();
@@ -3075,17 +3075,17 @@ int __cdecl G_ParseSpawnVars(int a1);
 int __cdecl G_SpawnStringInternal(int a1, char *s1, int a3, _DWORD *a4);
 int __cdecl G_NewString(char *s); // idb
 char *__cdecl vtos(float *a1);
-int __cdecl sub_80F1C24(char *a1, char *src, int a3, int *a4);
-int __cdecl G_ParseWeaponAccurayGraphs(int a1, const char *a2, const char *a3, int a4, int *a5);
-int __cdecl sub_80F1F7E(int a1);
+int __cdecl G_ParseAIWeaponAccurayGraphFile(char *a1, char *src, int a3, int *a4);
+int __cdecl G_ParseWeaponAccurayGraphInternal(int a1, const char *a2, const char *a3, int a4, int *a5);
+int __cdecl G_ParseWeaponAccurayGraphs(int a1);
 int __cdecl P_DamageFeedback(int a1);
 int __cdecl sub_80F2350(int a1);
-int __cdecl sub_80F2362(int a1, int a2);
+int __cdecl ClientImpacts(int a1, int a2);
 int __cdecl sub_80F24C6(int a1);
 int __cdecl SpectatorThink(int a1, int **a2);
-// int __usercall sub_80F29CA@<eax>(long double a1@<st0>, int a2);
-int __cdecl sub_80F2B22(int a1);
-int __cdecl sub_80F2B86(int *a1, int a2);
+// int __usercall ClientInactivityTimer@<eax>(long double a1@<st0>, int a2);
+int __cdecl ClientIntermissionThink(int a1);
+int __cdecl ClientEvents(int *a1, int a2);
 int __cdecl G_SetLastServerTime(int a1, int a2);
 int __cdecl sub_80F2F2E(int a1);
 void __cdecl G_PlayerStateToEntityStateExtrapolate(int a1, int a2, int a3, int a4);
@@ -3360,9 +3360,9 @@ int __cdecl RegisterItem(int a1, int a2);
 int __cdecl G_RegisterWeapon(int a1);
 int __cdecl IsItemRegistered(int a1);
 // int __usercall G_SpawnItem@<eax>(long double a1@<st0>, int a2, int a3);
-int __cdecl sub_81050FE(int a1, int a2, int a3, _DWORD *a4);
+int __cdecl G_BounceCorpse(int a1, int a2, int a3, _DWORD *a4);
 int __cdecl sub_81052AA(int a1, int a2);
-int __cdecl sub_8105382(int a1, int *a2, _DWORD *a3);
+int __cdecl G_GetAnimDeltaForCorpse(int a1, int *a2, _DWORD *a3);
 int *__cdecl G_RunCorpseMove(float *a1);
 int __cdecl G_RunCorpseAnimate(int *a1);
 int __cdecl G_RunCorpse(float *a1);
@@ -3423,9 +3423,9 @@ int __cdecl sub_8108368(int a1);
 int *G_InitTurrets();
 float *__cdecl sub_81083E8(int a1, int a2, int a3);
 int __cdecl sub_81084EA(int a1, int *a2);
-void __cdecl sub_81085B8(int a1, int a2);
+void __cdecl G_PlayerTurretPositionAndBlend(int a1, int a2);
 int __cdecl turret_clientaim(int a1, int a2);
-int *__cdecl sub_8109348(int a1, int *a2);
+int *__cdecl turret_shoot_internal(int a1, int *a2);
 int __cdecl turret_track(_DWORD *a1, int *a2);
 int __cdecl sub_810948E(_DWORD *a1);
 unsigned int __cdecl G_ClientStopUsingTurret(int a1);
@@ -3456,12 +3456,12 @@ void __cdecl sub_810AAB4(int a1, float *a2, int a3, int a4);
 _BOOL4 __cdecl sub_810AD10(int a1, int a2);
 // int __usercall sub_810B07A@<eax>(long double a1@<st0>, int a2, int a3, int a4, float *a5);
 int __cdecl G_ExplodeMissile(int a1);
-void __cdecl sub_810B894(float *s, float *a2, float *a3, int a4, int a5);
+void __cdecl G_MissileTrace(float *s, float *a2, float *a3, int a4, int a5);
 int __cdecl sub_810B90E(float *s, int a2, int a3, float *a4);
 long double __cdecl sub_810B988(float a1);
 int __cdecl sub_810B9B6(int a1);
 int __cdecl sub_810BB8C(float *a1, int a2);
-unsigned __int8 *__cdecl sub_810BC36(unsigned __int8 *a1);
+unsigned __int8 *__cdecl G_RunMissile(unsigned __int8 *a1);
 int __cdecl sub_810C1F6(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5);
 int __cdecl sub_810C4A0(_DWORD *a1, _DWORD *a2, float *a3);
 long double __cdecl sub_810C6D2(float a1);
@@ -3789,7 +3789,7 @@ int __cdecl Scr_SetObjectField(int a1, int a2, int a3);
 char *__cdecl Scr_GetEntityField(int a1, int a2);
 int __cdecl Scr_GetGenericField(int a1, int a2, int a3);
 char *__cdecl Scr_GetObjectField(char *a1, int a2, int a3);
-int *__cdecl sub_8118C0E(int a1);
+int *__cdecl Scr_FreeEntityConstStrings(int a1);
 void __cdecl Scr_FreeEntity(int *a1);
 int __cdecl Scr_AddEntity(int *a1);
 int __cdecl Scr_GetEntity(unsigned int a1);
@@ -3923,7 +3923,7 @@ int __cdecl sub_811E0C2(_DWORD *a1, int a2, int a3);
 float *__cdecl sub_811E18A(float *a1, float a2, int a3);
 _BOOL4 __cdecl sub_811E2C2(int a1, int a2);
 void __cdecl sub_811E35C(int a1, float *a2);
-float *__cdecl sub_811E3E0(int a1, int a2);
+float *__cdecl FireWeapon(int a1, int a2);
 float *__cdecl sub_811E56A(int a1);
 int __cdecl sub_811E586(_DWORD *a1);
 __int16 __cdecl sub_811E5E0(int a1);
@@ -23809,7 +23809,7 @@ int __cdecl CM_BoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int
 // 805CCFA: using guessed type float var_64[2];
 
 //----- (0805D124) --------------------------------------------------------
-int __cdecl sub_805D124(int a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9)
+int __cdecl CM_TransformedBoxSightTrace(int a1, int a2, int a3, int a4, int a5, int a6, int a7, float *a8, float *a9)
 {
   int v10; // [esp+20h] [ebp-A8h]
   int i; // [esp+2Ch] [ebp-9Ch]
@@ -24907,7 +24907,7 @@ int __cdecl CM_ClipSightTraceToEntities_r(_DWORD *a1, unsigned __int16 a2, _DWOR
         for ( i = *(_WORD *)(v17 + 8); i; i = *(_WORD *)(v22 + 2) )
         {
           v22 = 372 * i + 138600228;
-          v19 = sub_809B1A0(a1, v22);
+          v19 = SV_ClipSightToEntity(a1, v22);
           if ( v19 )
             return v19;
         }
@@ -51243,7 +51243,7 @@ void __cdecl sub_808C626(char *a1)
 }
 
 //----- (0808C7CA) --------------------------------------------------------
-void __cdecl sub_808C7CA(char a1, int a2, int a3, int a4, int a5)
+void __cdecl SV_AuthorizeIpPacket(char a1, int a2, int a3, int a4, int a5)
 {
   char *v5; // eax
   char *v6; // eax
@@ -51633,7 +51633,7 @@ LABEL_55:
       s[33606] = dword_841FB04;
       s[33604] = dword_841FB04;
       s[33605] = dword_841FB04;
-      sub_808EEFE((int)s);
+      SV_UserinfoChanged((int)s);
       dword_841FB80[12 * j] = 0;
       NET_OutOfBandPrint(1, (int)a2, (int)a3, (int)a4, (int)a5, (int)a6, "connectResponse");
       s[33287] = -1;
@@ -51761,7 +51761,7 @@ _DWORD *__cdecl SV_DelayDropClient(_DWORD *a1, _DWORD *a2)
 }
 
 //----- (0808DECA) --------------------------------------------------------
-int __usercall sub_808DECA@<eax>(long double a1@<st0>, int a2)
+int __usercall SV_SendClientGameState@<eax>(long double a1@<st0>, int a2)
 {
   char *v3; // [esp+1Ch] [ebp-13Ch]
   int v4[4]; // [esp+20h] [ebp-138h] BYREF
@@ -51879,7 +51879,7 @@ int *__cdecl sub_808E348(int a1)
 int __usercall sub_808E398@<eax>(long double a1@<st0>, int a2)
 {
   Com_DPrintf("clientDownload: %s Done\n", (const char *)(a2 + 134216));
-  return sub_808DECA(a1, a2);
+  return SV_SendClientGameState(a1, a2);
 }
 
 //----- (0808E3C4) --------------------------------------------------------
@@ -52218,7 +52218,7 @@ int __cdecl SV_ResetPureClient_f(int a1)
 }
 
 //----- (0808EEFE) --------------------------------------------------------
-int __cdecl sub_808EEFE(int a1)
+int __cdecl SV_UserinfoChanged(int a1)
 {
   char *v1; // eax
   int result; // eax
@@ -52296,7 +52296,7 @@ int __cdecl sub_808F0E6(int a1)
 
   v1 = SV_Cmd_Argv(1u);
   I_strncpyz((char *)(a1 + 12), v1, 1024);
-  sub_808EEFE(a1);
+  SV_UserinfoChanged(a1);
   return ClientUserinfoChanged(-1653759219 * ((a1 - (int)dword_841FB0C) >> 2));
 }
 
@@ -52557,7 +52557,7 @@ void __usercall SV_ExecuteClientMessage(long double a1@<st0>, int a2, _DWORD *a3
   else if ( *(_DWORD *)(a2 + 133144) > *(_DWORD *)(a2 + 133148) )
   {
     Com_DPrintf("%s : dropped gamestate, resending\n", (const char *)(a2 + 134216));
-    sub_808DECA(a1, a2);
+    SV_SendClientGameState(a1, a2);
     if ( *(_BYTE *)(net_lanauthorize + 8) || !Sys_IsLANAddress(*(_DWORD *)(a2 + 452036), *(_DWORD *)(a2 + 452040)) )
       sub_808C21C(
         a1,
@@ -52614,7 +52614,7 @@ int __usercall SV_AddTestClient@<eax>(long double a1@<st0>)
   if ( v5 == *(_DWORD *)(sv_maxclients + 8) )
     return 0;
   i[121215] = 1;
-  sub_808DECA(a1, (int)i);
+  SV_SendClientGameState(a1, (int)i);
   memset(v3, 0, 0x1Cu);
   sub_808E1F0((int)i, v3);
   return SV_GentityNum(v5);
@@ -52696,7 +52696,7 @@ int __cdecl SV_GameSendServerCommand(int a1, int a2, const char *a3)
 // 848B1CC: using guessed type int sv_maxclients;
 
 //----- (0808FF0A) --------------------------------------------------------
-void __usercall sub_808FF0A(long double a1@<st0>, int a2, char *a3)
+void __usercall SV_GameDropClient(long double a1@<st0>, int a2, char *a3)
 {
   if ( a2 >= 0 && a2 < *(_DWORD *)(sv_maxclients + 8) )
     SV_DropClient(a1, (int)dword_841FB0C + 495380 * a2, a3);
@@ -54449,7 +54449,7 @@ int SV_SendServerCommand(_DWORD *a1, int a2, char *format, ...)
 // 8494204: using guessed type int com_dedicated;
 
 //----- (0809315A) --------------------------------------------------------
-int __cdecl sub_809315A(char a1, int a2, int a3, int a4, int a5, _DWORD *a6)
+int __cdecl SV_VoicePacket(char a1, int a2, int a3, int a4, int a5, _DWORD *a6)
 {
   int result; // eax
   int v7; // [esp+2Ch] [ebp-Ch]
@@ -54474,9 +54474,9 @@ int __cdecl sub_809315A(char a1, int a2, int a3, int a4, int a5, _DWORD *a6)
       {
         *((_DWORD *)i + 33604) = dword_841FB04;
         if ( *(int *)i > 3 )
-          sub_809A112((int)i, a6);
+          SV_UserVoice((int)i, a6);
         else
-          sub_809A1EA((int)i, a6);
+          SV_PreGameUserVoice((int)i, a6);
       }
     }
     ++v8;
@@ -54826,7 +54826,7 @@ void __usercall SV_ConnectionlessPacket(long double a1@<st0>, void *a2, void *a3
             }
             else
             {
-              sub_808C7CA((char)a2, (int)a3, (int)a4, (int)a5, (int)a6);
+              SV_AuthorizeIpPacket((char)a2, (int)a3, (int)a4, (int)a5, (int)a6);
             }
           }
           else
@@ -54851,7 +54851,7 @@ void __usercall SV_ConnectionlessPacket(long double a1@<st0>, void *a2, void *a3
   }
   else
   {
-    sub_809315A((char)a2, (int)a3, (int)a4, (int)a5, (int)a6, a7);
+    SV_VoicePacket((char)a2, (int)a3, (int)a4, (int)a5, (int)a6, a7);
   }
 }
 // 848B214: using guessed type int sv_packet_info;
@@ -54899,7 +54899,7 @@ void __usercall SV_PacketEvent(long double a1@<st0>, void *a2, void *a3, void *a
         i[33284] = MSG_ReadLong(a7);
         if ( i[33283] - i[33284] <= 127 )
         {
-          sub_80954DE((int)i, (_BYTE *)(a7[1] + a7[4]), a7[3] - a7[4]);
+          SV_Netchan_Decode((int)i, (_BYTE *)(a7[1] + a7[4]), a7[3] - a7[4]);
           if ( *i != 1 )
           {
             i[33604] = dword_841FB04;
@@ -55524,7 +55524,7 @@ void sub_809544E()
 }
 
 //----- (08095454) --------------------------------------------------------
-int __cdecl sub_8095454(int a1, _BYTE *a2, int a3)
+int __cdecl SV_Netchan_Encode(int a1, _BYTE *a2, int a3)
 {
   int result; // eax
   int v4; // [esp+0h] [ebp-10h]
@@ -55548,7 +55548,7 @@ int __cdecl sub_8095454(int a1, _BYTE *a2, int a3)
 }
 
 //----- (080954DE) --------------------------------------------------------
-int __cdecl sub_80954DE(int a1, _BYTE *a2, int a3)
+int __cdecl SV_Netchan_Decode(int a1, _BYTE *a2, int a3)
 {
   int result; // eax
   int v4; // [esp+0h] [ebp-10h]
@@ -55578,9 +55578,9 @@ _BOOL4 __cdecl SV_Netchan_TransmitNextFragment(int a1)
 }
 
 //----- (080955A2) --------------------------------------------------------
-_BOOL4 __cdecl sub_80955A2(int a1, _BYTE *src, int n)
+_BOOL4 __cdecl SV_Netchan_Transmit(int a1, _BYTE *src, int n)
 {
-  sub_8095454(a1, src + 4, n - 4);
+  SV_Netchan_Encode(a1, src + 4, n - 4);
   return Netchan_Transmit(a1 + 452020, n, src);
 }
 
@@ -57022,7 +57022,7 @@ int __usercall SV_SendMessageToClient@<eax>(long double a1@<st0>, int a2, int a3
   *(_DWORD *)(a3 + 9924 * (*(_DWORD *)(a3 + 452020) & 0x1F) + 144356) = n;
   *(_DWORD *)(a3 + 9924 * (*(_DWORD *)(a3 + 452020) & 0x1F) + 144348) = dword_841FB04;
   *(_DWORD *)(a3 + 9924 * (*(_DWORD *)(a3 + 452020) & 0x1F) + 144352) = -1;
-  sub_80955A2(a3, dest, n);
+  SV_Netchan_Transmit(a3, dest, n);
   if ( *(_DWORD *)(a3 + 452036) == 2 || Sys_IsLANAddress(*(_DWORD *)(a3 + 452036), *(_DWORD *)(a3 + 452040)) )
   {
     *(_DWORD *)(a3 + 134424) = dword_841FB04 - 1;
@@ -57564,7 +57564,7 @@ char *__cdecl sub_809A040(char a1, int a2, int a3)
 }
 
 //----- (0809A112) --------------------------------------------------------
-void __cdecl sub_809A112(int a1, _DWORD *a2)
+void __cdecl SV_UserVoice(int a1, _DWORD *a2)
 {
   int i; // [esp+14h] [ebp-124h]
   int v3; // [esp+18h] [ebp-120h]
@@ -57591,7 +57591,7 @@ void __cdecl sub_809A112(int a1, _DWORD *a2)
 // 848B22C: using guessed type int sv_voice;
 
 //----- (0809A1EA) --------------------------------------------------------
-void __cdecl sub_809A1EA(int a1, _DWORD *a2)
+void __cdecl SV_PreGameUserVoice(int a1, _DWORD *a2)
 {
   int v2; // [esp+1Ch] [ebp-12Ch]
   int j; // [esp+20h] [ebp-128h]
@@ -57958,7 +57958,7 @@ LABEL_26:
 // 809AD2C: using guessed type float var_88[4];
 
 //----- (0809B1A0) --------------------------------------------------------
-int __cdecl sub_809B1A0(_DWORD *a1, int a2)
+int __cdecl SV_ClipSightToEntity(_DWORD *a1, int a2)
 {
   int v4; // [esp+38h] [ebp-10h]
   float *v5; // [esp+3Ch] [ebp-Ch]
@@ -57987,7 +57987,7 @@ int __cdecl sub_809B1A0(_DWORD *a1, int a2)
   v5 = (float *)(v7 + 324);
   if ( !*(_BYTE *)(v7 + 241) )
     v5 = flt_8145E68;
-  if ( sub_805D124(0, (int)(a1 + 9), (int)(a1 + 12), (int)a1, (int)(a1 + 3), v6, a1[17], (float *)(v7 + 312), v5) )
+  if ( CM_TransformedBoxSightTrace(0, (int)(a1 + 9), (int)(a1 + 12), (int)a1, (int)(a1 + 3), v6, a1[17], (float *)(v7 + 312), v5) )
     return -1;
   else
     return 0;
@@ -58059,7 +58059,7 @@ int __cdecl SV_PointSightTraceToEntity(_DWORD *a1, int a2)
       v15 = (float *)(v17 + 324);
       if ( !*(_BYTE *)(v17 + 241) )
         v15 = flt_8145E68;
-      if ( sub_805D124(
+      if ( CM_TransformedBoxSightTrace(
              0,
              (int)a1,
              (int)(a1 + 3),
@@ -58325,7 +58325,7 @@ int __cdecl sub_809BE82(int a1, int a2, int a3, int a4, int a5, int a6)
   v10 = (float *)(v13 + 324);
   if ( !*(_BYTE *)(v13 + 241) )
     v10 = flt_8145E68;
-  if ( sub_805D124(0, a1, a4, a2, a3, v12, a6, v11, v10) )
+  if ( CM_TransformedBoxSightTrace(0, a1, a4, a2, a3, v12, a6, v11, v10) )
     return -1;
   else
     return 0;
@@ -70983,7 +70983,7 @@ int __cdecl sub_80B6E20(char *s1)
 // 8162968: using guessed type int dword_8162968[263];
 
 //----- (080B6EB2) --------------------------------------------------------
-const char *__cdecl sub_80B6EB2(int a1)
+const char *__cdecl Com_SurfaceTypeToName(int a1)
 {
   if ( a1 <= 0 || a1 > 22 )
     return "default";
@@ -72393,7 +72393,7 @@ int __cdecl sub_80B98CC(int a1, int a2, int a3, float *a4)
 // 8145E68: using guessed type float flt_8145E68[3];
 
 //----- (080B994A) --------------------------------------------------------
-int __cdecl sub_80B994A(int a1, int a2, int a3, _DWORD *a4, float *a5)
+int __cdecl DObjSetLocalTag(int a1, int a2, int a3, _DWORD *a4, float *a5)
 {
   int v7; // [esp+14h] [ebp-4h]
 
@@ -73412,7 +73412,7 @@ float *__cdecl sub_80BB642(unsigned __int16 **a1, float a2, int a3, float *a4)
 }
 
 //----- (080BB682) --------------------------------------------------------
-float *__cdecl XAnim_CalcDelta3DForTime(unsigned __int16 *a1, float a2, int a3, float *a4)
+float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, int a3, float *a4)
 {
   char v5; // [esp+1Bh] [ebp-Dh]
   unsigned __int16 **v6; // [esp+1Ch] [ebp-Ch]
@@ -73476,8 +73476,8 @@ float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, floa
   float v14; // [esp+58h] [ebp-10h] BYREF
   float v15; // [esp+5Ch] [ebp-Ch]
 
-  XAnim_CalcDelta3DForTime((unsigned __int16 *)a1, a3, (int)&v12, (float *)v11);
-  XAnim_CalcDelta3DForTime((unsigned __int16 *)a1, a4, (int)&v14, (float *)v10);
+  XAnim_CalcDeltaForTime((unsigned __int16 *)a1, a3, (int)&v12, (float *)v11);
+  XAnim_CalcDeltaForTime((unsigned __int16 *)a1, a4, (int)&v14, (float *)v10);
   if ( *(_BYTE *)(a1 + 2) )
   {
     if ( a3 > (long double)a4 )
@@ -73503,13 +73503,13 @@ float *__cdecl XAnimCalcRelDeltaParts(int a1, float a2, float a3, float a4, floa
 }
 
 //----- (080BB9A8) --------------------------------------------------------
-float *__cdecl XAnim_CalcDeltaForTime(unsigned __int16 *a1, float a2, float a3, float *a4)
+float *__cdecl XAnimCalcAbsDeltaParts(unsigned __int16 *a1, float a2, float a3, float *a4)
 {
   float v5; // [esp+4h] [ebp-34h]
   int v6[6]; // [esp+10h] [ebp-28h] BYREF
   int v7[4]; // [esp+28h] [ebp-10h] BYREF
 
-  XAnim_CalcDelta3DForTime(a1, a3, (int)v7, (float *)v6);
+  XAnim_CalcDeltaForTime(a1, a3, (int)v7, (float *)v6);
   v5 = a2 * 0.000030518509;
   sub_80C0FE8(a4, v5, (float *)v7, a4);
   a4[2] = a4[2] + a2;
@@ -74885,7 +74885,7 @@ void __cdecl XAnimCalcDeltaTree(int a1, int a2, float a3, unsigned __int8 a4, un
       if ( v17 )
       {
         if ( *(_BYTE *)(a1 + 6) )
-          XAnim_CalcDeltaForTime((unsigned __int16 *)v15, a3, *((float *)&unk_8527A80 + 10 * v17 + 3), (float *)a6);
+          XAnimCalcAbsDeltaParts((unsigned __int16 *)v15, a3, *((float *)&unk_8527A80 + 10 * v17 + 3), (float *)a6);
         else
           XAnimCalcRelDeltaParts(
             v15,
@@ -75190,7 +75190,7 @@ void __cdecl DObjDisplayAnim(int **a1)
 }
 
 //----- (080BEF2C) --------------------------------------------------------
-int __cdecl sub_80BEF2C(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5)
+int __cdecl XAnimCalcDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, char a5)
 {
   int v6[3]; // [esp+20h] [ebp-38h] BYREF
   int v7[8]; // [esp+2Ch] [ebp-2Ch] BYREF
@@ -75285,7 +75285,7 @@ int __cdecl XAnimGetAbsDelta(int a1, int a2, _DWORD *a3, _DWORD *a4, float a5)
     sub_80C0F86(v7);
     v7[2] = 0;
     sub_80C1040(v8);
-    XAnim_CalcDeltaForTime((unsigned __int16 *)v6, 1.0, a5, (float *)v7);
+    XAnimCalcAbsDeltaParts((unsigned __int16 *)v6, 1.0, a5, (float *)v7);
     if ( *(float *)v7 == 0.0 && *(float *)&v7[1] == 0.0 )
     {
       *a3 = 0;
@@ -86533,7 +86533,7 @@ int __cdecl BG_AnimPlayerConditions(_DWORD *a1, int a2)
 }
 
 //----- (080D8C3E) --------------------------------------------------------
-void *__cdecl sub_80D8C3E(int a1, int a2, int a3, int a4, void *s)
+void *__cdecl BG_Player_DoControllersInternal(int a1, int a2, int a3, int a4, void *s)
 {
   long double v6; // fst7
   long double v7; // fst7
@@ -86693,7 +86693,7 @@ void *__cdecl sub_80D8C3E(int a1, int a2, int a3, int a4, void *s)
 // 80D8C3E: using guessed type float var_1C[7];
 
 //----- (080D93D8) --------------------------------------------------------
-int *__cdecl sub_80D93D8(int a1, float a2, int a3)
+int *__cdecl BG_LerpAngles(int a1, float a2, int a3)
 {
   int *result; // eax
   int i; // [esp+4h] [ebp-Ch] BYREF
@@ -86719,7 +86719,7 @@ int *__cdecl sub_80D93D8(int a1, float a2, int a3)
 }
 
 //----- (080D94B8) --------------------------------------------------------
-void __cdecl sub_80D94B8(float *a1, float a2, float *a3)
+void __cdecl BG_LerpOffset(float *a1, float a2, float *a3)
 {
   int v3; // [esp+1Ch] [ebp-1Ch]
   float v4; // [esp+1Ch] [ebp-1Ch]
@@ -86738,7 +86738,7 @@ void __cdecl sub_80D94B8(float *a1, float a2, float *a3)
 }
 
 //----- (080D954C) --------------------------------------------------------
-int __cdecl sub_80D954C(int a1, int a2, int a3, int a4, int a5)
+int __cdecl BG_Player_DoControllers(int a1, int a2, int a3, int a4, int a5)
 {
   float v6; // [esp+4h] [ebp-94h]
   _DWORD s[18]; // [esp+20h] [ebp-78h] BYREF
@@ -86747,17 +86747,17 @@ int __cdecl sub_80D954C(int a1, int a2, int a3, int a4, int a5)
   float v10; // [esp+88h] [ebp-10h]
   int i; // [esp+8Ch] [ebp-Ch]
 
-  sub_80D8C3E(a1, a2, a3, a4, s);
+  BG_Player_DoControllersInternal(a1, a2, a3, a4, s);
   v10 = (long double)a5 * 0.36000001;
   for ( i = 0; i <= 5; ++i )
   {
-    sub_80D93D8((int)&s[3 * i], v10, a4 + 12 * i + 1020);
+    BG_LerpAngles((int)&s[3 * i], v10, a4 + 12 * i + 1020);
     sub_80B98CC(a1, a3, **((unsigned __int16 **)&off_8164808 + i), (float *)(a4 + 12 * i + 1020));
   }
-  sub_80D93D8((int)&v8, v10, a4 + 1092);
+  BG_LerpAngles((int)&v8, v10, a4 + 1092);
   v6 = (long double)a5 * 0.1;
-  sub_80D94B8(&v9, v6, (float *)(a4 + 1104));
-  return sub_80B994A(a1, a3, (unsigned __int16)word_87A2342, (_DWORD *)(a4 + 1104), (float *)(a4 + 1092));
+  BG_LerpOffset(&v9, v6, (float *)(a4 + 1104));
+  return DObjSetLocalTag(a1, a3, (unsigned __int16)word_87A2342, (_DWORD *)(a4 + 1104), (float *)(a4 + 1092));
 }
 // 87A2342: using guessed type __int16 word_87A2342;
 
@@ -87171,7 +87171,7 @@ void __cdecl Jump_ClampVelocity(int a1, int a2)
 // 8576040: using guessed type int jump_height;
 
 //----- (080DA2CA) --------------------------------------------------------
-long double __cdecl sub_80DA2CA(int a1)
+long double __cdecl Jump_GetLandFactor(int a1)
 {
   if ( *(_BYTE *)(jump_slowdownEnable + 8) )
   {
@@ -87188,7 +87188,7 @@ long double __cdecl sub_80DA2CA(int a1)
 // 8576048: using guessed type int jump_slowdownEnable;
 
 //----- (080DA31C) --------------------------------------------------------
-void __cdecl sub_80DA31C(int *a1, _DWORD *a2, float a3)
+void __cdecl Jump_Start(int *a1, _DWORD *a2, float a3)
 {
   int v3; // [esp+8h] [ebp-10h]
   float v4; // [esp+Ch] [ebp-Ch]
@@ -87198,7 +87198,7 @@ void __cdecl sub_80DA31C(int *a1, _DWORD *a2, float a3)
   v5 = (a3 + a3) * (long double)*(int *)(*a1 + 72);
   if ( (*(_DWORD *)(*a1 + 12) & 0x80000) != 0 && *(int *)(v3 + 16) <= 1800 )
   {
-    v4 = sub_80DA2CA(v3);
+    v4 = Jump_GetLandFactor(v3);
     v5 = v5 / v4;
   }
   a2[12] = 0;
@@ -87217,7 +87217,7 @@ void __cdecl sub_80DA31C(int *a1, _DWORD *a2, float a3)
 // 8576050: using guessed type int jump_spreadAdd;
 
 //----- (080DA424) --------------------------------------------------------
-unsigned int __cdecl sub_80DA424(int a1, int *a2)
+unsigned int __cdecl Jump_PushOffLadder(int a1, int *a2)
 {
   unsigned int result; // eax
   float v3; // [esp+4h] [ebp-44h]
@@ -87249,7 +87249,7 @@ unsigned int __cdecl sub_80DA424(int a1, int *a2)
 // 857604C: using guessed type int jump_ladderPushVel;
 
 //----- (080DA52E) --------------------------------------------------------
-int __cdecl sub_80DA52E(int a1, int a2)
+int __cdecl Jump_AddSurfaceEvent(int a1, int a2)
 {
   int result; // eax
 
@@ -87286,10 +87286,10 @@ int __cdecl Jump_Check(int *a1, int *a2)
   }
   else
   {
-    sub_80DA31C(a1, a2, *(float *)(jump_height + 8));
-    sub_80DA52E((int)v4, (int)a2);
+    Jump_Start(a1, a2, *(float *)(jump_height + 8));
+    Jump_AddSurfaceEvent((int)v4, (int)a2);
     if ( (v4[3] & 0x20) != 0 )
-      sub_80DA424((int)v4, a2);
+      Jump_PushOffLadder((int)v4, a2);
     if ( *((char *)a1 + 28) < 0 )
       BG_AnimScriptEvent(v4, 4, 0, 1);
     else
@@ -87406,14 +87406,14 @@ void __cdecl Mantle_DebugPrint(const char *a1)
 // 8576058: using guessed type int mantle_debug;
 
 //----- (080DA9FC) --------------------------------------------------------
-int __cdecl sub_80DA9FC(int a1)
+int __cdecl Mantle_GetUpLength(int a1)
 {
   return XAnimGetLengthMsec(dword_857606C, dword_8164860[3 * *(_DWORD *)(a1 + 8)]);
 }
 // 8164860: using guessed type int dword_8164860[];
 
 //----- (080DAA36) --------------------------------------------------------
-int __cdecl sub_80DAA36(int a1)
+int __cdecl Mantle_GetOverLength(int a1)
 {
   if ( ((*(_BYTE *)(a1 + 12) ^ 1) & 1) != 0 )
     return 0;
@@ -87423,12 +87423,12 @@ int __cdecl sub_80DAA36(int a1)
 // 8164864: using guessed type int dword_8164864[];
 
 //----- (080DAA8E) --------------------------------------------------------
-int __cdecl sub_80DAA8E(int a1)
+int __cdecl Mantle_GetAnim(int a1)
 {
   int v3; // [esp+14h] [ebp-4h]
 
-  v3 = sub_80DA9FC(a1);
-  sub_80DAA36(a1);
+  v3 = Mantle_GetUpLength(a1);
+  Mantle_GetOverLength(a1);
   if ( *(_DWORD *)(a1 + 4) > v3 )
     return dword_8164864[3 * *(_DWORD *)(a1 + 8)];
   else
@@ -87438,7 +87438,7 @@ int __cdecl sub_80DAA8E(int a1)
 // 8164864: using guessed type int dword_8164864[];
 
 //----- (080DAAF2) --------------------------------------------------------
-int __cdecl sub_80DAAF2(int a1, int a2, float *a3)
+int __cdecl Mantle_GetAnimDelta(int a1, int a2, float *a3)
 {
   float v4; // [esp+28h] [ebp-30h]
   float v5; // [esp+28h] [ebp-30h]
@@ -87447,8 +87447,8 @@ int __cdecl sub_80DAAF2(int a1, int a2, float *a3)
   int v8[2]; // [esp+38h] [ebp-20h] BYREF
   int v9[6]; // [esp+40h] [ebp-18h] BYREF
 
-  v7 = sub_80DA9FC(a1);
-  v6 = sub_80DAA36(a1);
+  v7 = Mantle_GetUpLength(a1);
+  v6 = Mantle_GetOverLength(a1);
   if ( a2 > v7 )
   {
     v5 = (long double)(a2 - v7) / (long double)v6;
@@ -87467,7 +87467,7 @@ int __cdecl sub_80DAAF2(int a1, int a2, float *a3)
 // 8164864: using guessed type int dword_8164864[];
 
 //----- (080DAC38) --------------------------------------------------------
-int __cdecl sub_80DAC38(float a1, float a2)
+int __cdecl Mantle_FindTransition(float a1, float a2)
 {
   float v3; // [esp+0h] [ebp-18h]
   float v4; // [esp+0h] [ebp-18h]
@@ -87496,7 +87496,7 @@ int __cdecl sub_80DAC38(float a1, float a2)
 // 8164868: using guessed type float flt_8164868[22];
 
 //----- (080DACB8) --------------------------------------------------------
-int __cdecl sub_80DACB8(int **a1, int a2)
+int __cdecl Mantle_CalcEndPos(int **a1, int a2)
 {
   int result; // eax
   int *v3; // [esp+2Ch] [ebp-7Ch]
@@ -87519,7 +87519,7 @@ int __cdecl sub_80DACB8(int **a1, int a2)
   sub_80DC082((float *)v8, 31.0, (float *)a2, (float *)v8);
   sub_80DBF54(v8, v6);
   v7 = v7 - 18.0;
-  sub_80DEBE4((int)a1, s, (int)v8, (int)v5, (int)v4, (int)v6, v3[51], (int)a1[15]);
+  PM_trace((int)a1, s, (int)v8, (int)v5, (int)v4, (int)v6, v3[51], (int)a1[15]);
   if ( v11 || s[0] < 1.0 )
   {
     *(_DWORD *)(a2 + 48) &= ~1u;
@@ -87536,7 +87536,7 @@ int __cdecl sub_80DACB8(int **a1, int a2)
 // 80DACB8: using guessed type float s[8];
 
 //----- (080DAE2E) --------------------------------------------------------
-int __cdecl sub_80DAE2E(int a1, int a2, int a3)
+int __cdecl Mantle_Start(int a1, int a2, int a3)
 {
   int v3; // ebx
   int result; // eax
@@ -87547,11 +87547,11 @@ int __cdecl sub_80DAE2E(int a1, int a2, int a3)
   v7 = (_DWORD *)(a2 + 1468);
   *(float *)(a2 + 1468) = sub_80A29F6((float *)a3);
   v7[1] = 0;
-  v7[2] = sub_80DAC38(*(float *)(a3 + 20), *(float *)(a3 + 32));
+  v7[2] = Mantle_FindTransition(*(float *)(a3 + 20), *(float *)(a3 + 32));
   v7[3] = *(_DWORD *)(a3 + 48);
-  v3 = sub_80DA9FC((int)v7);
-  v5 = sub_80DAA36((int)v7) + v3;
-  sub_80DAAF2((int)v7, v5, v6);
+  v3 = Mantle_GetUpLength((int)v7);
+  v5 = Mantle_GetOverLength((int)v7) + v3;
+  Mantle_GetAnimDelta((int)v7, v5, v6);
   sub_80DC006((float *)(a3 + 36), v6, (float *)(a2 + 20));
   *(_DWORD *)(a2 + 12) |= 4u;
   *(_DWORD *)(a2 + 160) |= 0x4000u;
@@ -87589,7 +87589,7 @@ int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4)
   sub_80DBF54((_DWORD *)(a3 + 12), v13);
   v14 = v14 + a4;
   sub_80DC082((float *)v13, 16.0, (float *)a3, (float *)v11);
-  sub_80DEBE4((int)a1, s, (int)v13, (int)v10, (int)v9, (int)v11, v8[51], a1[15]);
+  PM_trace((int)a1, s, (int)v13, (int)v10, (int)v9, (int)v11, v8[51], a1[15]);
   if ( v16 || s[0] < 1.0 )
   {
     Mantle_DebugPrint("Mantle Failed: Ledge is too far away");
@@ -87599,7 +87599,7 @@ int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4)
   {
     sub_80DBF54(v11, v13);
     v12 = *(float *)(a3 + 20) + 18.0;
-    sub_80DEBE4((int)a1, s, (int)v13, (int)v10, (int)v9, (int)v11, v8[51], a1[15]);
+    PM_trace((int)a1, s, (int)v13, (int)v10, (int)v9, (int)v11, v8[51], a1[15]);
     if ( v16 || s[0] == 1.0 )
     {
       Mantle_DebugPrint("Mantle Failed: Can't find ledge");
@@ -87610,7 +87610,7 @@ int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4)
       sub_80DBF54(v11, (_DWORD *)(a3 + 24));
       *(float *)(a3 + 32) = (v12 - v14) * s[0] + v14;
       v9[2] = 1112014848;
-      sub_80DEBE4((int)a1, s, a3 + 24, (int)v10, (int)v9, a3 + 24, v8[51], a1[15]);
+      PM_trace((int)a1, s, a3 + 24, (int)v10, (int)v9, a3 + 24, v8[51], a1[15]);
       if ( v16 )
       {
         Mantle_DebugPrint("Mantle Failed: Player can't fit crouched on ledge");
@@ -87623,17 +87623,17 @@ int __cdecl Mantle_CheckLedge(int *a1, int a2, int a3, float a4)
         Mantle_DebugPrint("Mantle available!");
         if ( (a1[2] & 0x400) != 0 )
         {
-          sub_80DACB8((int **)a1, a3);
+          Mantle_CalcEndPos((int **)a1, a3);
           if ( (v8[40] & 4) == 0 )
           {
-            sub_80DEBE4((int)a1, s, a3 + 24, (int)(v8 + 347), (int)(v8 + 350), a3 + 24, v8[51], a1[15]);
+            PM_trace((int)a1, s, a3 + 24, (int)(v8 + 347), (int)(v8 + 350), a3 + 24, v8[51], a1[15]);
             if ( v16 )
               *(_DWORD *)(a3 + 48) |= 2u;
-            sub_80DEBE4((int)a1, s, a3 + 36, (int)(v8 + 347), (int)(v8 + 350), a3 + 36, v8[51], a1[15]);
+            PM_trace((int)a1, s, a3 + 36, (int)(v8 + 347), (int)(v8 + 350), a3 + 36, v8[51], a1[15]);
             if ( !v16 )
               *(_DWORD *)(a3 + 48) |= 4u;
           }
-          sub_80DAE2E((int)a1, (int)v8, a3);
+          Mantle_Start((int)a1, (int)v8, a3);
           return 1;
         }
         else
@@ -87720,13 +87720,13 @@ void __cdecl Mantle_CreateAnims(int (__cdecl *a1)(int))
 // 8164868: using guessed type float flt_8164868[22];
 
 //----- (080DB6CA) --------------------------------------------------------
-void sub_80DB6CA()
+void Mantle_ShutdownAnims()
 {
   dword_857606C = 0;
 }
 
 //----- (080DB6DA) --------------------------------------------------------
-int __cdecl sub_80DB6DA(int *a1, _DWORD *a2, float *s, unsigned int *a4)
+int __cdecl Mantle_FindMantleSurface(int *a1, _DWORD *a2, float *s, unsigned int *a4)
 {
   int v6; // [esp+2Ch] [ebp-7Ch]
   float v7; // [esp+30h] [ebp-78h]
@@ -87755,7 +87755,7 @@ int __cdecl sub_80DB6DA(int *a1, _DWORD *a2, float *s, unsigned int *a4)
   Vec3Normalize((float *)v11);
   sub_80DC082((float *)(v6 + 20), COERCE_FLOAT(LODWORD(v9) ^ 0x80000000), (float *)v11, (float *)v13);
   sub_80DC082((float *)(v6 + 20), v10, (float *)v11, (float *)v12);
-  sub_80DEBE4((int)a1, s, (int)v13, (int)v15, (int)v14, (int)v12, *(_DWORD *)(v6 + 204), 0x1000000);
+  PM_trace((int)a1, s, (int)v13, (int)v15, (int)v14, (int)v12, *(_DWORD *)(v6 + 204), 0x1000000);
   if ( *((_BYTE *)s + 35) || *((_BYTE *)s + 34) )
   {
     Mantle_DebugPrint("Mantle Failed: Mantle brush is too thick");
@@ -87814,7 +87814,7 @@ void __cdecl Mantle_Check(int *a1, _DWORD *a2)
   if ( *(_BYTE *)(mantle_enable + 8) )
   {
     v2 = (int *)*a1;
-    sub_80DBE96(*a1);
+    Mantle_ClearHint(*a1);
     if ( v2[1] <= 5 )
     {
       if ( (v2[3] & 4) != 0 )
@@ -87827,7 +87827,7 @@ void __cdecl Mantle_Check(int *a1, _DWORD *a2)
       }
       else if ( v2[54] <= 16 || v2[54] > 22 )
       {
-        if ( (unsigned __int8)sub_80DB6DA(a1, a2, v4, (unsigned int *)v3) )
+        if ( (unsigned __int8)Mantle_FindMantleSurface(a1, a2, v4, (unsigned int *)v3) )
         {
           memset(s, 0, 0x38u);
           sub_80DBF54(v3, s);
@@ -87861,7 +87861,7 @@ void __cdecl Mantle_Check(int *a1, _DWORD *a2)
 // 80DB964: using guessed type int anonymous_0[9];
 
 //----- (080DBB3C) --------------------------------------------------------
-int __cdecl sub_80DBB3C(int a1, int a2, int a3)
+int __cdecl Mantle_Move(int a1, int a2, int a3)
 {
   int result; // eax
   int v4; // ebx
@@ -87881,16 +87881,16 @@ int __cdecl sub_80DBB3C(int a1, int a2, int a3)
     *(_DWORD *)(a2 + 1480) &= ~8u;
     if ( (*(_DWORD *)(v12 + 12) & 2) != 0 )
       BG_AddPredictableEventToPlayerstate(141, 0, a2);
-    v4 = sub_80DA9FC(v12);
-    v7 = sub_80DAA36(v12) + v4;
+    v4 = Mantle_GetUpLength(v12);
+    v7 = Mantle_GetOverLength(v12) + v4;
     v9 = *(_DWORD *)(v12 + 4);
     *(_DWORD *)(v12 + 4) = v9 + *(_DWORD *)(a3 + 40);
     if ( *(_DWORD *)(v12 + 4) > v7 )
       *(_DWORD *)(v12 + 4) = v7;
     v8 = *(_DWORD *)(v12 + 4) - v9;
-    sub_80DAAF2(v12, v9, v10);
-    sub_80DAAF2(v12, *(_DWORD *)(v12 + 4), (float *)v11);
-    v6 = sub_80DAA8E(v12);
+    Mantle_GetAnimDelta(v12, v9, v10);
+    Mantle_GetAnimDelta(v12, *(_DWORD *)(v12 + 4), (float *)v11);
+    v6 = Mantle_GetAnim(v12);
     BG_AnimScriptAnimation((_DWORD *)a2, 3, v6 + 20, 1);
     sub_80DC006((float *)v11, v10, (float *)v11);
     sub_80DBFC2((float *)v11, (float *)(a2 + 20), (float *)(a2 + 20));
@@ -87947,7 +87947,7 @@ void __usercall sub_80DBD56(long double a1@<st0>, int a2)
 // 8576068: using guessed type int mantle_view_yawcap;
 
 //----- (080DBE96) --------------------------------------------------------
-int __cdecl sub_80DBE96(int a1)
+int __cdecl Mantle_ClearHint(int a1)
 {
   int result; // eax
 
@@ -87957,7 +87957,7 @@ int __cdecl sub_80DBE96(int a1)
 }
 
 //----- (080DBEB0) --------------------------------------------------------
-_BOOL4 __cdecl sub_80DBEB0(int a1)
+_BOOL4 __cdecl Mantle_IsWeaponInactive(int a1)
 {
   if ( !*(_BYTE *)(mantle_enable + 8) )
     return 0;
@@ -88543,7 +88543,7 @@ int __cdecl BG_PlayerStateToEntityState(int a1, int a2, int a3, unsigned __int8 
 // 8166528: using guessed type int dword_8166528[];
 
 //----- (080DDAD0) --------------------------------------------------------
-int __cdecl sub_80DDAD0(
+int __cdecl BG_CheckProneValid(
         int a1,
         float *a2,
         int a3,
@@ -88769,7 +88769,7 @@ LABEL_30:
 // 80DDAD0: using guessed type float var_D8[4];
 
 //----- (080DE734) --------------------------------------------------------
-int __cdecl sub_80DE734(
+int __cdecl BG_CheckProne(
         int a1,
         float *a2,
         int a3,
@@ -88785,7 +88785,7 @@ int __cdecl sub_80DE734(
         int a13,
         float a14)
 {
-  return sub_80DDAD0(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);
+  return BG_CheckProneValid(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);
 }
 
 //----- (080DE918) --------------------------------------------------------
@@ -88918,7 +88918,7 @@ float *__cdecl sub_80DEB7A(float *a1, float *a2, float a3, float *a4)
 }
 
 //----- (080DEBE4) --------------------------------------------------------
-void __cdecl sub_80DEBE4(int a1, void *s, int a3, int a4, int a5, int a6, int a7, int a8)
+void __cdecl PM_trace(int a1, void *s, int a3, int a4, int a5, int a6, int a7, int a8)
 {
   funcs_80DDC6A[3 * *(unsigned __int8 *)(a1 + 228)](s, a3, a4, a5, a6, a7, a8);
 }
@@ -88932,7 +88932,7 @@ void __cdecl PM_playerTrace(int a1, unsigned __int16 *s, int a3, int a4, int a5,
   {
     if ( (*((_DWORD *)s + 5) & 0x2000000) != 0 )
     {
-      sub_80DED50(a1, s[14]);
+      PM_AddTouchEnt(a1, s[14]);
       *(_DWORD *)(a1 + 60) &= ~0x2000000u;
       funcs_80DDC6A[3 * *(unsigned __int8 *)(a1 + 228)](s, a3, a4, a5, a6, a7, a8 & 0xFDFFFFFF);
     }
@@ -88947,7 +88947,7 @@ int __cdecl PM_AddEvent(int a1, int a2)
 }
 
 //----- (080DED50) --------------------------------------------------------
-int __cdecl sub_80DED50(int a1, int a2)
+int __cdecl PM_AddTouchEnt(int a1, int a2)
 {
   int result; // eax
   int i; // [esp+0h] [ebp-4h]
@@ -88972,7 +88972,7 @@ int __cdecl sub_80DED50(int a1, int a2)
 }
 
 //----- (080DEDB0) --------------------------------------------------------
-float *__cdecl sub_80DEDB0(float *a1, float *a2, float *a3)
+float *__cdecl PM_ClipVelocity(float *a1, float *a2, float *a3)
 {
   float v4; // [esp+14h] [ebp-4h]
   float v5; // [esp+14h] [ebp-4h]
@@ -88992,7 +88992,7 @@ int __cdecl PM_GetEffectiveStance(int a1)
 }
 
 //----- (080DEE4A) --------------------------------------------------------
-int __usercall sub_80DEE4A@<eax>(long double a1@<st0>, int a2, int a3)
+int __usercall PM_Friction@<eax>(long double a1@<st0>, int a2, int a3)
 {
   int result; // eax
   float v4; // [esp+18h] [ebp-30h]
@@ -89099,7 +89099,7 @@ long double __cdecl sub_80DF0DA(int a1, float a2, float *a3)
 // 85760A0: using guessed type int inertiaMax;
 
 //----- (080DF16A) --------------------------------------------------------
-void __cdecl sub_80DF16A(int a1, int a2, float *a3, float a4, float a5)
+void __cdecl PM_Accelerate(int a1, int a2, float *a3, float a4, float a5)
 {
   float v5; // [esp+1Ch] [ebp-4Ch]
   int v6[4]; // [esp+20h] [ebp-48h] BYREF
@@ -89142,7 +89142,7 @@ void __cdecl sub_80DF16A(int a1, int a2, float *a3, float a4, float a5)
 // 85760AC: using guessed type int stopspeed;
 
 //----- (080DF2DE) --------------------------------------------------------
-long double __cdecl sub_80DF2DE(int a1, float a2, float a3, float a4)
+long double __cdecl PM_MoveScale(int a1, float a2, float a3, float a4)
 {
   float v5; // [esp+0h] [ebp-18h]
   float v7; // [esp+Ch] [ebp-Ch]
@@ -89177,7 +89177,7 @@ long double __cdecl sub_80DF2DE(int a1, float a2, float a3, float a4)
 // 8576108: using guessed type int player_spectateSpeedScale;
 
 //----- (080DF3FA) --------------------------------------------------------
-long double __cdecl sub_80DF3FA(int a1, int a2)
+long double __cdecl PM_CmdScale(int a1, int a2)
 {
   float v3; // [esp+0h] [ebp-28h]
   int v4; // [esp+Ch] [ebp-1Ch]
@@ -89224,7 +89224,7 @@ long double __cdecl sub_80DF3FA(int a1, int a2)
 // 8576108: using guessed type int player_spectateSpeedScale;
 
 //----- (080DF534) --------------------------------------------------------
-long double __cdecl sub_80DF534(int *a1, int a2)
+long double __cdecl PM_CmdScale_Walk(int *a1, int a2)
 {
   float v3; // [esp+0h] [ebp-38h]
   float v4; // [esp+0h] [ebp-38h]
@@ -89305,7 +89305,7 @@ long double __cdecl sub_80DF534(int *a1, int a2)
 // 8576104: using guessed type int player_backSpeedScale;
 
 //----- (080DF7FC) --------------------------------------------------------
-long double __cdecl sub_80DF7FC(int a1)
+long double __cdecl PM_DamageScale_Walk(int a1)
 {
   float v3; // [esp+8h] [ebp-10h]
   float v4; // [esp+10h] [ebp-8h]
@@ -89332,7 +89332,7 @@ long double __cdecl sub_80DF7FC(int a1)
 // 8576118: using guessed type int player_dmgtimer_minScale;
 
 //----- (080DF868) --------------------------------------------------------
-int __usercall sub_80DF868@<eax>(long double a1@<st0>, int a2, int a3)
+int __usercall PM_SetMovementDir@<eax>(long double a1@<st0>, int a2, int a3)
 {
   int result; // eax
   long double v4; // fst7
@@ -89437,7 +89437,7 @@ int __cdecl PM_GroundSurfaceType(int a1)
 }
 
 //----- (080DFB3A) --------------------------------------------------------
-void __usercall sub_80DFB3A(long double a1@<st0>, int a2, int a3)
+void __usercall PM_FlyMove(long double a1@<st0>, int a2, int a3)
 {
   int v3; // [esp+28h] [ebp-50h]
   float v4; // [esp+2Ch] [ebp-4Ch]
@@ -89449,8 +89449,8 @@ void __usercall sub_80DFB3A(long double a1@<st0>, int a2, int a3)
   int i; // [esp+6Ch] [ebp-Ch]
 
   v3 = *(_DWORD *)a2;
-  sub_80DEE4A(a1, *(_DWORD *)a2, a3);
-  v4 = sub_80DF3FA(v3, a2 + 4);
+  PM_Friction(a1, *(_DWORD *)a2, a3);
+  v4 = PM_CmdScale(v3, a2 + 4);
   if ( v4 == 0.0 )
   {
     v8[0] = 0;
@@ -89465,7 +89465,7 @@ void __usercall sub_80DFB3A(long double a1@<st0>, int a2, int a3)
   }
   if ( *(_DWORD *)(v3 + 80) )
   {
-    v5 = sub_80DF2DE(v3, 0.0, 0.0, 127.0);
+    v5 = PM_MoveScale(v3, 0.0, 0.0, 127.0);
     if ( (*(_DWORD *)(a2 + 8) & 0x40) != 0 )
       v9 = v9 - v5 * 127.0;
     if ( *(char *)(a2 + 8) < 0 )
@@ -89473,12 +89473,12 @@ void __usercall sub_80DFB3A(long double a1@<st0>, int a2, int a3)
   }
   sub_80E70CA(v8, v6);
   v7 = Vec3Normalize((float *)v6);
-  sub_80DF16A(v3, a3, (float *)v6, v7, 8.0);
-  sub_80E7CC0((int *)a2, a3, 0);
+  PM_Accelerate(v3, a3, (float *)v6, v7, 8.0);
+  PM_StepSlideMove((int *)a2, a3, 0);
 }
 
 //----- (080DFCD4) --------------------------------------------------------
-int __usercall sub_80DFCD4@<eax>(long double a1@<st0>, int a2, int a3)
+int __usercall PM_AirMove@<eax>(long double a1@<st0>, int a2, int a3)
 {
   long double v3; // fst7
   int v5; // [esp+2Ch] [ebp-7Ch]
@@ -89492,7 +89492,7 @@ int __usercall sub_80DFCD4@<eax>(long double a1@<st0>, int a2, int a3)
   int i; // [esp+9Ch] [ebp-Ch]
 
   v5 = *(_DWORD *)a2;
-  sub_80DEE4A(a1, *(_DWORD *)a2, a3);
+  PM_Friction(a1, *(_DWORD *)a2, a3);
   v11 = (float)*(char *)(a2 + 28);
   v10 = (float)*(char *)(a2 + 29);
   v6[0] = *(_DWORD *)(a2 + 4);
@@ -89502,7 +89502,7 @@ int __usercall sub_80DFCD4@<eax>(long double a1@<st0>, int a2, int a3)
   v6[4] = *(_DWORD *)(a2 + 20);
   v6[5] = *(_DWORD *)(a2 + 24);
   v6[6] = *(_DWORD *)(a2 + 28);
-  v7 = sub_80DF3FA(v5, (int)v6);
+  v7 = PM_CmdScale(v5, (int)v6);
   *(_DWORD *)(a3 + 8) = 0;
   *(_DWORD *)(a3 + 20) = 0;
   Vec3Normalize((float *)a3);
@@ -89514,15 +89514,15 @@ int __usercall sub_80DFCD4@<eax>(long double a1@<st0>, int a2, int a3)
   v8 = Vec3Normalize((float *)v9);
   v3 = v8 * v7;
   v8 = v3;
-  sub_80DF16A(v5, a3, (float *)v9, v8, 1.0);
+  PM_Accelerate(v5, a3, (float *)v9, v8, 1.0);
   if ( *(_DWORD *)(a3 + 48) )
-    sub_80DEDB0((float *)(v5 + 32), (float *)(a3 + 60), (float *)(v5 + 32));
-  sub_80E7CC0((int *)a2, a3, 1);
-  return sub_80DF868(v3, a2, a3);
+    PM_ClipVelocity((float *)(v5 + 32), (float *)(a3 + 60), (float *)(v5 + 32));
+  PM_StepSlideMove((int *)a2, a3, 1);
+  return PM_SetMovementDir(v3, a2, a3);
 }
 
 //----- (080DFE82) --------------------------------------------------------
-int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3)
+int __usercall PM_WalkMove@<eax>(long double a1@<st0>, int a2, int a3)
 {
   long double v4; // fst7
   long double v5; // fst7
@@ -89545,8 +89545,8 @@ int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3)
   if ( (*(_DWORD *)(*(_DWORD *)a2 + 12) & 0x80000) != 0 )
     Jump_ApplySlowdown(v7);
   if ( (unsigned __int8)Jump_Check((int *)a2, (int *)a3) )
-    return sub_80DFCD4(a1, a2, a3);
-  sub_80DEE4A(a1, v7, a3);
+    return PM_AirMove(a1, a2, a3);
+  PM_Friction(a1, v7, a3);
   v16 = (float)*(char *)(a2 + 28);
   v15 = (float)*(char *)(a2 + 29);
   v11[0] = *(_DWORD *)(a2 + 4);
@@ -89556,16 +89556,16 @@ int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3)
   v11[4] = *(_DWORD *)(a2 + 20);
   v11[5] = *(_DWORD *)(a2 + 24);
   v11[6] = *(_DWORD *)(a2 + 28);
-  v12 = sub_80DF534((int *)a2, (int)v11);
-  v4 = sub_80DF7FC(*(_DWORD *)(v7 + 144));
+  v12 = PM_CmdScale_Walk((int *)a2, (int)v11);
+  v4 = PM_DamageScale_Walk(*(_DWORD *)(v7 + 144));
   v12 = v4 * v12;
   *(_DWORD *)(v7 + 144) -= (int)(*(float *)(a3 + 36) * 1000.0);
   if ( *(int *)(v7 + 144) <= 0 )
     *(_DWORD *)(v7 + 144) = 0;
   *(_DWORD *)(a3 + 8) = 0;
   *(_DWORD *)(a3 + 20) = 0;
-  sub_80DEDB0((float *)a3, (float *)(a3 + 60), (float *)a3);
-  sub_80DEDB0((float *)(a3 + 12), (float *)(a3 + 60), (float *)(a3 + 12));
+  PM_ClipVelocity((float *)a3, (float *)(a3 + 60), (float *)a3);
+  PM_ClipVelocity((float *)(a3 + 12), (float *)(a3 + 60), (float *)(a3 + 12));
   Vec3Normalize((float *)a3);
   Vec3Normalize((float *)(a3 + 12));
   for ( i = 0; i <= 2; ++i )
@@ -89596,7 +89596,7 @@ int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3)
     v5 = v10 * 0.25;
     v10 = v5;
   }
-  sub_80DF16A(v7, a3, (float *)v14, v13, v10);
+  PM_Accelerate(v7, a3, (float *)v14, v13, v10);
   if ( (*(_DWORD *)(a3 + 72) & 2) != 0 || (*(_DWORD *)(v7 + 12) & 0x400) != 0 )
   {
     v5 = *(float *)(v7 + 40) - (long double)*(int *)(v7 + 72) * *(float *)(a3 + 36);
@@ -89605,7 +89605,7 @@ int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3)
   sub_80E72B4((float *)(v7 + 32));
   v9 = v5;
   sub_80E70CA((_DWORD *)(v7 + 32), v17);
-  sub_80DEDB0((float *)(v7 + 32), (float *)(a3 + 60), (float *)(v7 + 32));
+  PM_ClipVelocity((float *)(v7 + 32), (float *)(a3 + 60), (float *)(v7 + 32));
   if ( sub_80E724C((float *)(v7 + 32), v17) > 0.0 )
   {
     Vec3Normalize((float *)(v7 + 32));
@@ -89613,14 +89613,14 @@ int __usercall sub_80DFE82@<eax>(long double a1@<st0>, int a2, int a3)
   }
   v6 = 0.0;
   if ( *(float *)(v7 + 32) != 0.0 || (v6 = 0.0, *(float *)(v7 + 36) != 0.0) )
-    sub_80E7CC0((int *)a2, a3, 0);
-  return sub_80DF868(v6, a2, a3);
+    PM_StepSlideMove((int *)a2, a3, 0);
+  return PM_SetMovementDir(v6, a2, a3);
 }
 // 80DFE82: using guessed type float var_28[7];
 // 80DFE82: using guessed type float var_38[4];
 
 //----- (080E02FE) --------------------------------------------------------
-float *__usercall sub_80E02FE@<eax>(long double a1@<st0>, int a2, int a3)
+float *__usercall PM_DeadMove@<eax>(long double a1@<st0>, int a2, int a3)
 {
   float *result; // eax
   float v4; // [esp+14h] [ebp-4h]
@@ -89646,7 +89646,7 @@ float *__usercall sub_80E02FE@<eax>(long double a1@<st0>, int a2, int a3)
 }
 
 //----- (080E037E) --------------------------------------------------------
-float *__usercall sub_80E037E@<eax>(long double a1@<st0>, int a2, int a3)
+float *__usercall PM_NoclipMove@<eax>(long double a1@<st0>, int a2, int a3)
 {
   float v4; // [esp+20h] [ebp-68h]
   int v5; // [esp+24h] [ebp-64h]
@@ -89696,13 +89696,13 @@ float *__usercall sub_80E037E@<eax>(long double a1@<st0>, int a2, int a3)
     v10 = v10 + 127.0;
   if ( (*(_DWORD *)(a2 + 8) & 0x40) != 0 )
     v10 = v10 - 127.0;
-  v6 = sub_80DF2DE(v5, v12, v11, v10);
+  v6 = PM_MoveScale(v5, v12, v11, v10);
   for ( i = 0; i <= 2; ++i )
     v13[i] = *(float *)(a3 + 4 * i) * v12 + *(float *)(a3 + 4 * i + 12) * v11 + *(float *)(a3 + 4 * i + 24) * v10;
   sub_80E70CA(v13, v9);
   v7 = Vec3Normalize((float *)v9);
   v8 = v7 * v6;
-  sub_80DF16A(v5, a3, (float *)v9, v8, 9.0);
+  PM_Accelerate(v5, a3, (float *)v9, v8, 9.0);
   return sub_80E71F8((float *)(v5 + 20), *(float *)(a3 + 36), (float *)(v5 + 32), (float *)(v5 + 20));
 }
 // 8145E68: using guessed type float flt_8145E68[3];
@@ -89711,7 +89711,7 @@ float *__usercall sub_80E037E@<eax>(long double a1@<st0>, int a2, int a3)
 // 80E037E: using guessed type float var_38[6];
 
 //----- (080E05C8) --------------------------------------------------------
-float *__cdecl sub_80E05C8(int a1, int a2)
+float *__cdecl PM_UFOMove(int a1, int a2)
 {
   long double v2; // fst7
   float v4; // [esp+2Ch] [ebp-8Ch]
@@ -89771,7 +89771,7 @@ float *__cdecl sub_80E05C8(int a1, int a2)
   {
     sub_80E70CA(flt_8145E68, (_DWORD *)(v8 + 32));
   }
-  v9 = sub_80DF2DE(v8, v14, v13, v12);
+  v9 = PM_MoveScale(v8, v14, v13, v12);
   v6[1] = 0;
   v6[0] = 0;
   v6[2] = 1065353216;
@@ -89781,7 +89781,7 @@ float *__cdecl sub_80E05C8(int a1, int a2)
   sub_80E70CA(v15, v11);
   v10 = Vec3Normalize((float *)v11);
   v10 = v10 * v9;
-  sub_80DF16A(v8, a2, (float *)v11, v10, 9.0);
+  PM_Accelerate(v8, a2, (float *)v11, v10, 9.0);
   return sub_80E71F8((float *)(v8 + 20), *(float *)(a2 + 36), (float *)(v8 + 32), (float *)(v8 + 20));
 }
 // 8145E68: using guessed type float flt_8145E68[3];
@@ -90164,7 +90164,7 @@ _DWORD *__cdecl PM_GroundTrace(int *a1, int a2)
         if ( *(_DWORD *)(v4 + 96) == 1023 )
           sub_80E09A0(v4, a2);
         *(_DWORD *)(v4 + 96) = (unsigned __int16)v12;
-        return (_DWORD *)sub_80DED50((int)a1, (unsigned __int16)v12);
+        return (_DWORD *)PM_AddTouchEnt((int)a1, (unsigned __int16)v12);
       }
       else
       {
@@ -90204,7 +90204,7 @@ int __cdecl PM_GetViewHeightLerpTime(int a1, int a2, int a3)
 }
 
 //----- (080E1562) --------------------------------------------------------
-long double __cdecl sub_80E1562(int a1, int a2, float *a3)
+long double __cdecl PM_ViewHeightTableLerp(int a1, int a2, float *a3)
 {
   float v5; // [esp+4h] [ebp-14h]
   int v6; // [esp+Ch] [ebp-Ch]
@@ -90278,7 +90278,7 @@ long double __cdecl sub_80E168A(_DWORD *a1, int a2, int a3)
 }
 
 //----- (080E178C) --------------------------------------------------------
-void __cdecl sub_80E178C(int *a1, int a2)
+void __cdecl PM_ViewHeightAdjust(int *a1, int a2)
 {
   int v2; // ebx
   int v3; // ebx
@@ -90324,20 +90324,20 @@ void __cdecl sub_80E178C(int *a1, int a2)
             if ( *(_DWORD *)(v12 + 256) == 11 )
             {
               v2 = v12;
-              *(float *)(v2 + 248) = sub_80E1562(v11, (int)&unk_81663E0, &v9);
+              *(float *)(v2 + 248) = PM_ViewHeightTableLerp(v11, (int)&unk_81663E0, &v9);
             }
             else if ( *(_DWORD *)(v12 + 256) == 40 )
             {
               v3 = v12;
               if ( *(_DWORD *)(v12 + 260) )
-                *(float *)(v3 + 248) = sub_80E1562(v11, (int)&unk_81662E0, &v9);
+                *(float *)(v3 + 248) = PM_ViewHeightTableLerp(v11, (int)&unk_81662E0, &v9);
               else
-                *(float *)(v3 + 248) = sub_80E1562(v11, (int)&unk_81664C0, &v9);
+                *(float *)(v3 + 248) = PM_ViewHeightTableLerp(v11, (int)&unk_81664C0, &v9);
             }
             else
             {
               v4 = v12;
-              *(float *)(v4 + 248) = sub_80E1562(v11, (int)&unk_8166360, &v9);
+              *(float *)(v4 + 248) = PM_ViewHeightTableLerp(v11, (int)&unk_8166360, &v9);
             }
             v5 = *(float *)(v12 + 264) - v9;
             if ( sub_80E6E42(v5) > 0.050000001 )
@@ -90352,7 +90352,7 @@ void __cdecl sub_80E178C(int *a1, int a2)
               v6[2] = 0;
               Vec3Normalize((float *)v6);
               sub_80E71C0((float *)v6, v8, (float *)(v12 + 32));
-              sub_80E7CC0(a1, a2, 1);
+              PM_StepSlideMove(a1, a2, 1);
               sub_80E70CA(v7, (_DWORD *)(v12 + 32));
               *(float *)(v12 + 264) = v9;
             }
@@ -90397,18 +90397,18 @@ void __cdecl sub_80E178C(int *a1, int a2)
               *(_DWORD *)(v12 + 252) = a1[1] - (int)((long double)v11 * 0.0099999998 * (long double)v10);
               if ( *(_DWORD *)(v12 + 256) == 11 )
               {
-                sub_80E1562(v11, (int)&unk_81663E0, &v9);
+                PM_ViewHeightTableLerp(v11, (int)&unk_81663E0, &v9);
               }
               else if ( *(_DWORD *)(v12 + 256) == 40 )
               {
                 if ( *(_DWORD *)(v12 + 260) )
-                  sub_80E1562(v11, (int)&unk_81662E0, &v9);
+                  PM_ViewHeightTableLerp(v11, (int)&unk_81662E0, &v9);
                 else
-                  sub_80E1562(v11, (int)&unk_81664C0, &v9);
+                  PM_ViewHeightTableLerp(v11, (int)&unk_81664C0, &v9);
               }
               else
               {
-                sub_80E1562(v11, (int)&unk_8166360, &v9);
+                PM_ViewHeightTableLerp(v11, (int)&unk_8166360, &v9);
               }
               *(float *)(v12 + 264) = v9;
             }
@@ -90550,7 +90550,7 @@ void __cdecl PM_CheckDuck(int a1, int a2)
         {
           if ( ((_BYTE)v10[3] & 1) != 0
             || *((_DWORD *)v10 + 24) != 1023
-            && sub_80DE734(
+            && BG_CheckProne(
                  *((_DWORD *)v10 + 51),
                  v10 + 5,
                  *(_DWORD *)(a1 + 208),
@@ -90705,7 +90705,7 @@ void __cdecl PM_CheckDuck(int a1, int a2)
           *((_DWORD *)v10 + 61) = 60;
         }
       }
-      sub_80E178C((int *)a1, a2);
+      PM_ViewHeightAdjust((int *)a1, a2);
       v11 = PM_GetEffectiveStance((int)v10);
       if ( v11 == 1 )
       {
@@ -90801,14 +90801,14 @@ void __cdecl PM_CheckDuck(int a1, int a2)
     {
       *(float *)(a1 + 216) = v10[352];
       *((_DWORD *)v10 + 61) = 8;
-      sub_80E178C((int *)a1, a2);
+      PM_ViewHeightAdjust((int *)a1, a2);
     }
   }
 }
 // 8166520: using guessed type int (__cdecl *funcs_80DDC6A[2])(void *s, int, int, int, int, int, int);
 
 //----- (080E2CDE) --------------------------------------------------------
-char __cdecl sub_80E2CDE(int *a1, int a2, char a3, char a4, int a5)
+char __cdecl PM_FootstepEvent(int *a1, int a2, char a3, char a4, int a5)
 {
   char v5; // dl
   int v6; // eax
@@ -90877,7 +90877,7 @@ char __cdecl sub_80E2CDE(int *a1, int a2, char a3, char a4, int a5)
 }
 
 //----- (080E2EA6) --------------------------------------------------------
-_BOOL4 __cdecl sub_80E2EA6(int *a1)
+_BOOL4 __cdecl PM_ShouldMakeFootsteps(int *a1)
 {
   int v3; // [esp+Ch] [ebp-Ch]
   int v4; // [esp+10h] [ebp-8h]
@@ -90981,7 +90981,7 @@ void __cdecl PM_Footsteps(int a1, int a2)
         BG_AnimScriptAnimation((_DWORD *)v14, 3, 18, 1);
       v20 = *(_DWORD *)(v14 + 8);
       *(_DWORD *)(v14 + 8) = (unsigned __int8)(int)((long double)v20 + (long double)*(int *)(a2 + 40) * v22);
-      sub_80E2CDE((int *)a1, a2, v20, *(_DWORD *)(v14 + 8), 1);
+      PM_FootstepEvent((int *)a1, a2, v20, *(_DWORD *)(v14 + 8), 1);
     }
     if ( v18 == (*(_DWORD *)(v14 + 12) & 3) )
       return;
@@ -91225,14 +91225,14 @@ LABEL_11:
       v9 = BG_AnimScriptAnimation((_DWORD *)v14, 3, 36, 1);
   }
 LABEL_136:
-  v19 = sub_80E2EA6((int *)a1);
+  v19 = PM_ShouldMakeFootsteps((int *)a1);
   v21 = *(_DWORD *)(v14 + 8);
   *(_DWORD *)(v14 + 8) = (unsigned __int8)(int)((long double)v21 + (long double)*(int *)(a2 + 40) * v23);
   if ( *(_BYTE *)(a1 + 28) || *(_BYTE *)(a1 + 29) )
   {
     if ( v9 < 0 )
       BG_AnimScriptAnimation((_DWORD *)v14, 3, 1, 1);
-    sub_80E2CDE((int *)a1, a2, v21, *(_DWORD *)(v14 + 8), v19);
+    PM_FootstepEvent((int *)a1, a2, v21, *(_DWORD *)(v14 + 8), v19);
   }
   else if ( *(float *)(a1 + 220) <= 120.0 )
   {
@@ -91265,7 +91265,7 @@ LABEL_74:
 // 8576120: using guessed type int player_dmgtimer_flinchTime;
 
 //----- (080E4060) --------------------------------------------------------
-void __cdecl sub_80E4060(int a1)
+void __cdecl PM_FoliageSounds(int a1)
 {
   int v1; // [esp+2Ch] [ebp-6Ch]
   int v2[4]; // [esp+30h] [ebp-68h] BYREF
@@ -91310,7 +91310,7 @@ void __cdecl sub_80E4060(int a1)
 // 80E4060: using guessed type unsigned __int16 s[17];
 
 //----- (080E4212) --------------------------------------------------------
-_DWORD *__cdecl sub_80E4212(_DWORD *a1, int a2)
+_DWORD *__cdecl PM_DropTimers(_DWORD *a1, int a2)
 {
   _DWORD *result; // eax
 
@@ -91452,7 +91452,7 @@ int __usercall sub_80E4688@<eax>(long double a1@<st0>, int a2, float a3, unsigne
   v5 = a3 - (1.0 - v7) * v9;
   v8 = sub_80A6154(v5);
   v6 = v7 * 45.0 + (1.0 - v7) * 66.0;
-  return sub_80DE734(
+  return BG_CheckProne(
            *(_DWORD *)(a2 + 204),
            (float *)(a2 + 20),
            *(_DWORD *)(a2 + 1400),
@@ -91660,7 +91660,7 @@ LABEL_106:
             v5 = sub_80A6154(v14);
             v33 = v5;
           }
-          v31 = sub_80DE734(
+          v31 = BG_CheckProne(
                   *(_DWORD *)(a1 + 204),
                   (float *)(a1 + 20),
                   *(_DWORD *)(a1 + 1400),
@@ -91677,7 +91677,7 @@ LABEL_106:
                   45.0);
           if ( v31 )
           {
-            v31 = sub_80DE734(
+            v31 = BG_CheckProne(
                     *(_DWORD *)(a1 + 204),
                     (float *)(a1 + 20),
                     *(_DWORD *)(a1 + 1400),
@@ -91707,7 +91707,7 @@ LABEL_68:
           v34 = *(float *)(a1 + 1412);
           v30 = 1;
 LABEL_70:
-          for ( m = sub_80DE734(
+          for ( m = BG_CheckProne(
                       *(_DWORD *)(a1 + 204),
                       (float *)(a1 + 20),
                       *(_DWORD *)(a1 + 1400),
@@ -91723,7 +91723,7 @@ LABEL_70:
                       0,
                       45.0);
                 ;
-                m = sub_80DE734(
+                m = BG_CheckProne(
                       *(_DWORD *)(a1 + 204),
                       (float *)(a1 + 20),
                       *(_DWORD *)(a1 + 1400),
@@ -91836,7 +91836,7 @@ LABEL_81:
 // 8576080: using guessed type int bg_prone_yawcap;
 
 //----- (080E54DC) --------------------------------------------------------
-void __usercall sub_80E54DC(long double a1@<st0>, _BYTE *a2, int a3)
+void __usercall PM_UpdatePronePitch(long double a1@<st0>, _BYTE *a2, int a3)
 {
   int v3; // eax
   long double v4; // fst7
@@ -91854,7 +91854,7 @@ void __usercall sub_80E54DC(long double a1@<st0>, _BYTE *a2, int a3)
     {
       v5 = a2[228];
       if ( *(_DWORD *)(a3 + 48) )
-        v3 = sub_80DE734(
+        v3 = BG_CheckProne(
                *(_DWORD *)(v6 + 204),
                (float *)(v6 + 20),
                *(_DWORD *)(v6 + 1400),
@@ -91870,7 +91870,7 @@ void __usercall sub_80E54DC(long double a1@<st0>, _BYTE *a2, int a3)
                0,
                66.0);
       else
-        v3 = sub_80DE734(
+        v3 = BG_CheckProne(
                *(_DWORD *)(v6 + 204),
                (float *)(v6 + 20),
                *(_DWORD *)(v6 + 1400),
@@ -91957,7 +91957,7 @@ int __cdecl sub_80E5820(int a1)
 }
 
 //----- (080E5844) --------------------------------------------------------
-int __cdecl sub_80E5844(int **a1)
+int __cdecl PM_UpdatePlayerWalkingFlag(int **a1)
 {
   int result; // eax
   int *v2; // [esp+0h] [ebp-4h]
@@ -92028,7 +92028,7 @@ int __cdecl PM_ClearLadderFlag(int a1)
 }
 
 //----- (080E5936) --------------------------------------------------------
-int __cdecl sub_80E5936(int a1, int *a2)
+int __cdecl PM_CheckLadderMove(int a1, int *a2)
 {
   int result; // eax
   int v3; // [esp+20h] [ebp-88h]
@@ -92141,7 +92141,7 @@ int __cdecl sub_80E5936(int a1, int *a2)
 // 80E5936: using guessed type int anonymous_0[3];
 
 //----- (080E5D4A) --------------------------------------------------------
-int __usercall sub_80E5D4A@<eax>(long double a1@<st0>, int a2, int a3)
+int __usercall PM_LadderMove@<eax>(long double a1@<st0>, int a2, int a3)
 {
   int result; // eax
   long double v4; // fst7
@@ -92165,7 +92165,7 @@ int __usercall sub_80E5D4A@<eax>(long double a1@<st0>, int a2, int a3)
 
   v9 = *(_DWORD *)a2;
   if ( (unsigned __int8)Jump_Check((int *)a2, (int *)a3) )
-    return sub_80DFCD4(a1, a2, a3);
+    return PM_AirMove(a1, a2, a3);
   v16 = (*(float *)(a3 + 8) + 0.25) * 2.5;
   if ( v16 <= 1.0 )
   {
@@ -92181,7 +92181,7 @@ int __usercall sub_80E5D4A@<eax>(long double a1@<st0>, int a2, int a3)
   *(_DWORD *)(a3 + 20) = 0;
   sub_80A2298((float *)(a3 + 12), (int)v17);
   sub_80A7D80(v17, (float *)(v9 + 100), (float *)(a3 + 12));
-  v20 = sub_80DF3FA(v9, a2 + 4);
+  v20 = PM_CmdScale(v9, a2 + 4);
   sub_80E707C(v18);
   if ( *(_BYTE *)(a2 + 28) )
     *(float *)&v18[2] = v16 * 0.5 * v20 * (long double)*(char *)(a2 + 28);
@@ -92191,7 +92191,7 @@ int __usercall sub_80E5D4A@<eax>(long double a1@<st0>, int a2, int a3)
     sub_80E71F8((float *)v18, v5, (float *)(a3 + 12), (float *)v18);
   }
   v21 = sub_80A2298((float *)v18, (int)v19);
-  sub_80DF16A(v9, a3, (float *)v19, v21, 9.0);
+  PM_Accelerate(v9, a3, (float *)v19, v21, 9.0);
   if ( !*(_BYTE *)(a2 + 28) )
   {
     if ( *(float *)(v9 + 40) <= 0.0 )
@@ -92234,7 +92234,7 @@ int __usercall sub_80E5D4A@<eax>(long double a1@<st0>, int a2, int a3)
     if ( sub_80E6F06(*(float *)(v9 + 40)) >= v7 )
       sub_80E6FD6((float *)(v9 + 32), -50.0, (float *)(v9 + 100), (float *)(v9 + 32));
   }
-  sub_80E7CC0((int *)a2, a3, 0);
+  PM_StepSlideMove((int *)a2, a3, 0);
   v4 = sub_80A29F6((float *)(v9 + 100)) + 180.0;
   v20 = v4;
   sub_80A6258(v20, *(float *)(v9 + 236));
@@ -92341,7 +92341,7 @@ void __cdecl PmoveSingle(int a1)
   if ( *(_DWORD *)(v27 + 4) != 5
     && (*(_DWORD *)(v27 + 12) & 0x1000) == 0
     && (!*(_DWORD *)(v27 + 216) || *(_DWORD *)(v27 + 216) == 3)
-    && sub_80EAEC8(v27)
+    && PM_WeaponAmmoAvailable(v27)
     && (*(_BYTE *)(a1 + 8) & 1) != 0 )
   {
     *(_DWORD *)(v27 + 160) |= 0x40u;
@@ -92387,7 +92387,7 @@ void __cdecl PmoveSingle(int a1)
     *(_BYTE *)(a1 + 28) = 0;
     *(_BYTE *)(a1 + 29) = 0;
   }
-  sub_80DBE96(v27);
+  Mantle_ClearHint(v27);
   switch ( *(_DWORD *)(v27 + 4) )
   {
     case 1:
@@ -92399,41 +92399,41 @@ void __cdecl PmoveSingle(int a1)
       v22 = 0;
       sub_80E707C((_DWORD *)(v27 + 32));
       PM_UpdateAimDownSightFlag(a1, (int)s);
-      sub_80E5844((int **)a1);
+      PM_UpdatePlayerWalkingFlag((int **)a1);
       PM_CheckDuck(a1, (int)s);
-      sub_80E4212((_DWORD *)v27, (int)s);
+      PM_DropTimers((_DWORD *)v27, (int)s);
       PM_Footsteps(a1, (int)s);
-      sub_80EDF3A(a1, (int)s);
+      PM_Weapon(a1, (int)s);
       break;
     case 2:
       PM_ClearLadderFlag(v27);
       PM_UpdateAimDownSightFlag(a1, (int)s);
-      sub_80E5844((int **)a1);
-      sub_80E037E(v2, a1, (int)s);
-      sub_80E4212((_DWORD *)v27, (int)s);
-      sub_80EA568((int *)a1, (int)s);
+      PM_UpdatePlayerWalkingFlag((int **)a1);
+      PM_NoclipMove(v2, a1, (int)s);
+      PM_DropTimers((_DWORD *)v27, (int)s);
+      PM_UpdateAimDownSightLerp((int *)a1, (int)s);
       break;
     case 3:
       PM_ClearLadderFlag(v27);
       PM_UpdateAimDownSightFlag(a1, (int)s);
-      sub_80E5844((int **)a1);
-      sub_80E05C8(a1, (int)s);
-      sub_80E4212((_DWORD *)v27, (int)s);
-      sub_80EA568((int *)a1, (int)s);
+      PM_UpdatePlayerWalkingFlag((int **)a1);
+      PM_UFOMove(a1, (int)s);
+      PM_DropTimers((_DWORD *)v27, (int)s);
+      PM_UpdateAimDownSightLerp((int *)a1, (int)s);
       break;
     case 4:
       PM_ClearLadderFlag(v27);
       PM_UpdateAimDownSightFlag(a1, (int)s);
-      sub_80E5844((int **)a1);
+      PM_UpdatePlayerWalkingFlag((int **)a1);
       PM_CheckDuck(a1, (int)s);
-      sub_80DFB3A(v2, a1, (int)s);
-      sub_80E4212((_DWORD *)v27, (int)s);
-      sub_80EA568((int *)a1, (int)s);
+      PM_FlyMove(v2, a1, (int)s);
+      PM_DropTimers((_DWORD *)v27, (int)s);
+      PM_UpdateAimDownSightLerp((int *)a1, (int)s);
       break;
     case 5:
       PM_ClearLadderFlag(v27);
       PM_UpdateAimDownSightFlag(a1, (int)s);
-      sub_80EA568((int *)a1, (int)s);
+      PM_UpdateAimDownSightLerp((int *)a1, (int)s);
       break;
     default:
       if ( (*(_DWORD *)(v27 + 160) & 0x300) != 0 )
@@ -92445,9 +92445,9 @@ void __cdecl PmoveSingle(int a1)
         v22 = 0;
         sub_80E707C((_DWORD *)(v27 + 32));
         PM_UpdateAimDownSightFlag(a1, (int)s);
-        sub_80E5844((int **)a1);
+        PM_UpdatePlayerWalkingFlag((int **)a1);
         PM_CheckDuck(a1, (int)s);
-        sub_80E4212((_DWORD *)v27, (int)s);
+        PM_DropTimers((_DWORD *)v27, (int)s);
         PM_Footsteps(a1, (int)s);
         PM_ResetWeaponState((_DWORD *)v27);
       }
@@ -92466,36 +92466,36 @@ void __cdecl PmoveSingle(int a1)
           v23 = 0;
           v22 = 0;
           PM_UpdateAimDownSightFlag(a1, (int)s);
-          sub_80E5844((int **)a1);
+          PM_UpdatePlayerWalkingFlag((int **)a1);
           PM_CheckDuck(a1, (int)s);
-          sub_80DBB3C(a1, v27, (int)s);
-          sub_80EDF3A(a1, (int)s);
+          Mantle_Move(a1, v27, (int)s);
+          PM_Weapon(a1, (int)s);
         }
         else
         {
           PM_UpdateAimDownSightFlag(a1, (int)s);
-          sub_80E5844((int **)a1);
-          sub_80E54DC(v2, (_BYTE *)a1, (int)s);
+          PM_UpdatePlayerWalkingFlag((int **)a1);
+          PM_UpdatePronePitch(v2, (_BYTE *)a1, (int)s);
           if ( *(_DWORD *)(v27 + 4) == 6 )
-            sub_80E02FE(v2, v27, (int)s);
-          sub_80E5936(a1, s);
-          sub_80E4212((_DWORD *)v27, (int)s);
+            PM_DeadMove(v2, v27, (int)s);
+          PM_CheckLadderMove(a1, s);
+          PM_DropTimers((_DWORD *)v27, (int)s);
           if ( (*(_DWORD *)(v27 + 12) & 0x20) != 0 )
           {
-            sub_80E5D4A(v2, a1, (int)s);
+            PM_LadderMove(v2, a1, (int)s);
           }
           else if ( v22 )
           {
-            sub_80DFE82(v2, a1, (int)s);
+            PM_WalkMove(v2, a1, (int)s);
           }
           else
           {
-            sub_80DFCD4(v2, a1, (int)s);
+            PM_AirMove(v2, a1, (int)s);
           }
           PM_GroundTrace((int *)a1, (int)s);
           PM_Footsteps(a1, (int)s);
-          sub_80EDF3A(a1, (int)s);
-          sub_80E4060(a1);
+          PM_Weapon(a1, (int)s);
+          PM_FoliageSounds(a1);
           sub_80E717C((float *)(v27 + 20), v25, (float *)v16);
           v3 = sub_80E7280((float *)v16);
           v15 = v3 / (v20 * v20);
@@ -92560,7 +92560,7 @@ int __cdecl Pmove(int **a1)
 }
 
 //----- (080E6DF4) --------------------------------------------------------
-long double __usercall sub_80E6DF4@<st0>(long double a1@<st0>, int a2, int a3)
+long double __usercall BG_GetSpeed@<st0>(long double a1@<st0>, int a2, int a3)
 {
   if ( (*(_DWORD *)(a2 + 12) & 0x20) != 0 )
   {
@@ -92843,7 +92843,7 @@ unsigned int __cdecl sub_80E733C(unsigned int a1)
 }
 
 //----- (080E7348) --------------------------------------------------------
-int __cdecl sub_80E7348(unsigned __int8 *a1, _DWORD *a2, _DWORD *a3)
+int __cdecl PM_VerifyPronePosition(unsigned __int8 *a1, _DWORD *a2, _DWORD *a3)
 {
   int v5; // [esp+40h] [ebp-8h]
   int v6; // [esp+44h] [ebp-4h]
@@ -92851,7 +92851,7 @@ int __cdecl sub_80E7348(unsigned __int8 *a1, _DWORD *a2, _DWORD *a3)
   v6 = *(_DWORD *)a1;
   if ( (*(_BYTE *)(*(_DWORD *)a1 + 12) & 1) == 0 )
     return 1;
-  v5 = sub_80DE734(
+  v5 = BG_CheckProne(
          *(_DWORD *)(v6 + 204),
          (float *)(v6 + 20),
          *(_DWORD *)(v6 + 1400),
@@ -92895,7 +92895,7 @@ long double __cdecl sub_80E7448(float *a1, int a2, int a3, _DWORD *a4)
 // 80E7448: using guessed type float var_38[11];
 
 //----- (080E750E) --------------------------------------------------------
-_BOOL4 __cdecl sub_80E750E(int *a1, int a2, int a3)
+_BOOL4 __cdecl PM_SlideMove(int *a1, int a2, int a3)
 {
   int v5; // [esp+3Ch] [ebp-15Ch]
   int v6[4]; // [esp+40h] [ebp-158h] BYREF
@@ -92931,7 +92931,7 @@ _BOOL4 __cdecl sub_80E750E(int *a1, int a2, int a3)
     *(float *)(v5 + 40) = (*(float *)(v5 + 40) + v8) * 0.5;
     *(float *)&v20[2] = v8;
     if ( *(_DWORD *)(a2 + 48) )
-      sub_80DEDB0((float *)(v5 + 32), (float *)(a2 + 60), (float *)(v5 + 32));
+      PM_ClipVelocity((float *)(v5 + 32), (float *)(a2 + 60), (float *)(v5 + 32));
   }
   v10 = *(float *)(a2 + 36);
   if ( *(_DWORD *)(a2 + 48) )
@@ -92965,7 +92965,7 @@ _BOOL4 __cdecl sub_80E750E(int *a1, int a2, int a3)
       sub_80DEB7A((float *)(v5 + 20), (float *)v11, s, (float *)(v5 + 20));
     if ( s == 1.0 )
       break;
-    sub_80DED50((int)a1, v14);
+    PM_AddTouchEnt((int)a1, v14);
     v10 = v10 - v10 * s;
     if ( v23 > 7 )
     {
@@ -92977,7 +92977,7 @@ LABEL_15:
     {
       if ( sub_80E88AA(v13, &v22[3 * j]) > 0.99900001 )
       {
-        sub_80DEDB0((float *)(v5 + 32), v13, (float *)(v5 + 32));
+        PM_ClipVelocity((float *)(v5 + 32), v13, (float *)(v5 + 32));
         sub_80E87DA(v13, (float *)(v5 + 32), (float *)(v5 + 32));
         break;
       }
@@ -92990,14 +92990,14 @@ LABEL_15:
       {
         if ( -v9 > (long double)*(float *)(a2 + 92) )
           *(_DWORD *)(a2 + 92) = LODWORD(v9) ^ 0x80000000;
-        sub_80DEDB0((float *)(v5 + 32), &v22[3 * v21[0]], (float *)v19);
-        sub_80DEDB0(v7, &v22[3 * v21[0]], (float *)v6);
+        PM_ClipVelocity((float *)(v5 + 32), &v22[3 * v21[0]], (float *)v19);
+        PM_ClipVelocity(v7, &v22[3 * v21[0]], (float *)v6);
         for ( k = 1; k < v23; ++k )
         {
           if ( sub_80E88AA((float *)v19, &v22[3 * v21[k]]) < 0.1 )
           {
-            sub_80DEDB0((float *)v19, &v22[3 * v21[k]], (float *)v19);
-            sub_80DEDB0((float *)v6, &v22[3 * v21[k]], (float *)v6);
+            PM_ClipVelocity((float *)v19, &v22[3 * v21[k]], (float *)v19);
+            PM_ClipVelocity((float *)v6, &v22[3 * v21[k]], (float *)v6);
             if ( sub_80E88AA((float *)v19, &v22[3 * v21[0]]) < 0.0 )
             {
               sub_80A1ED8(&v22[3 * v21[0]], &v22[3 * v21[k]], (float *)v25);
@@ -93030,7 +93030,7 @@ LABEL_15:
 // 80E750E: using guessed type int var_B8[8];
 
 //----- (080E7CC0) --------------------------------------------------------
-void __cdecl sub_80E7CC0(int *a1, int a2, int a3)
+void __cdecl PM_StepSlideMove(int *a1, int a2, int a3)
 {
   long double v3; // fst6
   float v4; // [esp+0h] [ebp-138h]
@@ -93091,7 +93091,7 @@ void __cdecl sub_80E7CC0(int *a1, int a2, int a3)
   }
   sub_80E87AA((_DWORD *)(v19 + 20), v39);
   sub_80E87AA((_DWORD *)(v19 + 32), v38);
-  v24 = sub_80E750E(a1, a2, a3);
+  v24 = PM_SlideMove(a1, a2, a3);
   if ( (*(_BYTE *)(v19 + 12) & 1) != 0 )
     v25[0] = 1092616192;
   else
@@ -93131,7 +93131,7 @@ LABEL_23:
         *(float *)&v7 = v40 + v23;
         sub_80E8786((_DWORD *)(v19 + 20), v30[0], v30[1], v7);
         sub_80E87AA(v38, (_DWORD *)(v19 + 32));
-        sub_80E750E(a1, a2, a3);
+        PM_SlideMove(a1, a2, a3);
       }
       else
       {
@@ -93170,7 +93170,7 @@ LABEL_32:
           return;
         }
         sub_80DEB7A((float *)(v19 + 20), (float *)v28, s, (float *)(v19 + 20));
-        sub_80DEDB0((float *)(v19 + 32), v33, (float *)(v19 + 32));
+        PM_ClipVelocity((float *)(v19 + 32), v33, (float *)(v19 + 32));
       }
     }
     sub_80E870E((float *)(v19 + 20), (float *)v39, v26);
@@ -93200,7 +93200,7 @@ LABEL_32:
           sub_80DEB7A((float *)(v19 + 20), (float *)v28, s, (float *)v21);
           v23 = *(float *)&v21[2] - *(float *)(v19 + 28);
           sub_80E87AA(v21, (_DWORD *)(v19 + 20));
-          sub_80DEDB0((float *)(v19 + 32), v33, (float *)(v19 + 32));
+          PM_ClipVelocity((float *)(v19 + 32), v33, (float *)(v19 + 32));
         }
       }
     }
@@ -93210,7 +93210,7 @@ LABEL_32:
     {
       if ( *(int *)(v19 + 4) <= 5 )
       {
-        if ( sub_80E7348((unsigned __int8 *)a1, v39, v38) )
+        if ( PM_VerifyPronePosition((unsigned __int8 *)a1, v39, v38) )
         {
           v4 = *(float *)(v19 + 28) - v37;
           if ( sub_80E86BE(v4) > 0.5 )
@@ -93238,7 +93238,7 @@ LABEL_32:
               v9 = v17;
               if ( v17 < 0 )
                 v9 = -v17;
-              if ( v9 > 3 && *(_DWORD *)(v19 + 96) != 1023 && sub_80E2EA6(a1) )
+              if ( v9 > 3 && *(_DWORD *)(v19 + 96) != 1023 && PM_ShouldMakeFootsteps(a1) )
               {
                 v8 = v17;
                 if ( v17 < 0 )
@@ -93249,7 +93249,7 @@ LABEL_32:
                 v11 = (long double)v18 * 1.25 + 7.0;
                 v12 = *(_DWORD *)(v19 + 8);
                 *(_DWORD *)(v19 + 8) = (unsigned __int8)(int)((long double)v12 + v11);
-                sub_80E2CDE(a1, a2, v12, *(_DWORD *)(v19 + 8), 1);
+                PM_FootstepEvent(a1, a2, v12, *(_DWORD *)(v19 + 8), 1);
               }
             }
           }
@@ -93776,7 +93776,7 @@ int __cdecl sub_80E9336(int a1)
 // 8576360: using guessed type int dword_8576360[128];
 
 //----- (080E9356) --------------------------------------------------------
-int __cdecl sub_80E9356(int a1)
+int __cdecl BG_GetClipSize(int a1)
 {
   return *(_DWORD *)(dword_85767A0[a1] + 472);
 }
@@ -93847,7 +93847,7 @@ int __cdecl BG_GetWeaponIndexForName(char *s1, void (__cdecl *a2)(int))
   v5 = BG_FindWeaponIndexForName(s1);
   if ( v5 )
     return v5;
-  v4 = sub_80F0110("mp", s1);
+  v4 = BG_LoadWeaponDef("mp", s1);
   if ( v4 )
     return sub_80E9188((int)v4, a2);
   Com_DPrintf("Couldn't find weapon \"%s\"\n", s1);
@@ -93886,7 +93886,7 @@ int __cdecl BG_GetViewmodelWeaponIndex(_DWORD *a1)
 }
 
 //----- (080E963A) --------------------------------------------------------
-int __cdecl sub_80E963A(int a1, int a2)
+int __cdecl BG_PlayerHasOffhand(int a1, int a2)
 {
   int v4; // [esp+Ch] [ebp-Ch]
   int i; // [esp+10h] [ebp-8h]
@@ -93901,7 +93901,7 @@ int __cdecl sub_80E963A(int a1, int a2)
 }
 
 //----- (080E973E) --------------------------------------------------------
-int __cdecl sub_80E973E(int a1)
+int __cdecl BG_IsAimDownSightWeapon(int a1)
 {
   return *(_DWORD *)(BG_GetWeaponDef(a1) + 812);
 }
@@ -94012,7 +94012,7 @@ int __cdecl BG_TakePlayerWeapon(int a1, int a2)
 // 8576140: using guessed type int dword_8576140;
 
 //----- (080E9A9E) --------------------------------------------------------
-int __cdecl sub_80E9A9E(int a1, int a2, int a3)
+int __cdecl BG_IsAltSwitch(int a1, int a2, int a3)
 {
   if ( !(unsigned __int8)sub_80D9E84(a1 + 1348, a3) )
     return 0;
@@ -94121,7 +94121,7 @@ int __cdecl sub_80E9DE0(int a1, int a2)
   {
     if ( BG_WeaponIsClipOnly(a2) )
     {
-      v4 = sub_80E9356(v9);
+      v4 = BG_GetClipSize(v9);
       return v4 - *(_DWORD *)(a1 + 4 * v9 + 836);
     }
     else
@@ -94348,7 +94348,7 @@ unsigned int __cdecl PM_ExitAimDownSight(int a1)
 }
 
 //----- (080EA568) --------------------------------------------------------
-void __cdecl sub_80EA568(int *a1, int a2)
+void __cdecl PM_UpdateAimDownSightLerp(int *a1, int a2)
 {
   long double v2; // fst7
   int v3; // [esp+14h] [ebp-14h]
@@ -94438,7 +94438,7 @@ int __cdecl sub_80EA850(int a1)
 }
 
 //----- (080EA868) --------------------------------------------------------
-void __cdecl sub_80EA868(int a1)
+void __cdecl PM_HoldBreathFire(int a1)
 {
   int v1; // [esp+8h] [ebp-10h]
   int v2; // [esp+Ch] [ebp-Ch]
@@ -94462,7 +94462,7 @@ void __cdecl sub_80EA868(int a1)
 // 85760D4: using guessed type int player_breath_fire_delay;
 
 //----- (080EA950) --------------------------------------------------------
-void __cdecl sub_80EA950(int *a1, int a2)
+void __cdecl PM_UpdateHoldBreath(int *a1, int a2)
 {
   int v2; // eax
   int v3; // [esp+18h] [ebp-20h]
@@ -94572,7 +94572,7 @@ int __cdecl BG_WeaponAmmo(int a1, int a2)
 }
 
 //----- (080EAD0C) --------------------------------------------------------
-int __cdecl sub_80EAD0C(int a1)
+int __cdecl PM_ReloadClip(int a1)
 {
   int result; // eax
   int v2; // [esp+8h] [ebp-20h]
@@ -94589,12 +94589,12 @@ int __cdecl sub_80EAD0C(int a1)
     v5 = BG_ClipForWeapon(*(_DWORD *)(a1 + 212));
     v4 = *(_DWORD *)(a1 + 4 * v6 + 324);
     v3 = *(_DWORD *)(a1 + 4 * v5 + 836);
-    v2 = sub_80E9356(v5) - v3;
+    v2 = BG_GetClipSize(v5) - v3;
     if ( v2 > v4 )
       v2 = v4;
     if ( *(_DWORD *)(a1 + 216) == 7 || *(_DWORD *)(a1 + 216) == 8 )
     {
-      result = sub_80E9356(v5);
+      result = BG_GetClipSize(v5);
       if ( *(_DWORD *)(v7 + 868) < result )
       {
         result = v2;
@@ -94610,7 +94610,7 @@ int __cdecl sub_80EAD0C(int a1)
       result = v7;
       if ( *(_DWORD *)(v7 + 864) )
       {
-        result = sub_80E9356(v5);
+        result = BG_GetClipSize(v5);
         if ( *(_DWORD *)(v7 + 864) < result )
         {
           result = v2;
@@ -94633,7 +94633,7 @@ int __cdecl sub_80EAD0C(int a1)
 }
 
 //----- (080EAE8C) --------------------------------------------------------
-int __cdecl sub_80EAE8C(int a1, int a2, int a3)
+int __cdecl PM_WeaponUseAmmo(int a1, int a2, int a3)
 {
   int v3; // ebx
   int result; // eax
@@ -94645,13 +94645,13 @@ int __cdecl sub_80EAE8C(int a1, int a2, int a3)
 }
 
 //----- (080EAEC8) --------------------------------------------------------
-int __cdecl sub_80EAEC8(int a1)
+int __cdecl PM_WeaponAmmoAvailable(int a1)
 {
   return *(_DWORD *)(a1 + 4 * BG_ClipForWeapon(*(_DWORD *)(a1 + 212)) + 836);
 }
 
 //----- (080EAEF2) --------------------------------------------------------
-_BOOL4 __cdecl sub_80EAEF2(int a1)
+_BOOL4 __cdecl PM_WeaponClipEmpty(int a1)
 {
   return *(_DWORD *)(a1 + 4 * BG_ClipForWeapon(*(_DWORD *)(a1 + 212)) + 836) == 0;
 }
@@ -94668,7 +94668,7 @@ int __cdecl sub_80EAF30(int a1)
 }
 
 //----- (080EAF58) --------------------------------------------------------
-int __cdecl sub_80EAF58(int a1, int a2)
+int __cdecl PM_Weapon_CheckForRechamber(int a1, int a2)
 {
   _DWORD *v4; // [esp+14h] [ebp-4h]
 
@@ -94722,7 +94722,7 @@ int __cdecl sub_80EAF58(int a1, int a2)
 }
 
 //----- (080EB180) --------------------------------------------------------
-int __cdecl sub_80EB180(_DWORD *a1)
+int __cdecl PM_SetWeaponReloadAddAmmoDelay(_DWORD *a1)
 {
   int result; // eax
   int v2; // [esp+10h] [ebp-8h]
@@ -94773,7 +94773,7 @@ int __cdecl sub_80EB180(_DWORD *a1)
 }
 
 //----- (080EB2E8) --------------------------------------------------------
-int __cdecl sub_80EB2E8(_DWORD *a1)
+int __cdecl PM_SetReloadingState(_DWORD *a1)
 {
   _DWORD *v2; // [esp+14h] [ebp-4h]
 
@@ -94794,11 +94794,11 @@ int __cdecl sub_80EB2E8(_DWORD *a1)
     a1[54] = 6;
   else
     a1[54] = 5;
-  return sub_80EB180(a1);
+  return PM_SetWeaponReloadAddAmmoDelay(a1);
 }
 
 //----- (080EB3D0) --------------------------------------------------------
-int __cdecl sub_80EB3D0(_DWORD *a1)
+int __cdecl PM_BeginWeaponReload(_DWORD *a1)
 {
   int result; // eax
   int v2; // [esp+10h] [ebp-8h]
@@ -94821,11 +94821,11 @@ int __cdecl sub_80EB3D0(_DWORD *a1)
           a1[13] = *(_DWORD *)(v2 + 548);
           a1[54] = 7;
           PM_AddEvent((int)a1, 152);
-          return sub_80EB180(a1);
+          return PM_SetWeaponReloadAddAmmoDelay(a1);
         }
         else
         {
-          return sub_80EB2E8(a1);
+          return PM_SetReloadingState(a1);
         }
       }
     }
@@ -94834,7 +94834,7 @@ int __cdecl sub_80EB3D0(_DWORD *a1)
 }
 
 //----- (080EB4FC) --------------------------------------------------------
-int __cdecl sub_80EB4FC(_DWORD *a1, int a2)
+int __cdecl PM_BeginWeaponChange(_DWORD *a1, int a2)
 {
   int result; // eax
   int v3; // edx
@@ -94884,7 +94884,7 @@ int __cdecl sub_80EB4FC(_DWORD *a1, int a2)
         {
           result = BG_PlayerHasWeapon((int)a1, v5, 1);
           if ( result )
-            return sub_80E9A9E((int)a1, result, a2);
+            return BG_IsAltSwitch((int)a1, result, a2);
         }
       }
       else
@@ -94911,7 +94911,7 @@ int __cdecl sub_80EB738(unsigned __int8 *a1)
 
   v5 = *(float **)a1;
   BG_GetWeaponDef(*(_DWORD *)(*(_DWORD *)a1 + 212));
-  if ( sub_80DBEB0((int)v5)
+  if ( Mantle_IsWeaponInactive((int)v5)
     || ((_DWORD)v5[3] & 0x20) != 0
     || !(unsigned __int8)sub_80D9E84((int)(v5 + 337), a1[12])
     || ((_DWORD)v5[3] & 0x4000000) != 0
@@ -94987,7 +94987,7 @@ int __cdecl sub_80EBA76(int a1)
 }
 
 //----- (080EBA9E) --------------------------------------------------------
-int __cdecl sub_80EBA9E(int a1)
+int __cdecl PM_Weapon_AllowReload(int a1)
 {
   int v3; // [esp+18h] [ebp-10h]
   int v4; // [esp+1Ch] [ebp-Ch]
@@ -94995,19 +94995,19 @@ int __cdecl sub_80EBA9E(int a1)
   v4 = BG_GetWeaponDef(*(_DWORD *)(a1 + 212));
   v3 = BG_ClipForWeapon(*(_DWORD *)(a1 + 212));
   if ( !*(_DWORD *)(a1 + 4 * BG_AmmoForWeapon(*(_DWORD *)(a1 + 212)) + 324)
-    || *(_DWORD *)(a1 + 4 * v3 + 836) >= sub_80E9356(v3) )
+    || *(_DWORD *)(a1 + 4 * v3 + 836) >= BG_GetClipSize(v3) )
   {
     return 0;
   }
   if ( !*(_DWORD *)(v4 + 856) )
     return 1;
-  if ( *(_DWORD *)(v4 + 864) && *(_DWORD *)(v4 + 864) < sub_80E9356(v3) )
-    return sub_80E9356(v3) - *(_DWORD *)(a1 + 4 * v3 + 836) >= *(_DWORD *)(v4 + 864);
+  if ( *(_DWORD *)(v4 + 864) && *(_DWORD *)(v4 + 864) < BG_GetClipSize(v3) )
+    return BG_GetClipSize(v3) - *(_DWORD *)(a1 + 4 * v3 + 836) >= *(_DWORD *)(v4 + 864);
   return !*(_DWORD *)(a1 + 4 * v3 + 836);
 }
 
 //----- (080EBBA8) --------------------------------------------------------
-int __cdecl sub_80EBBA8(_DWORD *a1)
+int __cdecl PM_Weapon_ReloadDelayedAction(_DWORD *a1)
 {
   int result; // eax
   int v2; // [esp+Ch] [ebp-Ch]
@@ -95017,7 +95017,7 @@ int __cdecl sub_80EBBA8(_DWORD *a1)
 
   v5 = (_DWORD *)BG_GetWeaponDef(a1[53]);
   if ( !v5[202] || !(unsigned __int8)sub_80D9E84((int)(a1 + 343), a1[53]) )
-    return sub_80EAD0C((int)a1);
+    return PM_ReloadClip((int)a1);
   sub_80F0400((int)(a1 + 343), a1[53]);
   PM_AddEvent((int)a1, 162);
   if ( a1[54] != 7 && a1[54] != 8 || (result = (int)v5, v5[138]) )
@@ -95043,24 +95043,24 @@ int __cdecl sub_80EBBA8(_DWORD *a1)
         return result;
       }
     }
-    return sub_80EAD0C((int)a1);
+    return PM_ReloadClip((int)a1);
   }
   return result;
 }
 
 //----- (080EBD80) --------------------------------------------------------
-int __cdecl sub_80EBD80(_DWORD *a1, int a2)
+int __cdecl PM_Weapon_FinishReloadStart(_DWORD *a1, int a2)
 {
   int result; // eax
   int v3; // [esp+10h] [ebp-8h]
 
   v3 = BG_GetWeaponDef(a1[53]);
   if ( a2 )
-    sub_80EBBA8(a1);
+    PM_Weapon_ReloadDelayedAction(a1);
   result = (int)a1;
   if ( !a1[13] )
   {
-    if ( a1[54] == 8 && a1[BG_ClipForWeapon(a1[53]) + 209] || !sub_80EBA9E((int)a1) )
+    if ( a1[54] == 8 && a1[BG_ClipForWeapon(a1[53]) + 209] || !PM_Weapon_AllowReload((int)a1) )
     {
       sub_80F0400((int)(a1 + 343), a1[53]);
       if ( *(_DWORD *)(v3 + 556) )
@@ -95078,20 +95078,20 @@ int __cdecl sub_80EBD80(_DWORD *a1, int a2)
     }
     else
     {
-      return sub_80EB2E8(a1);
+      return PM_SetReloadingState(a1);
     }
   }
   return result;
 }
 
 //----- (080EBE96) --------------------------------------------------------
-int __cdecl sub_80EBE96(_DWORD *a1, int a2)
+int __cdecl PM_Weapon_FinishReload(_DWORD *a1, int a2)
 {
   int result; // eax
   int v3; // [esp+14h] [ebp-4h]
 
   v3 = BG_GetWeaponDef(a1[53]);
-  if ( !a2 || (sub_80EBBA8(a1), result = (int)a1, !a1[13]) )
+  if ( !a2 || (PM_Weapon_ReloadDelayedAction(a1), result = (int)a1, !a1[13]) )
   {
     result = (int)a1;
     if ( !a1[13] )
@@ -95099,8 +95099,8 @@ int __cdecl sub_80EBE96(_DWORD *a1, int a2)
       sub_80F0400((int)(a1 + 343), a1[53]);
       if ( !*(_DWORD *)(v3 + 860) )
         goto LABEL_10;
-      if ( a1[54] != 6 && sub_80EBA9E((int)a1) )
-        return sub_80EB2E8(a1);
+      if ( a1[54] != 6 && PM_Weapon_AllowReload((int)a1) )
+        return PM_SetReloadingState(a1);
       if ( *(_DWORD *)(v3 + 556) )
       {
         a1[54] = 9;
@@ -95120,14 +95120,14 @@ LABEL_10:
 }
 
 //----- (080EBFC8) --------------------------------------------------------
-int __cdecl sub_80EBFC8(int a1)
+int __cdecl PM_Weapon_FinishReloadEnd(int a1)
 {
   *(_DWORD *)(a1 + 216) = 0;
   return PM_StartWeaponAnim(a1, 0);
 }
 
 //----- (080EBFF0) --------------------------------------------------------
-char __cdecl sub_80EBFF0(int a1)
+char __cdecl PM_Weapon_CheckForReload(int a1)
 {
   int v1; // eax
   _DWORD *v3; // [esp+20h] [ebp-18h]
@@ -95188,7 +95188,7 @@ char __cdecl sub_80EBFF0(int a1)
         default:
           v5 = BG_ClipForWeapon(v3[53]);
           v4 = BG_AmmoForWeapon(v3[53]);
-          if ( v7 && sub_80EBA9E((int)v3) )
+          if ( v7 && PM_Weapon_AllowReload((int)v3) )
             v6 = 1;
           LOBYTE(v1) = v5;
           if ( !v3[v5 + 209] )
@@ -95206,7 +95206,7 @@ char __cdecl sub_80EBFF0(int a1)
             }
           }
           if ( v6 )
-            LOBYTE(v1) = sub_80EB3D0(v3);
+            LOBYTE(v1) = PM_BeginWeaponReload(v3);
           break;
       }
     }
@@ -95215,7 +95215,7 @@ char __cdecl sub_80EBFF0(int a1)
 }
 
 //----- (080EC22A) --------------------------------------------------------
-int __cdecl sub_80EC22A(int a1)
+int __cdecl BG_SwitchWeaponsIfEmpty(int a1)
 {
   int result; // eax
 
@@ -95323,7 +95323,7 @@ void __cdecl PM_AdjustAimSpreadScale(_BYTE *a1, int a2)
 // 85760C8: using guessed type int bg_aimSpreadMoveSpeedThreshold;
 
 //----- (080EC560) --------------------------------------------------------
-int __cdecl sub_80EC560(_BYTE *a1, int a2)
+int __cdecl PM_Weapon_WeaponTimeAdjust(_BYTE *a1, int a2)
 {
   _DWORD *v4; // [esp+Ch] [ebp-Ch]
   _DWORD *v5; // [esp+10h] [ebp-8h]
@@ -95344,7 +95344,7 @@ int __cdecl sub_80EC560(_BYTE *a1, int a2)
         && v5[201]
         && (a1[8] & 1) != 0
         && v4[53] == (unsigned __int8)a1[12]
-        && sub_80EAEC8((int)v4) )
+        && PM_WeaponAmmoAvailable((int)v4) )
       {
         v4[13] = 1;
         if ( v4[54] == 5 || v4[54] == 7 || v4[54] == 9 || v4[54] == 8 || v4[54] == 6 )
@@ -95382,7 +95382,7 @@ int __cdecl sub_80EC560(_BYTE *a1, int a2)
 }
 
 //----- (080EC7D2) --------------------------------------------------------
-int __cdecl sub_80EC7D2(unsigned __int8 *a1)
+int __cdecl PM_Weapon_CheckForChangeWeapon(unsigned __int8 *a1)
 {
   int result; // eax
   __int16 *v2; // [esp+14h] [ebp-4h]
@@ -95405,39 +95405,39 @@ int __cdecl sub_80EC7D2(unsigned __int8 *a1)
         && (result = *(_DWORD *)a1, *((_DWORD *)v2 + 54) != 11)
         && (result = *(_DWORD *)a1, !*((_DWORD *)v2 + 14)) )
       {
-        if ( sub_80DBEB0((int)v2) )
+        if ( Mantle_IsWeaponInactive((int)v2) )
         {
           result = (int)v2;
           if ( !*((_DWORD *)v2 + 53) )
             return result;
-          return sub_80EB4FC(v2, 0);
+          return PM_BeginWeaponChange(v2, 0);
         }
         if ( (*((_DWORD *)v2 + 3) & 0x20) != 0 )
         {
           result = (int)v2;
           if ( !*((_DWORD *)v2 + 53) )
             return result;
-          return sub_80EB4FC(v2, 0);
+          return PM_BeginWeaponChange(v2, 0);
         }
         if ( (*((_DWORD *)v2 + 3) & 0x4000000) != 0 )
         {
           result = (int)v2;
           if ( !*((_DWORD *)v2 + 53) )
             return result;
-          return sub_80EB4FC(v2, 0);
+          return PM_BeginWeaponChange(v2, 0);
         }
         if ( *((_DWORD *)v2 + 53) != a1[12]
           && (v2[6] >= 0 || !*((_DWORD *)v2 + 53))
           && (!a1[12] || BG_IsWeaponValid((int)v2, a1[12])) )
         {
-          return sub_80EB4FC(v2, a1[12]);
+          return PM_BeginWeaponChange(v2, a1[12]);
         }
         result = (int)v2;
         if ( *((_DWORD *)v2 + 53) )
         {
           result = sub_80D9E84((int)(v2 + 674), *((_DWORD *)v2 + 53));
           if ( !(_BYTE)result )
-            return sub_80EB4FC(v2, 0);
+            return PM_BeginWeaponChange(v2, 0);
         }
       }
     }
@@ -95446,7 +95446,7 @@ int __cdecl sub_80EC7D2(unsigned __int8 *a1)
 }
 
 //----- (080ECA14) --------------------------------------------------------
-int __cdecl sub_80ECA14(_BYTE *a1, int a2)
+int __cdecl PM_Weapon_ShouldBeFiring(_BYTE *a1, int a2)
 {
   int v4; // [esp+14h] [ebp-4h]
 
@@ -95460,7 +95460,7 @@ int __cdecl sub_80ECA14(_BYTE *a1, int a2)
 }
 
 //----- (080ECA78) --------------------------------------------------------
-int __cdecl sub_80ECA78(int a1, int a2)
+int __cdecl PM_Weapon_StartFiring(int a1, int a2)
 {
   int v3; // [esp+20h] [ebp-8h]
 
@@ -95469,7 +95469,7 @@ int __cdecl sub_80ECA78(int a1, int a2)
   {
     if ( !a2 )
     {
-      if ( sub_80EAEC8(a1) )
+      if ( PM_WeaponAmmoAvailable(a1) )
       {
         *(_DWORD *)(a1 + 60) = *(_DWORD *)(v3 + 584);
         PM_StartWeaponAnim(a1, 19);
@@ -95501,13 +95501,13 @@ int __cdecl sub_80ECA78(int a1, int a2)
 }
 
 //----- (080ECC42) --------------------------------------------------------
-int sub_80ECC42()
+int CL_LocalClient_GetActiveCount()
 {
   return 1;
 }
 
 //----- (080ECC4C) --------------------------------------------------------
-int __cdecl sub_80ECC4C(_DWORD *a1)
+int __cdecl PM_Weapon_CheckFiringAmmo(_DWORD *a1)
 {
   int v3; // [esp+10h] [ebp-18h]
   _BOOL4 v4; // [esp+14h] [ebp-14h]
@@ -95516,8 +95516,8 @@ int __cdecl sub_80ECC4C(_DWORD *a1)
 
   v3 = 1;
   v6 = BG_GetWeaponDef(a1[53]);
-  v5 = sub_80ECC42();
-  if ( v5 <= sub_80EAEC8((int)a1) )
+  v5 = CL_LocalClient_GetActiveCount();
+  if ( v5 <= PM_WeaponAmmoAvailable((int)a1) )
     return 1;
   v4 = v5 <= a1[BG_AmmoForWeapon(a1[53]) + 81];
   if ( *(_DWORD *)(v6 + 120) == 1 )
@@ -95526,7 +95526,7 @@ int __cdecl sub_80ECC4C(_DWORD *a1)
     PM_AddEvent((int)a1, 146);
   if ( v4 )
   {
-    sub_80EB3D0(a1);
+    PM_BeginWeaponReload(a1);
   }
   else
   {
@@ -95538,16 +95538,16 @@ int __cdecl sub_80ECC4C(_DWORD *a1)
 }
 
 //----- (080ECD62) --------------------------------------------------------
-int __cdecl sub_80ECD62(int a1)
+int __cdecl PM_Weapon_SetFPSFireAnim(int a1)
 {
   if ( *(float *)(a1 + 220) <= 0.75 )
   {
-    if ( sub_80EAEF2(a1) )
+    if ( PM_WeaponClipEmpty(a1) )
       return PM_StartWeaponAnim(a1, 3);
     else
       return PM_StartWeaponAnim(a1, 2);
   }
-  else if ( sub_80EAEF2(a1) )
+  else if ( PM_WeaponClipEmpty(a1) )
   {
     return PM_StartWeaponAnim(a1, 6);
   }
@@ -95558,7 +95558,7 @@ int __cdecl sub_80ECD62(int a1)
 }
 
 //----- (080ECDD6) --------------------------------------------------------
-void __cdecl sub_80ECDD6(int a1)
+void __cdecl PM_Weapon_AddFiringAimSpreadScale(int a1)
 {
   int v1; // [esp+4h] [ebp-4h]
 
@@ -95572,42 +95572,42 @@ void __cdecl sub_80ECDD6(int a1)
 }
 
 //----- (080ECE56) --------------------------------------------------------
-int __cdecl sub_80ECE56(_DWORD *a1, int a2)
+int __cdecl PM_Weapon_FireWeapon(_DWORD *a1, int a2)
 {
   int result; // eax
   int v3; // eax
   int v4; // [esp+14h] [ebp-4h]
 
   v4 = BG_GetWeaponDef(a1[53]);
-  sub_80ECA78((int)a1, a2);
-  result = sub_80ECC4C(a1);
+  PM_Weapon_StartFiring((int)a1, a2);
+  result = PM_Weapon_CheckFiringAmmo(a1);
   if ( result )
   {
     result = (int)a1;
     if ( !a1[14] )
     {
-      if ( sub_80EAEC8((int)a1) != -1 && (a1[40] & 0x300) == 0 )
+      if ( PM_WeaponAmmoAvailable((int)a1) != -1 && (a1[40] & 0x300) == 0 )
       {
-        v3 = sub_80ECC42();
-        sub_80EAE8C((int)a1, a1[53], v3);
+        v3 = CL_LocalClient_GetActiveCount();
+        PM_WeaponUseAmmo((int)a1, a1[53], v3);
       }
       if ( *(_DWORD *)(v4 + 120) == 1 )
         a1[13] = *(_DWORD *)(v4 + 516);
-      sub_80ECD62((int)a1);
-      if ( sub_80EAEF2((int)a1) )
+      PM_Weapon_SetFPSFireAnim((int)a1);
+      if ( PM_WeaponClipEmpty((int)a1) )
         PM_AddEvent((int)a1, 160);
       else
         PM_AddEvent((int)a1, 158);
-      sub_80EA868((int)a1);
-      sub_80ECDD6((int)a1);
-      return sub_80EC22A((int)a1);
+      PM_HoldBreathFire((int)a1);
+      PM_Weapon_AddFiringAimSpreadScale((int)a1);
+      return BG_SwitchWeaponsIfEmpty((int)a1);
     }
   }
   return result;
 }
 
 //----- (080ECF70) --------------------------------------------------------
-int __cdecl sub_80ECF70(_DWORD *a1)
+int __cdecl PM_Weapon_MeleeFire(_DWORD *a1)
 {
   int v2; // [esp+10h] [ebp-8h]
 
@@ -95620,7 +95620,7 @@ int __cdecl sub_80ECF70(_DWORD *a1)
 }
 
 //----- (080ECFF2) --------------------------------------------------------
-int __cdecl sub_80ECFF2(int a1)
+int __cdecl PM_Weapon_MeleeEnd(int a1)
 {
   int result; // eax
 
@@ -95631,7 +95631,7 @@ int __cdecl sub_80ECFF2(int a1)
 }
 
 //----- (080ED01A) --------------------------------------------------------
-int __cdecl sub_80ED01A(int *a1, int a2)
+int __cdecl PM_Weapon_CheckForMelee(int *a1, int a2)
 {
   int result; // eax
   int v3; // [esp+1Ch] [ebp-Ch]
@@ -95680,7 +95680,7 @@ int __cdecl sub_80ED01A(int *a1, int a2)
                     }
                     else
                     {
-                      return sub_80ECF70((_DWORD *)v4);
+                      return PM_Weapon_MeleeFire((_DWORD *)v4);
                     }
                   }
                 }
@@ -95741,7 +95741,7 @@ int __cdecl sub_80ED2F2(_DWORD *a1)
 }
 
 //----- (080ED382) --------------------------------------------------------
-int __cdecl sub_80ED382(_DWORD *a1)
+int __cdecl PM_Weapon_OffHandHold(_DWORD *a1)
 {
   int v1; // eax
   int result; // eax
@@ -95757,7 +95757,7 @@ int __cdecl sub_80ED382(_DWORD *a1)
 }
 
 //----- (080ED3DE) --------------------------------------------------------
-int __cdecl sub_80ED3DE(int *a1)
+int __cdecl PM_Weapon_OffHand(int *a1)
 {
   int result; // eax
   _DWORD *v2; // [esp+10h] [ebp-8h]
@@ -95778,7 +95778,7 @@ int __cdecl sub_80ED3DE(int *a1)
     v2[3] |= 0x10u;
     BG_AddPredictableEventToPlayerstate(166, v2[52], (int)v2);
     PM_StartWeaponAnim((int)v2, 2);
-    sub_80EAE8C((int)v2, v2[52], 1);
+    PM_WeaponUseAmmo((int)v2, v2[52], 1);
     BG_AnimScriptEvent(v2, 2, 0, 1);
     result = BG_WeaponAmmo((int)v2, v2[52]);
     if ( !result )
@@ -95788,7 +95788,7 @@ int __cdecl sub_80ED3DE(int *a1)
 }
 
 //----- (080ED50A) --------------------------------------------------------
-unsigned int __cdecl sub_80ED50A(_DWORD *a1)
+unsigned int __cdecl PM_Weapon_OffHandEnd(_DWORD *a1)
 {
   unsigned int result; // eax
 
@@ -95816,7 +95816,7 @@ int __cdecl sub_80ED592(int a1)
 }
 
 //----- (080ED5AE) --------------------------------------------------------
-int __cdecl sub_80ED5AE(int *a1)
+int __cdecl PM_Weapon_CheckForOffHand(int *a1)
 {
   int result; // eax
   int v2; // eax
@@ -95839,14 +95839,14 @@ int __cdecl sub_80ED5AE(int *a1)
             v5[52] = *((unsigned __int8 *)a1 + 13);
           if ( (a1[2] & 0x10000) != 0 )
           {
-            v2 = sub_80E963A((int)v5, 1);
+            v2 = BG_PlayerHasOffhand((int)v5, 1);
           }
           else
           {
             result = a1[2] & 0x20000;
             if ( !result )
               return result;
-            v2 = sub_80E963A((int)v5, 2);
+            v2 = BG_PlayerHasOffhand((int)v5, 2);
           }
           v4 = v2;
           if ( v2 )
@@ -95875,7 +95875,7 @@ int __cdecl sub_80ED5AE(int *a1)
 }
 
 //----- (080ED780) --------------------------------------------------------
-int __cdecl sub_80ED780(_DWORD *a1, int a2)
+int __cdecl PM_UpdateGrenadeThrow(_DWORD *a1, int a2)
 {
   int v4; // [esp+1Ch] [ebp-Ch]
   int v5; // [esp+20h] [ebp-8h]
@@ -95892,7 +95892,7 @@ int __cdecl sub_80ED780(_DWORD *a1, int a2)
     a1[15] -= *(_DWORD *)(a2 + 40);
   if ( (int)a1[15] > 0 )
     return 0;
-  sub_80EAE8C((int)a1, v4, 1);
+  PM_WeaponUseAmmo((int)a1, v4, 1);
   PM_AddEvent((int)a1, 197);
   return 1;
 }
@@ -95936,7 +95936,7 @@ _DWORD *__cdecl sub_80ED8D2(_DWORD *a1)
 // 85760F4: using guessed type int player_adsExitDelay;
 
 //----- (080ED928) --------------------------------------------------------
-int __cdecl sub_80ED928(_DWORD *a1)
+int __cdecl PM_Weapon_BinocularsPrepare(_DWORD *a1)
 {
   int v2; // [esp+14h] [ebp-4h]
 
@@ -95948,7 +95948,7 @@ int __cdecl sub_80ED928(_DWORD *a1)
 }
 
 //----- (080ED97E) --------------------------------------------------------
-int __cdecl sub_80ED97E(_DWORD *a1)
+int __cdecl PM_Weapon_BinocularsHold(_DWORD *a1)
 {
   int v2; // [esp+10h] [ebp-8h]
   int v3; // [esp+14h] [ebp-4h]
@@ -95963,7 +95963,7 @@ int __cdecl sub_80ED97E(_DWORD *a1)
 }
 
 //----- (080ED9E0) --------------------------------------------------------
-_DWORD *__cdecl sub_80ED9E0(_DWORD *a1)
+_DWORD *__cdecl PM_Weapon_Binoculars(_DWORD *a1)
 {
   _DWORD *result; // eax
 
@@ -95991,7 +95991,7 @@ int __cdecl sub_80EDA06(_DWORD *a1)
 // 85760F4: using guessed type int player_adsExitDelay;
 
 //----- (080EDA78) --------------------------------------------------------
-int __cdecl sub_80EDA78(int a1)
+int __cdecl PM_Weapon_BinocularsEnd(int a1)
 {
   int result; // eax
   _DWORD *v2; // [esp+10h] [ebp-8h]
@@ -96015,7 +96015,7 @@ int __cdecl sub_80EDA78(int a1)
 }
 
 //----- (080EDB00) --------------------------------------------------------
-int __cdecl sub_80EDB00(int a1)
+int __cdecl PM_Weapon_CheckForBinoculars(int a1)
 {
   int result; // eax
   unsigned __int8 v2; // [esp+Ch] [ebp-1Ch]
@@ -96160,18 +96160,18 @@ int __cdecl sub_80EDB00(int a1)
                                           if ( (*(_DWORD *)(a1 + 8) & 0x1000) != 0 )
                                             return (int)sub_80ED8D2((_DWORD *)v10);
                                           else
-                                            return sub_80ED928((_DWORD *)v10);
+                                            return PM_Weapon_BinocularsPrepare((_DWORD *)v10);
                                         }
                                         else
                                         {
-                                          return sub_80ED97E((_DWORD *)v10);
+                                          return PM_Weapon_BinocularsHold((_DWORD *)v10);
                                         }
                                       }
                                     }
                                     else if ( v11 )
                                     {
                                       if ( *(_DWORD *)(v10 + 216) == 18 )
-                                        return sub_80EDA78(a1);
+                                        return PM_Weapon_BinocularsEnd(a1);
                                       else
                                         return sub_80EDA06((_DWORD *)v10);
                                     }
@@ -96197,7 +96197,7 @@ int __cdecl sub_80EDB00(int a1)
 // 85760EC: using guessed type int player_toggleBinoculars;
 
 //----- (080EDF3A) --------------------------------------------------------
-int __cdecl sub_80EDF3A(int a1, int a2)
+int __cdecl PM_Weapon(int a1, int a2)
 {
   int result; // eax
   int v3; // [esp+10h] [ebp-8h]
@@ -96212,18 +96212,18 @@ int __cdecl sub_80EDF3A(int a1, int a2)
       result = *(_DWORD *)(v3 + 160) & 0x300;
       if ( !result )
       {
-        sub_80EA568((int *)a1, a2);
-        sub_80EA950((int *)a1, a2);
-        result = sub_80ED780((_DWORD *)v3, a2);
+        PM_UpdateAimDownSightLerp((int *)a1, a2);
+        PM_UpdateHoldBreath((int *)a1, a2);
+        result = PM_UpdateGrenadeThrow((_DWORD *)v3, a2);
         if ( !(_BYTE)result )
         {
-          v4 = sub_80EC560((_BYTE *)a1, a2);
-          sub_80EDB00(a1);
-          sub_80ED5AE((int *)a1);
-          sub_80EC7D2((unsigned __int8 *)a1);
-          sub_80EBFF0(a1);
-          sub_80ED01A((int *)a1, v4);
-          result = sub_80EAF58(v3, v4);
+          v4 = PM_Weapon_WeaponTimeAdjust((_BYTE *)a1, a2);
+          PM_Weapon_CheckForBinoculars(a1);
+          PM_Weapon_CheckForOffHand((int *)a1);
+          PM_Weapon_CheckForChangeWeapon((unsigned __int8 *)a1);
+          PM_Weapon_CheckForReload(a1);
+          PM_Weapon_CheckForMelee((int *)a1, v4);
+          result = PM_Weapon_CheckForRechamber(v3, v4);
           if ( !result )
           {
             if ( (*(_BYTE *)(v3 + 12) & 1) != 0 && (*(_BYTE *)(a1 + 28) || *(_BYTE *)(a1 + 29))
@@ -96245,58 +96245,58 @@ int __cdecl sub_80EDF3A(int a1, int a2)
                   break;
                 case 5:
                 case 6:
-                  result = sub_80EBE96((_DWORD *)v3, v4);
+                  result = PM_Weapon_FinishReload((_DWORD *)v3, v4);
                   break;
                 case 7:
                 case 8:
-                  result = sub_80EBD80((_DWORD *)v3, v4);
+                  result = PM_Weapon_FinishReloadStart((_DWORD *)v3, v4);
                   break;
                 case 9:
-                  result = sub_80EBFC8(v3);
+                  result = PM_Weapon_FinishReloadEnd(v3);
                   break;
                 case 10:
-                  result = sub_80ECF70((_DWORD *)v3);
+                  result = PM_Weapon_MeleeFire((_DWORD *)v3);
                   break;
                 case 11:
-                  result = sub_80ECFF2(v3);
+                  result = PM_Weapon_MeleeEnd(v3);
                   break;
                 case 12:
                   result = sub_80ED2F2((_DWORD *)v3);
                   break;
                 case 13:
-                  result = sub_80ED382((_DWORD *)v3);
+                  result = PM_Weapon_OffHandHold((_DWORD *)v3);
                   break;
                 case 14:
-                  result = sub_80ED3DE((int *)a1);
+                  result = PM_Weapon_OffHand((int *)a1);
                   break;
                 case 15:
-                  result = sub_80ED50A((_DWORD *)v3);
+                  result = PM_Weapon_OffHandEnd((_DWORD *)v3);
                   break;
                 case 16:
                 case 22:
                   result = PM_Weapon_Idle((_DWORD *)v3);
                   break;
                 case 17:
-                  result = sub_80ED928((_DWORD *)v3);
+                  result = PM_Weapon_BinocularsPrepare((_DWORD *)v3);
                   break;
                 case 18:
-                  result = sub_80ED97E((_DWORD *)v3);
+                  result = PM_Weapon_BinocularsHold((_DWORD *)v3);
                   break;
                 case 19:
-                  result = (int)sub_80ED9E0((_DWORD *)v3);
+                  result = (int)PM_Weapon_Binoculars((_DWORD *)v3);
                   break;
                 case 20:
                   return result;
                 case 21:
-                  result = sub_80EDA78(a1);
+                  result = PM_Weapon_BinocularsEnd(a1);
                   break;
                 default:
                   result = v3;
                   if ( *(_DWORD *)(v3 + 212) )
                   {
-                    result = sub_80ECA14((_BYTE *)a1, v4);
+                    result = PM_Weapon_ShouldBeFiring((_BYTE *)a1, v4);
                     if ( !result )
-                      result = sub_80ECE56((_DWORD *)v3, v4);
+                      result = PM_Weapon_FireWeapon((_DWORD *)v3, v4);
                   }
                   break;
               }
@@ -96569,7 +96569,7 @@ void __cdecl sub_80EEA0C(float *a1, float *a2)
   v4 = *(_DWORD *)a1;
   v2 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
   v3 = BG_GetWeaponDef(v2);
-  if ( sub_80E973E(v2) )
+  if ( BG_IsAimDownSightWeapon(v2) )
     *a2 = *(float *)(v4 + 220) * *(float *)(v3 + 1132) + *a2;
   sub_80EE640(a1, a2);
 }
@@ -96592,7 +96592,7 @@ float *__cdecl sub_80EEA7C(float *a1, float *a2)
   v5 = *(float **)a1;
   v4 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
   v12 = BG_GetWeaponDef(v4);
-  if ( sub_80E973E(v4) )
+  if ( BG_IsAimDownSightWeapon(v4) )
   {
     v7 = (*(float *)(v12 + 712) - *(float *)(v12 + 716)) * v5[55] + *(float *)(v12 + 716);
     v3 = (*(float *)(v12 + 720) - *(float *)(v12 + 724)) * v5[55] + *(float *)(v12 + 724);
@@ -96840,7 +96840,7 @@ float *__cdecl sub_80EF336(float *a1, float *a2)
   v6 = *(float **)a1;
   v4 = BG_GetViewmodelWeaponIndex(*(_DWORD **)a1);
   v5 = (float *)BG_GetWeaponDef(v4);
-  result = (float *)sub_80E973E(v4);
+  result = (float *)BG_IsAimDownSightWeapon(v4);
   if ( result )
   {
     v7 = v6[55];
@@ -96876,7 +96876,7 @@ float *__cdecl sub_80EF336(float *a1, float *a2)
 }
 
 //----- (080EF52C) --------------------------------------------------------
-int __cdecl sub_80EF52C(float *a1, int a2)
+int __cdecl BG_CalculateWeaponAngles(float *a1, int a2)
 {
   long double v2; // fst7
   int result; // eax
@@ -96972,7 +96972,7 @@ int __cdecl sub_80EF7AA(float *a1, float *a2)
   v13 = result;
   if ( *(_DWORD *)(result + 632) )
   {
-    if ( sub_80E973E(v4) )
+    if ( BG_IsAimDownSightWeapon(v4) )
     {
       v7 = (*(float *)(v13 + 712) - *(float *)(v13 + 716)) * v5[55] + *(float *)(v13 + 716);
       v3 = (*(float *)(v13 + 720) - *(float *)(v13 + 724)) * v5[55] + *(float *)(v13 + 724);
@@ -97121,7 +97121,7 @@ void __cdecl sub_80EFD94(float *a1, float *a2)
 }
 
 //----- (080EFDF0) --------------------------------------------------------
-int __cdecl sub_80EFDF0(int a1, float *a2, int a3, float *a4, float a5, int a6)
+int __cdecl BG_CalculateWeaponPosition_Sway(int a1, float *a2, int a3, float *a4, float a5, int a6)
 {
   int result; // eax
   long double v7; // fst7
@@ -97152,7 +97152,7 @@ int __cdecl sub_80EFDF0(int a1, float *a2, int a3, float *a4, float a5, int a6)
     v9 = BG_GetViewmodelWeaponIndex((_DWORD *)a1);
     v26 = BG_GetWeaponDef(v9);
     v10 = (long double)a6 * 0.001;
-    if ( !sub_80E973E(v9) )
+    if ( !BG_IsAimDownSightWeapon(v9) )
     {
       v21 = *(float *)(v26 + 744);
       v20 = *(float *)(v26 + 748);
@@ -97198,7 +97198,7 @@ LABEL_7:
 }
 
 //----- (080F0110) --------------------------------------------------------
-char **__cdecl sub_80F0110(const char *a1, char *s)
+char **__cdecl BG_LoadWeaponDef(const char *a1, char *s)
 {
   int v4; // [esp+14h] [ebp-4h]
   char **v5; // [esp+14h] [ebp-4h]
@@ -97211,7 +97211,7 @@ char **__cdecl sub_80F0110(const char *a1, char *s)
   v5 = (char **)BG_LoadWeaponDefInternal(a1, "defaultweapon_mp");
   if ( !v5 )
     Com_Error(1, (char *)&byte_814E800);
-  SetConfigString2(v5, s);
+  SetConfigString(v5, s);
   return v5;
 }
 // 80F0110: using guessed type const char *arg_0;
@@ -97435,7 +97435,7 @@ _DWORD *BG_LoadPlayerAnimTypes()
 // 80F04EA: using guessed type char var_1018[4104];
 
 //----- (080F065E) --------------------------------------------------------
-int __cdecl sub_80F065E(char *s1, int a2, int a3)
+int __cdecl Weapon_GetStringArrayIndex(char *s1, int a2, int a3)
 {
   int i; // [esp+14h] [ebp-4h]
 
@@ -97462,49 +97462,49 @@ int __cdecl BG_ParseWeaponDefSpecificFieldType(_DWORD *a1, char *s1, int a3)
   switch ( a3 )
   {
     case 8:
-      v4 = sub_80F065E(s1, (int)off_8166540, 4);
+      v4 = Weapon_GetStringArrayIndex(s1, (int)off_8166540, 4);
       if ( v4 < 0 )
         Com_Error(1, (char *)&byte_8150060, s1, *a1);
       a1[30] = v4;
       break;
     case 9:
-      v5 = sub_80F065E(s1, (int)off_8166580, 10);
+      v5 = Weapon_GetStringArrayIndex(s1, (int)off_8166580, 10);
       if ( v5 < 0 )
         Com_Error(1, (char *)&byte_81500A0, s1, *a1);
       a1[31] = v5;
       break;
     case 10:
-      v6 = sub_80F065E(s1, (int)off_8166568, 5);
+      v6 = Weapon_GetStringArrayIndex(s1, (int)off_8166568, 5);
       if ( v6 < 0 )
         Com_Error(1, (char *)&byte_81500E0, s1, *a1);
       a1[158] = v6;
       break;
     case 11:
-      v7 = sub_80F065E(s1, (int)&off_8166550, 3);
+      v7 = Weapon_GetStringArrayIndex(s1, (int)&off_8166550, 3);
       if ( v7 < 0 )
         Com_Error(1, (char *)&byte_8150120, s1, *a1);
       a1[32] = v7;
       break;
     case 12:
-      v8 = sub_80F065E(s1, (int)off_81665A8, 3);
+      v8 = Weapon_GetStringArrayIndex(s1, (int)off_81665A8, 3);
       if ( v8 < 0 )
         Com_Error(1, (char *)&byte_8150160, s1, *a1);
       a1[35] = v8;
       break;
     case 13:
-      v9 = sub_80F065E(s1, (int)off_816655C, 3);
+      v9 = Weapon_GetStringArrayIndex(s1, (int)off_816655C, 3);
       if ( v9 < 0 )
         Com_Error(1, (char *)&byte_81501A0, s1, *a1);
       a1[228] = v9;
       break;
     case 14:
-      v10 = sub_80F065E(s1, (int)off_81665B4, 3);
+      v10 = Weapon_GetStringArrayIndex(s1, (int)off_81665B4, 3);
       if ( v10 < 0 )
         Com_Error(1, (char *)&byte_81501E0, s1, *a1);
       a1[33] = v10;
       break;
     case 15:
-      v11 = sub_80F065E(s1, (int)&dword_8576FE0, dword_8576FC4);
+      v11 = Weapon_GetStringArrayIndex(s1, (int)&dword_8576FE0, dword_8576FC4);
       if ( v11 < 0 )
         Com_Error(1, (char *)&byte_8150220, s1, *a1);
       a1[29] = v11;
@@ -97569,7 +97569,7 @@ void __cdecl sub_80F0AA6(int a1)
 }
 
 //----- (080F0B8E) --------------------------------------------------------
-char *__cdecl SetConfigString2(char **a1, char *s)
+char *__cdecl SetConfigString(char **a1, char *s)
 {
   char *result; // eax
   size_t v3; // eax
@@ -97592,9 +97592,9 @@ char *__cdecl SetConfigString2(char **a1, char *s)
 }
 
 //----- (080F0BE2) --------------------------------------------------------
-char *__cdecl sub_80F0BE2(char **a1, char *s)
+char *__cdecl SetConfigString2(char **a1, char *s)
 {
-  return SetConfigString2(a1, s);
+  return SetConfigString(a1, s);
 }
 
 //----- (080F0BFC) --------------------------------------------------------
@@ -97649,7 +97649,7 @@ int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2)
         FS_FCloseFile(v5);
         if ( Info_Validate(s1) )
         {
-          SetConfigString2((char **)v6, a2);
+          SetConfigString((char **)v6, a2);
           if ( ParseConfigStringToStruct(
                  v6,
                  (int)&off_81665C0,
@@ -97657,7 +97657,7 @@ int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2)
                  s1,
                  16,
                  (int (__cdecl *)(int, char *, _DWORD))BG_ParseWeaponDefSpecificFieldType,
-                 (void (__cdecl *)(int, char *))sub_80F0BE2) )
+                 (void (__cdecl *)(int, char *))SetConfigString2) )
           {
             sub_80F09D6((int *)v6);
             sub_80F0A52(v6);
@@ -97665,7 +97665,7 @@ int __cdecl BG_LoadWeaponDefInternal(const char *a1, char *a2)
               Com_Error(1, "Enemy crosshair ranges should be less than %f ", (double)15000.0);
             if ( *(_DWORD *)(v6 + 120) == 2 )
               sub_80F0AA6(v6);
-            if ( (unsigned __int8)sub_80F1F7E(v6) )
+            if ( (unsigned __int8)G_ParseWeaponAccurayGraphs(v6) )
             {
               I_strlwr(*(_BYTE **)(v6 + 452));
               I_strlwr(*(_BYTE **)(v6 + 460));
@@ -97718,7 +97718,7 @@ void *BG_LoadDefaultWeaponDef()
   unk_85769C0 = "none";
   *((_DWORD *)&unk_85769C0 + 323) = "noweapon.accu";
   *((_DWORD *)&unk_85769C0 + 324) = "noweapon.accu";
-  sub_80F1F7E((int)&unk_85769C0);
+  G_ParseWeaponAccurayGraphs((int)&unk_85769C0);
   return &unk_85769C0;
 }
 
@@ -98117,7 +98117,7 @@ char *__cdecl vtos(float *a1)
 // 8577A20: using guessed type int dword_8577A20;
 
 //----- (080F1C24) --------------------------------------------------------
-int __cdecl sub_80F1C24(char *a1, char *src, int a3, int *a4)
+int __cdecl G_ParseAIWeaponAccurayGraphFile(char *a1, char *src, int a3, int *a4)
 {
   int v4; // eax
   int v5; // ebx
@@ -98161,7 +98161,7 @@ int __cdecl sub_80F1C24(char *a1, char *src, int a3, int *a4)
 }
 
 //----- (080F1D3A) --------------------------------------------------------
-int __cdecl G_ParseWeaponAccurayGraphs(int a1, const char *a2, const char *a3, int a4, int *a5)
+int __cdecl G_ParseWeaponAccurayGraphInternal(int a1, const char *a2, const char *a3, int a4, int *a5)
 {
   int v7; // [esp+14h] [ebp-2064h] BYREF
   size_t n; // [esp+18h] [ebp-2060h]
@@ -98192,7 +98192,7 @@ int __cdecl G_ParseWeaponAccurayGraphs(int a1, const char *a2, const char *a3, i
         s1[v13 - n] = 0;
         FS_FCloseFile(v12);
         v7 = 0;
-        if ( (unsigned __int8)sub_80F1C24(s1, src, a4, &v7) )
+        if ( (unsigned __int8)G_ParseAIWeaponAccurayGraphFile(s1, src, a4, &v7) )
         {
           *a5 = v7;
           return 1;
@@ -98225,7 +98225,7 @@ int __cdecl G_ParseWeaponAccurayGraphs(int a1, const char *a2, const char *a3, i
 // 80F1D3A: using guessed type char s1[8192];
 
 //----- (080F1F7E) --------------------------------------------------------
-int __cdecl sub_80F1F7E(int a1)
+int __cdecl G_ParseWeaponAccurayGraphs(int a1)
 {
   int i; // [esp+24h] [ebp-94h]
   int n; // [esp+28h] [ebp-90h]
@@ -98236,7 +98236,7 @@ int __cdecl sub_80F1F7E(int a1)
   {
     memset(s, 0, 0x80u);
     v5 = 0;
-    if ( !(unsigned __int8)G_ParseWeaponAccurayGraphs(a1, off_81676E8[i], *(const char **)(a1 + 4 * i + 1292), (int)s, &v5) )
+    if ( !(unsigned __int8)G_ParseWeaponAccurayGraphInternal(a1, off_81676E8[i], *(const char **)(a1 + 4 * i + 1292), (int)s, &v5) )
       return 0;
     if ( v5 > 0 )
     {
@@ -98337,7 +98337,7 @@ int __cdecl sub_80F2350(int a1)
 }
 
 //----- (080F2362) --------------------------------------------------------
-int __cdecl sub_80F2362(int a1, int a2)
+int __cdecl ClientImpacts(int a1, int a2)
 {
   int result; // eax
   void (__cdecl *v3)(int *, int, int); // [esp+10h] [ebp-18h]
@@ -98487,7 +98487,7 @@ int __cdecl SpectatorThink(int a1, int **a2)
 }
 
 //----- (080F29CA) --------------------------------------------------------
-int __usercall sub_80F29CA@<eax>(long double a1@<st0>, int a2)
+int __usercall ClientInactivityTimer@<eax>(long double a1@<st0>, int a2)
 {
   char *v2; // eax
 
@@ -98515,14 +98515,14 @@ int __usercall sub_80F29CA@<eax>(long double a1@<st0>, int a2)
     }
     return 1;
   }
-  sub_808FF0A(a1, 1682649625 * ((a2 - dword_859B400) >> 2), "GAME_DROPPEDFORINACTIVITY");
+  SV_GameDropClient(a1, 1682649625 * ((a2 - dword_859B400) >> 2), "GAME_DROPPEDFORINACTIVITY");
   return 0;
 }
 // 859B400: using guessed type int dword_859B400;
 // 8793DA8: using guessed type int g_inactivity;
 
 //----- (080F2B22) --------------------------------------------------------
-int __cdecl sub_80F2B22(int a1)
+int __cdecl ClientIntermissionThink(int a1)
 {
   int result; // eax
   _DWORD *v2; // [esp+0h] [ebp-8h]
@@ -98536,7 +98536,7 @@ int __cdecl sub_80F2B22(int a1)
 }
 
 //----- (080F2B86) --------------------------------------------------------
-int __cdecl sub_80F2B86(int *a1, int a2)
+int __cdecl ClientEvents(int *a1, int a2)
 {
   int result; // eax
   int v3; // edx
@@ -98566,9 +98566,9 @@ int __cdecl sub_80F2B86(int *a1, int a2)
         case 160:
         case 175:
           if ( *(_BYTE *)(g_antilag + 8) )
-            sub_811E3E0((int)a1, v6[2599]);
+            FireWeapon((int)a1, v6[2599]);
           else
-            sub_811E3E0((int)a1, dword_859B5EC);
+            FireWeapon((int)a1, dword_859B5EC);
           break;
         case 164:
           sub_811E5E0((int)a1);
@@ -98867,7 +98867,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
       *(_DWORD *)(v41 + 12) = v4;
       if ( *(_DWORD *)(v41 + 9896) == 3 )
       {
-        return sub_80F2B22((int)a2);
+        return ClientIntermissionThink((int)a2);
       }
       else if ( *(_DWORD *)(v41 + 9896) == 2 )
       {
@@ -98875,7 +98875,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
       }
       else
       {
-        result = sub_80F29CA(a1, v41);
+        result = ClientInactivityTimer(a1, v41);
         if ( result )
         {
           v33 = *(_DWORD *)(v41 + 164);
@@ -98910,7 +98910,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
           v25 = dword_859B5EC;
           v26 = *(_DWORD *)(v41 + 10312);
           v27 = *(_DWORD *)(v41 + 10308);
-          *(float *)&v28 = sub_80E6DF4(a1, v41, dword_859B5EC);
+          *(float *)&v28 = BG_GetSpeed(a1, v41, dword_859B5EC);
           v29 = (long double)v32 * 0.001;
           v30 = *(_DWORD *)(v41 + 10364);
           v31 = v41 + 10392;
@@ -98930,7 +98930,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
             v10 = (3.0 - (v10 + v10)) * v10 * v10;
             v9 = (*(float *)(v11 + 768) - 1.0) * v10 + 1.0;
           }
-          sub_80EFDF0(v41, (float *)(v41 + 10316), v41 + 10328, (float *)(v41 + 10340), 1.0, v32);
+          BG_CalculateWeaponPosition_Sway(v41, (float *)(v41 + 10316), v41 + 10328, (float *)(v41 + 10340), 1.0, v32);
           v14[0] = v24[0];
           v14[1] = v28;
           *(float *)&v14[2] = (long double)v32 * 0.001;
@@ -98944,8 +98944,8 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
           sub_80F552A((_DWORD *)(v41 + 10380), v22);
           sub_80F552A((_DWORD *)(v41 + 10340), v23);
           v23[3] = v41 + 10392;
-          sub_80EF52C((float *)v14, (int)v12);
-          if ( sub_80E973E(*(_DWORD *)(v14[0] + 212)) && *(float *)(v14[0] + 220) != 0.0 && !*(_DWORD *)(v11 + 632) )
+          BG_CalculateWeaponAngles((float *)v14, (int)v12);
+          if ( BG_IsAimDownSightWeapon(*(_DWORD *)(v14[0] + 212)) && *(float *)(v14[0] + 220) != 0.0 && !*(_DWORD *)(v11 + 632) )
           {
             AnglesToAxis(v12, (int)v7);
             AnglesToAxis((float *)v13, (int)v6);
@@ -98974,14 +98974,14 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
           sub_80F552A(a2 + 6, a2 + 78);
           sub_80F552A(v36, a2 + 65);
           sub_80F552A(v37, a2 + 68);
-          sub_80F2B86(a2, v33);
+          ClientEvents(a2, v33);
           SV_LinkEntity((int)a2);
           if ( !*(_DWORD *)(a2[86] + 10156) )
             sub_80F24C6((int)a2);
           sub_80F552A((_DWORD *)(a2[86] + 20), a2 + 78);
           sub_80F54DC(a2 + 81);
           a2[82] = *(_DWORD *)(a2[86] + 236);
-          sub_80F2362((int)a2, (int)s);
+          ClientImpacts((int)a2, (int)s);
           if ( *(_DWORD *)(a2[86] + 164) != v33 )
             a2[94] = dword_859B5EC;
           return Player_UpdateActivate(a2);
@@ -99328,7 +99328,7 @@ int __cdecl G_PlayerController(int *a1, int a2)
   v4 = 1208 * a1[36] + 140846652;
   dword_855A4E0 = &unk_859EA40;
   v2 = Com_GetServerDObj(*a1);
-  return sub_80D954C(v2, (int)a1, a2, v4, dword_859B5F4);
+  return BG_Player_DoControllers(v2, (int)a1, a2, v4, dword_859B5F4);
 }
 // 859B5F4: using guessed type int dword_859B5F4;
 
@@ -100142,7 +100142,7 @@ void __cdecl G_GetPlayerViewOrigin(int a1, float *a2)
     a2[2] = a2[2] + *(float *)(v8 + 248);
     v2 = sub_80EE4AA(v8);
     v4 = v2;
-    v3 = sub_80E6DF4(v2, v8, dword_859B5EC);
+    v3 = BG_GetSpeed(v2, v8, dword_859B5EC);
     v6 = sub_80EE506(v8, v4, v3, *(float *)(bg_bobMax + 8));
     a2[2] = a2[2] + v6;
     v5 = sub_80EE5C6(v8, v4, v3, *(float *)(bg_bobMax + 8));
@@ -102065,8 +102065,8 @@ int __cdecl PlayerCmd_SetWeaponSlotAmmo(int a1)
       {
         if ( v9 >= 0 )
         {
-          if ( v9 > sub_80E9356(result) )
-            v9 = sub_80E9356(v7);
+          if ( v9 > BG_GetClipSize(result) )
+            v9 = BG_GetClipSize(v7);
         }
         else
         {
@@ -102193,8 +102193,8 @@ int __cdecl PlayerCmd_SetWeaponSlotClipAmmo(int a1)
   {
     if ( v8 < 0 )
       v8 = 0;
-    if ( v8 > sub_80E9356(result) )
-      v8 = sub_80E9356(v7);
+    if ( v8 > BG_GetClipSize(result) )
+      v8 = BG_GetClipSize(v7);
     result = v8;
     *(_DWORD *)(*((_DWORD *)v6 + 86) + 4 * v7 + 836) = v8;
   }
@@ -102237,8 +102237,8 @@ int __cdecl PlayerCmd_SetWeaponClipAmmo(int a1)
   {
     if ( v5 < 0 )
       v5 = 0;
-    if ( v5 > sub_80E9356(result) )
-      v5 = sub_80E9356(v4);
+    if ( v5 > BG_GetClipSize(result) )
+      v5 = BG_GetClipSize(v4);
     result = v5;
     *(_DWORD *)(*((_DWORD *)v3 + 86) + 4 * v4 + 836) = v5;
   }
@@ -106567,7 +106567,7 @@ int __cdecl sub_8102634(int a1, int a2)
     if ( a2 <= result )
     {
       v6 = *(_DWORD *)(a1 + 4 * v3 + 836);
-      v5 = sub_80E9356(v3) - v6;
+      v5 = BG_GetClipSize(v3) - v6;
       result = v5;
       if ( v5 > *(_DWORD *)(a1 + 4 * v4 + 324) )
       {
@@ -106626,10 +106626,10 @@ int __cdecl sub_8102704(int a1, int a2, int a3, int a4)
     }
   }
   v6 = *(_DWORD *)(a1 + 344);
-  if ( *(_DWORD *)(v6 + 4 * v13 + 836) > sub_80E9356(v13) )
+  if ( *(_DWORD *)(v6 + 4 * v13 + 836) > BG_GetClipSize(v13) )
   {
     v7 = *(_DWORD *)(a1 + 344);
-    *(_DWORD *)(v7 + 4 * v13 + 836) = sub_80E9356(v13);
+    *(_DWORD *)(v7 + 4 * v13 + 836) = BG_GetClipSize(v13);
   }
   if ( *(int *)(BG_GetWeaponDef(a2) + 484) < 0 )
     return *(_DWORD *)(*(_DWORD *)(a1 + 344) + 4 * v13 + 836)
@@ -106774,7 +106774,7 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
       {
         v23 = (sub_80A1410() + 1.0) * 0.5;
         v4 = BG_ClipForWeapon(v34);
-        v21 = (long double)(sub_80E9356(v4) - 1) * v23;
+        v21 = (long double)(BG_GetClipSize(v4) - 1) * v23;
         *(_DWORD *)(a1 + 416) = sub_8105D5E(v21) + 1;
       }
     }
@@ -106797,7 +106797,7 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
       if ( *(int *)(a1 + 416) >= 0 )
       {
         v7 = BG_ClipForWeapon(v34);
-        *(_DWORD *)(a1 + 424) = sub_80E9356(v7);
+        *(_DWORD *)(a1 + 424) = BG_GetClipSize(v7);
         if ( *(_DWORD *)(a1 + 424) > *(_DWORD *)(a1 + 416) )
           *(_DWORD *)(a1 + 424) = *(_DWORD *)(a1 + 416);
         *(_DWORD *)(a1 + 416) -= *(_DWORD *)(a1 + 424);
@@ -106809,10 +106809,10 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
       }
     }
     v8 = BG_ClipForWeapon(v34);
-    if ( *(_DWORD *)(a1 + 424) > sub_80E9356(v8) )
+    if ( *(_DWORD *)(a1 + 424) > BG_GetClipSize(v8) )
     {
       v9 = BG_ClipForWeapon(v34);
-      *(_DWORD *)(a1 + 424) = sub_80E9356(v9);
+      *(_DWORD *)(a1 + 424) = BG_GetClipSize(v9);
     }
     v36 = *(_DWORD *)(a1 + 424);
   }
@@ -106919,12 +106919,12 @@ int __cdecl sub_8102BE2(int a1, int *a2, _DWORD *a3, int a4)
     if ( v36 >= 0 )
     {
       v15 = BG_ClipForWeapon(v34);
-      if ( v36 > sub_80E9356(v15) )
+      if ( v36 > BG_GetClipSize(v15) )
       {
         v16 = BG_ClipForWeapon(v34);
-        v37 += v36 - sub_80E9356(v16);
+        v37 += v36 - BG_GetClipSize(v16);
         v17 = BG_ClipForWeapon(v34);
-        v36 = sub_80E9356(v17);
+        v36 = BG_GetClipSize(v17);
       }
       v18 = a2[86];
       *(_DWORD *)(v18 + 4 * BG_ClipForWeapon(v34) + 836) = v36;
@@ -107332,7 +107332,7 @@ float *__cdecl Drop_Weapon(int a1, int a2, int a3)
           v29 = v11;
           if ( v11 > 0 )
           {
-            v23 = sub_80E9356(v26);
+            v23 = BG_GetClipSize(v26);
             if ( v23 )
               v10 = rand() % v23;
             else
@@ -107363,7 +107363,7 @@ float *__cdecl Drop_Weapon(int a1, int a2, int a3)
       else
       {
         v12 = (sub_80A1410() + 1.0) * 0.5;
-        v5 = (long double)(sub_80E9356(v26) - 1) * v12;
+        v5 = (long double)(BG_GetClipSize(v26) - 1) * v12;
         v29 = sub_8105D5E(v5) + 1;
         v6 = (sub_80A1410() * 0.5 + 0.25) * (long double)v29;
         v28 = sub_8105D5E(v6);
@@ -107697,7 +107697,7 @@ int __usercall G_SpawnItem@<eax>(long double a1@<st0>, int a2, int a3)
 // 859C748: using guessed type char byte_859C748;
 
 //----- (081050FE) --------------------------------------------------------
-int __cdecl sub_81050FE(int a1, int a2, int a3, _DWORD *a4)
+int __cdecl G_BounceCorpse(int a1, int a2, int a3, _DWORD *a4)
 {
   int result; // eax
   _DWORD v5[4]; // [esp+10h] [ebp-48h] BYREF
@@ -107765,11 +107765,11 @@ int __cdecl sub_81052AA(int a1, int a2)
 // 81052AA: using guessed type _DWORD var_48[2];
 
 //----- (08105382) --------------------------------------------------------
-int __cdecl sub_8105382(int a1, int *a2, _DWORD *a3)
+int __cdecl G_GetAnimDeltaForCorpse(int a1, int *a2, _DWORD *a3)
 {
   int v4[6]; // [esp+20h] [ebp-18h] BYREF
 
-  return sub_80BEF2C(*a2, 0, v4, a3, 1);
+  return XAnimCalcDelta(*a2, 0, v4, a3, 1);
 }
 // 8105382: using guessed type int var_18[6];
 
@@ -107799,7 +107799,7 @@ int *__cdecl G_RunCorpseMove(float *a1)
 
   v10 = sub_811C830(a1);
   v9 = (int *)(1224 * v10 + 142202936);
-  sub_8105382((int)a1, v9, &v7);
+  G_GetAnimDeltaForCorpse((int)a1, v9, &v7);
   v3 = 0;
   if ( !*((_BYTE *)v9 + 1220) && sub_8105FB6(&v7) > 1.0 )
     v3 = 1;
@@ -107880,7 +107880,7 @@ int *__cdecl G_RunCorpseMove(float *a1)
                 sub_8105DE2(v13, (_DWORD *)a1 + 78);
               }
             }
-            return (int *)sub_81050FE((int)a1, (int)v9, (int)s, v13);
+            return (int *)G_BounceCorpse((int)a1, (int)v9, (int)s, v13);
           }
         }
       }
@@ -108534,7 +108534,7 @@ unsigned int *__usercall G_ShutdownGame@<eax>(long double a1@<st0>, int a2)
   result = Scr_ShutdownSystem(1, dword_859D154 == 0);
   if ( a2 )
   {
-    sub_80DB6CA();
+    Mantle_ShutdownAnims();
     sub_810E010();
     sub_8075F74();
     sub_8106B36();
@@ -108922,7 +108922,7 @@ LABEL_9:
       switch ( s[1] )
       {
         case 4:
-          sub_810BC36((unsigned __int8 *)s);
+          G_RunMissile((unsigned __int8 *)s);
           return;
         case 3:
           if ( s[130] )
@@ -109276,7 +109276,7 @@ int __cdecl sub_81084EA(int a1, int *a2)
 // 86F1020: using guessed type int dword_86F1020;
 
 //----- (081085B8) --------------------------------------------------------
-void __cdecl sub_81085B8(int a1, int a2)
+void __cdecl G_PlayerTurretPositionAndBlend(int a1, int a2)
 {
   char *v2; // eax
   char *v3; // eax
@@ -109581,7 +109581,7 @@ int __cdecl turret_clientaim(int a1, int a2)
 }
 
 //----- (08109348) --------------------------------------------------------
-int *__cdecl sub_8109348(int a1, int *a2)
+int *__cdecl turret_shoot_internal(int a1, int *a2)
 {
   int v2; // ebx
   int *result; // eax
@@ -109607,7 +109607,7 @@ int __cdecl turret_track(_DWORD *a1, int *a2)
 
   v4 = a1[87];
   turret_clientaim((int)a1, (int)a2);
-  sub_81085B8((int)a2, (int)a1);
+  G_PlayerTurretPositionAndBlend((int)a2, (int)a1);
   v3 = BG_GetWeaponDef(a1[50]);
   *(_DWORD *)(a2[86] + 1424) = 1;
   a1[2] &= ~0x40u;
@@ -109620,7 +109620,7 @@ int __cdecl turret_track(_DWORD *a1, int *a2)
     if ( (_BYTE)result )
     {
       *(_DWORD *)(v4 + 8) = *(_DWORD *)(v3 + 516);
-      sub_8109348((int)a1, a2);
+      turret_shoot_internal((int)a1, a2);
       result = a1[2] | 0x40;
       a1[2] = result;
     }
@@ -110633,7 +110633,7 @@ int __cdecl G_ExplodeMissile(int a1)
 // 810B4D8: using guessed type float s;
 
 //----- (0810B894) --------------------------------------------------------
-void __cdecl sub_810B894(float *s, float *a2, float *a3, int a4, int a5)
+void __cdecl G_MissileTrace(float *s, float *a2, float *a3, int a4, int a5)
 {
   float v5[6]; // [esp+20h] [ebp-18h] BYREF
 
@@ -110655,7 +110655,7 @@ int __cdecl sub_810B90E(float *s, int a2, int a3, float *a4)
 
   v5 = *((_DWORD *)&unk_8665480 + 140 * a2 + 71);
   *((_DWORD *)&unk_8665480 + 140 * a2 + 71) = 0;
-  sub_810B894(s, (float *)(a3 + 312), a4, *(_DWORD *)(a3 + 336), *(_DWORD *)(a3 + 388));
+  G_MissileTrace(s, (float *)(a3 + 312), a4, *(_DWORD *)(a3 + 336), *(_DWORD *)(a3 + 388));
   result = v5;
   *((_DWORD *)&unk_8665480 + 140 * a2 + 71) = v5;
   return result;
@@ -110734,7 +110734,7 @@ int __cdecl sub_810BB8C(float *a1, int a2)
 // 810BB8C: using guessed type float var_18[2];
 
 //----- (0810BC36) --------------------------------------------------------
-unsigned __int8 *__cdecl sub_810BC36(unsigned __int8 *a1)
+unsigned __int8 *__cdecl G_RunMissile(unsigned __int8 *a1)
 {
   unsigned __int8 *result; // eax
   int v2; // [esp+2Ch] [ebp-BCh]
@@ -110759,7 +110759,7 @@ unsigned __int8 *__cdecl sub_810BC36(unsigned __int8 *a1)
   {
     sub_810C716((_DWORD *)a1 + 78, v17);
     v18 = v18 - 1.5;
-    sub_810B894(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
+    G_MissileTrace(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
     if ( s[0] == 1.0 )
     {
       *((_DWORD *)a1 + 3) = 5;
@@ -110775,13 +110775,13 @@ unsigned __int8 *__cdecl sub_810BC36(unsigned __int8 *a1)
   if ( Vec3Normalize(v16) < 0.001 )
     return (unsigned __int8 *)G_RunThink((int)a1);
   if ( sub_810C6D2(*((float *)a1 + 11)) <= 30.0 || SV_PointContents((float *)a1 + 78, -1, 32) )
-    sub_810B894(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
+    G_MissileTrace(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
   else
-    sub_810B894(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97) | 0x20);
+    G_MissileTrace(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97) | 0x20);
   if ( (LODWORD(v11) & 0x1F00000) == 20971520 )
   {
     sub_810BB8C((float *)a1, (int)s);
-    sub_810B894(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
+    G_MissileTrace(s, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
   }
   v4 = dword_81678A0[10 * a1[358]];
   if ( v4 == 3 && word_86655F4[280 * (unsigned __int16)v14] < 0 )
@@ -110792,7 +110792,7 @@ unsigned __int8 *__cdecl sub_810BC36(unsigned __int8 *a1)
   {
     sub_810C716((_DWORD *)a1 + 78, v17);
     v18 = v18 - 1.5;
-    sub_810B894(v6, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
+    G_MissileTrace(v6, (float *)a1 + 78, (float *)v17, *((_DWORD *)a1 + 84), *((_DWORD *)a1 + 97));
     if ( v6[0] != 1.0 && (_WORD)v7 == 1022 )
     {
       s[0] = v6[0];
@@ -113754,7 +113754,7 @@ int Scr_BulletTrace()
     Scr_AddVector(v6);
     Scr_AddArrayStringIndexed((unsigned __int16)word_87A22CC);
     v4 = (v6[3] & 0x1F00000) >> 20;
-    v0 = (char *)sub_80B6EB2(v4);
+    v0 = (char *)Com_SurfaceTypeToName(v4);
     Scr_AddString(v0);
     return Scr_AddArrayStringIndexed((unsigned __int16)word_87A22EC);
   }
@@ -118163,7 +118163,7 @@ char *__cdecl Scr_GetObjectField(char *a1, int a2, int a3)
 }
 
 //----- (08118C0E) --------------------------------------------------------
-int *__cdecl sub_8118C0E(int a1)
+int *__cdecl Scr_FreeEntityConstStrings(int a1)
 {
   int *result; // eax
   int v2[2]; // [esp+Ch] [ebp-Ch] BYREF
@@ -118193,7 +118193,7 @@ int *__cdecl sub_8118C0E(int a1)
 //----- (08118C98) --------------------------------------------------------
 void __cdecl Scr_FreeEntity(int *a1)
 {
-  sub_8118C0E((int)a1);
+  Scr_FreeEntityConstStrings((int)a1);
   Scr_FreeEntityNum(*a1, 0);
 }
 
@@ -121094,7 +121094,7 @@ void __cdecl sub_811E35C(int a1, float *a2)
 }
 
 //----- (0811E3E0) --------------------------------------------------------
-float *__cdecl sub_811E3E0(int a1, int a2)
+float *__cdecl FireWeapon(int a1, int a2)
 {
   float *result; // eax
   float v3; // [esp+20h] [ebp-58h] BYREF
@@ -121138,7 +121138,7 @@ float *__cdecl sub_811E3E0(int a1, int a2)
 //----- (0811E56A) --------------------------------------------------------
 float *__cdecl sub_811E56A(int a1)
 {
-  return sub_811E3E0(a1, dword_859B5EC);
+  return FireWeapon(a1, dword_859B5EC);
 }
 
 //----- (0811E586) --------------------------------------------------------
@@ -121204,7 +121204,7 @@ int __cdecl sub_811E696(int a1, int a2)
       if ( BG_WeaponAmmo(a1, *(_DWORD *)(a1 + 208)) <= 0 )
       {
         v6 = BG_GetWeaponDef(*(_DWORD *)(a1 + 208));
-        v4 = sub_80E963A(a1, *(_DWORD *)(v6 + 132));
+        v4 = BG_PlayerHasOffhand(a1, *(_DWORD *)(v6 + 132));
         if ( v4 )
           *(_DWORD *)(a1 + 208) = v4;
         else

@@ -58,7 +58,12 @@ dvar_t *player_dmgtimer_minScale;
 dvar_t *player_dmgtimer_stumbleTime;
 dvar_t *player_dmgtimer_flinchTime;
 
-void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
+/*
+================
+BG_AddPredictableEventToPlayerstate
+================
+*/
+void QDECL BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
 {
 	ps->events[ps->eventSequence & ( MAX_EVENTS - 1 )] = newEvent;
 	ps->eventParms[ps->eventSequence & ( MAX_EVENTS - 1 )] = eventParm;

@@ -17,7 +17,9 @@ typedef struct
 #define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
 #define test (*((vec3_t*)( 0x0815D6E8 )))
+#define CorrectSolidDeltas (((vec3_t*)( 0x814E080 )))
 
+#define viewLerp_CrouchProne (((viewLerpWaypoint_s*)( 0x08166360 )))
 
 
 void test2()
@@ -42,19 +44,18 @@ void test2()
 
 	//Scr_DumpScriptThreads();
 
-	//for (int i = 0; i < 512; i++)
-	//	Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
+	//for (int i = 0; i < 20; i++)
+	//	Com_Printf("{ %i, %f, %i},\n", viewLerp_CrouchProne[i].iFrac, viewLerp_CrouchProne[i].fViewHeight, viewLerp_CrouchProne[i].iOffset);
+
 
 	// Just print stuff until program segfaults
-	/*
-	for(int i = 0; i < 9; i++)
+	for ( int i = 0; i <= 0x19; ++i )
 	{
 		//if (net_fields[i].name == NULL)
 		//	return;
-		Com_Printf("{ %d, %d, %f },\n", net_fields[i].upAnimIndex, net_fields[i].overAnimIndex, net_fields[i].height );
+		Com_Printf(" { %f, %f, %f },\n", CorrectSolidDeltas[i][0], CorrectSolidDeltas[i][1], CorrectSolidDeltas[i][2] );
 	}
 
-	*/
 }
 
 void Sys_RedirectFunctions()
@@ -897,6 +898,7 @@ void Sys_RedirectFunctions()
 	SetJump(0x080DD59E, (DWORD)BG_PlayerStateToEntityState);
 	SetJump(0x080D978C, (DWORD)BG_UpdatePlayerDObj);
 	SetJump(0x080D954C, (DWORD)BG_Player_DoControllers);
+	SetJump(0x080DE734, (DWORD)BG_CheckProne);
 
 
 
@@ -904,6 +906,28 @@ void Sys_RedirectFunctions()
 	// Pmove
 	SetJump(0x080EDF3A, (DWORD)PM_Weapon);
 	SetJump(0x080DEBE4, (DWORD)PM_trace);
+
+	SetJump(0x080EC2BA, (DWORD)PM_AdjustAimSpreadScale);
+	SetJump(0x080DF16A, (DWORD)PM_Accelerate);
+	SetJump(0x080E2CDE, (DWORD)PM_FootstepEvent);
+	SetJump(0x080E7CC0, (DWORD)PM_StepSlideMove);
+	SetJump(0x080DFB3A, (DWORD)PM_FlyMove);
+	SetJump(0x080E178C, (DWORD)PM_ViewHeightAdjust);
+	SetJump(0x080E1F20, (DWORD)PM_CheckDuck);
+	SetJump(0x080DF868, (DWORD)PM_SetMovementDir);
+	SetJump(0x080DFCD4, (DWORD)PM_AirMove);
+	SetJump(0x080E5D4A, (DWORD)PM_LadderMove);
+	SetJump(0x080DFE82, (DWORD)PM_WalkMove);
+	SetJump(0x080E037E, (DWORD)PM_NoclipMove);
+	SetJump(0x080E05C8, (DWORD)PM_UFOMove);
+	SetJump(0x080E117E, (DWORD)PM_GroundTrace);
+	SetJump(0x080E3008, (DWORD)PM_Footsteps);
+	SetJump(0x080E4794, (DWORD)PM_UpdateViewAngles);
+	SetJump(0x080E5936, (DWORD)PM_CheckLadderMove);
+	
+	
+	SetJump(0x080E6D30, (DWORD)Pmove);
+
 
 	// Mantle
 	SetJump(0x080DAAF2, (DWORD)Mantle_GetAnimDelta);

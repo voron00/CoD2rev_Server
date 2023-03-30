@@ -131,6 +131,101 @@ int BG_IsAltSwitch(playerState_s *ps, unsigned int lastWeapon, unsigned int weap
 	return 1;
 }
 
+void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
+{
+	float temp1;
+	float temp2;
+	float temp3;
+	float velocity;
+	playerState_s *ps;
+	float hipSpreadDecayRate;
+	float sppedSquared;
+	float decrease;
+	float increase;
+	int i;
+	int j;
+	WeaponDef *weaponDef;
+
+	ps = pm->ps;
+	weaponDef = BG_GetWeaponDef(pm->ps->weapon);
+	hipSpreadDecayRate = weaponDef->hipSpreadDecayRate;
+
+	if ( hipSpreadDecayRate == 0.0 )
+	{
+		increase = 0.0;
+		decrease = 1.0;
+	}
+	else
+	{
+		if ( ps->groundEntityNum != 1023 || ps->pm_type == 1 )
+		{
+			if ( (ps->eFlags & 8) != 0 )
+			{
+				hipSpreadDecayRate = hipSpreadDecayRate * weaponDef->hipSpreadProneDecay;
+			}
+			else if ( (ps->eFlags & 4) != 0 )
+			{
+				hipSpreadDecayRate = hipSpreadDecayRate * weaponDef->hipSpreadDuckedDecay;
+			}
+		}
+		else
+		{
+			hipSpreadDecayRate = hipSpreadDecayRate * 0.5;
+		}
+
+		decrease = hipSpreadDecayRate * pml->frametime;
+
+		if ( ps->fWeaponPosFrac == 1.0 )
+		{
+			increase = 0.0;
+		}
+		else
+		{
+			sppedSquared = 0.0;
+
+			if ( weaponDef->hipSpreadTurnAdd != 0.0 )
+			{
+				for ( i = 0; i <= 1; ++i )
+				{
+					temp3 = (long double)pm->oldcmd.angles[i] * 0.0054931641;
+					temp1 = (long double)pm->cmd.angles[i] * 0.0054931641;
+					temp2 = AngleSubtract(temp1, temp3);
+
+					sppedSquared = fabs(temp2) * 0.0099999998 * weaponDef->hipSpreadTurnAdd / pml->frametime + sppedSquared;
+				}
+			}
+
+			if ( weaponDef->hipSpreadMoveAdd != 0.0 && (pm->cmd.forwardmove || pm->cmd.rightmove) )
+			{
+				velocity = Vec2LengthSq(ps->velocity);
+
+				if ( velocity > Square(bg_aimSpreadMoveSpeedThreshold->current.decimal) )
+					sppedSquared = sppedSquared + weaponDef->hipSpreadMoveAdd;
+			}
+
+			if ( ps->groundEntityNum == 1023 && ps->pm_type != 1 )
+			{
+				for ( j = 0; j <= 1; ++j )
+					sppedSquared = sppedSquared + 1.28;
+			}
+
+			increase = sppedSquared * pml->frametime;
+		}
+	}
+
+	ps->aimSpreadScale = (increase - decrease) * 255.0 + ps->aimSpreadScale;
+
+	if ( ps->aimSpreadScale >= 0.0 )
+	{
+		if ( ps->aimSpreadScale > 255.0 )
+			ps->aimSpreadScale = 255.0;
+	}
+	else
+	{
+		ps->aimSpreadScale = 0.0;
+	}
+}
+
 void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel)
 {
 	float hipKickYaw;
@@ -527,6 +622,35 @@ void PM_Weapon_Idle(playerState_s *ps)
 	ps->weaponDelay = 0;
 	ps->weaponstate = WEAPON_READY;
 	PM_StartWeaponAnim(ps, WEAP_IDLE);
+}
+
+int PM_InteruptWeaponWithProneMove(playerState_s *ps)
+{
+	if ( ps->weaponstate <  WEAPON_FIRING
+	        || ps->weaponstate == WEAPON_RELOADING
+	        || ps->weaponstate == WEAPON_RELOAD_START
+	        || ps->weaponstate == WEAPON_RELOAD_END
+	        || ps->weaponstate == WEAPON_RELOAD_START_INTERUPT
+	        || ps->weaponstate == WEAPON_RELOADING_INTERUPT
+	        || ps->weaponstate == WEAPON_RECHAMBERING )
+	{
+		return 1;
+	}
+
+	if ( ps->weaponstate == WEAPON_FIRING
+	        || ps->weaponstate == WEAPON_MELEE_FIRE
+	        || ps->weaponstate > WEAPON_MELEE_FIRE && ps->weaponstate <= WEAPON_OFFHAND_END )
+	{
+		return 0;
+	}
+
+	PM_Weapon_Idle(ps);
+	return 1;
+}
+
+void PM_ResetWeaponState(playerState_s *ps)
+{
+	PM_Weapon_Idle(ps);
 }
 
 void PM_Weapon_BinocularsInit(playerState_s *ps)
@@ -1592,6 +1716,91 @@ void PM_Weapon_OffHandHold(playerState_s *ps)
 	ps->weaponDelay = 0;
 	ps->pm_flags |= 0x10u;
 	ps->grenadeTimeLeft = weaponDef->fuseTime;
+}
+
+bool BG_IsUsingBinoculars(playerState_s *ps)
+{
+	if ( ps->weaponstate == WEAPON_BINOCULARS_HOLD || ps->weaponstate == WEAPON_BINOCULARS_START )
+		return 1;
+
+	return 0;
+}
+
+bool BG_IsUsingBinoculars2(int state)
+{
+	if ( state == WEAPON_BINOCULARS_HOLD || state == WEAPON_BINOCULARS_START )
+		return 1;
+
+	return 0;
+}
+
+bool PM_IsAdsAllowed(playerState_s *ps, pml_t *pml)
+{
+	unsigned int weapon;
+
+	if ( ps->pm_type == 1 )
+	{
+		if ( pml->almostGroundPlane )
+			return 0;
+	}
+	else if ( ps->pm_type >= 1 && ps->pm_type <= 7 )
+	{
+		return 0;
+	}
+
+	weapon = BG_GetViewmodelWeaponIndex(ps);
+
+	if ( !BG_GetWeaponDef(weapon)->aimDownSight )
+		return 0;
+
+	if ( ps->weaponstate > WEAPON_MELEE_FIRE && ps->weaponstate <= WEAPON_OFFHAND_END )
+		return 0;
+
+	if ( ps->weaponstate == WEAPON_MELEE_INIT || ps->weaponstate == WEAPON_MELEE_FIRE )
+		return 0;
+
+	if ( ps->weaponstate == WEAPON_RAISING || ps->weaponstate == WEAPON_DROPPING )
+		return 0;
+
+	return ps->weaponstate <= WEAPON_OFFHAND_END
+	       || ps->weaponstate > WEAPON_BINOCULARS_END
+	       || BG_IsUsingBinoculars2(ps->weaponstate);
+}
+
+void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml)
+{
+	bool adsRequested;
+	bool IsAdsAllowed;
+	playerState_s *ps;
+
+	ps = pm->ps;
+	ps->pm_flags &= ~0x40u;
+	IsAdsAllowed = PM_IsAdsAllowed(ps, pml);
+	adsRequested = 0;
+
+	if ( (pm->cmd.buttons & 0x1000) != 0 || BG_IsUsingBinoculars(ps) )
+		adsRequested = 1;
+
+	if ( adsRequested && IsAdsAllowed )
+	{
+		if ( (ps->pm_flags & 1) != 0 )
+		{
+			if ( (pm->oldcmd.buttons & 0x1000) == 0 || !pm->cmd.forwardmove && !pm->cmd.rightmove )
+			{
+				ps->pm_flags |= 0x40u;
+				ps->pm_flags |= 0x800u;
+			}
+		}
+		else
+		{
+			ps->pm_flags |= 0x40u;
+		}
+	}
+
+	if ( (ps->pm_flags & 0x40) != 0 )
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, 1, 1);
+	else
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, 0, 1);
 }
 
 void PM_Weapon_OffHand(pmove_t *pm)

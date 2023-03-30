@@ -786,7 +786,7 @@ BG_AnimScriptEvent
   returns the duration in milliseconds that this model should be paused. -1 if no event found
 ================
 */
-int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force )
+int QDECL BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force )
 {
 	animScriptCommand_t *script;
 	animScriptItem_t *item;
@@ -914,7 +914,7 @@ BG_AnimScriptAnimation
   returns 1 if an animation was set, -1 if no animation was found, 0 otherwise
 ================
 */
-int BG_AnimScriptAnimation(playerState_s *ps, int state, scriptAnimMoveTypes_t movetype, qboolean force)
+int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean force)
 {
 	animScriptItem_t *item;
 
@@ -2309,6 +2309,37 @@ void BG_PlayerAnimation(const DObj_s *pDObj, entityState_s *es, clientInfo_t *ci
 
 	BG_RunLerpFrameRate(ci, &ci->legs, es->legsAnim, es);
 	BG_RunLerpFrameRate(ci, &ci->torso, es->torsoAnim, es);
+}
+
+void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove)
+{
+	int index;
+	WeaponDef *weaponDef;
+	playerState_s *ps;
+
+	ps = pmove->ps;
+	index = BG_GetViewmodelWeaponIndex(pmove->ps);
+	weaponDef = BG_GetWeaponDef(index);
+
+	BG_UpdateConditionValue(ps->clientNum, ANIM_COND_PLAYERANIMTYPE, weaponDef->playerAnimType, 1);
+	BG_UpdateConditionValue(ps->clientNum, ANIM_COND_WEAPONCLASS, weaponDef->weaponClass, 1);
+
+	if ( (ps->eFlags & 0x40000) != 0 )
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, 1, 1);
+	else
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, 0, 1);
+
+	if ( (ps->eFlags & 0x300) != 0 )
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_MOUNTED, 1, 1);
+	else
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_MOUNTED, 0, 1);
+
+	BG_UpdateConditionValue(ps->clientNum, ANIM_COND_UNDERHAND, ps->viewangles[0] > 0.0, 1);
+
+	if ( (pmove->cmd.buttons & 1) != 0 )
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_FIRING, 1, 1);
+	else
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_FIRING, 0, 1);
 }
 
 loadAnim_t* BG_GetAnim(unsigned int index)

@@ -271,6 +271,7 @@ bool Mantle_CheckLedge(pmove_t *pmove, pml_t *pml, MantleResults *mresults, floa
 	VectorCopy(mresults->startPos, start);
 	start[2] = start[2] + units;
 	VectorMA(start, 16.0, mresults->dir, end);
+
 	PM_trace(pmove, &trace, start, mins, maxs, end, ps->clientNum, pmove->tracemask);
 
 	if ( trace.startsolid || trace.fraction < 1.0 )

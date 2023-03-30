@@ -44,6 +44,11 @@ vec_t Vec2Length( const vec2_t v )
 	return sqrt( v[0] * v[0] + v[1] * v[1] );
 }
 
+vec_t Vec2LengthSq( const vec2_t v )
+{
+	return ( v[0] * v[0] + v[1] * v[1] );
+}
+
 vec_t VectorLengthSquared( const vec3_t v )
 {
 	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
@@ -723,4 +728,86 @@ float vectoyaw( const vec3_t vec )
 	}
 
 	return yaw + 360;
+}
+
+void YawVectors2D(const float yaw, vec2_t forward, vec2_t right)
+{
+	float cy;
+	float angle;
+	float sy;
+
+	angle = yaw * 0.017453292;
+	cy = cos(angle);
+	sy = sin(angle);
+
+	if ( forward )
+	{
+		forward[0] = cy;
+		forward[1] = sy;
+	}
+
+	if ( right )
+	{
+		right[0] = sy;
+		right[1] = -cy;
+	}
+}
+
+void YawVectors(const float yaw, vec3_t forward, vec3_t right)
+{
+	float cy;
+	float angle;
+	float sy;
+
+	angle = yaw * 0.017453292;
+	cy = cos(angle);
+	sy = sin(angle);
+
+	if ( forward )
+	{
+		forward[0] = cy;
+		forward[1] = sy;
+		forward[2] = 0.0;
+	}
+
+	if ( right )
+	{
+		right[0] = sy;
+		right[1] = -cy;
+		right[2] = 0.0;
+	}
+}
+
+double PitchForYawOnNormal(const float fYaw, const vec3_t normal)
+{
+	vec3_t forward;
+
+	YawVectors(fYaw, forward, 0);
+
+	if ( normal[2] != 0 )
+	{
+		forward[2] = (normal[0] * forward[0] + normal[1] * forward[1]) / normal[2];
+		return atan(forward[2]) * 180.0 / M_PI;
+	}
+
+	return 270.0;
+}
+
+double Abs(const float *v)
+{
+	return (float)sqrt((float)((float)((float)(*v * *v) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
+}
+
+void VectorRint(float *v)
+{
+	v[0] = rint(v[0]);
+	v[1] = rint(v[1]);
+	v[2] = rint(v[2]);
+}
+
+void VectorNegCopy(float *from, float *to)
+{
+	to[0] = -from[0];
+	to[1] = -from[1];
+	to[2] = -from[2];
 }

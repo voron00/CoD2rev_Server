@@ -15,13 +15,13 @@ extern gentity_t g_entities[];
 
 int singleClientEvents[] =
 {
-	EV_STANCE_FORCE_STAND,
-	EV_STANCE_FORCE_CROUCH,
-	EV_STANCE_FORCE_PRONE,
-	EV_STEP_VIEW,
-	EV_BULLET_HIT_CLIENT_SMALL,
-	EV_BULLET_HIT_CLIENT_LARGE,
-	EV_NONE
+	140,
+	141,
+	142,
+	143,
+	185,
+	186,
+	-1,
 };
 
 qboolean G_UpdateClientInfo(gentity_s *ent)
@@ -132,6 +132,7 @@ void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, 
 	{
 		if ( ps->eventSequence - ps->entityEventSequence > 4 )
 			ps->entityEventSequence = ps->eventSequence - 4;
+
 		s->eventParm = LOBYTE(ps->eventParms[ps->entityEventSequence++ & 3]);
 	}
 
@@ -141,7 +142,7 @@ void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, 
 	for ( i = ps->oldEventSequence; i != ps->eventSequence; ++i )
 	{
 		event = ps->events[i & 3];
-		G_PlayerEvent(s->number, (entity_event_t)event);
+		G_PlayerEvent(s->number, event);
 
 		for ( j = 0; singleClientEvents[j] > 0 && singleClientEvents[j] != event; ++j )
 			;

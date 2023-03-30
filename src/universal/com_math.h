@@ -49,6 +49,7 @@ extern vec4_t vec4_origin;
 #define	ANGLE2SHORT(x)	((int)((x)*65536.0f/360.0f) & 65535)
 #define	SHORT2ANGLE(x)	((x)*(360.0/65536))
 
+#define abs32 abs
 #define Square( x ) ( ( x ) * ( x ) )
 
 float Q_fabs( float f );
@@ -160,6 +161,7 @@ vec_t Vec2Length( const vec2_t v );
 vec_t VectorLengthSquared( const vec3_t v );
 vec_t Vec4LengthSq( const vec4_t v);
 vec_t VectorsLengthSquared(const vec4_t v1, const vec4_t v2);
+vec_t Vec2LengthSq( const vec2_t v );
 void VectorInverse( vec3_t v );
 void MatrixTransformVector(const float *in1, const float *in2, float *out);
 void MatrixTransformVector43(const float *in1, const float *in2, float *out);
@@ -197,3 +199,7 @@ long double AngleNormalize180Accurate(float angle);
 long double AngleNormalize360Accurate(float angle);
 void VectorAngleMultiply(float *vec, float angle);
 float vectoyaw( const vec3_t vec );
+double PitchForYawOnNormal(const float fYaw, const vec3_t normal);
+double Abs(const float *v);
+void VectorRint(float *v);
+void VectorNegCopy(float *from, float *to);
