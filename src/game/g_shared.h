@@ -108,7 +108,7 @@ typedef struct entityState_s
 	int legsAnim;
 	int torsoAnim;
 	float leanf;
-	float scale;
+	int scale;
 	int dmgFlags;
 	int animMovetype;
 	float fTorsoHeight;
@@ -1056,6 +1056,32 @@ enum entityType_t
 	ET_EVENTS = 0xA,
 };
 
+enum meansOfDeath_t
+{
+	MOD_UNKNOWN = 0x0,
+	MOD_PISTOL_BULLET = 0x1,
+	MOD_RIFLE_BULLET = 0x2,
+	MOD_GRENADE = 0x3,
+	MOD_GRENADE_SPLASH = 0x4,
+	MOD_PROJECTILE = 0x5,
+	MOD_PROJECTILE_SPLASH = 0x6,
+	MOD_MELEE = 0x7,
+	MOD_HEAD_SHOT = 0x8,
+	MOD_CRUSH = 0x9,
+	MOD_TELEFRAG = 0xA,
+	MOD_FALLING = 0xB,
+	MOD_SUICIDE = 0xC,
+	MOD_TRIGGER_HURT = 0xD,
+	MOD_EXPLOSIVE = 0xE,
+	MOD_NUM = 0xF,
+};
+
+struct AntilagClientStore
+{
+	vec3_t realClientPositions[64];
+	bool clientMoved[64];
+};
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
@@ -1119,12 +1145,17 @@ XModel* G_CachedModelForIndex(int modelIndex);
 unsigned int G_ModelIndex(const char *name);
 void G_OverrideModel(int modelIndex, const char *defaultModelName);
 void G_RunThink(gentity_s *ent);
+void G_CheckHitTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, int iDamage, unsigned int iMOD);
+qboolean OnSameTeam(gentity_s *ent1, gentity_s *ent2);
+void G_AntiLagRewindClientPos(int gameTime, AntilagClientStore *antilagStore);
+void G_AntiLag_RestoreClientPos(AntilagClientStore *antilagStore);
 
 void G_DObjCalcPose(gentity_s *ent);
 void G_DObjCalcBone(gentity_s *ent, int boneIndex);
 
 qboolean G_UpdateClientInfo(gentity_s *ent);
 void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap);
+void G_FreeEntityDelay(gentity_s *ent);
 
 gentity_t* Scr_EntityForRef(scr_entref_t entref);
 game_hudelem_t* Scr_HudElemForRef(scr_entref_t entref);
@@ -1151,10 +1182,22 @@ void Scr_Notify(gentity_s *ent, unsigned short stringValue, unsigned int paramco
 unsigned short Scr_ExecEntThread(gentity_s *ent, int handle, unsigned int paramcount);
 void Scr_PlayerConnect(gentity_s *self);
 void G_InitGentity(gentity_s *ent);
-
+void G_PrintEntities();
+gentity_s* G_Spawn(void);
+gentity_s* G_TempEntity(vec3_t origin, int event);
+void Bullet_Fire(gentity_s *attacker, float spread, weaponParms *wp, const gentity_s *ent, int gameTime);
+gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenadeWPID, int time);
+void Weapon_Throw_Grenade(gentity_s *ent, int grenType, weaponParms *wp);
+void Bullet_RandomDir(float *x, float *y);
+gentity_s* fire_rocket(gentity_s *parent, float *start, float *dir);
+void Weapon_RocketLauncher_Fire(gentity_s *ent, float spread, weaponParms *targetOffset);
 void G_SetOrigin(gentity_s *ent, const float *origin);
 void G_SetAngle(gentity_s *ent, const float *angle);
 void G_PlayerEvent(int clientNum, int event);
+int GetFollowPlayerState(int clientNum, playerState_s *ps);
+clientState_t* G_GetClientState(int num);
+int G_GetClientArchiveTime(int clientindex);
+void G_SetClientArchiveTime(int clindex, int time);
 
 void G_TraceCapsule(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask);
 int G_TraceCapsuleComplete(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask);
@@ -1166,9 +1209,21 @@ void Scr_BulletTrace();
 
 void SetClientViewAngle(gentity_s *ent, const float *angle);
 void ClientUserinfoChanged(int clientNum);
+void ClientImpacts(gentity_s *ent, pmove_t *pm);
+void G_TouchTriggers(gentity_s *ent);
+DObjAnimMat* G_DObjGetLocalTagMatrix(gentity_s *ent, unsigned int tagName);
+int G_DObjGetWorldTagPos(gentity_s *ent, unsigned int tagName, float *pos);
+
+float G_GetWeaponHitLocationMultiplier(hitLocation_t hitLoc, int weapon);
+unsigned short G_GetHitLocationString(hitLocation_t hitLoc);
+int G_GetHitLocationIndexFromString(unsigned short sString);
+void G_ParseHitLocDmgTable();
 
 void GScr_AddFieldsForEntity();
 void GScr_AddFieldsForRadiant();
+
+void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int dflags, unsigned int meansOfDeath, int iWeapon, const float *vPoint, const float *vDir, hitLocation_t hitLoc, int timeOffset);
+void G_Damage(gentity_s *self, gentity_s *inflictor, gentity_s *ent, const float *vDir,const float *vPoint, int value, int dflags, int meansOfDeath, hitLocation_t hitLoc, int timeOffset);
 
 float G_random();
 float G_crandom();
@@ -1182,6 +1237,9 @@ void G_FreeEntity(gentity_s *ent);
 void G_RunCorpseMove(gentity_s *ent);
 void G_RunCorpse(gentity_s *ent);
 
+void Player_UpdateActivate(gentity_s *ent);
+
+qboolean G_IsTurretUsable(gentity_s *useEnt, gentity_s *playerEnt);
 void G_ClientStopUsingTurret(gentity_s *self);
 void G_FreeTurret(gentity_s *ent);
 

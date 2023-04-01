@@ -2398,7 +2398,6 @@ void BG_SetupAnimNoteTypes(animScriptData_t *scriptData)
 void BG_FinalizePlayerAnims()
 {
 	const char *name;
-	long double lenMsec;
 	float length;
 	loadAnim_t *loadAnim;
 	vec3_t vDelta;
@@ -2442,11 +2441,9 @@ void BG_FinalizePlayerAnims()
 				}
 				else
 				{
-					lenMsec = length * 1000.0;
-					animation->duration = (int)lenMsec;
+					animation->duration = (int)(length * 1000.0);
 					XAnimGetRelDelta(xanim, index, vRot, vDelta, 0.0, 1.0);
-					VectorLength(vDelta);
-					animation->moveSpeed = lenMsec / length;
+					animation->moveSpeed = VectorLength(vDelta) / length;
 
 					if ( animation->duration <= 499 )
 						animation->duration = 500;

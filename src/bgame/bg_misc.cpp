@@ -58,6 +58,11 @@ dvar_t *player_dmgtimer_minScale;
 dvar_t *player_dmgtimer_stumbleTime;
 dvar_t *player_dmgtimer_flinchTime;
 
+void BG_StringCopy(unsigned char *member, const char *keyValue)
+{
+	strcpy((char *)member, keyValue);
+}
+
 /*
 ================
 BG_AddPredictableEventToPlayerstate
@@ -276,6 +281,19 @@ void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, 
 	ps->oldEventSequence = ps->eventSequence;
 	s->weapon = LOBYTE(ps->weapon);
 	s->groundEntityNum = LOWORD(ps->groundEntityNum);
+}
+
+qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item, int atTime)
+{
+	vec3_t origin;
+
+	BG_EvaluateTrajectory(&item->pos, atTime, origin);
+	return ps->origin[0] - origin[0] <= 36.0
+	       && ps->origin[0] - origin[0] >= -36.0
+	       && ps->origin[1] - origin[1] <= 36.0
+	       && ps->origin[1] - origin[1] >= -36.0
+	       && ps->origin[2] - origin[2] <= 18.0
+	       && ps->origin[2] - origin[2] >= -88.0;
 }
 
 void BG_RegisterDvars()

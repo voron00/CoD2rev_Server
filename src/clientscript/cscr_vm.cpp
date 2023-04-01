@@ -27,6 +27,11 @@ extern const char *var_typename[];
 scrVmGlob_t scrVmGlob;
 #endif
 
+qboolean Scr_IsSystemActive()
+{
+	return scrVarPub.timeArrayId != 0;
+}
+
 void Scr_Error(const char *error)
 {
 	if ( !scrVarPub.error_message )

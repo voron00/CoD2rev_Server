@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "../clientscript/clientscript_public.h"
 
-qboolean XModelGetStaticBounds(const XModel *model, const float *axis, float *mins, float *maxs)
+qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs)
 {
 	vec3_t bounds;
 	vec3_t out;

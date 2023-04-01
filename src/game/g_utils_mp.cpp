@@ -21,6 +21,12 @@ extern gentity_t g_entities[];
 extern entityHandler_t entityHandlers[] = {};
 #endif
 
+#ifdef TESTING_LIBRARY
+#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
+#else
+extern scr_data_t g_scr_data;
+#endif
+
 XModel* cached_models[MAX_MODELS];
 
 const char* G_ModelName(int modelIndex)
@@ -372,6 +378,14 @@ void G_FreeEntity(gentity_s *ent)
 	ent->useCount = useCount + 1;
 }
 
+void G_FreeEntityDelay(gentity_s *ent)
+{
+	unsigned short callback;
+
+	callback = Scr_ExecEntThread(ent, g_scr_data.deletestruct, 0);
+	Scr_FreeThread(callback);
+}
+
 void G_InitGentity(gentity_s *ent)
 {
 	ent->nextFree = 0;
@@ -381,4 +395,118 @@ void G_InitGentity(gentity_s *ent)
 	ent->r.ownerNum = 1023;
 	ent->eventTime = 0;
 	ent->freeAfterEvent = 0;
+}
+
+void G_PrintEntities()
+{
+	const char *classname;
+	int i;
+
+	for ( i = 0; i < level.num_entities; ++i )
+	{
+		if ( g_entities[i].classname )
+			classname = SL_ConvertToString(g_entities[i].classname);
+		else
+			classname = "";
+
+		Com_Printf(
+		    "%4i: '%s', origin: %f %f %f\n",
+		    i,
+		    classname,
+		    g_entities[i].r.currentOrigin[0],
+		    g_entities[i].r.currentOrigin[1],
+		    g_entities[i].r.currentOrigin[2]);
+	}
+}
+
+bool G_MaySpawnEntity(gentity_s *ent)
+{
+	if ( !ent )
+		return 0;
+
+	return level.time - ent->eventTime >= 500 || level.num_entities >= 1022;
+}
+
+gentity_s* G_Spawn(void)
+{
+	gentity_s *ent;
+
+	ent = level.firstFreeEnt;
+
+	if ( G_MaySpawnEntity(level.firstFreeEnt) )
+	{
+		level.firstFreeEnt = level.firstFreeEnt->nextFree;
+
+		if ( !level.firstFreeEnt )
+			level.lastFreeEnt = 0;
+
+		ent->nextFree = 0;
+	}
+	else
+	{
+		if ( level.num_entities == 1022 )
+		{
+			G_PrintEntities();
+			Com_Error(ERR_DROP, "G_Spawn: no free entities");
+		}
+
+		ent = &level.gentities[level.num_entities++];
+		SV_LocateGameData(level.gentities, level.num_entities, sizeof(gentity_s), &level.clients->ps, sizeof(gclient_s));
+	}
+
+	G_InitGentity(ent);
+	return ent;
+}
+
+gentity_s* G_TempEntity(vec3_t origin, int event)
+{
+	vec3_t snapped;
+	gentity_s *ent;
+
+	ent = G_Spawn();
+	ent->s.eType = event + ET_EVENTS;
+
+	Scr_SetString(&ent->classname, scr_const.tempEntity);
+
+	ent->eventTime = level.time;
+	ent->r.eventTime = level.time;
+	ent->freeAfterEvent = 1;
+
+	VectorCopy(origin, snapped);
+	SnapVector(snapped);      // save network bandwidth
+	G_SetOrigin(ent, snapped);
+
+	SV_LinkEntity(ent);
+
+	return ent;
+}
+
+DObjAnimMat* G_DObjGetLocalTagMatrix(gentity_s *ent, unsigned int tagName)
+{
+	int boneIndex;
+
+	boneIndex = SV_DObjGetBoneIndex(ent, tagName);
+
+	if ( boneIndex < 0 )
+		return 0;
+
+	G_DObjCalcBone(ent, boneIndex);
+	return &SV_DObjGetMatrixArray(ent)[boneIndex];
+}
+
+int G_DObjGetWorldTagPos(gentity_s *ent, unsigned int tagName, float *pos)
+{
+	float ent_axis[4][3];
+	DObjAnimMat *mat;
+
+	mat = G_DObjGetLocalTagMatrix(ent, tagName);
+
+	if ( !mat )
+		return 0;
+
+	AnglesToAxis(ent->r.currentAngles, ent_axis);
+	VectorCopy(ent->r.currentOrigin, ent_axis[3]);
+	MatrixTransformVector43(mat->trans, ent_axis, pos);
+
+	return 1;
 }

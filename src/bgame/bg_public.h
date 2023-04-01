@@ -740,29 +740,35 @@ typedef struct
 	float destabilizationTimeReductionRatio;
 	float destabilizationAngleMax;
 	int destabilizeDistance;
-	int locNone;
-	int locHelmet;
-	int locHead;
-	int locNeck;
-	int locTorsoUpper;
-	int locTorsoLower;
-	int locRightArmUpper;
-	int locLeftArmUpper;
-	int locRightArmLower;
-	int locLeftArmLower;
-	int locRightHand;
-	int locLeftHand;
-	int locRightLegUpper;
-	int locLeftLegUpper;
-	int locRightLegLower;
-	int locLeftLegLower;
-	int locRightFoot;
-	int locLeftFoot;
-	int locGun;
+	float locationDamageMultipliers[19];
 	const char *fireRumble;
 	const char *meleeImpactRumble;
 } WeaponDef;
 static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
+
+enum hitLocation_t
+{
+	HITLOC_NONE = 0x0,
+	HITLOC_HELMET = 0x1,
+	HITLOC_HEAD = 0x2,
+	HITLOC_NECK = 0x3,
+	HITLOC_TORSO_UPR = 0x4,
+	HITLOC_TORSO_LWR = 0x5,
+	HITLOC_R_ARM_UPR = 0x6,
+	HITLOC_L_ARM_UPR = 0x7,
+	HITLOC_R_ARM_LWR = 0x8,
+	HITLOC_L_ARM_LWR = 0x9,
+	HITLOC_R_HAND = 0xA,
+	HITLOC_L_HAND = 0xB,
+	HITLOC_R_LEG_UPR = 0xC,
+	HITLOC_L_LEG_UPR = 0xD,
+	HITLOC_R_LEG_LWR = 0xE,
+	HITLOC_L_LEG_LWR = 0xF,
+	HITLOC_R_FOOT = 0x10,
+	HITLOC_L_FOOT = 0x11,
+	HITLOC_GUN = 0x12,
+	HITLOC_NUM = 0x13,
+};
 
 struct pmoveHandler_t
 {
@@ -927,6 +933,16 @@ struct viewLerpWaypoint_s
 	int iOffset;
 };
 
+struct weaponParms
+{
+	float forward[3];
+	float right[3];
+	float up[3];
+	float muzzleTrace[3];
+	float gunForward[3];
+	const WeaponDef *weapDef;
+};
+
 extern pmoveHandler_t pmoveHandlers[];
 extern int singleClientEvents[];
 
@@ -982,6 +998,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean force);
 void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove);
 unsigned int BG_AnimationIndexForString(const char *string);
+void BG_FinalizePlayerAnims();
 void BG_LoadAnim();
 
 void BG_LoadPlayerAnimTypes();
@@ -1002,6 +1019,7 @@ void PM_CheckLadderMove(pmove_t *pm, pml_t *pml);
 
 void Pmove(pmove_t *pmove);
 
+qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item, int atTime);
 void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 int PM_WeaponAmmoAvailable(playerState_s *ps);
@@ -1018,6 +1036,7 @@ void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml);
 
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);
+void BG_StringCopy(unsigned char *member, const char *keyValue);
 
 long BG_StringHashValue( const char *fname );
 long BG_StringHashValue_Lwr( const char *fname );

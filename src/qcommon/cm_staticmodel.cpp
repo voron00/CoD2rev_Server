@@ -25,9 +25,9 @@ void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *star
 	DObjAnimMat *pose;
 
 	VectorSubtract(start, sm->origin, position);
-	MatrixTransformVector(position, sm->invScaledAxis[0], localStart);
+	MatrixTransformVector(position, sm->invScaledAxis, localStart);
 	VectorSubtract(end, sm->origin, position);
-	MatrixTransformVector(position, sm->invScaledAxis[0], localEnd);
+	MatrixTransformVector(position, sm->invScaledAxis, localEnd);
 
 	pose = XModelGetBasePose(sm->xmodel);
 
@@ -49,9 +49,9 @@ unsigned int CM_TraceStaticModelComplete(cStaticModel_s *sm, const float *start,
 	DObjAnimMat *pose;
 
 	VectorSubtract(start, sm->origin, trans);
-	MatrixTransformVector(trans, sm->invScaledAxis[0], localStart);
+	MatrixTransformVector(trans, sm->invScaledAxis, localStart);
 	VectorSubtract(end, sm->origin, trans);
-	MatrixTransformVector(trans, sm->invScaledAxis[0], localEnd);
+	MatrixTransformVector(trans, sm->invScaledAxis, localEnd);
 
 	trace.fraction = 1.0;
 	pose = XModelGetBasePose(sm->xmodel);

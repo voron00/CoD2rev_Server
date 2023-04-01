@@ -1410,8 +1410,8 @@ char *SV_GetPlayerByName();
 char *sub_808AB48();
 void *__cdecl SV_GetMapBaseName(char *s);
 // void __usercall sub_808AC7E(long double a1@<st0>);
-// void __usercall sub_808AD76(long double a1@<st0>, int a2);
-// void __usercall sub_808AFE0(long double a1@<st0>);
+// void __usercall SV_MapRestart(long double a1@<st0>, int a2);
+// void __usercall SV_MapRestart_f(long double a1@<st0>);
 // void __usercall sub_808AFF4(long double a1@<st0>);
 char *sub_808B008();
 // void __usercall sub_808B06A(long double a1@<st0>);
@@ -1487,7 +1487,7 @@ int __cdecl SV_GameSendServerCommand(int a1, int a2, const char *a3);
 // void __usercall SV_GameDropClient(long double a1@<st0>, int a2, char *a3);
 int __cdecl SV_SetBrushModel(int a1);
 _BOOL4 __cdecl SV_inSnapshot(float *a1, int a2);
-int __cdecl sub_80901C2(float *a1, float *a2, int a3);
+int __cdecl SV_EntityContact(float *a1, float *a2, int a3);
 char *__cdecl SV_GetServerinfo(char *dest, int a2);
 void *__cdecl sub_8090408(size_t a1);
 void *__cdecl sub_8090438(size_t n, int a2);
@@ -1610,8 +1610,8 @@ int __cdecl SV_AddEntitiesVisibleFromPoint(float *a1, int a2, _DWORD *a3);
 int __cdecl SV_AddCachedEntitiesVisibleFromPoint(int a1, int a2, float *a3, int a4, _DWORD *a5);
 _DWORD *__cdecl SV_GetCachedSnapshotInternal(int a1);
 _DWORD *__cdecl SV_GetCachedSnapshot(int *a1);
-int __cdecl sub_8097B54(int a1, _DWORD *a2, void *a3);
-int __cdecl sub_8097BD0(int a1, int a2, int a3);
+int __cdecl SV_GetCurrentClientInfo(int a1, _DWORD *a2, void *a3);
+int __cdecl SV_GetClientPositionsAtTime(int a1, int a2, int a3);
 int __cdecl SV_GetArchivedClientInfo(int a1, int *a2, _DWORD *a3, void *a4);
 int __cdecl SV_BuildClientSnapshot(char *a1);
 int __cdecl SV_RateMsec(int a1, int a2);
@@ -1640,7 +1640,7 @@ int __cdecl SV_PointSightTraceToEntity(_DWORD *a1, int a2);
 void __cdecl SV_Trace(float *s, float *a2, float *a3, float *a4, float *a5, int a6, int a7, int a8, int a9, int a10);
 int __cdecl SV_TracePassed(float *a1, float *a2, float *a3, float *a4, int a5, int a6, int a7, int a8, int a9);
 int *__cdecl SV_SightTrace(int *a1, float *a2, float *a3, float *a4, float *a5, int a6, int a7, int a8);
-int __cdecl sub_809BE82(int a1, int a2, int a3, int a4, int a5, int a6);
+int __cdecl SV_SightTraceToEntity(int a1, int a2, int a3, int a4, int a5, int a6);
 void __cdecl sub_809C0CE(_DWORD *s, _DWORD *a2, _DWORD *a3, int a4, int a5, int a6);
 int __cdecl SV_PointContents(float *a1, int a2, int a3);
 int __cdecl sub_809C294(float); // idb
@@ -2784,7 +2784,7 @@ long double __cdecl sub_80DC0D6(float *a1, float *a2);
 // char *__usercall BG_RegisterDvars@<eax>(long double a1@<st0>);
 int __cdecl BG_FindItemForWeapon(int a1);
 char *__cdecl sub_80DCB02(char *s1);
-_BOOL4 __cdecl sub_80DCBB6(float *a1, int a2, int a3);
+_BOOL4 __cdecl BG_PlayerTouchesItem(float *a1, int a2, int a3);
 _BOOL4 __cdecl BG_CanItemBeGrabbed(_DWORD *a1, _DWORD *a2, int a3);
 float *__cdecl BG_EvaluateTrajectory(int a1, int a2, int a3);
 float *__cdecl sub_80DD224(float *a1, int a2, int a3);
@@ -2944,7 +2944,7 @@ int __cdecl sub_80E9C10(int a1, int a2);
 int __cdecl sub_80E9C6A(int a1, int a2, int a3);
 int __cdecl sub_80E9DE0(int a1, int a2);
 int __cdecl sub_80E9FD2(int a1, int a2);
-float *__cdecl sub_80EA198(int a1, int a2, float *a3, float *a4);
+float *__cdecl BG_GetSpreadForWeapon(int a1, int a2, float *a3, float *a4);
 int __cdecl sub_80EA28E(int a1);
 _BOOL4 __cdecl PM_IsAdsAllowed(_DWORD *a1, int a2);
 int __cdecl sub_80EA3DA(int a1);
@@ -3081,7 +3081,7 @@ int __cdecl G_ParseWeaponAccurayGraphs(int a1);
 int __cdecl P_DamageFeedback(int a1);
 int __cdecl sub_80F2350(int a1);
 int __cdecl ClientImpacts(int a1, int a2);
-int __cdecl sub_80F24C6(int a1);
+int __cdecl G_TouchTriggers(int a1);
 int __cdecl SpectatorThink(int a1, int **a2);
 // int __usercall ClientInactivityTimer@<eax>(long double a1@<st0>, int a2);
 int __cdecl ClientIntermissionThink(int a1);
@@ -3096,7 +3096,7 @@ int __cdecl sub_80F34E0(_DWORD *a1, int a2, int a3);
 int __cdecl ClientIntermission(int a1);
 _DWORD *__cdecl SpectatorClientEndFrame(int a1);
 int __cdecl CanSpectateTeam(int a1, char a2);
-int __cdecl sub_80F4696(int a1, _DWORD *a2);
+int __cdecl GetFollowPlayerState(int a1, _DWORD *a2);
 int __cdecl StuckInClient(int a1);
 int __cdecl G_PlayerController(int *a1, int a2);
 int __cdecl G_UpdateClientInfo(int a1);
@@ -3260,7 +3260,7 @@ __int16 __cdecl G_Damage(int *a1, int *a2, int *a3, float *a4, _DWORD *a5, int a
 long double __cdecl sub_80FFA56(int a1, float *a2);
 int __cdecl G_RadiusDamage(float *a1, int *a2, int *a3, float a4, float a5, float a6, int *a7, int a8);
 int __cdecl G_GetHitLocationString(int a1);
-int __cdecl sub_81003F6(__int16 a1);
+int __cdecl G_GetHitLocationIndexFromString(__int16 a1);
 int __cdecl sub_810043E(_DWORD *a1, _DWORD *a2);
 float *__cdecl sub_810046E(float *a1, float *a2, float *a3);
 float *__cdecl sub_81004B2(float *a1, float *a2, float *a3);
@@ -3462,8 +3462,8 @@ long double __cdecl sub_810B988(float a1);
 int __cdecl sub_810B9B6(int a1);
 int __cdecl sub_810BB8C(float *a1, int a2);
 unsigned __int8 *__cdecl G_RunMissile(unsigned __int8 *a1);
-int __cdecl sub_810C1F6(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5);
-int __cdecl sub_810C4A0(_DWORD *a1, _DWORD *a2, float *a3);
+int __cdecl fire_grenade(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5);
+int __cdecl fire_rocket(_DWORD *a1, _DWORD *a2, float *a3);
 long double __cdecl sub_810C6D2(float a1);
 int __cdecl sub_810C6EC(_DWORD *a1);
 int __cdecl sub_810C716(_DWORD *a1, _DWORD *a2);
@@ -3832,13 +3832,13 @@ int __cdecl sub_811A3F0(int a1);
 int __cdecl hurt_touch(int a1, int a2);
 int __cdecl SP_trigger_hurt(int a1);
 int __cdecl sub_811A6A6(int a1);
-_BOOL4 __cdecl sub_811A6EE(int a1, int a2);
-int __cdecl sub_811A826(int *a1, int *a2, int a3, int a4);
+_BOOL4 __cdecl Respond_trigger_damage(int a1, int a2);
+int __cdecl Activate_trigger_damage(int *a1, int *a2, int a3, int a4);
 int __cdecl Use_trigger_damage(int *a1, int *a2);
 int *__cdecl Pain_trigger_damage(int *a1, int *a2, int a3, int a4, int a5);
 int *__cdecl Die_trigger_damage(int *a1, int a2, int *a3, int a4, int a5);
 int __cdecl SP_trigger_damage(int a1);
-int __cdecl sub_811AA18(int *a1, _DWORD *a2, float *a3, int a4, int a5);
+int __cdecl G_CheckHitTriggerDamage(int *a1, _DWORD *a2, float *a3, int a4, int a5);
 int __cdecl sub_811AC06(int *a1, _DWORD *a2, float *a3, int a4, int a5);
 int __cdecl sub_811ADB6(int a1);
 int __cdecl sub_811ADFA(_DWORD *a1, _DWORD *a2);
@@ -3912,21 +3912,21 @@ int __cdecl sub_811D220(int *a1, float *a2, int a3, float a4, float a5, float a6
 __int16 __cdecl sub_811D3B4(int *a1, float *a2, float a3, float a4, float a5);
 int *__cdecl sub_811D53A(int a1, int a2);
 float *__cdecl sub_811D5E0(float *a1, float *a2);
-float *__cdecl sub_811D638(float a1, float *a2, float *a3, float a4);
+float *__cdecl Bullet_RandomSpread(float a1, float *a2, float *a3, float a4);
 int __cdecl sub_811D6EC(int, float); // idb
-int __cdecl sub_811D7E6(int a1, char *s);
-int __cdecl sub_811D95C(int a1);
-void __cdecl sub_811DA00(int *a1, int *a2, float *a3, float *a4, float a5, int a6, int a7, _DWORD *a8, int a9);
+int __cdecl G_AntiLagRewindClientPos(int a1, char *s);
+int __cdecl G_AntiLag_RestoreClientPos(int a1);
+void __cdecl Bullet_Fire_Extended(int *a1, int *a2, float *a3, float *a4, float a5, int a6, int a7, _DWORD *a8, int a9);
 int __cdecl sub_811DF44(int *a1, int *a2, int a3, int a4, float a5);
-int __cdecl sub_811DFF4(int *a1, float a2, int a3, int *a4, int a5);
-int __cdecl sub_811E0C2(_DWORD *a1, int a2, int a3);
-float *__cdecl sub_811E18A(float *a1, float a2, int a3);
+int __cdecl Bullet_Fire(int *a1, float a2, int a3, int *a4, int a5);
+int __cdecl Weapon_Throw_Grenade(_DWORD *a1, int a2, int a3);
+float *__cdecl Weapon_RocketLauncher_Fire(float *a1, float a2, int a3);
 _BOOL4 __cdecl sub_811E2C2(int a1, int a2);
-void __cdecl sub_811E35C(int a1, float *a2);
+void __cdecl G_CalcMuzzlePoints(int a1, float *a2);
 float *__cdecl FireWeapon(int a1, int a2);
 float *__cdecl sub_811E56A(int a1);
-int __cdecl sub_811E586(_DWORD *a1);
-__int16 __cdecl sub_811E5E0(int a1);
+int __cdecl G_UseOffHand(_DWORD *a1);
+__int16 __cdecl FireWeaponMelee(int a1);
 int __cdecl sub_811E696(int a1, int a2);
 void G_SetupWeaponDef();
 int __cdecl G_GetWeaponIndexForName(char *s1); // idb
@@ -3941,8 +3941,8 @@ float *__cdecl sub_811EADE(float *a1, float a2, float *a3, float *a4);
 long double __cdecl sub_811EB32(float *a1, float *a2);
 void __cdecl sub_811EB66(float *);
 long double __cdecl sub_811EBA4(float a1);
-int __cdecl Player_UseEntity(int *a1, int a2);
-int __cdecl Player_ActivateHoldCmdAllowed(int a1);
+int __cdecl sub_811EBC4(int *a1, int a2);
+int __cdecl sub_811ECE4(int a1);
 int __cdecl sub_811EDD4(int *a1);
 int __cdecl Player_UpdateActivate(int *a1);
 int __cdecl sub_811EFC8(float *a1, float *a2);
@@ -50268,7 +50268,7 @@ void __usercall sub_808AC7E(long double a1@<st0>)
 // 848B208: using guessed type int sv_cheats;
 
 //----- (0808AD76) --------------------------------------------------------
-void __usercall sub_808AD76(long double a1@<st0>, int a2)
+void __usercall SV_MapRestart(long double a1@<st0>, int a2)
 {
   char *v2; // eax
   char *v3; // eax
@@ -50353,15 +50353,15 @@ void __usercall sub_808AD76(long double a1@<st0>, int a2)
 // 808AD76: using guessed type int var_C[3];
 
 //----- (0808AFE0) --------------------------------------------------------
-void __usercall sub_808AFE0(long double a1@<st0>)
+void __usercall SV_MapRestart_f(long double a1@<st0>)
 {
-  sub_808AD76(a1, 0);
+  SV_MapRestart(a1, 0);
 }
 
 //----- (0808AFF4) --------------------------------------------------------
 void __usercall sub_808AFF4(long double a1@<st0>)
 {
-  sub_808AD76(a1, 1);
+  SV_MapRestart(a1, 1);
 }
 
 //----- (0808B008) --------------------------------------------------------
@@ -50917,7 +50917,7 @@ void SV_AddOperatorCommands()
     Cmd_AddCommand("serverinfo", (int)sub_808BADE);
     Cmd_AddCommand("systeminfo", (int)sub_808BB06);
     Cmd_AddCommand("dumpuser", (int)sub_808BB2E);
-    Cmd_AddCommand("map_restart", (int)sub_808AFE0);
+    Cmd_AddCommand("map_restart", (int)SV_MapRestart_f);
     Cmd_AddCommand("fast_restart", (int)sub_808AFF4);
     Cmd_AddCommand("map", (int)sub_808AC7E);
     Cmd_SetAutoComplete("map", (int)"maps/mp", (int)"d3dbsp");
@@ -52767,7 +52767,7 @@ LABEL_23:
 }
 
 //----- (080901C2) --------------------------------------------------------
-int __cdecl sub_80901C2(float *a1, float *a2, int a3)
+int __cdecl SV_EntityContact(float *a1, float *a2, int a3)
 {
   int s[8]; // [esp+40h] [ebp-58h] BYREF
   unsigned __int8 v6; // [esp+63h] [ebp-35h]
@@ -56657,18 +56657,18 @@ _DWORD *__cdecl SV_GetCachedSnapshot(int *a1)
 // 848B1B4: using guessed type int sv_fps;
 
 //----- (08097B54) --------------------------------------------------------
-int __cdecl sub_8097B54(int a1, _DWORD *a2, void *a3)
+int __cdecl SV_GetCurrentClientInfo(int a1, _DWORD *a2, void *a3)
 {
   if ( *((_DWORD *)dword_841FB0C + 123845 * a1) != 4 )
     return 0;
-  if ( !sub_80F4696(a1, a2) )
+  if ( !GetFollowPlayerState(a1, a2) )
     return 0;
   qmemcpy(a3, (const void *)G_GetClientState(a1), 0x5Cu);
   return 1;
 }
 
 //----- (08097BD0) --------------------------------------------------------
-int __cdecl sub_8097BD0(int a1, int a2, int a3)
+int __cdecl SV_GetClientPositionsAtTime(int a1, int a2, int a3)
 {
   long double v3; // fst7
   int v6; // [esp+30h] [ebp-2768h] BYREF
@@ -56821,7 +56821,7 @@ int __cdecl SV_GetArchivedClientInfo(int a1, int *a2, _DWORD *a3, void *a4)
   }
   else
   {
-    return sub_8097B54(a1, a3, a4);
+    return SV_GetCurrentClientInfo(a1, a3, a4);
   }
 }
 
@@ -57179,7 +57179,7 @@ int SV_ArchiveSnapshot()
               {
                 v0 = (int *)G_GetClientState(v11);
                 MSG_WriteDeltaClient(&s, (int *)(v15 + 4), v0, 1);
-                if ( sub_80F4696(v11, v19) )
+                if ( GetFollowPlayerState(v11, v19) )
                 {
                   MSG_WriteBit1(&s);
                   MSG_WriteDeltaPlayerstate(&s, (char *)(v15 + 96), v19);
@@ -57200,7 +57200,7 @@ int SV_ArchiveSnapshot()
               {
                 v1 = (int *)G_GetClientState(v11);
                 MSG_WriteDeltaClient(&s, 0, v1, 1);
-                if ( sub_80F4696(v11, v19) )
+                if ( GetFollowPlayerState(v11, v19) )
                 {
                   MSG_WriteBit1(&s);
                   MSG_WriteDeltaPlayerstate(&s, 0, v19);
@@ -57264,7 +57264,7 @@ int SV_ArchiveSnapshot()
         qmemcpy((void *)(v15 + 4), (const void *)G_GetClientState(i), 0x5Cu);
         MSG_WriteDeltaClient(&s, 0, (int *)(v15 + 4), 1);
         v3 = (int *)v15;
-        *v3 = sub_80F4696(i, (_DWORD *)(v15 + 96));
+        *v3 = GetFollowPlayerState(i, (_DWORD *)(v15 + 96));
         if ( *(_DWORD *)v15 )
         {
           MSG_WriteBit1(&s);
@@ -58285,7 +58285,7 @@ int *__cdecl SV_SightTrace(int *a1, float *a2, float *a3, float *a4, float *a5, 
 // 809BC5C: using guessed type int anonymous_0[3];
 
 //----- (0809BE82) --------------------------------------------------------
-int __cdecl sub_809BE82(int a1, int a2, int a3, int a4, int a5, int a6)
+int __cdecl SV_SightTraceToEntity(int a1, int a2, int a3, int a4, int a5, int a6)
 {
   float v8[4]; // [esp+40h] [ebp-48h]
   float v9[7]; // [esp+50h] [ebp-38h]
@@ -88184,7 +88184,7 @@ char *__cdecl sub_80DCB02(char *s1)
 }
 
 //----- (080DCBB6) --------------------------------------------------------
-_BOOL4 __cdecl sub_80DCBB6(float *a1, int a2, int a3)
+_BOOL4 __cdecl BG_PlayerTouchesItem(float *a1, int a2, int a3)
 {
   float v5; // [esp+20h] [ebp-18h] BYREF
   float v6; // [esp+24h] [ebp-14h]
@@ -94227,7 +94227,7 @@ int __cdecl sub_80E9FD2(int a1, int a2)
 // 80E9FD2: using guessed type int var_428[128];
 
 //----- (080EA198) --------------------------------------------------------
-float *__cdecl sub_80EA198(int a1, int a2, float *a3, float *a4)
+float *__cdecl BG_GetSpreadForWeapon(int a1, int a2, float *a3, float *a4)
 {
   float *result; // eax
   float v5; // [esp+10h] [ebp-8h]
@@ -98377,7 +98377,7 @@ int __cdecl ClientImpacts(int a1, int a2)
 // 87A22F2: using guessed type __int16 word_87A22F2;
 
 //----- (080F24C6) --------------------------------------------------------
-int __cdecl sub_80F24C6(int a1)
+int __cdecl G_TouchTriggers(int a1)
 {
   int result; // eax
   void (__cdecl *v2)(int *, int, int); // [esp+28h] [ebp-1050h]
@@ -98410,10 +98410,10 @@ int __cdecl sub_80F24C6(int a1)
       {
         if ( v6[1] == 3 )
         {
-          if ( !sub_80DCBB6(*(float **)(a1 + 344), (int)v6, dword_859B5EC) )
+          if ( !BG_PlayerTouchesItem(*(float **)(a1 + 344), (int)v6, dword_859B5EC) )
             continue;
         }
-        else if ( !sub_80901C2(v5, v4, (int)v6) )
+        else if ( !SV_EntityContact(v5, v4, (int)v6) )
         {
           continue;
         }
@@ -98571,10 +98571,10 @@ int __cdecl ClientEvents(int *a1, int a2)
             FireWeapon((int)a1, dword_859B5EC);
           break;
         case 164:
-          sub_811E5E0((int)a1);
+          FireWeaponMelee((int)a1);
           break;
         case 166:
-          sub_811E586(a1);
+          G_UseOffHand(a1);
           break;
         case 168:
           Scr_Notify(a1, word_87A2302, 0);
@@ -98977,7 +98977,7 @@ int __usercall ClientThink_real@<eax>(long double a1@<st0>, int *a2, int **a3)
           ClientEvents(a2, v33);
           SV_LinkEntity((int)a2);
           if ( !*(_DWORD *)(a2[86] + 10156) )
-            sub_80F24C6((int)a2);
+            G_TouchTriggers((int)a2);
           sub_80F552A((_DWORD *)(a2[86] + 20), a2 + 78);
           sub_80F54DC(a2 + 81);
           a2[82] = *(_DWORD *)(a2[86] + 236);
@@ -99212,7 +99212,7 @@ int __cdecl CanSpectateTeam(int a1, char a2)
 }
 
 //----- (080F4696) --------------------------------------------------------
-int __cdecl sub_80F4696(int a1, _DWORD *a2)
+int __cdecl GetFollowPlayerState(int a1, _DWORD *a2)
 {
   unsigned int v3; // [esp+18h] [ebp-20h]
   const void *v4; // [esp+1Ch] [ebp-1Ch]
@@ -101556,7 +101556,7 @@ int __cdecl PlayerCmd_finishPlayerDamage(int a1)
       v30 = (float *)v31;
     }
     v5 = Scr_GetConstString(8u);
-    v23 = sub_81003F6(v5);
+    v23 = G_GetHitLocationIndexFromString(v5);
     v17 = Scr_GetInt(9u);
     if ( v30 )
       sub_80A2298(v30, (int)v20);
@@ -104806,7 +104806,7 @@ int __cdecl player_die(int a1, int *a2, int *a3, int a4, unsigned int a5, int a6
           sub_81004F6((float *)v15, 160.0, (float *)v15);
           sub_810043E((_DWORD *)(a1 + 312), v13);
           v14 = v14 + 40.0;
-          sub_810C1F6(
+          fire_grenade(
             (_DWORD *)a1,
             v13,
             (float *)v15,
@@ -105226,7 +105226,7 @@ int __cdecl G_GetHitLocationString(int a1)
 // 8577FC0: using guessed type __int16 word_8577FC0[];
 
 //----- (081003F6) --------------------------------------------------------
-int __cdecl sub_81003F6(__int16 a1)
+int __cdecl G_GetHitLocationIndexFromString(__int16 a1)
 {
   int i; // [esp+4h] [ebp-8h]
 
@@ -109268,9 +109268,9 @@ int __cdecl sub_81084EA(int a1, int *a2)
   sub_81083E8(a1, (int)v3, (int)v4);
   v5 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
   if ( *(_DWORD *)(v5 + 120) )
-    sub_811E18A((float *)a1, 0.0, (int)v4);
+    Weapon_RocketLauncher_Fire((float *)a1, 0.0, (int)v4);
   else
-    sub_811DFF4(v3, *(float *)(*(_DWORD *)(a1 + 348) + 56), (int)v4, (int *)a1, dword_859B5EC);
+    Bullet_Fire(v3, *(float *)(*(_DWORD *)(a1 + 348) + 56), (int)v4, (int *)a1, dword_859B5EC);
   return G_AddEvent((_DWORD *)a1, 175, *v3);
 }
 // 86F1020: using guessed type int dword_86F1020;
@@ -110483,9 +110483,9 @@ int __usercall sub_810B07A@<eax>(long double a1@<st0>, int a2, int a3, int a4, f
       v8 = *(_DWORD *)(a2 + 412);
       v6 = (_DWORD *)(a2 + 312);
       if ( *(_DWORD *)(a2 + 336) == 1023 )
-        sub_811AA18(&dword_86F1020, v6, a5, v8, v15);
+        G_CheckHitTriggerDamage(&dword_86F1020, v6, a5, v8, v15);
       else
-        sub_811AA18((int *)(560 * *(_DWORD *)(a2 + 336) + 140924032), v6, a5, v8, v15);
+        G_CheckHitTriggerDamage((int *)(560 * *(_DWORD *)(a2 + 336) + 140924032), v6, a5, v8, v15);
     }
     v14 = 0;
     if ( v18 || *(_WORD *)(a3 + 30) )
@@ -110839,7 +110839,7 @@ unsigned __int8 *__cdecl G_RunMissile(unsigned __int8 *a1)
 // 810BC36: using guessed type float var_28[4];
 
 //----- (0810C1F6) --------------------------------------------------------
-int __cdecl sub_810C1F6(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5)
+int __cdecl fire_grenade(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5)
 {
   float v6; // [esp+0h] [ebp-28h]
   int v7; // [esp+1Ch] [ebp-Ch]
@@ -110891,7 +110891,7 @@ int __cdecl sub_810C1F6(_DWORD *a1, _DWORD *a2, float *a3, int a4, int a5)
 // 87A22BA: using guessed type __int16 word_87A22BA;
 
 //----- (0810C4A0) --------------------------------------------------------
-int __cdecl sub_810C4A0(_DWORD *a1, _DWORD *a2, float *a3)
+int __cdecl fire_rocket(_DWORD *a1, _DWORD *a2, float *a3)
 {
   float v4; // [esp+4h] [ebp-24h]
   _DWORD *v5; // [esp+20h] [ebp-8h]
@@ -112647,7 +112647,7 @@ int __usercall ScrCmd_IsTouching@<eax>(long double a1@<st0>, int a2)
   sub_811623A((float *)(v8 + 312), (float *)(v8 + 260), v5);
   sub_811623A((float *)(v8 + 312), (float *)(v8 + 272), v4);
   sub_80A6450(a1, v5, v4);
-  v3 = sub_80901C2(v5, v4, v7);
+  v3 = SV_EntityContact(v5, v4, v7);
   return Scr_AddInt(v3);
 }
 // 810F760: using guessed type float var_28[5];
@@ -119175,7 +119175,7 @@ int __cdecl sub_811A6A6(int a1)
 }
 
 //----- (0811A6EE) --------------------------------------------------------
-_BOOL4 __cdecl sub_811A6EE(int a1, int a2)
+_BOOL4 __cdecl Respond_trigger_damage(int a1, int a2)
 {
   if ( (*(_BYTE *)(a1 + 368) & 1) != 0 && a2 == 1 )
     return 0;
@@ -119193,13 +119193,13 @@ _BOOL4 __cdecl sub_811A6EE(int a1, int a2)
 }
 
 //----- (0811A826) --------------------------------------------------------
-int __cdecl sub_811A826(int *a1, int *a2, int a3, int a4)
+int __cdecl Activate_trigger_damage(int *a1, int *a2, int a3, int a4)
 {
   int result; // eax
 
   if ( a1[106] <= 0 || (result = a3, a3 >= a1[106]) )
   {
-    result = sub_811A6EE((int)a1, a4);
+    result = Respond_trigger_damage((int)a1, a4);
     if ( result )
     {
       if ( !a1[107] || (result = (int)a1, 32000 - a1[101] >= a1[107]) )
@@ -119219,7 +119219,7 @@ int __cdecl sub_811A826(int *a1, int *a2, int a3, int a4)
 //----- (0811A8D2) --------------------------------------------------------
 int __cdecl Use_trigger_damage(int *a1, int *a2)
 {
-  return sub_811A826(a1, a2, a1[107] + 1, -1);
+  return Activate_trigger_damage(a1, a2, a1[107] + 1, -1);
 }
 
 //----- (0811A902) --------------------------------------------------------
@@ -119227,7 +119227,7 @@ int *__cdecl Pain_trigger_damage(int *a1, int *a2, int a3, int a4, int a5)
 {
   int *result; // eax
 
-  sub_811A826(a1, a2, a3, a5);
+  Activate_trigger_damage(a1, a2, a3, a5);
   result = a1;
   if ( !a1[107] )
   {
@@ -119242,7 +119242,7 @@ int *__cdecl Die_trigger_damage(int *a1, int a2, int *a3, int a4, int a5)
 {
   int *result; // eax
 
-  sub_811A826(a1, a3, a4, a5);
+  Activate_trigger_damage(a1, a3, a4, a5);
   result = a1;
   if ( !a1[107] )
   {
@@ -119266,7 +119266,7 @@ int __cdecl SP_trigger_damage(int a1)
 }
 
 //----- (0811AA18) --------------------------------------------------------
-int __cdecl sub_811AA18(int *a1, _DWORD *a2, float *a3, int a4, int a5)
+int __cdecl G_CheckHitTriggerDamage(int *a1, _DWORD *a2, float *a3, int a4, int a5)
 {
   int result; // eax
   float *v6; // [esp+2Ch] [ebp-105Ch]
@@ -119292,12 +119292,12 @@ int __cdecl sub_811AA18(int *a1, _DWORD *a2, float *a3, int a4, int a5)
     {
       sub_811AE2A(v6 + 78, v6 + 65, v8);
       sub_811AE2A(v6 + 78, v6 + 68, v7);
-      if ( sub_809BE82((int)a2, (int)flt_8145E68, (int)flt_8145E68, (int)a3, *(_DWORD *)v6, -1) )
+      if ( SV_SightTraceToEntity((int)a2, (int)flt_8145E68, (int)flt_8145E68, (int)a3, *(_DWORD *)v6, -1) )
       {
         Scr_AddEntity(a1);
         Scr_AddInt(a4);
         Scr_Notify((int *)v6, word_87A22A8, 2);
-        sub_811A826((int *)v6, a1, a4, a5);
+        Activate_trigger_damage((int *)v6, a1, a4, a5);
         if ( !*((_DWORD *)v6 + 107) )
           *((_DWORD *)v6 + 101) = 32000;
       }
@@ -119337,12 +119337,12 @@ int __cdecl sub_811AC06(int *a1, _DWORD *a2, float *a3, int a4, int a5)
     v6 = (int *)((char *)&unk_8665480 + 560 * v9[i]);
     if ( *((_WORD *)v6 + 180) == word_87A22FA
       && (v6[93] & 0x4000) != 0
-      && sub_809BE82((int)a2, (int)flt_8145E68, (int)flt_8145E68, (int)a3, *v6, -1) )
+      && SV_SightTraceToEntity((int)a2, (int)flt_8145E68, (int)flt_8145E68, (int)a3, *v6, -1) )
     {
       Scr_AddEntity(a1);
       Scr_AddInt(a4);
       Scr_Notify(v6, word_87A22A8, 2);
-      sub_811A826(v6, a1, a4, a5);
+      Activate_trigger_damage(v6, a1, a4, a5);
       if ( !v6[107] )
         v6[101] = 32000;
     }
@@ -120650,7 +120650,7 @@ int __cdecl sub_811D220(int *a1, float *a2, int a3, float a4, float a5, float a6
     G_LocationalTrace(s, a2 + 9, (float *)v14, *a1, 41953329, (int)&unk_816778C);
     sub_80DEB7A(a2 + 9, (float *)v14, *s, a8);
     if ( !i )
-      sub_811AA18(a1, (_DWORD *)a2 + 9, a8, a3, 7);
+      G_CheckHitTriggerDamage(a1, (_DWORD *)a2 + 9, a8, a3, 7);
     if ( ((_DWORD)s[4] & 0x10) == 0 && *s != 1.0 )
       return 1;
   }
@@ -120742,7 +120742,7 @@ float *__cdecl sub_811D5E0(float *a1, float *a2)
 }
 
 //----- (0811D638) --------------------------------------------------------
-float *__cdecl sub_811D638(float a1, float *a2, float *a3, float a4)
+float *__cdecl Bullet_RandomSpread(float a1, float *a2, float *a3, float a4)
 {
   float v5; // [esp+18h] [ebp-10h]
   float v6; // [esp+1Ch] [ebp-Ch]
@@ -120781,7 +120781,7 @@ int __cdecl sub_811D6EC(int a1, float a2)
 }
 
 //----- (0811D7E6) --------------------------------------------------------
-int __cdecl sub_811D7E6(int a1, char *s)
+int __cdecl G_AntiLagRewindClientPos(int a1, char *s)
 {
   int result; // eax
   char src[24]; // [esp+20h] [ebp-28h] BYREF
@@ -120802,7 +120802,7 @@ int __cdecl sub_811D7E6(int a1, char *s)
           break;
         if ( *(_DWORD *)(dword_859B400 + 10404 * i + 9924) == 2 && !*(_DWORD *)(dword_859B400 + 10404 * i + 9896) )
         {
-          if ( (unsigned __int8)sub_8097BD0(i, a1, (int)src) )
+          if ( (unsigned __int8)SV_GetClientPositionsAtTime(i, a1, (int)src) )
           {
             v4 = a1;
             memcpy(&s[12 * i], (const void *)(560 * i + 140924344), 0xCu);
@@ -120823,7 +120823,7 @@ int __cdecl sub_811D7E6(int a1, char *s)
 // 8793E4C: using guessed type int g_antilag;
 
 //----- (0811D95C) --------------------------------------------------------
-int __cdecl sub_811D95C(int a1)
+int __cdecl G_AntiLag_RestoreClientPos(int a1)
 {
   int result; // eax
   int i; // [esp+14h] [ebp-4h]
@@ -120850,7 +120850,7 @@ int __cdecl sub_811D95C(int a1)
 // 8793E4C: using guessed type int g_antilag;
 
 //----- (0811DA00) --------------------------------------------------------
-void __cdecl sub_811DA00(int *a1, int *a2, float *a3, float *a4, float a5, int a6, int a7, _DWORD *a8, int a9)
+void __cdecl Bullet_Fire_Extended(int *a1, int *a2, float *a3, float *a4, float a5, int a6, int a7, _DWORD *a8, int a9)
 {
   long double v9; // fst7
   _DWORD *v10; // eax
@@ -120896,7 +120896,7 @@ void __cdecl sub_811DA00(int *a1, int *a2, float *a3, float *a4, float a5, int a
     else
       G_LocationalTrace(&s, a3, a4, *a1, 41953329, (int)&unk_816778C);
     sub_80DEB7A(a3, a4, s, (float *)v19);
-    sub_811AA18(a2, a3, (float *)v19, *(_DWORD *)(*(_DWORD *)(a7 + 60) + 492), v20);
+    G_CheckHitTriggerDamage(a2, a3, (float *)v19, *(_DWORD *)(*(_DWORD *)(a7 + 60) + 492), v20);
     v25 = (int *)((char *)&unk_8665480 + 560 * v31);
     sub_811EA62(a4, a3, (float *)v17);
     Vec3Normalize((float *)v17);
@@ -120946,7 +120946,7 @@ void __cdecl sub_811DA00(int *a1, int *a2, float *a3, float *a4, float a5, int a
       else
         v14 = 0.25 / COERCE_FLOAT(LODWORD(v13) ^ 0x80000000);
       sub_811EADE((float *)v19, v14, (float *)v17, a3);
-      sub_811DA00(a1, (char)a2, a3, a4, LODWORD(a5), a6 + 1, a7, a8, a9);
+      Bullet_Fire_Extended(a1, (char)a2, a3, a4, LODWORD(a5), a6 + 1, a7, a8, a9);
     }
     else if ( *((_BYTE *)v25 + 353) )
     {
@@ -120962,7 +120962,7 @@ void __cdecl sub_811DA00(int *a1, int *a2, float *a3, float *a4, float a5, int a
           if ( (v21 & 0x20) != 0 && (Dvar_GetInt("scr_friendlyfire") || !sub_8119C40((int)v25, (int)a2)) )
           {
             v12 = a5 * 0.5;
-            sub_811DA00(v25, (char)a2, v19, a4, LODWORD(v12), a6 + 1, a7, a8, a9);
+            Bullet_Fire_Extended(v25, (char)a2, v19, a4, LODWORD(v12), a6 + 1, a7, a8, a9);
           }
         }
       }
@@ -120990,34 +120990,34 @@ int __cdecl sub_811DF44(int *a1, int *a2, int a3, int a4, float a5)
     result = i;
     if ( i >= *(_DWORD *)(*(_DWORD *)(a3 + 60) + 476) )
       break;
-    sub_811D638(a5, (float *)v8, (float *)a3, *(float *)(*(_DWORD *)(a3 + 60) + 1436));
-    sub_811DA00(a1, a2, v7, (float *)v8, 1.0, 0, a3, a1, a4);
+    Bullet_RandomSpread(a5, (float *)v8, (float *)a3, *(float *)(*(_DWORD *)(a3 + 60) + 1436));
+    Bullet_Fire_Extended(a1, a2, v7, (float *)v8, 1.0, 0, a3, a1, a4);
   }
   return result;
 }
 // 811DF44: using guessed type float var_28[4];
 
 //----- (0811DFF4) --------------------------------------------------------
-int __cdecl sub_811DFF4(int *a1, float a2, int a3, int *a4, int a5)
+int __cdecl Bullet_Fire(int *a1, float a2, int a3, int *a4, int a5)
 {
   char s[832]; // [esp+30h] [ebp-358h] BYREF
   int v7[6]; // [esp+370h] [ebp-18h] BYREF
 
-  sub_811D7E6(a5, s);
+  G_AntiLagRewindClientPos(a5, s);
   if ( *(_DWORD *)(*(_DWORD *)(a3 + 60) + 124) == 3 )
   {
     sub_811DF44(a4, a1, a3, a5, a2);
   }
   else
   {
-    sub_811D638(a2, (float *)v7, (float *)a3, 8192.0);
-    sub_811DA00(a4, a1, (float *)(a3 + 36), (float *)v7, 1.0, 0, a3, a4, a5);
+    Bullet_RandomSpread(a2, (float *)v7, (float *)a3, 8192.0);
+    Bullet_Fire_Extended(a4, a1, (float *)(a3 + 36), (float *)v7, 1.0, 0, a3, a4, a5);
   }
-  return sub_811D95C((int)s);
+  return G_AntiLag_RestoreClientPos((int)s);
 }
 
 //----- (0811E0C2) --------------------------------------------------------
-int __cdecl sub_811E0C2(_DWORD *a1, int a2, int a3)
+int __cdecl Weapon_Throw_Grenade(_DWORD *a1, int a2, int a3)
 {
   float v4; // [esp+4h] [ebp-54h]
   float v5; // [esp+2Ch] [ebp-2Ch]
@@ -121028,7 +121028,7 @@ int __cdecl sub_811E0C2(_DWORD *a1, int a2, int a3)
   v4 = (float)*(int *)(*(_DWORD *)(a3 + 60) + 900);
   sub_811EAA6((float *)a3, v4, (float *)v6);
   v7 = (long double)*(int *)(*(_DWORD *)(a3 + 60) + 904) + v7;
-  v8 = sub_810C1F6(a1, (_DWORD *)(a3 + 36), (float *)v6, a2, *(_DWORD *)(*(_DWORD *)(a3 + 60) + 584));
+  v8 = fire_grenade(a1, (_DWORD *)(a3 + 36), (float *)v6, a2, *(_DWORD *)(*(_DWORD *)(a3 + 60) + 584));
   Vec3Normalize((float *)v6);
   v5 = sub_811EB32((float *)(a1[86] + 32), (float *)v6);
   sub_811EADE((float *)(v8 + 36), v5, (float *)v6, (float *)(v8 + 36));
@@ -121036,7 +121036,7 @@ int __cdecl sub_811E0C2(_DWORD *a1, int a2, int a3)
 }
 
 //----- (0811E18A) --------------------------------------------------------
-float *__cdecl sub_811E18A(float *a1, float a2, int a3)
+float *__cdecl Weapon_RocketLauncher_Fire(float *a1, float a2, int a3)
 {
   float *result; // eax
   float v4; // [esp+18h] [ebp-40h]
@@ -121057,7 +121057,7 @@ float *__cdecl sub_811E18A(float *a1, float a2, int a3)
   sub_811EADE((float *)v6, v8, (float *)(a3 + 24), (float *)v6);
   Vec3Normalize((float *)v6);
   sub_811EA32((_DWORD *)(a3 + 36), v5);
-  sub_810C4A0(a1, v5, (float *)v6);
+  fire_rocket(a1, v5, (float *)v6);
   result = a1;
   if ( *((_DWORD *)a1 + 86) )
     return sub_811EADE((float *)(*((_DWORD *)a1 + 86) + 32), -64.0, (float *)a3, (float *)(*((_DWORD *)a1 + 86) + 32));
@@ -121082,7 +121082,7 @@ _BOOL4 __cdecl sub_811E2C2(int a1, int a2)
 }
 
 //----- (0811E35C) --------------------------------------------------------
-void __cdecl sub_811E35C(int a1, float *a2)
+void __cdecl G_CalcMuzzlePoints(int a1, float *a2)
 {
   int v2[6]; // [esp+10h] [ebp-18h] BYREF
 
@@ -121107,9 +121107,9 @@ float *__cdecl FireWeapon(int a1, int a2)
   if ( (*(_DWORD *)(*(_DWORD *)(a1 + 344) + 160) & 0x300) == 0 || (result = (float *)a1, !*(_BYTE *)(a1 + 354)) )
   {
     v8 = BG_GetWeaponDef(*(_DWORD *)(a1 + 200));
-    sub_811E35C(a1, (float *)v7);
+    G_CalcMuzzlePoints(a1, (float *)v7);
     v6 = *(float *)(*(_DWORD *)(a1 + 344) + 10256);
-    sub_80EA198(*(_DWORD *)(a1 + 344), *(_DWORD *)(a1 + 200), &v4, &v3);
+    BG_GetSpreadForWeapon(*(_DWORD *)(a1 + 344), *(_DWORD *)(a1 + 200), &v4, &v3);
     if ( *(float *)(*(_DWORD *)(a1 + 344) + 220) == 1.0 )
       v5 = (v3 - *(float *)(v8 + 1212)) * v6 + *(float *)(v8 + 1212);
     else
@@ -121118,18 +121118,18 @@ float *__cdecl FireWeapon(int a1, int a2)
     {
       if ( *(_DWORD *)(v8 + 120) == 1 )
       {
-        return (float *)sub_811E0C2((_DWORD *)a1, *(_DWORD *)(a1 + 200), (int)v7);
+        return (float *)Weapon_Throw_Grenade((_DWORD *)a1, *(_DWORD *)(a1 + 200), (int)v7);
       }
       else
       {
         if ( *(_DWORD *)(v8 + 120) != 2 )
           Com_Error(1, (char *)&byte_8157D40, *(_DWORD *)(v8 + 120), *(_DWORD *)v8);
-        return sub_811E18A((float *)a1, v5, (int)v7);
+        return Weapon_RocketLauncher_Fire((float *)a1, v5, (int)v7);
       }
     }
     else
     {
-      return (float *)sub_811DFF4((int *)a1, v5, (int)v7, (int *)a1, a2);
+      return (float *)Bullet_Fire((int *)a1, v5, (int)v7, (int *)a1, a2);
     }
   }
   return result;
@@ -121142,17 +121142,17 @@ float *__cdecl sub_811E56A(int a1)
 }
 
 //----- (0811E586) --------------------------------------------------------
-int __cdecl sub_811E586(_DWORD *a1)
+int __cdecl G_UseOffHand(_DWORD *a1)
 {
   float v2[18]; // [esp+10h] [ebp-48h] BYREF
 
   LODWORD(v2[15]) = BG_GetWeaponDef(*(_DWORD *)(a1[86] + 208));
-  sub_811E35C((int)a1, v2);
-  return sub_811E0C2(a1, *(_DWORD *)(a1[86] + 208), (int)v2);
+  G_CalcMuzzlePoints((int)a1, v2);
+  return Weapon_Throw_Grenade(a1, *(_DWORD *)(a1[86] + 208), (int)v2);
 }
 
 //----- (0811E5E0) --------------------------------------------------------
-__int16 __cdecl sub_811E5E0(int a1)
+__int16 __cdecl FireWeaponMelee(int a1)
 {
   __int16 result; // ax
   int v2[3]; // [esp+20h] [ebp-48h] BYREF
@@ -121369,7 +121369,7 @@ long double __cdecl sub_811EBA4(float a1)
 }
 
 //----- (0811EBC4) --------------------------------------------------------
-int __cdecl Player_UseEntity(int *a1, int a2)
+int __cdecl sub_811EBC4(int *a1, int a2)
 {
   int result; // eax
   void (__cdecl *v3)(int, int *, _DWORD); // [esp+10h] [ebp-8h]
@@ -121402,7 +121402,7 @@ int __cdecl Player_UseEntity(int *a1, int a2)
 // 87A22F4: using guessed type __int16 word_87A22F4;
 
 //----- (0811ECE4) --------------------------------------------------------
-int __cdecl Player_ActivateHoldCmdAllowed(int a1)
+int __cdecl sub_811ECE4(int a1)
 {
   if ( !Scr_IsSystemActive() )
     return 0;
@@ -121447,7 +121447,7 @@ int __cdecl sub_811EDD4(int *a1)
       {
         result = g_useholdtime;
         if ( dword_859B5EC - *(_DWORD *)(a1[86] + 10292) >= *(_DWORD *)(g_useholdtime + 8) )
-          return Player_UseEntity(a1, (int)&unk_8665480 + 560 * *(_DWORD *)(a1[86] + 10288));
+          return sub_811EBC4(a1, (int)&unk_8665480 + 560 * *(_DWORD *)(a1[86] + 10288));
       }
     }
   }
@@ -121471,7 +121471,7 @@ int __cdecl Player_UpdateActivate(int *a1)
       || (*(_DWORD *)(a1[86] + 10172) & 0x20) != 0 )
     {
       if ( (*(_DWORD *)(a1[86] + 10180) & 0x28) != 0 )
-        v2 = Player_ActivateHoldCmdAllowed((int)a1);
+        v2 = sub_811ECE4((int)a1);
       if ( *(_DWORD *)(a1[86] + 10288) != 1023 || v2 )
       {
         result = *(_DWORD *)(a1[86] + 10172) & 0x28;
@@ -121551,7 +121551,7 @@ int __cdecl sub_811F004(float *a1, _DWORD *base)
           && v20[74] <= (long double)v5[2]
           && v6[2] <= (long double)v20[77] )
         {
-          if ( sub_80901C2(v6, v5, (int)v20) )
+          if ( SV_EntityContact(v6, v5, (int)v20) )
           {
             base[2 * nmemb + 1] = -1015021568;
             base[2 * nmemb++] = v20;

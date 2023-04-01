@@ -6,6 +6,12 @@
 #include "../universal/universal_public.h"
 #include "../xanim/xanim_public.h"
 
+#ifdef TESTING_LIBRARY
+#define dvar_modifiedFlags (*((int*)( 0x085178A8 )))
+#else
+extern int dvar_modifiedFlags;
+#endif
+
 dvar_t *com_dedicated;
 dvar_t *com_maxfps;
 dvar_t *com_developer;
@@ -1228,28 +1234,4 @@ void Com_Init(char* commandLine)
 		Sys_Error(va("Error during Initialization:\n%s\n", com_errorMessage));
 
 	Com_Init_Try_Block_Function(commandLine);
-
-
-/*
-	extern bgs_t level_bgs;
-	extern bgs_t *bgs;
-
-	level_bgs.GetXModel = SV_XModelGet;
-	//level_bgs.CreateDObj = G_CreateDObj;
-	level_bgs.SafeDObjFree = Com_SafeServerDObjFree;
-	level_bgs.AllocXAnim = Hunk_AllocXAnimServer;
-	level_bgs.anim_user = 1;
-
-	bgs = &level_bgs;
-
-	Scr_BeginLoadScripts();
-	Scr_PostCompileScripts();
-	Scr_EndLoadScripts();
-
-	BG_LoadAnim();
-
-	WeaponDef* test = BG_LoadWeaponDef("mp", "thompson_mp");
-	Com_Printf("%s\n", test->szInternalName);
-	*/
-	Mantle_CreateAnims(Hunk_AllocXAnimServer);
 }

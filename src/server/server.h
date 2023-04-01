@@ -115,8 +115,8 @@ typedef struct archivedSnapshot_s
 typedef struct cachedClient_s
 {
 	int playerStateExists;
-	clientState_t *cs;
-	playerState_t *ps;
+	clientState_t cs;
+	playerState_t ps;
 } cachedClient_t;
 
 typedef struct cachedSnapshot_s
@@ -303,8 +303,14 @@ void SV_Trace(trace_t *results, const float *start, const float *mins, const flo
 int SV_TracePassed(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask, int locational, int staticmodels);
 void SV_SightTrace(int *hitNum,const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask);
 int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask);
-
+clipHandle_t SV_ClipHandleForEntity(gentity_s *touch);
+int SV_EntityContact(const float *mins, const float *maxs, gentity_s *gEnt);
+int SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs);
+signed int SV_SightTraceToEntity(const float *start, const float *mins, const float *maxs, const float *end, int entityNum, int contentmask);
+void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, playerState_s *clients, int sizeofGameClient);
 void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);
+cachedSnapshot_t* SV_GetCachedSnapshot(int *pArchiveTime);
+void SV_BuildClientSnapshot( client_t *client );
 char* SV_AllocSkelMemory(unsigned int size);
 void SV_ResetSkeletonCache();
 int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex);
@@ -312,3 +318,7 @@ int SV_DObjCreateSkelForBones(gentity_s *ent, int *partBits);
 void SV_DObjGetHierarchyBits(gentity_s *ent, int boneIndex, int *partBits);
 void SV_DObjCalcAnim(gentity_s *ent, int *partBits);
 void SV_DObjCalcSkel(gentity_s *ent, int *partBits);
+int SV_DObjGetBoneIndex(const gentity_s *ent, unsigned int boneName);
+DObjAnimMat* SV_DObjGetMatrixArray(gentity_s *ent);
+bool SV_GetClientPositionsAtTime(int clientNum, int gametime, float *origin);
+void SV_WriteDownloadToClient( client_t *cl, msg_t *msg );

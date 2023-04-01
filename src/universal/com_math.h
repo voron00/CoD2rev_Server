@@ -2,6 +2,8 @@
 
 #include "math.h"
 
+typedef unsigned char byte;
+
 typedef float vec_t;
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
@@ -163,11 +165,11 @@ vec_t Vec4LengthSq( const vec4_t v);
 vec_t VectorsLengthSquared(const vec4_t v1, const vec4_t v2);
 vec_t Vec2LengthSq( const vec2_t v );
 void VectorInverse( vec3_t v );
-void MatrixTransformVector(const float *in1, const float *in2, float *out);
-void MatrixTransformVector43(const float *in1, const float *in2, float *out);
-void MatrixTransposeTransformVector(const float *in1, const vec3_t in2[3], float *out);
+void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
+void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
+void MatrixTransposeTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
 void MatrixTransposeTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
-void MatrixInverse(const float *in, float *out);
+void MatrixInverse(float in1[3][3], float out[3][3]);
 void MatrixMultiply( float in1[3][3], float in2[3][3], float out[3][3] );
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
 void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
@@ -202,4 +204,16 @@ float vectoyaw( const vec3_t vec );
 double PitchForYawOnNormal(const float fYaw, const vec3_t normal);
 double Abs(const float *v);
 void VectorRint(float *v);
-void VectorNegCopy(float *from, float *to);
+void VectorCopyInverse(float *from, float *to);
+float Q_acos( float c );
+void YawVectors2D(const float yaw, vec2_t forward, vec2_t right);
+void YawVectors(const float yaw, vec3_t forward, vec3_t right);
+void ShrinkBoundsToHeight(vec3_t mins, vec3_t maxs);
+void ClearBounds( vec3_t mins, vec3_t maxs );
+void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
+byte DirToByte(const vec3_t dir);
+void ByteToDir(const int b, vec3_t dir);
+float lerp(float x, float y, float z);
+void Rand_Init(int seed);
+double flrand(float min, float max);
+int irand(int min, int max);

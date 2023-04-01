@@ -13,6 +13,21 @@ extern bgs_t level_bgs;
 extern gentity_t g_entities[];
 #endif
 
+#ifdef TESTING_LIBRARY
+#define level (*((level_locals_t*)( 0x0859B400 )))
+#else
+extern level_locals_t level;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
+#else
+const entityHandler_t entityHandlers[] =
+{
+
+};
+#endif
+
 int singleClientEvents[] =
 {
 	140,
@@ -23,6 +38,8 @@ int singleClientEvents[] =
 	186,
 	-1,
 };
+
+vec3_t TouchTriggersgentity_range = { 40.0, 40.0, 52.0 };
 
 qboolean G_UpdateClientInfo(gentity_s *ent)
 {
@@ -223,4 +240,109 @@ void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, 
 		s->fTorsoPitch = 0.0;
 		s->fWaistPitch = 0.0;
 	}
+}
+
+void ClientImpacts(gentity_s *ent, pmove_t *pm)
+{
+	void (*entTouch)(struct gentity_s *, struct gentity_s *, int);
+	void (*otherTouch)(struct gentity_s *, struct gentity_s *, int);
+	gentity_s *other;
+	int j;
+	int i;
+
+	otherTouch = entityHandlers[ent->handler].touch;
+
+	for ( i = 0; i < pm->numtouch; ++i )
+	{
+		for ( j = 0; j < i && pm->touchents[j] != pm->touchents[i]; ++j )
+			;
+
+		if ( j == i )
+		{
+			other = &g_entities[pm->touchents[i]];
+
+			if ( Scr_IsSystemActive() )
+			{
+				Scr_AddEntity(other);
+				Scr_Notify(ent, scr_const.touch, 1u);
+				Scr_AddEntity(ent);
+				Scr_Notify(other, scr_const.touch, 1u);
+			}
+
+			entTouch = entityHandlers[other->handler].touch;
+
+			if ( entTouch )
+				entTouch(other, ent, 1);
+
+			if ( otherTouch )
+				otherTouch(ent, other, 1);
+		}
+	}
+}
+
+void G_TouchTriggers(gentity_s *ent)
+{
+	void (*entTouch)(struct gentity_s *, struct gentity_s *, int);
+	void (*otherTouch)(struct gentity_s *, struct gentity_s *, int);
+	vec3_t maxs;
+	vec3_t mins;
+	gentity_s *touch;
+	int entityList[1024];
+	int entities;
+	int i;
+
+	if ( ent->client->ps.pm_type <= 1 )
+	{
+		VectorSubtract(ent->client->ps.origin, TouchTriggersgentity_range, mins);
+		VectorAdd(ent->client->ps.origin, TouchTriggersgentity_range, maxs);
+		entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, 1079771144);
+		VectorAdd(ent->client->ps.origin, ent->r.mins, mins);
+		VectorAdd(ent->client->ps.origin, ent->r.maxs, maxs);
+		ShrinkBoundsToHeight(mins, maxs);
+		otherTouch = entityHandlers[ent->handler].touch;
+
+		for ( i = 0; ; ++i )
+		{
+			if ( i >= entities )
+				return;
+
+			touch = &g_entities[entityList[i]];
+			entTouch = entityHandlers[touch->handler].touch;
+
+			if ( entTouch || otherTouch )
+			{
+				if ( touch->s.eType == ET_ITEM )
+				{
+					if ( !BG_PlayerTouchesItem(&ent->client->ps, &touch->s, level.time) )
+						continue;
+				}
+				else if ( !SV_EntityContact(mins, maxs, touch) )
+				{
+					continue;
+				}
+
+				if ( Scr_IsSystemActive() )
+				{
+					Scr_AddEntity(ent);
+					Scr_Notify(touch, scr_const.touch, 1);
+					Scr_AddEntity(touch);
+					Scr_Notify(ent, scr_const.touch, 1);
+				}
+
+				if ( entTouch )
+					entTouch(touch, ent, 1);
+			}
+		}
+	}
+}
+
+int GetFollowPlayerState(int clientNum, playerState_s *ps)
+{
+	if ( (g_entities[clientNum].client->ps.pm_flags & 0x800000) == 0 )
+		return 0;
+
+	memcpy(ps, g_entities[clientNum].client, sizeof(playerState_s));
+	memset(&ps->hud, 0, sizeof(hudElemState_t) / 2);
+
+	return 1;
 }

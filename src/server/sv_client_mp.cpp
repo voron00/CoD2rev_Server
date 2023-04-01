@@ -266,3 +266,196 @@ void SV_UserinfoChanged( client_t *cl )
 	if ( cl->rate < 5000 )
 		cl->hasVoip = 0;
 }
+
+/*
+==================
+SV_WriteDownloadToClient
+Check to see if the client wants a file, open it if needed and start pumping the client
+Fill up msg with data
+==================
+*/
+extern dvar_t *sv_allowDownload;
+extern dvar_t *sv_maxRate;
+extern dvar_t *sv_pure;
+void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
+{
+	int curindex;
+	int rate;
+	int blockspersnap;
+	int iwdFile;
+	char errorMessage[1024];
+
+	if (!*cl->downloadName)
+		return;	// Nothing being downloaded
+
+	if (!cl->download)
+	{
+		// We open the file here
+
+		Com_Printf( "clientDownload: %d : begining \"%s\"\n", cl - svs.clients, cl->downloadName );
+
+		iwdFile = FS_iwIwd(cl->downloadName, "main");
+
+		if ( !sv_allowDownload->current.integer || iwdFile ||
+		        ( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) <= 0 )
+		{
+			// cannot auto-download file
+			if (iwdFile)
+			{
+				Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
+				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
+			}
+			else if ( !sv_allowDownload->current.integer )
+			{
+				Com_Printf("clientDownload: %d : \"%s\" download disabled", cl - svs.clients, cl->downloadName);
+				if (sv_pure->current.integer)
+				{
+					Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED_PURE\x15%s", cl->downloadName);
+				}
+				else
+				{
+					Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED\x15%s", cl->downloadName);
+				}
+			}
+			else
+			{
+				// NOTE TTimo this is NOT supposed to happen unless bug in our filesystem scheme?
+				//   if the iwd is referenced, it must have been found somewhere in the filesystem
+				Com_Printf("clientDownload: %d : \"%s\" file not found on server\n", cl - svs.clients, cl->downloadName);
+				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_FILENOTONSERVER\x15%s", cl->downloadName);
+			}
+			MSG_WriteByte( msg, svc_download );
+			MSG_WriteShort( msg, 0 ); // client is expecting block zero
+			MSG_WriteLong( msg, -1 ); // illegal file size
+			MSG_WriteString( msg, errorMessage );
+
+			*cl->downloadName = 0;
+			return;
+		}
+
+		// Init
+		cl->downloadCurrentBlock = cl->downloadClientBlock = cl->downloadXmitBlock = 0;
+		cl->downloadCount = 0;
+		cl->downloadEOF = qfalse;
+	}
+
+	// Perform any reads that we need to
+	while (cl->downloadCurrentBlock - cl->downloadClientBlock < MAX_DOWNLOAD_WINDOW &&
+	        cl->downloadSize != cl->downloadCount)
+	{
+
+		curindex = (cl->downloadCurrentBlock % MAX_DOWNLOAD_WINDOW);
+
+		if (!cl->downloadBlocks[curindex])
+			cl->downloadBlocks[curindex] = (unsigned char *)Z_Malloc( MAX_DOWNLOAD_BLKSIZE );
+
+		cl->downloadBlockSize[curindex] = FS_Read( cl->downloadBlocks[curindex], MAX_DOWNLOAD_BLKSIZE, cl->download );
+
+		if (cl->downloadBlockSize[curindex] < 0)
+		{
+			// EOF right now
+			cl->downloadCount = cl->downloadSize;
+			break;
+		}
+
+		cl->downloadCount += cl->downloadBlockSize[curindex];
+
+		// Load in next block
+		cl->downloadCurrentBlock++;
+	}
+
+	// Check to see if we have eof condition and add the EOF block
+	if (cl->downloadCount == cl->downloadSize &&
+	        !cl->downloadEOF &&
+	        cl->downloadCurrentBlock - cl->downloadClientBlock < MAX_DOWNLOAD_WINDOW)
+	{
+
+		cl->downloadBlockSize[cl->downloadCurrentBlock % MAX_DOWNLOAD_WINDOW] = 0;
+		cl->downloadCurrentBlock++;
+
+		cl->downloadEOF = qtrue;  // We have added the EOF block
+	}
+
+	// Loop up to window size times based on how many blocks we can fit in the
+	// client snapMsec and rate
+
+	// based on the rate, how many bytes can we fit in the snapMsec time of the client
+	// normal rate / snapshotMsec calculation
+	rate = cl->rate;
+	if ( sv_maxRate->current.integer )
+	{
+		if ( sv_maxRate->current.integer < 1000 )
+		{
+			Dvar_SetInt( sv_maxRate, 1000 );
+		}
+		if ( sv_maxRate->current.integer < rate )
+		{
+			rate = sv_maxRate->current.integer;
+		}
+	}
+
+	/*
+	if (!rate)
+	{
+		blockspersnap = 1;
+	}
+	else
+	{
+		blockspersnap = ( (rate * cl->snapshotMsec) / 1000 + MAX_DOWNLOAD_BLKSIZE ) /
+		                MAX_DOWNLOAD_BLKSIZE;
+	}
+
+	if (blockspersnap < 0)
+		blockspersnap = 1;
+	*/
+
+	blockspersnap = 1;
+
+	while (blockspersnap--)
+	{
+
+		// Write out the next section of the file, if we have already reached our window,
+		// automatically start retransmitting
+
+		if (cl->downloadClientBlock == cl->downloadCurrentBlock)
+			return; // Nothing to transmit
+
+		if (cl->downloadXmitBlock == cl->downloadCurrentBlock)
+		{
+			// We have transmitted the complete window, should we start resending?
+
+			//FIXME:  This uses a hardcoded one second timeout for lost blocks
+			//the timeout should be based on client rate somehow
+			if (svs.time - cl->downloadSendTime > 1000)
+				cl->downloadXmitBlock = cl->downloadClientBlock;
+			else
+				return;
+		}
+
+		// Send current block
+		curindex = (cl->downloadXmitBlock % MAX_DOWNLOAD_WINDOW);
+
+		MSG_WriteByte( msg, svc_download );
+		MSG_WriteShort( msg, cl->downloadXmitBlock );
+
+		// block zero is special, contains file size
+		if ( cl->downloadXmitBlock == 0 )
+			MSG_WriteLong( msg, cl->downloadSize );
+
+		MSG_WriteShort( msg, cl->downloadBlockSize[curindex] );
+
+		// Write the block
+		if ( cl->downloadBlockSize[curindex] )
+		{
+			MSG_WriteData( msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex] );
+		}
+
+		Com_DPrintf( "clientDownload: %d : writing block %d\n", cl - svs.clients, cl->downloadXmitBlock );
+
+		// Move on to the next block
+		// It will get sent with next snap shot.  The rate will keep us in line.
+		cl->downloadXmitBlock++;
+
+		cl->downloadSendTime = svs.time;
+	}
+}

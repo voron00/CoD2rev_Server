@@ -97,7 +97,6 @@ typedef struct dvar_s
 
 extern dvar_t *sortedDvars;
 extern int dvarCount;
-extern int dvar_modifiedFlags;
 
 dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned int flags);
 dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned int flags);

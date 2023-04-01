@@ -295,7 +295,7 @@ LABEL_14:
 							trace->surfaceFlags = objTrace.sflags;
 							trace->modelIndex = objTrace.modelIndex;
 							trace->partName = objTrace.partName;
-							MatrixTransformVector(objTrace.normal, entAxis[0], trace->normal);
+							MatrixTransformVector(objTrace.normal, entAxis, trace->normal);
 LABEL_26:
 							trace->hitId = ent->s.number;
 							trace->contents = ent->r.contents;
@@ -709,4 +709,55 @@ int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask)
 	}
 
 	return contents & contentmask;
+}
+
+signed int SV_SightTraceToEntity(const float *start, const float *mins, const float *maxs, const float *end, int entityNum, int contentmask)
+{
+	struct gentity_s *touch;
+	signed int i;
+	unsigned int clipHandle;
+	const float *angles;
+	vec3_t bmin;
+	vec3_t bmax;
+
+	touch = SV_GentityNum(entityNum);
+
+	if ( !(contentmask & touch->r.contents) )
+	{
+		return 0;
+	}
+
+	for(i = 0; i < 3; ++i)
+	{
+		if ( end[i] <= start[i] )
+		{
+			bmax[i] = (end[i] + mins[i]) - 1.0;
+			bmin[i] = (start[i] + maxs[i]) + 1.0;
+		}
+		else
+		{
+			bmax[i] = (start[i] + mins[i]) - 1.0;
+			bmin[i] = (end[i] + maxs[i]) + 1.0;
+		}
+	}
+
+	if ( touch->r.absmin[0] > bmin[0] || touch->r.absmin[1] > bmin[1] || touch->r.absmin[2] > bmin[2] || bmax[0] > touch->r.absmax[0] || bmax[1] > touch->r.absmax[1] || bmax[2] > touch->r.absmax[2] )
+	{
+		return 0;
+	}
+
+	clipHandle = SV_ClipHandleForEntity(touch);
+	angles = touch->r.currentAngles;
+
+	if ( !touch->r.bmodel )
+	{
+		angles = vec3_origin;
+	}
+
+	if ( CM_TransformedBoxSightTrace(0, start, end, mins, maxs, clipHandle, contentmask, touch->r.currentOrigin, angles) )
+	{
+		return -1;
+	}
+
+	return 0;
 }

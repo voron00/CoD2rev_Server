@@ -2374,7 +2374,7 @@ void PM_CheckLadderMove(pmove_t *pm, pml_t *pml)
 
 		if ( fellOffLadderInAir )
 		{
-			VectorNegCopy(ps->vLadderVec, vLadderCheckDir);
+			VectorCopyInverse(ps->vLadderVec, vLadderCheckDir);
 		}
 		else
 		{
@@ -2413,7 +2413,7 @@ void PM_CheckLadderMove(pmove_t *pm, pml_t *pml)
 				        && (!pml->walking || pm->cmd.forwardmove > 0)
 				        && ((ps->pm_flags & 0x20) != 0
 				            || (VectorCopy(trace.normal, ps->vLadderVec),
-				                VectorNegCopy(ps->vLadderVec, vLadderCheckDir),
+				                VectorCopyInverse(ps->vLadderVec, vLadderCheckDir),
 				                VectorMA(ps->origin, tracedist, vLadderCheckDir, spot),
 				                PM_playerTrace(pm, &trace, ps->origin, mins, maxs, spot, ps->clientNum, pm->tracemask),
 				                trace.fraction < 1.0)

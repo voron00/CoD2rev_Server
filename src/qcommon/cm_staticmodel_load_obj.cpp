@@ -3,18 +3,18 @@
 
 void CM_InitStaticModel(cStaticModel_s *model, const float *origin, const float *angles, const float *modelscale_vec)
 {
-	vec3_t scale[3];
+	vec3_t axis[3];
 
 	VectorCopy(origin, model->origin);
-	AnglesToAxis(angles, scale);
+	AnglesToAxis(angles, axis);
 
-	VectorScale(scale[0], modelscale_vec[0], scale[0]);
-	VectorScale(scale[1], modelscale_vec[1], scale[1]);
-	VectorScale(scale[2], modelscale_vec[2], scale[2]);
+	VectorScale(axis[0], modelscale_vec[0], axis[0]);
+	VectorScale(axis[1], modelscale_vec[1], axis[1]);
+	VectorScale(axis[2], modelscale_vec[2], axis[2]);
 
-	MatrixInverse(scale[0], model->invScaledAxis[0]);
+	MatrixInverse(axis, model->invScaledAxis);
 
-	if ( XModelGetStaticBounds(model->xmodel, scale[0], model->absmin, model->absmax) )
+	if ( XModelGetStaticBounds(model->xmodel, axis, model->absmin, model->absmax) )
 	{
 		VectorAdd(model->absmin, origin, model->absmin);
 		VectorAdd(model->absmax, origin, model->absmax);

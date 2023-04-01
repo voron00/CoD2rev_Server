@@ -7,6 +7,47 @@
 extern gentity_t g_entities[];
 #endif
 
+qboolean turret_behind(gentity_s *self, gentity_s *other)
+{
+	float dir[3];
+	float centerYaw;
+	float minYaw;
+	float angle;
+	float forward[3];
+	turretInfo_s *pTurretInfo;
+	float yawSpan;
+	float dot;
+
+	pTurretInfo = self->pTurretInfo;
+	minYaw = self->r.currentAngles[1] + pTurretInfo->arcmin[1];
+	yawSpan = (float)(fabs(pTurretInfo->arcmax[1]) + fabs(pTurretInfo->arcmin[1]) * 0.5);
+	centerYaw = AngleNormalize180(minYaw + yawSpan);
+	YawVectors(centerYaw, forward, 0);
+	Vec3Normalize(forward);
+	dir[0] = self->r.currentOrigin[0] - other->r.currentOrigin[0];
+	dir[1] = self->r.currentOrigin[1] - other->r.currentOrigin[1];
+	dir[2] = 0.0;
+	Vec3Normalize(dir);
+	dot = (float)((float)(forward[0] * dir[0]) + (float)(forward[1] * dir[1])) + (float)(forward[2] * dir[2]);
+	angle = Q_acos(dot) * 57.295776;
+
+	return angle <= yawSpan;
+}
+
+qboolean G_IsTurretUsable(gentity_s *useEnt, gentity_s *playerEnt)
+{
+	if ( useEnt->active || !useEnt->pTurretInfo )
+		return 0;
+
+	if ( !turret_behind(useEnt, playerEnt) )
+		return 0;
+
+	if ( playerEnt->client->ps.grenadeTimeLeft )
+		return 0;
+
+	return playerEnt->client->ps.groundEntityNum != 1023;
+}
+
 void G_ClientStopUsingTurret(gentity_s *self)
 {
 	turretInfo_s *info;
@@ -31,6 +72,7 @@ void G_ClientStopUsingTurret(gentity_s *self)
 		{
 			G_AddEvent(owner, EV_STANCE_FORCE_STAND, 0);
 		}
+
 		info->prevStance = -1;
 	}
 

@@ -17,7 +17,7 @@ typedef struct
 #define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
 #define level_bgs (*((bgs_t*)( 0x0859EA40 )))
 #define test (*((vec3_t*)( 0x0815D6E8 )))
-#define CorrectSolidDeltas (((vec3_t*)( 0x814E080 )))
+#define riflePriorityMap (((char*)( 0x0816778C )))
 
 #define viewLerp_CrouchProne (((viewLerpWaypoint_s*)( 0x08166360 )))
 
@@ -49,11 +49,11 @@ void test2()
 
 
 	// Just print stuff until program segfaults
-	for ( int i = 0; i <= 0x19; ++i )
+	for ( int i = 0; i < 19; ++i )
 	{
 		//if (net_fields[i].name == NULL)
 		//	return;
-		Com_Printf(" { %f, %f, %f },\n", CorrectSolidDeltas[i][0], CorrectSolidDeltas[i][1], CorrectSolidDeltas[i][2] );
+		Com_Printf("%i,\n", riflePriorityMap[i] );
 	}
 
 }
@@ -160,6 +160,9 @@ void Sys_RedirectFunctions()
 
 	SetJump(0x0808FFBC, (DWORD)SV_inSnapshot);
 	SetJump(0x08096C56, (DWORD)SV_AddCachedEntitiesVisibleFromPoint);
+	SetJump(0x08097A28, (DWORD)SV_GetCachedSnapshot);
+	SetJump(0x0809822C, (DWORD)SV_BuildClientSnapshot);
+	SetJump(0x08097EDA, (DWORD)SV_GetArchivedClientInfo);
 
 	SetJump(0x0809A45E, (DWORD)SV_LinkEntity);
 	SetJump(0x0809A3BA, (DWORD)SV_UnlinkEntity);
@@ -924,8 +927,8 @@ void Sys_RedirectFunctions()
 	SetJump(0x080E3008, (DWORD)PM_Footsteps);
 	SetJump(0x080E4794, (DWORD)PM_UpdateViewAngles);
 	SetJump(0x080E5936, (DWORD)PM_CheckLadderMove);
-	
-	
+
+
 	SetJump(0x080E6D30, (DWORD)Pmove);
 
 
@@ -937,6 +940,30 @@ void Sys_RedirectFunctions()
 	SetJump(0x080DB964, (DWORD)Mantle_Check);
 	SetJump(0x080DB380, (DWORD)Mantle_CreateAnims);
 	SetJump(0x080DB6CA, (DWORD)Mantle_ShutdownAnims);
+
+
+
+	// Game #2
+	SetJump(0x0811EE84, (DWORD)Player_UpdateActivate);
+	SetJump(0x080F24C6, (DWORD)G_TouchTriggers);
+	SetJump(0x08115F2A, (DWORD)Scr_PlayerDamage);
+	SetJump(0x080FF7C8, (DWORD)G_Damage);
+	SetJump(0x0811AA18, (DWORD)G_CheckHitTriggerDamage);
+	SetJump(0x0811DFF4, (DWORD)Bullet_Fire);
+	SetJump(0x0811E0C2, (DWORD)Weapon_Throw_Grenade);
+	SetJump(0x0811E18A, (DWORD)Weapon_RocketLauncher_Fire);
+
+
+	// g_combat.cpp
+	SetJump(0x080FF652, (DWORD)G_GetWeaponHitLocationMultiplier);
+	SetJump(0x081003E6, (DWORD)G_GetHitLocationString);
+	SetJump(0x081003F6, (DWORD)G_GetHitLocationIndexFromString);
+	SetJump(0x080FEEDA, (DWORD)G_ParseHitLocDmgTable);
+
+
+
+	// Temp
+	SetJump(0x0808E544, (DWORD)SV_WriteDownloadToClient);
 
 
 	G_RegisterDvars(); // <-- FIX ME

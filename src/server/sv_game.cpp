@@ -320,6 +320,100 @@ XAnimTree_s* SV_DObjGetTree(gentity_s *ent)
 		return 0;
 }
 
+int SV_DObjGetBoneIndex(const gentity_s *ent, unsigned int boneName)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj )
+		return DObjGetBoneIndex(obj, boneName);
+	else
+		return -1;
+}
+
+DObjAnimMat* SV_DObjGetMatrixArray(gentity_s *ent)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+	return DObjGetRotTransArray(obj);
+}
+
+int SV_EntityContact(const float *mins, const float *maxs, gentity_s *gEnt)
+{
+	unsigned int model;
+	float dist;
+	trace_t trace;
+	float center[2];
+
+	if ( (gEnt->r.svFlags & 0x60) != 0 )
+	{
+		if ( (gEnt->r.svFlags & 0x20) != 0 )
+		{
+			if ( gEnt->r.currentOrigin[2] < maxs[2] )
+			{
+				if ( mins[2] < (float)(gEnt->r.currentOrigin[2] + gEnt->r.maxs[2]) )
+				{
+					center[0] = *mins + *maxs;
+					center[1] = mins[1] + maxs[1];
+					center[0] = 0.5 * center[0];
+					center[1] = 0.5 * center[1];
+					dist = (float)(*maxs - center[0]) + gEnt->r.maxs[0];
+					return (float)(dist * dist) > (float)((float)((float)(center[0] - gEnt->r.currentOrigin[0])
+					                                      * (float)(center[0] - gEnt->r.currentOrigin[0]))
+					                                      + (float)((float)(center[1] - gEnt->r.currentOrigin[1])
+					                                              * (float)(center[1] - gEnt->r.currentOrigin[1])));
+				}
+				else
+				{
+					return 0;
+				}
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			center[0] = *mins + *maxs;
+			center[1] = mins[1] + maxs[1];
+			center[0] = 0.5 * center[0];
+			center[1] = 0.5 * center[1];
+			dist = (float)((float)(*maxs - center[0]) + gEnt->r.maxs[0]) - 64.0;
+			return (float)((float)((float)(center[0] - gEnt->r.currentOrigin[0])
+			                       * (float)(center[0] - gEnt->r.currentOrigin[0]))
+			               + (float)((float)(center[1] - gEnt->r.currentOrigin[1])
+			                         * (float)(center[1] - gEnt->r.currentOrigin[1]))) >= (float)(dist * dist);
+		}
+	}
+	else
+	{
+		model = SV_ClipHandleForEntity(gEnt);
+		CM_TransformedBoxTraceExternal(
+		    &trace,
+		    vec3_origin,
+		    vec3_origin,
+		    mins,
+		    maxs,
+		    model,
+		    -1,
+		    gEnt->r.currentOrigin,
+		    gEnt->r.currentAngles);
+		return trace.startsolid;
+	}
+}
+
+void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, playerState_s *clients, int sizeofGameClient)
+{
+	sv.gentities = gEnts;
+	sv.gentitySize = sizeofGEntity_t;
+	sv.num_entities = numGEntities;
+	sv.gameClients = clients;
+	sv.gameClientSize = sizeofGameClient;
+}
+
 void SV_ShutdownGameProgs()
 {
 	UNIMPLEMENTED(__FUNCTION__);

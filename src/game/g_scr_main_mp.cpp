@@ -34,6 +34,25 @@ scr_function_t functions[] =
 };
 #endif
 
+const char *modNames[] =
+{
+	"MOD_UNKNOWN",
+	"MOD_PISTOL_BULLET",
+	"MOD_RIFLE_BULLET",
+	"MOD_GRENADE",
+	"MOD_GRENADE_SPLASH",
+	"MOD_PROJECTILE",
+	"MOD_PROJECTILE_SPLASH",
+	"MOD_MELEE",
+	"MOD_HEAD_SHOT",
+	"MOD_CRUSH",
+	"MOD_TELEFRAG",
+	"MOD_FALLING",
+	"MOD_SUICIDE",
+	"MOD_TRIGGER_HURT",
+	"MOD_EXPLOSIVE",
+};
+
 gentity_t* Scr_EntityForRef(scr_entref_t entRef)
 {
 	if ( entRef.classnum == CLASS_NUM_ENTITY )
@@ -235,6 +254,22 @@ void Scr_SetHealth(gentity_s *ent, int offset)
 	}
 }
 
+void GScr_AddVector(const float *vVec)
+{
+	if ( vVec )
+		Scr_AddVector(vVec);
+	else
+		Scr_AddUndefined();
+}
+
+void GScr_AddEntity(gentity_s *pEnt)
+{
+	if ( pEnt )
+		Scr_AddEntity(pEnt);
+	else
+		Scr_AddUndefined();
+}
+
 void Scr_PlayerConnect(gentity_s *self)
 {
 	unsigned short callback;
@@ -350,6 +385,33 @@ void Scr_BulletTrace()
 		Scr_AddString(surfaceName);
 		Scr_AddArrayStringIndexed(scr_const.surfacetype);
 	}
+}
+
+void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int dflags, unsigned int meansOfDeath, int iWeapon, const float *vPoint, const float *vDir, hitLocation_t hitLoc, int timeOffset)
+{
+	unsigned short hitLocStr;
+	WeaponDef *weaponDef;
+	unsigned short callback;
+
+	Scr_AddInt(timeOffset);
+	hitLocStr = G_GetHitLocationString(hitLoc);
+	Scr_AddConstString(hitLocStr);
+	GScr_AddVector(vDir);
+	GScr_AddVector(vPoint);
+	weaponDef = BG_GetWeaponDef(iWeapon);
+	Scr_AddString(weaponDef->szInternalName);
+
+	if ( meansOfDeath < 0xF )
+		Scr_AddString(modNames[meansOfDeath]);
+	else
+		Scr_AddString("badMOD");
+
+	Scr_AddInt(dflags);
+	Scr_AddInt(damage);
+	GScr_AddEntity(attacker);
+	GScr_AddEntity(inflictor);
+	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerdamage, 0xAu);
+	Scr_FreeThread(callback);
 }
 
 void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t)

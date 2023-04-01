@@ -1372,8 +1372,6 @@ SetJump(0x0807CBD8, (DWORD)Scr_EvalBoolComplement);
 SetJump(0x0807CA16, (DWORD)FindLastSibling);
 SetJump(0x0807A3E8, (DWORD)GetVariableKeyObject);
 SetJump(0x0811EE84, (DWORD)Player_UpdateActivate);
-SetJump(0x0811ECE4, (DWORD)Player_ActivateHoldCmdAllowed);
-SetJump(0x0811EBC4, (DWORD)Player_UseEntity);
 SetJump(0x08109EC0, (DWORD)G_IsTurretUsable);
 SetJump(0x08109D26, (DWORD)turret_behind);
 SetJump(0x080F6ED0, (DWORD)G_GetNonPVSFriendlyInfo);
@@ -1728,6 +1726,12 @@ SetJump(0x080DF534, (DWORD)PM_CmdScale_Walk);
 SetJump(0x080DF7FC, (DWORD)PM_DamageScale_Walk);
 SetJump(0x080E02FE, (DWORD)PM_DeadMove);
 SetJump(0x080E5936, (DWORD)PM_CheckLadderMove);
+SetJump(0x080F24C6, (DWORD)G_TouchTriggers);
+SetJump(0x080DCBB6, (DWORD)BG_PlayerTouchesItem);
+SetJump(0x080901C2, (DWORD)SV_EntityContact);
+SetJump(0x0808AFE0, (DWORD)SV_MapRestart_f);
+SetJump(0x0808AD76, (DWORD)SV_MapRestart);
+SetJump(0x081003F6, (DWORD)G_GetHitLocationIndexFromString);
 
 
 
@@ -2260,6 +2264,13 @@ SetJump(0x0810404E, (DWORD)Drop_Weapon);
 SetJump(0x0811A1B8, (DWORD)multi_trigger);
 SetJump(0x0810BC36, (DWORD)G_RunMissile);
 SetJump(0x0810B894, (DWORD)G_MissileTrace);
+SetJump(0x0811D95C, (DWORD)G_AntiLag_RestoreClientPos);
+SetJump(0x0811DA00, (DWORD)Bullet_Fire_Extended);
+SetJump(0x0811AA18, (DWORD)G_CheckHitTriggerDamage);
+SetJump(0x0809BE82, (DWORD)SV_SightTraceToEntity);
+SetJump(0x0811A826, (DWORD)Activate_trigger_damage);
+SetJump(0x0811A6EE, (DWORD)Respond_trigger_damage);
+SetJump(0x0811D638, (DWORD)Bullet_RandomSpread);
 
 SetJump(0x0805C534, (DWORD)CM_SightTraceCapsuleThroughCapsule);
 SetJump(0x0805C23C, (DWORD)CM_SightTraceSphereThroughSphere);
@@ -2421,6 +2432,19 @@ SetJump(0x080DAE2E, (DWORD)Mantle_Start);
 SetJump(0x080DAC38, (DWORD)Mantle_FindTransition);
 SetJump(0x080DB6DA, (DWORD)Mantle_FindMantleSurface);
 SetJump(0x080DB6CA, (DWORD)Mantle_ShutdownAnims);
+SetJump(0x0811E5E0, (DWORD)FireWeaponMelee);
+SetJump(0x0811E586, (DWORD)G_UseOffHand);
+SetJump(0x0811E35C, (DWORD)G_CalcMuzzlePoints);
+SetJump(0x0811DFF4, (DWORD)Bullet_Fire);
+SetJump(0x0811D7E6, (DWORD)G_AntiLagRewindClientPos);
+SetJump(0x08097BD0, (DWORD)SV_GetClientPositionsAtTime);
+SetJump(0x08097B54, (DWORD)SV_GetCurrentClientInfo);
+SetJump(0x080F4696, (DWORD)GetFollowPlayerState);
+SetJump(0x080EA198, (DWORD)BG_GetSpreadForWeapon);
+SetJump(0x0811E0C2, (DWORD)Weapon_Throw_Grenade);
+SetJump(0x0810C1F6, (DWORD)fire_grenade);
+SetJump(0x0811E18A, (DWORD)Weapon_RocketLauncher_Fire);
+SetJump(0x0810C4A0, (DWORD)fire_rocket);
 
 
 

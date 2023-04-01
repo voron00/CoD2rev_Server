@@ -413,7 +413,7 @@ void QDECL XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float 
 qboolean XModelBad(XModel *model);
 XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
 
-qboolean XModelGetStaticBounds(const XModel *model, const float *axis, float *mins, float *maxs);
+qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs);
 
 const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
 XAnimParts* XAnimPrecache(const char *name, void *(*Alloc)(int));

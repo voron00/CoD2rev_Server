@@ -884,6 +884,7 @@ bool Scr_IsIdentifier(const char *token);
 unsigned int Scr_GetSourceBuffer(const char *codePos);
 char* Scr_AddSourceBuffer(const char *filename, const char *extFilename, const char *codePos, bool archive);
 
+qboolean Scr_IsSystemActive();
 int Scr_GetFunctionHandle(const char *filename, const char *name, qboolean errorIfMissing);
 unsigned int Scr_LoadScript(const char *filename);
 void Scr_BeginLoadScripts();
