@@ -150,6 +150,7 @@ char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const ch
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles);
 void FS_FreeFileList( char **list );
 void FS_ConvertPath(char *s);
+int FS_WriteFile(const char* filename, const void* buffer, int size);
 qboolean FS_iwIwd(char *iwd, const char *base);
 const char *FS_LoadedIwdNames();
 const char *FS_ReferencedIwdNames();

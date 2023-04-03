@@ -247,7 +247,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal(int archivedFrame)
 	int oldindex;
 	signed int oldnum;
 	msg_t msg;
-	byte buf[MAX_MSGLEN];
+	byte buf[MAX_LARGE_MSGLEN]; // VoroN: !!! WARNING !!! In CoD2 1.0 they allocate this to 128k but wouldn't that potentially cause a netchan MAX_MSGLEN error? Changed to MAX_MSGLEN for now. Update: Nope, it SHOULD be 128k, otherwise snapshot overflows.
 	int partSize;
 	int firstCachedSnapshotFrame;
 	int i;
@@ -927,4 +927,687 @@ bool SV_GetClientPositionsAtTime(int clientNum, int gametime, float *origin)
 	}
 
 	return 1;
+}
+
+/*
+====================
+SV_RateMsec
+Return the number of msec a given size message is supposed
+to take to clear, based on the current rate
+TTimo - use sv_maxRate or sv_dl_maxRate depending on regular or downloading client
+====================
+*/
+#define HEADER_RATE_BYTES   48      // include our header, IP header, and some overhead
+extern dvar_t *sv_maxRate;
+static int SV_RateMsec( client_t *client, int messageSize )
+{
+	int rate;
+	int rateMsec;
+	int maxRate;
+
+	// individual messages will never be larger than fragment size
+	if ( messageSize > 1500 )
+	{
+		messageSize = 1500;
+	}
+
+	// low watermark for sv_maxRate, never 0 < sv_maxRate < 1000 (0 is no limitation)
+	if ( sv_maxRate->current.integer && sv_maxRate->current.integer < 1000 )
+	{
+		Dvar_SetInt( sv_maxRate, 1000 );
+	}
+
+	rate = client->rate;
+	maxRate = sv_maxRate->current.integer;
+
+	if ( maxRate )
+	{
+		if ( maxRate < rate )
+		{
+			rate = maxRate;
+		}
+	}
+
+	rateMsec = ( messageSize + HEADER_RATE_BYTES ) * 1000 / rate;
+	return rateMsec;
+}
+
+/*
+=======================
+SV_SendMessageToClient
+Called by SV_SendClientSnapshot and SV_SendClientGameState
+=======================
+*/
+void SV_SendMessageToClient( msg_t *msg, client_t *client )
+{
+	byte buf[MAX_MSGLEN];
+	int len;
+	int rateMsec;
+
+	memcpy(buf, msg->data, 4);
+	len = MSG_WriteBitsCompress(msg->data + 4, buf + 4, msg->cursize - 4) + 4;
+
+	if ( client->delayDropMsg )
+		SV_DropClient(client, client->delayDropMsg);
+
+	// record information about the message
+	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSize = len;
+	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSent = svs.time;
+	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageAcked = -1;
+
+	// send the datagram
+	SV_Netchan_Transmit(client, buf, len);
+
+	// set nextSnapshotTime based on rate and requested number of updates
+	// local clients get snapshots every frame
+	// TTimo - show_bug.cgi?id=491
+	// added sv_lanForceRate check
+	if ( client->netchan.remoteAddress.type == NA_LOOPBACK || Sys_IsLANAddress( client->netchan.remoteAddress ) )
+	{
+		client->nextSnapshotTime = svs.time - 1;
+		return;
+	}
+
+	// normal rate / snapshotMsec calculation
+	rateMsec = SV_RateMsec( client, len );
+
+	// TTimo - during a download, ignore the snapshotMsec
+	// the update server on steroids, with this disabled and sv_fps 60, the download can reach 30 kb/s
+	// on a regular server, we will still top at 20 kb/s because of sv_fps 20
+	if ( !*client->downloadName && rateMsec < client->snapshotMsec )
+	{
+		// never send more packets than this, no matter what the rate is at
+		rateMsec = client->snapshotMsec;
+		client->rateDelayed = qfalse;
+	}
+	else
+	{
+		client->rateDelayed = qtrue;
+	}
+
+	client->nextSnapshotTime = svs.time + rateMsec;
+
+	// don't pile up empty snapshots while connecting
+	if ( client->state != CS_ACTIVE )
+	{
+		// a gigantic connection message may have already put the nextSnapshotTime
+		// more than a second away, so don't shorten it
+		// do shorten if client is downloading
+		if ( !*client->downloadName && client->nextSnapshotTime < svs.time + 1000 )
+		{
+			client->nextSnapshotTime = svs.time + 1000;
+		}
+
+		sv.bpsTotalBytes += len;
+	}
+}
+
+/*
+==================
+SV_UpdateServerCommandsToClient
+(re)send all server commands the client hasn't acknowledged yet
+==================
+*/
+extern dvar_t *sv_debugReliableCmds;
+void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg )
+{
+	int i;
+
+	if ( client->reliableAcknowledge + 1 < client->reliableSequence && sv_debugReliableCmds->current.boolean )
+		Com_Printf("Client %s has the following un-ack'd reliable commands:\n", client->name);
+
+	// write any unacknowledged serverCommands
+	for ( i = client->reliableAcknowledge + 1 ; i <= client->reliableSequence ; i++ )
+	{
+		MSG_WriteByte( msg, svc_serverCommand );
+		MSG_WriteLong( msg, i );
+		MSG_WriteString( msg, client->reliableCommands[ i & ( MAX_RELIABLE_COMMANDS - 1 ) ].command );
+
+		if ( sv_debugReliableCmds->current.boolean )
+			Com_Printf("%i: %s\n", i - client->reliableAcknowledge - 1, client->reliableCommands[ i & ( MAX_RELIABLE_COMMANDS - 1 ) ].command);
+	}
+
+	client->reliableSent = client->reliableSequence;
+}
+
+void SV_EmitPacketEntities(int clientNum, int oldEntities, int oldFirstEnt, int entities, int firstEnt, msg_t *msg)
+{
+	int newnum;
+	int oldnum;
+	int newIndex;
+	int oldIndex;
+	entityState_t *newent;
+	entityState_t *oldent;
+
+	newent = 0;
+	oldent = 0;
+	newIndex = 0;
+	oldIndex = 0;
+
+	while ( newIndex < entities || oldIndex < oldEntities )
+	{
+		if ( newIndex < entities )
+		{
+			newent = &svs.snapshotEntities[(firstEnt + newIndex) % svs.numSnapshotEntities];
+			newnum = newent->number;
+		}
+		else
+		{
+			newnum = 9999;
+		}
+
+		if ( oldIndex < oldEntities )
+		{
+			oldent = &svs.snapshotEntities[(oldFirstEnt + oldIndex) % svs.numSnapshotEntities];
+			oldnum = oldent->number;
+		}
+		else
+		{
+			oldnum = 9999;
+		}
+
+		if ( newnum == oldnum )
+		{
+			MSG_WriteDeltaEntity(msg, oldent, newent, 0);
+			++oldIndex;
+			++newIndex;
+		}
+		else if ( newnum >= oldnum )
+		{
+			if ( newnum > oldnum )
+			{
+				MSG_WriteDeltaEntity(msg, oldent, 0, 1);
+				++oldIndex;
+			}
+		}
+		else
+		{
+			MSG_WriteDeltaEntity(msg, &sv.svEntities[newnum].baseline.s, newent, 1);
+			++newIndex;
+		}
+	}
+
+	MSG_WriteBits( msg, ( MAX_GENTITIES - 1 ), GENTITYNUM_BITS );   // end of packetentities
+}
+
+void SV_EmitPacketClients(int clientNum, int oldClients, int oldFirstClient, int clients, int firstClient, msg_t *msg)
+{
+	int newnum;
+	int oldnum;
+	int newIndex;
+	int oldIndex;
+	clientState_t *newcl;
+	clientState_t *oldcl;
+
+	newcl = 0;
+	oldcl = 0;
+	newIndex = 0;
+	oldIndex = 0;
+
+	while ( newIndex < clients || oldIndex < oldClients )
+	{
+		if ( newIndex < clients )
+		{
+			newcl = &svs.snapshotClients[(firstClient + newIndex) % svs.numSnapshotClients];
+			newnum = newcl->clientIndex;
+		}
+		else
+		{
+			newnum = 9999;
+		}
+
+		if ( oldIndex < oldClients )
+		{
+			oldcl = &svs.snapshotClients[(oldFirstClient + oldIndex) % svs.numSnapshotClients];
+			oldnum = oldcl->clientIndex;
+		}
+		else
+		{
+			oldnum = 9999;
+		}
+
+		if ( newnum == oldnum )
+		{
+			MSG_WriteDeltaClient(msg, oldcl, newcl, 0);
+			++oldIndex;
+			++newIndex;
+		}
+		else if ( newnum >= oldnum )
+		{
+			if ( newnum > oldnum )
+			{
+				MSG_WriteDeltaClient(msg, oldcl, 0, 1);
+				++oldIndex;
+			}
+		}
+		else
+		{
+			MSG_WriteDeltaClient(msg, 0, newcl, 1);
+			++newIndex;
+		}
+	}
+
+	MSG_WriteBit0(msg);
+}
+
+extern dvar_t *sv_padPackets;
+void SV_WriteSnapshotToClient(client_s *client, msg_t *msg)
+{
+	int oldFirstClient;
+	int oldClients;
+	int snapFlags;
+	int i;
+	int lastframe;
+	clientSnapshot_t *oldframe;
+	clientSnapshot_t *frame;
+
+	frame = &client->frames[client->netchan.outgoingSequence & 0x1F];
+
+	if ( client->deltaMessage > 0 && client->state == CS_ACTIVE )
+	{
+		if ( client->netchan.outgoingSequence - client->deltaMessage <= 28 )
+		{
+			oldframe = &client->frames[client->deltaMessage & 0x1F];
+			lastframe = client->netchan.outgoingSequence - client->deltaMessage;
+
+			if ( client->frames[client->deltaMessage & 0x1F].first_entity < svs.nextSnapshotEntities - svs.numSnapshotEntities )
+			{
+				Com_DPrintf("%s: Delta request from out of date entities.\n", client->name);
+				oldframe = 0;
+				lastframe = 0;
+			}
+		}
+		else
+		{
+			Com_DPrintf("%s: Delta request from out of date packet.\n", client->name);
+			oldframe = 0;
+			lastframe = 0;
+		}
+	}
+	else
+	{
+		oldframe = 0;
+		lastframe = 0;
+	}
+
+	MSG_WriteByte(msg, svc_snapshot);
+	MSG_WriteLong(msg, svs.time);
+	MSG_WriteByte(msg, lastframe);
+	snapFlags = svs.snapFlagServerBit;
+
+	if ( client->rateDelayed )
+		snapFlags = svs.snapFlagServerBit | 1;
+
+	if ( client->state == CS_ACTIVE )
+	{
+		client->delayed = 1;
+	}
+	else if ( client->state != CS_ZOMBIE )
+	{
+		client->delayed = 0;
+	}
+
+	if ( !client->delayed )
+		snapFlags |= 2u;
+
+	MSG_WriteByte(msg, snapFlags);
+
+	if ( oldframe )
+	{
+		MSG_WriteDeltaPlayerstate(msg, &oldframe->ps, &frame->ps);
+		oldClients = oldframe->num_clients;
+		oldFirstClient = oldframe->first_client;
+		SV_EmitPacketEntities(client - svs.clients, oldframe->num_entities, oldframe->first_entity, frame->num_entities, frame->first_entity, msg);
+	}
+	else
+	{
+		MSG_WriteDeltaPlayerstate(msg, 0, &frame->ps);
+		oldClients = 0;
+		oldFirstClient = 0;
+		SV_EmitPacketEntities(client - svs.clients, 0, 0, frame->num_entities, frame->first_entity, msg);
+	}
+
+	SV_EmitPacketClients( client - svs.clients, oldClients, oldFirstClient, frame->num_clients, frame->first_client, msg);
+
+	for ( i = 0; i < sv_padPackets->current.integer; ++i )
+		MSG_WriteByte(msg, svc_nop);
+}
+
+void SV_UpdateServerCommandsToClientRecover( client_t *client, msg_t *msg, int msgLen )
+{
+	int i;
+	int cmdlen;
+
+	for(i = client->reliableAcknowledge + 1; i <= client->reliableSequence; i++)
+	{
+
+		cmdlen = strlen(client->reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )].command);
+
+		if ( cmdlen + msg->cursize + 6 >= msgLen )
+			break;
+
+		MSG_WriteByte(msg, svc_serverCommand);
+		MSG_WriteLong(msg, i);
+		MSG_WriteString(msg, client->reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )].command);
+
+	}
+
+	if ( i - 1 > client->reliableSent )
+		client->reliableSent = i - 1;
+}
+
+void SV_SendClientSnapshot(client_s *client)
+{
+	byte buf[MAX_LARGE_MSGLEN]; // VoroN: !!! WARNING !!! In CoD2 1.0 they allocate this to 128k but wouldn't that potentially cause a netchan MAX_MSGLEN error? Changed to MAX_MSGLEN for now. Update: Nope, it SHOULD be 128k, otherwise snapshot overflows.
+	msg_t msg;
+
+	if ( client->state == CS_ACTIVE || client->state == CS_ZOMBIE )
+		SV_BuildClientSnapshot(client);
+
+	MSG_Init(&msg, buf, sizeof(buf));
+	MSG_WriteLong(&msg, client->lastClientCommand);
+
+	if ( client->state == CS_ACTIVE || client->state == CS_ZOMBIE )
+	{
+		SV_UpdateServerCommandsToClient(client, &msg);
+		SV_WriteSnapshotToClient(client, &msg);
+	}
+
+	if ( client->state != CS_ZOMBIE )
+		SV_WriteDownloadToClient(client, &msg);
+
+	MSG_WriteByte(&msg, svc_EOF);
+
+	if ( msg.overflowed )
+	{
+		Com_Printf("WARNING: msg overflowed for %s, trying to recover\n", client->name);
+
+		if ( client->state == CS_ACTIVE || client->state == CS_ZOMBIE )
+		{
+			SV_ShowClientUnAckCommands(client);
+			MSG_Init(&msg, buf, sizeof(buf));
+			MSG_WriteLong(&msg, client->lastClientCommand);
+			SV_UpdateServerCommandsToClientRecover(client, &msg, sizeof(buf));
+			MSG_WriteByte(&msg, svc_EOF);
+		}
+
+		if ( msg.overflowed )
+		{
+			Com_Printf("WARNING: client disconnected for msg overflow: %s\n", client->name);
+			NET_OutOfBandPrint(NS_SERVER, client->netchan.remoteAddress, "disconnect");
+			SV_DropClient(client, "EXE_SERVERMESSAGEOVERFLOW");
+		}
+	}
+
+	SV_SendMessageToClient(&msg, client);
+}
+
+void SV_ArchiveSnapshot()
+{
+	clientState_t *cs1;
+	clientState_t *cs2;
+	cachedClient_s *client2;
+	byte buf[MAX_LARGE_MSGLEN]; // VoroN: !!! WARNING !!! In CoD2 1.0 they allocate this to 128k but wouldn't that potentially cause a netchan MAX_MSGLEN error? Changed to MAX_MSGLEN for now. Update: Nope, it SHOULD be 128k, otherwise snapshot overflows.
+	msg_t msg;
+	int clientIndex;
+	int count;
+	int clientNum;
+	int num_clients;
+	int maxClients;
+	archivedEntity_s *archEnt;
+	cachedClient_s *client1;
+	int next_frame;
+	int current_frame;
+	cachedSnapshot_s *cachedFrame;
+	playerState_s ps;
+	size_t len;
+	int currentBuffer;
+	archivedSnapshot_s *aSnap;
+	client_s *client;
+	int i;
+	svEntity_t *svEnt;
+	archivedEntity_s aEnt;
+	gentity_s *ent;
+	int num;
+
+	if ( sv.state == SS_GAME && svs.archivedSnapshotEnabled )
+	{
+		MSG_Init(&msg, buf, sizeof(buf));
+		current_frame = svs.nextCachedSnapshotFrames - 512;
+
+		if ( svs.nextCachedSnapshotFrames - 512 < 0 )
+			current_frame = 0;
+
+		next_frame = svs.nextArchivedSnapshotFrames - sv_fps->current.integer;
+
+		for ( i = svs.nextCachedSnapshotFrames - 1; i >= current_frame; --i )
+		{
+			cachedFrame = &svs.cachedSnapshotFrames[i % 512];
+
+			if ( cachedFrame->archivedFrame >= next_frame && !cachedFrame->usesDelta )
+			{
+				if ( cachedFrame->first_entity >= svs.nextCachedSnapshotEntities - 0x4000
+				        && cachedFrame->first_client >= svs.nextCachedSnapshotClients - 4096 )
+				{
+					MSG_WriteBit0(&msg);
+					MSG_WriteLong(&msg, cachedFrame->archivedFrame);
+					MSG_WriteLong(&msg, svs.time);
+
+					maxClients = sv_maxclients->current.integer;
+					num_clients = cachedFrame->num_clients;
+
+					client1 = 0;
+					clientNum = 0;
+					count = 0;
+
+					while ( clientNum < maxClients || count < num_clients )
+					{
+						if ( clientNum >= maxClients || svs.clients[clientNum].state > CS_ZOMBIE )
+						{
+							if ( count < num_clients )
+							{
+								client1 = &svs.cachedSnapshotClients[(count + cachedFrame->first_client) % 4096];
+								clientIndex = client1->cs.clientIndex;
+							}
+							else
+							{
+								clientIndex = 9999;
+							}
+							if ( clientNum == clientIndex )
+							{
+								cs1 = G_GetClientState(clientNum);
+								MSG_WriteDeltaClient(&msg, &client1->cs, cs1, 1);
+
+								if ( GetFollowPlayerState(clientNum, &ps) )
+								{
+									MSG_WriteBit1(&msg);
+									MSG_WriteDeltaPlayerstate(&msg, &client1->ps, &ps);
+								}
+								else
+								{
+									MSG_WriteBit0(&msg);
+								}
+
+								++count;
+								++clientNum;
+							}
+							else if ( clientNum >= clientIndex )
+							{
+								if ( clientNum > clientIndex )
+									++count;
+							}
+							else
+							{
+								cs2 = G_GetClientState(clientNum);
+								MSG_WriteDeltaClient(&msg, 0, cs2, 1);
+
+								if ( GetFollowPlayerState(clientNum, &ps) )
+								{
+									MSG_WriteBit1(&msg);
+									MSG_WriteDeltaPlayerstate(&msg, 0, &ps);
+								}
+								else
+								{
+									MSG_WriteBit0(&msg);
+								}
+
+								++clientNum;
+							}
+						}
+						else
+						{
+							++clientNum;
+						}
+					}
+
+					MSG_WriteBit0(&msg);
+
+					for ( num = 0; num < sv.num_entities; ++num )
+					{
+						ent = SV_GentityNum(num);
+
+						if ( ent->r.linked )
+						{
+							if ( ent->r.broadcastTime
+							        || (ent->r.svFlags & 1) == 0
+							        && ((svEnt = SV_SvEntityForGentity(ent), (ent->r.svFlags & 0x18) != 0) || svEnt->numClusters) )
+							{
+								memcpy(&aEnt.s, &ent->s, sizeof(entityState_t));
+								aEnt.r.svFlags = ent->r.svFlags;
+
+								if ( ent->r.broadcastTime )
+									aEnt.r.svFlags |= 8u;
+
+								aEnt.r.clientMask[0] = ent->r.clientMask[0];
+								aEnt.r.clientMask[0] = ent->r.clientMask[0];
+
+								VectorCopy(ent->r.absmin, aEnt.r.absmin);
+								VectorCopy(ent->r.absmax, aEnt.r.absmax);
+
+								MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, &aEnt, 1);
+							}
+						}
+					}
+					goto out;
+				}
+				break;
+			}
+		}
+
+		MSG_WriteBit1(&msg);
+		MSG_WriteLong(&msg, svs.time);
+
+		cachedFrame = &svs.cachedSnapshotFrames[svs.nextCachedSnapshotFrames % 512];
+		cachedFrame->archivedFrame = svs.nextArchivedSnapshotFrames;
+		cachedFrame->num_entities = 0;
+		cachedFrame->first_entity = svs.nextCachedSnapshotEntities;
+		cachedFrame->num_clients = 0;
+		cachedFrame->first_client = svs.nextCachedSnapshotClients;
+		cachedFrame->usesDelta = 0;
+		cachedFrame->time = svs.time;
+
+		i = 0;
+		client = svs.clients;
+
+		while ( i < sv_maxclients->current.integer )
+		{
+			if ( client->state > CS_ZOMBIE )
+			{
+				client1 = &svs.cachedSnapshotClients[svs.nextCachedSnapshotClients % 4096];
+				memcpy(&client1->cs, G_GetClientState(i), sizeof(client1->cs));
+				MSG_WriteDeltaClient(&msg, 0, &client1->cs, 1);
+
+				client2 = client1;
+				client2->playerStateExists = GetFollowPlayerState(i, &client1->ps);
+
+				if ( client1->playerStateExists )
+				{
+					MSG_WriteBit1(&msg);
+					MSG_WriteDeltaPlayerstate(&msg, 0, &client1->ps);
+				}
+				else
+				{
+					MSG_WriteBit0(&msg);
+				}
+
+				if ( ++svs.nextCachedSnapshotClients > 2147483645 )
+					Com_Error(ERR_FATAL, "svs.nextCachedSnapshotClients wrapped");
+
+				++cachedFrame->num_clients;
+			}
+
+			++i;
+			++client;
+		}
+
+		MSG_WriteBit0(&msg);
+
+		for ( num = 0; num < sv.num_entities; ++num )
+		{
+			ent = SV_GentityNum(num);
+
+			if ( ent->r.linked )
+			{
+				if ( ent->r.broadcastTime
+				        || (ent->r.svFlags & 1) == 0
+				        && ((svEnt = SV_SvEntityForGentity(ent), (ent->r.svFlags & 0x18) != 0) || svEnt->numClusters) )
+				{
+					archEnt = &svs.cachedSnapshotEntities[svs.nextCachedSnapshotEntities % 0x4000];
+					memcpy(&archEnt->s, &ent->s, sizeof(entityState_t));
+					archEnt->r.svFlags = ent->r.svFlags;
+
+					if ( ent->r.broadcastTime )
+						archEnt->r.svFlags |= 8u;
+
+					archEnt->r.clientMask[0] = ent->r.clientMask[0];
+					archEnt->r.clientMask[1] = ent->r.clientMask[1];
+
+					VectorCopy(ent->r.absmin, archEnt->r.absmin);
+					VectorCopy(ent->r.absmax, archEnt->r.absmax);
+
+					MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, archEnt, 1);
+
+					if ( ++svs.nextCachedSnapshotEntities > 2147483645 )
+						Com_Error(ERR_FATAL, "svs.nextCachedSnapshotEntities wrapped");
+
+					++cachedFrame->num_entities;
+				}
+			}
+		}
+
+		if ( ++svs.nextCachedSnapshotFrames > 2147483645 )
+			Com_Error(ERR_FATAL, "svs.nextCachedSnapshotFrames wrapped");
+out:
+		MSG_WriteBits(&msg, 1023, 10);
+
+		if ( msg.overflowed )
+		{
+			Com_DPrintf("SV_ArchiveSnapshot: ignoring snapshot because it overflowed.\n");
+			return;
+		}
+
+		aSnap = &svs.archivedSnapshotFrames[svs.nextArchivedSnapshotFrames % 1200];
+		aSnap->start = svs.nextArchivedSnapshotBuffer;
+		aSnap->size = msg.cursize;
+		currentBuffer = svs.nextArchivedSnapshotBuffer % 0x2000000;
+		svs.nextArchivedSnapshotBuffer += msg.cursize;
+
+		if ( svs.nextArchivedSnapshotBuffer > 2147483645 )
+			Com_Error(ERR_FATAL, "svs.nextArchivedSnapshotBuffer wrapped");
+
+		len = 0x2000000 - currentBuffer;
+
+		if ( msg.cursize > 0x2000000 - currentBuffer )
+		{
+			memcpy(&svs.archivedSnapshotBuffer[currentBuffer], msg.data, len);
+			memcpy(svs.archivedSnapshotBuffer, &msg.data[len], msg.cursize - len);
+		}
+		else
+		{
+			memcpy(&svs.archivedSnapshotBuffer[currentBuffer], msg.data, msg.cursize);
+		}
+
+		if ( ++svs.nextArchivedSnapshotFrames > 2147483645 )
+			Com_Error(ERR_FATAL, "svs.nextArchivedSnapshotFrames wrapped");
+	}
 }

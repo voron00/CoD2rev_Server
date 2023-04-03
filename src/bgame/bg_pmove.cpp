@@ -2738,3 +2738,18 @@ void Pmove(pmove_t *pmove)
 		}
 	}
 }
+
+float BG_GetSpeed(const playerState_s *ps, int time)
+{
+	if ( (ps->pm_flags & 0x20) != 0 )
+	{
+		if ( time - ps->jumpTime > 499 )
+			return ps->velocity[2];
+		else
+			return 0.0;
+	}
+	else
+	{
+		return VectorLength(ps->velocity);
+	}
+}

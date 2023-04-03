@@ -82,6 +82,11 @@ const entityHandler_t entityHandlers[] =
 };
 #endif
 
+int G_GetClientScore(int clientNum)
+{
+	return level.clients[clientNum].sess.score;
+}
+
 void Scr_LocalizationError(int iParm, const char *pszErrorMessage)
 {
 	Com_Error(ERR_LOCALIZATION, pszErrorMessage);
@@ -104,6 +109,41 @@ void G_RunThink(gentity_s *ent)
 
 		think(ent);
 	}
+}
+
+/*
+=================
+G_LogPrintf
+Print to the logfile with a time stamp if it is open
+=================
+*/
+void QDECL G_LogPrintf( const char *fmt, ... )
+{
+	va_list argptr;
+	char string[1024];
+	int min, tens, sec, l;
+
+	sec = level.time / 1000;
+
+	min = sec / 60;
+	sec -= min * 60;
+	tens = sec / 10;
+	sec -= tens * 10;
+
+	Com_sprintf( string, sizeof( string ), "%i:%i%i ", min, tens, sec );
+
+	l = strlen( string );
+
+	va_start( argptr, fmt );
+	Q_vsnprintf( string + l, sizeof( string ) - l, fmt, argptr );
+	va_end( argptr );
+
+	if ( !level.logFile )
+	{
+		return;
+	}
+
+	FS_Write( string, strlen( string ), level.logFile );
 }
 
 void G_TraceCapsule(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask)
@@ -205,6 +245,11 @@ void CalculateRanks()
 float G_GetFogOpaqueDistSqrd()
 {
 	return level.fFogOpaqueDistSqrd;
+}
+
+int G_GetSavePersist()
+{
+	return level.savePersist;
 }
 
 void G_RegisterDvars()

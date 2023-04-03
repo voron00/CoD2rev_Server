@@ -406,8 +406,27 @@ qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg)
 	}
 
 	Com_Memcpy(buf + 4, msg, msglen + 1);
-
 	buflen = strlen(buf);
+
+	if ( sock == NS_SERVER )
+		SV_Netchan_AddOOBProfilePacket(buflen);
+
+	return NET_SendPacket(sock, buflen, buf, adr) > 0;
+}
+
+qboolean NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *data, int len)
+{
+	char buf[MAX_LARGE_MSGLEN];
+	size_t buflen;
+
+	// set the header
+	buf[0] = -1;
+	buf[1] = -1;
+	buf[2] = -1;
+	buf[3] = -1;
+
+	Com_Memcpy(buf + 4, data, len);
+	buflen = len + 4;
 
 	if ( sock == NS_SERVER )
 		SV_Netchan_AddOOBProfilePacket(buflen);
@@ -738,8 +757,7 @@ int NET_CompareBaseAdrSigned(netadr_t *a, netadr_t *b)
 
 	switch ( a->type )
 	{
-	case NA_BAD:
-		return a->port - b->port;
+	case NA_BOT:
 	case NA_LOOPBACK:
 		return a->port - b->port;
 	case NA_IP:

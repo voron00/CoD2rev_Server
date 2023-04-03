@@ -8,12 +8,30 @@ extern gentity_t g_entities[];
 #endif
 
 #ifdef TESTING_LIBRARY
+#define level (*((level_locals_t*)( 0x0859B400 )))
+#else
+extern level_locals_t level;
+#endif
+
+#ifdef TESTING_LIBRARY
 #define entityHandlers ((entityHandler_t*)( 0x08167880 ))
 #else
 const entityHandler_t entityHandlers[] =
 {
 
 };
+#endif
+
+#ifdef TESTING_LIBRARY
+#define bgs (*((bgs_t**)( 0x0855A4E0 )))
+#else
+extern bgs_t *bgs;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
+#else
+extern bgs_t level_bgs;
 #endif
 
 const char *g_HitLocNames[] =
@@ -221,4 +239,122 @@ void G_ParseHitLocDmgTable()
 	            0,
 	            BG_StringCopy) )
 		Com_Error(ERR_DROP, "Error parsing hitloc damage table %s", src);
+}
+
+void LookAtKiller(gentity_s *self, gentity_s *inflictor, gentity_s *attacker)
+{
+	gclient_s *client;
+	vec3_t dir;
+
+	if ( !attacker || attacker == self )
+	{
+		if ( !inflictor || inflictor == self )
+		{
+			self->client->ps.stats[1] = (int)self->r.currentAngles[1];
+			return;
+		}
+
+		VectorSubtract(inflictor->r.currentOrigin, self->r.currentOrigin, dir);
+	}
+	else
+	{
+		VectorSubtract(attacker->r.currentOrigin, self->r.currentOrigin, dir);
+	}
+
+	client = self->client;
+	client->ps.stats[1] = (int)vectoyaw(dir);
+	vectoyaw(dir);
+}
+
+void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int meansOfDeath, int iWeapon, const float *vDir, hitLocation_t hitLoc, int psTimeOffset)
+{
+	int type;
+	gentity_s *turret;
+	gclient_s *client;
+	vec3_t origin;
+	vec3_t dir;
+	int deathAnimDuration;
+	int i;
+
+	if ( Com_GetServerDObj(self->client->ps.clientNum)
+	        && self->client->ps.pm_type <= 1
+	        && (self->client->ps.pm_flags & 0x400000) == 0 )
+	{
+		bgs = &level_bgs;
+
+		if ( attacker->s.eType == ET_TURRET && attacker->r.ownerNum != 1023 )
+			attacker = &g_entities[attacker->r.ownerNum];
+
+		Scr_AddEntity(attacker);
+		Scr_Notify(self, scr_const.death, 1u);
+
+		if ( iWeapon )
+		{
+			if ( attacker->client )
+			{
+				if ( (attacker->client->ps.eFlags & 0x300) != 0 )
+				{
+					turret = &g_entities[attacker->s.otherEntityNum];
+
+					if ( turret->s.eType == ET_TURRET )
+						iWeapon = turret->s.weapon;
+				}
+			}
+		}
+
+		if ( self->client->ps.grenadeTimeLeft )
+		{
+			dir[0] = G_crandom();
+			dir[1] = G_crandom();
+			dir[2] = G_random();
+			VectorScale(dir, 160.0, dir);
+			VectorCopy(self->r.currentOrigin, origin);
+			origin[2] = origin[2] + 40.0;
+			fire_grenade(self, origin, dir, self->client->ps.offHandIndex, self->client->ps.grenadeTimeLeft);
+		}
+
+		if ( self->client->ps.pm_type == 1 )
+			type = 7;
+		else
+			type = 6;
+
+		self->client->ps.pm_type = type;
+		deathAnimDuration = BG_AnimScriptEvent(&self->client->ps, ANIM_ET_DEATH, 0, 1);
+
+		Scr_PlayerKilled(
+		    self,
+		    inflictor,
+		    attacker,
+		    damage,
+		    meansOfDeath,
+		    iWeapon,
+		    vDir,
+		    hitLoc,
+		    psTimeOffset,
+		    deathAnimDuration);
+
+		for ( i = 0; i < level.maxclients; ++i )
+		{
+			client = &level.clients[i];
+
+			if ( client->sess.connected == CS_CONNECTED
+			        && client->sess.sessionState == STATE_SPECTATOR
+			        && client->spectatorClient == self->s.number )
+			{
+				Cmd_Score_f(&g_entities[i]);
+			}
+		}
+
+		self->takedamage = 1;
+		self->r.contents = 0x4000000;
+		self->r.currentAngles[2] = 0.0;
+		LookAtKiller(self, inflictor, attacker);
+		VectorCopy(self->r.currentAngles, self->client->ps.viewangles);
+		self->s.loopSound = 0;
+		SV_UnlinkEntity(self);
+		self->r.maxs[2] = 30.0;
+		SV_LinkEntity(self);
+		self->health = 0;
+		self->handler = 11;
+	}
 }

@@ -13,6 +13,15 @@ extern gentity_t g_entities[];
 extern level_locals_t level;
 #endif
 
+vec2_t traceOffsets[] =
+{
+	{ 0.000000, 0.000000},
+	{ 1.000000, 1.000000},
+	{ 1.000000, -1.000000},
+	{ -1.000000, 1.000000},
+	{ -1.000000, -1.000000},
+};
+
 extern dvar_t *sv_fps;
 extern dvar_t *g_antilag;
 
@@ -106,7 +115,17 @@ void Weapon_RocketLauncher_Fire(gentity_s *ent, float spread, weaponParms *targe
 		VectorMA(ent->client->ps.velocity, -64.0, targetOffset->forward, ent->client->ps.velocity);
 }
 
-/*
+void G_CalcMuzzlePoints(const gentity_s *ent, weaponParms *wp)
+{
+	vec3_t angles;
+
+	VectorCopy(ent->client->ps.viewangles, angles);
+	angles[0] = ent->client->fGunPitch;
+	angles[1] = ent->client->fGunYaw;
+	AngleVectors(angles, wp->forward, wp->right, wp->up);
+	G_GetPlayerViewOrigin((gentity_s *)ent, wp->muzzleTrace);
+}
+
 void FireWeapon(gentity_s *ent, int gametime)
 {
 	float maxSpread;
@@ -148,4 +167,100 @@ void FireWeapon(gentity_s *ent, int gametime)
 		}
 	}
 }
-*/
+
+extern char bulletPriorityMap[];
+bool Melee_Trace(gentity_s *ent, weaponParms *wp, int damage, float range, float width, float height, trace_t *traceResult, float *hitOrigin)
+{
+	float widthScale;
+	float heightScale;
+	int numTraces;
+	int i;
+	vec3_t end;
+
+	if ( width > 0.0 || height > 0.0 )
+		numTraces = 5;
+	else
+		numTraces = 1;
+
+	for ( i = 0; i < numTraces; ++i )
+	{
+		VectorMA(wp->muzzleTrace, range, wp->forward, end);
+		widthScale = width * traceOffsets[i][0];
+		VectorMA(end, widthScale, wp->right, end);
+		heightScale = height * traceOffsets[i][1];
+		VectorMA(end, heightScale, wp->up, end);
+		G_LocationalTrace(traceResult, wp->muzzleTrace, end, ent->s.number, 41953329, bulletPriorityMap);
+		Vec3Lerp(wp->muzzleTrace, end, traceResult->fraction, hitOrigin);
+
+		if ( !i )
+			G_CheckHitTriggerDamage(ent, wp->muzzleTrace, hitOrigin, damage, MOD_MELEE);
+
+		if ( (traceResult->surfaceFlags & 0x10) == 0 && traceResult->fraction != 1.0 )
+			return 1;
+	}
+
+	return 0;
+}
+
+void Weapon_Melee(gentity_s *ent, weaponParms *wp, float range, float width, float height)
+{
+	vec3_t origin;
+	int damage;
+	gentity_s *tempEnt;
+	gentity_s *self;
+	trace_t trace;
+
+	damage = BG_GetWeaponDef(ent->s.weapon)->meleeDamage;
+
+	if ( Melee_Trace(ent, wp, damage, range, width, height, &trace, origin) )
+	{
+		self = &g_entities[trace.hitId];
+
+		if ( self->client )
+			tempEnt = G_TempEntity(origin, EV_MELEE_HIT);
+		else
+			tempEnt = G_TempEntity(origin, EV_MELEE_MISS);
+
+		tempEnt->s.otherEntityNum = trace.hitId;
+		tempEnt->s.eventParm = DirToByte(trace.normal);
+		tempEnt->s.weapon = ent->s.weapon;
+
+		if ( trace.hitId != 1022 )
+		{
+			if ( self->takedamage )
+			{
+				G_Damage(self, ent, ent, wp->forward, origin, damage + rand() % 5, 0, 7, (hitLocation_t)trace.partName, 0);
+			}
+		}
+	}
+}
+
+extern dvar_t *player_meleeRange;
+extern dvar_t *player_meleeWidth;
+extern dvar_t *player_meleeHeight;
+void FireWeaponMelee(gentity_s *ent)
+{
+	weaponParms wp;
+
+	if ( (ent->client->ps.eFlags & 0x300) == 0 || !ent->active )
+	{
+		wp.weapDef = BG_GetWeaponDef(ent->s.weapon);
+		G_GetPlayerViewOrigin(ent, wp.muzzleTrace);
+		G_GetPlayerViewDirection(ent, wp.forward, wp.right, wp.up);
+		Weapon_Melee(
+		    ent,
+		    &wp,
+		    player_meleeRange->current.decimal,
+		    player_meleeWidth->current.decimal,
+		    player_meleeHeight->current.decimal);
+	}
+}
+
+void G_UseOffHand(gentity_s *ent)
+{
+	weaponParms wp;
+
+	wp.weapDef = BG_GetWeaponDef(ent->client->ps.offHandIndex);
+	G_CalcMuzzlePoints(ent, &wp);
+	Weapon_Throw_Grenade(ent, ent->client->ps.offHandIndex, &wp);
+}

@@ -8,6 +8,12 @@ serverStatic_t svs;
 server_t sv;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define sv_serverId_value (*((int*)( 0x0841FA88 )))
+#else
+int sv_serverId_value;
+#endif
+
 dvar_t *sv_gametype;
 dvar_t *sv_mapname;
 dvar_t *sv_privateClients;
@@ -49,6 +55,11 @@ dvar_t *sv_debugReliableCmds;
 dvar_t *nextmap;
 dvar_t *com_expectedHunkUsage;
 
+bool SV_Loaded()
+{
+	return sv.state == SS_GAME;
+}
+
 void SV_AddOperatorCommands()
 {
 	UNIMPLEMENTED(__FUNCTION__);
@@ -59,7 +70,7 @@ void SV_Init()
 	SV_AddOperatorCommands();
 	sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024u);
 	Dvar_RegisterString("sv_keywords", "", 0x1004u);
-	Dvar_RegisterInt("protocol", 115, 115, 115, 0x1044u);
+	Dvar_RegisterInt("protocol", PROTOCOL_VERSION, PROTOCOL_VERSION, PROTOCOL_VERSION, 0x1044u);
 	sv_mapname = Dvar_RegisterString("mapname", "", 0x1044u);
 	sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, 64, 0x1004u);
 	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 64, 0x1025u);
@@ -256,4 +267,20 @@ void SV_GetUserinfo( int index, char *buffer, int bufferSize )
 	}
 
 	Q_strncpyz( buffer, svs.clients[ index ].userinfo, bufferSize );
+}
+
+void SV_SetUserinfo( int index, const char *val )
+{
+	if ( index < 0 || index >= sv_maxclients->current.integer )
+	{
+		Com_Error( ERR_DROP, "SV_SetUserinfo: bad index %i\n", index );
+	}
+
+	if ( !val )
+	{
+		val = "";
+	}
+
+	Q_strncpyz( svs.clients[index].userinfo, val, sizeof( svs.clients[ index ].userinfo ) );
+	Q_strncpyz( svs.clients[index].name, Info_ValueForKey( val, "name" ), sizeof( svs.clients[index].name ) );
 }

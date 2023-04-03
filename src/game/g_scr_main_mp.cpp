@@ -86,6 +86,11 @@ char* Scr_GetGameTypeNameForScript(const char *pszGameTypeScript)
 	return 0;
 }
 
+qboolean Scr_IsValidGameType(const char *pszGameType)
+{
+	return Scr_GetGameTypeNameForScript(pszGameType) != 0;
+}
+
 void Scr_ValidateLocalizedStringRef(int parmIndex, const char *token, int tokenLen)
 {
 	int charIter;
@@ -414,6 +419,54 @@ void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker
 	Scr_FreeThread(callback);
 }
 
+void Scr_PlayerKilled(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, unsigned int meansOfDeath, int iWeapon, const float *vDir, hitLocation_t hitLoc, int psTimeOffset, int deathAnimDuration)
+{
+	unsigned short hitLocStr;
+	WeaponDef *weaponDef;
+	unsigned short callback;
+
+	Scr_AddInt(deathAnimDuration);
+	Scr_AddInt(psTimeOffset);
+	hitLocStr = G_GetHitLocationString(hitLoc);
+	Scr_AddConstString(hitLocStr);
+	GScr_AddVector(vDir);
+	weaponDef = BG_GetWeaponDef(iWeapon);
+	Scr_AddString(weaponDef->szInternalName);
+
+	if ( meansOfDeath < 0xF )
+		Scr_AddString(modNames[meansOfDeath]);
+	else
+		Scr_AddString("badMOD");
+
+	Scr_AddInt(damage);
+	GScr_AddEntity(attacker);
+	GScr_AddEntity(inflictor);
+	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerkilled, 9u);
+	Scr_FreeThread(callback);
+}
+
+void Scr_PlayerDisconnect(gentity_s *self)
+{
+	unsigned short callback;
+
+	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerdisconnect, 0);
+	Scr_FreeThread(callback);
+}
+
+void Scr_PlayerVote(gentity_s *self, const char *option)
+{
+	Scr_AddString(option);
+	Scr_Notify(self, scr_const.vote, 1u);
+}
+
+void Scr_VoteCalled(gentity_s *self, const char *command, const char *param1, const char *param2)
+{
+	Scr_AddString(param2);
+	Scr_AddString(param1);
+	Scr_AddString(command);
+	Scr_Notify(self, scr_const.call_vote, 3u);
+}
+
 void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t)
 {
 	const char *name;
@@ -490,12 +543,95 @@ void (*Scr_GetFunction(const char **pName, int *type))()
 	return NULL;
 }
 
-extern dvar_t * sv_gametype;
+void Scr_ParseGameTypeList()
+{
+	size_t fileLength;
+	fileHandle_t f;
+	char listbuf[4096];
+	char buffer[1024];
+	char *path;
+	gameTypeScript_t *script;
+	char *token;
+	const char *data;
+	int list;
+	int count;
+	int len;
+	int i;
+	char *filename;
+
+	memset(buffer, 0, sizeof(buffer));
+	count = 0;
+	memset(g_scr_data.gametype.list, 0, sizeof(g_scr_data.gametype.list));
+	list = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, listbuf, sizeof(listbuf));
+	filename = listbuf;
+
+	for ( i = 0; i < list; ++i )
+	{
+		script = &g_scr_data.gametype.list[count];
+		fileLength = strlen(filename);
+
+		if ( *filename == 95 )
+		{
+			filename += fileLength + 1;
+		}
+		else
+		{
+			if ( !I_stricmp(&filename[fileLength - 4], ".gsc") )
+				filename[fileLength - 4] = 0;
+
+			if ( count == 32 )
+			{
+				Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
+				break;
+			}
+
+			I_strncpyz(script->pszScript, filename, 64);
+			I_strlwr(script->pszScript);
+			path = va("maps/mp/gametypes/%s.txt", filename);
+			len = FS_FOpenFileByMode(path, &f, FS_READ);
+
+			if ( len > 0 && len < 1024 )
+			{
+				FS_Read(buffer, len, f);
+				data = buffer;
+				token = Com_Parse(&data);
+				I_strncpyz(script->pszName, token, 64);
+				token = Com_Parse(&data);
+				script->bTeamBased = token && !I_stricmp(token, "team");
+			}
+			else
+			{
+				if ( len > 0 )
+				{
+					Com_Printf("WARNING: GameType description file %s is too big to load.\n", va("maps/mp/gametypes/%s.txt", filename));
+				}
+				else
+				{
+					Com_Printf("WARNING: Could not load GameType description file %s for gametype %s\n", va("maps/mp/gametypes/%s.txt", filename), filename);
+				}
+
+				I_strncpyz(script->pszName, script->pszScript, 64);
+				script->bTeamBased = 0;
+			}
+
+			++count;
+
+			if ( len > 0 )
+				FS_FCloseFile(f);
+
+			filename += fileLength + 1;
+		}
+	}
+
+	g_scr_data.gametype.iNumGameTypes = count;
+}
+
+extern dvar_t *g_gametype;
 void GScr_LoadGameTypeScript()
 {
 	char s[64];
 
-	Com_sprintf(s, sizeof(s), "maps/mp/gametypes/%s", sv_gametype->current.string);
+	Com_sprintf(s, sizeof(s), "maps/mp/gametypes/%s", g_gametype->current.string);
 
 	g_scr_data.gametype.main = Scr_GetFunctionHandle(s, "main", 1);
 	g_scr_data.gametype.startupgametype = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_StartGameType", 1);

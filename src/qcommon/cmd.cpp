@@ -347,6 +347,19 @@ void Cbuf_ExecuteText( int exec_when, const char *text )
 
 /*
 ============
+Cmd_Cmd
+Retrieve the unmodified command string
+For rcon use when you want to transmit without altering quoting
+ATVI Wolfenstein Misc #284
+============
+*/
+char *Cmd_Cmd()
+{
+	return cmd_cmd;
+}
+
+/*
+============
 Cmd_TokenizeString
 Parses the given string into command line tokens.
 The text is copied to a seperate buffer and 0 characters

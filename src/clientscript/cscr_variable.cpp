@@ -2196,6 +2196,11 @@ unsigned int FindEntityId(int entnum, unsigned int classnum)
 		return 0;
 }
 
+void Scr_FreeValue(unsigned int id)
+{
+	RemoveRefToObject(id);
+}
+
 void SafeRemoveVariable(unsigned int parentId, unsigned int name)
 {
 	unsigned int index;

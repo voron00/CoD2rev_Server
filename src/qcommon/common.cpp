@@ -356,6 +356,55 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
+void Info_Print( const char *s )
+{
+	char key[512];
+	char value[512];
+	char    *o;
+	int l;
+
+	if ( *s == '\\' )
+	{
+		s++;
+	}
+	while ( *s )
+	{
+		o = key;
+		while ( *s && *s != '\\' )
+			*o++ = *s++;
+
+		l = o - key;
+		if ( l < 20 )
+		{
+			memset( o, ' ', 20 - l );
+			key[20] = 0;
+		}
+		else
+		{
+			*o = 0;
+		}
+		Com_Printf( "%s", key );
+
+		if ( !*s )
+		{
+			Com_Printf( "MISSING VALUE\n" );
+			return;
+		}
+
+		o = value;
+		s++;
+		while ( *s && *s != '\\' )
+			*o++ = *s++;
+		*o = 0;
+
+		if ( *s )
+		{
+			s++;
+		}
+		Com_Printf( "%s\n", value );
+	}
+}
+
 void Com_PrintMessage( conChannel_t channel, const char *fmt, ... )
 {
 	va_list		argptr;
@@ -676,21 +725,43 @@ void Com_ErrorCleanup( void )
 	com_errorEntered = 0;
 }
 
+int Com_HashKey( const char *string, int maxlen )
+{
+	int register hash, i;
+
+	hash = 0;
+
+	for ( i = 0; i < maxlen && string[i] != '\0'; i++ )
+	{
+		hash += string[i] * ( 119 + i );
+	}
+
+	hash = ( hash ^ ( hash >> 10 ) ^ ( hash >> 20 ) );
+	return hash;
+}
+
 void Com_InitDvars()
 {
-	com_dedicated = Dvar_RegisterInt("dedicated", 2, 0, 2, 4160);
-	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 4097);
-	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 4096);
-	com_developer_script = Dvar_RegisterBool("developer_script", 0, 4096);
-	com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, 4096);
-	com_timescale = Dvar_RegisterFloat("timescale", 1.0, 0.0, 1000.0, 4232);
-	com_fixedtime = Dvar_RegisterInt("fixedtime", 0, 0, 1000, 4224);
-	com_viewlog = Dvar_RegisterInt("viewlog", 0, 0, 2, 4224);
-	sv_paused = Dvar_RegisterInt("sv_paused", 0, 0, 2, 4160);
-	cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 2, 4160);
-	sv_running = Dvar_RegisterBool("sv_running", 0, 4160);
-	com_introPlayed = Dvar_RegisterBool("com_introPlayed", 0, 4097);
-	com_animCheck = Dvar_RegisterBool("com_animCheck", 0, 4096);
+	com_dedicated = Dvar_RegisterInt("dedicated", 2, 0, 2, 0x1040u);
+	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001u);
+	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000u);
+	com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000u);
+	com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, 0x1000u);
+	com_timescale = Dvar_RegisterFloat("timescale", 1.0, 0.001, 1000.0, 0x1088u);
+	com_fixedtime = Dvar_RegisterInt("fixedtime", 0, 0, 1000, 0x1080u);
+	com_viewlog = Dvar_RegisterInt("viewlog", 0, 0, 2, 0x1080u);
+	sv_paused = Dvar_RegisterInt("sv_paused", 0, 0, 2, 0x1040u);
+	cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 2, 0x1040u);
+	com_sv_running = Dvar_RegisterBool("sv_running", 0, 0x1040u);
+	//*((_DWORD *)legacyHacks + 1) = 0;
+	com_introPlayed = Dvar_RegisterBool("com_introPlayed", 0, 0x1001u);
+	com_animCheck = Dvar_RegisterBool("com_animCheck", 0, 0x1000u);
+
+	if ( com_dedicated->current.integer )
+	{
+		if ( !com_viewlog->current.integer )
+			Dvar_SetInt(com_viewlog, 1);
+	}
 }
 
 void Com_RunAutoExec()

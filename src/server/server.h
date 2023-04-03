@@ -50,7 +50,7 @@ typedef struct
 	byte num;
 	char data[256];
 	int dataLen;
-} voices_t;
+} VoicePacket_t;
 #pragma pack(pop)
 
 typedef struct client_s
@@ -83,7 +83,7 @@ typedef struct client_s
 	qboolean		downloadEOF;
 	int				downloadSendTime;
 	int				deltaMessage;
-	int				floodprotect;
+	int				nextReliableTime;
 	int				lastPacketTime;
 	int				lastConnectTime;
 	int				nextSnapshotTime;
@@ -99,7 +99,7 @@ typedef struct client_s
 	unsigned short	clscriptid;
 	int				bot;
 	int				serverId;
-	voices_t		voicedata[40];
+	VoicePacket_t	voicedata[40];
 	int				unsentVoiceData;
 	byte			mutedClients[MAX_CLIENTS];
 	byte			hasVoip;
@@ -276,8 +276,40 @@ void SV_SetConfigstring(unsigned int index, const char *val);
 void SV_GetConfigstring( int index, char *buffer, int bufferSize );
 const char* SV_GetConfigstringConst(int index);
 void SV_GetUserinfo( int index, char *buffer, int bufferSize );
+void SV_SetUserinfo( int index, const char *val );
 
 void SV_AuthorizeIpPacket( netadr_t from );
+void SV_Heartbeat_f(void);
+bool SV_Loaded();
+void SV_FreeClientScriptId(client_s *cl);
+void SV_DropClient(client_s *drop, const char *reason);
+void SV_GameDropClient(int clientNum, const char *reason);
+void SV_GetUsercmd(int clientNum, usercmd_s *cmd);
+void SV_ClientThink(client_s *cl, usercmd_s *cmd);
+int SV_GetGuid(int clientNum);
+qboolean SV_IsBannedGuid(int guid);
+unsigned int SV_FindFreeTempBanSlot();
+void SV_BanGuidBriefly(int guid);
+void SV_BanClient(client_t *cl);
+void SV_UnbanClient(const char *name);
+
+void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta );
+void SV_BotUserMove(client_s *cl);
+void SV_CalcPings( void );
+void SV_CheckTimeouts( void );
+void SV_SetGametype();
+
+void SV_SendMessageToClient( msg_t *msg, client_t *client );
+void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
+void SV_SendClientGameState( client_t *client );
+void SV_DirectConnect( netadr_t from );
+void SVC_RemoteCommand( netadr_t from, msg_t *msg );
+
+void SV_ShowClientUnAckCommands(client_s *client);
+void SV_SendClientSnapshot(client_s *client);
+void SV_ExecuteClientMessage(client_s *cl, msg_t *msg);
+void SV_PacketEvent( netadr_t from, msg_t *msg );
+void SV_ArchiveSnapshot();
 
 qboolean SV_IsLocalClient(int clientNum);
 qboolean SV_MapExists(const char *name);
@@ -311,6 +343,7 @@ void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, 
 void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);
 cachedSnapshot_t* SV_GetCachedSnapshot(int *pArchiveTime);
 void SV_BuildClientSnapshot( client_t *client );
+void SV_WriteSnapshotToClient(client_s *client, msg_t *msg);
 char* SV_AllocSkelMemory(unsigned int size);
 void SV_ResetSkeletonCache();
 int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex);
@@ -322,3 +355,17 @@ int SV_DObjGetBoneIndex(const gentity_s *ent, unsigned int boneName);
 DObjAnimMat* SV_DObjGetMatrixArray(gentity_s *ent);
 bool SV_GetClientPositionsAtTime(int clientNum, int gametime, float *origin);
 void SV_WriteDownloadToClient( client_t *cl, msg_t *msg );
+int SV_GetClientPing(int clientNum);
+void SV_GameSendServerCommand(int clientnum, int svscmd_type, const char *text);
+void SV_GetChallenge( netadr_t from );
+void SVC_Info( netadr_t from );
+void SVC_Status( netadr_t from );
+void SV_ConnectionlessPacket( netadr_t from, msg_t *msg );
+
+bool SV_ClientHasClientMuted(int listener, int talker);
+bool SV_ClientWantsVoiceData(unsigned int clientNum);
+void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacket);
+void SV_UserVoice(client_s *cl, msg_t *msg);
+void SV_PreGameUserVoice(client_s *cl, msg_t *msg);
+void SV_VoicePacket(netadr_t from, msg_t *msg);
+void SV_SendClientVoiceData(client_s *client);

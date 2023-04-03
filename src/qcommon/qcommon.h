@@ -104,7 +104,7 @@ enum errorParm_t
 typedef enum
 {
 	NA_BOT = 0,
-	NA_BAD = 0,
+	NA_BAD = 1,
 	NA_LOOPBACK = 2,
 	NA_BROADCAST = 3,
 	NA_IP = 4,
@@ -190,6 +190,10 @@ typedef void (*xcommand_t)(void);
 #define PORT_SERVER 28960
 #define	PORT_ANY -1
 
+#define AUTHORIZE_SERVER_NAME "cod2master.activision.com"
+#define PORT_AUTHORIZE 20700
+#define AUTHORIZE_TIMEOUT 5000
+
 #define	MAX_RELIABLE_COMMANDS 128
 #define MAX_DOWNLOAD_WINDOW	8
 #define MAX_DOWNLOAD_BLKSIZE 1024
@@ -197,6 +201,8 @@ typedef void (*xcommand_t)(void);
 #define	PACKET_BACKUP 32
 #define PACKET_MASK ( PACKET_BACKUP - 1 )
 #define MAX_QPATH 64
+
+#define MAX_PACKET_USERCMDS     32      // max number of usercmd_t in a packet
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data
  * Compression book.  The ranks are not actually stored, but implicitly defined
@@ -312,6 +318,8 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 unsigned int Com_BlockChecksum( void *buffer, int length );
 unsigned int Com_BlockChecksumKey( void *buffer, int length, int key );
 
+int Com_HashKey( const char *string, int maxlen );
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -323,11 +331,17 @@ void QDECL Com_Printf( const char *fmt, ...);
 void QDECL Com_DPrintf( const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
 void Com_WriteConfigToFile(const char *contents);
-qboolean Com_SafeMode( void );
 
 #ifdef __cplusplus
 }
 #endif
+
+qboolean Com_SafeMode( void );
+int Com_Milliseconds( void );
+void Com_BeginRedirect (char *buffer, int buffersize, void (*flush)( char *) );
+void Com_EndRedirect (void);
+
+void Info_Print( const char *s );
 
 const char *GetBspExtension();
 void Com_LoadBsp(const char *filename);

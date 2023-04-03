@@ -24,6 +24,7 @@ void Cbuf_Execute( void );
 void Cbuf_ExecuteText( int exec_when, const char *text );
 void Cbuf_AddText( const char *text );
 void Cbuf_InsertText( const char *text );
+char *Cmd_Cmd();
 void Cmd_TokenizeString( const char *text_in );
 void Cmd_ExecuteString( const char *text );
 void Cmd_SetAutoComplete(const char *cmdName, const char *dir, const char *ext);

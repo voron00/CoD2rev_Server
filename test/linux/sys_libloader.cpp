@@ -19,7 +19,7 @@ typedef struct
 #define test (*((vec3_t*)( 0x0815D6E8 )))
 #define riflePriorityMap (((char*)( 0x0816778C )))
 
-#define viewLerp_CrouchProne (((viewLerpWaypoint_s*)( 0x08166360 )))
+#define viewLerp_CrouchProne (((vec2_t*)( 0x08157C80 )))
 
 
 void test2()
@@ -44,18 +44,19 @@ void test2()
 
 	//Scr_DumpScriptThreads();
 
-	//for (int i = 0; i < 20; i++)
-	//	Com_Printf("{ %i, %f, %i},\n", viewLerp_CrouchProne[i].iFrac, viewLerp_CrouchProne[i].fViewHeight, viewLerp_CrouchProne[i].iOffset);
+	for (int i = 0; i < 10; i++)
+		Com_Printf("{ %f, %f},\n", viewLerp_CrouchProne[i][0], viewLerp_CrouchProne[i][1]);
 
 
 	// Just print stuff until program segfaults
+	/*
 	for ( int i = 0; i < 19; ++i )
 	{
 		//if (net_fields[i].name == NULL)
 		//	return;
 		Com_Printf("%i,\n", riflePriorityMap[i] );
 	}
-
+	*/
 }
 
 void Sys_RedirectFunctions()
@@ -903,6 +904,9 @@ void Sys_RedirectFunctions()
 	SetJump(0x080D954C, (DWORD)BG_Player_DoControllers);
 	SetJump(0x080DE734, (DWORD)BG_CheckProne);
 
+	SetJump(0x080EFDF0, (DWORD)BG_CalculateWeaponPosition_Sway);
+	SetJump(0x080EFD94, (DWORD)BG_CalculateViewMovementAngles);
+	SetJump(0x080EF52C, (DWORD)BG_CalculateWeaponMovement);
 
 
 
@@ -952,6 +956,16 @@ void Sys_RedirectFunctions()
 	SetJump(0x0811DFF4, (DWORD)Bullet_Fire);
 	SetJump(0x0811E0C2, (DWORD)Weapon_Throw_Grenade);
 	SetJump(0x0811E18A, (DWORD)Weapon_RocketLauncher_Fire);
+	SetJump(0x080F61BE, (DWORD)G_GetPlayerViewOrigin);
+	SetJump(0x0811E3E0, (DWORD)FireWeapon);
+	SetJump(0x0811D3B4, (DWORD)Weapon_Melee);
+	SetJump(0x080FB79C, (DWORD)DeathmatchScoreboardMessage);
+	SetJump(0x080FF2CA, (DWORD)player_die);
+	SetJump(0x080F2B86, (DWORD)ClientEvents);
+	SetJump(0x080F35DA, (DWORD)ClientThink_real);
+	SetJump(0x080F3EA4, (DWORD)ClientThink);
+	SetJump(0x08115AE2, (DWORD)Scr_ParseGameTypeList);
+
 
 
 	// g_combat.cpp
@@ -962,8 +976,36 @@ void Sys_RedirectFunctions()
 
 
 
-	// Temp
+	// Server #2
 	SetJump(0x0808E544, (DWORD)SV_WriteDownloadToClient);
+	SetJump(0x080F6D74, (DWORD)ClientDisconnect);
+	SetJump(0x0808DC8C, (DWORD)SV_DropClient);
+	SetJump(0x0808F510, (DWORD)SV_UserMove);
+	SetJump(0x0809479A, (DWORD)SV_BotUserMove);
+	SetJump(0x0809443E, (DWORD)SV_CalcPings);
+	SetJump(0x080945AC, (DWORD)SV_CheckTimeouts);
+	SetJump(0x080989C6, (DWORD)SV_SendMessageToClient);
+	SetJump(0x0808DECA, (DWORD)SV_SendClientGameState);
+	SetJump(0x0808D0E6, (DWORD)SV_DirectConnect);
+	SetJump(0x080951B4, (DWORD)SVC_RemoteCommand);
+	SetJump(0x080963EC, (DWORD)SV_WriteSnapshotToClient);
+	SetJump(0x08098C0E, (DWORD)SV_SendClientSnapshot);
+	SetJump(0x0809315A, (DWORD)SV_VoicePacket);
+	SetJump(0x08099EC6, (DWORD)SV_SendClientVoiceData);
+	SetJump(0x0808BE54, (DWORD)SV_GetChallenge);
+	SetJump(0x08093980, (DWORD)SVC_Info);
+	SetJump(0x08093288, (DWORD)SVC_Status);
+	SetJump(0x08093F1E, (DWORD)SV_ConnectionlessPacket);
+	SetJump(0x0808F82A, (DWORD)SV_ExecuteClientMessage);
+	SetJump(0x080941AE, (DWORD)SV_PacketEvent);
+	SetJump(0x08098E3A, (DWORD)SV_ArchiveSnapshot);
+	
+	
+	SetJump(0x08090BE6, (DWORD)SV_SetGametype);
+	
+	
+	// g_cmds
+	SetJump(0x080FE998, (DWORD)ClientCommand);
 
 
 	G_RegisterDvars(); // <-- FIX ME

@@ -1,6 +1,7 @@
 #pragma once
 
 #define MAX_MSGLEN				0x4000
+#define MAX_LARGE_MSGLEN		0x20000 // For voice chat and snapshot
 #define MAX_PACKETLEN           1400
 #define FRAGMENT_SIZE           ( MAX_PACKETLEN - 100 )
 
@@ -71,6 +72,7 @@ void NetProf_SendProfile(netchan_t *chan, int iSize, int bFragment);
 void NetProf_ReceiveProfile(netchan_t *chan, int iSize, int bFragment);
 void NetProf_UpdateStatistics(netProfileStream_t *pStream);
 qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
+qboolean NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *data, int len);
 void Netchan_Prepare(netsrc_t src, netchan_t *chan, netadr_t adr, unsigned int qport);
 qboolean Netchan_TransmitNextFragment(netchan_t *chan);
 qboolean Netchan_Transmit(netchan_t *chan, int length, const byte *data);

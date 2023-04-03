@@ -1669,6 +1669,51 @@ void FS_ResetFiles()
 	fs_loadStack = 0;
 }
 
+bool FS_Delete(const char *filename)
+{
+	char ospath[MAX_OSPATH];
+	const char* basepath;
+
+	FS_CheckFileSystemStarted();
+
+	if (!*filename)
+	{
+		return 0;
+	}
+
+	basepath = Dvar_GetString("fs_homepath");
+	FS_BuildOSPath(basepath, fs_gamedir, filename, ospath);
+
+	return remove(ospath) != -1;
+}
+
+int FS_WriteFile(const char* filename, const void* buffer, int size)
+{
+	int actualSize;
+	fileHandle_t f;
+
+	FS_CheckFileSystemStarted();
+
+	f = FS_FOpenFileWrite(filename);
+
+	if (!f)
+	{
+		Com_Printf("Failed to open %s\n", filename);
+		return 0;
+	}
+
+	actualSize = FS_Write(buffer, size, f);
+	FS_FCloseFile(f);
+
+	if (actualSize != size)
+	{
+		FS_Delete(filename);
+		return 0;
+	}
+
+	return 1;
+}
+
 int QDECL FS_ReadFile(const char* qpath, void** buffer)
 {
 	char* buf;

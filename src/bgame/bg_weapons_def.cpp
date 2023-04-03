@@ -14,7 +14,7 @@ unsigned int BG_GetNumWeapons()
 	return bg_iNumWeapons;
 }
 
-WeaponDef* BG_GetWeaponDef(int weaponIndex)
+WeaponDef* QDECL BG_GetWeaponDef(int weaponIndex)
 {
 	return bg_weaponDefs[weaponIndex];
 }

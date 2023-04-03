@@ -1325,3 +1325,27 @@ qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFi
 
 	return iField == iNumFields;
 }
+
+int I_DrawStrlen(const char *str)
+{
+	const char* s;
+	int count;
+
+	s = str;
+	count = 0;
+
+	while (*s)
+	{
+		if (s && *s == '^' && s[1] && s[1] != '^' && s[1] >= '0' && s[1] <= '@')
+		{
+			s += 2;
+		}
+		else
+		{
+			++count;
+			++s;
+		}
+	}
+
+	return count;
+}

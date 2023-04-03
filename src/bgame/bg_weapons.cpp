@@ -17,6 +17,11 @@ bool BG_ValidateWeaponNumber(int weaponIndex)
 	return false;
 }
 
+int QDECL BG_IsAimDownSightWeapon(int weapon)
+{
+	return BG_GetWeaponDef(weapon)->aimDownSight;
+}
+
 bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex)
 {
 	WeaponDef *WeaponDef;
@@ -56,7 +61,7 @@ int BG_GetBinocularsIndex()
 	return 0;
 }
 
-unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps)
+unsigned int QDECL BG_GetViewmodelWeaponIndex(const playerState_s *ps)
 {
 	if ( (ps->pm_flags & 0x20000) != 0 )
 		return BG_GetBinocularsIndex();
@@ -2239,5 +2244,89 @@ void PM_Weapon(pmove_t *pm, pml_t *pml)
 		{
 			ps->weapon = 0;
 		}
+	}
+}
+
+float BG_GetBobCycle(gclient_s *client)
+{
+	return (long double)LOBYTE(client->ps.bobCycle) / 255.0 * 3.141592653589793
+	       + (long double)LOBYTE(client->ps.bobCycle) / 255.0 * 3.141592653589793
+	       + 6.283185307179586;
+}
+
+float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
+{
+	long double v4;
+	float v6;
+	float v7;
+	float v8;
+	float v10;
+	float amplitude;
+
+	if ( ps->viewHeightTarget == 11 )
+	{
+		amplitude = speed * bg_bobAmplitudeProne->current.decimal;
+	}
+	else
+	{
+		if ( ps->viewHeightTarget == 40 )
+			v4 = speed * bg_bobAmplitudeDucked->current.decimal;
+		else
+			v4 = speed * bg_bobAmplitudeStanding->current.decimal;
+		amplitude = v4;
+	}
+	if ( amplitude > (long double)maxAmp )
+		amplitude = maxAmp;
+	v6 = sin(cycle + cycle);
+	v10 = sin(cycle * 4.0 + 1.570796326794897);
+	v7 = v10 * 0.2 + v6;
+	v8 = 0.75 * v7;
+	return v8 * amplitude;
+}
+
+float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
+{
+	long double v4;
+	float v6;
+	float amplitude;
+
+	if ( ps->viewHeightTarget == 11 )
+	{
+		amplitude = speed * bg_bobAmplitudeProne->current.decimal;
+	}
+	else
+	{
+		if ( ps->viewHeightTarget == 40 )
+			v4 = speed * bg_bobAmplitudeDucked->current.decimal;
+		else
+			v4 = speed * bg_bobAmplitudeStanding->current.decimal;
+		amplitude = v4;
+	}
+	if ( amplitude > (long double)maxAmp )
+		amplitude = maxAmp;
+	v6 = sin(cycle);
+	return v6 * amplitude;
+}
+
+void BG_GetSpreadForWeapon(const playerState_s *ps, int weaponIndex, float *minSpread, float *maxSpread)
+{
+	float frac;
+	WeaponDef *weaponDef;
+
+	weaponDef = BG_GetWeaponDef(weaponIndex);
+
+	if ( ps->viewHeightCurrent <= 40.0 )
+	{
+		frac = (ps->viewHeightCurrent - 11.0) / 29.0;
+
+		*minSpread = (weaponDef->hipSpreadDuckedMin - weaponDef->hipSpreadProneMin) * frac + weaponDef->hipSpreadProneMin;
+		*maxSpread = (weaponDef->hipSpreadDuckedMax - weaponDef->hipSpreadProneMax) * frac + weaponDef->hipSpreadProneMax;
+	}
+	else
+	{
+		frac = (ps->viewHeightCurrent - 40.0) / 20.0;
+
+		*minSpread = (weaponDef->hipSpreadStandMin - weaponDef->hipSpreadDuckedMin) * frac + weaponDef->hipSpreadDuckedMin;
+		*maxSpread = (weaponDef->hipSpreadMax - weaponDef->hipSpreadDuckedMax) * frac + weaponDef->hipSpreadDuckedMax;
 	}
 }

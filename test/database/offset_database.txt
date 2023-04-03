@@ -1443,6 +1443,11 @@ SetJump(0x080A5194, (DWORD)MatrixTransposeTransformVector43);
 SetJump(0x080B955A, (DWORD)DObjGeomTraceline);
 SetJump(0x080B8CA6, (DWORD)DObjTraceline);
 SetJump(0x08118C0E, (DWORD)Scr_FreeEntityConstStrings);
+SetJump(0x080EE4AA, (DWORD)BG_GetBobCycle);
+SetJump(0x080EE506, (DWORD)BG_GetVerticalBobFactor);
+SetJump(0x080EE5C6, (DWORD)BG_GetHorizontalBobFactor);
+SetJump(0x0811D3B4, (DWORD)Weapon_Melee);
+SetJump(0x0811D220, (DWORD)Melee_Trace);
 
 
 
@@ -1625,7 +1630,7 @@ SetJump(0x0811B13C, (DWORD)G_TagIndex);
 SetJump(0x080F41C2, (DWORD)SpectatorClientEndFrame);
 SetJump(0x080F40C4, (DWORD)ClientIntermission);
 SetJump(0x08097EDA, (DWORD)SV_GetArchivedClientInfo);
-SetJump(0x080F467C, (DWORD)CanSpectateTeam);
+SetJump(0x080F467C, (DWORD)G_ClientCanSpectateTeam);
 SetJump(0x080FCD40, (DWORD)Cmd_FollowCycle_f);
 SetJump(0x081023F2, (DWORD)HudElem_UpdateClient);
 SetJump(0x080759A6, (DWORD)Scr_AllocStrings);
@@ -1732,6 +1737,8 @@ SetJump(0x080901C2, (DWORD)SV_EntityContact);
 SetJump(0x0808AFE0, (DWORD)SV_MapRestart_f);
 SetJump(0x0808AD76, (DWORD)SV_MapRestart);
 SetJump(0x081003F6, (DWORD)G_GetHitLocationIndexFromString);
+SetJump(0x080F34E0, (DWORD)G_AddPlayerMantleBlockage);
+SetJump(0x080EFD94, (DWORD)BG_CalculateViewMovementAngles);
 
 
 
@@ -2271,6 +2278,10 @@ SetJump(0x0809BE82, (DWORD)SV_SightTraceToEntity);
 SetJump(0x0811A826, (DWORD)Activate_trigger_damage);
 SetJump(0x0811A6EE, (DWORD)Respond_trigger_damage);
 SetJump(0x0811D638, (DWORD)Bullet_RandomSpread);
+SetJump(0x0808F510, (DWORD)SV_UserMove);
+SetJump(0x080AA70C, (DWORD)Com_HashKey);
+SetJump(0x0808E1F0, (DWORD)SV_ClientEnterWorld);
+SetJump(0x080F6954, (DWORD)ClientBegin);
 
 SetJump(0x0805C534, (DWORD)CM_SightTraceCapsuleThroughCapsule);
 SetJump(0x0805C23C, (DWORD)CM_SightTraceSphereThroughSphere);
@@ -2364,7 +2375,7 @@ SetJump(0x080F29CA, (DWORD)ClientInactivityTimer);
 SetJump(0x0808FF0A, (DWORD)SV_GameDropClient);
 SetJump(0x080E6DF4, (DWORD)BG_GetSpeed);
 SetJump(0x080E973E, (DWORD)BG_IsAimDownSightWeapon);
-SetJump(0x080EF52C, (DWORD)BG_CalculateWeaponAngles);
+SetJump(0x080EF52C, (DWORD)BG_CalculateWeaponMovement);
 SetJump(0x080EFDF0, (DWORD)BG_CalculateWeaponPosition_Sway);
 SetJump(0x080DBE96, (DWORD)Mantle_ClearHint);
 SetJump(0x080E4212, (DWORD)PM_DropTimers);
@@ -2445,6 +2456,9 @@ SetJump(0x0811E0C2, (DWORD)Weapon_Throw_Grenade);
 SetJump(0x0810C1F6, (DWORD)fire_grenade);
 SetJump(0x0811E18A, (DWORD)Weapon_RocketLauncher_Fire);
 SetJump(0x0810C4A0, (DWORD)fire_rocket);
+SetJump(0x080FF17A, (DWORD)LookAtKiller);
+SetJump(0x08115EF6, (DWORD)Scr_PlayerDisconnect);
+SetJump(0x080FCAE6, (DWORD)StopFollowing);
 
 
 

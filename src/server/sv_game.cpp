@@ -414,6 +414,52 @@ void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, 
 	sv.gameClientSize = sizeofGameClient;
 }
 
+void SV_GameDropClient(int clientNum, const char *reason)
+{
+	if ( clientNum >= 0 && clientNum < sv_maxclients->current.integer )
+		SV_DropClient(&svs.clients[clientNum], reason);
+}
+
+void SV_GetUsercmd(int clientNum, usercmd_s *cmd)
+{
+	*cmd = svs.clients[clientNum].lastUsercmd;
+}
+
+int SV_GetGuid(int clientNum)
+{
+	if ( clientNum >= 0 && clientNum < sv_maxclients->current.integer )
+		return svs.clients[clientNum].guid;
+	else
+		return 0;
+}
+
+extern dvar_t *sv_gametype;
+void SV_SetGametype()
+{
+	char gametype[64];
+	char *s;
+
+	Dvar_RegisterString("g_gametype", "dm", 0x1024u);
+
+	if ( com_sv_running->current.boolean && G_GetSavePersist() )
+		I_strncpyz(gametype, sv.gametype, sizeof(gametype));
+	else
+		I_strncpyz(gametype, sv_gametype->current.string, sizeof(gametype));
+
+	for ( s = gametype; *s; ++s )
+	{
+		*s = tolower(*s);
+	}
+
+	if ( !Scr_IsValidGameType(gametype) )
+	{
+		Com_Printf("g_gametype %s is not a valid gametype, defaulting to dm\n", gametype);
+		strcpy(gametype, "dm");
+	}
+
+	Dvar_SetString(sv_gametype, gametype);
+}
+
 void SV_ShutdownGameProgs()
 {
 	UNIMPLEMENTED(__FUNCTION__);

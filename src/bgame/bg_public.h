@@ -943,6 +943,48 @@ struct weaponParms
 	const WeaponDef *weapDef;
 };
 
+struct viewState_t
+{
+	playerState_s *ps;
+	int damageTime;
+	int time;
+	float v_dmg_pitch;
+	float v_dmg_roll;
+	float xyspeed;
+	float frametime;
+	float fLastIdleFactor;
+	int *weapIdleTime;
+};
+
+struct weaponState_t
+{
+	const playerState_s *ps;
+	float xyspeed;
+	float frametime;
+	float vLastMoveAng[3];
+	float fLastIdleFactor;
+	int time;
+	int damageTime;
+	float v_dmg_pitch;
+	float v_dmg_roll;
+	float recoilAngles[3];
+	float recoilSpeed[3];
+	float swayAngles[3];
+	int *weapIdleTime;
+};
+
+enum pmtype_t
+{
+	PM_NORMAL = 0x0,
+	PM_NORMAL_LINKED = 0x1,
+	PM_NOCLIP = 0x2,
+	PM_UFO = 0x3,
+	PM_SPECTATOR = 0x4,
+	PM_INTERMISSION = 0x5,
+	PM_DEAD = 0x6,
+	PM_DEAD_LINKED = 0x7,
+};
+
 extern pmoveHandler_t pmoveHandlers[];
 extern int singleClientEvents[];
 
@@ -981,6 +1023,17 @@ bool QDECL Jump_Check(pmove_t *pm, pml_t *pml);
 void QDECL BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 int QDECL BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 
+int QDECL BG_IsAimDownSightWeapon(int weapon);
+unsigned int QDECL BG_GetViewmodelWeaponIndex(const playerState_s *ps);
+WeaponDef* QDECL BG_GetWeaponDef(int weaponIndex);
+void QDECL BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
+
+float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
+float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
+
+void QDECL BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
+void QDECL BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
+
 #ifdef __cplusplus
 }
 #endif
@@ -1005,7 +1058,6 @@ void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
 
 int CL_LocalClient_GetActiveCount();
-unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
 void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml);
 void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml);
 void PM_CheckDuck(pmove_t *pm, pml_t *pml);
@@ -1033,10 +1085,14 @@ int PM_InteruptWeaponWithProneMove(playerState_s *ps);
 void PM_ResetWeaponState(playerState_s *ps);
 void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml);
 void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml);
+float BG_GetBobCycle(gclient_s *client);
+float BG_GetSpeed(const playerState_s *ps, int time);
+void BG_GetSpreadForWeapon(const playerState_s *ps, int weaponIndex, float *minSpread, float *maxSpread);
 
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);
 void BG_StringCopy(unsigned char *member, const char *keyValue);
+bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex);
 
 long BG_StringHashValue( const char *fname );
 long BG_StringHashValue_Lwr( const char *fname );
@@ -1057,7 +1113,6 @@ void Mantle_CreateAnims(void *(*Alloc)(int));
 void Mantle_ShutdownAnims();
 
 unsigned int BG_GetNumWeapons();
-WeaponDef* BG_GetWeaponDef(int weaponIndex);
 void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);
 void PM_WeaponUseAmmo(playerState_s *ps, int weaponIndex, int amount);
 

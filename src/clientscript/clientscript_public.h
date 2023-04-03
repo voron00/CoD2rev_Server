@@ -841,6 +841,7 @@ bool IsFieldObject(unsigned int id);
 bool IsValidArrayIndex(unsigned int index);
 bool IsObjectFree(unsigned int id);
 int Scr_GetClassnumForCharId(char charId);
+void Scr_FreeValue(unsigned int id);
 unsigned int GetInternalVariableIndex(unsigned int index);
 void CopyArray(unsigned int parentId, unsigned int newParentId);
 void ClearArray(unsigned int parentId, VariableValue *value);

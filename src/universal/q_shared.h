@@ -8,6 +8,7 @@
 
 #define PRODUCT_VERSION "1.0"
 #define GAME_STRING "CoD2 MP"
+#define PROTOCOL_VERSION 115
 
 // for windows fastcall option
 #define	QDECL
@@ -391,3 +392,4 @@ void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanF
 qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes, int (*parseSpecialFieldType)(unsigned char *, const char *, const int), void (*parseStrCpy)(unsigned char *, const char *));
 void SetConfigString(char **ppszConfigString, const char *pszKeyValue);
 void SetConfigString2(unsigned char *pMember, const char *pszKeyValue);
+int I_DrawStrlen(const char *str);
