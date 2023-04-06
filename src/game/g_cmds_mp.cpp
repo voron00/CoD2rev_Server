@@ -55,6 +55,28 @@ qboolean G_IsPlaying(gentity_s *ent)
 	return ent->client->sess.sessionState == STATE_PLAYING;
 }
 
+void G_setfog(const char *fogstring)
+{
+	float time;
+	float r;
+	float g;
+	float b;
+	float fDensity;
+	float fFar;
+	float fNear;
+
+	SV_SetConfigstring(0xCu, fogstring);
+
+	level.fFogOpaqueDist = 3.4028235e38;
+	level.fFogOpaqueDistSqrd = 3.4028235e38;
+
+	if ( sscanf(fogstring, "%f %f %f %f %f %f %f", &fNear, &fFar, &fDensity, &r, &g, &b, &time) == 7 && fDensity >= 1.0 )
+	{
+		level.fFogOpaqueDist = fFar - fNear + fNear;
+		level.fFogOpaqueDistSqrd = level.fFogOpaqueDist * level.fFogOpaqueDist;
+	}
+}
+
 extern dvar_t *g_cheats;
 int CheatsOk(gentity_s *ent)
 {
@@ -542,7 +564,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 			if ( (kicknum || !I_stricmp(arg2, "0"))
 			        && kicknum < MAX_CLIENTS
-			        && level.clients[kicknum].sess.connected == CS_CONNECTED )
+			        && level.clients[kicknum].sess.connected == CON_CONNECTED )
 			{
 				I_strncpyz(name, level.clients[kicknum].sess.state.name, sizeof(name));
 				I_CleanStr(name);
@@ -556,7 +578,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 		{
 			for ( j = 0; j < MAX_CLIENTS; ++j )
 			{
-				if ( level.clients[j].sess.connected == CS_CONNECTED )
+				if ( level.clients[j].sess.connected == CON_CONNECTED )
 				{
 					I_strncpyz(name, level.clients[j].sess.state.name, sizeof(name));
 					I_CleanStr(name);

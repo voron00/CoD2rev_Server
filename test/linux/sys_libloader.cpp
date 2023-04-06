@@ -44,8 +44,11 @@ void test2()
 
 	//Scr_DumpScriptThreads();
 
-	for (int i = 0; i < 10; i++)
-		Com_Printf("{ %f, %f},\n", viewLerp_CrouchProne[i][0], viewLerp_CrouchProne[i][1]);
+	/*
+		for (int i = 0; i < 132; i++)
+			printf("{ \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", %i, %i, %i, %i, %i },\n", bg_itemlist[i].classname, bg_itemlist[i].pickup_sound, bg_itemlist[i].world_model, bg_itemlist[i].view_model, bg_itemlist[i].icon, bg_itemlist[i].pickup_name,
+			bg_itemlist[i].quantity, bg_itemlist[i].giType, bg_itemlist[i].giWeaponIndex, bg_itemlist[i].giClipIndex, bg_itemlist[i].giSharedAmmoCapIndex);
+			*/
 
 
 	// Just print stuff until program segfaults
@@ -57,12 +60,13 @@ void test2()
 		Com_Printf("%i,\n", riflePriorityMap[i] );
 	}
 	*/
+
 }
 
 void Sys_RedirectFunctions()
 {
-	//SetJump(0x08094F02, (DWORD)test);
 	//SetJump(0x08094F02, (DWORD)test2);
+	//SetJump(0x0806283E, (DWORD)test2);
 
 
 
@@ -712,7 +716,7 @@ void Sys_RedirectFunctions()
 
 	// Random client stuff
 	SetJump(0x080F5E80, (DWORD)SetClientViewAngle);
-	SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
+	SetJump(0x0811B0F8, (DWORD)G_GetModel);
 	SetJump(0x0811B00C, (DWORD)G_ModelIndex);
 	SetJump(0x0811B422, (DWORD)G_OverrideModel);
 	SetJump(0x080F6506, (DWORD)ClientUserinfoChanged);
@@ -965,7 +969,14 @@ void Sys_RedirectFunctions()
 	SetJump(0x080F35DA, (DWORD)ClientThink_real);
 	SetJump(0x080F3EA4, (DWORD)ClientThink);
 	SetJump(0x08115AE2, (DWORD)Scr_ParseGameTypeList);
+	SetJump(0x0811B20E, (DWORD)G_DObjUpdate);
+	SetJump(0x08118320, (DWORD)G_ParseEntityFields);
 
+	SetJump(0x081083B2, (DWORD)G_InitTurrets);
+	SetJump(0x0810A21A, (DWORD)G_SpawnTurret);
+
+	SetJump(0x081186D2, (DWORD)G_CallSpawnEntity);
+	SetJump(0x081185EA, (DWORD)G_CallSpawn);
 
 
 	// g_combat.cpp
@@ -999,14 +1010,51 @@ void Sys_RedirectFunctions()
 	SetJump(0x0808F82A, (DWORD)SV_ExecuteClientMessage);
 	SetJump(0x080941AE, (DWORD)SV_PacketEvent);
 	SetJump(0x08098E3A, (DWORD)SV_ArchiveSnapshot);
-	
-	
+
+
 	SetJump(0x08090BE6, (DWORD)SV_SetGametype);
-	
-	
+	SetJump(0x0808FAC6, (DWORD)SV_AddTestClient);
+
+
 	// g_cmds
 	SetJump(0x080FE998, (DWORD)ClientCommand);
 
+
+	// Items
+	SetJump(0x08104EA2, (DWORD)IsItemRegistered);
+	SetJump(0x08104C84, (DWORD)RegisterItem);
+	SetJump(0x08104AEC, (DWORD)SaveRegisteredItems);
+	SetJump(0x08104A02, (DWORD)ClearRegisteredItems);
+	SetJump(0x08104D86, (DWORD)G_RegisterWeapon);
+	//SetJump(0x0811E940, (DWORD)G_GetWeaponIndexForName);
+	SetJump(0x08103D3C, (DWORD)LaunchItem);
+	SetJump(0x0810404E, (DWORD)Drop_Weapon);
+
+
+	// Scr functions
+	SetJump(0x08118E82, (DWORD)Scr_GetEnt);
+	SetJump(0x08118F7E, (DWORD)Scr_GetEntArray);
+	SetJump(0x0810E9BE, (DWORD)GScr_SetDvar);
+	SetJump(0x0810ECE4, (DWORD)GScr_GetAnimLength);
+	SetJump(0x08110514, (DWORD)Scr_Objective_Add);
+	SetJump(0x08111684, (DWORD)Scr_SightTracePassed);
+	SetJump(0x081128EC, (DWORD)GScr_GetMoveDelta);
+	SetJump(0x08112A04, (DWORD)GScr_GetAngleDelta);
+	SetJump(0x08111B82, (DWORD)GScr_CastInt);
+	SetJump(0x08112490, (DWORD)Scr_PrecacheItem);
+	SetJump(0x08112FDE, (DWORD)Scr_PlayLoopedFX);
+	SetJump(0x080FFE10, (DWORD)G_RadiusDamage);
+	SetJump(0x08114C98, (DWORD)GScr_OpenFile);
+	SetJump(0x08115138, (DWORD)GScr_FReadLn);
+	SetJump(0x0810F392, (DWORD)ScrCmd_LinkTo);
+	
+	
+	
+	SetJump(0x0810B4D8, (DWORD)G_ExplodeMissile);
+	SetJump(0x0810381C, (DWORD)Touch_Item);
+	SetJump(0x08109672, (DWORD)turret_think_client);
+	SetJump(0x081099D6, (DWORD)turret_think);
+	
 
 	G_RegisterDvars(); // <-- FIX ME
 }

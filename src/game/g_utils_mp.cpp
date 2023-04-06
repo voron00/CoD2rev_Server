@@ -114,7 +114,22 @@ int G_TagIndex(const char *name)
 	return G_FindConfigstringIndex(name, 110, 32, 1, 0);
 }
 
-XModel* G_CachedModelForIndex(int modelIndex)
+int G_SoundAliasIndex(const char *name)
+{
+	return G_FindConfigstringIndex(name, 590, 256, 1, 0);
+}
+
+int G_ShellShockIndex(const char *name)
+{
+	return G_FindConfigstringIndex(name, 1166, 16, 1, 0);
+}
+
+int G_EffectIndex(const char *name)
+{
+	return G_FindConfigstringIndex(name, 846, 64, level.initializing, "effect");
+}
+
+XModel* G_GetModel(int modelIndex)
 {
 	return cached_models[modelIndex];
 }
@@ -177,7 +192,7 @@ void G_SetOrigin(gentity_s *ent, const float *origin)
 	ent->s.pos.trType = TR_STATIONARY;
 	ent->s.pos.trTime = 0;
 	ent->s.pos.trDuration = 0;
-	VectorSet(ent->s.pos.trDelta, 0, 0, 0);
+	VectorClear(ent->s.pos.trDelta);
 	VectorCopy(origin, ent->r.currentOrigin);
 }
 
@@ -187,8 +202,14 @@ void G_SetAngle(gentity_s *ent, const float *angle)
 	ent->s.apos.trType = TR_STATIONARY;
 	ent->s.apos.trTime = 0;
 	ent->s.apos.trDuration = 0;
-	VectorSet(ent->s.pos.trDelta, 0, 0, 0);
+	VectorClear(ent->s.apos.trDelta);
 	VectorCopy(angle, ent->r.currentAngles);
+}
+
+void G_SetConstString(unsigned short *to, const char *from)
+{
+	Scr_SetString(to, 0);
+	*to = SL_GetString(from, 0);
 }
 
 void G_DObjCalcPose(gentity_s *ent)
@@ -228,6 +249,28 @@ void G_DObjCalcBone(gentity_s *ent, int boneIndex)
 
 		SV_DObjCalcSkel(ent, partBits);
 	}
+}
+
+int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float (*tagMat)[3])
+{
+	float ent_axis[4][3];
+	DObjAnimMat *mat;
+	float axis[3][3];
+
+	mat = G_DObjGetLocalTagMatrix(ent, tagName);
+
+	if ( !mat )
+		return 0;
+
+	AnglesToAxis(ent->r.currentAngles, ent_axis);
+	ent_axis[3][0] = ent->r.currentOrigin[0];
+	ent_axis[3][1] = ent->r.currentOrigin[1];
+	ent_axis[3][2] = ent->r.currentOrigin[2];
+	ConvertQuatToMat(mat, axis);
+	MatrixMultiply(axis, ent_axis, tagMat);
+	MatrixTransformVector43(mat->trans, ent_axis, &(*tagMat)[9]);
+
+	return 1;
 }
 
 float G_random()
@@ -481,6 +524,18 @@ gentity_s* G_TempEntity(vec3_t origin, int event)
 	return ent;
 }
 
+void G_PlaySoundAlias(gentity_s *ent, byte alias)
+{
+	if ( alias )
+		G_AddEvent(ent, EV_SOUND_ALIAS, alias);
+}
+
+void G_AddPredictableEvent(gentity_s *ent, int event, int eventParm)
+{
+	if ( ent->client )
+		BG_AddPredictableEventToPlayerstate(event, eventParm, &ent->client->ps);
+}
+
 DObjAnimMat* G_DObjGetLocalTagMatrix(gentity_s *ent, unsigned int tagName)
 {
 	int boneIndex;
@@ -509,6 +564,95 @@ int G_DObjGetWorldTagPos(gentity_s *ent, unsigned int tagName, float *pos)
 	MatrixTransformVector43(mat->trans, ent_axis, pos);
 
 	return 1;
+}
+
+void G_SafeDObjFree(gentity_s *ent)
+{
+	Com_SafeServerDObjFree(ent->s.number);
+}
+
+void G_UpdateTagInfoOfChildren(gentity_s *parent, int bHasDObj)
+{
+	tagInfo_s *tagInfo;
+
+	tagInfo = parent->tagInfo;
+
+	if ( tagInfo->name )
+	{
+		if ( !bHasDObj || (tagInfo->index = SV_DObjGetBoneIndex(tagInfo->parent, tagInfo->name), tagInfo->index < 0) )
+			G_EntUnlink(parent);
+	}
+	else
+	{
+		tagInfo->index = -1;
+	}
+}
+
+void G_UpdateTags(gentity_s *ent, int bHasDObj)
+{
+	gentity_s *next;
+	gentity_s *parent;
+
+	for ( parent = ent->tagChildren; parent; parent = next )
+	{
+		next = parent->tagInfo->next;
+		G_UpdateTagInfoOfChildren(parent, bHasDObj);
+	}
+}
+
+void G_DObjUpdate(gentity_s *ent)
+{
+	int i;
+	int numModels;
+	DObjModel_s dobjModels[8];
+	XModel *model;
+	int modelIndex;
+
+	if ( !ent->client )
+	{
+		G_SafeDObjFree(ent);
+		modelIndex = ent->model;
+
+		if ( modelIndex )
+		{
+			model = G_GetModel(modelIndex);
+			dobjModels->model = model;
+			dobjModels->parentModelName = 0;
+			dobjModels->ignoreCollision = 0;
+			numModels = 1;
+
+			if ( ent->s.eType == ET_GENERAL || ent->s.eType == ET_SCRIPTMOVER || ent->s.eType == ET_TURRET )
+				ent->s.index = modelIndex;
+
+			for ( i = 0; i < 7; ++i )
+			{
+				modelIndex = ent->attachModelNames[i];
+
+				if ( modelIndex )
+				{
+					dobjModels[numModels].model = G_GetModel(modelIndex);
+					dobjModels[numModels].parentModelName = SL_ConvertToString(ent->attachTagNames[i]);
+					dobjModels[numModels].ignoreCollision = ((int)ent->attachIgnoreCollision >> i) & 1;
+					numModels++;
+				}
+			}
+
+			Com_ServerDObjCreate(dobjModels, numModels, 0, ent->s.number);
+			G_UpdateTags(ent, 1);
+		}
+		else
+		{
+			G_UpdateTags(ent, 0);
+		}
+	}
+}
+
+int G_XModelBad(int index)
+{
+	XModel *model;
+
+	model = G_GetModel(index);
+	return XModelBad(model);
 }
 
 /*
@@ -546,4 +690,266 @@ const char    *vtosf( const vec3_t v )
 	Com_sprintf( s, 64, "(%f %f %f)", v[0], v[1], v[2] );
 
 	return s;
+}
+
+void G_EntDetachAll(gentity_s *ent)
+{
+	int i;
+
+	for ( i = 0; i <= 6; ++i )
+	{
+		ent->attachModelNames[i] = 0;
+		Scr_SetString(&ent->attachTagNames[i], 0);
+	}
+
+	ent->attachIgnoreCollision = 0;
+	G_DObjUpdate(ent);
+}
+
+int G_EntDetach(gentity_s *ent, const char *modelName, unsigned int tagName)
+{
+	const char *name;
+	byte collisionbits;
+	int i;
+
+	for ( i = 0; ; ++i )
+	{
+		if ( i > 6 )
+			return 0;
+
+		if ( ent->attachTagNames[i] == tagName )
+		{
+			name = G_ModelName(ent->attachModelNames[i]);
+
+			if ( !strcasecmp(name, modelName) )
+				break;
+		}
+	}
+
+	ent->attachModelNames[i] = 0;
+	Scr_SetString(&ent->attachTagNames[i], 0);
+
+	while ( i <= 5 )
+	{
+		ent->attachModelNames[i] = ent->attachModelNames[i + 1];
+		ent->attachTagNames[i] = ent->attachTagNames[i + 1];
+
+		if ( (((int)ent->attachIgnoreCollision >> (i + 1)) & 1) != 0 )
+			collisionbits = ent->attachIgnoreCollision | (1 << i);
+		else
+			collisionbits = ent->attachIgnoreCollision & ~(unsigned char)(1 << i);
+
+		ent->attachIgnoreCollision = collisionbits;
+		++i;
+	}
+
+	ent->attachModelNames[i] = 0;
+	ent->attachTagNames[i] = 0;
+	ent->attachIgnoreCollision &= ~(unsigned char)(1 << i);
+
+	G_DObjUpdate(ent);
+
+	return 1;
+}
+
+int G_EntAttach(gentity_s *ent, const char *modelName, unsigned int tagName, int ignoreCollision)
+{
+	int i;
+
+	for ( i = 0; ; ++i )
+	{
+		if ( i > 6 )
+			return 0;
+
+		if ( !ent->attachModelNames[i] )
+			break;
+	}
+
+	ent->attachModelNames[i] = G_ModelIndex(modelName);
+	Scr_SetString(&ent->attachTagNames[i], tagName);
+
+	if ( ignoreCollision )
+		ent->attachIgnoreCollision |= 1 << i;
+
+	G_DObjUpdate(ent);
+
+	return 1;
+}
+
+int G_EntLinkToInternal(gentity_s *ent, gentity_s *parent, unsigned int tagName)
+{
+	int index;
+	gentity_s *checkEnt;
+	tagInfo_s *tag;
+
+	G_EntUnlink(ent);
+
+	if ( tagName )
+	{
+		if ( !SV_DObjExists(parent) )
+			return 0;
+
+		index = SV_DObjGetBoneIndex(parent, tagName);
+
+		if ( index < 0 )
+			return 0;
+	}
+	else
+	{
+		index = -1;
+	}
+
+	for ( checkEnt = parent; ; checkEnt = checkEnt->tagInfo->parent )
+	{
+		if ( checkEnt == ent )
+			return 0;
+
+		if ( !checkEnt->tagInfo )
+			break;
+	}
+
+	tag = (tagInfo_s *)MT_Alloc(sizeof(tagInfo_s));
+	tag->parent = parent;
+	tag->name = 0;
+	Scr_SetString(&tag->name, tagName);
+	tag->next = parent->tagChildren;
+	tag->index = index;
+	memset(tag->axis, 0, sizeof(tag->axis));
+	parent->tagChildren = ent;
+	ent->tagInfo = tag;
+	memset(tag->parentInvAxis, 0, sizeof(tag->parentInvAxis));
+
+	return 1;
+}
+
+int G_EntLinkToWithOffset(gentity_s *ent, gentity_s *parent, unsigned int tagName, const float *originOffset, const float *anglesOffset)
+{
+	tagInfo_s *tagInfo;
+
+	if ( !G_EntLinkToInternal(ent, parent, tagName) )
+		return 0;
+
+	tagInfo = ent->tagInfo;
+	AnglesToAxis(anglesOffset, tagInfo->axis);
+	VectorCopy(originOffset, tagInfo->axis[3]);
+
+	return 1;
+}
+
+void G_CalcTagParentAxis(gentity_s *ent, float (*parentAxis)[3])
+{
+	float *currentOrigin;
+	tagInfo_s *tagInfo;
+	DObj *obj;
+	float tempAxis[4][3];
+	gentity_s *parent;
+	DObjAnimMat *mat;
+	float axis[3][3];
+
+	tagInfo = ent->tagInfo;
+	parent = tagInfo->parent;
+	obj = Com_GetServerDObj(parent->s.number);
+
+	if ( tagInfo->index >= 0 && obj )
+	{
+		AnglesToAxis(parent->r.currentAngles, tempAxis);
+		tempAxis[3][0] = parent->r.currentOrigin[0];
+		tempAxis[3][1] = parent->r.currentOrigin[1];
+		tempAxis[3][2] = parent->r.currentOrigin[2];
+		G_DObjCalcBone(parent, tagInfo->index);
+		mat = &SV_DObjGetMatrixArray(parent)[tagInfo->index];
+		ConvertQuatToMat(mat, axis);
+		MatrixMultiply(axis, tempAxis, parentAxis);
+		MatrixTransformVector43(mat->trans, tempAxis, &(*parentAxis)[9]);
+	}
+	else
+	{
+		AnglesToAxis(parent->r.currentAngles, parentAxis);
+		currentOrigin = parent->r.currentOrigin;
+		(*parentAxis)[9] = parent->r.currentOrigin[0];
+		(*parentAxis)[10] = currentOrigin[1];
+		(*parentAxis)[11] = currentOrigin[2];
+	}
+}
+
+void G_CalcTagAxis(gentity_s *ent, int bAnglesOnly)
+{
+	tagInfo_s *tagInfo;
+	float invParentAxis[4][3];
+	float parentAxis[4][3];
+	float axis[4][3];
+
+	G_CalcTagParentAxis(ent, parentAxis);
+	AnglesToAxis(ent->r.currentAngles, axis);
+	tagInfo = ent->tagInfo;
+
+	if ( bAnglesOnly )
+	{
+		MatrixTranspose(parentAxis, invParentAxis);
+		MatrixMultiply(axis, invParentAxis, tagInfo->axis);
+	}
+	else
+	{
+		MatrixInverseOrthogonal43(parentAxis, invParentAxis);
+		axis[3][0] = ent->r.currentOrigin[0];
+		axis[3][1] = ent->r.currentOrigin[1];
+		axis[3][2] = ent->r.currentOrigin[2];
+		MatrixMultiply43(axis, invParentAxis, tagInfo->axis);
+	}
+}
+
+int G_EntLinkTo(gentity_s *ent, gentity_s *parent, unsigned int tagName)
+{
+	if ( !G_EntLinkToInternal(ent, parent, tagName) )
+		return 0;
+
+	G_CalcTagAxis(ent, 0);
+	return 1;
+}
+
+void G_SetFixedLink(gentity_s *ent, int eAngles)
+{
+	tagInfo_s *tagInfo;
+	float parentAxis[4][3];
+	float axis[4][3];
+
+	G_CalcTagParentAxis(ent, parentAxis);
+	tagInfo = ent->tagInfo;
+
+	if ( eAngles )
+	{
+		if ( eAngles == 1 )
+		{
+			MatrixMultiply43(tagInfo->axis, parentAxis, axis);
+			ent->r.currentOrigin[0] = axis[3][0];
+			ent->r.currentOrigin[1] = axis[3][1];
+			ent->r.currentOrigin[2] = axis[3][2];
+			ent->r.currentAngles[1] = vectoyaw(axis[0]);
+		}
+		else if ( eAngles == 2 )
+		{
+			MatrixTransformVector43(tagInfo->axis[3], parentAxis, axis[3]);
+			ent->r.currentOrigin[0] = axis[3][0];
+			ent->r.currentOrigin[1] = axis[3][1];
+			ent->r.currentOrigin[2] = axis[3][2];
+		}
+	}
+	else
+	{
+		MatrixMultiply43(tagInfo->axis, parentAxis, axis);
+		ent->r.currentOrigin[0] = axis[3][0];
+		ent->r.currentOrigin[1] = axis[3][1];
+		ent->r.currentOrigin[2] = axis[3][2];
+		AxisToAngles(axis, ent->r.currentAngles);
+	}
+}
+
+void G_GeneralLink(gentity_s *ent)
+{
+	G_SetFixedLink(ent, 0);
+	G_SetOrigin(ent, ent->r.currentOrigin);
+	G_SetAngle(ent, ent->r.currentAngles);
+	ent->s.pos.trType = TR_INTERPOLATE;
+	ent->s.apos.trType = TR_INTERPOLATE;
+	SV_LinkEntity(ent);
 }

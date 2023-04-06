@@ -22,13 +22,33 @@ vec2_t traceOffsets[] =
 	{ -1.000000, -1.000000},
 };
 
+qboolean LogAccuracyHit(gentity_s *target, gentity_s *attacker)
+{
+	if ( !target->takedamage )
+		return 0;
+
+	if ( target == attacker )
+		return 0;
+
+	if ( !target->client )
+		return 0;
+
+	if ( !attacker->client )
+		return 0;
+
+	if ( target->client->ps.pm_type <= PM_INTERMISSION )
+		return OnSameTeam(target, attacker) == 0;
+
+	return 0;
+}
+
 extern dvar_t *sv_fps;
 extern dvar_t *g_antilag;
 
 void G_AntiLagRewindClientPos(int gameTime, AntilagClientStore *antilagStore)
 {
 	vec3_t origin;
-	int snapshotTime;
+	//int snapshotTime;
 	int clientNum;
 
 	if ( g_antilag->current.boolean )
@@ -39,11 +59,11 @@ void G_AntiLagRewindClientPos(int gameTime, AntilagClientStore *antilagStore)
 		{
 			for ( clientNum = 0; clientNum < level.maxclients; ++clientNum )
 			{
-				if ( level.clients[clientNum].sess.connected == CS_CONNECTED
+				if ( level.clients[clientNum].sess.connected == CON_CONNECTED
 				        && level.clients[clientNum].sess.sessionState == STATE_PLAYING
 				        && SV_GetClientPositionsAtTime(clientNum, gameTime, origin) )
 				{
-					snapshotTime = gameTime;
+					//snapshotTime = gameTime;
 					memcpy(antilagStore->realClientPositions[clientNum], g_entities[clientNum].r.currentOrigin, sizeof(antilagStore->realClientPositions[clientNum]));
 					SV_UnlinkEntity(&g_entities[clientNum]);
 					memcpy(g_entities[clientNum].r.currentOrigin, origin, sizeof(vec3_t));
@@ -99,9 +119,9 @@ void Weapon_RocketLauncher_Fire(gentity_s *ent, float spread, weaponParms *targe
 	vec3_t kickBack;
 
 	kickBack[1] = 16.0;
-	temp = tan(spread * 0.0174532925199433);
+	temp = tan(spread * 0.017453292);
 	fAimOffset = temp * 16.0;
-	Bullet_RandomDir(kickBack, &scale);
+	gunrandom(kickBack, &scale);
 	kickBack[0] = kickBack[0] * fAimOffset;
 	scale = scale * fAimOffset;
 	VectorScale(targetOffset->forward, 16.0, dir);
@@ -124,6 +144,86 @@ void G_CalcMuzzlePoints(const gentity_s *ent, weaponParms *wp)
 	angles[1] = ent->client->fGunYaw;
 	AngleVectors(angles, wp->forward, wp->right, wp->up);
 	G_GetPlayerViewOrigin((gentity_s *)ent, wp->muzzleTrace);
+}
+
+void G_SetEquippedOffHand(int clientNum, int offHandIndex)
+{
+	SV_GameSendServerCommand(clientNum, 1, va("%c %i", 67, offHandIndex));
+}
+
+int G_GivePlayerWeapon(playerState_s *ps, int weapon)
+{
+	int offhand;
+	unsigned int altWeapon;
+	WeaponDef *weaponDef;
+	WeaponDef *altWeaponDef;
+
+	if ( COM_BitTest(ps->weapons, weapon) )
+		return 0;
+
+	altWeaponDef = BG_GetWeaponDef(weapon);
+
+	if ( altWeaponDef->weaponClass == WEAPCLASS_TURRET )
+		return 0;
+
+	if ( altWeaponDef->weaponClass == WEAPCLASS_NON_PLAYER )
+		return 0;
+
+	COM_BitSet(ps->weapons, weapon);
+	COM_BitClear(ps->weaponrechamber, weapon);
+
+	if ( altWeaponDef->weaponClass == WEAPCLASS_ITEM )
+		return 1;
+
+	if ( altWeaponDef->offhandClass )
+	{
+		if ( ps->offHandIndex )
+		{
+			if ( BG_WeaponAmmo(ps, ps->offHandIndex) <= 0 )
+			{
+				weaponDef = BG_GetWeaponDef(ps->offHandIndex);
+				offhand = BG_GetFirstAvailableOffhand(ps, weaponDef->offhandClass);
+
+				if ( offhand )
+					ps->offHandIndex = offhand;
+				else
+					ps->offHandIndex = weapon;
+
+				G_SetEquippedOffHand(ps->clientNum, ps->offHandIndex);
+			}
+		}
+		else
+		{
+			ps->offHandIndex = weapon;
+			G_SetEquippedOffHand(ps->clientNum, ps->offHandIndex);
+		}
+
+		return 1;
+	}
+	else
+	{
+		if ( (unsigned int)(altWeaponDef->weaponSlot - 1) <= 1 )
+		{
+			if ( ps->weaponslots[1] )
+			{
+				if ( !ps->weaponslots[2] )
+					ps->weaponslots[2] = weapon;
+			}
+			else
+			{
+				ps->weaponslots[1] = weapon;
+			}
+		}
+		for ( altWeapon = altWeaponDef->altWeaponIndex;
+		        altWeapon && !COM_BitTest(ps->weapons, altWeapon);
+		        altWeapon = BG_GetWeaponDef(altWeapon)->altWeaponIndex )
+		{
+			COM_BitSet(ps->weapons, altWeapon);
+			COM_BitClear(ps->weaponrechamber, weapon);
+		}
+
+		return 1;
+	}
 }
 
 void FireWeapon(gentity_s *ent, int gametime)
@@ -263,4 +363,12 @@ void G_UseOffHand(gentity_s *ent)
 	wp.weapDef = BG_GetWeaponDef(ent->client->ps.offHandIndex);
 	G_CalcMuzzlePoints(ent, &wp);
 	Weapon_Throw_Grenade(ent, ent->client->ps.offHandIndex, &wp);
+}
+
+int G_GetWeaponIndexForName(const char *name)
+{
+	if ( level.initializing )
+		return BG_GetWeaponIndexForName(name, G_RegisterWeapon);
+	else
+		return BG_FindWeaponIndexForName(name);
 }

@@ -21,6 +21,82 @@ int DObjHasContents(DObj_s *obj, int contentmask)
 	return 0;
 }
 
+const char* DObjInfoGetBoneName(const DObj_s *dobj, int index)
+{
+	int numBones;
+	XModel *model;
+	int count;
+	int i;
+
+	count = 0;
+
+	for ( i = 0; i < dobj->numModels; ++i )
+	{
+		model = dobj->models[i];
+		numBones = model->modelParts->numBones;
+
+		if ( index - count < numBones )
+			return SL_ConvertToString((*model->modelParts->boneNames)[index - count]);
+
+		count += numBones;
+	}
+
+	return 0;
+}
+
+void DObjDumpInfo(const DObj_s *obj)
+{
+	XModel *model;
+	byte *partName;
+	int bones;
+	int numModels;
+	int numBones;
+	int i;
+	int j;
+
+	if ( obj )
+	{
+		Com_Printf("\nModels:\n");
+		numModels = obj->numModels;
+		bones = 0;
+
+		for ( i = 0; i < numModels; ++i )
+		{
+			model = obj->models[i];
+			Com_Printf("%d: '%s'\n", bones, model->name);
+			bones += model->modelParts->numBones;
+		}
+
+		Com_Printf("\nBones:\n");
+		numBones = obj->numBones;
+
+		for ( j = 0; j < numBones; ++j )
+		{
+			Com_Printf("Bone %d: '%s'\n", j, DObjInfoGetBoneName(obj, j));
+		}
+
+		if ( obj->duplicateParts )
+		{
+			Com_Printf("\nPart duplicates:\n");
+
+			for ( partName = (byte *)(SL_ConvertToString(obj->duplicateParts) + 16); *partName; partName += 2 )
+			{
+				Com_Printf("%d ('%s') -> %d ('%s')\n", *partName - 1, DObjInfoGetBoneName(obj, *partName - 1), partName[1] - 1, DObjInfoGetBoneName(obj, partName[1] - 1));
+			}
+		}
+		else
+		{
+			Com_Printf("\nNo part duplicates.\n");
+		}
+
+		Com_Printf("\n");
+	}
+	else
+	{
+		Com_Printf("No Dobj\n");
+	}
+}
+
 void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results)
 {
 	int boneIndex;

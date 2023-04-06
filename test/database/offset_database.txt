@@ -480,7 +480,7 @@ SetJump(0x0808FF44, (DWORD)SV_SetBrushModel);
 SetJump(0x08079790, (DWORD)Scr_SetString);
 SetJump(0x080DCAE6, (DWORD)BG_FindItemForWeapon);
 SetJump(0x08090534, (DWORD)SV_XModelGet);
-SetJump(0x0811B0F8, (DWORD)G_CachedModelForIndex);
+SetJump(0x0811B0F8, (DWORD)G_GetModel);
 SetJump(0x08090A5A, (DWORD)SV_DObjExists);
 SetJump(0x0806289C, (DWORD)Com_GetServerDObj);
 SetJump(0x08090584, (DWORD)SV_DObjDumpInfo);
@@ -584,7 +584,7 @@ SetJump(0x0810F324, (DWORD)ScrCmd_GetAttachIgnoreCollision);
 SetJump(0x0810F392, (DWORD)ScrCmd_LinkTo);
 SetJump(0x0810F5A8, (DWORD)ScrCmd_Unlink);
 SetJump(0x0810F5CA, (DWORD)ScrCmd_EnableLinkTo);
-SetJump(0x0810E03A, (DWORD)Scr_EntityForRef);
+SetJump(0x0810E03A, (DWORD)GetEntity);
 SetJump(0x08084E30, (DWORD)Scr_ObjectError);
 SetJump(0x0810E074, (DWORD)GetPlayerEntity);
 SetJump(0x08113E1A, (DWORD)GScr_ShellShock);
@@ -1454,7 +1454,7 @@ SetJump(0x0811D220, (DWORD)Melee_Trace);
 SetJump(0x0805208A, (DWORD)CM_SaveLump);
 SetJump(0x08084788, (DWORD)Scr_GetFunc);
 SetJump(0x0808481E, (DWORD)Scr_GetEntityRef);
-SetJump(0x08101988, (DWORD)Scr_HudElemForRef);
+SetJump(0x08101988, (DWORD)HECmd_GetHudElem);
 SetJump(0x0810178E, (DWORD)Scr_FreeHudElemConstStrings);
 SetJump(0x0807DF90, (DWORD)Scr_FreeEntityNum);
 SetJump(0x08084BD2, (DWORD)Scr_AddEntityNum);
@@ -2459,6 +2459,10 @@ SetJump(0x0810C4A0, (DWORD)fire_rocket);
 SetJump(0x080FF17A, (DWORD)LookAtKiller);
 SetJump(0x08115EF6, (DWORD)Scr_PlayerDisconnect);
 SetJump(0x080FCAE6, (DWORD)StopFollowing);
+SetJump(0x080DCB02, (DWORD)G_FindItem);
+SetJump(0x08103F44, (DWORD)Drop_Item);
+SetJump(0x08103D3C, (DWORD)LaunchItem);
+SetJump(0x0811C0B2, (DWORD)G_DObjGetWorldTagMatrix);
 
 
 

@@ -356,6 +356,7 @@ void DObjAbort();
 
 void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
 int DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *angles);
+void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
 
 int DObjSkelExists(DObj_s *obj, int timeStamp);
 int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
@@ -405,6 +406,7 @@ void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, fl
 void QDECL XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos);
 void QDECL XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
 void QDECL XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float factor);
+void QDECL XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans);
 
 #ifdef __cplusplus
 }
@@ -463,6 +465,10 @@ unsigned int XAnimGetAnimTreeSize(const XAnim_s *anims);
 const char* XAnimGetAnimName(const XAnim_s *anims, unsigned int animIndex);
 void *Hunk_AllocXAnimServer(int size);
 float XAnimGetTime(const XAnimTree_s *tree, unsigned int animIndex);
+XAnim_s* XAnimGetAnims(const XAnimTree_s *tree);
+const char* XAnimGetAnimTreeDebugName(const XAnim_s *anims);
+bool XAnimNotetrackExists(const XAnim_s *anims, unsigned int animIndex, unsigned int name);
 
 int DObjHasContents(DObj_s *obj, int contentmask);
 void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results);
+void DObjDumpInfo(const DObj_s *obj);

@@ -358,3 +358,198 @@ void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int 
 		self->handler = 11;
 	}
 }
+
+float CanDamage(gentity_s *targ, float *centerPos)
+{
+	int hits;
+	float halfHeight;
+	vec3_t eyeOrigin;
+	vec3_t right;
+	vec3_t forward;
+	int i;
+	vec3_t dest[5];
+	//int contentmask;
+
+	//contentmask = 1097859072;
+	if ( targ->client )
+	{
+		G_GetPlayerViewOrigin(targ, eyeOrigin);
+		halfHeight = (eyeOrigin[2] - targ->r.currentOrigin[2]) * 0.5;
+		VectorSubtract(centerPos, targ->r.currentOrigin, forward);
+		forward[2] = 0.0;
+		Vec3Normalize(forward);
+		right[0] = -forward[1];
+		right[1] = forward[0];
+		right[2] = forward[2];
+		VectorAdd(eyeOrigin, targ->r.currentOrigin, dest[0]);
+		VectorScale(dest[0], 0.5, dest[0]);
+		VectorMA(dest[0], 15.0, right, dest[1]);
+		dest[1][2] = dest[1][2] + halfHeight;
+		VectorMA(dest[0], 15.0, right, dest[2]);
+		dest[2][2] = dest[2][2] - halfHeight;
+		VectorMA(dest[0], -15.0, right, dest[3]);
+		dest[3][2] = dest[3][2] + halfHeight;
+		VectorMA(dest[0], -15.0, right, dest[4]);
+		dest[4][2] = dest[4][2] - halfHeight;
+
+		hits = 0;
+
+		for ( i = 0; i < 5; ++i )
+		{
+			if ( G_LocationalTracePassed(centerPos, dest[i], targ->s.number, 8398993) )
+				++hits;
+		}
+
+		if ( hits )
+		{
+			if ( hits < 4 )
+				return (float)hits / 3.0;
+			else
+				return 1.0;
+		}
+		else
+		{
+			return 0.0;
+		}
+	}
+	else
+	{
+		VectorAdd(targ->r.absmin, targ->r.absmax, dest[0]);
+		VectorScale(dest[0], 0.5, dest[0]);
+		VectorCopy(dest[0], dest[1]);
+		dest[1][0] = dest[1][0] + 15.0;
+		dest[1][1] = dest[1][1] + 15.0;
+		VectorCopy(dest[0], dest[2]);
+		dest[2][0] = dest[2][0] + 15.0;
+		dest[2][1] = dest[2][1] - 15.0;
+		VectorCopy(dest[0], dest[3]);
+		dest[3][0] = dest[3][0] - 15.0;
+		dest[3][1] = dest[3][1] + 15.0;
+		VectorCopy(dest[0], dest[4]);
+		dest[4][0] = dest[4][0] - 15.0;
+		dest[4][1] = dest[4][1] - 15.0;
+
+		for ( i = 0; i < 5; ++i )
+		{
+			if ( G_LocationalTracePassed(dest[i], centerPos, targ->s.number, 8398993) )
+				return 1.0;
+		}
+
+		return 0.0;
+	}
+}
+
+int G_RadiusDamage(float *origin, gentity_s *inflictor, gentity_s *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_s *ignore, int mod)
+{
+	vec3_t tempDir;
+	trace_t trace;
+	vec3_t end;
+	float scale;
+	int loghit;
+	int j;
+	int i;
+	vec3_t vDir;
+	vec3_t tempPos;
+	vec3_t maxs;
+	vec3_t mins;
+	int entities;
+	int entityList[1024];
+	gentity_s *self;
+	float dmg;
+	float posLen;
+	float dmgScale;
+
+	loghit = 0;
+
+	if ( !attacker )
+		return 0;
+
+	if ( radius < 1.0 )
+		radius = 1.0;
+
+	scale = radius * 1.4142135;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		mins[i] = origin[i] - scale;
+		maxs[i] = origin[i] + scale;
+	}
+
+	entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, -1);
+
+	for ( j = 0; j < entities; ++j )
+	{
+		self = &g_entities[entityList[j]];
+
+		if ( self != ignore && self->takedamage )
+		{
+			if ( self->r.bmodel )
+			{
+				for ( i = 0; i < 3; ++i )
+				{
+					if ( self->r.absmin[i] <= origin[i] )
+					{
+						if ( origin[i] <= self->r.absmax[i] )
+							tempPos[i] = 0.0;
+						else
+							tempPos[i] = origin[i] - self->r.absmax[i];
+					}
+					else
+					{
+						tempPos[i] = self->r.absmin[i] - origin[i];
+					}
+				}
+			}
+			else
+			{
+				VectorSubtract(self->r.currentOrigin, origin, tempPos);
+			}
+
+			posLen = VectorLength(tempPos);
+
+			if ( posLen < radius && (!self->client || !level.bPlayerIgnoreRadiusDamage) )
+			{
+				dmgScale = (fInnerDamage - fOuterDamage) * (1.0 - posLen / radius) + fOuterDamage;
+				dmg = CanDamage(self, origin);
+
+				if ( dmg <= 0.0 )
+				{
+					VectorAdd(self->r.absmin, self->r.absmax, tempDir);
+					VectorScale(tempDir, 0.5, tempDir);
+					VectorCopy(tempDir, end);
+
+					G_TraceCapsule(&trace, origin, vec3_origin, vec3_origin, end, 1023, 2065);
+
+					if ( trace.fraction < 1.0 )
+					{
+						VectorSubtract(end, origin, end);
+						posLen = VectorLength(end);
+
+						if ( radius * 0.2 > posLen )
+						{
+							if ( LogAccuracyHit(self, attacker) )
+								loghit = 1;
+
+							VectorSubtract(self->r.currentOrigin, origin, vDir);
+							vDir[2] = vDir[2] + 24.0;
+
+							G_Damage(self, inflictor, attacker, vDir, origin, (int)(dmgScale * 0.1), 1, mod, HITLOC_NONE, 0);
+						}
+					}
+				}
+				else
+				{
+					if ( LogAccuracyHit(self, attacker) )
+						loghit = 1;
+
+					VectorSubtract(self->r.currentOrigin, origin, vDir);
+					vDir[2] = vDir[2] + 24.0;
+
+					G_Damage(self, inflictor, attacker, vDir, origin, (int)(dmgScale * dmg), 1, mod, HITLOC_NONE, 0);
+				}
+			}
+		}
+	}
+
+	return loghit;
+}

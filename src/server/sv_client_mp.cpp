@@ -1612,3 +1612,55 @@ void SV_ExecuteClientMessage(client_s *cl, msg_t *msg)
 			SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge);
 	}
 }
+
+gentity_t *SV_AddTestClient()
+{
+	netadr_t adr;
+	usercmd_s ucmd;
+	client_s *client;
+	int num;
+	char userinfo[MAX_STRING_CHARS];
+	static int botport = 0;
+
+	num = 0;
+
+	for ( client = svs.clients; num < sv_maxclients->current.integer && client->state; ++client )
+		++num;
+
+	if ( num == sv_maxclients->current.integer )
+		return 0;
+
+	sprintf(
+	    userinfo,
+	    "connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\"
+	    "bot%d\\protocol\\%d\"",
+	    botport,
+	    PROTOCOL_VERSION);
+
+	SV_Cmd_TokenizeString(userinfo);
+	memset(&adr, 0, sizeof(adr));
+
+	adr.type = NA_BOT;
+	adr.port = botport++;
+
+	SV_DirectConnect(adr);
+	num = 0;
+
+	for ( client = svs.clients;
+	        num < sv_maxclients->current.integer
+	        && (client->state == CS_FREE || !NET_CompareBaseAdr(adr, client->netchan.remoteAddress));
+	        ++client )
+	{
+		++num;
+	}
+
+	if ( num == sv_maxclients->current.integer )
+		return 0;
+
+	client->bot = 1;
+	SV_SendClientGameState(client);
+	memset(&ucmd, 0, sizeof(ucmd));
+	SV_ClientEnterWorld(client, &ucmd);
+
+	return SV_GentityNum(num);
+}

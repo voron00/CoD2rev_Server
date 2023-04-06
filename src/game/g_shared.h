@@ -134,6 +134,17 @@ typedef struct
 	int eventTime;
 } entityShared_t;
 
+enum objectiveState_t
+{
+	OBJST_EMPTY = 0x0,
+	OBJST_ACTIVE = 0x1,
+	OBJST_INVISIBLE = 0x2,
+	OBJST_DONE = 0x3,
+	OBJST_CURRENT = 0x4,
+	OBJST_FAILED = 0x5,
+	OBJST_NUMSTATES = 0x6,
+};
+
 typedef struct objective_s
 {
 	int state;
@@ -452,7 +463,7 @@ struct turretInfo_s
 	int fireSndDelay;
 	vec3_t userOrigin;
 	float playerSpread;
-	int triggerDown;
+	float triggerDown;
 	char fireSnd;
 	char fireSndPlayer;
 	char stopSnd;
@@ -483,9 +494,8 @@ struct trigger_ent_t
 
 struct item_ent_t
 {
-	int index;
-	unsigned short ammoCount;
-	unsigned short clipAmmoCount;
+	int clipAmmoCount;
+	unsigned short index;
 };
 
 struct mover_ent_t
@@ -1092,6 +1102,21 @@ struct AntilagClientStore
 	bool clientMoved[64];
 };
 
+enum itemType_t
+{
+	IT_BAD = 0x0,
+	IT_WEAPON = 0x1,
+	IT_AMMO = 0x2,
+	IT_HEALTH = 0x3,
+	IT_HOLDABLE = 0x4,
+};
+
+struct spawn_t
+{
+	const char *name;
+	void (*spawn)(gentity_s *ent);
+};
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
@@ -1122,7 +1147,6 @@ void Scr_GetHudElemField(int entnum, int offset);
 void Scr_SetHudElemField(int entnum, int offset);
 void Scr_FreeHudElemConstStrings(game_hudelem_s *hud);
 void GScr_AddFieldsForHudElems();
-void GScr_NewHudElem();
 
 void HECmd_SetText(scr_entref_t entRef);
 void HECmd_SetPlayerNameString(scr_entref_t entRef);
@@ -1143,15 +1167,24 @@ void HECmd_MoveOverTime(scr_entref_t entRef);
 void HECmd_Reset(scr_entref_t entRef);
 void HECmd_Destroy(scr_entref_t entRef);
 
+char *ConcatArgs( int start );
+qboolean ConsoleCommand();
+
 void Scr_LocalizationError(int iParm, const char *pszErrorMessage);
 void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, unsigned int stringLimit);
 void CalculateRanks();
 float G_GetFogOpaqueDistSqrd();
+int G_FindConfigstringIndex(const char *name, int start, int max, int create, const char *errormsg);
 const char* G_ModelName(int modelIndex);
 int G_LocalizedStringIndex(const char *string);
 int G_ShaderIndex(const char *string);
 int G_TagIndex(const char *name);
-XModel* G_CachedModelForIndex(int modelIndex);
+int G_SoundAliasIndex(const char *name);
+int G_ShellShockIndex(const char *name);
+int G_EffectIndex(const char *name);
+XModel* G_GetModel(int modelIndex);
+void G_SafeDObjFree(gentity_s *ent);
+void G_DObjUpdate(gentity_s *ent);
 unsigned int G_ModelIndex(const char *name);
 void G_OverrideModel(int modelIndex, const char *defaultModelName);
 void G_RunThink(gentity_s *ent);
@@ -1162,9 +1195,18 @@ void G_AntiLag_RestoreClientPos(AntilagClientStore *antilagStore);
 
 void FireWeaponMelee(gentity_s *ent);
 void G_UseOffHand(gentity_s *ent);
+int G_RadiusDamage(float *origin, gentity_s *inflictor, gentity_s *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_s *ignore, int mod);
+
+int G_CallSpawnEntity(gentity_s *ent);
+void G_CallSpawn(void);
 
 void ClientEvents(gentity_s *ent, int oldEventSequence);
 void G_AddPlayerMantleBlockage(float *endPos, int duration, pmove_t *pm);
+int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float (*tagMat)[3]);
+gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag);
+gitem_s* G_GetItemForClassname(const char *name);
+gitem_s* G_FindItem(const char *pickupName);
+void G_SpawnItem(gentity_s *ent, const gitem_s *item);
 
 void G_DObjCalcPose(gentity_s *ent);
 void G_DObjCalcBone(gentity_s *ent, int boneIndex);
@@ -1173,8 +1215,8 @@ qboolean G_UpdateClientInfo(gentity_s *ent);
 void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap);
 void G_FreeEntityDelay(gentity_s *ent);
 
-gentity_t* Scr_EntityForRef(scr_entref_t entref);
-game_hudelem_t* Scr_HudElemForRef(scr_entref_t entref);
+gentity_t* GetEntity(scr_entref_t entref);
+game_hudelem_t* HECmd_GetHudElem(scr_entref_t entref);
 gentity_t* Scr_GetEntity(unsigned int index);
 void Scr_AddEntity(gentity_t *ent);
 void Scr_AddHudElem(game_hudelem_t *hud);
@@ -1185,11 +1227,26 @@ qboolean Scr_IsValidGameType(const char *pszGameType);
 
 void ClientCommand( int clientNum );
 bool G_ParseWeaponAccurayGraphs(WeaponDef *weaponDef);
+int G_XModelBad(int index);
 
 const char *vtos( const vec3_t v );
 const char *vtosf( const vec3_t v );
 
 void QDECL G_LogPrintf( const char *fmt, ... );
+
+int IsItemRegistered(unsigned int iItemIndex);
+void RegisterItem(unsigned int index, int global);
+void SaveRegisteredItems();
+void ClearRegisteredItems();
+int G_RegisterWeapon(int weapIndex);
+void G_SetEquippedOffHand(int clientNum, int offHandIndex);
+int G_GivePlayerWeapon(playerState_s *ps, int weapon);
+int G_GetWeaponIndexForName(const char *name);
+void ExitLevel();
+
+int Add_Ammo(gentity_s *pSelf, int weaponIndex, int count, int fillClip);
+void G_AddPredictableEvent(gentity_s *ent, int event, int eventParm);
+void Touch_Item(gentity_s *ent, gentity_s *other, int touched);
 
 void Scr_ReadOnlyField(gentity_s *ent, int offset);
 void Scr_SetOrigin(gentity_s *ent, int offset);
@@ -1198,6 +1255,7 @@ void Scr_SetHealth(gentity_s *ent, int offset);
 unsigned int GScr_AllocString(const char *string);
 int GScr_GetHeadIconIndex(const char *pszIcon);
 int GScr_GetStatusIconIndex(const char *pszIcon);
+int G_GetHintStringIndex(int *piIndex, const char *pszString);
 int Scr_SetObjectField(unsigned int classnum, int entnum, int offset);
 void Scr_GetObjectField(unsigned int classnum, int entnum, int offset);
 int Scr_SetEntityField(int entnum, int offset);
@@ -1212,7 +1270,7 @@ gentity_s* G_TempEntity(vec3_t origin, int event);
 void Bullet_Fire(gentity_s *attacker, float spread, weaponParms *wp, const gentity_s *ent, int gameTime);
 gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenadeWPID, int time);
 void Weapon_Throw_Grenade(gentity_s *ent, int grenType, weaponParms *wp);
-void Bullet_RandomDir(float *x, float *y);
+void gunrandom(float *x, float *y);
 gentity_s* fire_rocket(gentity_s *parent, float *start, float *dir);
 void Weapon_RocketLauncher_Fire(gentity_s *ent, float spread, weaponParms *targetOffset);
 void G_SetOrigin(gentity_s *ent, const float *origin);
@@ -1229,7 +1287,6 @@ void G_LocationalTrace(trace_t *results, const float *start, const float *end, i
 int G_LocationalTracePassed(const float *start, const float *end, int passEntityNum, int contentmask);
 void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask);
 
-void Scr_BulletTrace();
 void Scr_ParseGameTypeList();
 
 void SetClientViewAngle(gentity_s *ent, const float *angle);
@@ -1286,25 +1343,70 @@ void G_EntUnlink(gentity_s *ent);
 void G_CorpseFree(gentity_s *ent);
 void G_FreeEntity(gentity_s *ent);
 
+void G_EntDetachAll(gentity_s *ent);
+int G_EntDetach(gentity_s *ent, const char *modelName, unsigned int tagName);
+int G_EntAttach(gentity_s *ent, const char *modelName, unsigned int tagName, int ignoreCollision);
+int G_EntLinkToWithOffset(gentity_s *ent, gentity_s *parent, unsigned int tagName, const float *originOffset, const float *anglesOffset);
+int G_EntLinkTo(gentity_s *ent, gentity_s *parent, unsigned int tagName);
+
 void G_RunCorpseMove(gentity_s *ent);
 void G_RunCorpse(gentity_s *ent);
+void G_SetModel(gentity_s *ent, const char *modelName);
+void G_SetConstString(unsigned short *to, const char *from);
+void G_setfog(const char *fogstring);
 
 void Player_UpdateActivate(gentity_s *ent);
 void LookAtKiller(gentity_s *self, gentity_s *inflictor, gentity_s *attacker);
 void DeathmatchScoreboardMessage(gentity_s *ent);
 void Cmd_Score_f(gentity_s *ent);
 void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int meansOfDeath, int iWeapon, const float *vDir, hitLocation_t hitLoc, int psTimeOffset);
+gentity_s* LaunchItem(const gitem_s *item, float *origin, float *angles, int ownerNum);
+unsigned int G_NewString(const char *string);
+void G_ParseEntityFields(gentity_s *ent);
+int G_SpawnInt(const char *key, const char *defaultString, int *out);
+int G_SpawnFloat(const char *key, const char *defaultString, float *out);
+int G_SpawnVector(const char *key, const char *defaultString, float *out);
+int G_SpawnString(const char *key, const char *defaultString, const char **out);
+
+void G_PlaySoundAlias(gentity_s *ent, byte alias);
+
+void G_InitTurrets();
+void G_SpawnTurret(gentity_s *ent, const char *weaponName);
+void turret_think_client(gentity_s *self);
+
+void trigger_use_shared(gentity_s *self);
+qboolean LogAccuracyHit(gentity_s *target, gentity_s *attacker);
+
+void SP_info_null(gentity_s *self);
+void SP_info_notnull(gentity_s *self);
+void SP_trigger_multiple(gentity_s *self);
+void SP_trigger_radius(gentity_s *ent);
+void SP_trigger_disk(gentity_s *ent);
+void SP_trigger_hurt(gentity_s *self);
+void SP_trigger_once(gentity_s *ent);
+void SP_light(gentity_s *self);
+void SP_misc_model(gentity_s *self);
+void SP_turret(gentity_s *ent);
+void SP_corona(gentity_s *self);
+void SP_trigger_use(gentity_s *self);
+void SP_trigger_use_touch(gentity_s *self);
+void SP_trigger_damage(gentity_s *ent);
+void SP_trigger_lookat(gentity_s *ent);
+void SP_script_brushmodel(gentity_s *ent);
+void SP_script_model(gentity_s *ent);
+void SP_script_origin(gentity_s *ent);
 
 qboolean G_IsTurretUsable(gentity_s *useEnt, gentity_s *playerEnt);
 void G_ClientStopUsingTurret(gentity_s *self);
 void G_FreeTurret(gentity_s *ent);
+void G_PlayerTurretPositionAndBlend(gentity_s *ent, gentity_s *pTurretEnt);
+void G_GeneralLink(gentity_s *ent);
 
 void (*Player_GetMethod(const char **pName))(scr_entref_t);
 void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t);
 void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t);
 void (*HudElem_GetMethod(const char **pName))(scr_entref_t);
 void (*Scr_GetMethod(const char **pName, int *type))(scr_entref_t);
-
 void (*Scr_GetFunction(const char **pName, int *type))();
 
 void ClientScr_ReadOnly(gclient_s *pSelf, const game_client_field_t *pField);
@@ -1334,3 +1436,242 @@ void GScr_LoadConsts();
 void GScr_LoadScripts();
 
 void G_RegisterDvars();
+
+
+
+
+void Touch_Multi(gentity_s *self, gentity_s *other);
+void hurt_use(gentity_s *self);
+void Use_trigger_damage(gentity_s *pEnt, gentity_s *pOther);
+void Pain_trigger_damage(gentity_s *pSelf, gentity_s *pAttacker, int iDamage, const float *vPoint, int iMod);
+void Die_trigger_damage(gentity_s *pSelf, gentity_s *pInflictor, gentity_s *pAttacker, int iDamage, int iMod);
+void Reached_ScriptMover(gentity_s *pEnt);
+void G_ExplodeMissile(gentity_s *ent);
+void Touch_Item_Auto(gentity_s *ent, gentity_s *other, int touched);
+void G_PlayerController(const gentity_s *self, int *partBits);
+void BodyEnd(gentity_s *ent);
+void turret_think(gentity_s *self);
+
+
+
+
+void print();
+void println();
+void iprintln();
+void iprintlnbold();
+void print3d();
+void GScr_line();
+void Scr_GetEnt();
+void Scr_GetEntArray();
+void GScr_Spawn();
+void GScr_SpawnTurret();
+void GScr_PrecacheTurret();
+void Scr_AddStruct();
+void assertCmd();
+void assertexCmd();
+void assertmsgCmd();
+void GScr_IsDefined();
+void GScr_IsString();
+void GScr_IsAlive();
+void GScr_GetDvar();
+void GScr_GetDvarInt();
+void GScr_GetDvarFloat();
+void GScr_SetDvar();
+void GScr_GetTime();
+void Scr_GetEntByNum();
+void Scr_GetWeaponModel();
+void GScr_GetAnimLength();
+void GScr_AnimHasNotetrack();
+void GScr_GetBrushModelCenter();
+void Scr_Objective_Add();
+void Scr_Objective_Delete();
+void Scr_Objective_State();
+void Scr_Objective_Icon();
+void Scr_Objective_Position();
+void Scr_Objective_OnEntity();
+void Scr_Objective_Current();
+void Scr_BulletTrace();
+void Scr_BulletTracePassed();
+void Scr_SightTracePassed();
+void Scr_PhysicsTrace();
+void GScr_GetMoveDelta();
+void GScr_GetAngleDelta();
+void GScr_GetNorthYaw();
+void Scr_RandomInt();
+void Scr_RandomFloat();
+void Scr_RandomIntRange();
+void Scr_RandomFloatRange();
+void GScr_sin();
+void GScr_cos();
+void GScr_tan();
+void GScr_asin();
+void GScr_acos();
+void GScr_atan();
+void GScr_CastInt();
+void Scr_Distance();
+void Scr_DistanceSquared();
+void Scr_Length();
+void Scr_LengthSquared();
+void Scr_Closer();
+void Scr_VectorDot();
+void Scr_VectorNormalize();
+void Scr_VectorToAngles();
+void Scr_AnglesToUp();
+void Scr_AnglesToRight();
+void Scr_AnglesToForward();
+void Scr_IsSubStr();
+void Scr_GetSubStr();
+void Scr_ToLower();
+void Scr_StrTok();
+void Scr_MusicPlay();
+void Scr_MusicStop();
+void Scr_SoundFade();
+void Scr_AmbientPlay();
+void Scr_AmbientStop();
+void Scr_PrecacheModel();
+void Scr_PrecacheShellShock();
+void Scr_PrecacheItem();
+void Scr_PrecacheShader();
+void Scr_PrecacheString();
+void Scr_PrecacheRumble();
+void Scr_LoadFX();
+void Scr_PlayFX();
+void Scr_PlayFXOnTag();
+void Scr_PlayLoopedFX();
+void Scr_SetLinearFog();
+void Scr_SetExponentialFog();
+void Scr_GrenadeExplosionEffect();
+void GScr_RadiusDamage();
+void GScr_SetPlayerIgnoreRadiusDamage();
+void GScr_GetNumParts();
+void GScr_GetPartName();
+void GScr_Earthquake();
+void GScr_NewHudElem();
+void GScr_NewClientHudElem();
+void GScr_NewTeamHudElem();
+void GScr_IsPlayer();
+void GScr_IsPlayerNumber();
+void GScr_SetWinningPlayer();
+void GScr_SetWinningTeam();
+void GScr_Announcement();
+void GScr_ClientAnnouncement();
+void GScr_GetTeamScore();
+void GScr_SetTeamScore();
+void GScr_SetClientNameMode();
+void GScr_UpdateClientNames();
+void GScr_GetTeamPlayersAlive();
+void GScr_Objective_Team();
+void GScr_LogPrint();
+void GScr_WorldEntNumber();
+void GScr_Obituary();
+void GScr_positionWouldTelefrag();
+void GScr_getStartTime();
+void GScr_PrecacheMenu();
+void GScr_PrecacheStatusIcon();
+void GScr_PrecacheHeadIcon();
+void GScr_MapRestart();
+void GScr_ExitLevel();
+void GScr_AddTestClient();
+void GScr_MakeDvarServerInfo();
+void GScr_SetArchive();
+void GScr_AllClientsPrint();
+void GScr_ClientPrint();
+void GScr_MapExists();
+void GScr_IsValidGameType();
+void GScr_MatchEnd();
+void GScr_SetPlayerTeamRank();
+void GScr_SendXboxLiveRanks();
+void GScr_SetVoteString();
+void GScr_SetVoteTime();
+void GScr_SetVoteYesCount();
+void GScr_SetVoteNoCount();
+void GScr_OpenFile();
+void GScr_CloseFile();
+void GScr_FPrintln();
+void GScr_FReadLn();
+void GScr_FGetArg();
+void GScr_KickPlayer();
+void GScr_BanPlayer();
+void GScr_LoadMap();
+void Scr_PlayRumbleOnPos();
+void Scr_PlayLoopRumbleOnPos();
+void Scr_StopAllRumbles();
+void ScrCmd_SoundExists();
+void Scr_IsSplitscreen();
+void GScr_EndXboxLiveLobby();
+
+
+void ScrCmd_attach(scr_entref_t entref);
+void ScrCmd_detach(scr_entref_t entref);
+void ScrCmd_detachAll(scr_entref_t entref);
+void ScrCmd_GetAttachSize(scr_entref_t entref);
+void ScrCmd_GetAttachModelName(scr_entref_t entref);
+void ScrCmd_GetAttachTagName(scr_entref_t entref);
+void ScrCmd_GetAttachIgnoreCollision(scr_entref_t entref);
+void GScr_GetAmmoCount(scr_entref_t entref);
+void ScrCmd_GetClanId(scr_entref_t entref);
+void ScrCmd_GetClanName(scr_entref_t entref);
+void ScrCmd_GetClanDescription(scr_entref_t entref);
+void ScrCmd_GetClanMotto(scr_entref_t entref);
+void ScrCmd_GetClanURL(scr_entref_t entref);
+void ScrCmd_LinkTo(scr_entref_t entref);
+void ScrCmd_Unlink(scr_entref_t entref);
+void ScrCmd_EnableLinkTo(scr_entref_t entref);
+void ScrCmd_GetOrigin(scr_entref_t entref);
+void ScrCmd_GetEye(scr_entref_t entref);
+void ScrCmd_UseBy(scr_entref_t entref);
+void Scr_SetStableMissile(scr_entref_t entref);
+void ScrCmd_IsTouching(scr_entref_t entref);
+void ScrCmd_PlaySound(scr_entref_t entref);
+void ScrCmd_PlaySoundAsMaster(scr_entref_t entref);
+void ScrCmd_PlayLoopSound(scr_entref_t entref);
+void ScrCmd_StopLoopSound(scr_entref_t entref);
+void ScrCmd_PlayRumble(scr_entref_t entref);
+void ScrCmd_PlayLoopRumble(scr_entref_t entref);
+void ScrCmd_StopRumble(scr_entref_t entref);
+void ScrCmd_Delete(scr_entref_t entref);
+void ScrCmd_SetModel(scr_entref_t entref);
+void ScrCmd_GetNormalHealth(scr_entref_t entref);
+void ScrCmd_SetNormalHealth(scr_entref_t entref);
+void ScrCmd_Show(scr_entref_t entref);
+void ScrCmd_Hide(scr_entref_t entref);
+void ScrCmd_ShowToPlayer(scr_entref_t entref);
+void ScrCmd_SetContents(scr_entref_t entRef);
+void GScr_SetCursorHint(scr_entref_t entref);
+void GScr_SetHintString(scr_entref_t entref);
+void GScr_ShellShock(scr_entref_t entref);
+void GScr_StopShellShock(scr_entref_t entref);
+void GScr_ViewKick(scr_entref_t entref);
+void GScr_LocalToWorldCoords(scr_entref_t entref);
+void GScr_SetRightArc(scr_entref_t entref);
+void GScr_SetLeftArc(scr_entref_t entref);
+void GScr_SetTopArc(scr_entref_t entref);
+void GScr_SetBottomArc(scr_entref_t entref);
+void GScr_GetEntityNumber(scr_entref_t entref);
+void GScr_EnableGrenadeTouchDamage(scr_entref_t entref);
+void GScr_DisableGrenadeTouchDamage(scr_entref_t entref);
+void GScr_EnableGrenadeBounce(scr_entref_t entref);
+void GScr_DisableGrenadeBounce(scr_entref_t entref);
+void GScr_EnableAimAssist(scr_entref_t entref);
+void GScr_DisableAimAssist(scr_entref_t entref);
+void GScr_PlaceSpawnPoint(scr_entref_t entref);
+void GScr_UpdateScores(scr_entref_t entref);
+void GScr_SetTeamForTrigger(scr_entref_t entref);
+void GScr_ClientClaimTrigger(scr_entref_t entref);
+void GScr_ClientReleaseTrigger(scr_entref_t entref);
+void GScr_ReleaseClaimedTrigger(scr_entref_t entref);
+
+
+
+void ScriptEntCmd_MoveTo(scr_entref_t entref);
+void ScriptEntCmd_MoveX(scr_entref_t entref);
+void ScriptEntCmd_MoveY(scr_entref_t entref);
+void ScriptEntCmd_MoveZ(scr_entref_t entref);
+void ScriptEntCmd_GravityMove(scr_entref_t entRef);
+void ScriptEntCmd_RotateTo(scr_entref_t entref);
+void ScriptEntCmd_RotatePitch(scr_entref_t entref);
+void ScriptEntCmd_RotateYaw(scr_entref_t entref);
+void ScriptEntCmd_RotateRoll(scr_entref_t entref);
+void ScriptEntCmd_RotateVelocity(scr_entref_t entref);
+void ScriptEntCmd_Solid(scr_entref_t entRef);
+void ScriptEntCmd_NotSolid(scr_entref_t entRef);

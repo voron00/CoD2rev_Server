@@ -988,6 +988,21 @@ enum pmtype_t
 extern pmoveHandler_t pmoveHandlers[];
 extern int singleClientEvents[];
 
+typedef struct gitem_s
+{
+	const char *classname;
+	const char *pickup_sound;
+	const char *world_model;
+	const char *view_model;
+	const char *icon;
+	const char *pickup_name;
+	int quantity;
+	int giType;
+	int giTag;
+	int giAmmoIndex;
+	int giClipIndex;
+} gitem_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1080,6 +1095,8 @@ int BG_WeaponIsClipOnly(int weapon);
 int BG_AmmoForWeapon(int weapon);
 int BG_ClipForWeapon(int weapon);
 int BG_GetClipSize(int weaponIndex);
+int BG_GetMaxAmmo(int weaponIndex);
+int BG_GetSharedAmmoCapSize(int weaponIndex);
 qboolean PM_WeaponClipEmpty(playerState_s *ps);
 int PM_InteruptWeaponWithProneMove(playerState_s *ps);
 void PM_ResetWeaponState(playerState_s *ps);
@@ -1088,11 +1105,24 @@ void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml);
 float BG_GetBobCycle(gclient_s *client);
 float BG_GetSpeed(const playerState_s *ps, int time);
 void BG_GetSpreadForWeapon(const playerState_s *ps, int weaponIndex, float *minSpread, float *maxSpread);
+int BG_GetFirstAvailableOffhand(playerState_s *ps, int offhandSlot);
+int BG_GetMaxPickupableAmmo(playerState_s *ps, unsigned int weaponIndex);
+bool BG_DoesWeaponNeedSlot(int weapon);
+int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex);
+int BG_GetStackableSlot(gclient_s *client, int weapon, int slot);
+int BG_GetEmptySlotForWeapon(playerState_s *ps, int weapon);
+qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched);
 
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);
 void BG_StringCopy(unsigned char *member, const char *keyValue);
 bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex);
+int BG_SetupWeaponDef(WeaponDef *weapDef, int (*regWeap)(int));
+WeaponDef *BG_LoadDefaultWeaponDef();
+
+int BG_GetWeaponIndexForName(const char *name, int (*regWeap)(int));
+int BG_FindWeaponIndexForName(const char *name);
+int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex);
 
 long BG_StringHashValue( const char *fname );
 long BG_StringHashValue_Lwr( const char *fname );
@@ -1117,6 +1147,7 @@ void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel)
 void PM_WeaponUseAmmo(playerState_s *ps, int weaponIndex, int amount);
 
 WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
+gitem_s* BG_FindItemForWeapon(int weapon);;
 
 int PM_GetViewHeightLerpTime(const playerState_s *ps, int iTarget, int bDown);
 void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler);

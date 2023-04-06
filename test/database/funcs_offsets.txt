@@ -143,6 +143,10 @@
 ( name: stopallrumbles : call 0x811548a : developer 0 )
 ( name: soundexists : call 0x810f872 : developer 0 )
 ( name: issplitscreen : call 0x8115490 : developer 0 )
+
+
+
+// BuiltIn_GetMethod
 ( name: attach : call 0x810efca : developer 0 )
 ( name: detach : call 0x810f0ba : developer 0 )
 ( name: detachall : call 0x810f1e4 : developer 0 )
@@ -202,6 +206,8 @@
 ( name: clientclaimtrigger : call 0x81155e4 : developer 0 )
 ( name: clientreleasetrigger : call 0x81156cc : developer 0 )
 ( name: releaseclaimedtrigger : call 0x811579a : developer 0 )
+
+
 
 // Player_GetMethod
 ( name: giveweapon : call 0x80f7420 : developer 0 )
@@ -264,6 +270,9 @@
 ( name: allowspectateteam : call 0x80fb474 : developer 0 )
 ( name: getguid : call 0x80fb5b4 : developer 0 )
 
+
+
+
 // ScriptEnt_GetMethod
 ( name: moveto : call 0x81174fa : developer 0 )
 ( name: movex : call 0x81177ac : developer 0 )
@@ -277,6 +286,9 @@
 ( name: rotatevelocity : call 0x8117a92 : developer 0 )
 ( name: solid : call 0x8117b74 : developer 0 )
 ( name: notsolid : call 0x8117c76 : developer 0 )
+
+
+
 
 // HudElem_GetMethod
 ( name: settext : call 0x81019c2 : developer 0 )

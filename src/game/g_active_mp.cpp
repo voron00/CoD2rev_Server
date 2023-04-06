@@ -774,3 +774,15 @@ void G_SetLastServerTime(int clientNum, int lastServerTime)
 	if ( lastServerTime >= ent->client->lastServerTime || level.time <= lastServerTime )
 		ent->client->lastServerTime = lastServerTime;
 }
+
+void G_PlayerController(const gentity_s *self, int *partBits)
+{
+	DObj_s *obj;
+	clientInfo_t *ci;
+
+	ci = &level_bgs.clientinfo[self->s.clientNum];
+	bgs = &level_bgs;
+	obj = Com_GetServerDObj(self->s.number);
+
+	BG_Player_DoControllers(obj, self, partBits, ci, level.frameTime);
+}

@@ -233,7 +233,7 @@ void CalculateRanks()
 		{
 			level.sortedClients[level.numConnectedClients++] = i;
 
-			if ( level.clients[i].sess.state.team != TEAM_SPECTATOR && level.clients[i].sess.connected == CS_CONNECTED )
+			if ( level.clients[i].sess.state.team != TEAM_SPECTATOR && level.clients[i].sess.connected == CON_CONNECTED )
 				++level.numVotingClients;
 		}
 	}
@@ -250,6 +250,31 @@ float G_GetFogOpaqueDistSqrd()
 int G_GetSavePersist()
 {
 	return level.savePersist;
+}
+
+void ExitLevel()
+{
+	int i;
+	int j;
+
+	Cbuf_ExecuteText(2, "map_rotate\n");
+
+	level.teamScores[1] = 0;
+	level.teamScores[2] = 0;
+
+	for ( i = 0; i < g_maxclients->current.integer; ++i )
+	{
+		if ( level.clients[i].sess.connected == CON_CONNECTED )
+			level.clients[i].sess.score = 0;
+	}
+
+	for ( j = 0; j < g_maxclients->current.integer; ++j )
+	{
+		if ( level.clients[j].sess.connected == CON_CONNECTED )
+			level.clients[j].sess.connected = CON_CONNECTING;
+	}
+
+	G_LogPrintf("ExitLevel: executed\n");
 }
 
 void G_RegisterDvars()

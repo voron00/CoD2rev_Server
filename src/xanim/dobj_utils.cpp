@@ -156,6 +156,48 @@ void DObjSetAngles(DObjAnimMat *rotTrans, const float *angles)
 	rotTrans->quat[3] = (float)(rollQuat_4 * (float)(pitchQuat_4 * yawQuat_4)) - (float)(rollQuat * tempQuat);
 }
 
+void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3])
+{
+	float transWeight;
+	float yy;
+	float xy;
+	float zz;
+	float zw;
+	float scaledQuat;
+	float scaledQuat_4;
+	float scaledQuat_8;
+	float yw;
+	float xz;
+	float yz;
+	float xx;
+	float xw;
+
+	transWeight = mat->transWeight;
+	scaledQuat = transWeight * mat->quat[0];
+	scaledQuat_4 = transWeight * mat->quat[1];
+	scaledQuat_8 = transWeight * mat->quat[2];
+
+	xx = scaledQuat * mat->quat[0];
+	xy = scaledQuat * mat->quat[1];
+	xz = scaledQuat * mat->quat[2];
+	xw = scaledQuat * mat->quat[3];
+	yy = scaledQuat_4 * mat->quat[1];
+	yz = scaledQuat_4 * mat->quat[2];
+	yw = scaledQuat_4 * mat->quat[3];
+	zz = scaledQuat_8 * mat->quat[2];
+	zw = scaledQuat_8 * mat->quat[3];
+
+	(*axis)[0] = 1.0 - (float)(yy + zz);
+	(*axis)[1] = xy + zw;
+	(*axis)[2] = xz - yw;
+	(*axis)[3] = xy - zw;
+	(*axis)[4] = 1.0 - (float)(xx + zz);
+	(*axis)[5] = yz + xw;
+	(*axis)[6] = xz + yw;
+	(*axis)[7] = yz - xw;
+	(*axis)[8] = 1.0 - (float)(xx + yy);
+}
+
 void DObjClearAngles(DObjAnimMat *rotTrans)
 {
 	rotTrans->quat[0] = 0.0;

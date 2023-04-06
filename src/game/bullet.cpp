@@ -207,39 +207,34 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 	}
 }
 
-void sub_811EA04(float z, float *x, float *y)
+void gunrandom(float *x, float *y)
 {
-	*x = sin(z);
-	*y = cos(z);
-}
+	long double v2;
+	float sinT;
+	float theta;
+	float r;
+	float cosT;
 
-void Bullet_RandomDir(float *x, float *y)
-{
-	float v2;
-	float v3;
-	float v4;
-	float v5;
-	float v6;
-
-	v6 = G_random() * 360.0;
-	v5 = G_random();
-	v2 = v6 * 0.0174532925199433;
-	sub_811EA04(v2, &v4, &v3);
-	*x = v5 * v3;
-	*y = v5 * v4;
+	theta = G_random() * 360.0;
+	r = G_random();
+	v2 = (float)(theta * 0.017453292);
+	cosT = cos(v2);
+	sinT = sin(v2);
+	*x = r * cosT;
+	*y = r * sinT;
 }
 
 void Bullet_RandomSpread(float spread, float *end, const weaponParms *wp, float maxRange)
 {
-	float temp;
+	float r;
 	float aimOffset;
 	float up;
 	float right;
 
-	temp = tan(spread * 0.0174532925199433);
-	aimOffset = temp * maxRange;
+	r = tan(spread * 0.017453292);
+	aimOffset = r * maxRange;
 
-	Bullet_RandomDir(&right, &up);
+	gunrandom(&right, &up);
 
 	right = right * aimOffset;
 	up = up * aimOffset;

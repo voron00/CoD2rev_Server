@@ -2,14 +2,36 @@
 #include "bg_public.h"
 
 #ifdef TESTING_LIBRARY
+#define bg_weapAmmoTypes (((WeaponDef**)( 0x08576360 )))
 #define bg_weapClips (((WeaponDef**)( 0x085767A0 )))
+#define bg_sharedAmmoCaps (((WeaponDef**)( 0x08576580 )))
 #else
-WeaponDef* bg_weapClips[128];
+extern WeaponDef *bg_weapAmmoTypes[];
+extern WeaponDef *bg_weapClips[];
+extern WeaponDef *bg_sharedAmmoCaps[];
+#endif
+
+#ifdef TESTING_LIBRARY
+#define bg_weaponDefs (((WeaponDef**)( 0x08576160 )))
+#define bg_iNumWeapons (*((unsigned int*)( 0x08576140 )))
+#else
+extern WeaponDef* bg_weaponDefs[];
+extern unsigned int bg_iNumWeapons;
 #endif
 
 int BG_GetClipSize(int weaponIndex)
 {
 	return bg_weapClips[weaponIndex]->clipSize;
+}
+
+int BG_GetMaxAmmo(int weaponIndex)
+{
+	return bg_weapAmmoTypes[weaponIndex]->maxAmmo;
+}
+
+int BG_GetSharedAmmoCapSize(int weaponIndex)
+{
+	return bg_sharedAmmoCaps[weaponIndex]->sharedAmmoCap;
 }
 
 int BG_AmmoForWeapon(int weapon)
@@ -50,5 +72,76 @@ int BG_WeaponAmmo(const playerState_s *ps, int weaponIndex)
 
 qboolean PM_WeaponClipEmpty(playerState_s *ps)
 {
-  return ps->ammoclip[BG_ClipForWeapon(ps->weapon)] == 0;
+	return ps->ammoclip[BG_ClipForWeapon(ps->weapon)] == 0;
+}
+
+int BG_GetMaxPickupableAmmo(playerState_s *ps, unsigned int weaponIndex)
+{
+	int altClip;
+	int altAmmo;
+	int clipSize;
+	int maxAmmo;
+	int weapClipPool[128];
+	int weapAmmoPool[128];
+	int clipForWeapon;
+	int ammoForWeapon;
+	int sharedAmmo;
+	WeaponDef *altWeaponDef;
+	WeaponDef *weaponDef;
+	int index;
+
+	memset(weapAmmoPool, 0, sizeof(weapAmmoPool));
+	memset(weapClipPool, 0, sizeof(weapClipPool));
+
+	weaponDef = BG_GetWeaponDef(weaponIndex);
+
+	ammoForWeapon = BG_AmmoForWeapon(weaponIndex);
+	clipForWeapon = BG_ClipForWeapon(weaponIndex);
+
+	if ( weaponDef->sharedAmmoCapIndex < 0 )
+	{
+		if ( BG_WeaponIsClipOnly(weaponIndex) )
+		{
+			clipSize = BG_GetClipSize(clipForWeapon);
+			return clipSize - ps->ammoclip[clipForWeapon];
+		}
+		else
+		{
+			maxAmmo = BG_GetMaxAmmo(ammoForWeapon);
+			return maxAmmo - ps->ammo[ammoForWeapon];
+		}
+	}
+	else
+	{
+		sharedAmmo = BG_GetSharedAmmoCapSize(weaponDef->sharedAmmoCapIndex);
+
+		for ( index = 1; index <= bg_iNumWeapons; ++index )
+		{
+			if ( COM_BitTest(ps->weapons, index) )
+			{
+				altWeaponDef = BG_GetWeaponDef(index);
+
+				if ( altWeaponDef->sharedAmmoCapIndex == weaponDef->sharedAmmoCapIndex )
+				{
+					if ( BG_WeaponIsClipOnly(index) )
+					{
+						if ( !weapClipPool[BG_ClipForWeapon(index)] )
+						{
+							weapClipPool[BG_ClipForWeapon(index)] = 1;
+							altClip = BG_ClipForWeapon(index);
+							sharedAmmo -= ps->ammoclip[altClip];
+						}
+					}
+					else if ( !weapAmmoPool[BG_AmmoForWeapon(index)] )
+					{
+						weapAmmoPool[BG_AmmoForWeapon(index)] = 1;
+						altAmmo = BG_AmmoForWeapon(index);
+						sharedAmmo -= ps->ammo[altAmmo];
+					}
+				}
+			}
+		}
+	}
+
+	return sharedAmmo;
 }

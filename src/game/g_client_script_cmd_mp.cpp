@@ -10,6 +10,13 @@ scr_method_t player_methods[] =
 };
 #endif
 
+void BodyEnd(gentity_s *ent)
+{
+	ent->s.eFlags &= ~0x80000u;
+	ent->r.contents = 0x4000000;
+	ent->r.svFlags = 0;
+}
+
 void (*Player_GetMethod(const char **pName))(scr_entref_t)
 {
 	const char *name;

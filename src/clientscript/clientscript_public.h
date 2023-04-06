@@ -606,7 +606,6 @@ void Scr_AddFloat(float value);
 void Scr_AddAnim(scr_anim_t value);
 void Scr_AddObject(unsigned int id);
 void Scr_AddEntityNum(int entnum, unsigned int classnum);
-void Scr_AddStruct();
 void Scr_AddString(const char *value);
 void Scr_AddIString(const char *value);
 void Scr_AddConstString(unsigned int value);
@@ -632,6 +631,9 @@ void Scr_GetVector(unsigned int index, float *vector);
 void VM_CancelNotify(unsigned int notifyListOwnerId, unsigned int startLocalId);
 void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top);
 void Scr_NotifyNum(int entnum, unsigned int classnum, unsigned int stringValue, unsigned int paramcount);
+void Scr_GetAnim(scr_anim_s *pAnim, unsigned int index, struct XAnimTree_s *tree);
+const char* Scr_GetTypeName(unsigned int index);
+unsigned int Scr_GetConstLowercaseString(unsigned int index);
 
 unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int numArgs);
 unsigned int QDECL VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int varCount, VariableValue *top, VariableValue *startTop);
@@ -843,10 +845,12 @@ bool IsObjectFree(unsigned int id);
 int Scr_GetClassnumForCharId(char charId);
 void Scr_FreeValue(unsigned int id);
 unsigned int GetInternalVariableIndex(unsigned int index);
+int Scr_GetOffset(unsigned int classnum, const char *name);
 void CopyArray(unsigned int parentId, unsigned int newParentId);
 void ClearArray(unsigned int parentId, VariableValue *value);
 void SetVariableFieldValue(unsigned int id, VariableValue *value);
 unsigned int GetArray(unsigned int id);
+void Scr_SetDynamicEntityField(int entnum, unsigned int classnum, unsigned int index);
 void Scr_SetThreadWaitTime(unsigned int startLocalId, unsigned int waitTime);
 void Scr_SetThreadNotifyName(unsigned int startLocalId, unsigned int stringValue);
 unsigned int Scr_FindField(const char *name, int *type);
@@ -894,6 +898,9 @@ void Scr_EndLoadScripts();
 
 void Scr_RunCurrentThreads();
 void Scr_ClearOutParams();
+
+const char* Scr_GetDebugString(unsigned int index);
+void Scr_CastDebugString(VariableValue *value);
 
 #ifdef __cplusplus
 extern "C" {

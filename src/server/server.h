@@ -22,7 +22,7 @@ typedef struct
 	int guid;
 } challenge_t;
 
-enum clientConnectState_t
+enum
 {
 	CS_FREE,
 	CS_ZOMBIE,
@@ -298,6 +298,7 @@ void SV_BotUserMove(client_s *cl);
 void SV_CalcPings( void );
 void SV_CheckTimeouts( void );
 void SV_SetGametype();
+gentity_t *SV_AddTestClient();
 
 void SV_SendMessageToClient( msg_t *msg, client_t *client );
 void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
@@ -310,6 +311,7 @@ void SV_SendClientSnapshot(client_s *client);
 void SV_ExecuteClientMessage(client_s *cl, msg_t *msg);
 void SV_PacketEvent( netadr_t from, msg_t *msg );
 void SV_ArchiveSnapshot();
+void SV_EnableArchivedSnapshot(qboolean enabled);
 
 qboolean SV_IsLocalClient(int clientNum);
 qboolean SV_MapExists(const char *name);
@@ -321,6 +323,7 @@ playerState_t *SV_GameClientNum( int num );
 svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt );
 gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
 void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
+qboolean SV_DObjExists(gentity_s *ent);
 qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 XAnimTree_s* SV_DObjGetTree(gentity_s *ent);
 
@@ -352,6 +355,7 @@ void SV_DObjGetHierarchyBits(gentity_s *ent, int boneIndex, int *partBits);
 void SV_DObjCalcAnim(gentity_s *ent, int *partBits);
 void SV_DObjCalcSkel(gentity_s *ent, int *partBits);
 int SV_DObjGetBoneIndex(const gentity_s *ent, unsigned int boneName);
+void SV_DObjDumpInfo(gentity_s *ent);
 DObjAnimMat* SV_DObjGetMatrixArray(gentity_s *ent);
 bool SV_GetClientPositionsAtTime(int clientNum, int gametime, float *origin);
 void SV_WriteDownloadToClient( client_t *cl, msg_t *msg );
@@ -369,3 +373,4 @@ void SV_UserVoice(client_s *cl, msg_t *msg);
 void SV_PreGameUserVoice(client_s *cl, msg_t *msg);
 void SV_VoicePacket(netadr_t from, msg_t *msg);
 void SV_SendClientVoiceData(client_s *client);
+void SV_SetBrushModel(gentity_s *ent);

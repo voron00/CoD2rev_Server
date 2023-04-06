@@ -170,7 +170,11 @@ static animStringItem_t animConditionLeaningStr[] =
 	{NULL, -1},
 };
 
+#ifdef TESTING_LIBRARY
+#define weaponStrings (((animStringItem_t*)( 0x08575C40 )))
+#else
 extern animStringItem_t weaponStrings[];
+#endif
 
 typedef enum
 {
@@ -1905,7 +1909,7 @@ void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, co
 			}
 			else
 			{
-				dist = vec3Distance(lf->oldFramePos, es->pos.trBase);
+				dist = Vec3Distance(lf->oldFramePos, es->pos.trBase);
 			}
 			newPos = dist / ((long double)(bgs->latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001);
 			lf->animSpeedScale = newPos / animation->moveSpeed;

@@ -48,6 +48,15 @@ bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex)
 	return valid;
 }
 
+bool BG_DoesWeaponNeedSlot(int weapon)
+{
+	WeaponDef *weaponDef;
+
+	weaponDef = BG_GetWeaponDef(weapon);
+
+	return weaponDef->weaponClass != WEAPCLASS_ITEM && weaponDef->offhandClass == 0;
+}
+
 int BG_GetBinocularsIndex()
 {
 	int i;
@@ -70,6 +79,60 @@ unsigned int QDECL BG_GetViewmodelWeaponIndex(const playerState_s *ps)
 		return ps->offHandIndex;
 
 	return ps->weapon;
+}
+
+int BG_GetStackableSlot(gclient_s *client, int weapon, int slot)
+{
+	WeaponDef *weaponDef;
+
+	weaponDef = BG_GetWeaponDef(weapon);
+
+	if ( weaponDef->slotStackable )
+	{
+		if ( (unsigned int)(weaponDef->weaponSlot - 1) <= 1 )
+		{
+			if ( slot == 1 || slot == 2 )
+			{
+				if ( !client->ps.weaponslots[slot] )
+					return slot;
+
+				if ( BG_GetWeaponDef(client->ps.weaponslots[slot])->slotStackable )
+					return slot;
+			}
+
+			if ( !client->ps.weaponslots[1] )
+				return 1;
+
+			if ( BG_GetWeaponDef(client->ps.weaponslots[1])->slotStackable )
+				return 1;
+
+			if ( !client->ps.weaponslots[2] )
+				return 2;
+
+			if ( BG_GetWeaponDef(client->ps.weaponslots[2])->slotStackable )
+				return 2;
+		}
+
+		return 0;
+	}
+
+	return 0;
+}
+
+int BG_GetEmptySlotForWeapon(playerState_s *ps, int weapon)
+{
+	if ( (unsigned int)(BG_GetWeaponDef(weapon)->weaponSlot - 1) > 1 )
+		return 0;
+
+	if ( ps->weaponslots[1] )
+	{
+		if ( !ps->weaponslots[2] )
+			return 2;
+
+		return 0;
+	}
+
+	return 1;
 }
 
 int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex)
@@ -102,17 +165,17 @@ int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex)
 	return 0;
 }
 
-int BG_PlayerHasOffhand(playerState_s *ps, int slot)
+int BG_GetFirstAvailableOffhand(playerState_s *ps, int offhandSlot)
 {
-	int count;
-	int index;
+	int weapIndex;
+	int slot;
 
-	count = BG_GetNumWeapons();
+	weapIndex = BG_GetNumWeapons();
 
-	for ( index = 1; index <= count; ++index )
+	for ( slot = 1; slot <= weapIndex; ++slot )
 	{
-		if ( BG_GetWeaponDef(index)->offhandClass == slot && COM_BitTest(ps->weapons, index) && BG_WeaponAmmo(ps, index) )
-			return index;
+		if ( BG_GetWeaponDef(slot)->offhandClass == offhandSlot && COM_BitTest(ps->weapons, slot) && BG_WeaponAmmo(ps, slot) )
+			return slot;
 	}
 
 	return 0;
@@ -939,7 +1002,7 @@ void PM_Weapon_CheckForOffHand(pmove_t *pm)
 			slot = 2;
 		}
 
-		index = BG_PlayerHasOffhand(ps, slot);
+		index = BG_GetFirstAvailableOffhand(ps, slot);
 
 		if ( index )
 		{
@@ -1974,28 +2037,28 @@ void PM_Weapon_AddFiringAimSpreadScale(playerState_s *ps)
 
 int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex)
 {
+	WeaponDef *altWeaponDef;
 	WeaponDef *weaponDef;
-	WeaponDef *weaponDef2;
 	int slot;
 	int index;
-	int index2;
+	int altIndex;
 
 	if ( !COM_BitTest(ps->weapons, weaponIndex) )
 		return 0;
 
-	weaponDef2 = BG_GetWeaponDef(weaponIndex);
+	weaponDef = BG_GetWeaponDef(weaponIndex);
 	slot = BG_PlayerHasWeapon(ps, weaponIndex, 1);
 
 	if ( slot )
 	{
-		if ( weaponDef2->slotStackable )
+		if ( weaponDef->slotStackable )
 		{
 			for ( index = 1; index <= bg_iNumWeapons; ++index )
 			{
-				weaponDef = BG_GetWeaponDef(weaponIndex);
+				altWeaponDef = BG_GetWeaponDef(weaponIndex);
 
-				if ( weaponDef->slotStackable
-				        && weaponDef->weaponSlot == weaponDef2->weaponSlot
+				if ( altWeaponDef->slotStackable
+				        && altWeaponDef->weaponSlot == weaponDef->weaponSlot
 				        && COM_BitTest(ps->weapons, index)
 				        && !BG_PlayerHasWeapon(ps, index, 1) )
 				{
@@ -2015,15 +2078,16 @@ int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex)
 
 	COM_BitClear(ps->weapons, weaponIndex);
 
-	for ( index2 = weaponDef2->altWeaponIndex;
-	        index2 && COM_BitTest(ps->weapons, index2);
-	        index2 = BG_GetWeaponDef(index2)->altWeaponIndex )
+	for ( altIndex = weaponDef->altWeaponIndex;
+	        altIndex && COM_BitTest(ps->weapons, altIndex);
+	        altIndex = BG_GetWeaponDef(altIndex)->altWeaponIndex )
 	{
-		COM_BitClear(ps->weapons, index2);
+		COM_BitClear(ps->weapons, altIndex);
 	}
 
 	if ( weaponIndex == ps->weapon )
 		ps->weapon = 0;
+
 	return 1;
 }
 

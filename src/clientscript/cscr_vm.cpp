@@ -137,15 +137,6 @@ void Scr_AddEntityNum(int entnum, unsigned int classnum)
 	Scr_AddObject(entId);
 }
 
-void Scr_AddStruct()
-{
-	unsigned int id;
-
-	id = AllocObject();
-	Scr_AddObject(id);
-	RemoveRefToObject(id);
-}
-
 void Scr_AddString(const char *value)
 {
 	IncInParam();
@@ -385,6 +376,122 @@ void Scr_GetVector(unsigned int index, float *vector)
 	Scr_Error(va("parameter %d does not exist", index + 1));
 }
 
+const char* Scr_GetDebugString(unsigned int index)
+{
+	VariableValue *value;
+
+	if ( index >= scrVmPub.outparamcount )
+	{
+		Scr_Error(va("parameter %d does not exist", index + 1));
+		return 0;
+	}
+	else
+	{
+		value = &scrVmPub.top[-index];
+		Scr_CastDebugString(value);
+		return SL_ConvertToString(value->u.intValue);
+	}
+}
+
+void Scr_GetAnim(scr_anim_s *pAnim, unsigned int index, XAnimTree_s *tree)
+{
+	XAnim_s *xanim;
+	const char *animTreeName;
+	const char *entityTreeName;
+	const char *animName;
+	VariableValue *pValue;
+
+	if ( index >= scrVmPub.outparamcount )
+		goto paramerror;
+
+	pValue = &scrVmPub.top[-index];
+
+	if ( pValue->type != VAR_ANIMATION )
+	{
+		scrVarPub.error_message = va("type %s is not an anim", var_typename[pValue->type]);
+		goto error;
+	}
+
+	pAnim->linkPointer = pValue->u.codePosValue;
+
+	if ( tree )
+	{
+		xanim = Scr_GetAnims(pAnim->tree);
+
+		if ( xanim != XAnimGetAnims(tree) )
+		{
+			xanim = XAnimGetAnims(tree);
+			animTreeName = XAnimGetAnimTreeDebugName(xanim);
+			xanim = Scr_GetAnims(pAnim->tree);
+			entityTreeName = XAnimGetAnimTreeDebugName(xanim);
+			xanim = Scr_GetAnims(pAnim->tree);
+			animName = XAnimGetAnimDebugName(xanim, pAnim->index);
+			scrVarPub.error_message = va(
+			                              "anim '%s' in animtree '%s' does not belong to the entity's animtree '%s'",
+			                              animName,
+			                              entityTreeName,
+			                              animTreeName);
+error:
+			RemoveRefToValue(pValue);
+			pValue->type = VAR_UNDEFINED;
+			scrVarPub.error_index = index + 1;
+			Scr_ErrorInternal();
+paramerror:
+			Scr_Error(va("parameter %d does not exist", index + 1));
+			pAnim->index = 0;
+			pAnim->tree = 0;
+		}
+	}
+}
+
+const char* Scr_GetTypeName(unsigned int index)
+{
+	if ( index < scrVmPub.outparamcount )
+		return var_typename[scrVmPub.top[-index].type];
+
+	Scr_Error(va("parameter %d does not exist", index + 1));
+	return 0;
+}
+
+unsigned int Scr_GetConstLowercaseString(unsigned int index)
+{
+	unsigned int stringValue;
+	VariableValue *value;
+	const char *string;
+	int i;
+	char tempString[8192];
+
+	if ( index >= scrVmPub.outparamcount )
+		goto error;
+
+	value = &scrVmPub.top[-index];
+
+	if ( !Scr_CastString(value) )
+	{
+		scrVarPub.error_index = index + 1;
+		Scr_ErrorInternal();
+error:
+		Scr_Error(va("parameter %d does not exist", index + 1));
+		return 0;
+	}
+
+	stringValue = value->u.stringValue;
+	string = SL_ConvertToString(value->u.stringValue);
+
+	for ( i = 0; ; ++i )
+	{
+		tempString[i] = tolower(string[i]);
+
+		if ( !string[i] )
+			break;
+	}
+
+	value->u.stringValue = SL_GetString(tempString, 0);
+	SL_RemoveRefToString(stringValue);
+
+	return value->u.stringValue;
+}
+
 void Scr_SetStructField(unsigned int structId, unsigned int index)
 {
 	unsigned int id;
@@ -393,6 +500,14 @@ void Scr_SetStructField(unsigned int structId, unsigned int index)
 	scrVmPub.inparamcount = 0;
 	SetVariableFieldValue(id, scrVmPub.top);
 	--scrVmPub.top;
+}
+
+void Scr_SetDynamicEntityField(int entnum, unsigned int classnum, unsigned int index)
+{
+	unsigned int entId;
+
+	entId = Scr_GetEntityId(entnum, classnum);
+	Scr_SetStructField(entId, index);
 }
 
 unsigned short Scr_ExecEntThreadNum(int entnum, unsigned int classnum, int handle, unsigned int paramcount)

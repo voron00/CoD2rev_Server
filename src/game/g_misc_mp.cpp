@@ -14,3 +14,28 @@ void TeleportPlayer(gentity_s *player, float *origin, float *angles)
 	if ( player->r.linked )
 		SV_LinkEntity(player);
 }
+
+void SP_info_null(gentity_s *self)
+{
+	G_FreeEntity(self);
+}
+
+void SP_info_notnull(gentity_s *self)
+{
+	G_SetOrigin(self, self->r.currentOrigin);
+}
+
+void SP_light(gentity_s *self)
+{
+	G_FreeEntity(self);
+}
+
+void SP_misc_model(gentity_s *self)
+{
+	G_FreeEntity(self);
+}
+
+void SP_corona(gentity_s *self)
+{
+	G_FreeEntity(self);
+}

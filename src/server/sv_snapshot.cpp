@@ -1611,3 +1611,20 @@ out:
 			Com_Error(ERR_FATAL, "svs.nextArchivedSnapshotFrames wrapped");
 	}
 }
+
+void SV_EnableArchivedSnapshot(qboolean enabled)
+{
+	svs.archivedSnapshotEnabled = enabled;
+
+	if ( enabled )
+	{
+		if ( !svs.archivedSnapshotFrames )
+		{
+			svs.cachedSnapshotEntities = (archivedEntity_s *)Z_MallocInternal(0x450000u);
+			svs.cachedSnapshotClients = (cachedClient_s *)Z_MallocInternal(0x2708000u);
+			svs.archivedSnapshotFrames = (archivedSnapshot_s *)Z_MallocInternal(0x2580u);
+			svs.archivedSnapshotBuffer = (byte *)Z_MallocInternal(0x2000000u);
+			svs.cachedSnapshotFrames = (cachedSnapshot_s *)Z_MallocInternal(0x3800u);
+		}
+	}
+}

@@ -1,9 +1,18 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
+#ifdef TESTING_LIBRARY
+#define g_playerAnimTypeNamesCount (*((unsigned int*)( 0x08576FC4 )))
+#define g_playerAnimTypeNames (((const char**)( 0x08576FE0 )))
+#define weaponStrings (((animStringItem_t*)( 0x08575C40 )))
+#define bg_defaultWeaponDefs (*((WeaponDef*)( 0x085769C0 )))
+#else
 unsigned int g_playerAnimTypeNamesCount;
 const char *g_playerAnimTypeNames[32];
 animStringItem_t weaponStrings[128];
+WeaponDef bg_defaultWeaponDefs;
+#endif
+
 static const char *globalTypesFilename = "mp/playeranimtypes.txt";    // to prevent redundant params
 
 const char *szWeapTypeNames[] =
@@ -760,4 +769,17 @@ WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName)
 
 	SetConfigString((char **)weapon, weaponName);
 	return weapon;
+}
+
+WeaponDef *BG_LoadDefaultWeaponDef()
+{
+	InitWeaponDef(&bg_defaultWeaponDefs);
+
+	bg_defaultWeaponDefs.szInternalName = "none";
+	bg_defaultWeaponDefs.accuracyGraphName[0] = "noweapon.accu";
+	bg_defaultWeaponDefs.accuracyGraphName[1] = "noweapon.accu";
+
+	G_ParseWeaponAccurayGraphs(&bg_defaultWeaponDefs);
+
+	return &bg_defaultWeaponDefs;
 }

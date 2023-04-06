@@ -592,7 +592,7 @@ int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *or
 	return 0;
 }
 
-float vec3Distance(const float* pointA, const float* pointB)
+float Vec3Distance(const float* pointA, const float* pointB)
 {
 	float diffx = pointA[0]-pointB[0];
 	float diffy = pointA[1]-pointB[1];
@@ -1100,4 +1100,108 @@ int irand(int min, int max)
 {
 	holdrand = 214013 * holdrand + 2531011;
 	return ((holdrand >> 17) * (max - min) >> 15) + min;
+}
+
+double Vec3DistanceSq(const float *p1, const float *p2)
+{
+	vec3_t d;
+
+	VectorSubtract(p2, p1, d);
+	return VectorLengthSquared( d );
+}
+
+double RotationToYaw(float *rot)
+{
+	float zz;
+	float r;
+	float v4;
+	float v6;
+	float v7;
+
+	zz = rot[0] * rot[0];
+	r = rot[1] * rot[1] + zz;
+
+	v4 = 2.0 / r;
+	v6 = rot[1] * rot[0] * v4;
+	v7 = 1.0 - zz * v4;
+
+	return atan2(v6, v7) * 57.2957763671875;
+}
+
+void MatrixTranspose(const float (*in)[3], float (*out)[3])
+{
+	(*out)[0] = (*in)[0];
+	(*out)[1] = (*in)[3];
+	(*out)[2] = (*in)[6];
+	(*out)[3] = (*in)[1];
+	(*out)[4] = (*in)[4];
+	(*out)[5] = (*in)[7];
+	(*out)[6] = (*in)[2];
+	(*out)[7] = (*in)[5];
+	(*out)[8] = (*in)[8];
+}
+
+void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
+{
+	(*out)[0] = (((*in1)[0] * (*in2)[0]) + ((*in1)[1] * (*in2)[3])) + ((*in1)[2] * (*in2)[6]);
+	(*out)[3] = (((*in1)[3] * (*in2)[0]) + ((*in1)[4] * (*in2)[3])) + ((*in1)[5] * (*in2)[6]);
+	(*out)[6] = (((*in1)[6] * (*in2)[0]) + ((*in1)[7] * (*in2)[3])) + ((*in1)[8] * (*in2)[6]);
+	(*out)[1] = (((*in1)[0] * (*in2)[1]) + ((*in1)[1] * (*in2)[4])) + ((*in1)[2] * (*in2)[7]);
+	(*out)[4] = (((*in1)[3] * (*in2)[1]) + ((*in1)[4] * (*in2)[4])) + ((*in1)[5] * (*in2)[7]);
+	(*out)[7] = (((*in1)[6] * (*in2)[1]) + ((*in1)[7] * (*in2)[4])) + ((*in1)[8] * (*in2)[7]);
+	(*out)[2] = (((*in1)[0] * (*in2)[2]) + ((*in1)[1] * (*in2)[5])) + ((*in1)[2] * (*in2)[8]);
+	(*out)[5] = (((*in1)[3] * (*in2)[2]) + ((*in1)[4] * (*in2)[5])) + ((*in1)[5] * (*in2)[8]);
+	(*out)[8] = (((*in1)[6] * (*in2)[2]) + ((*in1)[7] * (*in2)[5])) + ((*in1)[8] * (*in2)[8]);
+	(*out)[9] = ((((*in1)[9] * (*in2)[0]) + ((*in1)[10] * (*in2)[3])) + ((*in1)[11] * (*in2)[6])) + (*in2)[9];
+	(*out)[10] = ((((*in1)[9] * (*in2)[1]) + ((*in1)[10] * (*in2)[4])) + ((*in1)[11] * (*in2)[7])) + (*in2)[10];
+	(*out)[11] = ((((*in1)[9] * (*in2)[2]) + ((*in1)[10] * (*in2)[5])) + ((*in1)[11] * (*in2)[8])) + (*in2)[11];
+}
+
+void MatrixInverseOrthogonal43(const float in[4][3], float out[4][3])
+{
+	vec3_t origin;
+
+	MatrixTranspose(in, out);
+	origin[0] = 0.0 - in[3][0];
+	origin[1] = 0.0 - in[3][1];
+	origin[2] = 0.0 - in[3][2];
+	MatrixTransformVector(origin, (const float (*)[3])out, out[3]);
+}
+
+void ExpandBoundsToWidth(float *mins, float *maxs)
+{
+	float diff;
+	float s;
+	vec3_t size;
+
+	VectorSubtract(maxs, mins, size);
+
+	if ( (size[0] - size[1]) < 0.0 )
+	{
+		s = size[1];
+	}
+	else
+	{
+		s = size[0];
+	}
+	if ( s > size[2] )
+	{
+		diff = (s - size[2]) * 0.5;
+		mins[2] = mins[2] - diff;
+		maxs[2] = maxs[2] + diff;
+	}
+}
+
+void YawToAxis(float yaw, vec3_t axis[3])
+{
+	vec3_t right;
+
+	YawVectors(yaw, axis[0], right);
+
+	axis[2][0] = 0.0;
+	axis[2][1] = 0.0;
+	axis[2][2] = 1.0;
+	axis[1][0] = 0.0 - right[0];
+	axis[1][1] = 0.0 - right[1];
+	axis[1][2] = 0.0 - right[2];
 }

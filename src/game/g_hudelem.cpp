@@ -79,6 +79,15 @@ const char *g_he_aligny[] = { "top", "middle", "bottom" };
 const char *g_he_alignx[] = { "left", "center", "right" };
 const char *g_he_font[] =   { "default", "bigfixed", "smallfixed", };
 
+game_hudelem_t* HECmd_GetHudElem(scr_entref_t entRef)
+{
+	if ( entRef.classnum == CLASS_NUM_HUDELEM )
+		return &g_hudelems[entRef.entnum];
+
+	Scr_ObjectError("not a hud element");
+	return 0;
+}
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount)
 {
 	unsigned int *position;
@@ -277,7 +286,7 @@ void HECmd_SetText(scr_entref_t entRef)
 	game_hudelem_t *hud;
 	const char *string;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	string = Scr_GetIString(0);
 	HudElem_ClearTypeSettings(hud);
 	hud->elem.type = HE_TYPE_TEXT;
@@ -289,7 +298,7 @@ void HECmd_SetPlayerNameString(scr_entref_t entRef)
 	game_hudelem_t *hud;
 	gentity_t *entity;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	entity = Scr_GetEntity(0);
 
 	if ( entity )
@@ -316,7 +325,7 @@ void HECmd_SetGameTypeString(scr_entref_t entRef)
 	game_hudelem_t *hud;
 	const char *string;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	string = Scr_GetString(0);
 
 	if ( string )
@@ -344,7 +353,7 @@ void HECmd_SetMapNameString(scr_entref_t entRef)
 	game_hudelem_t *hud;
 	const char *string;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	string = Scr_GetString(0);
 
 	if ( string )
@@ -375,7 +384,7 @@ void HECmd_SetShader(scr_entref_t entRef)
 	unsigned int paramNum;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	paramNum = Scr_GetNumParam();
 
 	if ( paramNum != 1 && paramNum != 3 )
@@ -419,7 +428,7 @@ void HECmd_SetTimer_Internal(scr_entref_t entRef, he_type_t type, const char *fu
 	int timeInt;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 
 	if ( Scr_GetNumParam() != 1 )
 	{
@@ -450,7 +459,7 @@ void HECmd_SetClock_Internal(scr_entref_t entref, he_type_t type, const char *fu
 	unsigned int paramNum;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entref);
+	hud = HECmd_GetHudElem(entref);
 	paramNum = Scr_GetNumParam();
 
 	if ( paramNum != 3 && paramNum != 5 )
@@ -542,7 +551,7 @@ void HECmd_SetValue(scr_entref_t entRef)
 	game_hudelem_t *hud;
 	float value;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	value = Scr_GetFloat(0);
 	HudElem_ClearTypeSettings(hud);
 	hud->elem.type = HE_TYPE_VALUE;
@@ -554,7 +563,7 @@ void HECmd_SetWaypoint(scr_entref_t entRef)
 	int waypoint;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	waypoint = Scr_GetInt(0);
 	hud->elem.type = HE_TYPE_WAYPOINT;
 	hud->elem.value = (float)waypoint;
@@ -566,7 +575,7 @@ void HECmd_FadeOverTime(scr_entref_t entRef)
 	float fadetime;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	value = Scr_GetFloat(0);
 
 	if ( value > 0.0 )
@@ -595,7 +604,7 @@ void HECmd_ScaleOverTime(scr_entref_t entRef)
 	float value;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 
 	if ( Scr_GetNumParam() != 3 )
 		Scr_Error("hudelem scaleOverTime(time_in_seconds, new_width, new_height)");
@@ -631,7 +640,7 @@ void HECmd_MoveOverTime(scr_entref_t entRef)
 	float value;
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	value = Scr_GetFloat(0);
 
 	if ( value > 0.0 )
@@ -659,7 +668,7 @@ void HECmd_Reset(scr_entref_t entRef)
 {
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	HudElem_SetDefaults(hud);
 }
 
@@ -667,7 +676,7 @@ void HECmd_Destroy(scr_entref_t entRef)
 {
 	game_hudelem_t *hud;
 
-	hud = Scr_HudElemForRef(entRef);
+	hud = HECmd_GetHudElem(entRef);
 	HudElem_Free(hud);
 }
 
@@ -834,6 +843,57 @@ game_hudelem_t *HudElem_Alloc(int clientNum, int teamNum)
 	}
 
 	return NULL;
+}
+
+void GScr_NewTeamHudElem()
+{
+	const char *team;
+	unsigned short teamName;
+	game_hudelem_s *hud;
+
+	teamName = Scr_GetConstString(0);
+
+	if ( teamName == scr_const.allies )
+	{
+		hud = HudElem_Alloc(1023, 2);
+	}
+	else if ( teamName == scr_const.axis )
+	{
+		hud = HudElem_Alloc(1023, 1);
+	}
+	else if ( teamName == scr_const.spectator )
+	{
+		hud = HudElem_Alloc(1023, 3);
+	}
+	else
+	{
+		team = Scr_GetString(0);
+		Scr_ParamError(0, va("team \"%s\" should be \"allies\", \"axis\", or \"spectator\"", team));
+		hud = HudElem_Alloc(1023, 0);
+	}
+
+	if ( !hud )
+		Scr_Error("out of hudelems");
+
+	Scr_AddHudElem(hud);
+}
+
+void GScr_NewClientHudElem()
+{
+	gentity_s *ent;
+	game_hudelem_s *hud;
+
+	ent = Scr_GetEntity(0);
+
+	if ( !ent->client )
+		Scr_ParamError(0, "not a client");
+
+	hud = HudElem_Alloc(ent->s.number, 0);
+
+	if ( !hud )
+		Scr_Error("out of hudelems");
+
+	Scr_AddHudElem(hud);
 }
 
 void GScr_NewHudElem()

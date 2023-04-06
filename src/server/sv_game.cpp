@@ -12,12 +12,6 @@ char g_sv_skel_memory[262144];
 char *g_sv_skel_memory_start;
 int g_sv_skel_warn_count;
 
-qboolean ConsoleCommand()
-{
-	UNIMPLEMENTED(__FUNCTION__);
-	return qfalse;
-}
-
 qboolean SV_GameCommand()
 {
 	if ( sv.state == SS_GAME )
@@ -208,6 +202,11 @@ void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify)
 		DObjUpdateServerInfo(obj, dtime, bNotify);
 }
 
+qboolean SV_DObjExists(gentity_s *ent)
+{
+	return Com_GetServerDObj(ent->s.number) != 0;
+}
+
 void SV_ResetSkeletonCache()
 {
 	if ( !++sv.skelTimeStamp )
@@ -340,6 +339,22 @@ DObjAnimMat* SV_DObjGetMatrixArray(gentity_s *ent)
 	return DObjGetRotTransArray(obj);
 }
 
+extern dvar_t *com_developer;
+void SV_DObjDumpInfo(gentity_s *ent)
+{
+	DObj_s *obj;
+
+	if ( com_developer->current.integer )
+	{
+		obj = Com_GetServerDObj(ent->s.number);
+
+		if ( obj )
+			DObjDumpInfo(obj);
+		else
+			Com_Printf("no model.\n");
+	}
+}
+
 int SV_EntityContact(const float *mins, const float *maxs, gentity_s *gEnt)
 {
 	unsigned int model;
@@ -458,6 +473,19 @@ void SV_SetGametype()
 	}
 
 	Dvar_SetString(sv_gametype, gametype);
+}
+
+void SV_SetBrushModel(gentity_s *ent)
+{
+	vec3_t maxs;
+	vec3_t mins;
+
+	CM_ModelBounds(ent->s.index, mins, maxs);
+	VectorCopy(mins, ent->r.mins);
+	VectorCopy(maxs, ent->r.maxs);
+	ent->r.bmodel = 1;
+	ent->r.contents = -1;
+	SV_LinkEntity(ent);
 }
 
 void SV_ShutdownGameProgs()

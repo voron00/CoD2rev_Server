@@ -11,6 +11,7 @@ global XAnimCalcDeltaTree
 global XAnim_CalcDeltaForTime
 global XAnimCalcDelta
 global XAnimGetAbsDelta
+global XAnimCalcAbsDelta
 
 
 section .text

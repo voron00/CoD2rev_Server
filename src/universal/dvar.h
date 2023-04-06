@@ -92,7 +92,6 @@ typedef struct dvar_s
 #define DVAR_CHANGEABLE_RESET   (1 << 12)       // 0x1000
 #define DVAR_EXTERNAL           (1 << 14)       // 0x4000
 #define DVAR_AUTOEXEC           (1 << 15)       // 0x8000
-#define DVAR_UNRESTRICTED		(1 << 16)		// 0x1000
 #define DVAR_INVALID_ENUM_INDEX -1337
 
 extern dvar_t *sortedDvars;
@@ -139,6 +138,8 @@ qboolean Dvar_HasLatchedValue(dvar_t *var);
 qboolean Dvar_IsValidName(const char *dvarName);
 void Dvar_Reset(dvar_t *dvar, DvarSetSource setSource);
 void Dvar_AddFlags(dvar_t* var, unsigned short flags);
+void Dvar_ClearFlags(dvar_t* var, unsigned short flags);
+void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 const char *Dvar_DisplayableLatchedValue(dvar_t *var);
 const char *Dvar_DisplayableResetValue(dvar_t *var);
 const char *Dvar_DisplayableValue(dvar_t *var);

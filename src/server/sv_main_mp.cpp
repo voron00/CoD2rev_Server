@@ -105,38 +105,44 @@ extern dvar_t *sv_timeout;
 extern dvar_t *sv_zombietime;
 void SV_CheckTimeouts( void )
 {
-	int	i;
+	int i;
 	client_t *cl;
-	int	droppoint;
-	int	zombiepoint;
+	int droppoint;
+	int zombiepoint;
 
 	droppoint = svs.time - 1000 * sv_timeout->current.integer;
 	zombiepoint = svs.time - 1000 * sv_zombietime->current.integer;
 
-	for ( i = 0, cl = svs.clients; i < sv_maxclients->current.integer; i++, cl++ )
+	for ( i = 0,cl = svs.clients ; i < sv_maxclients->current.integer ; i++,cl++ )
 	{
 		// message times may be wrong across a changelevel
-		if (cl->lastPacketTime > svs.time)
-			cl->lastPacketTime = svs.time;
-
-		if (cl->state == CS_ZOMBIE && cl->lastPacketTime < zombiepoint)
+		if ( cl->lastPacketTime > svs.time )
 		{
-			cl->state = CS_FREE; // can now be reused
-			continue;
+			cl->lastPacketTime = svs.time;
 		}
 
-		if (cl->state >= CS_CONNECTED && cl->lastPacketTime < droppoint)
+		if ( cl->state == CS_ZOMBIE && cl->lastPacketTime < zombiepoint )
+		{
+			// using the client id cause the cl->name is empty at this point
+			Com_DPrintf( "Going from CS_ZOMBIE to CS_FREE for client %d\n", i );
+			cl->state = CS_FREE;    // can now be reused
+
+			continue;
+		}
+		if ( cl->state >= CS_CONNECTED && cl->lastPacketTime < droppoint )
 		{
 			// wait several frames so a debugger session doesn't
 			// cause a timeout
 			if ( ++cl->timeoutCount > 5 )
 			{
-				SV_DropClient(cl, "EXE_TIMEDOUT");
-				cl->state = CS_FREE; // don't bother with zombie state
+				SV_DropClient( cl, "EXE_TIMEDOUT" );
+				cl->state = CS_FREE;    // don't bother with zombie state
 			}
 		}
 		else
+		{
 			cl->timeoutCount = 0;
+		}
 	}
 }
 

@@ -92,6 +92,39 @@ void XAnimBlend(XAnim_s *anims, unsigned int animIndex,const char *name, unsigne
 	}
 }
 
+XAnim_s* XAnimGetAnims(const XAnimTree_s *tree)
+{
+	return tree->anims;
+}
+
+const char* XAnimGetAnimTreeDebugName(const XAnim_s *anims)
+{
+	return anims->debugName;
+}
+
+bool XAnimNotetrackExists(const XAnim_s *anims, unsigned int animIndex, unsigned int name)
+{
+	int i;
+	XAnimNotifyInfo *info;
+	XAnimParts_s *parts;
+
+	parts = anims->entries[animIndex].u.parts;
+	info = parts->notify;
+
+	if ( !info )
+		return 0;
+
+	for ( i = 0; i < parts->notifyCount; ++i )
+	{
+		if ( info->name == name )
+			return 1;
+
+		++info;
+	}
+
+	return 0;
+}
+
 bool XanimIsDefaultPart(XAnimParts *animParts)
 {
 	return animParts->isDefault;

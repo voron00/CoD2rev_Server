@@ -8,6 +8,12 @@
 extern gentity_t g_entities[];
 #endif
 
+#ifdef TESTING_LIBRARY
+#define level (*((level_locals_t*)( 0x0859B400 )))
+#else
+extern level_locals_t level;
+#endif
+
 extern game_hudelem_t g_hudelems[];
 
 game_entity_field_t g_entity_fields[] =
@@ -23,6 +29,32 @@ game_entity_field_t g_entity_fields[] =
 	{ "dmg", 412, 0, NULL },
 	{ "angles", 324, 4, Scr_SetAngles }
 };
+
+spawn_t spawns[] =
+{
+	{ "info_null", SP_info_null },
+	{ "info_notnull", SP_info_notnull },
+	{ "func_group", SP_info_null },
+	{ "trigger_multiple", SP_trigger_multiple },
+	{ "trigger_radius", SP_trigger_radius },
+	{ "trigger_disk", SP_trigger_disk },
+	{ "trigger_hurt", SP_trigger_hurt },
+	{ "trigger_once", SP_trigger_once },
+	{ "light", SP_light },
+	{ "misc_model", SP_misc_model },
+	{ "misc_mg42", SP_turret },
+	{ "misc_turret", SP_turret },
+	{ "corona", SP_corona },
+	{ "trigger_use", SP_trigger_use },
+	{ "trigger_use_touch", SP_trigger_use_touch },
+	{ "trigger_damage", SP_trigger_damage },
+	{ "trigger_lookat", SP_trigger_lookat },
+	{ "script_brushmodel", SP_script_brushmodel },
+	{ "script_model", SP_script_model },
+	{ "script_origin", SP_script_origin },
+	{ "script_struct", G_FreeEntity },
+};
+
 
 void GScr_AddFieldsForEntity()
 {
@@ -189,6 +221,116 @@ void Scr_GetObjectField(unsigned int classnum, int entnum, int offset)
 	}
 }
 
+void Scr_GetEnt()
+{
+	int i;
+	gentity_s *get;
+	int offset;
+	unsigned short name;
+	unsigned short value;
+	const char *key;
+	gentity_s *ent;
+
+	name = Scr_GetConstString(0);
+	key = Scr_GetString(1u);
+	offset = Scr_GetOffset(0, key);
+
+	if ( offset >= 0 && g_entity_fields[offset].type == F_STRING )
+	{
+		get = 0;
+		i = 0;
+		ent = g_entities;
+
+		while ( i < level.num_entities )
+		{
+			if ( ent->r.inuse )
+			{
+				value = *(uint16_t *)((char *)&ent->s.number + g_entity_fields[offset].ofs);
+
+				if ( value )
+				{
+					if ( value == name )
+					{
+						if ( get )
+							Scr_Error("getent used with more than one entity");
+
+						get = ent;
+					}
+				}
+			}
+
+			++i;
+			++ent;
+		}
+
+		if ( get )
+			Scr_AddEntity(get);
+	}
+}
+
+void Scr_GetEntArray()
+{
+	int i;
+	int j;
+	int offset;
+	unsigned short name;
+	unsigned short value;
+	const char *key;
+	gentity_s *ent;
+
+	if ( Scr_GetNumParam() )
+	{
+		name = Scr_GetConstString(0);
+		key = Scr_GetString(1u);
+		offset = Scr_GetOffset(0, key);
+
+		if ( offset >= 0 && g_entity_fields[offset].type == F_STRING )
+		{
+			Scr_MakeArray();
+			j = 0;
+			ent = g_entities;
+
+			while ( j < level.num_entities )
+			{
+				if ( ent->r.inuse )
+				{
+					value = *(uint16_t *)((char *)&ent->s.number + g_entity_fields[offset].ofs);
+
+					if ( value )
+					{
+						if ( value == name )
+						{
+							Scr_AddEntity(ent);
+							Scr_AddArray();
+						}
+					}
+				}
+
+				++j;
+				++ent;
+			}
+		}
+	}
+	else
+	{
+		Scr_MakeArray();
+		i = 0;
+		ent = g_entities;
+
+		while ( i < level.num_entities )
+		{
+			if ( ent->r.inuse )
+			{
+				Scr_AddEntity(ent);
+				Scr_AddArray();
+			}
+
+			++i;
+			++ent;
+		}
+	}
+}
+
 void Scr_Notify(gentity_s *ent, unsigned short stringValue, unsigned int paramcount)
 {
 	Scr_NotifyNum(ent->s.number, 0, stringValue, paramcount);
@@ -221,4 +363,207 @@ void Scr_FreeEntity(gentity_s *ent)
 {
 	Scr_FreeEntityConstStrings(ent);
 	Scr_FreeEntityNum(ent->s.number, 0);
+}
+
+void GScr_SetDynamicEntityField(gentity_s *ent, unsigned int index)
+{
+	Scr_SetDynamicEntityField(ent->s.number, 0, index);
+}
+
+void G_SetEntityScriptVariable(const char *key, const char *value, gentity_s *ent)
+{
+	unsigned int index;
+
+	index = G_SetEntityScriptVariableInternal(key, value);
+
+	if ( index )
+		GScr_SetDynamicEntityField(ent, index);
+}
+
+void G_ParseEntityField(const char *key, const char *value, gentity_s *ent)
+{
+	uint16_t *string;
+	vec3_t vector;
+	gentity_s *entity;
+	game_entity_field_t *f;
+
+	for ( f = g_entity_fields; ; ++f )
+	{
+		if ( !f->name )
+		{
+			G_SetEntityScriptVariable(key, value, ent);
+			return;
+		}
+
+		if ( !I_stricmp(f->name, key) )
+			break;
+	}
+
+	entity = ent;
+
+	switch ( f->type )
+	{
+	case F_INT:
+		*(int *)((char *)&entity->s.number + f->ofs) = atoi(value);
+		break;
+
+	case F_FLOAT:
+		*(float *)((char *)&entity->s.number + f->ofs) = atof(value);
+		break;
+
+	case F_STRING:
+		Scr_SetString((uint16_t *)((char *)entity + f->ofs), 0);
+		string = (uint16_t *)((char *)entity + f->ofs);
+		*string = G_NewString(value);
+		break;
+
+	case F_VECTOR:
+		VectorClear(vector);
+		sscanf(value, "%f %f %f", vector, &vector[1], &vector[2]);
+		*(vec_t *)((char *)&entity->s.number + f->ofs) = vector[0];
+		*(vec_t *)((char *)&entity->s.eType + f->ofs) = vector[1];
+		*(vec_t *)((char *)&entity->s.eFlags + f->ofs) = vector[2];
+		break;
+
+	case F_MODEL:
+		if ( *value == 42 )
+			ent->s.index = (unsigned short)atoi(value + 1);
+		else
+			G_SetModel(ent, value);
+		break;
+
+	default:
+		return;
+	}
+}
+
+void G_ParseEntityFields(gentity_s *ent)
+{
+	int i;
+
+	for ( i = 0; i < level.spawnVars.numSpawnVars; ++i )
+		G_ParseEntityField(level.spawnVars.spawnVars[i].key, level.spawnVars.spawnVars[i].value, ent);
+
+	G_SetOrigin(ent, ent->r.currentOrigin);
+	G_SetAngle(ent, ent->r.currentAngles);
+}
+
+int G_SpawnInt(const char *key, const char *defaultString, int *out)
+{
+	int present;
+	const char *s;
+
+	present = G_SpawnString(key, defaultString, &s);
+	*out = atoi(s);
+
+	return present;
+}
+
+int G_SpawnFloat(const char *key, const char *defaultString, float *out)
+{
+	int present;
+	const char *s;
+
+	present = G_SpawnString(key, defaultString, &s);
+	*out = atof(s);
+
+	return present;
+}
+
+int G_SpawnVector(const char *key, const char *defaultString, float *out)
+{
+	int present;
+	const char *s;
+
+	present = G_SpawnString(key, defaultString, &s);
+	VectorClear(out);
+	sscanf(s, "%f %f %f", out, out + 1, out + 2);
+
+	return present;
+}
+
+int G_CallSpawnEntity(gentity_s *ent)
+{
+	const char *classname;
+	gitem_s *item;
+	spawn_t *spawn;
+
+	if ( ent->classname )
+	{
+		classname = SL_ConvertToString(ent->classname);
+		item = G_GetItemForClassname(classname);
+
+		if ( item )
+		{
+			G_SpawnItem(ent, item);
+			return 1;
+		}
+		else
+		{
+			for ( spawn = spawns; spawn->name; ++spawn )
+			{
+				if ( !strcmp(spawn->name, classname) )
+				{
+					spawn->spawn(ent);
+					return 1;
+				}
+			}
+
+			Com_Printf("%s doesn't have a spawn function\n", SL_ConvertToString(ent->classname));
+			return 0;
+		}
+	}
+	else
+	{
+		Com_Printf("G_CallSpawnEntity: NULL classname\n");
+		return 0;
+	}
+}
+
+void G_CallSpawn(void)
+{
+	const char *classname;
+	gentity_s *ent;
+	gitem_s *item;
+	spawn_t *spawn;
+
+	G_SpawnString("classname", "", &classname);
+
+	if ( classname )
+	{
+		item = G_GetItemForClassname(classname);
+
+		if ( item )
+		{
+			ent = G_Spawn();
+			G_ParseEntityFields(ent);
+			G_SpawnItem(ent, item);
+		}
+		else
+		{
+			for ( spawn = spawns; ; ++spawn )
+			{
+				if ( !spawn->name )
+				{
+					ent = G_Spawn();
+					G_ParseEntityFields(ent);
+					return;
+				}
+
+				if ( !strcmp(spawn->name, classname) )
+					break;
+			}
+
+			if ( spawn->spawn != G_FreeEntity )
+			{
+				ent = G_Spawn();
+				G_ParseEntityFields(ent);
+				spawn->spawn(ent);
+			}
+		}
+	}
+	else
+	{
+		Com_Printf("G_CallSpawn: NULL classname\n");
+	}
 }

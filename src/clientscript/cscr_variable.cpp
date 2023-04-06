@@ -2530,6 +2530,22 @@ void Scr_SetThreadNotifyName(unsigned int startLocalId, unsigned int stringValue
 	entryValue->w.name |= stringValue << VAR_NAME_BITS;
 }
 
+int Scr_GetOffset(unsigned int classnum, const char *name)
+{
+	unsigned int str;
+	unsigned int classId;
+	unsigned int fieldId;
+
+	classId = scrClassMap[classnum].id;
+	str = SL_ConvertFromString(name);
+	fieldId = FindVariable(classId, str);
+
+	if ( fieldId )
+		return scrVarGlob.variableList[fieldId].u.u.entityOffset;
+	else
+		return -1;
+}
+
 unsigned int Scr_FindField(const char *name, int *type)
 {
 	unsigned int index;

@@ -22,7 +22,6 @@ dvar_t *com_fixedtime;
 dvar_t *com_viewlog;
 dvar_t *sv_paused;
 dvar_t *cl_paused;
-dvar_t *sv_running;
 dvar_t *com_introPlayed;
 dvar_t *com_animCheck;
 dvar_t *com_sv_running;

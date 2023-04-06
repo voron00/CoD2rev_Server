@@ -1453,6 +1453,11 @@ dvar_t *Dvar_SetFromStringByNameFromSource(const char *dvarName, const char *str
 	return dvar;
 }
 
+void Dvar_SetFromStringByName(const char *dvarName, const char *string)
+{
+	Dvar_SetFromStringByNameFromSource(dvarName, string, DVAR_SOURCE_INTERNAL, 0);
+}
+
 void Dvar_SetIntByName(const char *dvarName, int value)
 {
 	dvar_t *dvar;

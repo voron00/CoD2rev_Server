@@ -120,3 +120,212 @@ void G_CheckHitTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, 
 		}
 	}
 }
+
+void InitTriggerWait(gentity_s *ent, int spawnflag)
+{
+	float wait;
+
+	if ( level.spawnVars.spawnVarsValid && G_SpawnFloat("wait", "", &wait) && wait <= 0.0 )
+		ent->spawnflags |= spawnflag;
+}
+
+void InitTrigger(gentity_s *self)
+{
+	SV_SetBrushModel(self);
+	self->r.contents = 1079771144;
+	self->r.svFlags = 1;
+	self->s.eFlags |= 1u;
+}
+
+void InitSentientTrigger(gentity_s *self)
+{
+	self->r.contents = 0;
+
+	if ( (self->spawnflags & 8) == 0 )
+		self->r.contents |= 0x40000000u;
+	if ( (self->spawnflags & 1) != 0 )
+		self->r.contents |= 0x40000u;
+	if ( (self->spawnflags & 2) != 0 )
+		self->r.contents |= 0x80000u;
+	if ( (self->spawnflags & 4) != 0 )
+		self->r.contents |= 0x100000u;
+}
+
+void SP_trigger_multiple(gentity_s *self)
+{
+	self->handler = 1;
+	InitTriggerWait(self, 16);
+	InitTrigger(self);
+	InitSentientTrigger(self);
+	SV_LinkEntity(self);
+}
+
+void SP_trigger_radius(gentity_s *ent)
+{
+	float height;
+	float radius;
+
+	if ( level.spawnVars.spawnVarsValid )
+	{
+		if ( !G_SpawnFloat("radius", "", &radius) )
+		{
+			Com_Error(ERR_DROP, va("radius not specified for trigger_radius at (%g %g %g)",  ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]));
+		}
+
+		if ( !G_SpawnFloat("height", "", &height) )
+		{
+			Com_Error(ERR_DROP, va("height not specified for trigger_radius at (%g %g %g)", ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]));
+		}
+	}
+	else
+	{
+		if ( Scr_GetNumParam() <= 4 )
+			Scr_Error("USAGE: spawn( \"trigger_radius\", <origin>, <spawnflags>, <radius>, <height> )");
+
+		radius = Scr_GetFloat(3u);
+		height = Scr_GetFloat(4u);
+	}
+
+	ent->handler = 1;
+
+	ent->r.mins[0] = -radius;
+	ent->r.mins[1] = -radius;
+	ent->r.mins[2] = 0.0;
+	ent->r.maxs[0] = radius;
+	ent->r.maxs[1] = radius;
+	ent->r.maxs[2] = height;
+
+	ent->r.svFlags = 33;
+	InitTriggerWait(ent, 16);
+	InitSentientTrigger(ent);
+	SV_LinkEntity(ent);
+}
+
+void SP_trigger_disk(gentity_s *ent)
+{
+	float radius;
+
+	if ( !G_SpawnFloat("radius", "", &radius) )
+	{
+		Com_Error(ERR_DROP, va("radius not specified for trigger_radius at (%g %g %g)", ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2]));
+	}
+
+	ent->handler = 1;
+	radius = radius + 64.0;
+
+	ent->r.mins[0] = -radius;
+	ent->r.mins[1] = -radius;
+	ent->r.mins[2] = -100000.0;
+	ent->r.maxs[0] = radius;
+	ent->r.maxs[1] = radius;
+	ent->r.maxs[2] = 100000.0;
+
+	ent->r.svFlags = 65;
+	InitTriggerWait(ent, 16);
+	InitSentientTrigger(ent);
+	SV_LinkEntity(ent);
+}
+
+void SP_trigger_hurt(gentity_s *self)
+{
+	const char *sound;
+
+	InitTrigger(self);
+	G_SpawnString("sound", "world_hurt_me", &sound);
+
+	if ( !self->dmg )
+		self->dmg = 5;
+
+	self->r.contents = 1079771144;
+
+	if ( ((LOBYTE(self->spawnflags) ^ 1) & 1) != 0 )
+		self->handler = 3;
+	else
+		self->handler = 2;
+}
+
+void SP_trigger_once(gentity_s *ent)
+{
+	ent->handler = 1;
+	ent->spawnflags |= 0x10u;
+	InitTrigger(ent);
+	InitSentientTrigger(ent);
+	SV_LinkEntity(ent);
+}
+
+void SP_trigger_use(gentity_s *self)
+{
+	trigger_use_shared(self);
+}
+
+void SP_trigger_use_touch(gentity_s *self)
+{
+	trigger_use_shared(self);
+}
+
+void SP_trigger_damage(gentity_s *ent)
+{
+	G_SpawnInt("accumulate", "0", &ent->trigger.accumulate);
+	G_SpawnInt("threshold", "0", &ent->trigger.threshold);
+	ent->health = 32000;
+	ent->takedamage = 1;
+	ent->handler = 4;
+	InitTriggerWait(ent, 512);
+	InitTrigger(ent);
+	SV_LinkEntity(ent);
+}
+
+void SP_trigger_lookat(gentity_s *ent)
+{
+	SV_SetBrushModel(ent);
+	ent->r.contents = 0x20000000;
+	ent->r.svFlags = 1;
+	ent->s.eFlags |= 1u;
+	SV_LinkEntity(ent);
+}
+
+void multi_trigger(gentity_s *self)
+{
+	if ( (self->spawnflags & 0x10) != 0 )
+		G_FreeEntityDelay(self);
+}
+
+void Touch_Multi(gentity_s *self, gentity_s *other)
+{
+	G_Trigger(self, other);
+	multi_trigger(self);
+}
+
+void hurt_use(gentity_s *self)
+{
+	if ( self->handler == 3 )
+		self->handler = 2;
+	else
+		self->handler = 3;
+}
+
+void Use_trigger_damage(gentity_s *pEnt, gentity_s *pOther)
+{
+	Activate_trigger_damage(pEnt, pOther, pEnt->trigger.accumulate + 1, -1);
+}
+
+void Pain_trigger_damage(gentity_s *pSelf, gentity_s *pAttacker, int iDamage, const float *vPoint, int iMod)
+{
+	Activate_trigger_damage(pSelf, pAttacker, iDamage, iMod);
+
+	if ( !pSelf->trigger.accumulate )
+		pSelf->health = 32000;
+}
+
+void Die_trigger_damage(gentity_s *pSelf, gentity_s *pInflictor, gentity_s *pAttacker, int iDamage, int iMod)
+{
+	Activate_trigger_damage(pSelf, pAttacker, iDamage, iMod);
+
+	if ( !pSelf->trigger.accumulate )
+		pSelf->health = 32000;
+}
+
+void use_trigger_use()
+{
+	;
+}
