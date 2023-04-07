@@ -14,15 +14,6 @@ extern level_locals_t level;
 #endif
 
 #ifdef TESTING_LIBRARY
-#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
-#else
-const entityHandler_t entityHandlers[] =
-{
-
-};
-#endif
-
-#ifdef TESTING_LIBRARY
 #define bgs (*((bgs_t**)( 0x0855A4E0 )))
 #else
 extern bgs_t *bgs;
@@ -60,7 +51,7 @@ const char *g_HitLocNames[] =
 unsigned short g_HitLocConstNames[19];
 float g_fHitLocDamageMult[19];
 
-float G_GetWeaponHitLocationMultiplier(hitLocation_t hitLoc, int weapon)
+float G_GetWeaponHitLocationMultiplier(int hitLoc, int weapon)
 {
 	WeaponDef *weaponDef;
 
@@ -79,7 +70,7 @@ float G_GetWeaponHitLocationMultiplier(hitLocation_t hitLoc, int weapon)
 	}
 }
 
-unsigned short G_GetHitLocationString(hitLocation_t hitLoc)
+unsigned short G_GetHitLocationString(int hitLoc)
 {
 	return g_HitLocConstNames[hitLoc];
 }
@@ -97,7 +88,7 @@ int G_GetHitLocationIndexFromString(unsigned short sString)
 	return 0;
 }
 
-void G_DamageClient(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, const float *vDir, const float *vPoint, int damage, int dflags, int meansOfDeath, hitLocation_t hitLoc, int timeOffset)
+void G_DamageClient(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, const float *vDir, const float *vPoint, int damage, int dflags, int meansOfDeath, int hitLoc, int timeOffset)
 {
 	int iWeapon;
 	int dmg;
@@ -125,7 +116,7 @@ void G_DamageClient(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, 
 }
 
 extern dvar_t *g_debugDamage;
-void G_Damage(gentity_s *self, gentity_s *inflictor, gentity_s *ent, const float *vDir,const float *vPoint, int value, int dflags, int meansOfDeath, hitLocation_t hitLoc, int timeOffset)
+void G_Damage(gentity_s *self, gentity_s *inflictor, gentity_s *ent, const float *vDir,const float *vPoint, int value, int dflags, int meansOfDeath, int hitLoc, int timeOffset)
 {
 	void (*pain)(struct gentity_s *, struct gentity_s *, int, const float *, const int, const float *, int);
 	void (*die)(struct gentity_s *, struct gentity_s *, struct gentity_s *, int, int, const int, const float *, int, int);
@@ -266,7 +257,7 @@ void LookAtKiller(gentity_s *self, gentity_s *inflictor, gentity_s *attacker)
 	vectoyaw(dir);
 }
 
-void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int meansOfDeath, int iWeapon, const float *vDir, hitLocation_t hitLoc, int psTimeOffset)
+void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int meansOfDeath, int iWeapon, const float *vDir, int hitLoc, int psTimeOffset)
 {
 	int type;
 	gentity_s *turret;

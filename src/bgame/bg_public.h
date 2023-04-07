@@ -1112,6 +1112,8 @@ int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex);
 int BG_GetStackableSlot(gclient_s *client, int weapon, int slot);
 int BG_GetEmptySlotForWeapon(playerState_s *ps, int weapon);
 qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched);
+int BG_GetWeaponSlotForName(const char *name);
+const char* BG_GetWeaponSlotNameForIndex(int index);
 
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);

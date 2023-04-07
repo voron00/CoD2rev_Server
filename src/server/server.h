@@ -374,3 +374,4 @@ void SV_PreGameUserVoice(client_s *cl, msg_t *msg);
 void SV_VoicePacket(netadr_t from, msg_t *msg);
 void SV_SendClientVoiceData(client_s *client);
 void SV_SetBrushModel(gentity_s *ent);
+void SV_XModelDebugBoxes();

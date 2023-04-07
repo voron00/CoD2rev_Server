@@ -448,6 +448,11 @@ int SV_GetGuid(int clientNum)
 		return 0;
 }
 
+void SV_XModelDebugBoxes()
+{
+	;
+}
+
 extern dvar_t *sv_gametype;
 void SV_SetGametype()
 {

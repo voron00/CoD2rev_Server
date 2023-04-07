@@ -21,6 +21,37 @@ typedef struct
 
 #define viewLerp_CrouchProne (((vec2_t*)( 0x08157C80 )))
 
+#ifdef TESTING_LIBRARY
+#define g_entities ((gentity_t*)( 0x08665480 ))
+#else
+extern gentity_t g_entities[];
+#endif
+
+#ifdef TESTING_LIBRARY
+#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
+#else
+const entityHandler_t entityHandlers[] =
+{
+
+};
+#endif
+
+/*
+struct entityHandler_t
+{
+  void (__cdecl *think)(struct gentity_s *);
+  void (__cdecl *reached)(struct gentity_s *);
+  void (__cdecl *blocked)(struct gentity_s *, struct gentity_s *);
+  void (__cdecl *touch)(struct gentity_s *, struct gentity_s *, int);
+  void (__cdecl *use)(struct gentity_s *, struct gentity_s *, struct gentity_s *);
+  void (__cdecl *pain)(struct gentity_s *, struct gentity_s *, int, const float *, const int, const float *, int);
+  void (__cdecl *die)(struct gentity_s *, struct gentity_s *, struct gentity_s *, int, int, const int, const float *, int, int);
+  void (__cdecl *controller)(struct gentity_s *, int *);
+  int methodOfDeath;
+  int splashMethodOfDeath;
+};
+*/
+
 
 void test2()
 {
@@ -34,6 +65,9 @@ void test2()
 	//int hitnum = CM_BoxSightTrace(0, start, end, mins, maxs, 0, 1);
 	Com_Printf("(%f %f %f)\n", test[3], test[4], test[5]);
 	*/
+
+	//if (g_entities[1].client)
+	//printf("%i\n ", g_entities[1].client->ps.iCompassFriendInfo);
 
 	static int printed = 0;
 
@@ -52,15 +86,12 @@ void test2()
 
 
 	// Just print stuff until program segfaults
-	/*
-	for ( int i = 0; i < 19; ++i )
+	for ( int i = 0; i < 20; ++i )
 	{
 		//if (net_fields[i].name == NULL)
 		//	return;
-		Com_Printf("%i,\n", riflePriorityMap[i] );
+		Com_Printf("{ %p, %p, %p, %p, %p, %p, %p, %p, %i, %i }\n", entityHandlers[i].think, entityHandlers[i].reached, entityHandlers[i].blocked, entityHandlers[i].touch, entityHandlers[i].use, entityHandlers[i].pain, entityHandlers[i].die, entityHandlers[i].controller, entityHandlers[i].methodOfDeath, entityHandlers[i].splashMethodOfDeath );
 	}
-	*/
-
 }
 
 void Sys_RedirectFunctions()
@@ -1047,13 +1078,28 @@ void Sys_RedirectFunctions()
 	SetJump(0x08114C98, (DWORD)GScr_OpenFile);
 	SetJump(0x08115138, (DWORD)GScr_FReadLn);
 	SetJump(0x0810F392, (DWORD)ScrCmd_LinkTo);
-	
-	
-	
+
+
+
+	// Game #3
 	SetJump(0x0810B4D8, (DWORD)G_ExplodeMissile);
 	SetJump(0x0810381C, (DWORD)Touch_Item);
 	SetJump(0x08109672, (DWORD)turret_think_client);
 	SetJump(0x081099D6, (DWORD)turret_think);
+	SetJump(0x0811FB7A, (DWORD)Player_UpdateLookAtEntity);
+	SetJump(0x0811F736, (DWORD)Player_UpdateCursorHints);
+	SetJump(0x080F20C8, (DWORD)P_DamageFeedback);
+	SetJump(0x080F41C2, (DWORD)SpectatorClientEndFrame);
+	SetJump(0x080F474A, (DWORD)StuckInClient);
+	//SetJump(0x080F6ED0, (DWORD)G_GetNonPVSFriendlyInfo);
+	SetJump(0x080F69B4, (DWORD)ClientSpawn);
+	SetJump(0x080F4DBE, (DWORD)ClientEndFrame);
+	
+	
+	
+	SetJump(0x08105956, (DWORD)G_RunItem);
+	SetJump(0x0810D966, (DWORD)G_RunMover);
+	
 	
 
 	G_RegisterDvars(); // <-- FIX ME

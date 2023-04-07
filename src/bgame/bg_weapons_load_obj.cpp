@@ -444,6 +444,24 @@ cspField_t weaponDefFields[] =
 	{ "meleeImpactRumble", 1536, 0, }
 };
 
+int BG_GetWeaponSlotForName(const char *name)
+{
+	int i;
+
+	for ( i = 0; i < COUNT_OF(szWeapSlotNames); ++i )
+	{
+		if ( !strcasecmp(name, szWeapSlotNames[i]) )
+			return i;
+	}
+
+	return 0;
+}
+
+const char* BG_GetWeaponSlotNameForIndex(int index)
+{
+	return szWeapSlotNames[index];
+}
+
 void BG_LoadPlayerAnimTypes()
 {
 	unsigned int count;

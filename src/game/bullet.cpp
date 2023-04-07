@@ -188,7 +188,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 				dist = VectorLength(temp);
 				damage = (int)((float)Bullet_CalcDamageRange(wp, dist) * dmgScale);
 
-				G_Damage(self, attacker, attacker, wp->forward, origin, damage, dflags, meansOfDeath, (hitLocation_t)trace.partName, level.time - gameTime);
+				G_Damage(self, attacker, attacker, wp->forward, origin, damage, dflags, meansOfDeath, trace.partName, level.time - gameTime);
 
 				if ( self->client )
 				{

@@ -38,15 +38,6 @@ extern bgs_t *bgs;
 extern bgs_t level_bgs;
 #endif
 
-#ifdef TESTING_LIBRARY
-#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
-#else
-const entityHandler_t entityHandlers[] =
-{
-
-};
-#endif
-
 scr_function_t functions[] =
 {
 	{ "print", print, 1, },
@@ -596,7 +587,7 @@ int G_GetHintStringIndex(int *piIndex, const char *pszString)
 	return 0;
 }
 
-void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int dflags, unsigned int meansOfDeath, int iWeapon, const float *vPoint, const float *vDir, hitLocation_t hitLoc, int timeOffset)
+void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int dflags, unsigned int meansOfDeath, int iWeapon, const float *vPoint, const float *vDir, int hitLoc, int timeOffset)
 {
 	unsigned short hitLocStr;
 	WeaponDef *weaponDef;
@@ -623,7 +614,7 @@ void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker
 	Scr_FreeThread(callback);
 }
 
-void Scr_PlayerKilled(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, unsigned int meansOfDeath, int iWeapon, const float *vDir, hitLocation_t hitLoc, int psTimeOffset, int deathAnimDuration)
+void Scr_PlayerKilled(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, unsigned int meansOfDeath, int iWeapon, const float *vDir, int hitLoc, int psTimeOffset, int deathAnimDuration)
 {
 	unsigned short hitLocStr;
 	WeaponDef *weaponDef;
@@ -2864,6 +2855,23 @@ int G_IndexForMeansOfDeath(const char *name)
 	return 0;
 }
 
+int GScr_GetScriptMenuIndex(const char *pszMenu)
+{
+	char szConfigString[1024];
+	int i;
+
+	for ( i = 0; i < 32; ++i )
+	{
+		SV_GetConfigstring(i + 1246, szConfigString, 1024);
+
+		if ( !I_stricmp(szConfigString, pszMenu) )
+			return i;
+	}
+
+	Scr_Error(va("Menu '%s' was not precached\n", pszMenu));
+	return 0;
+}
+
 void GScr_Obituary()
 {
 	gentity_s *ent;
@@ -3636,7 +3644,7 @@ void Scr_StopAllRumbles()
 
 void ScrCmd_SoundExists()
 {
-	Scr_AddBool(0);
+	Scr_Error("ScrCmd_SoundExists: This function is currently not supported.");
 }
 
 void Scr_IsSplitscreen()

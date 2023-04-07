@@ -7,15 +7,6 @@
 extern level_locals_t level;
 #endif
 
-#ifdef TESTING_LIBRARY
-#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
-#else
-const entityHandler_t entityHandlers[] =
-{
-
-};
-#endif
-
 gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenadeWPID, int time)
 {
 	float speed;

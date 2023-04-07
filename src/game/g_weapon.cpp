@@ -329,7 +329,7 @@ void Weapon_Melee(gentity_s *ent, weaponParms *wp, float range, float width, flo
 		{
 			if ( self->takedamage )
 			{
-				G_Damage(self, ent, ent, wp->forward, origin, damage + rand() % 5, 0, 7, (hitLocation_t)trace.partName, 0);
+				G_Damage(self, ent, ent, wp->forward, origin, damage + rand() % 5, 0, 7, trace.partName, 0);
 			}
 		}
 	}

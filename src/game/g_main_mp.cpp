@@ -73,14 +73,44 @@ dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
 dvar_t *g_mantleBlockTimeBuffer;
 
-#ifdef TESTING_LIBRARY
-#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
-#else
-const entityHandler_t entityHandlers[] =
+entityHandler_t entityHandlers[] =
 {
-
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, Touch_Multi, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, hurt_use, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, hurt_touch, hurt_use, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, Use_trigger_damage, Pain_trigger_damage, Die_trigger_damage, NULL, 0, 0 },
+	{ NULL, Reached_ScriptMover, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, Reached_ScriptMover, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ G_ExplodeMissile, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, 4 },
+	{ G_ExplodeMissile, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5, 6 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL, player_die, G_PlayerController, 0, 0 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL, player_die, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, G_PlayerController, 0, 0 },
+	{ BodyEnd, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ turret_think_init, NULL, NULL, NULL, turret_use, NULL, NULL, turret_controller, 0, 0 },
+	{ turret_think, NULL, NULL, NULL, turret_use, NULL, NULL, turret_controller, 0, 0 },
+	{ DroppedItemClearOwner, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
+	{ FinishSpawningItem, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, use_trigger_use, NULL, NULL, NULL, 0, 0 },
+	{ G_FreeEntity, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
 };
-#endif
+
+clientState_t* G_GetClientState(int num)
+{
+	return &level.clients[num].sess.state;
+}
+
+int G_GetClientArchiveTime(int clientindex)
+{
+	return level.clients[clientindex].sess.archiveTime;
+}
+
+void G_SetClientArchiveTime(int clindex, int time)
+{
+	level.clients[clindex].sess.archiveTime = time;
+}
 
 int G_GetClientScore(int clientNum)
 {
@@ -169,6 +199,34 @@ int G_LocationalTracePassed(const float *start, const float *end, int passEntity
 void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask)
 {
 	SV_SightTrace(hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, 1023, contentmask);
+}
+
+gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap, float *forwardAngles)
+{
+#ifndef DEDICATED
+	float dist;
+	float visible;
+	vec3_t endPos;
+#endif
+
+	G_LocationalTrace(trace, start, end, passentitynum, contentmask, priorityMap);
+
+	if ( trace->hitId > 1021 )
+		return 0;
+
+#ifdef DEDICATED
+	return &g_entities[trace->hitId];
+#else
+	dist = trace->fraction * 15000.0;
+	VectorMA(start, dist, forwardAngles, endPos);
+
+	visible = SV_FX_GetVisibility(start, endPos);
+
+	if ( visible >= 0.2 )
+		return &g_entities[trace->hitId];
+	else
+		return 0;
+#endif
 }
 
 static signed int SortRanks(const void *num1, const void *num2)

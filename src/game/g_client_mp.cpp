@@ -390,3 +390,72 @@ void G_BroadcastVoice(gentity_s *talker, VoicePacket_t *voicePacket)
 		}
 	}
 }
+
+extern vec3_t playerMins;
+extern vec3_t playerMaxs;
+extern dvar_t *g_inactivity;
+void ClientSpawn(gentity_s *ent, const float *spawn_origin, const float *spawn_angles)
+{
+	int spawncount;
+	clientSession_t session;
+	int flags;
+	gclient_s *client;
+	int num;
+
+	num = ent - g_entities;
+	client = ent->client;
+
+	if ( (client->ps.pm_flags & 0x800000) != 0 && (client->ps.eFlags & 0x300) != 0 )
+		G_ClientStopUsingTurret(&level.gentities[client->ps.viewlocked_entNum]);
+
+	G_EntUnlink(ent);
+
+	if ( ent->r.linked )
+		SV_UnlinkEntity(ent);
+
+	ent->s.groundEntityNum = 1023;
+	Scr_SetString(&ent->classname, scr_const.player);
+	ent->clipmask = 42008593;
+	ent->r.svFlags |= 1u;
+	ent->takedamage = 0;
+	G_UpdatePlayerContents(ent);
+	ent->handler = 10;
+	ent->flags = 4096;
+	VectorCopy(playerMins, ent->r.mins);
+	VectorCopy(playerMaxs, ent->r.maxs);
+	flags = client->ps.eFlags & 0x100002;
+	memcpy(&session, &client->sess, sizeof(session));
+	spawncount = client->ps.stats[5];
+	memset(client, 0, sizeof(gclient_s));
+	memcpy(&client->sess, &session, sizeof(client->sess));
+	client->spectatorClient = -1;
+	client->useHoldEntity = 1023;
+	client->ps.stats[5] = spawncount + 1;
+	client->ps.stats[2] = client->sess.maxHealth;
+	client->ps.eFlags = flags;
+	client->sess.state.clientIndex = num;
+	client->ps.clientNum = num;
+	client->ps.viewlocked_entNum = 1023;
+	SV_GetUsercmd(client - level.clients, &client->sess.cmd);
+	client->ps.eFlags ^= 2u;
+	VectorCopy(ent->r.mins, client->ps.mins);
+	VectorCopy(ent->r.maxs, client->ps.maxs);
+	client->ps.viewHeightTarget = 60;
+	client->ps.viewHeightCurrent = 60.0;
+	client->ps.viewHeightLerpTime = 0;
+	client->ps.viewHeightLerpPosAdj = 0.0;
+	G_SetOrigin(ent, spawn_origin);
+	VectorCopy(spawn_origin, client->ps.origin);
+	client->ps.pm_flags |= 0x1000u;
+	SetClientViewAngle(ent, spawn_angles);
+	client->inactivityTime = level.time + 1000 * g_inactivity->current.integer;
+	client->buttons = client->sess.cmd.buttons;
+	level.clientIsSpawning = 1;
+	client->lastSpawnTime = level.time;
+	client->sess.cmd.serverTime = level.time;
+	client->ps.commandTime = level.time - 100;
+	ClientEndFrame(ent);
+	ClientThink_real(ent, &client->sess.cmd);
+	level.clientIsSpawning = 0;
+	BG_PlayerStateToEntityState(&client->ps, &ent->s, 1, 1u);
+}

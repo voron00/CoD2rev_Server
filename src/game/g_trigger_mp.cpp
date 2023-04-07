@@ -290,13 +290,13 @@ void multi_trigger(gentity_s *self)
 		G_FreeEntityDelay(self);
 }
 
-void Touch_Multi(gentity_s *self, gentity_s *other)
+void Touch_Multi(gentity_s *self, gentity_s *other, int touched)
 {
 	G_Trigger(self, other);
 	multi_trigger(self);
 }
 
-void hurt_use(gentity_s *self)
+void hurt_use(gentity_s *self, gentity_s *ent, gentity_s *other)
 {
 	if ( self->handler == 3 )
 		self->handler = 2;
@@ -304,12 +304,37 @@ void hurt_use(gentity_s *self)
 		self->handler = 3;
 }
 
-void Use_trigger_damage(gentity_s *pEnt, gentity_s *pOther)
+void hurt_touch(gentity_s *self, gentity_s *other, int touched)
+{
+	int dflags;
+
+	if ( other->takedamage && self->trigger.timestamp <= level.time )
+	{
+		G_Trigger(self, other);
+
+		if ( (self->spawnflags & 0x10) != 0 )
+			self->trigger.timestamp = level.time + 1000;
+		else
+			self->trigger.timestamp = level.time + 50;
+
+		if ( (self->spawnflags & 8) != 0 )
+			dflags = 16;
+		else
+			dflags = 0;
+
+		G_Damage(other, self, self, 0, 0, self->dmg, dflags, 13, HITLOC_NONE, 0);
+
+		if ( (self->spawnflags & 0x20) != 0 )
+			self->handler = 2;
+	}
+}
+
+void Use_trigger_damage(gentity_s *pEnt, gentity_s *pOther, gentity_s *pActivator)
 {
 	Activate_trigger_damage(pEnt, pOther, pEnt->trigger.accumulate + 1, -1);
 }
 
-void Pain_trigger_damage(gentity_s *pSelf, gentity_s *pAttacker, int iDamage, const float *vPoint, int iMod)
+void Pain_trigger_damage(gentity_s *pSelf, gentity_s *pAttacker, int iDamage, const float *vPoint, int iMod, const float *vDir, int hitLoc)
 {
 	Activate_trigger_damage(pSelf, pAttacker, iDamage, iMod);
 
@@ -317,7 +342,7 @@ void Pain_trigger_damage(gentity_s *pSelf, gentity_s *pAttacker, int iDamage, co
 		pSelf->health = 32000;
 }
 
-void Die_trigger_damage(gentity_s *pSelf, gentity_s *pInflictor, gentity_s *pAttacker, int iDamage, int iMod)
+void Die_trigger_damage(gentity_s *pSelf, gentity_s *pInflictor, gentity_s *pAttacker, int iDamage, int iMod, int iWeapon, const float *vDir, int hitLoc, int psTimeOffset)
 {
 	Activate_trigger_damage(pSelf, pAttacker, iDamage, iMod);
 
@@ -325,7 +350,7 @@ void Die_trigger_damage(gentity_s *pSelf, gentity_s *pInflictor, gentity_s *pAtt
 		pSelf->health = 32000;
 }
 
-void use_trigger_use()
+void use_trigger_use(gentity_s *pSelf, gentity_s *pEnt, gentity_s *pOther)
 {
 	;
 }

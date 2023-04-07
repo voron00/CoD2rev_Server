@@ -620,7 +620,7 @@ void turret_think_client(gentity_s *self)
 	}
 }
 
-void turret_use(gentity_s *self, gentity_s *owner)
+void turret_use(gentity_s *self, gentity_s *owner, gentity_s *other)
 {
 	float clamp0;
 	float clamp1;

@@ -16,12 +16,6 @@ extern gentity_t g_entities[];
 #endif
 
 #ifdef TESTING_LIBRARY
-#define entityHandlers ((entityHandler_t*)( 0x08167880 ))
-#else
-extern entityHandler_t entityHandlers[] = {};
-#endif
-
-#ifdef TESTING_LIBRARY
 #define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
 #else
 extern scr_data_t g_scr_data;
@@ -345,6 +339,7 @@ void G_FreeEntityRefs(gentity_s *ent)
 			if ( other->r.ownerNum == number )
 			{
 				other->r.ownerNum = 1023;
+
 				if ( other->s.eType == ET_TURRET )
 					other->active = 0;
 			}
@@ -359,6 +354,7 @@ void G_FreeEntityRefs(gentity_s *ent)
 		if ( g_entities[j].r.inuse )
 		{
 			client = g_entities[j].client;
+
 			if ( client->pLookatEnt == ent )
 				client->pLookatEnt = 0;
 
@@ -952,4 +948,87 @@ void G_GeneralLink(gentity_s *ent)
 	ent->s.pos.trType = TR_INTERPOLATE;
 	ent->s.apos.trType = TR_INTERPOLATE;
 	SV_LinkEntity(ent);
+}
+
+gentity_s* G_SpawnPlayerClone()
+{
+	int flags;
+	gentity_s *entity;
+
+	entity = &level.gentities[level.currentPlayerClone + 64];
+	level.currentPlayerClone = (level.currentPlayerClone + 1) % 8;
+	flags = entity->s.eFlags & 2 ^ 2;
+
+	if ( entity->r.inuse )
+		G_FreeEntity(entity);
+
+	G_InitGentity(entity);
+	entity->s.eFlags = flags;
+
+	return entity;
+}
+
+gentity_s* G_Find(gentity_s *from, int fieldofs, unsigned short match)
+{
+	unsigned short s;
+	gentity_s *i;
+
+	if ( from )
+		i = from + 1;
+	else
+		i = g_entities;
+
+	while ( i < &g_entities[level.num_entities] )
+	{
+		if ( i->r.inuse )
+		{
+			s = *(uint16_t *)((char *)&i->s.number + fieldofs);
+
+			if ( s )
+			{
+				if ( s == match )
+					return i;
+			}
+		}
+
+		++i;
+	}
+
+	return 0;
+}
+
+int G_GetFreePlayerCorpseIndex()
+{
+	int bestIndex;
+	vec3_t playerPos;
+	float bestDistSq;
+	float vDistSq;
+	gentity_s *ent;
+	int i;
+
+	bestDistSq = -1.0;
+	bestIndex = 0;
+	ent = G_Find(0, 360, scr_const.player);
+	VectorCopy(ent->s.pos.trBase, playerPos);
+
+	for ( i = 0; i < 8; ++i )
+	{
+		if ( g_scr_data.playerCorpseInfo[i].entnum == -1 )
+			return i;
+
+		ent = &level.gentities[g_scr_data.playerCorpseInfo[i].entnum];
+		vDistSq = Vec3DistanceSq(ent->r.currentOrigin, playerPos);
+
+		if ( vDistSq > bestDistSq )
+		{
+			bestDistSq = vDistSq;
+			bestIndex = i;
+		}
+	}
+
+	ent = &level.gentities[g_scr_data.playerCorpseInfo[bestIndex].entnum];
+	G_FreeEntity(ent);
+	g_scr_data.playerCorpseInfo[bestIndex].entnum = -1;
+
+	return bestIndex;
 }

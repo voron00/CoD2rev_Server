@@ -741,15 +741,17 @@ int Pickup_Health(gentity_s *ent, gentity_s *other)
 	}
 
 	other->client->ps.stats[0] = other->health;
+
 	SV_GameSendServerCommand(other - g_entities, 0, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 102, max));
 	SV_GameSendServerCommand(other - g_entities, 0, va("%c \"%i\"", 73, 0));
+
 	Scr_AddEntity(other);
 	Scr_Notify(ent, scr_const.trigger, 1u);
 
 	return 1;
 }
 
-void PrintPlayerPickupMessage(int clientnum, int weapon)
+void SendWeaponChangeInfo(int clientnum, int weapon)
 {
 	SV_GameSendServerCommand(clientnum, 1, va("%c %i", 97, weapon));
 }
@@ -932,7 +934,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			}
 			G_GivePlayerWeapon(&other->client->ps, weaponIndex);
 			if ( !touched )
-				PrintPlayerPickupMessage(other - g_entities, weaponIndex);
+				SendWeaponChangeInfo(other - g_entities, weaponIndex);
 		}
 		else
 		{
@@ -1172,4 +1174,101 @@ void Touch_Item_Auto(gentity_s *ent, gentity_s *other, int touched)
 {
 	ent->active = 1;
 	Touch_Item(ent, other, touched);
+}
+
+void G_OrientItemToGround(gentity_s *ent, trace_t *trace)
+{
+	vec3_t vAngles;
+	float vAxis[3][3];
+
+	VectorCopy(trace->normal, vAxis[2]);
+	AngleVectors(ent->r.currentAngles, vAxis[0], 0, 0);
+	Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
+	Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
+	AxisToAngles(vAxis, vAngles);
+
+	if ( bg_itemlist[ent->s.index].giType == IT_WEAPON )
+		vAngles[2] = vAngles[2] + 90.0;
+
+	G_SetAngle(ent, vAngles);
+}
+
+void G_RunItem(gentity_s *ent)
+{
+	vec3_t delta;
+	float vLenSq;
+	vec3_t endpos;
+	int contentmask;
+	int contents;
+	trace_t trace;
+	vec3_t origin;
+
+	if ( (ent->s.groundEntityNum == 1023 || level.gentities[ent->s.groundEntityNum].s.pos.trType)
+	        && ent->s.pos.trType != TR_GRAVITY
+	        && ((LOBYTE(ent->spawnflags) ^ 1) & 1) != 0 )
+	{
+		ent->s.pos.trType = TR_GRAVITY;
+		ent->s.pos.trTime = level.time;
+		VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
+		VectorClear(ent->s.pos.trDelta);
+	}
+
+	if ( ent->s.pos.trType == TR_STATIONARY || ent->s.pos.trType == TR_GRAVITY_PAUSED || ent->tagInfo )
+	{
+		G_RunThink(ent);
+	}
+	else
+	{
+		BG_EvaluateTrajectory(&ent->s.pos, level.time + 50, origin);
+		contentmask = G_ItemClipMask(ent);
+
+		if ( Vec3DistanceSq(ent->r.currentOrigin, origin) < 0.1 )
+			origin[2] = origin[2] - 1.0;
+
+		G_TraceCapsule(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, contentmask);
+
+		if ( trace.fraction >= 1.0 )
+		{
+			VectorCopy(origin, ent->r.currentOrigin);
+		}
+		else
+		{
+			Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
+
+			if ( !trace.startsolid && trace.fraction < 0.0099999998 && trace.normal[2] < 0.5 )
+			{
+				VectorSubtract(origin, ent->r.currentOrigin, delta);
+				vLenSq = 1.0 - VectorsLengthSquared(delta, trace.normal);
+				VectorMA(origin, vLenSq, trace.normal, origin);
+				G_TraceCapsule(&trace, endpos, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, contentmask);
+				Vec3Lerp(endpos, origin, trace.fraction, endpos);
+			}
+
+			ent->s.pos.trType = TR_LINEAR_STOP;
+			ent->s.pos.trTime = level.time;
+			ent->s.pos.trDuration = 50;
+			VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
+			VectorSubtract(endpos, ent->r.currentOrigin, ent->s.pos.trDelta);
+			VectorScale(ent->s.pos.trDelta, 20.0, ent->s.pos.trDelta);
+			VectorCopy(endpos, ent->r.currentOrigin);
+		}
+
+		SV_LinkEntity(ent);
+		G_RunThink(ent);
+
+		if ( ent->r.inuse && trace.fraction < 0.0099999998 )
+		{
+			if ( trace.normal[2] <= 0.0 || (contents = SV_PointContents(ent->r.currentOrigin, -1, 0x80000000)) != 0 )
+			{
+				G_FreeEntity(ent);
+			}
+			else
+			{
+				G_OrientItemToGround(ent, &trace);
+				G_SetOrigin(ent, endpos);
+				ent->s.groundEntityNum = trace.hitId;
+				SV_LinkEntity(ent);
+			}
+		}
+	}
 }
