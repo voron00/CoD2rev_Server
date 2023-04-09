@@ -137,16 +137,15 @@ void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int cont
 	VectorCopy(trace.normal, results->normal);
 }
 
-void QDECL DObjCreateDuplicateParts(DObj *obj)
+void QDECL DObjCreateDuplicateParts(DObj_s *obj)
 {
 	const char *name;
-	int buffer[4];
-	byte localbits;
-	XModelParts *modelParts;
-	int nextBone;
+	int duplicatePartBits[5];
+	XModelParts_s *modelParts;
+	int index;
 	char partIndex;
-	int bitcount;
-	byte *bits;
+	int len;
+	byte *duplicateParts;
 	unsigned short *nameIndex;
 	unsigned short **boneNames;
 	int boneIter;
@@ -156,9 +155,9 @@ void QDECL DObjCreateDuplicateParts(DObj *obj)
 	int numBones;
 	int numModels;
 
-	bits = &localbits;
-	memset(buffer, 0, sizeof(buffer));
-	bitcount = 0;
+	duplicateParts = (byte *)&duplicatePartBits[4];
+	memset(duplicatePartBits, 0, 16);
+	len = 0;
 	numBones = obj->models[0]->modelParts->numBones;
 	numModels = 1;
 
@@ -184,17 +183,18 @@ void QDECL DObjCreateDuplicateParts(DObj *obj)
 					if ( !i )
 						partIndex = 1;
 
-					nextBone = numBones + i;
-					bits[bitcount] = numBones + i + 1;
-					buffer[nextBone >> 5] |= 1 << (nextBone & 0x1F);
-					bits[++bitcount] = boneIndex + 1;
-					++bitcount;
+					index = numBones + i;
+					duplicateParts[len] = numBones + i + 1;
+					duplicatePartBits[index >> 5] |= 1 << (index & 0x1F);
+					duplicateParts[++len] = boneIndex + 1;
+					++len;
 				}
 			}
 
 			if ( !partIndex )
 			{
 				name = SL_ConvertToString(*nameIndex);
+
 				Com_Printf(
 				    "WARNING: Attempting to meld model, but root part '%s' of model '%s' not found in model '%s' or any of its descendants\n",
 				    name,
@@ -207,10 +207,10 @@ void QDECL DObjCreateDuplicateParts(DObj *obj)
 		numBones += xmodel->modelParts->numBones;
 	}
 
-	if ( bitcount )
+	if ( len )
 	{
-		bits[bitcount] = 0;
-		obj->duplicateParts = SL_GetStringOfLen((const char *)buffer, 0, bitcount + 17);
+		duplicateParts[len] = 0;
+		obj->duplicateParts = SL_GetStringOfLen((const char *)duplicatePartBits, 0, len + 17);
 	}
 	else
 	{

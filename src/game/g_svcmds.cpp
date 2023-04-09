@@ -360,5 +360,6 @@ qboolean ConsoleCommand()
 		return qtrue;
 	}
 
+	Com_Printf("Unknown command \"%s\"\n", cmd);
 	return qfalse;
 }
