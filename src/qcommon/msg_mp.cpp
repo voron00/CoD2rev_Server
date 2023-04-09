@@ -735,7 +735,7 @@ char *MSG_ReadCommandString( msg_t *msg )
 			break;
 		}
 
-		string[l] = c;
+		string[l] = I_CleanChar(c);
 		l++;
 	}
 	while ( l < sizeof( string ) - 1 );
@@ -764,7 +764,7 @@ char *MSG_ReadBigString( msg_t *msg )
 			c = '.';
 		}
 
-		string[l] = c;
+		string[l] = I_CleanChar(c);
 		l++;
 	}
 	while ( l < sizeof( string ) - 1 );
@@ -793,7 +793,7 @@ char *MSG_ReadStringLine( msg_t *msg )
 			c = '.';
 		}
 
-		string[l] = c;
+		string[l] = I_CleanChar(c);
 		l++;
 	}
 	while ( l < sizeof( string ) - 1 );
