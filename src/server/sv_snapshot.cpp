@@ -247,7 +247,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal(int archivedFrame)
 	int oldindex;
 	signed int oldnum;
 	msg_t msg;
-	byte buf[MAX_LARGE_MSGLEN]; // VoroN: !!! WARNING !!! In CoD2 1.0 they allocate this to 128k but wouldn't that potentially cause a netchan MAX_MSGLEN error? Changed to MAX_MSGLEN for now. Update: Nope, it SHOULD be 128k, otherwise snapshot overflows.
+	byte buf[MAX_LARGE_MSGLEN];
 	int partSize;
 	int firstCachedSnapshotFrame;
 	int i;
@@ -1298,7 +1298,7 @@ void SV_UpdateServerCommandsToClientRecover( client_t *client, msg_t *msg, int m
 
 void SV_SendClientSnapshot(client_s *client)
 {
-	byte buf[MAX_LARGE_MSGLEN]; // VoroN: !!! WARNING !!! In CoD2 1.0 they allocate this to 128k but wouldn't that potentially cause a netchan MAX_MSGLEN error? Changed to MAX_MSGLEN for now. Update: Nope, it SHOULD be 128k, otherwise snapshot overflows.
+	byte buf[MAX_LARGE_MSGLEN];
 	msg_t msg;
 
 	if ( client->state == CS_ACTIVE || client->state == CS_ZOMBIE )
@@ -1347,7 +1347,7 @@ void SV_ArchiveSnapshot()
 	clientState_t *cs1;
 	clientState_t *cs2;
 	cachedClient_s *client2;
-	byte buf[MAX_LARGE_MSGLEN]; // VoroN: !!! WARNING !!! In CoD2 1.0 they allocate this to 128k but wouldn't that potentially cause a netchan MAX_MSGLEN error? Changed to MAX_MSGLEN for now. Update: Nope, it SHOULD be 128k, otherwise snapshot overflows.
+	byte buf[MAX_LARGE_MSGLEN];
 	msg_t msg;
 	int clientIndex;
 	int count;

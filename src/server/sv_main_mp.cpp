@@ -152,51 +152,45 @@ void SV_CheckTimeouts( void )
 	}
 }
 
-void SV_ShowClientUnAckCommands(client_s *client)
+/*
+======================
+SV_AddServerCommand
+The given command will be transmitted to the client, and is guaranteed to
+not have future snapshot_t executed before it is executed
+======================
+*/
+void SV_CullIgnorableServerCommands(client_t *client)
 {
+	int v1;
 	int i;
 
-	Com_Printf("-- Unacknowledged Server Commands for client %i:%s --\n", client - svs.clients, client->name);
+	v1 = client->reliableSent + 1;
 
-	for ( i = client->reliableAcknowledge + 1; i <= client->reliableSequence; ++i )
-		Com_Printf("cmd %5d: %8d: %s\n", i, client->reliableCommands[i & (MAX_RELIABLE_COMMANDS -1)].cmdTime, client->reliableCommands[i & (MAX_RELIABLE_COMMANDS -1)].command);
-
-	Com_Printf("----------");
-}
-
-int SV_CullIgnorableServerCommands(client_t *client)
-{
-	int sequence;
-	int i;
-
-	sequence = client->reliableSent + 1;
-
-	for ( i = client->reliableSent; i < client->reliableSequence + 1; ++i )
+	for(i = client->reliableSent + 1 ; i <= client->reliableSequence; ++i)
 	{
 		if ( client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].cmdType )
 		{
-			if ( (sequence & (MAX_RELIABLE_COMMANDS - 1)) != (i & (MAX_RELIABLE_COMMANDS - 1)) )
+			if ( (v1 & (MAX_RELIABLE_COMMANDS - 1)) != (i & (MAX_RELIABLE_COMMANDS - 1)) )
 			{
-				Com_Memcpy(&client->reliableCommands[sequence & (MAX_RELIABLE_COMMANDS - 1)], &client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)], sizeof(reliableCommands_t));
+				memcpy(&client->reliableCommands[v1 & (MAX_RELIABLE_COMMANDS - 1)], &client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)], sizeof(reliableCommands_t));
 			}
-			++sequence;
+			++v1;
 		}
 	}
-
-	client->reliableSequence = sequence - 1;
-	return sequence - 1;
+	client->reliableSequence = v1 - 1;
 }
 
 int SV_CanReplaceServerCommand(client_t *client, const char *command)
 {
 	int i;
 
-	for ( i = client->reliableSent + 1; i < client->reliableSequence + 1; ++i )
+	for( i = client->reliableSent + 1; i <= client->reliableSequence; ++i)
 	{
+
 		if ( client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].cmdType == 0 )
 			continue;
 
-		if ( client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].command[0] != command[0] )
+		if(client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].command[0] != command[0])
 			continue;
 
 		if ( command[0] >= 120 && command[0] <= 122 )
@@ -205,82 +199,112 @@ int SV_CanReplaceServerCommand(client_t *client, const char *command)
 		if ( !strcmp(&command[1], &client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].command[1]) )
 			return i;
 
+
 		switch ( command[0] )
 		{
-		case 'C':
-		case 'D':
-		case 'a':
-		case 'b':
-		case 'o':
-		case 'p':
-		case 'q':
-		case 'r':
-		case 't':
-			return i;
-		case 'd':
-		case 'v':
-			if ( !I_IsEqualUnitWSpace( (char*)&command[2], &client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].command[2]) )
+		case 100:
+		case 118:
+			if ( !I_IsEqualUnitWSpace( (char*)&command[2], &client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)].command[2]))
+			{
 				continue;
+			}
+		case 67:
+		case 68:
+		case 97:
+		case 98:
+		case 111:
+		case 112:
+		case 113:
+		case 114:
+		case 116:
 			return i;
+
 		default:
 			continue;
+
 		}
 	}
-
 	return -1;
+}
+
+void SV_ShowClientUnAckCommands( client_t *client )
+{
+	int i;
+
+	Com_Printf("-- Unacknowledged Server Commands for client %i:%s --\n", client - svs.clients, client->name);
+
+	for ( i = client->reliableAcknowledge + 1; i <= client->reliableSequence; ++i )
+	{
+		Com_Printf("cmd %5d: %8d: %s\n", i, client->reliableCommands[i & (MAX_RELIABLE_COMMANDS -1)].cmdTime,
+		           client->reliableCommands[i & (MAX_RELIABLE_COMMANDS -1)].command );
+	}
+
+	Com_Printf("-----------------------------------------------------\n");
 }
 
 void SV_AddServerCommand(client_t *client, int type, const char *cmd)
 {
-	int sequence;
+	int v4;
 	int i;
 	int j;
 	int index;
+	char string[64];
 
+	if(client->netchan.remoteAddress.type == NA_BOT)
+	{
+		return;
+	}
 	if ( client->bot )
 		return;
 
-	if ( client->reliableSequence - client->reliableAcknowledge < MAX_RELIABLE_COMMANDS / 2 && client->state == CS_ACTIVE || (SV_CullIgnorableServerCommands(client), type) )
+	if ( client->reliableSequence - client->reliableAcknowledge >= MAX_RELIABLE_COMMANDS / 2 || client->state != CS_ACTIVE)
 	{
-		sequence = SV_CanReplaceServerCommand(client, cmd);
+		SV_CullIgnorableServerCommands(client);
 
-		if ( sequence < 0 )
-		{
-			++client->reliableSequence;
-		}
-		else
-		{
-			for ( i = sequence + 1; i < client->reliableSequence + 1; ++sequence )
-			{
-				Com_Memcpy(&client->reliableCommands[sequence & (MAX_RELIABLE_COMMANDS - 1)], &client->reliableCommands[i++ & (MAX_RELIABLE_COMMANDS - 1)], sizeof(reliableCommands_t));
-			}
-		}
+		if(!type)
+			return;
 
-		if ( client->reliableSequence - client->reliableAcknowledge == (MAX_RELIABLE_COMMANDS + 1) )
-		{
-			Com_Printf("Client: %i lost reliable commands\n", client - svs.clients);
-			Com_Printf("===== pending server commands =====\n");
-
-			for ( j = client->reliableAcknowledge + 1; j <= client->reliableSequence; ++j )
-			{
-				Com_Printf("cmd %5d: %8d: %s\n", j, client->reliableCommands[j & (MAX_RELIABLE_COMMANDS - 1)].cmdTime, &client->reliableCommands[j & (MAX_RELIABLE_COMMANDS - 1)].command);
-			}
-
-			Com_Printf("cmd %5d: %8d: %s\n", j, svs.time, cmd);
-
-			NET_OutOfBandPrint( NS_SERVER, client->netchan.remoteAddress, "disconnect" );
-			SV_DelayDropClient(client, "EXE_SERVERCOMMANDOVERFLOW");
-
-			type = 1;
-			cmd = va("%c \"EXE_SERVERCOMMANDOVERFLOW\"", 119);
-		}
-
-		index = client->reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
-		MSG_WriteReliableCommandToBuffer(cmd, client->reliableCommands[ index ].command, sizeof( client->reliableCommands[ index ].command ));
-
-		client->reliableCommands[ index ].cmdTime = svs.time;
-		client->reliableCommands[ index ].cmdType = type;
 	}
+
+	v4 = SV_CanReplaceServerCommand(client, cmd);
+
+	if ( v4 < 0 )
+	{
+		++client->reliableSequence;
+	}
+	else
+	{
+		for ( i = v4 + 1; i <= client->reliableSequence; ++v4 )
+		{
+			memcpy(&client->reliableCommands[v4 & 0x7F], &client->reliableCommands[i++ & 0x7F], sizeof(reliableCommands_t));
+		}
+	}
+
+	if ( client->reliableSequence - client->reliableAcknowledge == (MAX_RELIABLE_COMMANDS + 1) )
+	{
+		Com_Printf("Client: %i lost reliable commands\n", client - svs.clients);
+#if 0
+		Com_Printf("===== pending server commands =====\n");
+		for ( j = client->reliableAcknowledge + 1; j <= client->reliableSequence; ++j )
+		{
+			Com_Printf("cmd %5d: %8d: %s\n", j, client->reliableCommands[j & (MAX_RELIABLE_COMMANDS - 1)].cmdTime, &client->reliableCommands[j & (MAX_RELIABLE_COMMANDS - 1)].command);
+		}
+		Com_Printf("cmd %5d: %8d: %s\n", j, svs.time, cmd);
+#endif
+
+		NET_OutOfBandPrint(NS_SERVER, client->netchan.remoteAddress, "disconnect");
+		SV_DelayDropClient(client, "EXE_SERVERCOMMANDOVERFLOW");
+
+		type = 1;
+		Com_sprintf(string,sizeof(string),"%c \"EXE_SERVERCOMMANDOVERFLOW\"", 119);
+		cmd = string;
+	}
+
+	index = client->reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
+	MSG_WriteReliableCommandToBuffer(cmd, client->reliableCommands[ index ].command, sizeof( client->reliableCommands[ index ].command ));
+	client->reliableCommands[ index ].cmdTime = svs.time;
+	client->reliableCommands[ index ].cmdType = type;
+//    Com_Printf(CON_CHANNEL_SERVER,"ReliableCommand: %s\n", cmd);
 }
 
 void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... )

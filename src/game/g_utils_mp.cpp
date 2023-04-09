@@ -277,7 +277,11 @@ int G_DObjUpdateServerTime(gentity_s *ent, int bNotify)
 
 float G_random()
 {
-	return (double)(int)rand() / 32768.0;
+#ifdef _WIN32
+	return (float)(int)rand() / 32768.0;
+#else
+	return (float)(int)rand() / 2147483600.0;
+#endif
 }
 
 float G_crandom()
