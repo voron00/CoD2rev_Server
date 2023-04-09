@@ -270,7 +270,7 @@ LONG WINAPI MainWndProc (
 		// Windows 98/Me, Windows NT 4.0 and later - uses WM_MOUSEWHEEL
 		// only relevant for non-DI input and when console is toggled in window mode
 		//   if console is toggled in window mode (KEYCATCH_CONSOLE) then mouse is released and DI doesn't see any mouse wheel
-		if (in_mouse->current.integer != 1 || (!r_fullscreen->current.integer && (cls.keyCatchers & KEYCATCH_CONSOLE)))
+		if (in_mouse->current.integer != 1 || (!r_fullscreen->current.boolean && (cls.keyCatchers & KEYCATCH_CONSOLE)))
 		{
 			// 120 increments, might be 240 and multiples if wheel goes too fast
 			// NOTE Logitech: logitech drivers are screwed and send the message twice?
@@ -323,7 +323,7 @@ LONG WINAPI MainWndProc (
 		r_fullscreen = Dvar_RegisterBool ("r_fullscreen", 1, DVAR_ARCHIVE | DVAR_LATCH );
 
 		MSH_MOUSEWHEEL = RegisterWindowMessage("MSWHEEL_ROLLMSG"); 
-		if ( r_fullscreen->current.integer )
+		if ( r_fullscreen->current.boolean )
 		{
 			WIN_DisableAltTab();
 		}
@@ -350,7 +350,7 @@ LONG WINAPI MainWndProc (
 	case WM_DESTROY:
 		// let sound and input know about this?
 		g_wv.hWnd = NULL;
-		if ( r_fullscreen->current.integer )
+		if ( r_fullscreen->current.boolean )
 		{
 			WIN_EnableAltTab();
 		}
@@ -380,7 +380,7 @@ LONG WINAPI MainWndProc (
 			RECT r;
 			int		style;
 
-			if (!r_fullscreen->current.integer )
+			if (!r_fullscreen->current.boolean )
 			{
 				xPos = (short) LOWORD(lParam);    // horizontal position 
 				yPos = (short) HIWORD(lParam);    // vertical position 

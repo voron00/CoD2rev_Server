@@ -4222,3 +4222,15 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 	value.type = VAR_INTEGER;
 	SetVariableValue(scriptId, &value);
 }
+
+void Scr_CompileShutdown()
+{
+	VariableStackBuffer *stack;
+
+	while ( scrCompileGlob.value_start[0].value.u.intValue )
+	{
+		stack = scrCompileGlob.value_start[0].value.u.stackValue;
+		scrCompileGlob.value_start[0].value.u.intValue = *(uint32_t *)&scrCompileGlob.value_start[0].value.u.stackValue->localId;
+		Z_FreeInternal(stack);
+	}
+}

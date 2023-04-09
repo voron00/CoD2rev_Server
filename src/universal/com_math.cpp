@@ -59,11 +59,6 @@ vec_t Vec4LengthSq( const vec4_t v)
 	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
 }
 
-vec_t VectorsLengthSquared(const vec4_t v1, const vec4_t v2)
-{
-	return ( v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2] );
-}
-
 void VectorInverse( vec3_t v )
 {
 	v[0] = -v[0];

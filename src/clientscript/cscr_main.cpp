@@ -24,6 +24,31 @@ qboolean Scr_IsInOpcodeMemory(const char *pos)
 	return pos - scrVarPub.programBuffer < scrCompilePub.programLen;
 }
 
+unsigned int Scr_GetCanonicalStringIndex(unsigned int index)
+{
+	SL_TransferRefToUser(index, 2);
+
+	if ( scrCompilePub.canonicalStrings[index] )
+		return scrCompilePub.canonicalStrings[index];
+
+	scrCompilePub.canonicalStrings[index] = ++scrVarPub.canonicalStrCount;
+	return scrVarPub.canonicalStrCount;
+}
+
+unsigned int SL_GetCanonicalString(const char *str)
+{
+	unsigned int stringValue;
+	unsigned int index;
+
+	stringValue = SL_FindString(str);
+
+	if ( scrCompilePub.canonicalStrings[stringValue] )
+		return scrCompilePub.canonicalStrings[stringValue];
+
+	index = SL_GetString_(str, 0);
+	return Scr_GetCanonicalStringIndex(index);
+}
+
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset)
 {
 	const char *model;
@@ -321,4 +346,26 @@ void Scr_EndLoadAnimTrees()
 	SL_ShutdownSystem(2u);
 	scrVarPub.endScriptBuffer = (const char *)Hunk_AllocLowInternal(0);
 	scrAnimPub.animtree_loading = 0;
+}
+
+void Scr_FreeScripts()
+{
+	if ( scrCompilePub.script_loading )
+	{
+		scrCompilePub.script_loading = 0;
+		Scr_EndLoadScripts();
+	}
+
+	if ( scrAnimPub.animtree_loading )
+	{
+		scrAnimPub.animtree_loading = 0;
+		Scr_EndLoadAnimTrees();
+	}
+
+	SL_ShutdownSystem(1u);
+	Scr_ShutdownOpcodeLookup();
+	scrVarPub.programBuffer = 0;
+	scrCompilePub.programLen = 0;
+	scrVarPub.endScriptBuffer = 0;
+	scrVarPub.checksum = 0;
 }

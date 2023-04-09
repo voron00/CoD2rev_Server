@@ -7,7 +7,7 @@ CFLAGS=-m32 -g -Wall -std=gnu++11
 CFLAGS_TESTLIB=-m32 -g -fPIC -Wall -std=gnu++11 -DTESTING_LIBRARY
 CFLAGS_ZLIB=-m32
 CFLAGS_ZLIB_TEST=-m32 -fPIC
-LFLAGS=-m32
+LFLAGS=-m32 -no-pie
 LFLAGS_TESTLIB=-m32 -shared
 
 ifeq ($(OS),Windows_NT)
@@ -20,7 +20,7 @@ endif
 
 # Setup binary names.
 ifeq ($(OS),Windows_NT)
-BIN_NAME=cod2rev
+BIN_NAME=cod2rev_win32
 LIB_NAME=libcod2rev
 BIN_EXT=.exe
 LIB_EXT=.dll

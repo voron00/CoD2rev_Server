@@ -1400,22 +1400,212 @@ void PlayerCmd_EnableWeapon(scr_entref_t entref)
 
 void PlayerCmd_SetReverb(scr_entref_t entref)
 {
-	Scr_Error("PlayerCmd_SetReverb: This function is currently not supported.");
+	unsigned short priorityString;
+	int paramNum;
+	const char *roomtype;
+	float fadetime;
+	float wetlevel;
+	float drylevel;
+	int priority;
+
+	if ( entref.classnum )
+	{
+		Scr_ObjectError("not an entity");
+	}
+	else if ( !g_entities[entref.entnum].client )
+	{
+		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
+	}
+
+	fadetime = 0.0;
+	drylevel = 1.0;
+	wetlevel = 0.5;
+	paramNum = Scr_GetNumParam();
+	if ( paramNum != 3 )
+	{
+		if ( paramNum < 4 )
+		{
+			if ( paramNum != 2 )
+			{
+error:
+				Scr_Error(
+				    "USAGE: player setReverb(\"priority\", \"roomtype\", drylevel = 1.0, wetlevel = 0.5, fadetime = 0);\nValid priorities are \"snd_enveffectsprio_level\" or \"snd_enveffectsprio_shellsho ck\", dry level is a float from 0 (no source sound) to 1 (full source sound), wetlevel is a float from 0 (no effect) to 1 (full effect), fadetime is in sec and modifies drylevel and w etlevel\n"
+				);
+				return;
+			}
+			goto settype;
+		}
+		if ( paramNum != 4 )
+		{
+			if ( paramNum != 5 ) goto error;
+			fadetime = Scr_GetFloat(4);
+		}
+		wetlevel = Scr_GetFloat(3);
+	}
+	drylevel = Scr_GetFloat(2);
+settype:
+	roomtype = Scr_GetString(1);
+	priorityString = Scr_GetConstString(0);
+	priority = 1;
+	if ( priorityString == scr_const.snd_enveffectsprio_level )
+	{
+		priority = 1;
+	}
+	else if ( priorityString == scr_const.snd_enveffectsprio_shellshock )
+	{
+		priority = 2;
+	}
+	else
+	{
+		Scr_Error("priority must be \'snd_enveffectsprio_level\' or \'snd_enveffectsprio_shellshock\'\n");
+	}
+	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i \"%s\" %g %g %g", 114, priority, roomtype, drylevel, wetlevel, fadetime));
 }
 
 void PlayerCmd_DeactivateReverb(scr_entref_t entref)
 {
-	Scr_Error("PlayerCmd_DeactivateReverb: This function is currently not supported.");
+	unsigned short priorityString;
+	int paramNum;
+	float fadetime;
+	int priority;
+
+	if ( entref.classnum )
+	{
+		Scr_ObjectError("not an entity");
+	}
+	else if ( !g_entities[entref.entnum].client )
+	{
+		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
+	}
+
+	fadetime = 0.0;
+	paramNum = Scr_GetNumParam();
+	if ( paramNum != 1 )
+	{
+		if ( paramNum != 2 )
+		{
+			Scr_Error(
+			    "USAGE: player deactivateReverb(\"priority\", fadetime = 0);\nValid priorities are \"snd_enveffectsprio_level\" or \"snd_enveffectsprio_shellshock\", fadetime is the time spent fading t o the next lowest active reverb priority level in seconds\n"
+			);
+			return;
+		}
+		fadetime = Scr_GetFloat(1);
+	}
+	priorityString = Scr_GetConstString(0);
+	priority = 1;
+	if ( priorityString == scr_const.snd_enveffectsprio_level )
+	{
+		priority = 1;
+	}
+	else if ( priorityString == scr_const.snd_enveffectsprio_shellshock )
+	{
+		priority = 2;
+	}
+	else
+	{
+		Scr_Error("priority must be \'snd_enveffectsprio_level\' or \'snd_enveffectsprio_shellshock\'\n");
+	}
+	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %g", 68, priority, fadetime));
 }
 
 void PlayerCmd_SetChannelVolumes(scr_entref_t entref)
 {
-	Scr_Error("PlayerCmd_SetChannelVolumes: This function is currently not supported.");
+	unsigned short priorityString;
+	int paramNum;
+	float fadetime;
+	int priority;
+
+	if ( entref.classnum )
+	{
+		Scr_ObjectError("not an entity");
+	}
+	else if ( !g_entities[entref.entnum].client )
+	{
+		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
+	}
+
+	fadetime = 0.0;
+	paramNum = Scr_GetNumParam();
+	if ( paramNum != 2 )
+	{
+		if ( paramNum != 3 )
+		{
+			Scr_Error(
+			    "USAGE: player setchannelvolumes(\"priority\", \"shock name\", fadetime = 0);\nValid priorities are \"snd_channelvolprio_holdbreath\", \"snd_channelvolprio_pain\", or \"snd_channelvolpr io_shellshock\", fadetime is in sec\n"
+			);
+			return;
+		}
+		fadetime = Scr_GetFloat(2);
+	}
+	priorityString = Scr_GetConstString(0);
+	priority = 1;
+	if ( priorityString == scr_const.snd_channelvolprio_holdbreath )
+	{
+		priority = 1;
+	}
+	else if ( priorityString == scr_const.snd_channelvolprio_pain )
+	{
+		priority = 2;
+	}
+	else if ( priorityString == scr_const.snd_channelvolprio_shellshock )
+	{
+		priority = 3;
+	}
+	else
+	{
+		Scr_Error("priority must be \'snd_channelvolprio_holdbreath\', \'snd_channelvolprio_pain\', or \'snd_channelvolprio_shellshock\'\n");
+	}
+	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %i %g", 69, priority, G_FindConfigstringIndex(Scr_GetString(1), 1166, 16, 0, NULL), fadetime));
 }
 
 void PlayerCmd_DeactivateChannelVolumes(scr_entref_t entref)
 {
-	Scr_Error("PlayerCmd_DeactivateChannelVolumes: This function is currently not supported.");
+	unsigned short priorityString;
+	int paramNum;
+	float fadetime;
+	int priority;
+
+	if ( entref.classnum )
+	{
+		Scr_ObjectError("not an entity");
+	}
+	else if ( !g_entities[entref.entnum].client )
+	{
+		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
+	}
+
+	fadetime = 0.0;
+	paramNum = Scr_GetNumParam();
+	if ( paramNum != 1 )
+	{
+		if ( paramNum != 2 )
+		{
+			Scr_Error(
+			    "USAGE: player deactivatechannelvolumes(\"priority\", fadetime = 0);\nValid priorities are \"snd_channelvolprio_holdbreath\", \"snd_channelvolprio_pain\", or \"snd_channelvolprio_shells hock\", fadetime is the time spent fading to the next lowest active reverb priority level in seconds\n"
+			);
+			return;
+		}
+		fadetime = Scr_GetFloat(1);
+	}
+	priorityString = Scr_GetConstString(0);
+	priority = 1;
+	if ( priorityString == scr_const.snd_channelvolprio_holdbreath )
+	{
+		priority = 1;
+	}
+	else if ( priorityString == scr_const.snd_channelvolprio_pain )
+	{
+		priority = 2;
+	}
+	else if ( priorityString == scr_const.snd_channelvolprio_shellshock )
+	{
+		priority = 3;
+	}
+	else
+	{
+		Scr_Error("priority must be \'snd_channelvolprio_holdbreath\', \'snd_channelvolprio_pain\', or \'snd_channelvolprio_shellshock\'\n");
+	}
+	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %g", 70, priority, fadetime));
 }
 
 void PlayerCmd_GetWeaponSlotWeapon(scr_entref_t entref)

@@ -162,12 +162,20 @@ typedef struct
 	int value[2];
 } animScriptCondition_t;
 
+typedef struct snd_alias_list_s
+{
+	const char *aliasName;
+	struct snd_alias_t *head;
+	int count;
+	snd_alias_list_s *next;
+} snd_alias_list_t;
+
 typedef struct
 {
 	short bodyPart[2];
 	short animIndex[2];
 	unsigned short animDuration[2];
-	struct snd_alias_list_t *soundAlias;
+	snd_alias_list_t *soundAlias;
 } animScriptCommand_t;
 static_assert((sizeof(animScriptCommand_t) == 0x10), "ERROR: animScriptCommand_t size is invalid!");
 
@@ -201,8 +209,8 @@ typedef struct animScriptData_s
 	unsigned short legsAnim;
 	unsigned short turningAnim;
 	unsigned short rootAnim;
-	struct snd_alias_list_t *(*soundAlias)(const char *);
-	void (*playSoundAlias)(int, struct snd_alias_list_t *);
+	snd_alias_list_t *(*soundAlias)(const char *);
+	void (*playSoundAlias)(int, snd_alias_list_t *);
 } animScriptData_t;
 static_assert((sizeof(animScriptData_t) == 736200), "ERROR: animScriptData_t size is invalid!");
 
@@ -612,52 +620,8 @@ typedef struct
 	const char *projExplosionEffect;
 	const char *projExplosionSound;
 	int projImpactExplode;
-	float parallelDefaultBounce;
-	float parallelBarkBounce;
-	float parallelBrickBounce;
-	float parallelCarpetBounce;
-	float parallelClothBounce;
-	float parallelConcreteBounce;
-	float parallelDirtBounce;
-	float parallelFleshBounce;
-	float parallelFoliageBounce;
-	float parallelGlassBounce;
-	float parallelGrassBounce;
-	float parallelGravelBounce;
-	float parallelIceBounce;
-	float parallelMetalBounce;
-	float parallelMudBounce;
-	float parallelPaperBounce;
-	float parallelPlasterBounce;
-	float parallelRockBounce;
-	float parallelSandBounce;
-	float parallelSnowBounce;
-	float parallelWaterBounce;
-	float parallelWoodBounce;
-	float parallelAsphaltBounce;
-	float perpendicularDefaultBounce;
-	float perpendicularBarkBounce;
-	float perpendicularBrickBounce;
-	float perpendicularCarpetBounce;
-	float perpendicularClothBounce;
-	float perpendicularConcreteBounce;
-	float perpendicularDirtBounce;
-	float perpendicularFleshBounce;
-	float perpendicularFoliageBounce;
-	float perpendicularGlassBounce;
-	float perpendicularGrassBounce;
-	float perpendicularGravelBounce;
-	float perpendicularIceBounce;
-	float perpendicularMetalBounce;
-	float perpendicularMudBounce;
-	float perpendicularPaperBounce;
-	float perpendicularPlasterBounce;
-	float perpendicularRockBounce;
-	float perpendicularSandBounce;
-	float perpendicularSnowBounce;
-	float perpendicularWaterBounce;
-	float perpendicularWoodBounce;
-	float perpendicularAsphaltBounce;
+	float parallelBounce[23];
+	float perpendicularBounce[23];
 	const char *projTrailEffect;
 	int projectileDLight;
 	float projectileRed;
@@ -1064,10 +1028,14 @@ void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
 int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean force);
+void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims, unsigned int *piNumAnims);
+void BG_FindAnimTrees();
+void BG_FindAnims();
 void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove);
 unsigned int BG_AnimationIndexForString(const char *string);
 void BG_FinalizePlayerAnims();
 void BG_LoadAnim();
+void BG_PostLoadAnim();
 
 void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
@@ -1089,6 +1057,7 @@ void Pmove(pmove_t *pmove);
 qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item, int atTime);
 void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
+void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result);
 int PM_WeaponAmmoAvailable(playerState_s *ps);
 int BG_WeaponAmmo(const playerState_s *ps, int weaponIndex);
 int BG_WeaponIsClipOnly(int weapon);
@@ -1120,7 +1089,10 @@ void Mantle_ClearHint(playerState_s *ps);
 void BG_StringCopy(unsigned char *member, const char *keyValue);
 bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex);
 int BG_SetupWeaponDef(WeaponDef *weapDef, int (*regWeap)(int));
+void BG_FillInAmmoItems(int (*regWeap)(int));
 WeaponDef *BG_LoadDefaultWeaponDef();
+void BG_ClearWeaponDef();
+void BG_ShutdownWeaponDefFiles();
 
 int BG_GetWeaponIndexForName(const char *name, int (*regWeap)(int));
 int BG_FindWeaponIndexForName(const char *name);

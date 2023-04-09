@@ -1651,6 +1651,18 @@ const char *Dvar_IndexStringToEnumString(const dvar_t *dvar, const char *indexSt
 	return "";
 }
 
+void Dvar_SetStringByName(const char *dvarName, const char *value)
+{
+	dvar_s *var;
+
+	var = Dvar_FindVar(dvarName);
+
+	if ( var )
+		Dvar_SetString(var, value);
+	else
+		Dvar_RegisterString(dvarName, value, 0x4000u);
+}
+
 void Dvar_SetInAutoExec(qboolean inAutoExec)
 {
 	isLoadingAutoExecGlobalFlag = inAutoExec;
@@ -1740,6 +1752,14 @@ void Dvar_Shutdown()
 int Dvar_IsSystemActive()
 {
 	return isDvarSystemActive;
+}
+
+void Dvar_ResetScriptInfo()
+{
+	int dvarIter;
+
+	for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
+		dvarPool[dvarIter].flags &= ~0x400u;
 }
 
 void Dvar_Init()

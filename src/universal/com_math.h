@@ -162,7 +162,6 @@ vec_t VectorLength( const vec3_t v );
 vec_t Vec2Length( const vec2_t v );
 vec_t VectorLengthSquared( const vec3_t v );
 vec_t Vec4LengthSq( const vec4_t v);
-vec_t VectorsLengthSquared(const vec4_t v1, const vec4_t v2);
 vec_t Vec2LengthSq( const vec2_t v );
 void VectorInverse( vec3_t v );
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);

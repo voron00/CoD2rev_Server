@@ -359,6 +359,71 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result )
 	}
 }
 
+/*
+================
+BG_EvaluateTrajectoryDelta
+For determining velocity at a given time
+================
+*/
+void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result)
+{
+	float deltaTime;
+	float phase;
+
+	switch ( tr->trType )
+	{
+	case TR_STATIONARY:
+	case TR_INTERPOLATE:
+		VectorClear( result );
+		break;
+	case TR_LINEAR:
+		VectorCopy( tr->trDelta, result );
+		break;
+	case TR_LINEAR_STOP:
+		if ( atTime > tr->trTime + tr->trDuration )
+		{
+			VectorClear( result );
+			return;
+		}
+		VectorCopy( tr->trDelta, result );
+		break;
+	case TR_SINE:
+		deltaTime = ( atTime - tr->trTime ) / (float) tr->trDuration;
+		phase = cos( deltaTime * M_PI * 2 );    // derivative of sin = cos
+		phase *= 0.5;
+		VectorScale( tr->trDelta, phase, result );
+		break;
+	case TR_GRAVITY:
+		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
+		VectorCopy( tr->trDelta, result );
+		result[2] -= DEFAULT_GRAVITY * deltaTime;       // FIXME: local gravity...
+		break;
+	// RF, acceleration
+	case TR_ACCELERATE: // trDelta is eventual speed
+		if ( atTime > tr->trTime + tr->trDuration )
+		{
+			VectorClear( result );
+			return;
+		}
+		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
+		phase = deltaTime / (float)tr->trDuration;
+		VectorScale( tr->trDelta, deltaTime * deltaTime, result );
+		break;
+	case TR_DECCELERATE:    // trDelta is breaking force
+		if ( atTime > tr->trTime + tr->trDuration )
+		{
+			VectorClear( result );
+			return;
+		}
+		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
+		VectorScale( tr->trDelta, deltaTime, result );
+		break;
+	default:
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trTime );
+		break;
+	}
+}
+
 void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler)
 {
 	int flags;

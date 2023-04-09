@@ -107,6 +107,57 @@ void BG_SetupWeaponAlts(int weapIndex, int (*regWeap)(int))
 	}
 }
 
+void BG_FillInAmmoItems(int (*regWeap)(int))
+{
+	char name[64];
+	char *c;
+	gitem_s *item;
+	WeaponDef *weaponDef;
+	int weapon;
+	int i;
+
+	for ( i = 129; i < 131; ++i )
+	{
+		item = &bg_itemlist[i];
+
+		if ( item->giType == IT_AMMO )
+		{
+			I_strncpyz(name, item->pickup_name, 64);
+
+			for ( c = name; *c; ++c )
+			{
+				if ( *c == 32 )
+				{
+					*c = 0;
+					break;
+				}
+			}
+
+			weapon = BG_GetWeaponIndexForName(name, regWeap);
+
+			if ( weapon )
+			{
+				weaponDef = BG_GetWeaponDef(weapon);
+				item->giTag = weapon;
+				item->giAmmoIndex = weaponDef->ammoIndex;
+				item->giClipIndex = weaponDef->clipIndex;
+				return;
+			}
+
+			Com_Printf("^3WARNING^7: Could not find weapon for ammo item %s\n", item->pickup_name);
+			weapon = BG_GetWeaponIndexForName("defaultweapon_mp", regWeap);
+
+			if ( !weapon )
+				Com_Error(ERR_DROP, "BG_FillInAmmoItems: weapon def for default weapon could not be found!");
+
+			weaponDef = BG_GetWeaponDef(weapon);
+			item->giTag = 1;
+			item->giAmmoIndex = weaponDef->ammoIndex;
+			item->giClipIndex = weaponDef->clipIndex;
+		}
+	}
+}
+
 void BG_SetupAmmoIndexes(int weapIndex)
 {
 	WeaponDef *altWeaponDef;
@@ -295,6 +346,11 @@ int BG_SetupWeaponDef(WeaponDef *weapDef, int (*regWeap)(int))
 		regWeap(num);
 
 	return num;
+}
+
+void BG_ShutdownWeaponDefFiles()
+{
+	bg_iNumWeapons = 0;
 }
 
 // Don't hook that

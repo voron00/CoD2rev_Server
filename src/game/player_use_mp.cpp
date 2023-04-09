@@ -172,7 +172,7 @@ int Player_GetUseList(gentity_s *ent, useList_t *useList)
 	VectorAdd(client->ps.origin, client->ps.maxs, absmax);
 	VectorSubtract(vOrigin, useRadius, mins);
 	VectorAdd(vOrigin, useRadius, maxs);
-	entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, 0x200000);
+	entities = CM_AreaEntities(mins, maxs, entityList, 1024, 0x200000);
 	entityCount = 0;
 
 	for ( i = 0; i < entities; ++i )
@@ -207,7 +207,7 @@ int Player_GetUseList(gentity_s *ent, useList_t *useList)
 
 				if ( vNorm <= 128.0 )
 				{
-					vLenSq = VectorsLengthSquared(vAng, vForward);
+					vLenSq = DotProduct(vAng, vForward);
 					vDist = 1.0 - (vLenSq + 1.0) * 0.5;
 					useList[entityCount].score = vDist * 256.0;
 

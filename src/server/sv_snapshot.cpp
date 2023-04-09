@@ -1628,3 +1628,147 @@ void SV_EnableArchivedSnapshot(qboolean enabled)
 		}
 	}
 }
+
+void SV_InitArchivedSnapshot()
+{
+	svs.archivedSnapshotEnabled = 0;
+	svs.nextArchivedSnapshotFrames = 0;
+	svs.nextArchivedSnapshotBuffer = 0;
+	svs.nextCachedSnapshotEntities = 0;
+	svs.nextCachedSnapshotClients = 0;
+	svs.nextCachedSnapshotFrames = 0;
+}
+
+void SV_ShutdownArchivedSnapshot()
+{
+	if ( svs.cachedSnapshotEntities )
+	{
+		Z_FreeInternal(svs.cachedSnapshotEntities);
+		svs.cachedSnapshotEntities = 0;
+	}
+
+	if ( svs.cachedSnapshotClients )
+	{
+		Z_FreeInternal(svs.cachedSnapshotClients);
+		svs.cachedSnapshotClients = 0;
+	}
+
+	if ( svs.archivedSnapshotFrames )
+	{
+		Z_FreeInternal(svs.archivedSnapshotFrames);
+		svs.archivedSnapshotFrames = 0;
+	}
+
+	if ( svs.archivedSnapshotBuffer )
+	{
+		Z_FreeInternal(svs.archivedSnapshotBuffer);
+		svs.archivedSnapshotBuffer = 0;
+	}
+
+	if ( svs.cachedSnapshotFrames )
+	{
+		Z_FreeInternal(svs.cachedSnapshotFrames);
+		svs.cachedSnapshotFrames = 0;
+	}
+}
+
+/*
+=======================
+SV_SendClientMessages
+=======================
+*/
+extern dvar_t *sv_showAverageBPS;
+void SV_SendClientMessages( void )
+{
+	int i;
+	client_t    *c;
+	int numclients = 0;         // NERVE - SMF - net debugging
+
+	sv.bpsTotalBytes = 0;       // NERVE - SMF - net debugging
+	sv.ubpsTotalBytes = 0;      // NERVE - SMF - net debugging
+
+	// send a message to each connected client
+	for ( i = 0; i < sv_maxclients->current.integer; i++ )
+	{
+		c = &svs.clients[i];
+
+		// rain - changed <= CS_ZOMBIE to < CS_ZOMBIE so that the
+		// disconnect reason is properly sent in the network stream
+		if ( c->state < CS_ZOMBIE )
+		{
+			continue;       // not connected
+		}
+
+		if ( svs.time < c->nextSnapshotTime )
+		{
+			continue;       // not time yet
+		}
+
+		numclients++;       // NERVE - SMF - net debugging
+
+		// send additional message fragments if the last message
+		// was too large to send at once
+		if ( c->netchan.unsentFragments )
+		{
+			c->nextSnapshotTime = svs.time +
+			                      SV_RateMsec( c, c->netchan.unsentLength - c->netchan.unsentFragmentStart );
+			SV_Netchan_TransmitNextFragment(&c->netchan);
+			continue;
+		}
+
+		// generate and send a new message
+		SV_SendClientSnapshot( c );
+		SV_SendClientVoiceData( c );
+	}
+
+	// NERVE - SMF - net debugging
+	if ( sv_showAverageBPS->current.boolean && numclients > 0 )
+	{
+		float ave = 0, uave = 0;
+
+		for ( i = 0; i < MAX_BPS_WINDOW - 1; i++ )
+		{
+			sv.bpsWindow[i] = sv.bpsWindow[i + 1];
+			ave += sv.bpsWindow[i];
+
+			sv.ubpsWindow[i] = sv.ubpsWindow[i + 1];
+			uave += sv.ubpsWindow[i];
+		}
+
+		sv.bpsWindow[MAX_BPS_WINDOW - 1] = sv.bpsTotalBytes;
+		ave += sv.bpsTotalBytes;
+
+		sv.ubpsWindow[MAX_BPS_WINDOW - 1] = sv.ubpsTotalBytes;
+		uave += sv.ubpsTotalBytes;
+
+		if ( sv.bpsTotalBytes >= sv.bpsMaxBytes )
+		{
+			sv.bpsMaxBytes = sv.bpsTotalBytes;
+		}
+
+		if ( sv.ubpsTotalBytes >= sv.ubpsMaxBytes )
+		{
+			sv.ubpsMaxBytes = sv.ubpsTotalBytes;
+		}
+
+		sv.bpsWindowSteps++;
+
+		if ( sv.bpsWindowSteps >= MAX_BPS_WINDOW )
+		{
+			float comp_ratio;
+
+			sv.bpsWindowSteps = 0;
+
+			ave = ( ave / (float)MAX_BPS_WINDOW );
+			uave = ( uave / (float)MAX_BPS_WINDOW );
+
+			comp_ratio = ( 1 - ave / uave ) * 100.f;
+			sv.ucompAve += comp_ratio;
+			sv.ucompNum++;
+
+			Com_DPrintf( "bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f) acr(%2.2f)\n",
+			             ave / (float)numclients, ave, sv.bpsMaxBytes, uave, sv.ubpsMaxBytes, comp_ratio, sv.ucompAve / sv.ucompNum );
+		}
+	}
+	// -NERVE - SMF
+}

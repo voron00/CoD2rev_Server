@@ -295,7 +295,7 @@ void G_TouchTriggers(gentity_s *ent)
 	{
 		VectorSubtract(ent->client->ps.origin, TouchTriggersgentity_range, mins);
 		VectorAdd(ent->client->ps.origin, TouchTriggersgentity_range, maxs);
-		entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, 1079771144);
+		entities = CM_AreaEntities(mins, maxs, entityList, 1024, 1079771144);
 		VectorAdd(ent->client->ps.origin, ent->r.mins, mins);
 		VectorAdd(ent->client->ps.origin, ent->r.maxs, maxs);
 		ShrinkBoundsToHeight(mins, maxs);
@@ -900,8 +900,8 @@ void P_DamageFeedback(gentity_s *player)
 				vectoangles(client->damage_from, angles);
 				AnglesToAxis(client->ps.viewangles, viewaxis);
 
-				client->v_dmg_roll = VectorsLengthSquared(client->damage_from, viewaxis[1]) * -kick;
-				client->v_dmg_pitch = VectorsLengthSquared(client->damage_from, viewaxis[0]) * kick;
+				client->v_dmg_roll = DotProduct(client->damage_from, viewaxis[1]) * -kick;
+				client->v_dmg_pitch = DotProduct(client->damage_from, viewaxis[0]) * kick;
 
 				client->ps.damagePitch = (int)(angles[0] / 360.0 * 256.0);
 				client->ps.damageYaw = (int)(angles[1] / 360.0 * 256.0);

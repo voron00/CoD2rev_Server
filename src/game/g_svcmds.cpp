@@ -27,7 +27,6 @@ typedef struct ipFilterList_s
 {
 	ipFilter_t ipFilters[MAX_IPFILTERS];
 	int numIPFilters;
-	char cvarIPList[32];
 } ipFilterList_t;
 
 static ipFilterList_t ipFilters;
@@ -232,6 +231,37 @@ void Svcmd_RemoveIP_f( void )
 	}
 
 	Com_Printf( "Didn't find %s.\n", str );
+}
+
+/*
+=================
+G_ProcessIPBans
+=================
+*/
+void G_ProcessIPBans( void )
+{
+	char *s, *t;
+	char str[MAX_CVAR_VALUE_STRING];
+
+	ipFilters.numIPFilters = 0;
+
+	Q_strncpyz( str, g_banIPs->current.string, sizeof( str ) );
+
+	for ( t = s = (char *)g_banIPs->current.string; *t; /* */ )
+	{
+		s = strchr( s, ' ' );
+		if ( !s )
+		{
+			break;
+		}
+		while ( *s == ' ' )
+			*s++ = 0;
+		if ( *t )
+		{
+			AddIP( &ipFilters, t );
+		}
+		t = s;
+	}
 }
 
 void Svcmd_EntityList_f()

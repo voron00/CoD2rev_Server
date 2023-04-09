@@ -9,6 +9,8 @@
 #define MAX_SNAPSHOT_ENTITIES	1024
 #define MAX_NAME_LENGTH	32
 
+#define MAX_MASTER_SERVERS  5
+#define PORT_MASTER 20710
 
 typedef struct
 {
@@ -223,7 +225,7 @@ typedef struct
 	struct cmodel_s *models[MAX_MODELS];
 	char *configstrings[MAX_CONFIGSTRINGS];
 	svEntity_t svEntities[MAX_GENTITIES];
-	char *entityParsePoint;
+	const char *entityParsePoint;
 	gentity_t *gentities;
 	int gentitySize;
 	int	num_entities;
@@ -299,6 +301,7 @@ void SV_CalcPings( void );
 void SV_CheckTimeouts( void );
 void SV_SetGametype();
 gentity_t *SV_AddTestClient();
+void SV_FreeClient(client_s *cl);
 
 void SV_SendMessageToClient( msg_t *msg, client_t *client );
 void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
@@ -313,6 +316,8 @@ void SV_PacketEvent( netadr_t from, msg_t *msg );
 void SV_ArchiveSnapshot();
 void SV_EnableArchivedSnapshot(qboolean enabled);
 
+void SV_ResetEntityParsePoint();
+
 qboolean SV_IsLocalClient(int clientNum);
 qboolean SV_MapExists(const char *name);
 const char *SV_GetMapBaseName(const char *mapname);
@@ -322,7 +327,9 @@ gentity_t *SV_GentityNum( int num );
 playerState_t *SV_GameClientNum( int num );
 svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt );
 gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
-void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
+int SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
+void SV_DObjDisplayAnim(gentity_s *ent);
+void SV_DObjInitServerTime(gentity_s *ent, float dtime);
 qboolean SV_DObjExists(gentity_s *ent);
 qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 XAnimTree_s* SV_DObjGetTree(gentity_s *ent);
@@ -347,6 +354,8 @@ void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_
 cachedSnapshot_t* SV_GetCachedSnapshot(int *pArchiveTime);
 void SV_BuildClientSnapshot( client_t *client );
 void SV_WriteSnapshotToClient(client_s *client, msg_t *msg);
+void SV_InitArchivedSnapshot();
+void SV_ShutdownArchivedSnapshot();
 char* SV_AllocSkelMemory(unsigned int size);
 void SV_ResetSkeletonCache();
 int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex);
@@ -366,6 +375,26 @@ void SVC_Info( netadr_t from );
 void SVC_Status( netadr_t from );
 void SV_ConnectionlessPacket( netadr_t from, msg_t *msg );
 
+void SV_RestartGameProgs(int savepersist);
+void SV_InitGameProgs(int savepersist);
+
+void SV_MasterGameCompleteStatus();
+void SV_AddOperatorCommands();
+void SV_RemoveOperatorCommands();
+
+void SV_SpawnServer(char *server);
+void SV_MasterShutdown();
+
+void SV_SendClientMessages( void );
+
+void SV_ChangeMaxClients( void );
+void SV_Startup( void );
+
+void SV_ClientEnterWorld(client_s *client, usercmd_s *cmd);
+
+void SV_RunFrame();
+void SV_CreateBaseline( void );
+
 bool SV_ClientHasClientMuted(int listener, int talker);
 bool SV_ClientWantsVoiceData(unsigned int clientNum);
 void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacket);
@@ -375,3 +404,7 @@ void SV_VoicePacket(netadr_t from, msg_t *msg);
 void SV_SendClientVoiceData(client_s *client);
 void SV_SetBrushModel(gentity_s *ent);
 void SV_XModelDebugBoxes();
+void SV_SetWeaponInfoMemory();
+void SV_FreeWeaponInfoMemory();
+void SV_GetServerinfo(char *buffer, int bufferSize);
+void SV_FreeClientScriptPers();

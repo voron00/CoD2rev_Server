@@ -207,7 +207,7 @@ void Cmd_ExecuteString( const char *text )
 	}
 #endif
 	// check server game commands
-	if ( com_sv_running && com_sv_running->current.integer && SV_GameCommand() )
+	if ( com_sv_running && com_sv_running->current.boolean && SV_GameCommand() )
 	{
 		return;
 	}

@@ -109,7 +109,7 @@ bool G_MoverPush(gentity_s *pusher, vec3_t move, vec3_t amove, gentity_s **obsta
 	}
 
 	SV_UnlinkEntity(pusher);
-	entities = CM_AreaEntities((const vec3_t *)totalMins, (const vec3_t *)totalMaxs, entityList, 1024, 33554816);
+	entities = CM_AreaEntities(totalMins, totalMaxs, entityList, 1024, 33554816);
 	VectorAdd(pusher->r.currentOrigin, move, pusher->r.currentOrigin);
 	VectorAdd(pusher->r.currentAngles, amove, pusher->r.currentAngles);
 	SV_LinkEntity(pusher);

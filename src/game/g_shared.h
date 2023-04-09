@@ -1,5 +1,7 @@
 #pragma once
 
+#define GAMEVERSION "Call of Duty 2"
+
 #define MAX_HUDELEMENTS 31
 #define MAX_HUDELEMS_ARCHIVAL MAX_HUDELEMENTS
 #define MAX_HUDELEMS_CURRENT MAX_HUDELEMENTS
@@ -252,8 +254,8 @@ enum statIndex_t
 	STAT_DEAD_YAW = 0x1,
 	STAT_MAX_HEALTH = 0x2,
 	STAT_IDENT_CLIENT_NUM = 0x3,
-	STAT_SPAWN_COUNT = 0x4,
-	STAT_UNKNOWN = 0x5,
+	STAT_IDENT_CLIENT_HEALTH = 0x4,
+	STAT_SPAWN_COUNT = 0x5,
 	MAX_STATS = 0x6,
 };
 
@@ -1194,6 +1196,7 @@ void G_CheckHitTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, 
 qboolean OnSameTeam(gentity_s *ent1, gentity_s *ent2);
 void G_AntiLagRewindClientPos(int gameTime, AntilagClientStore *antilagStore);
 void G_AntiLag_RestoreClientPos(AntilagClientStore *antilagStore);
+void G_GrenadeTouchTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, int iDamage, int iMOD);
 
 void FireWeaponMelee(gentity_s *ent);
 void G_UseOffHand(gentity_s *ent);
@@ -1202,6 +1205,8 @@ void G_RunItem(gentity_s *ent);
 void G_SetFixedLink(gentity_s *ent, int eAngles);
 void G_RunClient(gentity_s *ent);
 void G_RunMover(gentity_s *ent);
+void G_RunMissile(gentity_s *ent);
+void G_RunFrameForEntity(gentity_s *ent);
 
 
 #ifdef __cplusplus
@@ -1255,6 +1260,7 @@ void QDECL G_LogPrintf( const char *fmt, ... );
 int IsItemRegistered(unsigned int iItemIndex);
 void RegisterItem(unsigned int index, int global);
 void SaveRegisteredItems();
+void SaveRegisteredWeapons();
 void ClearRegisteredItems();
 int G_RegisterWeapon(int weapIndex);
 void G_SetEquippedOffHand(int clientNum, int offHandIndex);
@@ -1265,6 +1271,30 @@ void ExitLevel();
 int Add_Ammo(gentity_s *pSelf, int weaponIndex, int count, int fillClip);
 void G_AddPredictableEvent(gentity_s *ent, int event, int eventParm);
 void Touch_Item(gentity_s *ent, gentity_s *other, int touched);
+void G_UpdateTeamScoresForIntermission();
+void CheckTeamStatus();
+int G_DObjUpdateServerTime(gentity_s *ent, int bNotify);
+void G_RunFrame(int time);
+
+void Scr_LoadGameType();
+void Scr_LoadLevel();
+void Scr_StartupGameType();
+
+void G_LoadStructs();
+int G_GetEntityToken(char *buffer, int bufferSize);
+char* G_AddSpawnVarToken(char *string, SpawnVar *spawnVar);
+int G_ParseSpawnVars(SpawnVar *spawnVar);
+void G_SpawnEntitiesFromString();
+
+void G_InitObjectives();
+void G_ProcessIPBans( void );
+void G_SetupWeaponDef();
+
+void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars);
+void G_ShutdownGame(int freeScripts);
+
+snd_alias_list_t* Com_FindSoundAlias(const char *name);
+void G_AnimScriptSound(int clientNum, snd_alias_list_t *aliasList);
 
 void Scr_ReadOnlyField(gentity_s *ent, int offset);
 void Scr_SetOrigin(gentity_s *ent, int offset);
@@ -1341,6 +1371,8 @@ void ClientBegin(unsigned int clientNum);
 const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId);
 int G_GetClientScore(int clientNum);
 int G_GetSavePersist();
+void G_SetSavePersist(int savepersist);
+void G_FreeAnimTreeInstances();
 
 #include "../server/server.h"
 void G_BroadcastVoice(gentity_s *talker, VoicePacket_t *voicePacket);
@@ -1458,6 +1490,7 @@ void GScr_AddFieldsForClient();
 
 void GScr_LoadConsts();
 void GScr_LoadScripts();
+void GScr_FreeScripts();
 
 void G_RegisterDvars();
 

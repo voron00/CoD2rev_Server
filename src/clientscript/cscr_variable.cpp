@@ -997,6 +997,89 @@ unsigned int Scr_AllocArray()
 	return id;
 }
 
+void SetEmptyArray(unsigned int parentId)
+{
+	VariableValue tempValue;
+
+	tempValue.type = VAR_OBJECT;
+	tempValue.u.pointerValue = Scr_AllocArray();
+	SetVariableValue(parentId, &tempValue);
+}
+
+void Scr_AllocGameVariable()
+{
+	if ( !scrVarPub.gameId )
+	{
+		scrVarPub.gameId = AllocValue();
+		SetEmptyArray(scrVarPub.gameId);
+	}
+}
+
+int Scr_MakeValuePrimitive(unsigned int parentId)
+{
+	unsigned int name;
+	unsigned int i;
+
+	if ( (scrVarGlob.variableList[parentId].w.status & 0x1F) != 22 )
+		return 0;
+
+find_next_variable:
+	for ( i = FindNextSibling(parentId); i; i = FindNextSibling(i) )
+	{
+		name = scrVarGlob.variableList[i].w.name >> 8;
+		switch ( scrVarGlob.variableList[i].w.type & 0x1F )
+		{
+		case 1u:
+			if ( !Scr_MakeValuePrimitive(scrVarGlob.variableList[i].u.u.pointerValue) )
+				goto remove_variable;
+			break;
+		case 7u:
+		case 8u:
+		case 9u:
+		case 0xAu:
+		case 0xBu:
+remove_variable:
+			RemoveVariable(parentId, name);
+			goto find_next_variable;
+		default:
+			continue;
+		}
+	}
+
+	return 1;
+}
+
+void Scr_FreeGameVariable(int bComplete)
+{
+	if ( bComplete )
+	{
+		FreeChildValue(scrVarPub.gameId);
+		scrVarPub.gameId = 0;
+	}
+	else
+	{
+		Scr_MakeValuePrimitive(scrVarGlob.variableList[scrVarPub.gameId].u.u.pointerValue);
+	}
+}
+
+void Scr_FreeObjects()
+{
+	VariableValueInternal *entryValue;
+	unsigned int id;
+
+	for ( id = 1; id <= 0xFFFD; ++id )
+	{
+		entryValue = &scrVarGlob.variableList[id];
+
+		if ( (entryValue->w.status & 0x60) != 0
+		        && ((entryValue->w.status & 0x1F) == 19 || (entryValue->w.status & 0x1F) == 20) )
+		{
+			Scr_CancelNotifyList(id);
+			ClearObject(id);
+		}
+	}
+}
+
 unsigned int Scr_GetEntityId(int entnum, unsigned int classnum)
 {
 	VariableValueInternal *entryValue;
@@ -1173,6 +1256,17 @@ int Scr_GetClassnumForCharId(char charId)
 	}
 
 	return -1;
+}
+
+void Scr_RemoveClassMap(unsigned int classnum)
+{
+	if ( scrVarPub.bInited )
+	{
+		RemoveRefToObject(scrClassMap[classnum].entArrayId);
+		scrClassMap[classnum].entArrayId = 0;
+		RemoveRefToObject(scrClassMap[classnum].id);
+		scrClassMap[classnum].id = 0;
+	}
 }
 
 unsigned int Scr_FindArrayIndex(unsigned int parentId, VariableValue *index)
@@ -2199,6 +2293,34 @@ unsigned int FindEntityId(int entnum, unsigned int classnum)
 void Scr_FreeValue(unsigned int id)
 {
 	RemoveRefToObject(id);
+}
+
+void Scr_StopThread(unsigned int threadId)
+{
+	Scr_ClearThread(threadId);
+	scrVarGlob.variableList[threadId].u.o.u.self = scrVarPub.levelId;
+	AddRefToObject(scrVarPub.levelId);
+}
+
+void Scr_FreeEntityList()
+{
+	unsigned int id;
+	VariableValueInternal *entryValue;
+
+	while ( scrVarPub.freeEntList )
+	{
+		id = scrVarPub.freeEntList;
+		entryValue = &scrVarGlob.variableList[scrVarPub.freeEntList];
+		scrVarPub.freeEntList = entryValue->u.o.u.entnum;
+		entryValue->u.o.u.entnum = 0;
+
+		Scr_CancelNotifyList(id);
+
+		if ( scrVarGlob.variableList[entryValue->nextSibling].hash.id != id )
+			ClearObjectInternal(id);
+
+		RemoveRefToObject(id);
+	}
 }
 
 void SafeRemoveVariable(unsigned int parentId, unsigned int name)

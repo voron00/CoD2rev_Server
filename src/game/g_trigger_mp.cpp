@@ -80,6 +80,40 @@ void Activate_trigger_damage(gentity_s *pEnt, gentity_s *pOther, int iDamage, in
 	}
 }
 
+void G_GrenadeTouchTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, int iDamage, int iMOD)
+{
+	gentity_s *pEnt;
+	vec3_t maxs;
+	vec3_t mins;
+	int entityList[1024];
+	int entities;
+	int i;
+
+	VectorCopy(vStart, mins);
+	VectorCopy(vStart, maxs);
+	AddPointToBounds(vEnd, mins, maxs);
+
+	entities = CM_AreaEntities(mins, maxs, entityList, 1024, 0x400000);
+
+	for ( i = 0; i < entities; ++i )
+	{
+		pEnt = &g_entities[entityList[i]];
+
+		if ( pEnt->classname == scr_const.trigger_damage
+		        && (pEnt->flags & 0x4000) != 0
+		        && SV_SightTraceToEntity(vStart, vec3_origin, vec3_origin, vEnd, pEnt->s.number, -1) )
+		{
+			Scr_AddEntity(pActivator);
+			Scr_AddInt(iDamage);
+			Scr_Notify(pEnt, scr_const.damage, 2u);
+			Activate_trigger_damage(pEnt, pActivator, iDamage, iMOD);
+
+			if ( !pEnt->trigger.accumulate )
+				pEnt->health = 32000;
+		}
+	}
+}
+
 void G_CheckHitTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, int iDamage, unsigned int iMOD)
 {
 	gentity_s *pEnt;
@@ -95,7 +129,7 @@ void G_CheckHitTriggerDamage(gentity_s *pActivator, float *vStart, float *vEnd, 
 	VectorCopy(vStart, maxs);
 
 	AddPointToBounds(vEnd, mins, maxs);
-	entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, 0x400000);
+	entities = CM_AreaEntities(mins, maxs, entityList, 1024, 0x400000);
 
 	for ( i = 0; i < entities; ++i )
 	{

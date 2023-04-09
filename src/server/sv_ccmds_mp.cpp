@@ -8,6 +8,12 @@ extern serverStatic_t svs;
 extern server_t sv;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define sv_serverId_value (*((int*)( 0x0841FA88 )))
+#else
+extern int sv_serverId_value;
+#endif
+
 const char *SV_GetMapBaseName(const char *mapname)
 {
 	return FS_GetMapBaseName(mapname);
@@ -291,6 +297,20 @@ int SV_KickClient_f(char *playerName, int maxPlayerNameLen)
 	}
 }
 
+void SV_TempBanNum_f(void)
+{
+	char name[64];
+	int guid;
+
+	guid = SV_KickClient_f(name, 64);
+
+	if ( guid )
+	{
+		Com_Printf("%s (guid %i) was kicked for cheating\n", name, guid);
+		SV_BanGuidBriefly(guid);
+	}
+}
+
 void SV_DropNum_f(void)
 {
 	SV_KickClient_f(0, 0);
@@ -415,4 +435,324 @@ void SV_DumpUser_f(void)
 	{
 		Com_Printf("Server is not running.\n");
 	}
+}
+
+extern dvar_t *sv_gametype;
+extern dvar_t *sv_serverid;
+
+extern int com_frameTime;
+
+void SV_MapRestart(int fast_restart)
+{
+	const char *dropreason;
+	const char *cmd;
+	int savepersist;
+	client_t *cl;
+	char mapname[64];
+	int i;
+
+	if ( !com_sv_running->current.boolean )
+		return Com_Printf("Server is not running.\n");
+
+	SV_SetGametype();
+	I_strncpyz(sv.gametype, sv_gametype->current.string, 64);
+	savepersist = G_GetSavePersist();
+
+	if ( !sv_maxclients->modified && !strcasecmp(sv.gametype, sv_gametype->current.string) && fast_restart )
+	{
+		if ( com_frameTime != sv.start_frameTime )
+		{
+			Dvar_ResetScriptInfo();
+			SV_InitArchivedSnapshot();
+			svs.snapFlagServerBit ^= 4u;
+			sv_serverId_value = (((byte)sv_serverId_value + 1) & 0xF) + (sv_serverId_value & 0xF0);
+			Dvar_SetInt(sv_serverid, sv_serverId_value);
+			sv.start_frameTime = com_frameTime;
+			sv.state = SS_LOADING;
+			sv.restarting = 1;
+			SV_RestartGameProgs(savepersist);
+
+			for(i = 0; i < 3; ++i)
+			{
+				svs.time += 100;
+				SV_RunFrame();
+			}
+
+			for(i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl)
+			{
+				if ( cl->state < CS_CONNECTED )
+				{
+					continue;
+				}
+
+				if ( savepersist )
+					cmd = va("%c", 110);
+				else
+					cmd = va("%c", 66);
+
+				SV_AddServerCommand(cl, 1, cmd);
+
+				dropreason = ClientConnect(i, cl->clscriptid);
+
+				if ( dropreason )
+				{
+					SV_DropClient(cl, dropreason);
+					Com_Printf("SV_MapRestart_f: dropped client %i - denied!\n", i);
+				}
+				else if ( cl->state == CS_ACTIVE )
+				{
+					SV_ClientEnterWorld(cl, &cl->lastUsercmd);
+				}
+			}
+
+			sv.state = SS_GAME;
+			sv.restarting = 0;
+		}
+	}
+	else
+	{
+		G_SetSavePersist(0);
+		I_strncpyz(mapname, Dvar_GetString("mapname"), 64);
+		FS_ConvertPath(mapname);
+		SV_SpawnServer(mapname);
+	}
+}
+
+void SV_MapRestart_f()
+{
+	SV_MapRestart(0);
+}
+
+void SV_FastRestart_f()
+{
+	SV_MapRestart(1);
+}
+
+extern dvar_t *sv_cheats;
+void SV_Map_f()
+{
+	char mapname[64];
+	char *qpath;
+	const char *base;
+	const char *map;
+
+	map = SV_Cmd_Argv(1u);
+
+	if ( *map )
+	{
+		base = SV_GetMapBaseName(map);
+		I_strncpyz(mapname, base, 64);
+		I_strlwr(mapname);
+		qpath = va("maps/mp/%s.%s", mapname, GetBspExtension());
+
+		if ( FS_ReadFile(qpath, 0) != -1 )
+		{
+			FS_ConvertPath(mapname);
+			SV_SpawnServer(mapname);
+			Dvar_SetBool(sv_cheats, I_stricmp(SV_Cmd_Argv(0), "devmap") == 0);
+		}
+		else
+			Com_Printf("Can't find map %s\n", qpath);
+	}
+}
+
+extern dvar_t *sv_mapRotationCurrent;
+const char* UI_GetMapRotationToken()
+{
+	char *token;
+	const char *value;
+
+	value = sv_mapRotationCurrent->current.string;
+	token = Com_Parse(&value);
+
+	if ( value )
+	{
+		Dvar_SetString(sv_mapRotationCurrent, value);
+		return token;
+	}
+	else
+	{
+		Dvar_SetString(sv_mapRotationCurrent, "");
+		return 0;
+	}
+}
+
+extern dvar_t *sv_mapRotation;
+void SV_MapRotate_f()
+{
+	const char *token;
+
+	Com_Printf("map_rotate...\n\n");
+	Com_Printf("\"sv_mapRotation\" is:\"%s\"\n\n", sv_mapRotation->current.string);
+	Com_Printf("\"sv_mapRotationCurrent\" is:\"%s\"\n\n", sv_mapRotationCurrent->current.string);
+
+	if ( !*sv_mapRotationCurrent->current.string )
+		Dvar_SetString(sv_mapRotationCurrent, sv_mapRotation->current.string);
+
+	token = UI_GetMapRotationToken();
+
+	if ( !token )
+	{
+		Dvar_SetString(sv_mapRotationCurrent, sv_mapRotation->current.string);
+		token = UI_GetMapRotationToken();
+	}
+
+	while ( 1 )
+	{
+		if ( !token )
+		{
+			Com_Printf("No map specified in sv_mapRotation - forcing map_restart.\n");
+			SV_FastRestart_f();
+			return;
+		}
+
+		if ( strcasecmp(token, "gametype") )
+			break;
+
+		token = UI_GetMapRotationToken();
+
+		if ( !token )
+		{
+			Com_Printf("No gametype specified after 'gametype' keyword in sv_mapRotation - forcing map_restart.\n");
+			SV_FastRestart_f();
+			return;
+		}
+
+		Com_Printf("Setting g_gametype: %s.\n", token);
+
+		if ( com_sv_running->current.boolean )
+		{
+			if ( strcasecmp(sv_gametype->current.string, token) )
+				G_SetSavePersist(0);
+		}
+
+		Dvar_SetString(sv_gametype, token);
+retry:
+		token = UI_GetMapRotationToken();
+	}
+
+	if ( strcasecmp(token, "map") )
+	{
+		Com_Printf("Unknown keyword '%s' in sv_mapRotation.\n", token);
+		goto retry;
+	}
+
+	token = UI_GetMapRotationToken();
+
+	if ( token )
+	{
+		Com_Printf("Setting map: %s.\n", token);
+		Cbuf_ExecuteText(0, va("map %s\n", token));
+	}
+	else
+	{
+		Com_Printf("No map specified after 'map' keyword in sv_mapRotation - forcing map_restart.\n");
+		SV_FastRestart_f();
+	}
+}
+
+void SV_GameCompleteStatus_f(void)
+{
+	SV_MasterGameCompleteStatus();
+}
+
+void SV_KillServer_f(void)
+{
+	Com_Shutdown("EXE_SERVERKILLED");
+}
+
+void SV_ScriptUsage_f(void)
+{
+	Scr_DumpScriptThreads();
+}
+
+void SV_StringUsage_f(void)
+{
+	MT_DumpTree();
+}
+
+/*
+==================
+SV_ConSay_f
+==================
+*/
+void SV_ConSay_f( void )
+{
+	char    *p;
+	char text[1024];
+
+	// make sure server is running
+	if ( !com_sv_running->current.boolean )
+	{
+		Com_Printf( "Server is not running.\n" );
+		return;
+	}
+
+	if ( Cmd_Argc() < 2 )
+	{
+		return;
+	}
+
+	strcpy( text, "console: " );
+	p = Cmd_Args();
+
+	if ( *p == '"' )
+	{
+		p++;
+		p[strlen( p ) - 1] = 0;
+	}
+
+	strcat( text, p );
+
+	SV_SendServerCommand(0, 0, "%c \"\x15%s\"", 104, text);
+}
+
+void SV_AddDedicatedCommands()
+{
+	Cmd_AddCommand("say", SV_ConSay_f);
+	//Cmd_AddCommand("tell", SV_ConTell_f);
+}
+
+void SV_AddOperatorCommands()
+{
+	static qboolean initailized = 0;
+
+	if ( !initailized )
+	{
+		initailized = 1;
+
+		Cmd_AddCommand("heartbeat", SV_Heartbeat_f);
+		Cmd_AddCommand("onlykick", SV_Drop_f);
+		Cmd_AddCommand("banUser", SV_Ban_f);
+		Cmd_AddCommand("banClient", SV_BanNum_f);
+		Cmd_AddCommand("kick", SV_TempBan_f);
+		Cmd_AddCommand("tempBanUser", SV_TempBan_f);
+		Cmd_AddCommand("tempBanClient", SV_TempBanNum_f);
+		Cmd_AddCommand("unbanUser", SV_Unban_f);
+		Cmd_AddCommand("clientkick", SV_DropNum_f);
+		Cmd_AddCommand("status", SV_Status_f);
+		Cmd_AddCommand("serverinfo", SV_Serverinfo_f);
+		Cmd_AddCommand("systeminfo", SV_Systeminfo_f);
+		Cmd_AddCommand("dumpuser", SV_DumpUser_f);
+		Cmd_AddCommand("map_restart", SV_MapRestart_f);
+		Cmd_AddCommand("fast_restart", SV_FastRestart_f);
+		Cmd_AddCommand("map", SV_Map_f);
+		Cmd_SetAutoComplete("map", "maps/mp", "d3dbsp");
+		Cmd_AddCommand("map_rotate", SV_MapRotate_f);
+		Cmd_AddCommand("gameCompleteStatus", SV_GameCompleteStatus_f);
+		Cmd_AddCommand("devmap", SV_Map_f);
+		Cmd_SetAutoComplete("devmap", "maps/mp", "d3dbsp");
+		Cmd_AddCommand("killserver", SV_KillServer_f);
+
+		if ( com_dedicated->current.integer )
+			SV_AddDedicatedCommands();
+
+		Cmd_AddCommand("scriptUsage", SV_ScriptUsage_f);
+		Cmd_AddCommand("stringUsage", SV_StringUsage_f);
+	}
+}
+
+void SV_RemoveOperatorCommands()
+{
+	;
 }

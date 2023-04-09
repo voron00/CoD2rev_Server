@@ -150,7 +150,7 @@ void Jump_PushOffLadder(playerState_s *ps, pml_t *pml)
 {
 	float scale;
 	float len;
-	float lengthSquared;
+	float dot;
 	vec3_t flatForward;
 	vec3_t pushOffDir;
 
@@ -158,7 +158,7 @@ void Jump_PushOffLadder(playerState_s *ps, pml_t *pml)
 	VectorSet(flatForward, pml->forward[0], pml->forward[1], 0.0);
 	Vec3Normalize(flatForward);
 
-	len = VectorsLengthSquared(ps->vLadderVec, pml->forward);
+	len = DotProduct(ps->vLadderVec, pml->forward);
 
 	if ( len >= 0.0 )
 	{
@@ -166,8 +166,8 @@ void Jump_PushOffLadder(playerState_s *ps, pml_t *pml)
 	}
 	else
 	{
-		lengthSquared = VectorsLengthSquared(flatForward, ps->vLadderVec);
-		scale = lengthSquared * -2.0;
+		dot = DotProduct(flatForward, ps->vLadderVec);
+		scale = dot * -2.0;
 		VectorMA(flatForward, scale, ps->vLadderVec, pushOffDir);
 		Vec3Normalize(pushOffDir);
 	}

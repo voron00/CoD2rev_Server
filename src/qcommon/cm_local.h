@@ -402,8 +402,8 @@ typedef struct leafList_s
 typedef struct
 {
 	int unused;
-	const vec3_t *mins;
-	const vec3_t *maxs;
+	const float *mins;
+	const float *maxs;
 	int *list;
 	int count;
 	int maxcount;

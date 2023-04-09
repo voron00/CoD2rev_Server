@@ -2925,7 +2925,7 @@ void GScr_positionWouldTelefrag()
 	VectorAdd(vPos, playerMins, mins);
 	VectorAdd(vPos, playerMaxs, maxs);
 
-	entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, 0x2000000);
+	entities = CM_AreaEntities(mins, maxs, entityList, 1024, 0x2000000);
 
 	for ( i = 0; i < entities; ++i )
 	{
@@ -3839,8 +3839,6 @@ void ScrCmd_LinkTo(scr_entref_t entref)
 	gentity_s *parent;
 	gentity_s *ent;
 
-	printf("test\n");
-
 	ent = GetEntity(entref);
 
 	if ( Scr_GetType(0) != VAR_OBJECT || Scr_GetPointerType(0) != VAR_ENTITY )
@@ -4661,6 +4659,49 @@ void (*Scr_GetMethod(const char **pName, int *type))(scr_entref_t)
 		return hud_meth;
 
 	return meth;
+}
+
+void G_InitObjectives()
+{
+	int i;
+
+	for ( i = 0; i < MAX_OBJECTIVES; ++i )
+		ClearObjective(&level.objectives[i]);
+}
+
+void GScr_FreeScripts()
+{
+	int classnum;
+
+	for ( classnum = 0; classnum < CLASS_NUM_COUNT; ++classnum )
+		Scr_RemoveClassMap(classnum);
+}
+
+void Scr_LoadGameType()
+{
+	unsigned short callback;
+
+	callback = Scr_ExecThread(g_scr_data.gametype.main, 0);
+	Scr_FreeThread(callback);
+}
+
+void Scr_LoadLevel()
+{
+	unsigned short callback;
+
+	if ( g_scr_data.levelscript )
+	{
+		callback = Scr_ExecThread(g_scr_data.levelscript, 0);
+		Scr_FreeThread(callback);
+	}
+}
+
+void Scr_StartupGameType()
+{
+	unsigned short callback;
+
+	callback = Scr_ExecThread(g_scr_data.gametype.startupgametype, 0);
+	Scr_FreeThread(callback);
 }
 
 void Scr_ParseGameTypeList()

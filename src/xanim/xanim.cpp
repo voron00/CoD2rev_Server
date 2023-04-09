@@ -23,6 +23,39 @@ void *Hunk_AllocXAnimTreePrecache(int size)
 	return Hunk_AllocAlignInternal(size, 4);
 }
 
+int XAnimTreeSize(int size)
+{
+	return 5 * size + 9;
+}
+
+void XAnimFreeTree(XAnimTree_s *tree, void (*Free)(void *, int))
+{
+	int size;
+	int treeSize;
+
+	treeSize = tree->anims->size;
+	XAnimClearTree(tree);
+
+	if ( Free )
+	{
+		size = XAnimTreeSize(treeSize);
+		Free(tree, size);
+	}
+}
+
+XAnimTree_s* XAnimCreateTree(XAnim_s *anims, void *(*Alloc)(int))
+{
+	int size;
+	XAnimTree_s *tree;
+
+	size = XAnimTreeSize(anims->size);
+	tree = (XAnimTree_s *)Alloc(size);
+	memset(tree, 0, size);
+	tree->anims = anims;
+
+	return tree;
+}
+
 void XAnimCreate(XAnim_s *anims, unsigned int animIndex, const char *name)
 {
 	size_t len;
@@ -1857,6 +1890,62 @@ float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoI
 	}
 }
 
+void DObjDisplayAnim(DObj_s *obj)
+{
+	if ( obj->tree )
+	{
+		XAnimDisplay(obj->tree, 0, 0);
+		Com_Printf("\n");
+	}
+	else
+	{
+		Com_Printf("NO TREE\n");
+	}
+}
+
+int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify)
+{
+	float time;
+	float track;
+
+	if ( !obj->tree )
+		return 0;
+
+	if ( bNotify )
+	{
+		track = XAnimFindServerNoteTrack(obj->tree, 0, dtime);
+
+		if ( track == 1.0 || (time = dtime * track + 0.001, dtime < time) )
+		{
+			XAnimUpdateInfoInternal(obj->tree, 0, dtime, 1);
+			return 0;
+		}
+		else
+		{
+			XAnimUpdateInfoInternal(obj->tree, 0, time, 1);
+			return 1;
+		}
+	}
+	else
+	{
+		XAnimUpdateInfoInternal(obj->tree, 0, dtime, 0);
+		return 0;
+	}
+}
+
+void DObjInitServerTime(DObj_s *obj, float dtime)
+{
+	XAnimState syncState;
+	XAnimDeltaInfo info;
+
+	if ( obj->tree )
+	{
+		syncState.time = 0.0;
+		syncState.cycleCount = 0;
+		XAnimUpdateOldTime(obj->tree, 0, &syncState, dtime, 1, &info.hasWeight, &info.hasTime);
+	}
+}
+
 void XAnimClearTreeWeights(XAnimTree_s *info, int index)
 {
 	XAnimEntry *entry;
@@ -1972,6 +2061,11 @@ void XAnimInit()
 
 	g_end = SL_GetString_("end", 0);
 	g_anim_developer = com_developer->current.integer != 0;
+}
+
+void XAnimAbort()
+{
+	g_end = 0;
 }
 
 void XAnimShutdown()

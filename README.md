@@ -1,8 +1,6 @@
-# cod2rev
+# cod2rev_server
 
 Reverse Engeneering of Call of Duty 2 Server
-
-Nothing interesting is here yet. Project is in very early state.
 
 Credits:
 

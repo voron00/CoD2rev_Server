@@ -13,6 +13,14 @@ extern gentity_t g_entities[];
 extern level_locals_t level;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define bg_weaponDefs (((WeaponDef**)( 0x08576160 )))
+#define bg_iNumWeapons (*((unsigned int*)( 0x08576140 )))
+#else
+extern WeaponDef* bg_weaponDefs[];
+extern unsigned int bg_iNumWeapons;
+#endif
+
 vec2_t traceOffsets[] =
 {
 	{ 0.000000, 0.000000},
@@ -105,7 +113,7 @@ void Weapon_Throw_Grenade(gentity_s *ent, int grenType, weaponParms *wp)
 	vTossVel[2] = (float)wp->weapDef->projectileSpeedUp + vTossVel[2];
 	grenade = fire_grenade(ent, wp->muzzleTrace, vTossVel, grenType, wp->weapDef->fuseTime);
 	Vec3Normalize(vTossVel);
-	fAddVel = VectorsLengthSquared(ent->client->ps.velocity, vTossVel);
+	fAddVel = DotProduct(ent->client->ps.velocity, vTossVel);
 	VectorMA(grenade->s.pos.trDelta, fAddVel, vTossVel, grenade->s.pos.trDelta);
 }
 
@@ -371,4 +379,21 @@ int G_GetWeaponIndexForName(const char *name)
 		return BG_GetWeaponIndexForName(name, G_RegisterWeapon);
 	else
 		return BG_FindWeaponIndexForName(name);
+}
+
+void G_SetupWeaponDef()
+{
+	Com_DPrintf("----------------------\n");
+	Com_DPrintf("Game: G_SetupWeaponDef\n");
+
+	if ( !bg_iNumWeapons )
+	{
+		SV_SetWeaponInfoMemory();
+		ClearRegisteredItems();
+		BG_ClearWeaponDef();
+		BG_FillInAmmoItems(G_RegisterWeapon);
+		G_GetWeaponIndexForName("defaultweapon_mp");
+	}
+
+	Com_DPrintf("----------------------\n");
 }

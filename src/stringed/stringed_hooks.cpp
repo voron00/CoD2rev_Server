@@ -64,7 +64,7 @@ SEH_InitLanguage
 */
 void SEH_InitLanguage()
 {
-	loc_language = Dvar_RegisterInt("loc_language", 0, 0, MAX_LANGUAGES, 0x1021u);
+	loc_language = Dvar_RegisterInt("loc_language", 0, 0, MAX_LANGUAGES - 1, 0x1021u);
 	loc_forceEnglish = Dvar_RegisterBool("loc_forceEnglish", 0, 4129);
 	loc_translate = Dvar_RegisterBool("loc_translate", 1, 4128);
 	loc_warnings = Dvar_RegisterBool("loc_warnings", 0, 4096);

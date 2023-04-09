@@ -14,6 +14,12 @@ extern gentity_t g_entities[];
 extern level_locals_t level;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
+#else
+extern scr_data_t g_scr_data;
+#endif
+
 extern game_hudelem_t g_hudelems[];
 
 game_entity_field_t g_entity_fields[] =
@@ -566,4 +572,102 @@ void G_CallSpawn(void)
 	{
 		Com_Printf("G_CallSpawn: NULL classname\n");
 	}
+}
+
+void G_LoadScriptStructs()
+{
+	unsigned int structId;
+	unsigned int index;
+	int i;
+
+	Scr_AddExecThread(g_scr_data.createstruct, 0);
+	structId = Scr_GetObject(0);
+
+	for ( i = 0; i < level.spawnVars.numSpawnVars; ++i )
+	{
+		index = G_SetEntityScriptVariableInternal(level.spawnVars.spawnVars[i].key, level.spawnVars.spawnVars[i].value);
+
+		if ( index )
+			Scr_SetStructField(structId, index);
+	}
+}
+
+void G_LoadStructs()
+{
+	const char *classname;
+	unsigned short callback;
+
+	callback = Scr_ExecThread(g_scr_data.initstructs, 0);
+	Scr_FreeThread(callback);
+
+	while ( G_ParseSpawnVars(&level.spawnVars) )
+	{
+		G_SpawnString("classname", "", &classname);
+
+		if ( !strcmp("script_struct", classname) )
+			G_LoadScriptStructs();
+	}
+
+	SV_ResetEntityParsePoint();
+}
+
+extern dvar_t *g_motd;
+extern dvar_t *g_gravity;
+void SP_worldspawn()
+{
+	const char *s;
+
+	G_SpawnString("classname", "", &s);
+
+	if ( I_stricmp(s, "worldspawn") )
+		Com_Error(ERR_DROP, "SP_worldspawn: The first entity isn't 'worldspawn'");
+
+	SV_SetConfigstring(2u, "cod");
+	SV_SetConfigstring(0xDu, va("%i", level.startTime));
+
+	G_SpawnString("ambienttrack", "", &s);
+
+	if ( *s )
+	{
+		SV_SetConfigstring(3u, va("n\\%s", s));
+	}
+	else
+	{
+		SV_SetConfigstring(3u, "");
+	}
+
+	G_SpawnString("message", "", &s);
+
+	SV_SetConfigstring(4u, s);
+	SV_SetConfigstring(0xEu, g_motd->current.string);
+
+	G_SpawnString("gravity", "800", &s);
+	Dvar_SetFloat(g_gravity, atof(s));
+
+	G_SpawnString("northyaw", "", &s);
+
+	if ( *s )
+		SV_SetConfigstring(0xBu, s);
+	else
+		SV_SetConfigstring(0xBu, "0");
+
+	G_SpawnString("spawnflags", "0", &s);
+
+	g_entities[1022].spawnflags = atoi(s);
+	g_entities[1022].s.number = 1022;
+
+	Scr_SetString(&g_entities[1022].classname, scr_const.worldspawn);
+
+	g_entities[1022].r.inuse = 1;
+}
+
+void G_SpawnEntitiesFromString()
+{
+	if ( !G_ParseSpawnVars(&level.spawnVars) )
+		Com_Error(ERR_DROP, "G_SpawnEntitiesFromString: no entities");
+
+	SP_worldspawn();
+
+	while ( G_ParseSpawnVars(&level.spawnVars) )
+		G_CallSpawn();
 }

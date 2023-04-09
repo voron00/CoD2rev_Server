@@ -12,6 +12,9 @@ char g_sv_skel_memory[262144];
 char *g_sv_skel_memory_start;
 int g_sv_skel_warn_count;
 
+int gameInitialized;
+extern int com_fixedConsolePosition;
+
 qboolean SV_GameCommand()
 {
 	if ( sv.state == SS_GAME )
@@ -192,14 +195,36 @@ qboolean SV_inSnapshot(const float *origin, int iEntityNum)
 	return 1;
 }
 
-void SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify)
+int SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify)
 {
 	DObj_s *obj;
 
 	obj = Com_GetServerDObj(ent->s.number);
 
 	if ( obj )
-		DObjUpdateServerInfo(obj, dtime, bNotify);
+		return DObjUpdateServerInfo(obj, dtime, bNotify);
+	else
+		return 0;
+}
+
+void SV_DObjDisplayAnim(gentity_s *ent)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj )
+		DObjDisplayAnim(obj);
+}
+
+void SV_DObjInitServerTime(gentity_s *ent, float dtime)
+{
+	DObj_s *obj;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj )
+		DObjInitServerTime(obj, dtime);
 }
 
 qboolean SV_DObjExists(gentity_s *ent)
@@ -216,14 +241,17 @@ void SV_ResetSkeletonCache()
 	sv.skelMemPos = 0;
 }
 
+void SV_ResetEntityParsePoint()
+{
+	sv.entityParsePoint = CM_EntityString();
+}
+
 char* SV_AllocSkelMemory(unsigned int size)
 {
 	char *pos;
 	unsigned int aligment;
 
 	aligment = (size + 15) & ~15;
-
-	assert(g_sv_skel_memory_start != NULL);
 
 	while ( 1 )
 	{
@@ -241,8 +269,6 @@ char* SV_AllocSkelMemory(unsigned int size)
 
 		SV_ResetSkeletonCache();
 	}
-
-	assert(pos != NULL);
 
 	return pos;
 }
@@ -420,6 +446,24 @@ int SV_EntityContact(const float *mins, const float *maxs, gentity_s *gEnt)
 	}
 }
 
+void SV_SetWeaponInfoMemory()
+{
+	Com_SetWeaponInfoMemory(1);
+}
+
+void SV_FreeWeaponInfoMemory()
+{
+	Com_FreeWeaponInfoMemory(1);
+}
+
+void SV_GetServerinfo(char *buffer, int bufferSize)
+{
+	if ( bufferSize <= 0 )
+		Com_Error(ERR_DROP, "SV_GetServerinfo: bufferSize == %i", bufferSize);
+
+	I_strncpyz(buffer, Dvar_InfoString(0x404u), bufferSize);
+}
+
 void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, playerState_s *clients, int sizeofGameClient)
 {
 	sv.gentities = gEnts;
@@ -493,7 +537,53 @@ void SV_SetBrushModel(gentity_s *ent)
 	SV_LinkEntity(ent);
 }
 
+void SV_InitGameVM(int restart, int registerDvars)
+{
+	int msec;
+	int i;
+
+#ifndef DEDICATED
+	FX_InitServer();
+#endif
+	sv.entityParsePoint = CM_EntityString();
+#ifndef DEDICATED
+	Sys_LoadingKeepAlive();
+#endif
+	msec = Sys_MillisecondsRaw();
+	G_InitGame(svs.time, msec, restart, registerDvars);
+#ifndef DEDICATED
+	Sys_LoadingKeepAlive();
+#endif
+	for ( i = 0; i < sv_maxclients->current.integer; ++i )
+		svs.clients[i].gentity = 0;
+
+	if ( com_dedicated->current.integer )
+		Com_DvarDump(CON_CHANNEL_LOGFILEONLY);
+}
+
+void SV_RestartGameProgs(int savepersist)
+{
+	G_ShutdownGame(0);
+	com_fixedConsolePosition = 0;
+	SV_InitGameVM(1, savepersist);
+}
+
+void SV_InitGameProgs(int savepersist)
+{
+	gameInitialized = 1;
+	SV_InitGameVM(0, savepersist);
+}
+
 void SV_ShutdownGameProgs()
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	sv.state = SS_DEAD;
+#ifndef DEDICATED
+	Com_UnloadSoundAliases(2);
+#endif
+	if ( gameInitialized )
+	{
+		G_ShutdownGame(1);
+		SV_FreeWeaponInfoMemory();
+		gameInitialized = 0;
+	}
 }

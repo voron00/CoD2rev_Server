@@ -187,6 +187,8 @@ typedef enum
 
 typedef void (*xcommand_t)(void);
 
+#define MASTER_SERVER_NAME "cod2master.activision.com"
+
 #define PORT_SERVER 28960
 #define	PORT_ANY -1
 
@@ -338,8 +340,16 @@ void Com_WriteConfigToFile(const char *contents);
 
 qboolean Com_SafeMode( void );
 int Com_Milliseconds( void );
+
+void Com_DvarDump(conChannel_t channel);
+
+#define Sys_MillisecondsRaw Com_Milliseconds
+
 void Com_BeginRedirect (char *buffer, int buffersize, void (*flush)( char *) );
 void Com_EndRedirect (void);
+
+void Com_SetWeaponInfoMemory(int source);
+void Com_FreeWeaponInfoMemory(int source);
 
 void Info_Print( const char *s );
 
@@ -362,6 +372,7 @@ void Sys_UnimplementedFunctionInternal(const char *function);
 #define UNIMPLEMENTED Sys_UnimplementedFunctionInternal
 
 void Com_Init(char* commandLine);
+void Com_Restart();
 void Com_Shutdown(const char *reason);
 void Com_Frame(void);
 void Com_Quit_f( void );

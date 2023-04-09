@@ -100,6 +100,28 @@ void SaveRegisteredItems()
 	SV_SetConfigstring(8u, string);
 }
 
+void SaveRegisteredWeapons()
+{
+	WeaponDef *weaponDef;
+	int weapon;
+	char string[8192];
+
+	level.registerWeapons = 0;
+	string[0] = 0;
+	weaponDef = 0;
+
+	for ( weapon = 1; weapon <= BG_GetNumWeapons(); ++weapon )
+	{
+		if ( weaponDef )
+			I_strncat(string, 8192, " ");
+
+		weaponDef = BG_GetWeaponDef(weapon);
+		I_strncat(string, 8192, weaponDef->szInternalName);
+	}
+
+	SV_SetConfigstring(7u, string);
+}
+
 extern dvar_t *g_maxDroppedWeapons;
 int GetFreeDropCueIdx()
 {
@@ -1238,7 +1260,7 @@ void G_RunItem(gentity_s *ent)
 			if ( !trace.startsolid && trace.fraction < 0.0099999998 && trace.normal[2] < 0.5 )
 			{
 				VectorSubtract(origin, ent->r.currentOrigin, delta);
-				vLenSq = 1.0 - VectorsLengthSquared(delta, trace.normal);
+				vLenSq = 1.0 - DotProduct(delta, trace.normal);
 				VectorMA(origin, vLenSq, trace.normal, origin);
 				G_TraceCapsule(&trace, endpos, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, contentmask);
 				Vec3Lerp(endpos, origin, trace.fraction, endpos);

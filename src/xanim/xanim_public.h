@@ -391,9 +391,6 @@ float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoI
 
 void QDECL DObjCalcAnim(const DObj_s *obj, int *partBits);
 
-// This function has some weird bs and breaks the decompiler. Moved to assembly.
-void QDECL DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
-
 DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
 void QDECL DObjCreateDuplicateParts(DObj_s *obj);
 void QDECL DObjCalcSkel(const DObj_s *obj, int *partBits);
@@ -412,6 +409,10 @@ void QDECL XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *r
 }
 #endif
 
+void DObjDisplayAnim(DObj_s *obj);
+int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
+void DObjInitServerTime(DObj_s *obj, float dtime);
+
 qboolean XModelBad(XModel *model);
 XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
 
@@ -420,6 +421,7 @@ qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *min
 const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
 XAnimParts* XAnimPrecache(const char *name, void *(*Alloc)(int));
 void XAnimInit();
+void XAnimAbort();
 void XAnimShutdown();
 
 unsigned short* XModelBoneNames(XModel *model);
@@ -454,6 +456,8 @@ void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWei
 void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *syncState, float dtime, bool parentHasWeight, bool *childHasTimeForParent1, bool *childHasTimeForParent2);
 int XAnimSetGoalWeightInternal(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, bool useGoalWeight, unsigned int notifyName, unsigned int notifyType);
 void XAnimSetupSyncNodes(XAnim_s *anims);
+void XAnimFreeTree(XAnimTree_s *tree, void (*Free)(void *, int));
+XAnimTree_s* XAnimCreateTree(XAnim_s *anims, void *(*Alloc)(int));
 void XAnimCreate(XAnim_s *anims, unsigned int animIndex, const char *name);
 void XAnimBlend(XAnim_s *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
 XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int));

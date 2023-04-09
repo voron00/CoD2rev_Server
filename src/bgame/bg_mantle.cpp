@@ -364,7 +364,7 @@ bool Mantle_FindMantleSurface(pmove_t *pm, pml_t *pml, trace_t *trace, float *ma
 {
 	playerState_s *ps;
 	float normal;
-	float angle;
+	float dot;
 	float radiusCheck;
 	float range;
 	vec3_t forward;
@@ -408,9 +408,9 @@ bool Mantle_FindMantleSurface(pmove_t *pm, pml_t *pml, trace_t *trace, float *ma
 
 		if ( normal >= 0.000099999997 )
 		{
-			angle = VectorsLengthSquared(forward, mantleDir);
+			dot = DotProduct(forward, mantleDir);
 
-			if ( acos(angle) * 57.29577951308232 <= mantle_check_angle->current.decimal )
+			if ( acos(dot) * 57.29577951308232 <= mantle_check_angle->current.decimal )
 			{
 				return 1;
 			}

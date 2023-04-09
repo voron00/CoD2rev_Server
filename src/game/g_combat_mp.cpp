@@ -466,7 +466,7 @@ int G_RadiusDamage(float *origin, gentity_s *inflictor, gentity_s *attacker, flo
 		maxs[i] = origin[i] + scale;
 	}
 
-	entities = CM_AreaEntities((const vec3_t *)mins, (const vec3_t *)maxs, entityList, 1024, -1);
+	entities = CM_AreaEntities(mins, maxs, entityList, 1024, -1);
 
 	for ( j = 0; j < entities; ++j )
 	{

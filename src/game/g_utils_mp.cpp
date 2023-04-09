@@ -267,6 +267,14 @@ int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float (*tagMat
 	return 1;
 }
 
+int G_DObjUpdateServerTime(gentity_s *ent, int bNotify)
+{
+	float nextFrameTime;
+
+	nextFrameTime = (float)level.frameTime * 0.001;
+	return SV_DObjUpdateServerTime(ent, nextFrameTime, bNotify);
+}
+
 float G_random()
 {
 	return (float)rand() / 2147483600.0;
@@ -520,10 +528,25 @@ gentity_s* G_TempEntity(vec3_t origin, int event)
 	return ent;
 }
 
+snd_alias_list_t* Com_FindSoundAlias(const char *name)
+{
+	return NULL; // Not supported
+}
+
 void G_PlaySoundAlias(gentity_s *ent, byte alias)
 {
 	if ( alias )
 		G_AddEvent(ent, EV_SOUND_ALIAS, alias);
+}
+
+void G_AnimScriptSound(int clientNum, snd_alias_list_t *aliasList)
+{
+	byte soundIndex;
+
+	soundIndex = G_SoundAliasIndex(aliasList->aliasName);
+
+	if (soundIndex)
+		G_PlaySoundAlias(&g_entities[clientNum], soundIndex);
 }
 
 void G_AddPredictableEvent(gentity_s *ent, int event, int eventParm)

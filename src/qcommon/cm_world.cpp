@@ -600,41 +600,61 @@ void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace)
 
 void CM_AreaEntities_r(unsigned short nodeIndex, areaParms_t *ap)
 {
-	uint16_t entId;
-	gentity_s *gcheck;
+	struct worldSector_s *node;
+	gentity_t *gcheck;
+	int en;
+	unsigned short nextNodeIndex;
+	int gnum;
 
-	if ( (cm_world.sectors[nodeIndex].contents.contentsEntities & ap->contentmask) != 0 )
+	for (node = &cm_world.sectors[nodeIndex] ; node->contents.contentsEntities & ap->contentmask; node = &cm_world.sectors[nodeIndex])
 	{
-		for ( entId = cm_world.sectors[nodeIndex].contents.entities; entId; entId = sv.svEntities[entId - 1].nextEntityInWorldSector )
+		for(en = node->contents.entities; en > 0; en = sv.svEntities[gnum].nextEntityInWorldSector)
 		{
-			gcheck = SV_GEntityForSvEntity(&sv.svEntities[entId - 1]);
-
-			if ( (gcheck->r.contents & ap->contentmask) != 0
-			        && gcheck->r.absmin[0] <= (*ap->maxs)[0]
-			        && (*ap->mins)[0] <= gcheck->r.absmax[0]
-			        && gcheck->r.absmin[1] <= (*ap->maxs)[1]
-			        && (*ap->mins)[1] <= gcheck->r.absmax[1]
-			        && gcheck->r.absmin[2] <= (*ap->maxs)[2]
-			        && (*ap->mins)[2] <= gcheck->r.absmax[2] )
+			gnum = en -1;
+			gcheck = SV_GentityNum(gnum);
+			if ( gcheck->r.contents & ap->contentmask )
 			{
+				if ( gcheck->r.absmin[0] > ap->maxs[0]
+				        || gcheck->r.absmin[1] > ap->maxs[1]
+				        || gcheck->r.absmin[2] > ap->maxs[2]
+				        || gcheck->r.absmax[0] < ap->mins[0]
+				        || gcheck->r.absmax[1] < ap->mins[1]
+				        || gcheck->r.absmax[2] < ap->mins[2] )
+				{
+					continue;
+				}
 				if ( ap->count == ap->maxcount )
 				{
 					Com_DPrintf("CM_AreaEntities: MAXCOUNT\n");
 					return;
 				}
-
-				ap->list[ap->count++] = entId - 1;
+				ap->list[ap->count] = gnum;
+				++ap->count;
 			}
 		}
 
-		if ( (*ap->maxs)[cm_world.sectors[nodeIndex].tree.axis] > cm_world.sectors[nodeIndex].tree.dist )
-			CM_AreaEntities_r(cm_world.sectors[nodeIndex].tree.child[0], ap);
-		if ( cm_world.sectors[nodeIndex].tree.dist > (*ap->mins)[cm_world.sectors[nodeIndex].tree.axis] )
-			CM_AreaEntities_r(cm_world.sectors[nodeIndex].tree.child[1], ap);
+		if ( node->tree.dist >= ap->maxs[node->tree.axis] )
+		{
+			nodeIndex = node->tree.child[1];
+			if ( node->tree.dist <= ap->mins[node->tree.axis] )
+			{
+				return;
+			}
+		}
+		else if ( node->tree.dist <= ap->mins[node->tree.axis] )
+		{
+			nodeIndex = node->tree.child[0];
+		}
+		else
+		{
+			nextNodeIndex = node->tree.child[1];
+			CM_AreaEntities_r(node->tree.child[0], ap);
+			nodeIndex = nextNodeIndex;
+		}
 	}
 }
 
-int CM_AreaEntities(const vec3_t *mins, const vec3_t *maxs, int *entityList, int maxcount, int contentmask)
+int CM_AreaEntities(const float *mins, const float *maxs, int *entityList, int maxcount, int contentmask)
 {
 	areaParms_t ap;
 

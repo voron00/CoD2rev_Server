@@ -205,7 +205,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 
 	if ( !NET_CompareBaseAdr( from, svs.authorizeAddress ) )
 	{
-		Com_Printf( "SV_AuthorizeIpPacket: not from authorize server\n" );
+		Com_DPrintf( "SV_AuthorizeIpPacket: not from authorize server\n" );
 		return;
 	}
 
@@ -221,7 +221,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 
 	if ( i == MAX_CHALLENGES )
 	{
-		Com_Printf( "SV_AuthorizeIpPacket: challenge not found\n" );
+		Com_DPrintf( "SV_AuthorizeIpPacket: challenge not found\n" );
 		return;
 	}
 
@@ -279,6 +279,29 @@ void SV_AuthorizeIpPacket( netadr_t from )
 		}
 	}
 
+	if ( r && r[0] )
+	{
+		if ( !Q_stricmp(r, "CLIENT_UNKNOWN_TO_AUTH") || !Q_stricmp(r, "BAD_CDKEY") )
+		{
+			NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, "needcdkey");
+			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
+			return;
+		}
+
+		if ( !Q_stricmp(r, "INVALID_CDKEY") || !Q_stricmp(r, "BANNED_CDKEY") )
+		{
+			NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, "error\nEXE_ERR_BAD_CDKEY");
+			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
+			return;
+		}
+	}
+	else
+	{
+		NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, "error\nEXE_ERR_CDKEY_IN_USE");
+		memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
+		return;
+	}
+
 	if ( !Q_stricmp( s, "deny" ) )
 	{
 		if ( r && r[0] )
@@ -294,30 +317,6 @@ void SV_AuthorizeIpPacket( netadr_t from )
 			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
 			return;
 		}
-	}
-
-	if ( r && r[0] )
-	{
-		if ( !Q_stricmp(r, "CLIENT_UNKNOWN_TO_AUTH") || !Q_stricmp(r, "BAD_CDKEY") )
-		{
-			NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, "needcdkey");
-			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-			return;
-		}
-
-		if ( !Q_stricmp(r, "INVALID_CDKEY") )
-		{
-			Q_stricmp(r, "BANNED_CDKEY");
-			NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, "error\nEXE_ERR_BAD_CDKEY");
-			memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-			return;
-		}
-	}
-	else
-	{
-		NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, "error\nEXE_ERR_CDKEY_IN_USE");
-		memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-		return;
 	}
 
 	// clear the challenge record so it won't timeout and let them through
@@ -418,7 +417,7 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 
 		iwdFile = FS_iwIwd(cl->downloadName, "main");
 
-		if ( !sv_allowDownload->current.integer || iwdFile ||
+		if ( !sv_allowDownload->current.boolean || iwdFile ||
 		        ( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) <= 0 )
 		{
 			// cannot auto-download file
@@ -427,10 +426,10 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 				Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
 				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
 			}
-			else if ( !sv_allowDownload->current.integer )
+			else if ( !sv_allowDownload->current.boolean )
 			{
 				Com_Printf("clientDownload: %d : \"%s\" download disabled", cl - svs.clients, cl->downloadName);
-				if (sv_pure->current.integer)
+				if (sv_pure->current.boolean)
 				{
 					Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED_PURE\x15%s", cl->downloadName);
 				}
@@ -612,6 +611,27 @@ void SV_CloseDownload( client_t *cl )
 
 }
 
+void SV_FreeClientScriptPers()
+{
+	client_s *clients;
+	int i;
+
+	i = 0;
+	clients = svs.clients;
+
+	while ( i < sv_maxclients->current.integer )
+	{
+		if ( clients->state > CS_ZOMBIE )
+		{
+			SV_FreeClientScriptId(clients);
+			clients->clscriptid = Scr_AllocArray();
+		}
+
+		++i;
+		++clients;
+	}
+}
+
 void SV_FreeClient(client_s *cl)
 {
 	SV_CloseDownload(cl);
@@ -776,7 +796,7 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 	}
 
 	// a bad cp command was sent, drop the client
-	if ( sv_pure->current.integer != 0 && cl->pureAuthentic == 0 )
+	if ( sv_pure->current.boolean != 0 && cl->pureAuthentic == 0 )
 	{
 		SV_DropClient( cl, "EXE_CANNOTVALIDATEPURECLIENT" );
 		return;
@@ -1222,24 +1242,24 @@ sent to that ip.
 extern dvar_t *net_lanauthorize;
 void SV_AuthorizeRequest(netadr_t adr, int challenge)
 {
-	char string[1024];
+	char game[1024];
 	bool allowAnonymous;
-	dvar_t *game;
+	dvar_t *fs;
 
 	if ( svs.authorizeAddress.type != NA_BAD )
 	{
-		string[0] = 0;
-		game = Dvar_RegisterString("fs_game", "", 0x101Cu);
+		game[0] = 0;
+		fs = Dvar_RegisterString("fs_game", "", 0x101Cu);
 
-		if ( game )
+		if ( fs )
 		{
-			if ( *game->current.string )
-				strcpy(string, game->current.string);
+			if ( *fs->current.string )
+				strcpy(game, fs->current.string);
 		}
 
 		Com_DPrintf("sending getIpAuthorize for %s\n", NET_AdrToString(adr));
 		allowAnonymous = Dvar_GetBool("sv_allowAnonymous");
-		NET_OutOfBandPrint(NS_SERVER, svs.authorizeAddress, va("getIpAuthorize %i %i.%i.%i.%i %s %i", challenge, adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], string, allowAnonymous));
+		NET_OutOfBandPrint(NS_SERVER, svs.authorizeAddress, va("getIpAuthorize %i %i.%i.%i.%i %s %i", challenge, adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], game, allowAnonymous));
 	}
 }
 
@@ -1526,7 +1546,7 @@ qboolean SV_ClientCommand( client_t *cl, msg_t *msg )
 	// We don't do this when the client hasn't been active yet since its
 	// normal to spam a lot of commands when downloading
 	if (cl->state >= CS_ACTIVE &&      // (SA) this was commented out in Wolf.  Did we do that?
-	        sv_floodProtect->current.integer &&
+	        sv_floodProtect->current.boolean &&
 	        svs.time < cl->nextReliableTime &&
 	        floodprotect )
 	{

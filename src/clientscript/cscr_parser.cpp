@@ -471,6 +471,45 @@ char* Scr_AddSourceBuffer(const char *filename, const char *extFilename, const c
 	return sourceBuf;
 }
 
+void Scr_ShutdownOpcodeLookup()
+{
+	unsigned int i;
+	unsigned int j;
+
+	if ( scrParserGlob.opcodeLookup )
+	{
+		Z_FreeInternal(scrParserGlob.opcodeLookup);
+		scrParserGlob.opcodeLookup = 0;
+	}
+
+	if ( scrParserGlob.sourcePosLookup )
+	{
+		Z_FreeInternal(scrParserGlob.sourcePosLookup);
+		scrParserGlob.sourcePosLookup = 0;
+	}
+
+	if ( scrParserPub.sourceBufferLookup )
+	{
+		for ( i = 0; i < scrParserPub.sourceBufferLookupLen; ++i )
+			Z_FreeInternal(scrParserPub.sourceBufferLookup[i].buf);
+
+		Z_FreeInternal(scrParserPub.sourceBufferLookup);
+		scrParserPub.sourceBufferLookup = 0;
+	}
+
+	if ( scrParserGlob.saveSourceBufferLookup )
+	{
+		for ( j = 0; j < scrParserGlob.saveSourceBufferLookupLen; ++j )
+		{
+			if ( scrParserGlob.saveSourceBufferLookup[j].sourceBuf )
+				Z_FreeInternal(scrParserGlob.saveSourceBufferLookup[j].sourceBuf);
+		}
+
+		Z_FreeInternal(scrParserGlob.saveSourceBufferLookup);
+		scrParserGlob.saveSourceBufferLookup = 0;
+	}
+}
+
 void CompileError(unsigned int sourcePos, const char *format, ...)
 {
 	char buf[MAX_STRING_CHARS];

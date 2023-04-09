@@ -52,6 +52,22 @@ static char shortestMatch[MAX_TOKEN_CHARS];
 static int	matchCount;
 static field_t *completionField;
 
+int iWeaponInfoSource;
+
+void Com_SetWeaponInfoMemory(int source)
+{
+	iWeaponInfoSource = source;
+}
+
+void Com_FreeWeaponInfoMemory(int source)
+{
+	if ( source == iWeaponInfoSource )
+	{
+		iWeaponInfoSource = 0;
+		BG_ShutdownWeaponDefFiles();
+	}
+}
+
 static void FindMatches( const char *s )
 {
 	int		i;
@@ -854,7 +870,7 @@ int Com_EventLoop( void )
 			while ( NET_GetLoopPacket( NS_SERVER, &evFrom, &buf ) )
 			{
 				// if the server just shut down, flush the events
-				if ( com_sv_running && com_sv_running->current.integer )
+				if ( com_sv_running && com_sv_running->current.boolean )
 				{
 					SV_PacketEvent( evFrom, &buf );
 				}
@@ -909,7 +925,7 @@ int Com_EventLoop( void )
 				continue;
 			}
 			Com_Memcpy( buf.data, (byte *)((netadr_t *)ev.evPtr + 1), buf.cursize );
-			if ( com_sv_running && com_sv_running->current.integer )
+			if ( com_sv_running && com_sv_running->current.boolean )
 			{
 				SV_PacketEvent( evFrom, &buf );
 			}
@@ -1068,7 +1084,7 @@ int Com_ModifyMsec( int msec )
 		}
 		clampTime = 5000;
 	}
-	else if ( !com_sv_running->current.integer )
+	else if ( !com_sv_running->current.boolean )
 	{
 		// clients of remote servers do not want to clamp time, because
 		// it would skew their view of the server's time temporarily
@@ -1161,7 +1177,7 @@ void Com_Frame( void )
 
 void Com_SetCinematic()
 {
-	if ( !com_dedicated->current.integer && !com_introPlayed->current.integer )
+	if ( !com_dedicated->current.boolean && !com_introPlayed->current.boolean )
 	{
 		Cbuf_AddText("cinematic atvi\n");
 		Dvar_SetString(nextmap, "cinematic IW_logo; set nextmap cinematic cod_intro");

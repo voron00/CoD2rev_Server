@@ -1587,7 +1587,7 @@ void PM_WalkMove(pmove_t *pm, pml_t *pml)
 		VectorCopy(ps->velocity, wishvel);
 		PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
 
-		if ( VectorsLengthSquared(ps->velocity, wishvel) > 0.0 )
+		if ( DotProduct(ps->velocity, wishvel) > 0.0 )
 		{
 			Vec3Normalize(ps->velocity);
 			VectorScale(ps->velocity, len, ps->velocity);
@@ -1886,7 +1886,7 @@ void PM_GroundTrace(pmove_t *pm, pml_t *pml)
 		}
 		else if ( (ps->pm_flags & 0x20) != 0
 		          || ps->velocity[2] <= 0.0
-		          || VectorsLengthSquared(ps->velocity, trace.normal) <= 10.0 )
+		          || DotProduct(ps->velocity, trace.normal) <= 10.0 )
 		{
 			if ( trace.normal[2] >= 0.69999999 )
 			{

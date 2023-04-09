@@ -14,6 +14,24 @@ server_t sv;
 int sv_serverId_value;
 #endif
 
+#ifdef TESTING_LIBRARY
+#define bgs (*((bgs_t**)( 0x0855A4E0 )))
+#else
+extern bgs_t *bgs;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define com_frameTime (*((int*)( 0x0819EF40 )))
+#else
+extern int com_frameTime;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define dvar_modifiedFlags (*((int*)( 0x085178A8 )))
+#else
+extern int dvar_modifiedFlags;
+#endif
+
 dvar_t *sv_gametype;
 dvar_t *sv_mapname;
 dvar_t *sv_privateClients;
@@ -55,19 +73,18 @@ dvar_t *sv_debugReliableCmds;
 dvar_t *nextmap;
 dvar_t *com_expectedHunkUsage;
 
+dvar_t *sv_master[MAX_MASTER_SERVERS];     // master server ip address
+
 bool SV_Loaded()
 {
 	return sv.state == SS_GAME;
 }
 
-void SV_AddOperatorCommands()
-{
-	UNIMPLEMENTED(__FUNCTION__);
-}
-
 void SV_Init()
 {
+#ifndef TESTING_LIBRARY
 	SV_AddOperatorCommands();
+#endif
 	sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024u);
 	Dvar_RegisterString("sv_keywords", "", 0x1004u);
 	Dvar_RegisterInt("protocol", PROTOCOL_VERSION, PROTOCOL_VERSION, PROTOCOL_VERSION, 0x1044u);
@@ -111,6 +128,12 @@ void SV_Init()
 	sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, 4096);
 	nextmap = Dvar_RegisterString("nextmap", "", 0x1000u);
 	com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7FFFFFFF, 0x1040u);
+
+	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE);
+	sv_master[1] = Dvar_RegisterString("sv_master2", "", DVAR_ARCHIVE);
+	sv_master[2] = Dvar_RegisterString("sv_master3", "", DVAR_ARCHIVE);
+	sv_master[3] = Dvar_RegisterString("sv_master4", "", DVAR_ARCHIVE);
+	sv_master[4] = Dvar_RegisterString("sv_master5", "", DVAR_ARCHIVE);
 }
 
 void SV_SetConfigstring(unsigned int index, const char *val)
@@ -283,4 +306,503 @@ void SV_SetUserinfo( int index, const char *val )
 
 	Q_strncpyz( svs.clients[index].userinfo, val, sizeof( svs.clients[ index ].userinfo ) );
 	Q_strncpyz( svs.clients[index].name, Info_ValueForKey( val, "name" ), sizeof( svs.clients[index].name ) );
+}
+
+void SV_BoundMaxClients(int minimum)
+{
+	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 64, 0x1025u);
+	Dvar_ClearModified(sv_maxclients);
+
+	if ( sv_maxclients->current.integer < minimum )
+		Dvar_SetInt(sv_maxclients, minimum);
+}
+
+/*
+==================
+SV_ChangeMaxClients
+==================
+*/
+void SV_ChangeMaxClients( void )
+{
+	int oldMaxClients;
+	int i;
+	client_t    *oldClients;
+	int count;
+
+	// get the highest client number in use
+	count = 0;
+	for ( i = 0 ; i < sv_maxclients->current.integer ; i++ )
+	{
+		if ( svs.clients[i].state >= CS_CONNECTED )
+		{
+			if ( i > count )
+			{
+				count = i;
+			}
+		}
+	}
+	count++;
+
+	oldMaxClients = sv_maxclients->current.integer;
+	// never go below the highest client number in use
+	SV_BoundMaxClients( count );
+	// if still the same
+	if ( sv_maxclients->current.integer == oldMaxClients )
+	{
+		return;
+	}
+
+	oldClients = (client_t *)Hunk_AllocateTempMemory( count * sizeof( client_t ) );
+	// copy the clients to hunk memory
+	for ( i = 0 ; i < count ; i++ )
+	{
+		if ( svs.clients[i].state >= CS_CONNECTED )
+		{
+			oldClients[i] = svs.clients[i];
+		}
+		else
+		{
+			Com_Memset( &oldClients[i], 0, sizeof( client_t ) );
+		}
+	}
+
+	// free old clients arrays
+	//Z_Free( svs.clients );
+	free( svs.clients );    // RF, avoid trying to allocate large chunk on a fragmented zone
+
+	// allocate new clients
+	// RF, avoid trying to allocate large chunk on a fragmented zone
+	svs.clients = (client_t *)malloc( sizeof( client_t ) * sv_maxclients->current.integer );
+	if ( !svs.clients )
+	{
+		Com_Error( ERR_FATAL, "SV_Startup: unable to allocate svs.clients" );
+	}
+
+	Com_Memset( svs.clients, 0, sv_maxclients->current.integer * sizeof( client_t ) );
+
+	// copy the clients over
+	for ( i = 0 ; i < count ; i++ )
+	{
+		if ( oldClients[i].state >= CS_CONNECTED )
+		{
+			svs.clients[i] = oldClients[i];
+		}
+	}
+
+	// free the old clients on the hunk
+	Hunk_FreeTempMemory( oldClients );
+
+	// allocate new snapshot entities
+	if ( com_dedicated->current.integer )
+	{
+		svs.numSnapshotEntities = sv_maxclients->current.integer * PACKET_BACKUP * 64;
+		svs.numSnapshotClients = PACKET_BACKUP * sv_maxclients->current.integer * sv_maxclients->current.integer;
+	}
+	else
+	{
+		// we don't need nearly as many when playing locally
+		svs.numSnapshotEntities = sv_maxclients->current.integer * 4 * 64;
+		svs.numSnapshotClients = 4 * sv_maxclients->current.integer * sv_maxclients->current.integer;
+	}
+}
+
+/*
+================
+SV_ClearServer
+================
+*/
+void SV_ClearServer( void )
+{
+	int i;
+
+	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ )
+	{
+		if ( sv.configstrings[i] )
+		{
+			Z_Free( sv.configstrings[i] );
+		}
+	}
+	Com_Memset( &sv, 0, sizeof( sv ) );
+}
+
+/*
+===============
+SV_Startup
+Called when a host starts a map when it wasn't running
+one before.  Successive map or map_restart commands will
+NOT cause this to be called, unless the game is exited to
+the menu system first.
+===============
+*/
+extern dvar_t *com_sv_running;
+void SV_Startup( void )
+{
+	if ( svs.initialized )
+	{
+		Com_Error( ERR_FATAL, "SV_Startup: svs.initialized" );
+	}
+
+	SV_BoundMaxClients( 1 );
+
+	// RF, avoid trying to allocate large chunk on a fragmented zone
+	svs.clients = (client_t *)malloc( sizeof( client_t ) * sv_maxclients->current.integer );
+	if ( !svs.clients )
+	{
+		Com_Error( ERR_FATAL, "SV_Startup: unable to allocate svs.clients" );
+	}
+
+	if ( com_dedicated->current.integer )
+	{
+		svs.numSnapshotEntities = sv_maxclients->current.integer * PACKET_BACKUP * 64;
+		svs.numSnapshotClients = PACKET_BACKUP * sv_maxclients->current.integer * sv_maxclients->current.integer;
+	}
+	else
+	{
+		// we don't need nearly as many when playing locally
+		svs.numSnapshotEntities = sv_maxclients->current.integer * 4 * 64;
+		svs.numSnapshotClients = 4 * sv_maxclients->current.integer * sv_maxclients->current.integer;
+	}
+	svs.initialized = qtrue;
+
+	Dvar_SetBool( com_sv_running, 1 );
+}
+
+/*
+====================
+SV_SetExpectedHunkUsage
+  Sets com_expectedhunkusage, so the client knows how to draw the percentage bar
+====================
+*/
+void SV_SetExpectedHunkUsage( char *mapname )
+{
+	int handle;
+	const char *memlistfile = "hunkusage.dat";
+	char *buf;
+	const char *buftrav;
+	char *token;
+	int len;
+
+	len = FS_FOpenFileByMode( memlistfile, &handle, FS_READ );
+	if ( len >= 0 )   // the file exists, so read it in, strip out the current entry for this map, and save it out, so we can append the new value
+	{
+
+		buf = (char *)Z_Malloc( len + 1 );
+		memset( buf, 0, len + 1 );
+
+		FS_Read( (void *)buf, len, handle );
+		FS_FCloseFile( handle );
+
+		// now parse the file, filtering out the current map
+		buftrav = buf;
+		while ( ( token = Com_Parse( &buftrav ) ) != NULL && token[0] )
+		{
+			if ( !Q_stricmp( token, mapname ) )
+			{
+				// found a match
+				token = Com_Parse( &buftrav );  // read the size
+				if ( token && token[0] )
+				{
+					// this is the usage
+					Dvar_SetInt(com_expectedHunkUsage, atoi( token ));
+					Z_Free( buf );
+					return;
+				}
+			}
+		}
+
+		Z_Free( buf );
+	}
+
+	// just set it to a negative number,so the cgame knows not to draw the percent bar
+	//com_expectedhunkusage = -1;
+}
+
+void SV_FinalMessage(const char *message)
+{
+	client_s *client;
+	int i;
+	int j;
+
+	for ( i = 0; i < 2; ++i )
+	{
+		j = 0;
+		client = svs.clients;
+
+		while ( j < sv_maxclients->current.integer )
+		{
+			if ( client->state > CS_ZOMBIE )
+			{
+				if ( client->netchan.remoteAddress.type != NA_LOOPBACK )
+				{
+					SV_SendServerCommand(client, 0, "%c \"%s\"", 101, message);
+					SV_SendServerCommand(client, 1, "%c \"%s\"", 119, message);
+				}
+
+				client->nextSnapshotTime = -1;
+				SV_SendClientSnapshot(client);
+			}
+
+			++j;
+			++client;
+		}
+	}
+}
+
+void SV_DropAllClients()
+{
+	client_s *client;
+	int i;
+
+	i = 0;
+	client = svs.clients;
+
+	while ( i < sv_maxclients->current.integer )
+	{
+		if ( client->state > CS_ZOMBIE )
+			SV_DropClient(client, "EXE_DISCONNECTED");
+
+		++i;
+		++client;
+	}
+}
+
+void SV_FreeClients()
+{
+	client_s *client;
+	int i;
+
+	i = 0;
+	client = svs.clients;
+
+	while ( i < sv_maxclients->current.integer )
+	{
+		if ( client->state > CS_ZOMBIE )
+			SV_FreeClient(client);
+
+		++i;
+		++client;
+	}
+
+	Z_Free(svs.clients);
+}
+
+
+void SV_Shutdown(const char *finalmsg)
+{
+	bool loading;
+
+	if ( com_sv_running && com_sv_running->current.boolean )
+	{
+		Com_Printf("----- Server Shutdown -----\n");
+		loading = sv.state == SS_LOADING;
+
+		if ( svs.clients )
+			SV_FinalMessage(finalmsg);
+
+		SV_RemoveOperatorCommands();
+		SV_MasterShutdown();
+		SV_ShutdownGameProgs();
+		SV_DropAllClients();
+		SV_ClearServer();
+
+		if ( svs.clients )
+			SV_FreeClients();
+
+		SV_ShutdownArchivedSnapshot();
+		memset(&svs, 0, sizeof(svs));
+#ifndef DEDICATED
+		if ( com_dedicated->current.integer )
+			FX_FreeSystem();
+#endif
+		Dvar_SetBool(com_sv_running, 0);
+		Com_Printf("---------------------------\n");
+
+		if ( loading )
+		{
+			Com_AbortDObj();
+			DObjAbort();
+			XAnimAbort();
+			Scr_Abort();
+			bgs = 0;
+		}
+	}
+}
+
+void SV_SaveSystemInfo()
+{
+	char info[8192];
+
+	I_strncpyz(info, Dvar_InfoString_Big(8u), 0x2000);
+	dvar_modifiedFlags &= ~8u;
+	SV_SetConfigstring(1u, info);
+	SV_SetConfigstring(0, Dvar_InfoString(0x404u));
+	dvar_modifiedFlags &= 0xFFFFFBFB;
+	SV_SetConfig(142, 96, 0x100u);
+	dvar_modifiedFlags &= ~0x100u;
+}
+
+extern dvar_t *cl_paused;
+void SV_SpawnServer(char *server)
+{
+	char mapname[64];
+	int persist;
+	client_t *cl;
+	const char* dropreason;
+	const char* iwdChecksums;
+	const char* iwdNames;
+	int checksum;
+	int index;
+	int i;
+
+	Scr_ParseGameTypeList();
+	SV_SetGametype();
+
+	if ( com_sv_running->current.boolean )
+	{
+		persist = G_GetSavePersist();
+		index = 0;
+		cl = svs.clients;
+
+		while ( index < sv_maxclients->current.integer )
+		{
+			if ( cl->state > CS_CONNECTED )
+			{
+				Com_sprintf(mapname, sizeof(mapname), "loadingnewmap\n%s\n%s", server, sv_gametype->current.string);
+				NET_OutOfBandPrint(NS_SERVER, cl->netchan.remoteAddress, mapname);
+			}
+
+			++index;
+			++cl;
+		}
+
+		NET_Sleep(250);
+	}
+	else
+	{
+		persist = 0;
+	}
+
+	Dvar_SetStringByName("mapname", server);
+	SV_ShutdownGameProgs();
+	Com_Printf("------ Server Initialization ------\n");
+	Com_Printf("Server: %s\n", server);
+	SV_ClearServer();
+
+#ifndef DEDICATED
+	if ( com_dedicated->current.integer )
+		FX_FreeSystem();
+#endif
+
+	FS_Shutdown();
+	FS_ClearIwdReferences();
+	Com_Restart();
+
+	if ( com_sv_running->current.boolean )
+		SV_ChangeMaxClients();
+	else
+		SV_Startup();
+
+	I_strncpyz(sv.gametype, sv_gametype->current.string, 64);
+
+	srand(Sys_MillisecondsRaw());
+	sv.checksumFeed = rand() ^ rand() << 16 ^ Sys_MilliSeconds();
+
+	FS_Restart(sv.checksumFeed);
+	Com_sprintf(mapname, 64, "maps/mp/%s.%s", server, GetBspExtension());
+	SV_SetExpectedHunkUsage(mapname);
+
+	for ( index = 0; index < MAX_CONFIGSTRINGS; ++index )
+	{
+		sv.configstrings[index] = CopyStringInternal("");
+	}
+
+	Dvar_ResetScriptInfo();
+
+	svs.snapshotEntities = (entityState_t *)Hunk_AllocInternal(sizeof(entityState_t) * svs.numSnapshotEntities);
+	svs.nextSnapshotEntities = 0;
+	svs.snapshotClients = (clientState_t *)Hunk_AllocInternal(sizeof(clientState_t) * svs.numSnapshotClients);
+	svs.nextSnapshotClients = 0;
+
+	SV_InitArchivedSnapshot();
+
+	svs.snapFlagServerBit ^= 4u;
+	Dvar_SetString(nextmap, "map_restart");
+	Dvar_SetInt(cl_paused, 0);
+
+	Com_sprintf(mapname, 64, "maps/mp/%s.%s", server, GetBspExtension());
+
+	Com_LoadBsp(mapname);
+	CM_LoadMap(mapname, &checksum);
+	Com_UnloadBsp();
+	CM_LinkWorld();
+
+	sv_serverId_value = (byte)(sv_serverId_value + 16);
+
+	if ( (sv_serverId_value & 0xF0) == 0 )
+		sv_serverId_value += 16;
+
+	Dvar_SetInt(sv_serverid, sv_serverId_value);
+	sv.start_frameTime = com_frameTime;
+	sv.state = SS_LOADING;
+
+#ifndef DEDICATED
+	Com_sprintf(mapname, 64, "maps/mp/%s.%s", server, GetBspExtension());
+	Com_LoadSoundAliases(mapname, "all_mp", SASYS_GAME);
+#endif
+
+	SV_InitGameProgs(persist);
+
+	for(i = 0; i < 3; ++i)
+	{
+		svs.time += 100;
+		SV_RunFrame();
+	}
+
+	SV_CreateBaseline();
+
+	for(i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl)
+	{
+		if ( cl->state < CS_CONNECTED )
+		{
+			continue;
+		}
+
+		dropreason = ClientConnect(i, cl->clscriptid);
+
+		if ( dropreason )
+		{
+			SV_DropClient(cl, dropreason);
+			Com_Printf("SV_SpawnServer: dropped client %i - denied!\n", i);
+		}
+		else
+		{
+			cl->state = CS_CONNECTED;
+		}
+	}
+
+	if ( sv_pure->current.boolean )
+	{
+		iwdChecksums = FS_LoadedIwdChecksums();
+		Dvar_SetString(sv_iwds, iwdChecksums);
+
+		if ( !*iwdChecksums )
+			Com_Printf("WARNING: sv_pure set but no IWD files loaded\n");
+
+		iwdNames = FS_LoadedIwdNames();
+		Dvar_SetString(sv_iwdNames, iwdNames);
+	}
+	else
+	{
+		Dvar_SetString(sv_iwds, "");
+		Dvar_SetString(sv_iwdNames, "");
+	}
+
+	Dvar_SetString(sv_referencedIwds, FS_ReferencedIwdChecksums());
+	Dvar_SetString(sv_referencedIwdNames, FS_ReferencedIwdNames());
+
+	SV_SaveSystemInfo();
+
+	sv.state = SS_GAME;
+	SV_Heartbeat_f();
+	Com_Printf("-----------------------------------\n");
 }

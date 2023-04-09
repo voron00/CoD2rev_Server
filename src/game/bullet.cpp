@@ -91,7 +91,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 	float dirScale;
 	int surfaceType;
 	int event;
-	float lengthSquared;
+	float dot;
 	vec3_t dir;
 	vec3_t origin;
 	int meansOfDeath;
@@ -130,8 +130,8 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 		self = &g_entities[trace.hitId];
 		VectorSubtract(end, start, dir);
 		Vec3Normalize(dir);
-		lengthSquared = VectorsLengthSquared(dir, trace.normal) * -2.0;
-		VectorMA(dir, lengthSquared, trace.normal, dir);
+		dot = DotProduct(dir, trace.normal) * -2.0;
+		VectorMA(dir, dot, trace.normal, dir);
 
 		if ( (trace.surfaceFlags & 4) == 0 && !self->client && trace.fraction < 1.0 )
 		{
@@ -170,7 +170,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 		{
 			VectorSubtract(end, start, dir);
 			Vec3Normalize(dir);
-			scaleSquared = VectorsLengthSquared(trace.normal, dir);
+			scaleSquared = DotProduct(trace.normal, dir);
 
 			if ( -scaleSquared < 0.125 )
 				dirScale = 0.0;

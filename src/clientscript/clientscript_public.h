@@ -634,20 +634,32 @@ void Scr_NotifyNum(int entnum, unsigned int classnum, unsigned int stringValue, 
 void Scr_GetAnim(scr_anim_s *pAnim, unsigned int index, struct XAnimTree_s *tree);
 const char* Scr_GetTypeName(unsigned int index);
 unsigned int Scr_GetConstLowercaseString(unsigned int index);
+unsigned int Scr_GetObject(unsigned int paramnum);
+void Scr_SetStructField(unsigned int structId, unsigned int index);
 
 unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int numArgs);
 unsigned int QDECL VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int varCount, VariableValue *top, VariableValue *startTop);
 
+void Scr_IncTime();
+void Scr_DecTime();
+
+void VM_TerminateTime(unsigned int timeId);
 void Scr_TerminateThread(unsigned int localId);
 void runtimeError(conChannel_t channel, const char *codePos, unsigned int index, const char *errorMessage);
 void scriptError(const char *codePos, unsigned int index, const char *errorMsg, const char *format);
 void Scr_ResetTimeout();
 void Scr_TerminateRunningThread(unsigned int localId);
+void Scr_SetLoading(int bLoading);
 VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValue *top, unsigned int localVarCount, unsigned int *localId);
+void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bool fromEndon);
+void Scr_CancelNotifyList(unsigned int notifyListOwnerId);
+unsigned short Scr_ExecThread(int callbackHook, unsigned int numArgs);
+void Scr_AddExecThread(int handle, unsigned int paramcount);
 void Scr_Settings(int developer, int developer_script, int abort_on_error);
 void Scr_TerminalError(const char *error);
 void Scr_ClearErrorMessage();
 void Scr_Abort();
+void Scr_ShutdownSystem(unsigned char sys, qboolean bComplete);
 void Scr_Shutdown();
 void Scr_InitSystem();
 void Scr_Init();
@@ -668,6 +680,7 @@ int MT_GetIndexByRef(byte* p);
 void MT_FreeForLength(byte *p, unsigned int data, int length);
 void *MT_BeginRelocate();
 void MT_EndRelocate(byte *ptr);
+void MT_DumpTree();
 
 struct __attribute__((aligned(4))) RefString
 {
@@ -826,6 +839,8 @@ unsigned int AllocThread(unsigned int self);
 unsigned int AllocChildThread(unsigned int self, unsigned int parentLocalId);
 unsigned int Scr_AllocArray();
 unsigned int Scr_EvalArrayRef(unsigned int parentId);
+void Scr_RemoveClassMap(unsigned int classnum);
+void Scr_StopThread(unsigned int threadId);
 void Scr_EvalArray(VariableValue *value, VariableValue *index);
 VariableValue Scr_FindVariableField(unsigned int parentId, unsigned int name);
 void Scr_FindVariableFieldInternal(VariableValue *pValue, unsigned int parentId, unsigned int name);
@@ -844,6 +859,9 @@ bool IsValidArrayIndex(unsigned int index);
 bool IsObjectFree(unsigned int id);
 int Scr_GetClassnumForCharId(char charId);
 void Scr_FreeValue(unsigned int id);
+void Scr_FreeEntityList();
+void Scr_FreeGameVariable(int bComplete);
+void Scr_FreeObjects();
 unsigned int GetInternalVariableIndex(unsigned int index);
 int Scr_GetOffset(unsigned int classnum, const char *name);
 void CopyArray(unsigned int parentId, unsigned int newParentId);
@@ -858,6 +876,7 @@ void Scr_AddFields(const char *path, const char *extension);
 void Scr_AddClassField(unsigned int classnum, const char *name, unsigned short offset);
 bool Scr_CastString(VariableValue *value);
 void Scr_SetClassMap(unsigned int classnum);
+void Scr_AllocGameVariable();
 void Scr_DumpScriptThreads();
 void Scr_DumpScriptVariables();
 void Var_Shutdown();
@@ -888,6 +907,7 @@ void Scr_AllocStrings();
 bool Scr_IsIdentifier(const char *token);
 unsigned int Scr_GetSourceBuffer(const char *codePos);
 char* Scr_AddSourceBuffer(const char *filename, const char *extFilename, const char *codePos, bool archive);
+void Scr_ShutdownOpcodeLookup();
 
 qboolean Scr_IsSystemActive();
 int Scr_GetFunctionHandle(const char *filename, const char *name, qboolean errorIfMissing);
@@ -895,6 +915,7 @@ unsigned int Scr_LoadScript(const char *filename);
 void Scr_BeginLoadScripts();
 void Scr_PostCompileScripts();
 void Scr_EndLoadScripts();
+void Scr_FreeScripts();
 
 void Scr_RunCurrentThreads();
 void Scr_ClearOutParams();
@@ -914,6 +935,7 @@ void AddOpcodePos(unsigned int sourcePos, int type);
 void RemoveOpcodePos();
 void AddThreadStartOpcodePos(unsigned int sourcePos);
 void Scr_InitOpcodeLookup();
+void Scr_CompileShutdown();
 
 void QDECL Scr_YYACError(const char* fmt, ...);
 void QDECL yyparse();

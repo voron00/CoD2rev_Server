@@ -696,7 +696,7 @@ int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask)
 	int entityList[1024];
 
 	contents = CM_PointContents(p, 0);
-	entities = CM_AreaEntities((const vec3_t *)p, (const vec3_t *)p, entityList, 1024, contentmask);
+	entities = CM_AreaEntities(p, p, entityList, 1024, contentmask);
 
 	for ( i = 0; i < entities; ++i )
 	{

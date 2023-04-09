@@ -1,6 +1,18 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
+#ifdef TESTING_LIBRARY
+#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
+#else
+extern bgs_t level_bgs;
+#endif
+
+#ifdef TESTING_LIBRARY
+#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
+#else
+extern scr_data_t g_scr_data;
+#endif
+
 uint16_t* controller_names[] =
 {
 	&scr_const.back_low,
@@ -214,13 +226,23 @@ static animScriptData_t *globalScriptData = NULL;
 
 static const char *globalFilename = "mp/playeranim.script";  		  // to prevent redundant params
 
+#ifdef TESTING_LIBRARY
+#define g_pLoadAnims (*((loadAnim_t**)( 0x0855D568 )))
+#define g_piNumLoadAnims (*((unsigned int**)( 0x0855D56C )))
+#else
 loadAnim_t *g_pLoadAnims;
 unsigned int *g_piNumLoadAnims;
+#endif
 
 unsigned int iNumPlayerAnims;
 
+#ifdef TESTING_LIBRARY
+#define parseMovetype (*((int*)( 0x0855D560 )))
+#define parseEvent (*((int*)( 0x0855D564 )))
+#else
 static int parseMovetype;
 static int parseEvent;
+#endif
 
 // these are used globally during script parsing
 static int numDefines[NUM_ANIM_CONDITIONS];
@@ -1271,7 +1293,7 @@ void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims
 	// start at the defines
 	parseMode = PARSEMODE_DEFINES;
 
-	BG_LoadPlayerAnimTypes();
+	//BG_LoadPlayerAnimTypes();
 	BG_InitWeaponStrings();
 
 	// init the global defines
@@ -2483,6 +2505,21 @@ void BG_FinalizePlayerAnims()
 	BG_SetupAnimNoteTypes(globalScriptData);
 }
 
+void BG_PostLoadAnim()
+{
+	XAnim_s *anims;
+	int i;
+	int j;
+
+	anims = level_bgs.animData.generic_human.tree.anims;
+
+	for ( i = 0; i < 64; ++i )
+		level_bgs.clientinfo[i].pXAnimTree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
+
+	for ( j = 0; j < 8; ++j )
+		g_scr_data.playerCorpseInfo[j].tree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
+}
+
 void BG_FindAnimTree(scr_animtree_t *pTree, const char *filename, int bEnforceExists)
 {
 	scr_animtree_t tree;
@@ -2519,22 +2556,16 @@ void BG_FindAnims()
 	Scr_FindAnim("multiplayer", "turning", &bgs->animData.generic_human.turning, bgs->anim_user);
 }
 
+// VoroN: Made this thing static because it was crashing otherwise
+loadAnim_t playerAnims[sizeof(loadAnim_t) * MAX_MODEL_ANIMATIONS];
 void BG_LoadAnim()
 {
-	loadAnim_t (*playerAnims)[MAX_MODEL_ANIMATIONS];
-	LargeLocal playerAnims_large_local(sizeof(loadAnim_t) * MAX_MODEL_ANIMATIONS);
-
-	playerAnims = (loadAnim_t (*)[MAX_MODEL_ANIMATIONS])playerAnims_large_local.GetBuf();
+	memset( playerAnims, 0, sizeof( playerAnims ) );
 
 	BG_FindAnims();
-	BG_AnimParseAnimScript(&bgs->animData.animScriptData, *playerAnims, &iNumPlayerAnims);
+	BG_AnimParseAnimScript(&bgs->animData.animScriptData, playerAnims, &iNumPlayerAnims);
 	Scr_PrecacheAnimTrees(bgs->AllocXAnim, bgs->anim_user);
 	BG_FindAnimTrees();
 	Scr_EndLoadAnimTrees();
 	BG_FinalizePlayerAnims();
-
-	playerAnims_large_local.~LargeLocal();
-
-	//for (int i = 0; i < 512; i++)
-	//	Com_Printf("%i: %s: %i\n", i, globalScriptData->animations[i].name, globalScriptData->animations[i].stance);
 }

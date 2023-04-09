@@ -492,6 +492,28 @@ error:
 	return value->u.stringValue;
 }
 
+unsigned int Scr_GetObject(unsigned int paramnum)
+{
+	VariableValue *var;
+
+	if (paramnum >= scrVmPub.outparamcount)
+	{
+		Scr_Error(va("parameter %d does not exist", paramnum + 1));
+		return 0;
+	}
+
+	var = &scrVmPub.top[-paramnum];
+
+	if (var->type == 1)
+	{
+		return var->u.pointerValue;
+	}
+
+	scrVarPub.error_index = paramnum + 1;
+	Scr_Error(va("type %s is not an object", var_typename[var->type]));
+	return 0;
+}
+
 void Scr_SetStructField(unsigned int structId, unsigned int index)
 {
 	unsigned int id;
@@ -500,6 +522,11 @@ void Scr_SetStructField(unsigned int structId, unsigned int index)
 	scrVmPub.inparamcount = 0;
 	SetVariableFieldValue(id, scrVmPub.top);
 	--scrVmPub.top;
+}
+
+void Scr_SetLoading(int bLoading)
+{
+	scrVmGlob.loading = bLoading;
 }
 
 void Scr_SetDynamicEntityField(int entnum, unsigned int classnum, unsigned int index)
@@ -537,6 +564,20 @@ unsigned short Scr_ExecEntThreadNum(int entnum, unsigned int classnum, int handl
 void Scr_FreeThread(unsigned short handle)
 {
 	RemoveRefToObject(handle);
+}
+
+void Scr_IncTime()
+{
+	Scr_RunCurrentThreads();
+	Scr_FreeEntityList();
+	++scrVarPub.time;
+	scrVarPub.time &= 0xFFFFFFu;
+}
+
+void Scr_DecTime()
+{
+	--scrVarPub.time;
+	scrVarPub.time &= 0xFFFFFFu;
 }
 
 bool SetEntityFieldValue(unsigned int classnum, int entnum, int offset, VariableValue *value)
@@ -713,6 +754,177 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 	MT_Free(stackValue, stackValue->bufLen);
 }
 
+void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bool fromEndon)
+{
+	unsigned int localId;
+	VariableValue localVariable;
+	unsigned char pos;
+	int size;
+	const char *buf;
+	VariableUnion threadValue;
+	unsigned int parentId;
+	unsigned int threadId;
+	bool bFromEndon;
+
+	bFromEndon = fromEndon;
+	size = stackValue->size;
+	threadId = stackValue->localId;
+	buf = &stackValue->buf[5 * size];
+
+	while ( size )
+	{
+		buf -= 4;
+		threadValue.intValue = *(int *)buf--;
+		pos = *buf;
+		--size;
+
+		if ( pos == 7 )
+		{
+			if ( FindObjectVariable(scrVarPub.pauseArrayId, threadId) )
+			{
+				++size;
+				stackValue->localId = threadId;
+				stackValue->size = size;
+				Scr_StopThread(threadId);
+
+				if ( !bFromEndon )
+				{
+					Scr_SetThreadNotifyName(startLocalId, 0);
+					stackValue->pos = 0;
+					localVariable.type = VAR_STACK;
+					localVariable.u.stackValue = stackValue;
+					localId = GetNewVariable(startLocalId, 0x1FFFFu);
+					SetNewVariableValue(localId, &localVariable);
+				}
+
+				return;
+			}
+
+			parentId = GetParentLocalId(threadId);
+			Scr_KillThread(threadId);
+			RemoveRefToObject(threadId);
+			threadId = parentId;
+		}
+		else
+		{
+			RemoveRefToValueInternal(pos, threadValue);
+		}
+	}
+
+	if ( bFromEndon )
+		RemoveVariable(startLocalId, 0x1FFFFu);
+
+	Scr_KillThread(startLocalId);
+	RemoveRefToObject(startLocalId);
+	MT_Free(stackValue, stackValue->bufLen);
+}
+
+void Scr_CancelWaittill(unsigned int startLocalId)
+{
+	unsigned int localId;
+	unsigned int parentId;
+	VariableValueInternal_u *adr;
+	unsigned int selfNameId;
+	unsigned int self;
+
+	self = Scr_GetSelf(startLocalId);
+	localId = FindObjectVariable(scrVarPub.pauseArrayId, self);
+	selfNameId = FindObject(localId);
+	parentId = FindObjectVariable(selfNameId, startLocalId);
+	adr = GetVariableValueAddress(parentId);
+	VM_CancelNotify(adr->u.intValue, startLocalId);
+	RemoveObjectVariable(selfNameId, startLocalId);
+
+	if ( !GetArraySize(selfNameId) )
+		RemoveObjectVariable(scrVarPub.pauseArrayId, self);
+}
+
+void Scr_CancelNotifyList(unsigned int notifyListOwnerId)
+{
+	VariableStackBuffer *stackBuf;
+	unsigned int localId;
+	unsigned int self;
+	VariableStackBuffer *stackValue;
+	unsigned int threadId;
+	unsigned int id;
+	unsigned int parentId;
+	unsigned int nextSibling;
+	unsigned int arrayId;
+	int objectId;
+	int parentLocalId;
+
+	while ( 1 )
+	{
+		id = FindVariable(notifyListOwnerId, 0x1FFFEu);
+
+		if ( !id )
+			break;
+
+		parentId = FindObject(id);
+		nextSibling = FindNextSibling(parentId);
+
+		if ( !nextSibling )
+			break;
+
+		arrayId = FindObject(nextSibling);
+		objectId = FindNextSibling(arrayId);
+
+		if ( !objectId )
+			break;
+
+		threadId = GetVariableKeyObject(objectId);
+
+		if ( GetVarType(objectId) == VAR_STACK )
+		{
+			stackValue = GetVariableValueAddress(objectId)->u.stackValue;
+			Scr_CancelWaittill(threadId);
+			VM_TrimStack(threadId, stackValue, 0);
+		}
+		else
+		{
+			AddRefToObject(threadId);
+			Scr_CancelWaittill(threadId);
+			self = Scr_GetSelf(threadId);
+			localId = GetStartLocalId(self);
+			parentLocalId = FindVariable(localId, 0x1FFFFu);
+
+			if ( parentLocalId )
+			{
+				stackBuf = GetVariableValueAddress(parentLocalId)->u.stackValue;
+				VM_TrimStack(localId, stackBuf, 1);
+			}
+
+			Scr_KillEndonThread(threadId);
+			RemoveRefToEmptyObject(threadId);
+		}
+	}
+}
+
+void VM_TerminateTime(unsigned int timeId)
+{
+	VariableStackBuffer *stackValue;
+	unsigned int startLocalId;
+	unsigned int stackId;
+
+	AddRefToObject(timeId);
+
+	while ( 1 )
+	{
+		stackId = FindNextSibling(timeId);
+
+		if ( !stackId )
+			break;
+
+		startLocalId = GetVariableKeyObject(stackId);
+		stackValue = GetVariableValueAddress(stackId)->u.stackValue;
+		RemoveObjectVariable(timeId, startLocalId);
+		Scr_ClearWaitTime(startLocalId);
+		VM_TerminateStack(startLocalId, startLocalId, stackValue);
+	}
+
+	RemoveRefToObject(timeId);
+}
+
 void Scr_TerminateWaittillThread(unsigned int localId, unsigned int startLocalId)
 {
 	unsigned short notifyName;
@@ -728,15 +940,15 @@ void Scr_TerminateWaittillThread(unsigned int localId, unsigned int startLocalId
 	VariableValueInternal_u notifyListOwnerId;
 	unsigned int name;
 	unsigned int parentId;
-	int id;
+	unsigned int self;
 
 	notifyName = Scr_GetThreadNotifyName(startLocalId);
 	name = notifyName;
 
 	if ( notifyName )
 	{
-		id = Scr_GetSelf(startLocalId);
-		object = FindObjectVariable(scrVarPub.pauseArrayId, id);
+		self = Scr_GetSelf(startLocalId);
+		object = FindObjectVariable(scrVarPub.pauseArrayId, self);
 		parentId = FindObject(object);
 		ObjectVariable = FindObjectVariable(parentId, startLocalId);
 		notifyListOwnerId = *GetVariableValueAddress(ObjectVariable);
@@ -750,7 +962,7 @@ void Scr_TerminateWaittillThread(unsigned int localId, unsigned int startLocalId
 		RemoveObjectVariable(parentId, startLocalId);
 
 		if ( !GetArraySize(parentId) )
-			RemoveObjectVariable(scrVarPub.pauseArrayId, id);
+			RemoveObjectVariable(scrVarPub.pauseArrayId, self);
 	}
 	else
 	{
@@ -831,6 +1043,48 @@ void Scr_TerminateThread(unsigned int localId)
 	{
 		Scr_TerminateRunningThread(localId);
 	}
+}
+
+unsigned short Scr_ExecThread(int callbackHook, unsigned int numArgs)
+{
+	unsigned int self;
+	const char *codePos;
+	unsigned short callback;
+
+	codePos = &scrVarPub.programBuffer[callbackHook];
+
+	if ( !scrVmPub.function_count )
+		Scr_ResetTimeout();
+
+	Scr_IsInOpcodeMemory(codePos);
+	AddRefToObject(scrVarPub.levelId);
+	self = AllocThread(scrVarPub.levelId);
+	callback = VM_Execute(self, codePos, numArgs);
+	RemoveRefToValue(scrVmPub.top);
+	scrVmPub.top->type = VAR_UNDEFINED;
+	--scrVmPub.top;
+	--scrVmPub.inparamcount;
+
+	return callback;
+}
+
+void Scr_AddExecThread(int handle, unsigned int paramcount)
+{
+	unsigned int self;
+	unsigned int callback;
+	const char *codePos;
+
+	codePos = &scrVarPub.programBuffer[handle];
+
+	if ( !scrVmPub.function_count )
+		Scr_ResetTimeout();
+
+	AddRefToObject(scrVarPub.levelId);
+	self = AllocThread(scrVarPub.levelId);
+	callback = VM_Execute(self, codePos, paramcount);
+	RemoveRefToObject(callback);
+	++scrVmPub.outparamcount;
+	--scrVmPub.inparamcount;
 }
 
 int Scr_AddLocalVars(unsigned int localId)
@@ -1318,6 +1572,58 @@ void Scr_Abort()
 {
 	scrVarPub.timeArrayId = 0;
 	scrVarPub.bInited = 0;
+}
+
+void Scr_ShutdownSystem(unsigned char sys, qboolean bComplete)
+{
+	unsigned int timeId;
+	unsigned int parentId;
+	VariableValueInternal_u notifyListOwnerId;
+	unsigned int id;
+	unsigned int nextId;
+	unsigned int localId;
+
+	Scr_CompileShutdown();
+	Scr_FreeEntityList();
+
+	if ( scrVarPub.timeArrayId )
+	{
+		Scr_FreeGameVariable(bComplete);
+
+		for ( id = FindNextSibling(scrVarPub.timeArrayId); id; id = FindNextSibling(id) )
+		{
+			timeId = FindObject(id);
+			VM_TerminateTime(timeId);
+		}
+
+		while ( 1 )
+		{
+			nextId = FindNextSibling(scrVarPub.pauseArrayId);
+
+			if ( !nextId )
+				break;
+
+			parentId = FindObject(nextId);
+			localId = FindNextSibling(parentId);
+			notifyListOwnerId = *GetVariableValueAddress(localId);
+			AddRefToObject(notifyListOwnerId.u.pointerValue);
+			Scr_CancelNotifyList(notifyListOwnerId.u.pointerValue);
+			RemoveRefToObject(notifyListOwnerId.u.pointerValue);
+		}
+
+		ClearObject(scrVarPub.levelId);
+		RemoveRefToEmptyObject(scrVarPub.levelId);
+		scrVarPub.levelId = 0;
+		ClearObject(scrVarPub.animId);
+		RemoveRefToEmptyObject(scrVarPub.animId);
+		scrVarPub.animId = 0;
+		ClearObject(scrVarPub.timeArrayId);
+		RemoveRefToEmptyObject(scrVarPub.timeArrayId);
+		scrVarPub.timeArrayId = 0;
+		RemoveRefToEmptyObject(scrVarPub.pauseArrayId);
+		scrVarPub.pauseArrayId = 0;
+		Scr_FreeObjects();
+	}
 }
 
 void Scr_Shutdown()

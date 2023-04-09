@@ -1094,13 +1094,47 @@ void Sys_RedirectFunctions()
 	//SetJump(0x080F6ED0, (DWORD)G_GetNonPVSFriendlyInfo);
 	SetJump(0x080F69B4, (DWORD)ClientSpawn);
 	SetJump(0x080F4DBE, (DWORD)ClientEndFrame);
+
+
+
+	SetJump(0x08107AC4, (DWORD)G_RunFrameForEntity);
+	SetJump(0x0807E04A, (DWORD)Scr_FreeEntityList);
+	SetJump(0x08107CA2, (DWORD)G_RunFrame);
+
+
+
+	SetJump(0x08083EDA, (DWORD)Scr_ShutdownSystem);
+	SetJump(0x080F187E, (DWORD)G_ParseSpawnVars);
+	SetJump(0x08117F4C, (DWORD)G_SpawnString);
+
+
+	//SetJump(0x08106C06, (DWORD)G_InitGame);
+	//SetJump(0x08107058, (DWORD)G_ShutdownGame);
+
+	//SetJump(0x08090D9C, (DWORD)SV_InitGameProgs);
+	//SetJump(0x08090BA2, (DWORD)SV_ShutdownGameProgs);
+
+
+	//SetJump(0x08091C02, (DWORD)SV_SpawnServer);
+
+	//SetJump(0x080915D0, (DWORD)SV_ChangeMaxClients);
+	//SetJump(0x080914E6, (DWORD)SV_Startup);
+	
+	
+	SetJump(0x08099AF2, (DWORD)SV_SendClientMessages);
 	
 	
 	
-	SetJump(0x08105956, (DWORD)G_RunItem);
-	SetJump(0x0810D966, (DWORD)G_RunMover);
 	
+	SetJump(0x080D5B94, (DWORD)BG_AnimParseAnimScript); // WORKS
+	SetJump(0x080D4BC2, (DWORD)BG_FinalizePlayerAnims); // WORKS
+	SetJump(0x08075F0E, (DWORD)Scr_EndLoadAnimTrees);   // WORKS
+	SetJump(0x080D9ADE, (DWORD)BG_FindAnimTrees); // WORKS
+	SetJump(0x08075ECE, (DWORD)Scr_PrecacheAnimTrees); // WORKS
+	SetJump(0x080D99BE, (DWORD)BG_FindAnims); // WORKS
 	
+	SetJump(0x080D9B7E, (DWORD)BG_LoadAnim); // FIXED
+
 
 	G_RegisterDvars(); // <-- FIX ME
 }
