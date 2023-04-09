@@ -187,10 +187,12 @@ typedef enum
 
 typedef void (*xcommand_t)(void);
 
-#define MASTER_SERVER_NAME "cod2master.activision.com"
-
 #define PORT_SERVER 28960
 #define	PORT_ANY -1
+
+#define MASTER_SERVER_NAME "cod2master.activision.com"
+#define MAX_MASTER_SERVERS  5
+#define PORT_MASTER 20710
 
 #define AUTHORIZE_SERVER_NAME "cod2master.activision.com"
 #define PORT_AUTHORIZE 20700
@@ -203,7 +205,6 @@ typedef void (*xcommand_t)(void);
 #define	PACKET_BACKUP 32
 #define PACKET_MASK ( PACKET_BACKUP - 1 )
 #define MAX_QPATH 64
-
 #define MAX_PACKET_USERCMDS     32      // max number of usercmd_t in a packet
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data

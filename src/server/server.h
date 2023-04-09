@@ -9,9 +9,6 @@
 #define MAX_SNAPSHOT_ENTITIES	1024
 #define MAX_NAME_LENGTH	32
 
-#define MAX_MASTER_SERVERS  5
-#define PORT_MASTER 20710
-
 typedef struct
 {
 	netadr_t adr;

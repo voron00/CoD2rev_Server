@@ -851,7 +851,6 @@ void SV_BotUserMove(client_s *cl)
 			{
 				ucmd.forwardmove = 127;
 			}
-#if 0
 			if ( G_random() >= 0.33000001 )
 			{
 				if ( G_random() < 0.5 )
@@ -870,7 +869,6 @@ void SV_BotUserMove(client_s *cl)
 
 			if ( G_random() < 0.33000001 )
 				ucmd.angles[2] = (int)(G_crandom() * 360.0);
-#endif
 		}
 
 		cl->deltaMessage = cl->netchan.outgoingSequence - 1;
