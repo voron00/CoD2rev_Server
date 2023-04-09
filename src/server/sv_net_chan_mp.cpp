@@ -89,7 +89,35 @@ bool SV_Netchan_Transmit(client_t *client, byte *data, int length)
 
 void SV_Netchan_UpdateProfileStats()
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	client_s *client;
+	int i;
+
+	if ( svs.clients )
+	{
+		if ( svs.netProfilingBuf )
+		{
+			NetProf_UpdateStatistics(&svs.netProfilingBuf->send);
+			NetProf_UpdateStatistics(&svs.netProfilingBuf->recieve);
+		}
+
+		i = 0;
+		client = svs.clients;
+
+		while ( i < sv_maxclients->current.integer )
+		{
+			if ( client->state )
+			{
+				if ( client->netchan.prof )
+				{
+					NetProf_UpdateStatistics(&client->netchan.prof->send);
+					NetProf_UpdateStatistics(&client->netchan.prof->recieve);
+				}
+			}
+
+			++i;
+			++client;
+		}
+	}
 }
 
 void SV_Netchan_PrintProfileStats(qboolean format)

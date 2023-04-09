@@ -262,56 +262,29 @@ Sys_IsLANAddress
 LAN clients will have their rate var ignored
 ==================
 */
-qboolean	Sys_IsLANAddress (netadr_t adr) {
-	int		i;
+qboolean Sys_IsLANAddress( netadr_t adr ) {
+  int i;
 
-	if( adr.type == NA_LOOPBACK ) {
-		return qtrue;
-	}
-
-	if( adr.type == NA_IPX ) {
-		return qtrue;
-	}
-
-	if( adr.type != NA_IP ) {
-		return qfalse;
-	}
-
-	// choose which comparison to use based on the class of the address being tested
-	// any local adresses of a different class than the address being tested will fail based on the first byte
-
-	// Class A
-	if( (adr.ip[0] & 0x80) == 0x00 ) {
-		for ( i = 0 ; i < numIP ; i++ ) {
-			if( adr.ip[0] == localIP[i][0] ) {
-				return qtrue;
-			}
-		}
-		// the RFC1918 class a block will pass the above test
-		return qfalse;
-	}
-
-	// Class B
-	if( (adr.ip[0] & 0xc0) == 0x80 ) {
-		for ( i = 0 ; i < numIP ; i++ ) {
-			if( adr.ip[0] == localIP[i][0] && adr.ip[1] == localIP[i][1] ) {
-				return qtrue;
-			}
-			// also check against the RFC1918 class b blocks
-			if( adr.ip[0] == 172 && localIP[i][0] == 172 && (adr.ip[1] & 0xf0) == 16 && (localIP[i][1] & 0xf0) == 16 ) {
-				return qtrue;
-			}
-		}
-		return qfalse;
-	}
+  if ( adr.type == NA_LOOPBACK )
+    return 1;
+  if ( adr.type == NA_IPX )
+    return 1;
+  if ( adr.type != NA_IP )
+    return 0;
+  if ( adr.ip[0] == 10 )
+    return 1;
+  if ( adr.ip[0] == 127 )
+    return 1;
+  if ( adr.ip[0] == 0xA9 && adr.ip[1] == 0xFE )
+    return 1;
+  if ( adr.ip[0] == 0xAC && (adr.ip[1] & 0xF0) == 16 )
+    return 1;
+  if ( adr.ip[0] == 0xC0 && adr.ip[1] == 0xA8 )
+    return 1;
 
 	// Class C
 	for ( i = 0 ; i < numIP ; i++ ) {
 		if( adr.ip[0] == localIP[i][0] && adr.ip[1] == localIP[i][1] && adr.ip[2] == localIP[i][2] ) {
-			return qtrue;
-		}
-		// also check against the RFC1918 class c blocks
-		if( adr.ip[0] == 192 && localIP[i][0] == 192 && adr.ip[1] == 168 && localIP[i][1] == 168 ) {
 			return qtrue;
 		}
 	}
