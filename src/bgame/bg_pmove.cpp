@@ -2753,3 +2753,319 @@ float BG_GetSpeed(const playerState_s *ps, int time)
 		return VectorLength(ps->velocity);
 	}
 }
+
+int sub_80E731C(int x, int y, int z)
+{
+	if ( x < 0 )
+		return z;
+	return y;
+}
+
+int PM_ClampFallDamage(int val, int min, int max)
+{
+	int x;
+
+	x = sub_80E731C(val - max, max, val);
+	return sub_80E731C(min - val, min, x);
+}
+
+int PM_DamageLandingForSurface(pml_t *pml)
+{
+	return PM_GroundSurfaceType(pml) + 116;
+}
+
+int PM_HardLandingForSurface(pml_t *pml)
+{
+	return PM_GroundSurfaceType(pml) + 93;
+}
+
+int PM_MediumLandingForSurface(pml_t *pml)
+{
+	int iSurfType;
+
+	iSurfType = PM_GroundSurfaceType(pml);
+
+	if ( iSurfType )
+		return iSurfType + 1;
+	else
+		return 0;
+}
+
+int PM_LightLandingForSurface(pml_t *pml)
+{
+	int iSurfType;
+
+	iSurfType = PM_GroundSurfaceType(pml);
+
+	if ( iSurfType )
+		return iSurfType + 24;
+	else
+		return 0;
+}
+
+void PM_CrashLand(playerState_s *pm, pml_t *pml)
+{
+	int dmg;
+	int hardDmg;
+	int lightDmg;
+	int medDmg;
+	float gravity;
+	float landVel;
+	int stunTime;
+	int damage;
+	int viewDip;
+	float fSpeedMult;
+	float den;
+	float acc;
+	float t;
+	float vel;
+	float dist;
+	float fallHeight;
+
+	dist = pml->previous_origin[2] - pm->origin[2];
+	vel = pml->previous_velocity[2];
+	gravity = (float)pm->gravity;
+	acc = -gravity * 0.5;
+	den = vel * vel - acc * 4.0 * dist;
+
+	if ( den >= 0.0 )
+	{
+		t = (-vel - sqrt(den)) / (acc + acc);
+		landVel = t * -gravity + vel;
+		fallHeight = -landVel * -landVel / ((long double)pm->gravity + (long double)pm->gravity);
+
+		if ( bg_fallDamageMinHeight->current.decimal < (long double)bg_fallDamageMaxHeight->current.decimal )
+		{
+			if ( bg_fallDamageMinHeight->current.decimal >= (long double)fallHeight
+			        || (pml->groundTrace.surfaceFlags & 1) != 0
+			        || pm->pm_type > PM_INTERMISSION )
+			{
+				damage = 0;
+			}
+			else if ( fallHeight < (long double)bg_fallDamageMaxHeight->current.decimal )
+			{
+				damage = PM_ClampFallDamage(
+				             (int)((fallHeight - bg_fallDamageMinHeight->current.decimal)
+				                   / (bg_fallDamageMaxHeight->current.decimal - bg_fallDamageMinHeight->current.decimal)
+				                   * 100.0),
+				             0,
+				             100);
+			}
+			else
+			{
+				damage = 100;
+			}
+		}
+		else
+		{
+			Com_Printf("bg_fallDamageMaxHeight must be greater than bg_fallDamageMinHeight\n");
+			damage = 0;
+		}
+		if ( fallHeight > 12.0 )
+		{
+			viewDip = (int)((fallHeight - 12.0) / 26.0 * 4.0 + 4.0);
+
+			if ( viewDip > 24 )
+				viewDip = 24;
+
+			BG_AnimScriptEvent(pm, ANIM_ET_LAND, 0, 1);
+		}
+		else
+		{
+			viewDip = 0;
+		}
+
+		if ( damage )
+		{
+			if ( damage > 99 || (pml->groundTrace.surfaceFlags & 2) != 0 )
+			{
+				VectorScale(pm->velocity, 0.67000002, pm->velocity);
+			}
+			else
+			{
+				stunTime = 35 * damage + 500;
+
+				if ( stunTime > 2000 )
+					stunTime = 2000;
+
+				if ( stunTime > 500 )
+				{
+					if ( stunTime <= 1499 )
+						fSpeedMult = 0.5 - ((long double)stunTime - 500.0) / 1000.0 * 0.30000001;
+					else
+						fSpeedMult = 0.2;
+				}
+				else
+				{
+					fSpeedMult = 0.5;
+				}
+
+				pm->pm_time = stunTime;
+				pm->pm_flags |= 0x200u;
+
+				VectorScale(pm->velocity, fSpeedMult, pm->velocity);
+			}
+
+			dmg = PM_DamageLandingForSurface(pml);
+			BG_AddPredictableEventToPlayerstate(dmg, damage, pm);
+		}
+		else if ( fallHeight > 4.0 )
+		{
+			if ( fallHeight >= 8.0 )
+			{
+				if ( fallHeight >= 12.0 )
+				{
+					VectorScale(pm->velocity, 0.67000002, pm->velocity);
+					hardDmg = PM_HardLandingForSurface(pml);
+					BG_AddPredictableEventToPlayerstate(hardDmg, viewDip, pm);
+				}
+				else
+				{
+					medDmg = PM_MediumLandingForSurface(pml);
+					PM_AddEvent(pm, medDmg);
+				}
+			}
+			else
+			{
+				lightDmg = PM_LightLandingForSurface(pml);
+				PM_AddEvent(pm, lightDmg);
+			}
+		}
+	}
+}
+
+void PM_LadderMove(pmove_t *pm, pml_t *pml)
+{
+	float sc;
+	int move;
+	float sidelenSqTemp;
+	float absSpeedDrop;
+	playerState_s *ps;
+	int moveyaw;
+	float fSpeedDrop;
+	float fSideSpeedTemp;
+	float fSideSpeed;
+	float sidelenSq;
+	vec2_t vSideDir;
+	float upscale;
+	vec3_t vTempRight;
+	vec3_t wishvel;
+	vec3_t out;
+	float scale;
+	float wishspeed;
+
+	ps = pm->ps;
+
+	if ( Jump_Check(pm, pml) )
+	{
+		PM_AirMove(pm, pml);
+	}
+	else
+	{
+		upscale = (pml->forward[2] + 0.25) * 2.5;
+
+		if ( upscale <= 1.0 )
+		{
+			if ( upscale < -1.0 )
+				upscale = -1.0;
+		}
+		else
+		{
+			upscale = 1.0;
+		}
+
+		pml->forward[2] = 0.0;
+		Vec3Normalize(pml->forward);
+		pml->right[2] = 0.0;
+		Vec3NormalizeTo(pml->right, vTempRight);
+		ProjectPointOnPlane(vTempRight, ps->vLadderVec, pml->right);
+		scale = PM_CmdScale(ps, &pm->cmd);
+		VectorClear(wishvel);
+
+		if ( pm->cmd.forwardmove )
+			wishvel[2] = upscale * 0.5 * scale * (long double)pm->cmd.forwardmove;
+
+		if ( pm->cmd.rightmove )
+		{
+			sc = scale * 0.2 * (long double)pm->cmd.rightmove;
+			VectorMA(wishvel, sc, pml->right, wishvel);
+		}
+
+		wishspeed = Vec3NormalizeTo(wishvel, out);
+		PM_Accelerate(ps, pml, out, wishspeed, 9.0);
+
+		if ( !pm->cmd.forwardmove )
+		{
+			if ( ps->velocity[2] <= 0.0 )
+			{
+				ps->velocity[2] = (long double)ps->gravity * pml->frametime + ps->velocity[2];
+
+				if ( ps->velocity[2] > 0.0 )
+					ps->velocity[2] = 0.0;
+			}
+			else
+			{
+				ps->velocity[2] = ps->velocity[2] - (long double)ps->gravity * pml->frametime;
+
+				if ( ps->velocity[2] < 0.0 )
+					ps->velocity[2] = 0.0;
+			}
+		}
+
+		if ( !pm->cmd.rightmove )
+		{
+			Vector2Copy(pml->right, vSideDir);
+			Vec2Normalize(vSideDir);
+			fSideSpeedTemp = Dot2Product(vSideDir, ps->velocity);
+
+			if ( fSideSpeedTemp != 0.0 )
+			{
+				VectorMA2(ps->velocity, -fSideSpeedTemp, vSideDir, ps->velocity);
+				fSpeedDrop = fSideSpeedTemp * pml->frametime * 16.0;
+				absSpeedDrop = fabs(fSideSpeedTemp);
+
+				if ( absSpeedDrop > fabs(fSpeedDrop) )
+				{
+					if ( fabs(fSpeedDrop) < 1.0 )
+					{
+						if ( fSpeedDrop < 0.0 )
+							fSpeedDrop = -1.0;
+						else
+							fSpeedDrop = 1.0;
+					}
+
+					fSideSpeed = fSideSpeedTemp - fSpeedDrop;
+					VectorMA2(ps->velocity, fSideSpeed, vSideDir, ps->velocity);
+				}
+			}
+		}
+
+		if ( !pml->walking )
+		{
+			sidelenSq = Dot2Product(ps->vLadderVec, ps->velocity);
+			VectorMA2(ps->velocity, -sidelenSq, ps->vLadderVec, ps->velocity);
+			sidelenSqTemp = Vec2LengthSq(ps->velocity);
+
+			if ( Square(ps->velocity[2]) >= sidelenSqTemp )
+				VectorMA2(ps->velocity, -50.0, ps->vLadderVec, ps->velocity);
+		}
+
+		PM_StepSlideMove(pm, pml, 0);
+		scale = vectoyaw(ps->vLadderVec) + 180.0;
+		moveyaw = (int)AngleDelta(scale, ps->viewangles[1]);
+		move = moveyaw;
+
+		if ( moveyaw < 0 )
+			move = -moveyaw;
+
+		if ( move > 75 )
+		{
+			if ( moveyaw <= 0 )
+				LOBYTE(moveyaw) = -75;
+			else
+				LOBYTE(moveyaw) = 75;
+		}
+
+		ps->movementDir = (char)moveyaw;
+	}
+}

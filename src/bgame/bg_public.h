@@ -984,10 +984,8 @@ void QDECL PM_StepSlideMove(pmove_t *pm, pml_t *pml, int gravity);
 void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out);
 void QDECL PM_AirMove(pmove_t *pm, pml_t *pml);
 float QDECL PM_CmdScale(playerState_s *ps, usercmd_s *cmd);
-void QDECL PM_LadderMove(pmove_t *pm, pml_t *pml);
 int QDECL PM_GroundSurfaceType(pml_t *pml);
 void QDECL PM_AddEvent(playerState_s *ps, int newEvent);
-void QDECL PM_CrashLand(playerState_s *pm, pml_t *pml);
 int QDECL PM_GetEffectiveStance(const playerState_s *ps);
 void QDECL PM_UpdateViewAngles(playerState_s *ps, float msec, usercmd_s *cmd, unsigned char handler);
 void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);
@@ -1051,6 +1049,8 @@ void PM_UFOMove(pmove_t *pm, pml_t *pml);
 void PM_GroundTrace(pmove_t *pm, pml_t *pml);
 void PM_Footsteps(pmove_t *pm, pml_t *pml);
 void PM_CheckLadderMove(pmove_t *pm, pml_t *pml);
+void PM_CrashLand(playerState_s *pm, pml_t *pml);
+void PM_LadderMove(pmove_t *pm, pml_t *pml);
 
 void Pmove(pmove_t *pmove);
 

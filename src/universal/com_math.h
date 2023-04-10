@@ -27,6 +27,7 @@ extern vec4_t vec4_origin;
 #define VectorCopy(a,b)         ((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2])
 #define Vector2Copy(a,b)        ((b)[0]=(a)[0],(b)[1]=(a)[1])
 #define Vec2Multiply(v)         ((v)[0]*(v)[0]+(v)[1]*(v)[1])
+#define VectorMA2(v, s, b, o)   ((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s))
 
 #define	VectorScale(v, s, o)    ((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
 #define	Vec2Scale(v, s, o)      ((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s))
@@ -223,3 +224,4 @@ void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)
 void MatrixInverseOrthogonal43(const float in[4][3], float out[4][3]);
 void ExpandBoundsToWidth(float *mins, float *maxs);
 void YawToAxis(float yaw, vec3_t axis[3]);
+void ProjectPointOnPlane(const float *p, const float *normal, float *dst);

@@ -1200,3 +1200,14 @@ void YawToAxis(float yaw, vec3_t axis[3])
 	axis[1][1] = 0.0 - right[1];
 	axis[1][2] = 0.0 - right[2];
 }
+
+void ProjectPointOnPlane(const float *p, const float *normal, float *dst)
+{
+	float d;
+
+	d = -(DotProduct(normal, p));
+
+	dst[0] = (d * normal[0]) + p[0];
+	dst[1] = (d * normal[1]) + p[1];
+	dst[2] = (d * normal[2]) + p[2];
+}
