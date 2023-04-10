@@ -19,6 +19,10 @@ typedef struct
 	int firstPing;
 	qboolean connected;
 	int guid;
+#if PROTOCOL_VERSION > 115
+	char PBguid[33];
+	char clientPBguid[33];
+#endif
 } challenge_t;
 
 enum
@@ -81,6 +85,13 @@ typedef struct client_s
 	int				downloadBlockSize[MAX_DOWNLOAD_WINDOW];
 	qboolean		downloadEOF;
 	int				downloadSendTime;
+#if PROTOCOL_VERSION > 115
+	char			wwwDownloadURL[MAX_OSPATH];
+	qboolean		wwwDownload;
+	qboolean		wwwDownloadStarted;
+	qboolean		wwwDlAck;
+	qboolean		wwwDl_failed;
+#endif
 	int				deltaMessage;
 	int				nextReliableTime;
 	int				lastPacketTime;
@@ -102,8 +113,12 @@ typedef struct client_s
 	int				unsentVoiceData;
 	byte			mutedClients[MAX_CLIENTS];
 	byte			hasVoip;
+#if PROTOCOL_VERSION > 115
+	char PBguid[33];
+	char clientPBguid[33];
+#endif
 } client_t;
-static_assert((sizeof(client_t) == 0x78F14), "ERROR: client_t size is invalid!");
+//static_assert((sizeof(client_t) == 0x78F14), "ERROR: client_t size is invalid!");
 
 typedef struct archivedSnapshot_s
 {
@@ -180,7 +195,7 @@ typedef struct
 	netProfileInfo_t *netProfilingBuf;
 	tempban_t bans[16];
 } serverStatic_t;
-static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is invalid!");
+//static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is invalid!");
 
 typedef enum
 {

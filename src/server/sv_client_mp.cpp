@@ -893,7 +893,9 @@ void SV_SendClientGameState( client_t *client )
 	byte msgBuffer[MAX_MSGLEN];
 
 	while ( client->state && client->netchan.unsentFragments )
+	{
 		SV_Netchan_TransmitNextFragment(&client->netchan);
+	}
 
 	Com_DPrintf( "SV_SendClientGameState() for %s\n", client->name );
 	Com_DPrintf( "Going from CS_CONNECTED to CS_PRIMED for %s\n", client->name );
@@ -1007,10 +1009,6 @@ void SV_DirectConnect( netadr_t from )
 	// quick reject
 	for ( i = 0,cl = svs.clients ; i < sv_maxclients->current.integer ; i++,cl++ )
 	{
-		// DHM - Nerve :: This check was allowing clients to reconnect after zombietime(2 secs)
-		//if ( cl->state == CS_FREE ) {
-		//continue;
-		//}
 		if ( NET_CompareBaseAdr( from, cl->netchan.remoteAddress )
 		        && ( cl->netchan.qport == qport
 		             || from.port == cl->netchan.remoteAddress.port ) )
@@ -1071,6 +1069,7 @@ void SV_DirectConnect( netadr_t from )
 				Com_DPrintf( "Client %i rejected on a too low ping\n", i );
 				return;
 			}
+
 			if ( sv_maxPing->current.integer && ping > sv_maxPing->current.integer )
 			{
 				NET_OutOfBandPrint( NS_SERVER, from, "error\nEXE_ERR_LOW_PING_ONLY" );
@@ -1095,14 +1094,13 @@ void SV_DirectConnect( netadr_t from )
 		             || from.port == cl->netchan.remoteAddress.port ) )
 		{
 			Com_Printf( "%s:reconnect\n", NET_AdrToString( from ) );
+
+			if ( cl->state > CS_ZOMBIE )
+				SV_FreeClient(cl);
+
 			newcl = cl;
+			memset(cl, 0, sizeof(client_t));
 
-			// this doesn't work because it nukes the players userinfo
-
-//			// disconnect the client from the game first so any flags the
-//			// player might have are dropped
-//			VM_Call( gvm, GAME_CLIENT_DISCONNECT, newcl - svs.clients );
-			//
 			goto gotnewcl;
 		}
 	}
@@ -1150,6 +1148,8 @@ void SV_DirectConnect( netadr_t from )
 	// we got a newcl, so reset the reliableSequence and reliableAcknowledge
 	cl->reliableAcknowledge = 0;
 	cl->reliableSequence = 0;
+
+	memset( newcl, 0, sizeof( client_t ) );
 
 gotnewcl:
 	// build a new connection
@@ -1569,22 +1569,28 @@ qboolean SV_ClientCommand( client_t *cl, msg_t *msg )
 	return qtrue;       // continue procesing
 }
 
+/*
+===================
+SV_ExecuteClientMessage
+Parse a client packet
+===================
+*/
 void SV_ExecuteClientMessage(client_s *cl, msg_t *msg)
 {
-	byte buf[MAX_MSGLEN];
+	byte msgBuf[MAX_MSGLEN];
 	msg_t decompressMsg;
 	int c;
 
-	MSG_Init(&decompressMsg, buf, sizeof(buf));
-	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], buf, msg->cursize - msg->readcount);
+	MSG_Init(&decompressMsg, msgBuf, sizeof(msgBuf));
+	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msgBuf, msg->cursize - msg->readcount);
 
 	if ( cl->serverId == sv_serverId_value || cl->downloadName[0] )
 	{
 		while ( 1 )
 		{
-			c = MSG_ReadBits(&decompressMsg, svc_baseline);
+			c = MSG_ReadBits(&decompressMsg, 3);
 
-			if ( c != svc_configstring )
+			if ( c != clc_clientCommand )
 				break;
 
 			if ( !SV_ClientCommand(cl, &decompressMsg) || cl->state == CS_ZOMBIE )
@@ -1602,11 +1608,11 @@ void SV_ExecuteClientMessage(client_s *cl, msg_t *msg)
 
 		if ( c )
 		{
-			if ( c == svc_gamestate )
+			if ( c == clc_moveNoDelta )
 			{
 				SV_UserMove(cl, &decompressMsg, 0);
 			}
-			else if ( c != svc_baseline )
+			else if ( c != clc_EOF )
 			{
 				Com_Printf( "WARNING: bad command byte %i for client %i\n", c, cl - svs.clients);
 			}

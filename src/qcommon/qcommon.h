@@ -176,6 +176,14 @@ enum svc_ops_e
 	svc_EOF
 };
 
+enum clc_ops_e
+{
+	clc_move,
+	clc_moveNoDelta,
+	clc_clientCommand,
+	clc_EOF
+};
+
 typedef enum
 {
 	MSG_DEFAULT,

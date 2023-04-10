@@ -6,8 +6,9 @@
 
 #include "com_math.h"
 
-#define PRODUCT_VERSION "1.0"
 #define GAME_STRING "CoD2 MP"
+
+#define PRODUCT_VERSION "1.0"
 #define PROTOCOL_VERSION 115
 
 // for windows fastcall option

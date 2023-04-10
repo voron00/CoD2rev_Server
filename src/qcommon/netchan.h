@@ -1,7 +1,13 @@
 #pragma once
 
+#if PROTOCOL_VERSION < 118
 #define MAX_MSGLEN				0x4000
+#else
+#define MAX_MSGLEN				0x20000
+#endif
+
 #define MAX_LARGE_MSGLEN		0x20000 // For voice chat and snapshot
+
 #define MAX_PACKETLEN           1400
 #define FRAGMENT_SIZE           ( MAX_PACKETLEN - 100 )
 
@@ -56,7 +62,7 @@ typedef struct
 	byte		unsentBuffer[MAX_MSGLEN];
 	netProfileInfo_t *prof;
 } netchan_t;
-static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
+//static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
 
 extern dvar_t* net_profile;
 

@@ -472,7 +472,11 @@ qboolean Netchan_TransmitNextFragment(netchan_t *chan)
 		fragmentLength = chan->unsentLength - chan->unsentFragmentStart;
 	}
 
+#if PROTOCOL_VERSION < 118
 	MSG_WriteShort( &send, chan->unsentFragmentStart );
+#else
+	MSG_WriteLong( &send, chan->unsentFragmentStart );
+#endif
 	MSG_WriteShort( &send, fragmentLength );
 	MSG_WriteData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
