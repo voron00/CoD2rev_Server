@@ -1017,18 +1017,6 @@ qboolean FS_PureIgnoreFiles(const char *extension)
 	return qtrue;
 }
 
-void FS_AddIwdPureCheckReference(const searchpath_t *search)
-{
-	for (search = fs_searchpaths; search; search = search->next)
-	{
-		// is the element an iwd file and has it been referenced?
-		if (search->iwd)
-		{
-			search->iwd->referenced = 0;
-		}
-	}
-}
-
 int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFILE, FsThread thread)
 {
 	char copypath[MAX_OSPATH];
@@ -1044,10 +1032,7 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 	bool wasSkipped = 0;
 	searchpath_t* search;
 	FILE* filetemp;
-
-#ifndef DEDICATED
 	iwd_t* impureIwd = NULL;
-#endif
 
 	FS_CheckFileSystemStarted();
 
@@ -1127,7 +1112,6 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 				// case and separator insensitive comparisons
 				if (!FS_FilenameCompare(iwdFile->name, sanitizedName))
 				{
-#ifndef DEDICATED
 					// found it!
 					if (!search->localized && !FS_IwdIsPure(iwd))
 					{
@@ -1138,9 +1122,7 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 					if (!iwd->referenced && !FS_FilesAreLoadedGlobally(sanitizedName))
 					{
 						iwd->referenced = 1;
-						FS_AddIwdPureCheckReference(search);
 					}
-#endif
 					if ( uniqueFILE )
 					{
 						// open a new file on the pakfile
@@ -1240,13 +1222,11 @@ int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean uniqueFI
 	FS_FCloseFile(*file);
 	*file = 0;
 
-#ifndef DEDICATED
 	if (impureIwd)
 	{
-		Com_Error(ERR_DROP, va("%s\n%s", "Impure client detected. Invalid .IWD files referenced!",
+		Com_Error(ERR_DROP, va("EXE_UNPURECLIENTDETECTED\x15\n%s",
 		                       impureIwd->iwdFilename));
 	}
-#endif
 
 	if (wasSkipped)
 	{
