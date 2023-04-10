@@ -807,7 +807,7 @@ qboolean NET_CompareAdr(netadr_t a, netadr_t b)
 
 qboolean NET_IsLocalAddress( netadr_t adr )
 {
-	return adr.type == NA_LOOPBACK;
+	return adr.type == NA_LOOPBACK || adr.type == NA_BOT;
 }
 
 void Net_DumpProfile_f()
