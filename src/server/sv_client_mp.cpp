@@ -998,8 +998,8 @@ void SV_DirectConnect( netadr_t from )
 
 	if ( version != PROTOCOL_VERSION )
 	{
-		NET_OutOfBandPrint( NS_SERVER, from, va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s\n", PROTOCOL_VERSION) );
-		Com_DPrintf( "    rejected connect from protocol version %i (should be %i)\n", version );
+		NET_OutOfBandPrint( NS_SERVER, from, va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s\n", PRODUCT_VERSION) );
+		Com_DPrintf( "    rejected connect from protocol version %i (should be %i)\n", version, PROTOCOL_VERSION );
 		return;
 	}
 
