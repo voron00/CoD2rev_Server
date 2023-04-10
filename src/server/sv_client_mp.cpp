@@ -1631,6 +1631,7 @@ void SV_ExecuteClientMessage(client_s *cl, msg_t *msg)
 	}
 }
 
+extern dvar_t *g_password;
 gentity_t *SV_AddTestClient()
 {
 	netadr_t adr;
@@ -1651,8 +1652,9 @@ gentity_t *SV_AddTestClient()
 	sprintf(
 	    userinfo,
 	    "connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\"
-	    "bot%d\\protocol\\%d\"",
+	    "bot%d\\password\\%s\\protocol\\%d\"",
 	    botport,
+	    g_password->current.string,
 	    PROTOCOL_VERSION);
 
 	SV_Cmd_TokenizeString(userinfo);
