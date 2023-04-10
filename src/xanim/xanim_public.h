@@ -363,7 +363,6 @@ int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 int DObjGetAllocSkelSize(const DObj_s *obj);
 void DObjCreateSkel(DObj_s *obj, DSkelPart_s *skelPart, int time);
 int DObjSkelAreBonesUpToDate(const DObj_s *obj, int *partBits);
-void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
 XAnimTree_s* DObjGetTree(const DObj_s *obj);
 
 void XAnimFree(XAnimParts *parts);
@@ -374,6 +373,8 @@ extern "C" {
 #endif
 
 int QDECL DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
+void QDECL DObjSetTree(DObj_s *obj, XAnimTree_s *tree);
+void QDECL DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
 
 void QDECL XModelPartsFree(XModelParts *modelParts);
 void QDECL XModelFree(XModel *model);

@@ -137,116 +137,6 @@ void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int cont
 	VectorCopy(trace.normal, results->normal);
 }
 
-void QDECL DObjCreateDuplicateParts(DObj_s *obj)
-{
-	const char *name;
-	int duplicatePartBits[5];
-	XModelParts_s *modelParts;
-	int index;
-	char partIndex;
-	int len;
-	byte *duplicateParts;
-	unsigned short *nameIndex;
-	unsigned short **boneNames;
-	int boneIter;
-	int i;
-	int boneIndex;
-	XModel *xmodel;
-	int numBones;
-	int numModels;
-
-	duplicateParts = (byte *)&duplicatePartBits[4];
-	memset(duplicatePartBits, 0, 16);
-	len = 0;
-	numBones = obj->models[0]->modelParts->numBones;
-	numModels = 1;
-
-	while ( numModels < obj->numModels )
-	{
-		xmodel = obj->models[numModels];
-
-		if ( obj->modelIndex[numModels] == 0 )
-		{
-			modelParts = xmodel->modelParts;
-			boneNames = modelParts->boneNames;
-			nameIndex = *boneNames;
-			boneIter = modelParts->numBones;
-			partIndex = 0;
-			boneIndex = -1;
-
-			for ( i = 0; i < boneIter; ++i )
-			{
-				boneIndex = DObjGetBoneIndex(obj, nameIndex[i]);
-
-				if ( boneIndex != numBones + i )
-				{
-					if ( !i )
-						partIndex = 1;
-
-					index = numBones + i;
-					duplicateParts[len] = numBones + i + 1;
-					duplicatePartBits[index >> 5] |= 1 << (index & 0x1F);
-					duplicateParts[++len] = boneIndex + 1;
-					++len;
-				}
-			}
-
-			if ( !partIndex )
-			{
-				name = SL_ConvertToString(*nameIndex);
-
-				Com_Printf(
-				    "WARNING: Attempting to meld model, but root part '%s' of model '%s' not found in model '%s' or any of its descendants\n",
-				    name,
-				    xmodel->name,
-				    obj->models[0]->name);
-			}
-		}
-
-		++numModels;
-		numBones += xmodel->modelParts->numBones;
-	}
-
-	if ( len )
-	{
-		duplicateParts[len] = 0;
-		obj->duplicateParts = SL_GetStringOfLen((const char *)duplicatePartBits, 0, len + 17);
-	}
-	else
-	{
-		obj->duplicateParts = g_empty;
-	}
-}
-
-void DObjSetTree(DObj *obj, XAnimTree *tree)
-{
-	byte next;
-	unsigned short *part;
-	unsigned int size;
-
-	obj->tree = tree;
-
-	if ( tree )
-	{
-		size = tree->anims->size;
-		obj->duplicatePartsIndexes = &tree->children[size];
-		part = &obj->duplicatePartsIndexes[size];
-		next = *(byte *)part + 1;
-
-		if ( *(byte *)part == 0 )
-		{
-			next = 1;
-			memset((char *)part + 1, 0, size);
-		}
-
-		*(byte *)part = next;
-	}
-	else
-	{
-		obj->duplicatePartsIndexes = 0;
-	}
-}
-
 void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs)
 {
 	VectorCopy(obj->mins, mins);
@@ -335,7 +225,7 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 							if ( boneIndex >= 0 )
 							{
 								newobj->modelIndex[modelIndex] = newobj->boneIndex[j] + boneIndex;
-								goto OUT;
+								goto setmodel;
 							}
 						}
 					}
@@ -347,7 +237,7 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 				}
 			}
 		}
-OUT:
+setmodel:
 		if ( model )
 		{
 			if ( numBones + model->modelParts->numBones > 127 )
@@ -364,80 +254,6 @@ OUT:
 	newobj->numBones = numBones;
 
 	DObjSetBounds(newobj);
-}
-
-void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits)
-{
-	const char *name;
-	int bones[8];
-	int current;
-	const char *next2;
-	int index;
-	unsigned short **parts;
-	const char *next;
-	XModelParts_s *modelParts;
-	int i;
-	int numModels;
-
-	for ( i = 0; i < 4; ++i )
-		partBits[i] = 0;
-
-	numModels = obj->numModels;
-
-	if ( !obj->duplicateParts )
-		DObjCreateDuplicateParts(obj);
-
-	name = SL_ConvertToString(obj->duplicateParts);
-	next = name + 16;
-	next2 = name + 16;
-	bones[0] = 0;
-
-	for ( i = 0; ; bones[i] = current )
-	{
-		modelParts = obj->models[i]->modelParts;
-		current = bones[i] + modelParts->numBones;
-
-		if ( current > boneIndex )
-		{
-			for ( parts = modelParts->boneNames + 1; ; boneIndex -= *((unsigned char *)parts + current) )
-			{
-				index = boneIndex - bones[i];
-
-				while ( 1 )
-				{
-					partBits[boneIndex >> 5] |= 1 << (boneIndex & 0x1F);
-
-					if ( (((unsigned char)(*(int *)&name[4 * (boneIndex >> 5)] >> (boneIndex & 0x1F)) ^ 1) & 1) == 0 )
-					{
-						for ( next2 = next; boneIndex != *(unsigned char *)next2 - 1; next2 += 2 )
-							;
-						boneIndex = *((unsigned char *)next2 + 1) - 1;
-						goto skip;
-					}
-
-					current = index - modelParts->numRootBones;
-
-					if ( current >= 0 )
-						break;
-
-					boneIndex = obj->modelIndex[i];
-
-					if ( boneIndex == 255 )
-						return;
-					do
-skip:
-						index = boneIndex - bones[--i];
-					while ( index < 0 );
-
-					modelParts = obj->models[i]->modelParts;
-					parts = modelParts->boneNames + 1;
-				}
-			}
-		}
-
-		if ( ++i == numModels )
-			break;
-	}
 }
 
 void DObjFree(DObj *obj)
