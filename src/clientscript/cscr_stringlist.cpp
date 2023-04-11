@@ -109,7 +109,7 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
 
 void SL_RemoveRefToString(unsigned int stringValue)
 {
-	unsigned int len;
+	int len;
 	RefString *refString;
 
 	refString = GetRefString(stringValue);
@@ -178,7 +178,7 @@ unsigned int GetHashCode(const char *str, unsigned int len)
 
 void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len)
 {
-	int newIndex;
+	unsigned int newIndex;
 	unsigned int prev;
 	unsigned int newNext;
 	unsigned int index;
@@ -196,7 +196,7 @@ void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len
 		if ( newEntry == entry )
 		{
 			newEntry = &scrStringGlob.hashTable[index];
-			LOWORD(newIndex) = index;
+			newIndex = index;
 		}
 		else
 		{
@@ -245,10 +245,10 @@ void SL_AddUser(unsigned int stringValue, unsigned char user)
 
 unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int len)
 {
-	int prevNode;
+	unsigned int prevNode;
 	unsigned int stringValue;
-	int newNext;
-	int newIndex;
+	unsigned int newNext;
+	unsigned int newIndex;
 	unsigned int hash;
 	RefString *refStr;
 	HashEntry *entry;
@@ -306,6 +306,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 		refStr->user = user;
 		refStr->refCount = 1;
 		refStr->length = len;
+
 		return stringValue;
 	}
 
@@ -328,6 +329,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 				prev->prev = entry->prev;
 				entry->prev = stringValue;
 				SL_AddUserInternal(refStr, user);
+
 				return stringValue;
 			}
 
@@ -357,6 +359,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 		refStr->user = user;
 		refStr->refCount = 1;
 		refStr->length = len;
+
 		return stringValue;
 	}
 
@@ -367,7 +370,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 {
 	unsigned int prev;
-	int newIndex;
+	unsigned int newIndex;
 	unsigned int hash;
 	RefString *refStr;
 	HashEntry *newEntry;
@@ -399,6 +402,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 				prev = newEntry->prev;
 				newEntry->prev = entry->prev;
 				entry->prev = prev;
+
 				return prev;
 			}
 
@@ -466,8 +470,10 @@ void Scr_SetString(uint16_t *to, unsigned int from)
 {
 	if ( from )
 		SL_AddRefToString(from);
+
 	if ( *to )
 		SL_RemoveRefToString(*to);
+
 	*to = from;
 }
 
@@ -522,6 +528,7 @@ void SL_ChangeUser(unsigned char from, unsigned char to)
 		if ( (scrStringGlob.hashTable[i].status_next & 0xC000) != 0 )
 		{
 			RefString = GetRefString(scrStringGlob.hashTable[i].prev);
+
 			if ( (from & RefString->user) != 0 )
 			{
 				RefString->user &= ~from;

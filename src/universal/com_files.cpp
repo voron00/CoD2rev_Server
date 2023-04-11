@@ -2329,13 +2329,14 @@ const char *FS_LoadedIwdNames()
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
-		if ( search->iwd && !search->localized )
+		// is the element a iwd file?
+		if ( !search->iwd )
+			continue;
+
+		if ( !search->localized )
 		{
 			if ( *info )
-			{
 				I_strncat( info, sizeof( info ), " " );
-			}
-
 			I_strncat( info, sizeof( info ), search->iwd->iwdBasename );
 		}
 	}
@@ -2355,19 +2356,16 @@ const char *FS_ReferencedIwdNames()
 	for ( search = fs_searchpaths ; search ; search = search->next )
 	{
 		// is the element a iwd file?
-		if ( search->iwd )
+		if ( !search->iwd )
+			continue;
+
+		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
 		{
 			if ( *info )
-			{
 				I_strncat( info, sizeof( info ), " " );
-			}
-
-			if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
-			{
-				I_strncat( info, sizeof( info ), search->iwd->iwdGamename );
-				I_strncat( info, sizeof( info ), "/" );
-				I_strncat( info, sizeof( info ), search->iwd->iwdBasename );
-			}
+			I_strncat( info, sizeof( info ), search->iwd->iwdGamename );
+			I_strncat( info, sizeof( info ), "/" );
+			I_strncat( info, sizeof( info ), search->iwd->iwdBasename );
 		}
 	}
 
@@ -2383,14 +2381,13 @@ const char *FS_ReferencedIwdChecksums()
 
 	for ( search = fs_searchpaths ; search ; search = search->next )
 	{
+		// is the element a iwd file?
 		if ( !search->iwd )
 			continue;
 
 		// is the element a iwd file and has it been referenced based on flag?
 		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
-		{
 			I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
-		}
 	}
 
 	return info;
@@ -2405,13 +2402,12 @@ const char *FS_LoadedIwdChecksums()
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
-		if ( search->iwd )
-		{
-			if ( !search->localized )
-			{
-				I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
-			}
-		}
+		// is the element a iwd file?
+		if ( !search->iwd )
+			continue;
+
+		if ( !search->localized )
+			I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
 	}
 
 	return info;
@@ -2426,13 +2422,12 @@ const char *FS_LoadedIwdPureChecksums()
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
-		if ( search->iwd )
-		{
-			if ( !search->localized )
-			{
-				I_strncat( info, sizeof( info ), va( "%i ", search->iwd->pure_checksum ) );
-			}
-		}
+		// is the element a iwd file?
+		if ( !search->iwd )
+			continue;
+
+		if ( !search->localized )
+			I_strncat( info, sizeof( info ), va( "%i ", search->iwd->pure_checksum ) );
 	}
 
 	return info;
