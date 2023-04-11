@@ -48,6 +48,26 @@ bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex)
 	return valid;
 }
 
+bool BG_DoesWeaponRequireSlot(int weaponIndex)
+{
+	int *pSlot;
+
+	pSlot = &BG_GetWeaponDef(weaponIndex)->weaponSlot;
+
+	if ( *pSlot == 1 || *pSlot == 2 )
+		return 1;
+
+	return 0;
+}
+
+bool BG_IsAnyEmptyPrimaryWeaponSlot(gclient_s *client)
+{
+	if ( !client->ps.weaponslots[1] || !client->ps.weaponslots[2] )
+		return 1;
+
+	return 0;
+}
+
 bool BG_DoesWeaponNeedSlot(int weapon)
 {
 	WeaponDef *weaponDef;

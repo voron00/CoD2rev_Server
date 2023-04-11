@@ -729,12 +729,236 @@ void Cmd_God_f(gentity_s *ent)
 
 void Cmd_Take_f(gentity_s *ent)
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	gclient_s *client;
+	int ammo;
+	int clip;
+	int amount;
+	int take_all;
+	int weaponIndex;
+	const char *amt;
+	char *name;
+
+	if ( CheatsOk(ent) )
+	{
+		amt = ConcatArgs(2);
+		amount = atoi(amt);
+		name = ConcatArgs(1);
+		if ( name )
+		{
+			if ( *name )
+			{
+				take_all = I_stricmp(name, "all") == 0;
+				if ( !take_all )
+				{
+					if ( I_strnicmp(name, "health", 6) )
+						goto take;
+				}
+				if ( amount )
+				{
+					ent->health -= amount;
+					if ( ent->health <= 0 )
+						ent->health = 1;
+				}
+				else
+				{
+					ent->health = 1;
+				}
+				if ( take_all )
+				{
+take:
+					if ( !take_all && I_stricmp(name, "weapons") )
+						goto ammo;
+					for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
+					{
+						BG_TakePlayerWeapon(&ent->client->ps, weaponIndex);
+						client = ent->client;
+						client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
+						client = ent->client;
+						client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
+					}
+					if ( ent->client->ps.weapon )
+					{
+						ent->client->ps.weapon = 0;
+						SendWeaponChangeInfo(ent - g_entities, 0);
+					}
+					if ( take_all )
+					{
+ammo:
+						if ( !take_all && I_strnicmp(name, "ammo", 4) )
+							goto allammo;
+						if ( amount )
+						{
+							if ( ent->client->ps.weapon )
+							{
+								weaponIndex = ent->client->ps.weapon;
+								client = ent->client;
+								ammo = BG_AmmoForWeapon(weaponIndex);
+								client->ps.ammo[ammo] = ent->client->ps.ammo[ammo] - amount;
+								client = ent->client;
+								if ( client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] < 0 )
+								{
+									client = ent->client;
+									clip = BG_ClipForWeapon(weaponIndex);
+									client = ent->client;
+									client->ps.ammoclip[clip] = client->ps.ammoclip[clip] + client->ps.ammo[BG_AmmoForWeapon(weaponIndex)];
+									client = ent->client;
+									client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
+									client = ent->client;
+									if ( client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] < 0 )
+									{
+										client = ent->client;
+										client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
+									}
+								}
+							}
+						}
+						else
+						{
+							for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
+							{
+								client = ent->client;
+								client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
+								client = ent->client;
+								client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
+							}
+						}
+						if ( take_all )
+						{
+allammo:
+							if ( !I_strnicmp(name, "allammo", 7) && amount )
+							{
+								for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
+								{
+									client = ent->client;
+									ammo = BG_AmmoForWeapon(weaponIndex);
+									client->ps.ammo[ammo] = ent->client->ps.ammo[ammo] - amount;
+									client = ent->client;
+									if ( client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] < 0 )
+									{
+										client = ent->client;
+										clip = BG_ClipForWeapon(weaponIndex);
+										client = ent->client;
+										client->ps.ammoclip[clip] = client->ps.ammoclip[clip] + client->ps.ammo[BG_AmmoForWeapon(weaponIndex)];
+										client = ent->client;
+										client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
+										client = ent->client;
+										if ( client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] < 0 )
+										{
+											client = ent->client;
+											client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void Cmd_Give_f(gentity_s *ent)
 {
-	UNIMPLEMENTED(__FUNCTION__);
+	int health;
+	int currentWeapon;
+	int amount;
+	gentity_s *it_ent;
+	int give_all;
+	int weaponIndex;
+	gitem_s *item;
+	const char *name;
+	char *pickupName;
+
+	if ( CheatsOk(ent) )
+	{
+		name = ConcatArgs(2);
+		amount = atoi(name);
+		pickupName = ConcatArgs(1);
+
+		if ( pickupName )
+		{
+			if ( *pickupName )
+			{
+				if ( (give_all = I_stricmp(pickupName, "all") == 0) == 0 && I_strnicmp(pickupName, "health", 6)
+				        || (!amount ? (health = ent->client->ps.stats[2]) : (health = ent->health + amount),
+				            ent->health = health,
+				            give_all) )
+				{
+					if ( !give_all && I_stricmp(pickupName, "weapons") )
+						goto ammo;
+					level.initializing = 1;
+					currentWeapon = ent->client->ps.weaponslots[2];
+					BG_TakePlayerWeapon(&ent->client->ps, ent->client->ps.weaponslots[1]);
+					BG_TakePlayerWeapon(&ent->client->ps, ent->client->ps.weaponslots[2]);
+					for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
+					{
+						if ( !BG_DoesWeaponRequireSlot(weaponIndex)
+						        || weaponIndex > currentWeapon && BG_IsAnyEmptyPrimaryWeaponSlot(ent->client) )
+						{
+							G_GivePlayerWeapon(&ent->client->ps, weaponIndex);
+						}
+					}
+					for ( weaponIndex = 1;
+					        BG_IsAnyEmptyPrimaryWeaponSlot(ent->client) && weaponIndex <= BG_GetNumWeapons();
+					        ++weaponIndex )
+					{
+						if ( BG_DoesWeaponRequireSlot(weaponIndex) )
+							G_GivePlayerWeapon(&ent->client->ps, weaponIndex);
+					}
+					level.initializing = 0;
+					if ( give_all )
+					{
+ammo:
+						if ( !give_all && I_strnicmp(pickupName, "ammo", 4) )
+							goto allammo;
+						if ( amount )
+						{
+							if ( ent->client->ps.weapon )
+								Add_Ammo(ent, ent->client->ps.weapon, amount, 1);
+						}
+						else
+						{
+							for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
+								Add_Ammo(ent, weaponIndex, 998, 1);
+						}
+						if ( give_all )
+						{
+allammo:
+							if ( I_strnicmp(pickupName, "allammo", 7) )
+								goto item;
+							if ( !amount )
+								goto item;
+							for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); Add_Ammo(ent, weaponIndex++, amount, 1) )
+								;
+							if ( give_all )
+							{
+item:
+								if ( !give_all )
+								{
+									item = G_FindItem(pickupName);
+									if ( item )
+									{
+										level.initializing = 1;
+										it_ent = G_Spawn();
+										VectorCopy(ent->r.currentOrigin, it_ent->r.currentOrigin);
+										G_GetItemClassname(item, &it_ent->classname);
+										G_SpawnItem(it_ent, item);
+										it_ent->active = 1;
+										Touch_Item(it_ent, ent, 1);
+										it_ent->active = 0;
+										if ( it_ent->r.inuse )
+											G_FreeEntity(it_ent);
+										level.initializing = 0;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void Cmd_MenuResponse_f(gentity_s *ent)

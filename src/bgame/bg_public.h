@@ -1097,6 +1097,8 @@ void BG_ShutdownWeaponDefFiles();
 int BG_GetWeaponIndexForName(const char *name, int (*regWeap)(int));
 int BG_FindWeaponIndexForName(const char *name);
 int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex);
+bool BG_DoesWeaponRequireSlot(int weaponIndex);
+bool BG_IsAnyEmptyPrimaryWeaponSlot(gclient_s *client);
 
 long BG_StringHashValue( const char *fname );
 long BG_StringHashValue_Lwr( const char *fname );

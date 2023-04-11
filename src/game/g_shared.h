@@ -1531,7 +1531,7 @@ void ClientSpawn(gentity_s *ent, const float *spawn_origin, const float *spawn_a
 void G_UpdatePlayerContents(gentity_s *ent);
 gentity_s* G_SpawnPlayerClone();
 int G_GetFreePlayerCorpseIndex();
-
+void G_GetItemClassname(const gitem_s *item, unsigned short *out);
 
 
 
