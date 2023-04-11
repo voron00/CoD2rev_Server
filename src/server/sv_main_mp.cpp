@@ -628,6 +628,7 @@ and all connected players.  Used for getting detailed information after
 the simple info query.
 ================
 */
+extern int gameInitialized;
 void SVC_Status( netadr_t from )
 {
 	int i;
@@ -653,7 +654,7 @@ void SVC_Status( netadr_t from )
 	Info_SetValueForKey( infostring, "challenge", Cmd_Argv( 1 ) );
 
 	// add "demo" to the sv_keywords if restricted
-	if ( Dvar_GetBool("fs_restrict") )
+	if ( Dvar_GetBool( "fs_restrict" ) )
 	{
 		Com_sprintf(keywords, sizeof( keywords ), "demo %s", Info_ValueForKey(infostring, "sv_keywords"));
 		Info_SetValueForKey(infostring, "sv_keywords", keywords);
@@ -667,7 +668,11 @@ void SVC_Status( netadr_t from )
 		cl = &svs.clients[i];
 		if ( cl->state >= CS_CONNECTED )
 		{
-			Com_sprintf( player, sizeof( player ), "%i %i \"%s\"\n", G_GetClientScore(cl - svs.clients), cl->ping, cl->name );
+			if ( gameInitialized )
+				Com_sprintf( player, sizeof( player ), "%i %i \"%s\"\n", G_GetClientScore(cl - svs.clients), cl->ping, cl->name );
+			else
+				Com_sprintf( player, sizeof( player ), "%i %i \"%s\"\n", 0, cl->ping, cl->name );
+
 			playerLength = strlen( player );
 			if ( statusLength + playerLength >= sizeof( status ) )
 			{
@@ -760,8 +765,11 @@ void SV_MasterHeartbeat(const char *game)
 
 			// see if we haven't already resolved the name
 			// do it when needed
-			if ( sv_master[i]->modified || !adr[i].type )
+			if ( sv_master[i]->modified )
 			{
+				if (adr[i].type == NA_BAD)
+					continue;
+
 				sv_master[i]->modified = qfalse;
 
 				Com_Printf( "Resolving %s\n", sv_master[i]->current.string );
@@ -807,8 +815,11 @@ void SV_MasterHeartbeat(const char *game)
 
 			// see if we haven't already resolved the name
 			// do it when needed
-			if ( sv_master[i]->modified || !adr[i].type )
+			if ( sv_master[i]->modified )
 			{
+				if (adr[i].type == NA_BAD)
+					continue;
+
 				sv_master[i]->modified = qfalse;
 
 				Com_Printf( "Resolving %s\n", sv_master[i]->current.string );
@@ -831,7 +842,9 @@ void SV_MasterHeartbeat(const char *game)
 			}
 
 			if (strlen(sv_master[i]->current.string))
+			{
 				SVC_Status(adr[i]);
+			}
 		}
 	}
 }

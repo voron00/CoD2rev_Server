@@ -22,29 +22,34 @@ extern bgs_t level_bgs;
 turretInfo_s turretInfo[32];
 extern char bulletPriorityMap[];
 
-qboolean turret_behind(gentity_s *self, gentity_s *other)
+qboolean turret_behind(gentity_s *self, gentity_s *player)
 {
-	float dir[3];
-	float centerYaw;
-	float minYaw;
+	float yaw;
+	float clamped;
+	float absmin;
 	float angle;
-	float forward[3];
-	turretInfo_s *pTurretInfo;
-	float yawSpan;
 	float dot;
+	float centerYaw;
+	float yawSpan;
+	float minYaw;
+	vec3_t forward;
+	vec3_t dir;
+	turretInfo_s *pTurretInfo;
 
 	pTurretInfo = self->pTurretInfo;
 	minYaw = self->r.currentAngles[1] + pTurretInfo->arcmin[1];
-	yawSpan = (float)(fabs(pTurretInfo->arcmax[1]) + fabs(pTurretInfo->arcmin[1]) * 0.5);
-	centerYaw = AngleNormalize180(minYaw + yawSpan);
+	absmin = fabs(pTurretInfo->arcmin[1]);
+	yawSpan = (fabs(pTurretInfo->arcmax[1]) + absmin) * 0.5;
+	yaw = minYaw + yawSpan;
+	centerYaw = AngleNormalize180(yaw);
 	YawVectors(centerYaw, forward, 0);
 	Vec3Normalize(forward);
-	dir[0] = self->r.currentOrigin[0] - other->r.currentOrigin[0];
-	dir[1] = self->r.currentOrigin[1] - other->r.currentOrigin[1];
+	VectorSubtract(self->r.currentOrigin, player->r.currentOrigin, dir);
 	dir[2] = 0.0;
 	Vec3Normalize(dir);
-	dot = (float)((float)(forward[0] * dir[0]) + (float)(forward[1] * dir[1])) + (float)(forward[2] * dir[2]);
-	angle = Q_acos(dot) * 57.295776;
+	dot = DotProduct(forward, dir);
+	clamped = I_fclamp(dot, -1.0, 1.0);
+	angle = Q_acos(clamped) * 57.29577951308232;
 
 	return angle <= yawSpan;
 }
