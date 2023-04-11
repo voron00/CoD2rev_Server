@@ -178,12 +178,12 @@ unsigned int GetHashCode(const char *str, unsigned int len)
 
 void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len)
 {
-	unsigned int newIndex;
 	unsigned int prev;
 	unsigned int newNext;
+	unsigned int newIndex;
 	unsigned int index;
-	HashEntry *entry;
 	HashEntry *newEntry;
+	HashEntry *entry;
 
 	index = GetHashCode(refStr->str, len);
 	entry = &scrStringGlob.hashTable[index];
@@ -211,6 +211,8 @@ void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len
 
 		while ( newEntry->prev != stringValue )
 		{
+			assert(newEntry != entry);
+
 			prev = newIndex;
 			newIndex = newEntry->status_next & 0x3FFF;
 			newEntry = &scrStringGlob.hashTable[newIndex];

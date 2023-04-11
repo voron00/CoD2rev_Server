@@ -258,10 +258,12 @@ bool MT_RemoveMemoryNode(int oldNode, int size)
 				{
 					oldNode = oldNodeValue.next;
 					*parentNode = oldNodeValue.next;
+
 					if (!oldNodeValue.next)
 					{
 						return true;
 					}
+
 					parentNode = &scrMemTreeGlob.nodes[oldNodeValue.next].next;
 				}
 
@@ -324,6 +326,8 @@ void MT_RemoveHeadMemoryNode(int size)
 				prevScore = MT_GetScore(oldNodeValue.prev);
 				nextScore = MT_GetScore(oldNodeValue.next);
 
+				assert(prevScore != nextScore);
+
 				if (prevScore >= nextScore)
 				{
 					oldNode = oldNodeValue.prev;
@@ -344,6 +348,7 @@ void MT_RemoveHeadMemoryNode(int size)
 				parentNode = &scrMemTreeGlob.nodes[oldNode].prev;
 			}
 		}
+		assert(oldNode != 0);
 
 		tempNodeValue = oldNodeValue;
 		oldNodeValue = scrMemTreeGlob.nodes[oldNode];

@@ -480,14 +480,14 @@ void SV_MapRestart(int fast_restart)
 
 			for(i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl)
 			{
-				if (cl->bot)
+				if ( cl->state < CS_CONNECTED )
 				{
-					SV_DropClient(cl, "EXE_DISCONNECTED");
 					continue;
 				}
 
-				if ( cl->state < CS_CONNECTED )
+				if (cl->bot)
 				{
+					SV_DropClient(cl, "EXE_DISCONNECTED");
 					continue;
 				}
 

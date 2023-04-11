@@ -215,10 +215,10 @@ void MakeVariableExternal(VariableValueInternal *value, VariableValueInternal *p
 {
 	VariableValue var;
 	unsigned int varIndex;
-	int nextSibling;
-	int prev;
-	int nextSiblingIndex;
-	int prevSiblingIndex;
+	unsigned int nextSibling;
+	unsigned int prev;
+	unsigned int nextSiblingIndex;
+	unsigned int prevSiblingIndex;
 	Variable hash;
 	VariableValueInternal *oldEntryValue;
 	VariableValueInternal *entryValue;
@@ -230,7 +230,7 @@ void MakeVariableExternal(VariableValueInternal *value, VariableValueInternal *p
 	index = value - scrVarGlob.variableList;
 	entryValue = &scrVarGlob.variableList[value->hash.id];
 
-	if ( (parentValue->w.status & VAR_MASK) == 22 )
+	if ( (parentValue->w.status & 0x1F) == 22 )
 	{
 		--parentValue->u.o.u.size;
 		varIndex = entryValue->w.status >> 8;
@@ -238,7 +238,7 @@ void MakeVariableExternal(VariableValueInternal *value, VariableValueInternal *p
 		RemoveRefToValue(&var);
 	}
 
-	if ( (entryValue->w.status & VAR_STAT_MASK) == 64 )
+	if ( (entryValue->w.status & 0x60) == 64 )
 	{
 		oldIndex = entryValue->v.next;
 		oldEntry = &scrVarGlob.variableList[oldIndex];
@@ -266,6 +266,7 @@ void MakeVariableExternal(VariableValueInternal *value, VariableValueInternal *p
 	{
 		oldEntry = value;
 		oldEntryValue = entryValue;
+
 		do
 		{
 			nextEntry = oldEntry;
@@ -274,6 +275,7 @@ void MakeVariableExternal(VariableValueInternal *value, VariableValueInternal *p
 			oldEntryValue = &scrVarGlob.variableList[oldEntry->hash.id];
 		}
 		while ( oldEntry != value );
+
 		scrVarGlob.variableList[nextEntry->hash.id].v.next = entryValue->v.next;
 	}
 
@@ -285,7 +287,7 @@ void MakeVariableExternal(VariableValueInternal *value, VariableValueInternal *p
 unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int name, unsigned int index)
 {
 	VariableValue value;
-	unsigned int status;
+	unsigned int type;
 	VariableValueInternal *parentValue;
 	VariableValueInternal *newEntry;
 	uint16_t next;
@@ -293,19 +295,19 @@ unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int na
 	VariableValueInternal *newEntryValue;
 	uint16_t i;
 	uint16_t nextId;
-	VariableValueInternal_u nextValue;
+	VariableValueInternal_u siblingValue;
 	VariableValueInternal *entry;
 	VariableValueInternal *entryValue;
 
 	entry = &scrVarGlob.variableList[index];
 	entryValue = &scrVarGlob.variableList[entry->hash.id];
-	status = entryValue->w.status & VAR_STAT_MASK;
+	type = entryValue->w.status & 0x60;
 
-	if ( status )
+	if ( type )
 	{
-		if ( status == 64 )
+		if ( type == 64 )
 		{
-			if ( (entry->w.status & VAR_STAT_MASK) != 0 )
+			if ( (entry->w.status & 0x60) != 0 )
 			{
 				index = scrVarGlob.variableList->u.next;
 				if ( !scrVarGlob.variableList->u.next )
@@ -324,10 +326,10 @@ unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int na
 				next = entry->v.next;
 				newEntryValue = &scrVarGlob.variableList[next];
 				newEntry = entry;
-				nextValue.next = newEntryValue->hash.u.prev;
+				siblingValue.next = newEntryValue->hash.u.prev;
 				nextId = entry->u.next;
-				scrVarGlob.variableList[scrVarGlob.variableList[nextValue.next].hash.id].u.next = nextId;
-				scrVarGlob.variableList[nextId].hash.u.prev = nextValue.next;
+				scrVarGlob.variableList[scrVarGlob.variableList[siblingValue.next].hash.id].u.next = nextId;
+				scrVarGlob.variableList[nextId].hash.u.prevSibling = siblingValue.next;
 				newEntryValue->hash.id = entry->hash.id;
 				entry->hash.id = index;
 				newEntryValue->hash.u.prev = entry->hash.u.prev;
@@ -340,7 +342,7 @@ unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int na
 		}
 		else
 		{
-			if ( (entry->w.status & VAR_STAT_MASK) != 0 )
+			if ( (entry->w.status & 0x60) != 0 )
 			{
 				next = scrVarGlob.variableList->u.next;
 				if ( !scrVarGlob.variableList->u.next )
@@ -356,20 +358,20 @@ unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int na
 				next = entry->v.next;
 				newEntryValue = &scrVarGlob.variableList[next];
 				newEntry = entry;
-				nextValue.next = newEntryValue->hash.u.prev;
+				siblingValue.next = newEntryValue->hash.u.prev;
 				nextId = entry->u.next;
-				scrVarGlob.variableList[scrVarGlob.variableList[nextValue.next].hash.id].u.next = nextId;
-				scrVarGlob.variableList[nextId].hash.u.prev = nextValue.next;
+				scrVarGlob.variableList[scrVarGlob.variableList[siblingValue.next].hash.id].u.next = nextId;
+				scrVarGlob.variableList[nextId].hash.u.prevSibling = siblingValue.next;
 			}
 
-			nextValue.o.u.size = entryValue->nextSibling;
+			siblingValue.o.u.self = entryValue->nextSibling;
 			scrVarGlob.variableList[scrVarGlob.variableList[entry->hash.u.prev].hash.id].nextSibling = next;
-			scrVarGlob.variableList[nextValue.o.u.size].hash.u.prev = next;
+			scrVarGlob.variableList[siblingValue.o.u.self].hash.u.prev = next;
 
-			if ( status == 32 )
+			if ( type == 32 )
 			{
-				nextValue.o.u.size = entryValue->v.next;
-				for ( i = scrVarGlob.variableList[nextValue.o.u.size].hash.id;
+				siblingValue.o.u.self = entryValue->v.next;
+				for ( i = scrVarGlob.variableList[siblingValue.o.u.self].hash.id;
 				        scrVarGlob.variableList[i].v.next != index;
 				        i = scrVarGlob.variableList[scrVarGlob.variableList[i].v.next].hash.id )
 				{
@@ -395,7 +397,7 @@ unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int na
 		next = entry->v.next;
 		nextId = entryValue->u.next;
 
-		if ( next == entry->hash.id || (entry->w.status & VAR_STAT_MASK) != 0 )
+		if ( next == entry->hash.id || (entry->w.status & 0x60) != 0 )
 		{
 			newEntry = entryValue;
 		}
@@ -408,18 +410,18 @@ unsigned int GetNewVariableIndexInternal3(unsigned int parentId, unsigned int na
 			newEntry = entry;
 		}
 
-		nextValue.next = entry->hash.u.prev;
-		scrVarGlob.variableList[scrVarGlob.variableList[nextValue.next].hash.id].u.next = nextId;
-		scrVarGlob.variableList[nextId].hash.u.prev = nextValue.next;
+		siblingValue.next = entry->hash.u.prev;
+		scrVarGlob.variableList[scrVarGlob.variableList[siblingValue.next].hash.id].u.next = nextId;
+		scrVarGlob.variableList[nextId].hash.u.prevSibling = siblingValue.next;
 		newEntry->w.status = 64;
 		newEntry->v.next = index;
 	}
 
-	newEntry->w.status = LOBYTE(newEntry->w.status);
-	newEntry->w.status |= name << 8;
+	newEntry->w.status = newEntry->w.status;
+	newEntry->w.name |= name << 8;
 	parentValue = &scrVarGlob.variableList[parentId];
 
-	if ( (parentValue->w.status & VAR_MASK) == 22 )
+	if ( (parentValue->w.status & 0x1F) == 22 )
 	{
 		++parentValue->u.o.u.size;
 		Scr_GetArrayIndexValue(&value, name);
@@ -745,12 +747,12 @@ void RemoveRefToObject(unsigned int id)
 	if ( entryValue->u.refCount )
 	{
 		if ( !--entryValue->u.refCount
-		        && (entryValue->w.status & VAR_MASK) == 21
+		        && (entryValue->w.status & 0x1F) == 21
 		        && scrVarGlob.variableList[entryValue->nextSibling].hash.id == id )
 		{
 			entryValue->w.status &= 0xFFFFFFE0;
 			entryValue->w.status |= 0x14u;
-			RemoveArrayVariable(scrClassMap[entryValue->w.classnum >> 8].entArrayId, entryValue->u.o.u.size);
+			RemoveArrayVariable(scrClassMap[entryValue->w.status >> 8].entArrayId, entryValue->u.o.u.size);
 		}
 	}
 	else
