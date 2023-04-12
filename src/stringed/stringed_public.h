@@ -48,6 +48,7 @@ const char *SEH_GetLanguageName(const int iLanguage);
 int SEH_StringEd_SetLanguageStrings(int iLanguage);
 void SEH_UpdateLanguageInfo();
 qboolean SEH_GetLanguageIndexForName(const char* language, int *langindex);
+void SEH_UpdateCurrentLanguage(int langindex);
 
 std::string *SE_GetString_LoadObj(const char *psPackageAndStringReference);
 char *SE_LoadLanguage(bool forceEnglish);

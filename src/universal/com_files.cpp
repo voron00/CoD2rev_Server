@@ -782,6 +782,9 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 		langindex = 0;
 		if(!I_strncmp(sorted[i], "          ", 10))
 		{
+			if (fs_ignoreLocalized->current.boolean)
+				continue;
+
 			Com_Memcpy(sorted[i],  "localized_", 10);
 			language = IwdFileLanguage(sorted[i]);
 			if ( !language[0] )
@@ -804,6 +807,7 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 				continue;
 			}
 			islocalized = qtrue;
+			SEH_UpdateCurrentLanguage(langindex);
 		}
 
 		FS_BuildOSPath(path, dir, sorted[i], iwdfile);
@@ -822,7 +826,6 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 		search->language = langindex;
 		search->next = fs_searchpaths;
 		fs_searchpaths = search;
-
 	}
 
 	Sys_FreeFileList(iwdfiles);
@@ -1754,7 +1757,7 @@ void FS_RegisterDvars()
 	fs_homepath = Dvar_RegisterString("fs_homepath", homePath, 0x1010u);
 	fs_gameDirVar = Dvar_RegisterString("fs_game", "", 0x101Cu);
 	fs_restrict = Dvar_RegisterBool("fs_restrict", 0, 0x1010u);
-	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x10A0u);
+	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x1010u);
 }
 
 void FS_ClearIwdReferences()
