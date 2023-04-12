@@ -1,12 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-extern WeaponDef *bg_weapAmmoTypes[];
-extern WeaponDef *bg_weapClips[];
-extern WeaponDef *bg_sharedAmmoCaps[];
-extern WeaponDef* bg_weaponDefs[];
-extern unsigned int bg_iNumWeapons;
-
 int BG_GetClipSize(int weaponIndex)
 {
 	return bg_weapClips[weaponIndex]->clipSize;

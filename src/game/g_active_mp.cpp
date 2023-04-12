@@ -1,9 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-extern char riflePriorityMap[];
-extern char bulletPriorityMap[];
-
 int singleClientEvents[] =
 {
 	140,

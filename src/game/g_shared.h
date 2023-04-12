@@ -865,6 +865,9 @@ struct entityHandler_t
 
 extern entityHandler_t entityHandlers[];
 
+extern char riflePriorityMap[];
+extern char bulletPriorityMap[];
+
 typedef enum
 {
 	EV_NONE,

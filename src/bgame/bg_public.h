@@ -716,6 +716,10 @@ static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!")
 extern WeaponDef* bg_weaponDefs[];
 extern unsigned int bg_iNumWeapons;
 
+extern WeaponDef *bg_weapAmmoTypes[];
+extern WeaponDef *bg_weapClips[];
+extern WeaponDef *bg_sharedAmmoCaps[];
+
 enum hitLocation_t
 {
 	HITLOC_NONE = 0x0,

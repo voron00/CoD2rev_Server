@@ -387,6 +387,7 @@ void Com_Frame(void);
 void Com_Quit_f( void );
 
 extern int com_frameTime;
+extern int com_fixedConsolePosition;
 
 qboolean SV_GameCommand();
 

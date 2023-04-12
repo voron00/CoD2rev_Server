@@ -5,7 +5,6 @@ char *g_sv_skel_memory_start;
 int g_sv_skel_warn_count;
 
 int gameInitialized;
-extern int com_fixedConsolePosition;
 
 qboolean SV_GameCommand()
 {

@@ -1,9 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-extern WeaponDef* bg_weaponDefs[];
-extern unsigned int bg_iNumWeapons;
-
 bool BG_ValidateWeaponNumber(int weaponIndex)
 {
 	if ( weaponIndex >= 0 && weaponIndex <= BG_GetNumWeapons() )

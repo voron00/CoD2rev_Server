@@ -2,7 +2,6 @@
 #include "g_shared.h"
 
 turretInfo_s turretInfo[32];
-extern char bulletPriorityMap[];
 
 qboolean turret_behind(gentity_s *self, gentity_s *player)
 {

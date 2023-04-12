@@ -1,8 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-extern char bulletPriorityMap[];
-
 gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenadeWPID, int time)
 {
 	float speed;
