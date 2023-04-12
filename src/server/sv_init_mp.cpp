@@ -73,6 +73,12 @@ dvar_t *sv_debugReliableCmds;
 dvar_t *nextmap;
 dvar_t *com_expectedHunkUsage;
 
+#if PROTOCOL_VERSION > 115
+dvar_t *sv_wwwDownload;
+dvar_t *sv_wwwBaseURL;
+dvar_t *sv_wwwDlDisconnected;
+#endif
+
 dvar_t *sv_master[MAX_MASTER_SERVERS];     // master server ip address
 
 bool SV_Loaded()
@@ -128,6 +134,12 @@ void SV_Init()
 	sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, 4096);
 	nextmap = Dvar_RegisterString("nextmap", "", 0x1000u);
 	com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7FFFFFFF, 0x1040u);
+
+#if PROTOCOL_VERSION > 115
+	sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 4097);
+	sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 4097);
+	sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 4097);
+#endif
 
 	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE);
 	sv_master[1] = Dvar_RegisterString("sv_master2", "", DVAR_ARCHIVE);

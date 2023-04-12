@@ -386,7 +386,46 @@ void SV_UserinfoChanged( client_t *cl )
 	cl->hasVoip = atoi(val) > 0;
 	if ( cl->rate < 5000 )
 		cl->hasVoip = 0;
+
+#if PROTOCOL_VERSION > 115
+	// wwwdl command
+	val = Info_ValueForKey (cl->userinfo, "cl_wwwDownload");
+	cl->wwwDownload = atoi(val) > 0;
+#endif
 }
+
+#if PROTOCOL_VERSION > 115
+extern dvar_t *sv_wwwDownload;
+extern dvar_t *sv_wwwBaseURL;
+extern dvar_t *sv_wwwDlDisconnected;
+qboolean SV_WWWRedirectClient(client_t *cl, msg_t *msg)
+{
+	int len;
+	fileHandle_t f;
+
+	len = FS_SV_FOpenFileRead(cl->downloadName, &f);
+
+	if ( len )
+	{
+		FS_FCloseFile(f);
+		I_strncpyz(cl->wwwDownloadURL, va("%s/%s", sv_wwwBaseURL->current.string, cl->downloadName), sizeof(cl->wwwDownloadURL));
+		Com_Printf("Redirecting client '%s' to %s\n", cl->name, cl->wwwDownloadURL);
+		cl->wwwDownloadStarted = 1;
+		MSG_WriteByte(msg, 5);
+		MSG_WriteShort(msg, -1);
+		MSG_WriteString(msg, cl->wwwDownloadURL);
+		MSG_WriteLong(msg, len);
+		MSG_WriteLong(msg, sv_wwwDlDisconnected->current.boolean);
+		cl->downloadName[0] = 0;
+		return qtrue;
+	}
+	else
+	{
+		Com_Printf("ERROR: Client '%s': couldn't extract file size for %s\n", cl->name, cl->downloadName);
+		return qfalse;
+	}
+}
+#endif
 
 /*
 ==================
@@ -406,8 +445,33 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	int iwdFile;
 	char errorMessage[1024];
 
+	if (cl->state == CS_ACTIVE)
+		return; // Client already in game
+
 	if (!*cl->downloadName)
 		return;	// Nothing being downloaded
+
+	if (strlen(cl->downloadName) < 4)
+		return; // File length too short
+
+	if (strcmp(&cl->downloadName[strlen(cl->downloadName) - 4], ".iwd") != 0)
+		return; // Not a iwd file
+
+#if PROTOCOL_VERSION > 115
+	if ( cl->wwwDlAck )
+		return; // wwwDl acknowleged
+#endif
+
+#if PROTOCOL_VERSION > 115
+	if (sv_wwwDownload->current.boolean && cl->wwwDownload)
+	{
+		if (!cl->wwwDl_failed)
+		{
+			SV_WWWRedirectClient(cl, msg);
+			return; // wwwDl redirect
+		}
+	}
+#endif
 
 	if (!cl->download)
 	{
@@ -515,7 +579,6 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 		}
 	}
 
-	/*
 	if (!rate)
 	{
 		blockspersnap = 1;
@@ -528,7 +591,6 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 
 	if (blockspersnap < 0)
 		blockspersnap = 1;
-	*/
 
 	blockspersnap = 1;
 
@@ -676,7 +738,7 @@ void SV_DropClient(client_s *drop, const char *reason)
 			}
 		}
 
-		if ( !I_stricmpn(reason, "EXE", 3) || !I_stricmpn(reason, "GAME", 4) )
+		if ( !I_stricmpn(reason, "EXE", 3) || !I_stricmpn(reason, "GAME", 4) || !I_stricmpn(reason, "PC", 2) )
 			SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
 		else
 			SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
@@ -1445,6 +1507,78 @@ void SV_UnmutePlayer_f(client_t *cl)
 		Com_Printf("Invalid unmute client %i\n", muteClient);
 }
 
+#if PROTOCOL_VERSION > 115
+void SV_WWWDownload_f(client_t *cl)
+{
+	const char *subcmd;
+
+	subcmd = SV_Cmd_Argv(1);
+
+	if ( !cl->wwwDownloadStarted )
+	{
+		Com_Printf("SV_WWWDownload: unexpected wwwdl '%s' for client '%s'\n", subcmd, cl->name);
+		SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
+		return;
+	}
+
+	if ( !Q_stricmp( subcmd, "ack" ) )
+	{
+		if ( cl->wwwDlAck )
+			Com_Printf("WARNING: dupe wwwdl ack from client '%s'\n", cl->name);
+
+		cl->wwwDlAck = 1;
+		return;
+	}
+
+	if ( !Q_stricmp( subcmd, "bbl8r" ) )
+	{
+		SV_DropClient(cl, "PC_PATCH_1_1_DOWNLOADDISCONNECTED");
+		return;
+	}
+
+	if ( !cl->wwwDlAck )
+	{
+		Com_Printf("SV_WWWDownload: unexpected wwwdl '%s' for client '%s'\n", subcmd, cl->name);
+		SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
+		return;
+	}
+
+	if ( !Q_stricmp( subcmd, "done" ) )
+	{
+		cl->download = 0;
+		cl->downloadName[0] = 0;
+		cl->wwwDlAck = 0;
+		return;
+	}
+
+	if ( !Q_stricmp( subcmd, "fail" ) )
+	{
+		cl->download = 0;
+		cl->downloadName[0] = 0;
+		cl->wwwDlAck = 0;
+		cl->wwwDl_failed = 1;
+		Com_Printf( "Client '%s' reported that the http download of '%s' failed, falling back to a server download\n", cl->name, cl->downloadName);
+		SV_SendClientGameState(cl);
+		return;
+	}
+
+	if ( !Q_stricmp( subcmd, "chkfail" ) )
+	{
+		Com_Printf( "WARNING: client '%s' reports that the redirect download for '%s' had wrong checksum.\n", cl->name, cl->downloadName);
+		Com_Printf("         you should check your download redirect configuration.\n");
+		cl->download = 0;
+		cl->downloadName[0] = 0;
+		cl->wwwDlAck = 0;
+		cl->wwwDl_failed = 1;
+		SV_SendClientGameState(cl);
+		return;
+	}
+
+	Com_Printf("SV_WWWDownload: unknown wwwdl subcommand '%s' for client '%s'\n", subcmd, cl->name);
+	SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
+}
+#endif
+
 typedef struct
 {
 	const char        *name;
@@ -1464,6 +1598,9 @@ ucmd_t ucmds[] =
 	{"retransdl",    SV_RetransmitDownload_f, },
 	{"muteplayer",   SV_MutePlayer_f,         },
 	{"unmuteplayer", SV_UnmutePlayer_f,       },
+#if PROTOCOL_VERSION > 115
+	{ "wwwdl",       SV_WWWDownload_f,        },
+#endif
 	{NULL, NULL}
 };
 
