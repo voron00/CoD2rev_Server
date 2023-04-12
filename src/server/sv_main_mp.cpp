@@ -745,11 +745,8 @@ void SV_MasterHeartbeat(const char *game)
 
 			// see if we haven't already resolved the name
 			// do it when needed
-			if ( sv_master[i]->modified )
+			if ( sv_master[i]->modified || !adr[i].type )
 			{
-				if (adr[i].type == NA_BAD)
-					continue;
-
 				sv_master[i]->modified = qfalse;
 
 				Com_Printf( "Resolving %s\n", sv_master[i]->current.string );
@@ -795,11 +792,8 @@ void SV_MasterHeartbeat(const char *game)
 
 			// see if we haven't already resolved the name
 			// do it when needed
-			if ( sv_master[i]->modified )
+			if ( sv_master[i]->modified || !adr[i].type )
 			{
-				if (adr[i].type == NA_BAD)
-					continue;
-
 				sv_master[i]->modified = qfalse;
 
 				Com_Printf( "Resolving %s\n", sv_master[i]->current.string );
