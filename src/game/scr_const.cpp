@@ -95,8 +95,4 @@ void GScr_LoadConsts()
 	scr_const.neck = GScr_AllocString("neck");
 	scr_const.head = GScr_AllocString("head");
 	scr_const.pelvis = GScr_AllocString("pelvis");
-
-#ifdef TESTING_LIBRARY
-	Com_Memcpy((scr_const_t *)0x087A22A0, &scr_const, sizeof(scr_const_t));
-#endif
 }

@@ -1,24 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
-extern scrVarPub_t scrVarPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrAnimPub (*((scrAnimPub_t*)( 0x08202440 )))
-#else
-extern scrAnimPub_t scrAnimPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrParserPub (*((scrParserPub_t*)( 0x08283ED4 )))
-#else
-extern scrParserPub_t scrParserPub;
-#endif
-
 qboolean Scr_IsInOpcodeMemory(const char *pos)
 {
 	return pos - scrVarPub.programBuffer < scrCompilePub.programLen;

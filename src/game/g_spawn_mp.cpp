@@ -2,26 +2,6 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define g_entities ((gentity_t*)( 0x08665480 ))
-#else
-extern gentity_t g_entities[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
-#else
-extern scr_data_t g_scr_data;
-#endif
-
-extern game_hudelem_t g_hudelems[];
-
 game_entity_field_t g_entity_fields[] =
 {
 	{ "classname", 360, 3, Scr_ReadOnlyField },
@@ -60,7 +40,6 @@ spawn_t spawns[] =
 	{ "script_origin", SP_script_origin },
 	{ "script_struct", G_FreeEntity },
 };
-
 
 void GScr_AddFieldsForEntity()
 {

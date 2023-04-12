@@ -1,39 +1,16 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-#ifdef TESTING_LIBRARY
-#define bg_weaponDefs (((WeaponDef**)( 0x08576160 )))
-#define bg_iNumWeapons (*((unsigned int*)( 0x08576140 )))
-#else
 WeaponDef* bg_weaponDefs[128];
 unsigned int bg_iNumWeapons;
-#endif
 
-#ifdef TESTING_LIBRARY
-#define bg_itemlist ((gitem_t*)( 0x08164C20 ))
-#else
-extern gitem_t bg_itemlist[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bg_weapAmmoTypes (((WeaponDef**)( 0x08576360 )))
-#define bg_weapClips (((WeaponDef**)( 0x085767A0 )))
-#define bg_sharedAmmoCaps (((WeaponDef**)( 0x08576580 )))
-#else
 WeaponDef *bg_weapAmmoTypes[128];
 WeaponDef *bg_weapClips[128];
 WeaponDef *bg_sharedAmmoCaps[128];
-#endif
 
-#ifdef TESTING_LIBRARY
-#define bg_iNumAmmoTypes (*((unsigned int*)( 0x08576560 )))
-#define bg_iNumWeapClips (*((unsigned int*)( 0x085769A0 )))
-#define bg_iNumSharedAmmoCaps (*((unsigned int*)( 0x08576780 )))
-#else
 unsigned int bg_iNumAmmoTypes;
 unsigned int bg_iNumWeapClips;
 unsigned int bg_iNumSharedAmmoCaps;
-#endif
 
 unsigned int BG_GetNumWeapons()
 {

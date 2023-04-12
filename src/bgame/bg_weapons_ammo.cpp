@@ -1,23 +1,11 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-#ifdef TESTING_LIBRARY
-#define bg_weapAmmoTypes (((WeaponDef**)( 0x08576360 )))
-#define bg_weapClips (((WeaponDef**)( 0x085767A0 )))
-#define bg_sharedAmmoCaps (((WeaponDef**)( 0x08576580 )))
-#else
 extern WeaponDef *bg_weapAmmoTypes[];
 extern WeaponDef *bg_weapClips[];
 extern WeaponDef *bg_sharedAmmoCaps[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bg_weaponDefs (((WeaponDef**)( 0x08576160 )))
-#define bg_iNumWeapons (*((unsigned int*)( 0x08576140 )))
-#else
 extern WeaponDef* bg_weaponDefs[];
 extern unsigned int bg_iNumWeapons;
-#endif
 
 int BG_GetClipSize(int weaponIndex)
 {

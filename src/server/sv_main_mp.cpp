@@ -1,25 +1,5 @@
 #include "../qcommon/qcommon.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern server_t sv;
-extern serverStatic_t svs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
-extern bgs_t *bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define dvar_modifiedFlags (*((int*)( 0x085178A8 )))
-#else
-extern int dvar_modifiedFlags;
-#endif
-
 void SV_FreeClientScriptId(client_s *cl)
 {
 	Scr_FreeValue(cl->clscriptid);

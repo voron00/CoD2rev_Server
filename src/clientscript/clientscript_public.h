@@ -133,6 +133,8 @@ typedef struct scrVarPub_s
 } scrVarPub_t;
 static_assert((sizeof(scrVarPub_t) == 0x50), "ERROR: scrVarPub_t size is invalid!");
 
+extern scrVarPub_t scrVarPub;
+
 enum var_type_t
 {
 	VAR_UNDEFINED,
@@ -161,6 +163,8 @@ enum var_type_t
 	VAR_REMOVED_THREAD,
 	VAR_COUNT
 };
+
+extern const char *var_typename[];
 
 struct function_stack_t
 {
@@ -207,6 +211,8 @@ typedef struct __attribute__((aligned(128))) scrVmPub_s
 } scrVmPub_t;
 static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
 
+extern scrVmPub_t scrVmPub;
+
 typedef struct scrVmGlob_s
 {
 	VariableValue eval_stack[2];
@@ -216,6 +222,8 @@ typedef struct scrVmGlob_s
 	unsigned int localVarsStack[2048];
 } scrVmGlob_t;
 static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
+
+extern scrVmGlob_t scrVmGlob;
 
 struct scr_animtree_t
 {
@@ -233,6 +241,8 @@ typedef struct scrAnimPub_s
 	bool animtree_loading;
 } scrAnimPub_t;
 static_assert((sizeof(scrAnimPub_t) == 0x41C), "ERROR: scrAnimPub_t size is invalid!");
+
+extern scrAnimPub_t scrAnimPub;
 
 typedef struct scrCompilePub_s
 {
@@ -300,6 +310,8 @@ typedef struct scrParserPub_s
 	const char *sourceBuf;
 } scrParserPub_t;
 static_assert((sizeof(scrParserPub_t) == 0x10), "ERROR: scrParserPub_t size is invalid!");
+
+extern scrParserPub_t scrParserPub;
 
 enum scr_opcode_t
 {

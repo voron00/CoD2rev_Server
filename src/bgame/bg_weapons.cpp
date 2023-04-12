@@ -1,13 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-#ifdef TESTING_LIBRARY
-#define bg_weaponDefs (((WeaponDef**)( 0x08576160 )))
-#define bg_iNumWeapons (*((unsigned int*)( 0x08576140 )))
-#else
 extern WeaponDef* bg_weaponDefs[];
 extern unsigned int bg_iNumWeapons;
-#endif
 
 bool BG_ValidateWeaponNumber(int weaponIndex)
 {

@@ -1,13 +1,5 @@
 #include "../qcommon/qcommon.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern server_t sv;
-extern serverStatic_t svs;
-#endif
-
 vec3_t actorLocationalMins = { -64.0, -64.0, -32.0 };
 vec3_t actorLocationalMaxs = { 64.0, 64.0, 72.0 };
 

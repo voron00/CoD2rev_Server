@@ -1,19 +1,5 @@
 #include "../qcommon/qcommon.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern serverStatic_t svs;
-extern server_t sv;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define sv_serverId_value (*((int*)( 0x0841FA88 )))
-#else
-extern int sv_serverId_value;
-#endif
-
 const char *SV_GetMapBaseName(const char *mapname)
 {
 	return FS_GetMapBaseName(mapname);
@@ -439,8 +425,6 @@ void SV_DumpUser_f(void)
 
 extern dvar_t *sv_gametype;
 extern dvar_t *sv_serverid;
-
-extern int com_frameTime;
 
 void SV_MapRestart(int fast_restart)
 {

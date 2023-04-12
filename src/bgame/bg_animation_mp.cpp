@@ -1,18 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-#ifdef TESTING_LIBRARY
-#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
-#else
-extern bgs_t level_bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
-#else
-extern scr_data_t g_scr_data;
-#endif
-
 uint16_t* controller_names[] =
 {
 	&scr_const.back_low,
@@ -182,11 +170,7 @@ static animStringItem_t animConditionLeaningStr[] =
 	{NULL, -1},
 };
 
-#ifdef TESTING_LIBRARY
-#define weaponStrings (((animStringItem_t*)( 0x08575C40 )))
-#else
 extern animStringItem_t weaponStrings[];
-#endif
 
 typedef enum
 {
@@ -215,34 +199,20 @@ static animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
 	{ ANIM_CONDTYPE_VALUE,    animConditionLeaningStr },
 };
 
-#ifdef TESTING_LIBRARY
-#define globalScriptData (*((animScriptData_t**)( 0x0855A4E4 )))
-#else
 // this is used globally within this file to reduce redundant params
 static animScriptData_t *globalScriptData = NULL;
-#endif
 
 #define MAX_ANIM_DEFINES    16
 
 static const char *globalFilename = "mp/playeranim.script";  		  // to prevent redundant params
 
-#ifdef TESTING_LIBRARY
-#define g_pLoadAnims (*((loadAnim_t**)( 0x0855D568 )))
-#define g_piNumLoadAnims (*((unsigned int**)( 0x0855D56C )))
-#else
 loadAnim_t *g_pLoadAnims;
 unsigned int *g_piNumLoadAnims;
-#endif
 
 unsigned int iNumPlayerAnims;
 
-#ifdef TESTING_LIBRARY
-#define parseMovetype (*((int*)( 0x0855D560 )))
-#define parseEvent (*((int*)( 0x0855D564 )))
-#else
 static int parseMovetype;
 static int parseEvent;
-#endif
 
 // these are used globally during script parsing
 static int numDefines[NUM_ANIM_CONDITIONS];
@@ -250,12 +220,6 @@ static char defineStrings[10000];       // stores the actual strings
 static int defineStringsOffset;
 static animStringItem_t defineStr[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES];
 static int defineBits[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES][2];
-
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
-extern bgs_t *bgs;
-#endif
 
 /*
 ================

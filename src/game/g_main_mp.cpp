@@ -1,41 +1,10 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
 level_locals_t level;
-#endif
 
-#ifdef TESTING_LIBRARY
-#define g_entities ((gentity_t*)( 0x08665480 ))
-#else
 gentity_t g_entities[MAX_GENTITIES];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_clients ((gclient_t*)( 0x086F1480 ))
-#else
 gclient_t g_clients[MAX_CLIENTS];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
-extern bgs_t *bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
-#else
-extern bgs_t level_bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
-#else
-extern scr_data_t g_scr_data;
-#endif
 
 dvar_t *g_cheats;
 dvar_t *g_gametype;

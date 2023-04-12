@@ -1,36 +1,9 @@
 #include "../qcommon/qcommon.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
 serverStatic_t svs;
 server_t sv;
-#endif
 
-#ifdef TESTING_LIBRARY
-#define sv_serverId_value (*((int*)( 0x0841FA88 )))
-#else
 int sv_serverId_value;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
-extern bgs_t *bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define com_frameTime (*((int*)( 0x0819EF40 )))
-#else
-extern int com_frameTime;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define dvar_modifiedFlags (*((int*)( 0x085178A8 )))
-#else
-extern int dvar_modifiedFlags;
-#endif
 
 dvar_t *sv_gametype;
 dvar_t *sv_mapname;
@@ -88,9 +61,8 @@ bool SV_Loaded()
 
 void SV_Init()
 {
-#ifndef TESTING_LIBRARY
 	SV_AddOperatorCommands();
-#endif
+
 	sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024u);
 	Dvar_RegisterString("sv_keywords", "", 0x1004u);
 	Dvar_RegisterInt("protocol", PROTOCOL_VERSION, PROTOCOL_VERSION, PROTOCOL_VERSION, 0x1044u);

@@ -1,20 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern serverStatic_t svs;
-extern server_t sv;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define sv_serverId_value (*((int*)( 0x0841FA88 )))
-#else
-extern int sv_serverId_value;
-#endif
-
 int SV_GetClientPing(int clientNum)
 {
 	return svs.clients[clientNum].ping;
@@ -411,7 +397,7 @@ qboolean SV_WWWRedirectClient(client_t *cl, msg_t *msg)
 		I_strncpyz(cl->wwwDownloadURL, va("%s/%s", sv_wwwBaseURL->current.string, cl->downloadName), sizeof(cl->wwwDownloadURL));
 		Com_Printf("Redirecting client '%s' to %s\n", cl->name, cl->wwwDownloadURL);
 		cl->wwwDownloadStarted = 1;
-		MSG_WriteByte(msg, 5);
+		MSG_WriteByte(msg, svc_download);
 		MSG_WriteShort(msg, -1);
 		MSG_WriteString(msg, cl->wwwDownloadURL);
 		MSG_WriteLong(msg, len);

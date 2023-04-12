@@ -3,24 +3,6 @@
 #include "../clientscript/clientscript_public.h"
 #include "../server/server.h"
 
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_entities ((gentity_t*)( 0x08665480 ))
-#else
-extern gentity_t g_entities[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
-#else
-extern scr_data_t g_scr_data;
-#endif
-
 XModel* cached_models[MAX_MODELS];
 
 const char* G_ModelName(int modelIndex)

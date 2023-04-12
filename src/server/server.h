@@ -197,6 +197,8 @@ typedef struct
 } serverStatic_t;
 //static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is invalid!");
 
+extern serverStatic_t svs;
+
 typedef enum
 {
 	SS_DEAD,
@@ -258,11 +260,15 @@ typedef struct
 } server_t;
 static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
 
+extern server_t sv;
+
 struct snapshotEntityNumbers_t
 {
 	int numSnapshotEntities;
 	int snapshotEntities[1024];
 };
+
+extern int sv_serverId_value;
 
 extern dvar_t *nextmap;
 extern dvar_t *sv_maxclients;

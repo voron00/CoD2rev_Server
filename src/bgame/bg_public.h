@@ -310,6 +310,9 @@ typedef struct __attribute__((aligned(8))) bgs_s
 } bgs_t;
 static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
 
+extern bgs_t level_bgs;
+extern bgs_t *bgs;
+
 enum weapType_t
 {
 	WEAPTYPE_BULLET = 0x0,
@@ -710,6 +713,9 @@ typedef struct
 } WeaponDef;
 static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
 
+extern WeaponDef* bg_weaponDefs[];
+extern unsigned int bg_iNumWeapons;
+
 enum hitLocation_t
 {
 	HITLOC_NONE = 0x0,
@@ -966,6 +972,8 @@ typedef struct gitem_s
 	int giAmmoIndex;
 	int giClipIndex;
 } gitem_t;
+
+extern gitem_t bg_itemlist[];
 
 #ifdef __cplusplus
 extern "C" {

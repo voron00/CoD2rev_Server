@@ -386,6 +386,8 @@ void Com_Shutdown(const char *reason);
 void Com_Frame(void);
 void Com_Quit_f( void );
 
+extern int com_frameTime;
+
 qboolean SV_GameCommand();
 
 #include "cm_public.h"

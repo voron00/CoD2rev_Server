@@ -1,17 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-#ifdef TESTING_LIBRARY
-#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
-#else
 bgs_t level_bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
 bgs_t *bgs;
-#endif
 
 dvar_t *player_view_pitch_up;
 dvar_t *player_view_pitch_down;
@@ -58,9 +49,6 @@ dvar_t *player_dmgtimer_minScale;
 dvar_t *player_dmgtimer_stumbleTime;
 dvar_t *player_dmgtimer_flinchTime;
 
-#ifdef TESTING_LIBRARY
-#define bg_itemlist ((gitem_t*)( 0x08164C20 ))
-#else
 gitem_t bg_itemlist[] =
 {
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 },
@@ -196,7 +184,6 @@ gitem_t bg_itemlist[] =
 	{ "item_health_large", "health_pickup_large", "xmodel/health_large", NULL, "icons/iconh_large", "Large Health", 50, 3, 0, 0, 0 },
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 },
 };
-#endif
 
 gitem_s* BG_FindItemForWeapon(int weapon)
 {

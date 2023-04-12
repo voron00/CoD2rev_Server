@@ -446,6 +446,8 @@ struct gclient_s
 };
 static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
 
+extern gclient_t g_clients[];
+
 struct turretInfo_s
 {
 	int inuse;
@@ -591,6 +593,8 @@ struct gentity_s
 };
 static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
 
+extern gentity_t g_entities[];
+
 typedef struct
 {
 	struct gclient_s *clients;
@@ -646,6 +650,8 @@ typedef struct
 } level_locals_t;
 static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
 
+extern level_locals_t level;
+
 enum fieldtype_t
 {
 	F_INT,
@@ -666,6 +672,8 @@ typedef struct game_hudelem_s
 	int team;
 	int archived;
 } game_hudelem_t;
+
+extern game_hudelem_t g_hudelems[];
 
 typedef struct game_hudelem_field_s
 {
@@ -742,6 +750,8 @@ typedef struct
 	int createstruct;
 	corpseInfo_t playerCorpseInfo[8];
 } scr_data_t;
+
+extern scr_data_t g_scr_data;
 
 typedef struct
 {

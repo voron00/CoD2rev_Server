@@ -2,19 +2,7 @@
 #include "cm_local.h"
 #include "../server/server.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern server_t sv;
-extern serverStatic_t svs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define cm_world (*((cm_world_t*)( 0x08185D80 )))
-#else
 cm_world_t cm_world;
-#endif
 
 unsigned short CM_AllocWorldSector(float *mins, float *maxs)
 {

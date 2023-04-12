@@ -1,24 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define scrAnimPub (*((scrAnimPub_t*)( 0x08202440 )))
-#else
-scrAnimPub_t scrAnimPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrParserPub (*((scrParserPub_t*)( 0x08283ED4 )))
-#else
-extern scrParserPub_t scrParserPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
-extern scrVarPub_t scrVarPub;
-#endif
-
 typedef struct scrAnimGlob_s
 {
 	const char *start;
@@ -28,11 +10,8 @@ typedef struct scrAnimGlob_s
 } scrAnimGlob_t;
 static_assert((sizeof(scrAnimGlob_t) == 0x20C), "ERROR: scrAnimGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define scrAnimGlob (*((scrAnimGlob_t*)( 0x08202220 )))
-#else
 scrAnimGlob_t scrAnimGlob;
-#endif
+scrAnimPub_t scrAnimPub;
 
 const char *propertyNames[] =
 {

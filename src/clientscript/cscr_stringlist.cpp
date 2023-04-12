@@ -21,11 +21,7 @@ typedef struct __attribute__((aligned(128))) scrStringGlob_s
 } scrStringGlob_t;
 static_assert((sizeof(scrStringGlob_t) == 0x10080), "ERROR: scrStringGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define scrStringGlob (*((scrStringGlob_t*)( 0x08283F00 )))
-#else
 scrStringGlob_t scrStringGlob;
-#endif
 
 RefString *GetRefString(unsigned int stringValue)
 {

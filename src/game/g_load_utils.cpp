@@ -1,20 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern serverStatic_t svs;
-extern server_t sv;
-#endif
-
 unsigned int G_NewString(const char *string)
 {
 	size_t len;

@@ -2,41 +2,7 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
-#else
 scr_data_t g_scr_data;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_entities ((gentity_t*)( 0x08665480 ))
-#else
-extern gentity_t g_entities[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bg_itemlist ((gitem_t*)( 0x08164C20 ))
-#else
-extern gitem_t bg_itemlist[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
-extern bgs_t *bgs;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
-#else
-extern bgs_t level_bgs;
-#endif
 
 scr_function_t functions[] =
 {

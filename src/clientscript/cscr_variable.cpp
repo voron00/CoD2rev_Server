@@ -9,17 +9,8 @@ typedef struct __attribute__((aligned(64))) scrVarGlob_s
 } scrVarGlob_t;
 static_assert((sizeof(scrVarGlob_t) == 0x100000), "ERROR: scrVarGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define scrVarGlob (*((scrVarGlob_t*)( 0x08294000 )))
-#else
 scrVarGlob_t scrVarGlob;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
 scrVarPub_t scrVarPub;
-#endif
 
 #define VAR_MASK 0x1F
 #define VAR_NAME_HIGH_MASK 0xFFFFFF00
@@ -69,9 +60,6 @@ struct scr_classStruct_t
 	const char *name;
 };
 
-#ifdef TESTING_LIBRARY
-#define scrClassMap (((scr_classStruct_t*)( 0x0815AB80 )))
-#else
 struct scr_classStruct_t scrClassMap[] =
 {
 	{ 0u, 0u, 'e', "entity" },
@@ -79,7 +67,6 @@ struct scr_classStruct_t scrClassMap[] =
 	{ 0u, 0u, 'p', "pathnode" },
 	{ 0u, 0u, 'v', "vehiclenode" }
 };
-#endif
 
 #define CLASS_NUM_COUNT 4
 

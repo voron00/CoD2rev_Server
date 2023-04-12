@@ -1,24 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define scrVmPub (*((scrVmPub_t*)( 0x083D7600 )))
-#else
-extern scrVmPub_t scrVmPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrVmGlob (*((scrVmGlob_t*)( 0x083D5580 )))
-#else
-extern scrVmGlob_t scrVmGlob;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
-extern scrVarPub_t scrVarPub;
-#endif
-
 int g_script_error_level;
 jmp_buf g_script_error[33];
 

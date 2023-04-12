@@ -1,18 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_scr_data (*(scr_data_t*)( 0x0879C780 ))
-#else
-extern scr_data_t g_scr_data;
-#endif
-
 int G_GetPlayerCorpseIndex(gentity_s *ent)
 {
 	int i;

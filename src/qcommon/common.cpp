@@ -6,12 +6,6 @@
 #include "../universal/universal_public.h"
 #include "../xanim/xanim_public.h"
 
-#ifdef TESTING_LIBRARY
-#define dvar_modifiedFlags (*((int*)( 0x085178A8 )))
-#else
-extern int dvar_modifiedFlags;
-#endif
-
 dvar_t *com_dedicated;
 dvar_t *com_maxfps;
 dvar_t *com_developer;
@@ -566,15 +560,6 @@ void Com_Error(errorParm_t code, const char *format, ...)
 	{
 		com_fixedConsolePosition = 0;
 	}
-
-// !!! REMOVE ME WHEN COMPLETE
-#ifdef TESTING_LIBRARY
-	if (code == ERR_FATAL)
-		Sys_Error("%s", com_errorMessage);
-	else
-		Com_Printf("!!! ERROR !!! %s\n", com_errorMessage);
-	return;
-#endif
 
 	com_errorType = code;
 	abortframe = (jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR);

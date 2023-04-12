@@ -1,14 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern server_t sv;
-extern serverStatic_t svs;
-#endif
-
 void SV_Netchan_AddOOBProfilePacket(int iLength)
 {
 	if ( net_profile->current.integer )

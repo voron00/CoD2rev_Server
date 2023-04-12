@@ -1,30 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_entities ((gentity_t*)( 0x08665480 ))
-#else
-extern gentity_t g_entities[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define g_clients ((gclient_t*)( 0x086F1480 ))
-#else
-extern gclient_t g_clients[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define level_bgs (*((bgs_t*)( 0x0859EA40 )))
-#else
-extern bgs_t level_bgs;
-#endif
-
 void SetClientViewAngle(gentity_s *ent, const float *angle)
 {
 	float direction;

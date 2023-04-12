@@ -1,31 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
-extern scrVarPub_t scrVarPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrAnimPub (*((scrAnimPub_t*)( 0x08202440 )))
-#else
-extern scrAnimPub_t scrAnimPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrVmPub (*((scrVmPub_t*)( 0x083D7600 )))
-#else
-scrVmPub_t scrVmPub;
-#endif
-
-extern const char *var_typename[];
-
-#ifdef TESTING_LIBRARY
-#define scrVmGlob (*((scrVmGlob_t*)( 0x083D5580 )))
-#else
 scrVmGlob_t scrVmGlob;
-#endif
+scrVmPub_t scrVmPub;
 
 qboolean Scr_IsSystemActive()
 {

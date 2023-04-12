@@ -1,13 +1,5 @@
 #include "../qcommon/qcommon.h"
 
-#ifdef TESTING_LIBRARY
-#define svs (*((serverStatic_t*)( 0x0841FB00 )))
-#define sv (*((server_t*)( 0x0842BC80 )))
-#else
-extern server_t sv;
-extern serverStatic_t svs;
-#endif
-
 char g_sv_skel_memory[262144];
 char *g_sv_skel_memory_start;
 int g_sv_skel_warn_count;

@@ -3,24 +3,6 @@
 
 scrCompilePub_t scrCompilePub;
 
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
-extern scrVarPub_t scrVarPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrAnimPub (*((scrAnimPub_t*)( 0x08202440 )))
-#else
-extern scrAnimPub_t scrAnimPub;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrParserPub (*((scrParserPub_t*)( 0x08283ED4 )))
-#else
-extern scrParserPub_t scrParserPub;
-#endif
-
 struct CaseStatementInfo
 {
 	unsigned int name;
@@ -80,11 +62,7 @@ typedef struct scrCompileGlob_s
 } scrCompileGlob_t;
 static_assert((sizeof(scrCompileGlob_t) == 0x1D8), "ERROR: scrCompileGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define scrCompileGlob (*((scrCompileGlob_t*)( 0x08202860 )))
-#else
 scrCompileGlob_t scrCompileGlob;
-#endif
 
 int GetExpressionCount(sval_u exprlist)
 {

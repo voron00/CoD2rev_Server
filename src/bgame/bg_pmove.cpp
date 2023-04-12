@@ -1,12 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-#ifdef TESTING_LIBRARY
-#define bgs (*((bgs_t**)( 0x0855A4E0 )))
-#else
-extern bgs_t *bgs;
-#endif
-
 pmoveHandler_t pmoveHandlers[] =
 {
 	{ NULL, NULL, NULL },

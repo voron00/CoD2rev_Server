@@ -24,13 +24,8 @@ typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
 } scrMemTreeGlob_t;
 static_assert((sizeof(scrMemTreeGlob_t) == 0x80380), "ERROR: scrMemTreeGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define scrMemTreeGlob (*((scrMemTreeGlob_t*)( 0x08203B00 )))
-#define scrMemTreePub (*((scrMemTreeGlob_t**)( 0x08283E80 )))
-#else
 scrMemTreeGlob_t scrMemTreeGlob;
 scrMemTreeGlob_t *scrMemTreePub;
-#endif
 
 int Scr_GetStringUsage()
 {

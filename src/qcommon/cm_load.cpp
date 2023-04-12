@@ -96,11 +96,6 @@ void CM_LoadMap(const char *name, int *checksum)
 	CM_LoadMapData(name);
 	CM_InitAllThreadData();
 	*checksum = cm.checksum;
-
-#ifdef TESTING_LIBRARY
-	Com_Memcpy((clipMap_t *)0x08185BE0, &cm, sizeof(clipMap_t));
-	Com_Memcpy((clipMapExtra_t *)0x08185CF4, &cme, sizeof(clipMapExtra_t));
-#endif
 }
 
 void CM_Shutdown()

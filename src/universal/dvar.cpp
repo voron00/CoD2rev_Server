@@ -8,12 +8,7 @@ static dvar_t* dvarHashTable[FILE_HASH_SIZE];
 dvar_t *dvar_cheats;
 static qboolean isDvarSystemActive;
 qboolean isLoadingAutoExecGlobalFlag;
-
-#ifdef TESTING_LIBRARY
-#define dvar_modifiedFlags (*((int*)( 0x085178A8 )))
-#else
 int dvar_modifiedFlags;
-#endif
 
 static long generateHashValue( const char *fname )
 {

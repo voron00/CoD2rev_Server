@@ -1,12 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define scrVarPub (*((scrVarPub_t*)( 0x08394000 )))
-#else
-extern scrVarPub_t scrVarPub;
-#endif
-
 typedef struct scrParserGlob_s
 {
 	struct OpcodeLookup *opcodeLookup;
@@ -25,17 +19,8 @@ typedef struct scrParserGlob_s
 } scrParserGlob_t;
 static_assert((sizeof(scrParserGlob_t) == 0x34), "ERROR: scrParserGlob_t size is invalid!");
 
-#ifdef TESTING_LIBRARY
-#define scrParserGlob (*((scrParserGlob_t*)( 0x08283EA0 )))
-#else
 scrParserGlob_t scrParserGlob;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define scrParserPub (*((scrParserPub_t*)( 0x08283ED4 )))
-#else
 scrParserPub_t scrParserPub;
-#endif
 
 char g_EndPos;
 

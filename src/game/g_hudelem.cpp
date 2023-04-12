@@ -2,12 +2,6 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
 game_hudelem_t g_hudelems[1024];
 
 game_hudelem_field_t g_hudelem_fields[] =

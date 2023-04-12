@@ -1,26 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-#ifdef TESTING_LIBRARY
-#define g_entities ((gentity_t*)( 0x08665480 ))
-#else
-extern gentity_t g_entities[];
-#endif
-
-#ifdef TESTING_LIBRARY
-#define level (*((level_locals_t*)( 0x0859B400 )))
-#else
-extern level_locals_t level;
-#endif
-
-#ifdef TESTING_LIBRARY
-#define bg_weaponDefs (((WeaponDef**)( 0x08576160 )))
-#define bg_iNumWeapons (*((unsigned int*)( 0x08576140 )))
-#else
-extern WeaponDef* bg_weaponDefs[];
-extern unsigned int bg_iNumWeapons;
-#endif
-
 vec2_t traceOffsets[] =
 {
 	{ 0.000000, 0.000000},
