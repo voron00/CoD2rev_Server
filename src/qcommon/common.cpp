@@ -742,7 +742,7 @@ int Com_HashKey( const char *string, int maxlen )
 
 void Com_InitDvars()
 {
-	com_dedicated = Dvar_RegisterInt("dedicated", 2, 0, 2, 0x1040u);
+	com_dedicated = Dvar_RegisterInt("dedicated", 2, 1, 2, 0x1020u);
 	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001u);
 	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000u);
 	com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000u);
@@ -1162,7 +1162,7 @@ void Com_Frame( void )
 
 void Com_SetCinematic()
 {
-	if ( !com_dedicated->current.boolean && !com_introPlayed->current.boolean )
+	if ( !com_dedicated->current.integer && !com_introPlayed->current.boolean )
 	{
 		Cbuf_AddText("cinematic atvi\n");
 		Dvar_SetString(nextmap, "cinematic IW_logo; set nextmap cinematic cod_intro");
