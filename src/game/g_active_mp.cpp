@@ -68,8 +68,16 @@ qboolean G_UpdateClientInfo(gentity_s *ent)
 	return updated;
 }
 
+#ifdef LIBCOD
+extern dvar_t *g_playerCollision;
+#endif
+
 void G_UpdatePlayerContents(gentity_s *ent)
 {
+#ifdef LIBCOD
+	if (!g_playerCollision->current.boolean)
+		return;
+#endif
 	if ( ent->client->noclip )
 	{
 		ent->r.contents = 0;
@@ -90,10 +98,12 @@ void G_UpdatePlayerContents(gentity_s *ent)
 
 void G_PlayerEvent(int clientNum, int event)
 {
+#ifndef DEDICATED // VoroN: this code runs on client only. Running it on server breaks bots aim.
 	vec3_t kickAVel;
 
 	if ( event >= EV_FIRE_WEAPON && (event <= EV_FIRE_WEAPON_LASTSHOT || event == EV_FIRE_WEAPON_MG42) )
 		BG_WeaponFireRecoil(&g_entities[clientNum].client->ps, g_entities[clientNum].client->recoilSpeed, kickAVel);
+#endif
 }
 
 void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap)
@@ -478,16 +488,17 @@ void ClientIntermissionThink(gentity_s *ent)
 
 qboolean G_ClientCanSpectateTeam(gclient_s *client, int team)
 {
-	return ((unsigned char)(client->sess.noSpectate >> team) ^ 1) & 1;
+	return (client->sess.noSpectate & (1 << team)) == 0;
 }
 
 void SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
 {
 	gclient_s *client;
-	pmove_t pmove;
+	pmove_t pm;
 
 	client = ent->client;
 	client->oldbuttons = client->buttons;
+
 	client->buttons = client->sess.cmd.buttons;
 	client->buttonsSinceLastFrame |= client->buttons & ~client->oldbuttons;
 
@@ -499,7 +510,7 @@ void SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
 		StopFollowing(ent);
 	}
 
-	if ( (client->buttons & 1) != 0 && ((LOBYTE(client->oldbuttons) ^ 1) & 1) != 0 )
+	if ( (client->buttons & 1) != 0 && (client->oldbuttons & 1) == 0 )
 	{
 		Cmd_FollowCycle_f(ent, 1);
 	}
@@ -507,6 +518,7 @@ void SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
 	{
 		Cmd_FollowCycle_f(ent, -1);
 	}
+
 	if ( (client->ps.pm_flags & 0x400000) == 0 )
 	{
 		client->ps.pm_type = 4;
@@ -516,12 +528,12 @@ void SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
 		else
 			client->ps.speed = 0;
 
-		memset(&pmove, 0, sizeof(pmove));
-		pmove.ps = &client->ps;
-		pmove.cmd = *ucmd;
-		pmove.tracemask = 8390673;
-		pmove.handler = 1;
-		Pmove(&pmove);
+		memset(&pm, 0, sizeof(pm));
+		pm.ps = &client->ps;
+		memcpy(&pm.cmd, ucmd, sizeof(pm.cmd));
+		pm.tracemask = 8390673;
+		pm.handler = 1;
+		Pmove(&pm);
 		VectorCopy(client->ps.origin, ent->r.currentOrigin);
 		SV_UnlinkEntity(ent);
 	}
@@ -544,7 +556,7 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 	viewState_t vs;
 	int frametime;
 	int eventSequence;
-	pmove_t pmove;
+	pmove_t pm;
 	gclient_s *client;
 
 	client = ent->client;
@@ -582,17 +594,17 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 			else if ( ClientInactivityTimer(client) )
 			{
 				eventSequence = client->ps.eventSequence;
-				memset(&pmove, 0, sizeof(pmove));
-				pmove.ps = &client->ps;
-				pmove.cmd = *ucmd;
-				pmove.oldcmd = client->sess.oldcmd;
+				memset(&pm, 0, sizeof(pm));
+				pm.ps = &client->ps;
+				memcpy(&pm.cmd, ucmd, sizeof(pm.cmd));
+				pm.oldcmd = client->sess.oldcmd;
 
 				if ( client->ps.pm_type <= 5 )
-					pmove.tracemask = 42008593;
+					pm.tracemask = 42008593;
 				else
-					pmove.tracemask = 8454161;
+					pm.tracemask = 8454161;
 
-				pmove.handler = 1;
+				pm.handler = 1;
 				VectorCopy(client->ps.origin, client->oldOrigin);
 
 				client->oldbuttons = client->buttons;
@@ -670,10 +682,10 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 				client->fGunPitch = viewangles[0];
 				client->fGunYaw = viewangles[1];
 
-				Pmove(&pmove);
+				Pmove(&pm);
 
-				if ( pmove.mantleStarted )
-					G_AddPlayerMantleBlockage(pmove.mantleEndPos, pmove.mantleDuration, &pmove);
+				if ( pm.mantleStarted )
+					G_AddPlayerMantleBlockage(pm.mantleEndPos, pm.mantleDuration, &pm);
 
 				ent->s.animMovetype = (ent->client->ps.pm_flags & 2) != 0;
 
@@ -689,8 +701,8 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 					BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, 1, 1);
 
 				VectorCopy(ent->s.pos.trBase, ent->r.currentOrigin);
-				VectorCopy(pmove.mins, ent->r.mins);
-				VectorCopy(pmove.maxs, ent->r.maxs);
+				VectorCopy(pm.mins, ent->r.mins);
+				VectorCopy(pm.maxs, ent->r.maxs);
 				ClientEvents(ent, eventSequence);
 				SV_LinkEntity(ent);
 
@@ -700,7 +712,7 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 				VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
 				VectorClear(ent->r.currentAngles);
 				ent->r.currentAngles[1] = ent->client->ps.viewangles[1];
-				ClientImpacts(ent, &pmove);
+				ClientImpacts(ent, &pm);
 
 				if ( ent->client->ps.eventSequence != eventSequence )
 					ent->eventTime = level.time;
@@ -1017,6 +1029,10 @@ update:
 	}
 }
 
+#ifdef LIBCOD
+extern dvar_t *g_playerEject;
+#endif
+
 extern dvar_t *g_playerCollisionEjectSpeed;
 int StuckInClient(gentity_s *self)
 {
@@ -1031,6 +1047,11 @@ int StuckInClient(gentity_s *self)
 	float hitSpeed;
 	float vDelta[2];
 	int iPushTime;
+
+#ifdef LIBCOD
+	if (!g_playerEject->current.boolean)
+		return 0;
+#endif
 
 	iPushTime = 300;
 
@@ -1123,6 +1144,11 @@ int StuckInClient(gentity_s *self)
 	return 1;
 }
 
+#if COMPILE_PLAYER == 1
+int player_g_speed[MAX_CLIENTS] = {0};
+int player_g_gravity[MAX_CLIENTS] = {0};
+#endif
+
 extern dvar_t *g_gravity;
 extern dvar_t *g_speed;
 extern dvar_t *g_debugLocDamage;
@@ -1198,6 +1224,14 @@ void ClientEndFrame(gentity_s *entity)
 
 			client->ps.gravity = (int)g_gravity->current.decimal;
 			client->ps.speed = g_speed->current.integer;
+#if COMPILE_PLAYER == 1
+			int num = client->ps.clientNum;
+			if (player_g_gravity[num] > 0)
+				client->ps.gravity = player_g_gravity[num];
+
+			if (player_g_speed[num] > 0)
+				client->ps.speed = player_g_speed[num];
+#endif
 			client->currentAimSpreadScale = client->ps.aimSpreadScale / 255.0;
 
 			Player_UpdateLookAtEntity(entity);

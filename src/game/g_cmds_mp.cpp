@@ -225,6 +225,7 @@ int Cmd_FollowCycle_f(gentity_s *ent, int dir)
 	do
 	{
 		clientNum += dir;
+
 		if ( clientNum >= level.maxclients )
 			clientNum = 0;
 

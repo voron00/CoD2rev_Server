@@ -446,6 +446,9 @@ void SV_MapRestart(int fast_restart)
 	{
 		if ( com_frameTime != sv.start_frameTime )
 		{
+#if COMPILE_SQLITE == 1
+			free_sqlite_db_stores_and_tasks();
+#endif
 			Dvar_ResetScriptInfo();
 			SV_InitArchivedSnapshot();
 			svs.snapFlagServerBit ^= 4u;

@@ -4,7 +4,7 @@ CXX = g++
 NASM = nasm
 WINDRES=windres
 CFLAGS=-m32 -std=gnu++11
-CFLAGS_ZLIB=-m32
+CFLAGS_LIBS=-m32
 LFLAGS=-m32 -no-pie
 
 ifeq ($(OS),Windows_NT)
@@ -35,6 +35,7 @@ SRC_DIR=src
 LINUX_DIR=$(SRC_DIR)/unix
 WIN32_DIR=$(SRC_DIR)/win32
 ZLIB_DIR=$(SRC_DIR)/zlib
+SQLITE_DIR=$(SRC_DIR)/sqlite
 
 # Source dirs
 BOTLIB_DIR=$(SRC_DIR)/botlib
@@ -42,6 +43,7 @@ CLIENTSCR_DIR=$(SRC_DIR)/clientscript
 GAME_DIR=$(SRC_DIR)/game
 BGAME_DIR=$(SRC_DIR)/bgame
 CGAME_DIR=$(SRC_DIR)/cgame
+LIBCOD_DIR=$(SRC_DIR)/libcod
 QCOMMON_DIR=$(SRC_DIR)/qcommon
 SERVER_DIR=$(SRC_DIR)/server
 STRINGED_DIR=$(SRC_DIR)/stringed
@@ -57,6 +59,7 @@ CLIENTSCR_SOURCES=$(wildcard $(CLIENTSCR_DIR)/*.cpp)
 GAME_SOURCES=$(wildcard $(GAME_DIR)/*.cpp)
 BGAME_SOURCES=$(wildcard $(BGAME_DIR)/*.cpp)
 CGAME_SOURCES=$(wildcard $(CGAME_DIR)/*.cpp)
+LIBCOD_SOURCES=$(wildcard $(LIBCOD_DIR)/*.cpp)
 QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/*.cpp)
 SERVER_SOURCES=$(wildcard $(SERVER_DIR)/*.cpp)
 STRINGED_SOURCES=$(wildcard $(STRINGED_DIR)/*.cpp)
@@ -66,6 +69,7 @@ LINUX_SOURCES=$(wildcard $(LINUX_DIR)/*.cpp)
 WIN32_SOURCES=$(wildcard $(WIN32_DIR)/*.cpp)
 WIN32_RESOURCES=$(wildcard $(WIN32_DIR)/*.rc)
 ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
+SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
 
 # ASM files
 ASM_BOTLIB_SOURCES=$(wildcard $(BOTLIB_DIR)/asm/*.asm)
@@ -73,6 +77,7 @@ ASM_CLIENTSCR_SOURCES=$(wildcard $(CLIENTSCR_DIR)/asm/*.asm)
 ASM_GAME_SOURCES=$(wildcard $(GAME_DIR)/asm/*.asm)
 ASM_BGAME_SOURCES=$(wildcard $(BGAME_DIR)/asm/*.asm)
 ASM_CGAME_SOURCES=$(wildcard $(CGAME_DIR)/asm/*.asm)
+ASM_LIBCOD_SOURCES=$(wildcard $(LIBCOD_DIR)/asm/*.asm)
 ASM_QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/asm/*.asm)
 ASM_SERVER_SOURCES=$(wildcard $(SERVER_DIR)/asm/*.asm)
 ASM_STRINGED_SOURCES=$(wildcard $(STRINGED_DIR)/asm/*.asm)
@@ -85,6 +90,7 @@ CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CLIENTSCR_SOURC
 GAME_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(GAME_SOURCES))
 BGAME_OBJ=$(patsubst $(BGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BGAME_SOURCES))
 CGAME_OBJ=$(patsubst $(CGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CGAME_SOURCES))
+LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LIBCOD_SOURCES))
 QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
 SERVER_OBJ=$(patsubst $(SERVER_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SERVER_SOURCES))
 STRINGED_OBJ=$(patsubst $(STRINGED_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(STRINGED_SOURCES))
@@ -97,6 +103,7 @@ ASM_CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_CLI
 ASM_GAME_OBJ=$(patsubst $(GAME_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_GAME_SOURCES))
 ASM_BGAME_OBJ=$(patsubst $(BGAME_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_BGAME_SOURCES))
 ASM_CGAME_OBJ=$(patsubst $(CGAME_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_CGAME_SOURCES))
+ASM_LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_LIBCOD_SOURCES))
 ASM_QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_QCOMMON_SOURCES))
 ASM_SERVER_OBJ=$(patsubst $(SERVER_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_SERVER_SOURCES))
 ASM_STRINGED_OBJ=$(patsubst $(STRINGED_DIR)/asm/%.asm,$(OBJ_DIR)/%.o,$(ASM_STRINGED_SOURCES))
@@ -111,14 +118,15 @@ else
 LINUX_OBJ=$(patsubst $(LINUX_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LINUX_SOURCES))
 endif
 ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
+SQLITE_OBJ=$(patsubst $(SQLITE_DIR)/%.c,$(OBJ_DIR)/%.o,$(SQLITE_SOURCES))
 
 # Default rule.
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
-	$(ASM_BOTLIB_OBJ) $(ASM_CLIENTSCR_OBJ) $(ASM_GAME_OBJ) $(ASM_BGAME_OBJ) $(ASM_CGAME_OBJ) \
+	$(ASM_BOTLIB_OBJ) $(ASM_CLIENTSCR_OBJ) $(ASM_GAME_OBJ) $(ASM_BGAME_OBJ) $(ASM_CGAME_OBJ) $(ASM_LIBCOD_OBJ) \
 	$(ASM_QCOMMON_OBJ) $(ASM_SERVER_OBJ) $(ASM_STRINGED_OBJ) $(ASM_UNIVERSAL_OBJ) $(ASM_XANIM_OBJ) \
-	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(BGAME_OBJ) $(CGAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
-	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ)
+	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(BGAME_OBJ) $(CGAME_OBJ) $(LIBCOD_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
+	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(SQLITE_OBJ)
 	$(CXX) $(LFLAGS) -o $@ $^ $(LLIBS)
 
 ifeq ($(OS),Windows_NT)
@@ -157,6 +165,11 @@ $(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
 
 # A rule to build cgame source code.
 $(OBJ_DIR)/%.o: $(CGAME_DIR)/%.cpp
+	@echo $(CXX)  $@
+	@$(CXX) -c $(CFLAGS) -o $@ $<
+
+# A rule to build libcod source code.
+$(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
 	@echo $(CXX)  $@
 	@$(CXX) -c $(CFLAGS) -o $@ $<
 
@@ -203,7 +216,12 @@ $(OBJ_DIR)/%.res: $(WIN32_DIR)/%.rc
 # A rule to build zlib source code.
 $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS_ZLIB) -o $@ $<
+	@$(CC) -c $(CFLAGS_LIBS) -o $@ $<
+
+# A rule to build sqlite source code.
+$(OBJ_DIR)/%.o: $(SQLITE_DIR)/%.c
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS_LIBS) -o $@ $<
 
 
 # Build ASM sources
@@ -231,6 +249,11 @@ $(OBJ_DIR)/%.o: $(BGAME_DIR)/asm/%.asm
 
 # A rule to build cgame source code.
 $(OBJ_DIR)/%.o: $(CGAME_DIR)/asm/%.asm
+	@echo $(NASM) $@
+	@$(NASM) $(NASMFLAGS) $< -o $@
+
+# A rule to build libcod source code.
+$(OBJ_DIR)/%.o: $(LIBCOD_DIR)/asm/%.asm
 	@echo $(NASM) $@
 	@$(NASM) $(NASMFLAGS) $< -o $@
 

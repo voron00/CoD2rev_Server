@@ -2362,7 +2362,7 @@ const char *FS_ReferencedIwdNames()
 		if ( !search->iwd )
 			continue;
 
-		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
+		if ( search->iwd->referenced )
 		{
 			if ( *info )
 				I_strncat( info, sizeof( info ), " " );
@@ -2389,7 +2389,7 @@ const char *FS_ReferencedIwdChecksums()
 			continue;
 
 		// is the element a iwd file and has it been referenced based on flag?
-		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
+		if ( search->iwd->referenced )
 			I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
 	}
 

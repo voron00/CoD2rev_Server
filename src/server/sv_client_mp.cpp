@@ -181,6 +181,10 @@ qboolean SV_IsTempBannedGuid(int guid)
 	return 0;
 }
 
+#ifdef LIBCOD
+extern dvar_t *sv_cracked;
+#endif
+
 void SV_AuthorizeIpPacket( netadr_t from )
 {
 	int challenge;
@@ -216,6 +220,14 @@ void SV_AuthorizeIpPacket( netadr_t from )
 
 	s = SV_Cmd_Argv( 2 );
 	r = SV_Cmd_Argv( 3 );
+
+#ifdef LIBCOD
+	if (sv_cracked->current.boolean)
+	{
+		s = "accept";
+		//r = "";
+	}
+#endif
 
 	if ( !Q_stricmp( s, "demo" ) )
 	{
@@ -743,7 +755,7 @@ void SV_DropClient(client_s *drop, const char *reason)
 
 void SV_ClientThink(client_s *cl, usercmd_s *cmd)
 {
-	cl->lastUsercmd = *cmd;
+	memcpy(&cl->lastUsercmd, cmd, sizeof(cl->lastUsercmd));
 
 	if ( cl->state == CS_ACTIVE )
 	{
@@ -768,6 +780,13 @@ void SV_ClientEnterWorld(client_s *client, usercmd_s *cmd)
 	client->lastUsercmd = *cmd;
 	ClientBegin(client - svs.clients);
 }
+
+#if COMPILE_PLAYER == 1
+int clientfps[MAX_CLIENTS] = {0};
+int clientframes[MAX_CLIENTS] = {0};
+uint64_t clientframetime[MAX_CLIENTS] = {0};
+int previousbuttons[MAX_CLIENTS] = {0};
+#endif
 
 /*
 ==================
@@ -862,15 +881,81 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 	for ( i =  0 ; i < cmdCount ; i++ )
 	{
 		// if this is a cmd from before a map_restart ignore it
-		if ( cmds[i].serverTime > cmds[cmdCount - 1].serverTime )
+		if ( cmds[i].serverTime > cmds[cmdCount-1].serverTime )
 		{
 			continue;
 		}
-
-		SV_ClientThink( cl, &cmds[ i ] );
+		// extremely lagged or cmd from before a map_restart
+		//if ( cmds[i].serverTime > svs.time + 3000 ) {
+		//	continue;
+		//}
+		// don't execute if this is an old cmd which is already executed
+		// these old cmds are included when cl_packetdup > 0
+		if ( cmds[i].serverTime <= cl->lastUsercmd.serverTime )
+		{
+			continue;
+		}
+		SV_ClientThink(cl, &cmds[ i ]);
 	}
+
+#if COMPILE_PLAYER == 1
+	int clientnum = cl - svs.clients;
+
+	clientframes[clientnum]++;
+
+	if (Sys_Milliseconds64() - clientframetime[clientnum] >= 1000)
+	{
+		if (clientframes[clientnum] > 1000)
+			clientframes[clientnum] = 1000;
+
+		clientfps[clientnum] = clientframes[clientnum];
+		clientframetime[clientnum] = Sys_Milliseconds64();
+		clientframes[clientnum] = 0;
+	}
+#endif
 }
 
+#if COMPILE_BOTS == 1
+int bot_buttons[MAX_CLIENTS] = {0};
+int bot_weapon[MAX_CLIENTS] = {0};
+char bot_forwardmove[MAX_CLIENTS] = {0};
+char bot_rightmove[MAX_CLIENTS] = {0};
+void SV_BotUserMove(client_t *client)
+{
+	int num;
+	usercmd_t ucmd = {0};
+
+	if (client->gentity == NULL)
+		return;
+
+	num = client - svs.clients;
+	ucmd.serverTime = svs.time;
+
+	playerState_t *ps = SV_GameClientNum(num);
+	gentity_t *ent = SV_GentityNum(num);
+
+	if (bot_weapon[num])
+		ucmd.weapon = (byte)(bot_weapon[num] & 0xFF);
+	else
+		ucmd.weapon = (byte)(ps->weapon & 0xFF);
+
+	if (ent->client == NULL)
+		return;
+
+	if (ent->client->sess.archiveTime == 0)
+	{
+		ucmd.buttons = bot_buttons[num];
+
+		ucmd.forwardmove = bot_forwardmove[num];
+		ucmd.rightmove = bot_rightmove[num];
+
+		VectorCopy(ent->client->sess.cmd.angles, ucmd.angles);
+	}
+
+	client->deltaMessage = client->netchan.outgoingSequence - 1;
+	SV_ClientThink(client, &ucmd);
+}
+#else
 void SV_BotUserMove(client_s *cl)
 {
 	usercmd_s ucmd;
@@ -923,6 +1008,11 @@ void SV_BotUserMove(client_s *cl)
 		SV_ClientThink(cl, &ucmd);
 	}
 }
+#endif
+
+#if COMPILE_PLAYER == 1
+int gamestate_size[MAX_CLIENTS] = {0};
+#endif
 
 /*
 ================
@@ -1004,7 +1094,9 @@ void SV_SendClientGameState( client_t *client )
 
 	// NERVE - SMF - debug info
 	Com_DPrintf( "Sending %i bytes in gamestate to client: %i\n", msg.cursize, client - svs.clients );
-
+#if COMPILE_PLAYER == 1
+	gamestate_size[client - svs.clients] = msg.cursize;
+#endif
 	// deliver this to the client
 	SV_SendMessageToClient( &msg, client );
 }
@@ -1015,6 +1107,11 @@ SV_DirectConnect
 A "connect" OOB command has been received
 ==================
 */
+
+#if COMPILE_RATELIMITER == 1
+extern leakyBucket_t outboundLeakyBucket;
+#endif
+
 extern dvar_t *sv_reconnectlimit;
 extern dvar_t *sv_minPing;
 extern dvar_t *sv_maxPing;
@@ -1036,6 +1133,23 @@ void SV_DirectConnect( netadr_t from )
 	const char *denied;
 	int count;
 	int guid;
+
+#if COMPILE_RATELIMITER == 1
+	// Prevent using connect as an amplifier
+	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
+	{
+		Com_DPrintf( "SV_DirectConnect: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+
+	// Allow connect to be DoSed relatively easily, but prevent
+	// excess outbound bandwidth usage when being flooded inbound
+	if ( SVC_RateLimit( &outboundLeakyBucket, 10, 100 ) )
+	{
+		Com_DPrintf( "SV_DirectConnect: rate limit exceeded, dropping request\n" );
+		return;
+	}
+#endif
 
 	Com_DPrintf("SV_DirectConnect()\n");
 	Q_strncpyz( userinfo, Cmd_Argv( 1 ), sizeof( userinfo ) );
@@ -1309,12 +1423,33 @@ void SV_AuthorizeRequest(netadr_t adr, int challenge)
 	}
 }
 
+#if COMPILE_RATELIMITER == 1
+extern leakyBucket_t outboundLeakyBucket;
+#endif
+
 void SV_GetChallenge( netadr_t from )
 {
 	int i;
 	int oldest;
 	int oldestTime;
 	challenge_t *challenge;
+
+#if COMPILE_RATELIMITER == 1
+	// Prevent using getchallenge as an amplifier
+	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
+	{
+		Com_DPrintf( "SV_GetChallenge: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+
+	// Allow getchallenge to be DoSed relatively easily, but prevent
+	// excess outbound bandwidth usage when being flooded inbound
+	if ( SVC_RateLimit( &outboundLeakyBucket, 10, 100 ) )
+	{
+		Com_DPrintf( "SV_GetChallenge: rate limit exceeded, dropping request\n" );
+		return;
+	}
+#endif
 
 	oldest = 0;
 	oldestTime = 0x7fffffff;
@@ -1396,7 +1531,11 @@ void SV_UpdateUserinfo_f(client_t *cl)
 {
 	I_strncpyz(cl->userinfo, SV_Cmd_Argv(1), sizeof( cl->userinfo ));
 	SV_UserinfoChanged(cl);
+#ifdef LIBCOD
+	hook_ClientUserinfoChanged(cl - svs.clients);
+#else
 	ClientUserinfoChanged(cl - svs.clients);
+#endif
 }
 
 void SV_Disconnect_f(client_t *cl)
@@ -1409,9 +1548,28 @@ void SV_VerifyIwds_f( client_t *cl )
 	cl->pureAuthentic = 1; // VoroN: Fix this later
 }
 
+#ifdef LIBCOD
+extern int codecallback_vid_restart;
+#endif
+
 void SV_ResetPureClient_f(client_t *cl)
 {
 	cl->pureAuthentic = 0;
+
+#ifdef LIBCOD
+	if (codecallback_vid_restart)
+	{
+		if (!Scr_IsSystemActive())
+			return;
+
+		if (cl->gentity == NULL)
+			return;
+
+		stackPushInt(cl - svs.clients);
+		short ret = Scr_ExecEntThread(cl->gentity, codecallback_vid_restart, 1);
+		Scr_FreeThread(ret);
+	}
+#endif
 }
 
 void SV_BeginDownload_f(client_t *cl)
@@ -1596,6 +1754,47 @@ SV_ExecuteClientCommand
 Also called by bot code
 ==================
 */
+#ifdef LIBCOD
+extern int codecallback_playercommand;
+void hook_ClientCommand(int clientNum)
+{
+	if ( ! codecallback_playercommand)
+	{
+		ClientCommand(clientNum);
+		return;
+	}
+
+	if (!Scr_IsSystemActive())
+		return;
+
+	stackPushArray();
+	int args = Cmd_Argc();
+	for (int i = 0; i < args; i++)
+	{
+		char tmp[COD2_MAX_STRINGLENGTH];
+		SV_Cmd_ArgvBuffer(i, tmp, sizeof(tmp));
+		if(i == 1 && tmp[0] >= 20 && tmp[0] <= 22)
+		{
+			char *part = strtok(tmp + 1, " ");
+			while(part != NULL)
+			{
+				stackPushString(part);
+				stackPushArrayLast();
+				part = strtok(NULL, " ");
+			}
+		}
+		else
+		{
+			stackPushString(tmp);
+			stackPushArrayLast();
+		}
+	}
+
+	short ret = Scr_ExecEntThread(&g_entities[clientNum], codecallback_playercommand, 1);
+	Scr_FreeThread(ret);
+}
+#endif
+
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK )
 {
 	ucmd_t  *u;
@@ -1617,7 +1816,11 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK )
 		// pass unknown strings to the game
 		if ( !u->name && SV_Loaded() )
 		{
+#ifdef LIBCOD
+			hook_ClientCommand ( cl - svs.clients );
+#else
 			ClientCommand( cl - svs.clients );
+#endif
 		}
 	}
 }
@@ -1761,6 +1964,7 @@ void SV_ExecuteClientMessage(client_s *cl, msg_t *msg)
 }
 
 extern dvar_t *g_password;
+int botport = 0;
 gentity_t *SV_AddTestClient()
 {
 	netadr_t adr;
@@ -1768,7 +1972,6 @@ gentity_t *SV_AddTestClient()
 	client_s *client;
 	int num;
 	char userinfo[MAX_STRING_CHARS];
-	static int botport = 0;
 
 	num = 0;
 

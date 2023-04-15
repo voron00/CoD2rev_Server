@@ -2699,7 +2699,11 @@ void GScr_UpdateClientNames()
 			{
 				I_strncpyz(oldname, client->sess.state.name, 32);
 				I_strncpyz(client->sess.state.name, client->sess.name, 32);
+#ifdef LIBCOD
+				hook_ClientUserinfoChanged(clientNum);
+#else
 				ClientUserinfoChanged(clientNum);
+#endif
 			}
 		}
 
@@ -4596,6 +4600,15 @@ void (*Scr_GetFunction(const char **pName, int *type))()
 		}
 	}
 
+#ifdef LIBCOD
+	void (*libcod_func)();
+
+	libcod_func = Scr_GetCustomFunction(pName, type);
+
+	if ( libcod_func )
+		return libcod_func;
+#endif
+
 	return NULL;
 }
 
@@ -4622,7 +4635,16 @@ void (*Scr_GetMethod(const char **pName, int *type))(scr_entref_t)
 	hud_meth = HudElem_GetMethod(pName);
 
 	if ( !meth )
-		return hud_meth;
+		meth = hud_meth;
+
+#ifdef LIBCOD
+	void (*libcod_meth)(scr_entref_t);
+
+	libcod_meth = Scr_GetCustomMethod(pName, type);
+
+	if ( !meth )
+		meth = libcod_meth;
+#endif
 
 	return meth;
 }
@@ -4753,6 +4775,13 @@ void Scr_ParseGameTypeList()
 	g_scr_data.gametype.iNumGameTypes = count;
 }
 
+#ifdef LIBCOD
+int codecallback_playercommand = 0;
+int codecallback_userinfochanged = 0;
+int codecallback_fire_grenade = 0;
+int codecallback_vid_restart = 0;
+#endif
+
 extern dvar_t *g_gametype;
 void GScr_LoadGameTypeScript()
 {
@@ -4766,6 +4795,12 @@ void GScr_LoadGameTypeScript()
 	g_scr_data.gametype.playerdisconnect = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerDisconnect", 1);
 	g_scr_data.gametype.playerdamage = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerDamage", 1);
 	g_scr_data.gametype.playerkilled = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerKilled", 1);
+#ifdef LIBCOD
+	codecallback_playercommand = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerCommand", 0);
+	codecallback_userinfochanged = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_UserInfoChanged", 0);
+	codecallback_fire_grenade = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_FireGrenade", 0);
+	codecallback_vid_restart = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_VidRestart", 0);
+#endif
 }
 
 void GScr_LoadLevelScript()

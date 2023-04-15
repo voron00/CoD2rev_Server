@@ -85,6 +85,11 @@ playerState_t *SV_GameClientNum( int num )
 	return ps;
 }
 
+int playerstateToClientNum(playerState_t* ps)
+{
+	return (int)(((byte *)ps - (byte *)sv.gameClients) / sv.gameClientSize);
+}
+
 svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt )
 {
 	if ( !gEnt || gEnt->s.number < 0 || gEnt->s.number >= MAX_GENTITIES )
@@ -472,7 +477,7 @@ void SV_GameDropClient(int clientNum, const char *reason)
 
 void SV_GetUsercmd(int clientNum, usercmd_s *cmd)
 {
-	*cmd = svs.clients[clientNum].lastUsercmd;
+	memcpy(cmd, &svs.clients[clientNum].lastUsercmd, sizeof(usercmd_s));
 }
 
 int SV_GetGuid(int clientNum)

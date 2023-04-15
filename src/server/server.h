@@ -268,6 +268,17 @@ struct snapshotEntityNumbers_t
 	int snapshotEntities[1024];
 };
 
+typedef struct leakyBucket_s leakyBucket_t;
+struct leakyBucket_s
+{
+	int type;
+	unsigned char adr[4];
+	uint64_t lastTime;
+	signed char	burst;
+	long hash;
+	leakyBucket_t *prev, *next;
+};
+
 extern int sv_serverId_value;
 
 extern dvar_t *nextmap;
@@ -327,6 +338,9 @@ void SV_SendClientGameState( client_t *client );
 void SV_DirectConnect( netadr_t from );
 void SVC_RemoteCommand( netadr_t from, msg_t *msg );
 
+bool SVC_RateLimit( leakyBucket_t *bucket, int burst, int period );
+bool SVC_RateLimitAddress( netadr_t from, int burst, int period );
+
 void SV_ShowClientUnAckCommands(client_s *client);
 void SV_SendClientSnapshot(client_s *client);
 void SV_ExecuteClientMessage(client_s *cl, msg_t *msg);
@@ -343,6 +357,7 @@ XModel* SV_XModelGet(const char *name);
 int SV_NumForGentity( gentity_t *ent );
 gentity_t *SV_GentityNum( int num );
 playerState_t *SV_GameClientNum( int num );
+int playerstateToClientNum(playerState_t* ps);
 svEntity_t  *SV_SvEntityForGentity( gentity_t *gEnt );
 gentity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
 int SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);

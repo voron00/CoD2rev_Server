@@ -60,6 +60,11 @@ dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
 dvar_t *g_mantleBlockTimeBuffer;
 
+#ifdef LIBCOD
+dvar_t *g_playerCollision;
+dvar_t *g_playerEject;
+#endif
+
 entityHandler_t entityHandlers[] =
 {
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
@@ -969,4 +974,8 @@ void G_RegisterDvars()
 	g_useholdspawndelay = Dvar_RegisterInt("g_useholdspawndelay", 1, 0, 10, 0x1081u);
 	g_mantleBlockTimeBuffer = Dvar_RegisterInt("g_mantleBlockTimeBuffer", 500, 0, 60000, 0x1080u);
 	BG_RegisterDvars();
+#ifdef LIBCOD
+	g_playerCollision = Dvar_RegisterBool("g_playerCollision", true, DVAR_ARCHIVE);
+	g_playerEject = Dvar_RegisterBool("g_playerEject", true, DVAR_ARCHIVE);
+#endif
 }

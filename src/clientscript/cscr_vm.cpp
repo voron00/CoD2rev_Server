@@ -1398,6 +1398,10 @@ void runtimeError(conChannel_t channel, const char *codePos, unsigned int index,
 	Com_PrintMessage(channel, "************************************\n");
 }
 
+#ifdef LIBCOD
+extern dvar_t *com_developer;
+#endif
+
 void scriptError(const char *codePos, unsigned int index, const char *errorMsg, const char *format)
 {
 	const char *line;
@@ -1411,7 +1415,7 @@ void scriptError(const char *codePos, unsigned int index, const char *errorMsg, 
 			Com_Printf("%s\n", errorMsg);
 
 			if ( scrVmPub.terminal_error )
-				goto ERROR;
+				goto error;
 		}
 		else
 		{
@@ -1424,10 +1428,13 @@ void scriptError(const char *codePos, unsigned int index, const char *errorMsg, 
 				runtimeError(CON_CHANNEL_DONT_FILTER, codePos, index, errorMsg);
 			else
 				runtimeError(CON_CHANNEL_LOGFILEONLY, codePos, index, errorMsg);
-
+#ifdef LIBCOD
+			if (com_developer->current.integer == 2)
+				drop = 0;
+#endif
 			if ( drop )
 			{
-ERROR:
+error:
 				fmt = format;
 
 				if ( !format )

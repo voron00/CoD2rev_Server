@@ -322,6 +322,144 @@ void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... )
 	}
 }
 
+#if COMPILE_RATELIMITER == 1
+// ioquake3 rate limit connectionless requests
+// https://github.com/ioquake/ioq3/blob/master/code/server/sv_main.c
+
+// This is deliberately quite large to make it more of an effort to DoS
+#define MAX_BUCKETS	16384
+#define MAX_HASHES 1024
+
+static leakyBucket_t buckets[ MAX_BUCKETS ];
+static leakyBucket_t* bucketHashes[ MAX_HASHES ];
+leakyBucket_t outboundLeakyBucket;
+
+static long SVC_HashForAddress( netadr_t address )
+{
+	unsigned char *ip = address.ip;
+	int	i;
+	long hash = 0;
+
+	for ( i = 0; i < 4; i++ )
+	{
+		hash += (long)( ip[ i ] ) * ( i + 119 );
+	}
+
+	hash = ( hash ^ ( hash >> 10 ) ^ ( hash >> 20 ) );
+	hash &= ( MAX_HASHES - 1 );
+
+	return hash;
+}
+
+static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int period )
+{
+	leakyBucket_t *bucket = NULL;
+	int	i;
+	long hash = SVC_HashForAddress( address );
+	uint64_t now = Sys_Milliseconds64();
+
+	for ( bucket = bucketHashes[ hash ]; bucket; bucket = bucket->next )
+	{
+		if ( memcmp( bucket->adr, address.ip, 4 ) == 0 )
+		{
+			return bucket;
+		}
+	}
+
+	for ( i = 0; i < MAX_BUCKETS; i++ )
+	{
+		int interval;
+
+		bucket = &buckets[ i ];
+		interval = now - bucket->lastTime;
+
+		// Reclaim expired buckets
+		if ( bucket->lastTime > 0 && ( interval > ( burst * period ) ||
+		                               interval < 0 ) )
+		{
+			if ( bucket->prev != NULL )
+			{
+				bucket->prev->next = bucket->next;
+			}
+			else
+			{
+				bucketHashes[ bucket->hash ] = bucket->next;
+			}
+
+			if ( bucket->next != NULL )
+			{
+				bucket->next->prev = bucket->prev;
+			}
+
+			memset( bucket, 0, sizeof( leakyBucket_t ) );
+		}
+
+		if ( bucket->type == 0 )
+		{
+			bucket->type = address.type;
+			memcpy( bucket->adr, address.ip, 4 );
+
+			bucket->lastTime = now;
+			bucket->burst = 0;
+			bucket->hash = hash;
+
+			// Add to the head of the relevant hash chain
+			bucket->next = bucketHashes[ hash ];
+			if ( bucketHashes[ hash ] != NULL )
+			{
+				bucketHashes[ hash ]->prev = bucket;
+			}
+
+			bucket->prev = NULL;
+			bucketHashes[ hash ] = bucket;
+
+			return bucket;
+		}
+	}
+
+	// Couldn't allocate a bucket for this address
+	return NULL;
+}
+
+bool SVC_RateLimit( leakyBucket_t *bucket, int burst, int period )
+{
+	if ( bucket != NULL )
+	{
+		uint64_t now = Sys_Milliseconds64();
+		int interval = now - bucket->lastTime;
+		int expired = interval / period;
+		int expiredRemainder = interval % period;
+
+		if ( expired > bucket->burst || interval < 0 )
+		{
+			bucket->burst = 0;
+			bucket->lastTime = now;
+		}
+		else
+		{
+			bucket->burst -= expired;
+			bucket->lastTime = now - expiredRemainder;
+		}
+
+		if ( bucket->burst < burst )
+		{
+			bucket->burst++;
+
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool SVC_RateLimitAddress( netadr_t from, int burst, int period )
+{
+	leakyBucket_t *bucket = SVC_BucketForAddress( from, burst, period );
+
+	return SVC_RateLimit( bucket, burst, period );
+}
+#endif
+
 /*
 ==============
 SV_FlushRedirect
@@ -358,6 +496,11 @@ Shift down the remaining args
 Redirect all printfs
 ===============
 */
+
+#ifdef LIBCOD
+extern dvar_t *sv_allowRcon;
+#endif
+
 extern dvar_t *rcon_password;
 void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 {
@@ -373,6 +516,28 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 	static unsigned int lasttime = 0;
 	char *cmd_aux;
+
+#ifdef LIBCOD
+	if (!sv_allowRcon->current.boolean)
+		return;
+#endif
+
+#if COMPILE_RATELIMITER == 1
+	static leakyBucket_t bucket;
+	// Prevent using rcon as an amplifier and make dictionary attacks impractical
+	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
+	{
+		Com_DPrintf( "SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+
+	// Make DoS via rcon impractical
+	if ( SVC_RateLimit( &bucket, 10, 1000 ) )
+	{
+		Com_DPrintf( "SVC_RemoteCommand: rate limit exceeded, dropping request\n" );
+		return;
+	}
+#endif
 
 	// TTimo - show_bug.cgi?id=534
 	time = Com_Milliseconds();
@@ -497,6 +662,23 @@ void SVC_Info( netadr_t from )
 	int serverModded;
 	const char *referencedIwdNames;
 	char *iwd;
+
+#if COMPILE_RATELIMITER == 1
+	// Prevent using getinfo as an amplifier
+	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
+	{
+		Com_DPrintf( "SVC_Info: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+
+	// Allow getinfo to be DoSed relatively easily, but prevent
+	// excess outbound bandwidth usage when being flooded inbound
+	if ( SVC_RateLimit( &outboundLeakyBucket, 10, 100 ) )
+	{
+		Com_DPrintf( "SVC_Info: rate limit exceeded, dropping request\n" );
+		return;
+	}
+#endif
 
 	// don't count privateclients
 	count = 0;
@@ -626,6 +808,23 @@ void SVC_Status( netadr_t from )
 	char *iwd;
 	const char *referencedIwdNames;
 	int count;
+
+#if COMPILE_RATELIMITER == 1
+	// Prevent using getstatus as an amplifier
+	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
+	{
+		Com_DPrintf( "SVC_Status: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
+		return;
+	}
+
+	// Allow getstatus to be DoSed relatively easily, but prevent
+	// excess outbound bandwidth usage when being flooded inbound
+	if ( SVC_RateLimit( &outboundLeakyBucket, 10, 100 ) )
+	{
+		Com_DPrintf( "SVC_Status: rate limit exceeded, dropping request\n" );
+		return;
+	}
+#endif
 
 	strcpy( infostring, Dvar_InfoString(0x404u) );
 

@@ -1,6 +1,10 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+#ifdef LIBCOD
+extern int codecallback_fire_grenade;
+#endif
+
 gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenadeWPID, int time)
 {
 	float speed;
@@ -51,7 +55,16 @@ gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenade
 	grenade->s.apos.trDelta[2] = flrand(-45.0, 45.0) + 360.0;
 	VectorCopy(start, grenade->r.currentOrigin);
 	VectorCopy(grenade->s.apos.trBase, grenade->r.currentAngles);
-
+#ifdef LIBCOD
+	if (codecallback_fire_grenade)
+	{
+		WeaponDef *def = BG_GetWeaponDef(grenadeWPID);
+		stackPushString(def->szInternalName);
+		stackPushEntity(grenade);
+		short ret = Scr_ExecEntThread(parent, codecallback_fire_grenade, 2);
+		Scr_FreeThread(ret);
+	}
+#endif
 	return grenade;
 }
 

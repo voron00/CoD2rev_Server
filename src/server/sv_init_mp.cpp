@@ -54,6 +54,13 @@ dvar_t *sv_wwwDlDisconnected;
 
 dvar_t *sv_master[MAX_MASTER_SERVERS];     // master server ip address
 
+#ifdef LIBCOD
+dvar_t *sv_allowRcon;
+dvar_t *sv_downloadMessage;
+dvar_t *sv_cracked;
+dvar_t *cl_allowDownload;
+#endif
+
 bool SV_Loaded()
 {
 	return sv.state == SS_GAME;
@@ -118,6 +125,14 @@ void SV_Init()
 	sv_master[2] = Dvar_RegisterString("sv_master3", "", DVAR_ARCHIVE);
 	sv_master[3] = Dvar_RegisterString("sv_master4", "", DVAR_ARCHIVE);
 	sv_master[4] = Dvar_RegisterString("sv_master5", "", DVAR_ARCHIVE);
+
+#ifdef LIBCOD
+	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", qtrue, DVAR_ARCHIVE);
+	sv_downloadMessage = Dvar_RegisterString("sv_downloadMessage", "", DVAR_ARCHIVE);
+	sv_cracked = Dvar_RegisterBool("sv_cracked", qfalse, DVAR_ARCHIVE);
+	// Force download on clients
+	cl_allowDownload = Dvar_RegisterBool("cl_allowDownload", qfalse, DVAR_ARCHIVE | DVAR_SYSTEMINFO);
+#endif
 }
 
 void SV_SetConfigstring(unsigned int index, const char *val)
@@ -637,6 +652,10 @@ void SV_SpawnServer(char *server)
 	int checksum;
 	int index;
 	int i;
+
+#if COMPILE_SQLITE == 1
+	free_sqlite_db_stores_and_tasks();
+#endif
 
 	Scr_ParseGameTypeList();
 	SV_SetGametype();

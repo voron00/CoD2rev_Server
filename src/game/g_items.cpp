@@ -1174,8 +1174,16 @@ void DroppedItemClearOwner(gentity_s *pSelf)
 	pSelf->s.clientNum = 1022;
 }
 
+#if COMPILE_PLAYER == 1
+int player_disableitempickup[MAX_CLIENTS] = {0};
+#endif
+
 void Touch_Item_Auto(gentity_s *ent, gentity_s *other, int touched)
 {
+#if COMPILE_PLAYER == 1
+	if (player_disableitempickup[other->s.number])
+		return;
+#endif
 	ent->active = 1;
 	Touch_Item(ent, other, touched);
 }

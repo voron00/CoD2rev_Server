@@ -7,6 +7,21 @@ dvar_t *jump_slowdownEnable;
 dvar_t *jump_ladderPushVel;
 dvar_t *jump_spreadAdd;
 
+#if COMPILE_PLAYER == 1
+bool player_jump_slowdownenable_enabled[MAX_CLIENTS] = {0};
+bool player_jump_slowdownenable[MAX_CLIENTS] = {0};
+#endif
+
+bool getJumpSlowdownEnable(playerState_t* ps)
+{
+#if COMPILE_PLAYER == 1
+	int clientid = playerstateToClientNum(ps);
+	if(player_jump_slowdownenable_enabled[clientid])
+		return player_jump_slowdownenable[clientid];
+#endif
+	return jump_slowdownEnable->current.decimal;
+}
+
 void QDECL Jump_ClearState(playerState_s *ps)
 {
 	ps->pm_flags &= ~0x80000u;
@@ -68,7 +83,7 @@ void Jump_ApplySlowdown(playerState_s *ps)
 		scale = 0.64999998;
 	}
 
-	if ( !jump_slowdownEnable->current.boolean )
+	if ( !getJumpSlowdownEnable(ps) )
 		scale = 1.0;
 
 	VectorScale(ps->velocity, scale, ps->velocity);
@@ -76,7 +91,7 @@ void Jump_ApplySlowdown(playerState_s *ps)
 
 float Jump_ReduceFriction(playerState_s *ps)
 {
-	if ( jump_slowdownEnable->current.boolean )
+	if ( getJumpSlowdownEnable(ps) )
 	{
 		if ( ps->pm_time <= 1699 )
 			return (long double)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
@@ -116,7 +131,7 @@ void QDECL Jump_ClampVelocity(playerState_s *ps, const float *origin)
 
 float Jump_GetLandFactor(playerState_s *ps)
 {
-	if ( jump_slowdownEnable->current.boolean )
+	if ( getJumpSlowdownEnable(ps) )
 	{
 		if ( ps->pm_time <= 1699 )
 			return (long double)ps->pm_time * 1.5 * 0.00058823527 + 1.0;

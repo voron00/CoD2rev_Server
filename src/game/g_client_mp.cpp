@@ -156,6 +156,25 @@ static void ClientCleanName( const char *in, char *out, int outSize )
 	}
 }
 
+#ifdef LIBCOD
+extern int codecallback_userinfochanged;
+void hook_ClientUserinfoChanged(int clientNum)
+{
+	if ( ! codecallback_userinfochanged)
+	{
+		ClientUserinfoChanged(clientNum);
+		return;
+	}
+
+	if (!Scr_IsSystemActive())
+		return;
+
+	stackPushInt(clientNum); // one parameter is required
+	short ret = Scr_ExecEntThread(&g_entities[clientNum], codecallback_userinfochanged, 1);
+	Scr_FreeThread(ret);
+}
+#endif
+
 void ClientUserinfoChanged(int clientNum)
 {
 	char userinfo[MAX_STRING_CHARS];
@@ -318,7 +337,11 @@ const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId)
 	gclient->useHoldEntity = 1023;
 	gclient->sess.state.clientIndex = clientNum;
 	gclient->ps.clientNum = clientNum;
+#ifdef LIBCOD
+	hook_ClientUserinfoChanged(clientNum);
+#else
 	ClientUserinfoChanged(clientNum);
+#endif
 	SV_GetUserinfo(clientNum, userinfo, 1024);
 	if ( gclient->sess.localClient
 	        || (password = Info_ValueForKey(userinfo, "password"), !*g_password->current.string)

@@ -144,6 +144,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
 int FS_FOpenFileReadStream(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
 int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
 fileHandle_t FS_SV_FOpenFileWrite( const char *filename );
+void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir);
 int FS_FilenameCompare(const char *s1, const char *s2);
 int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listbuf, int bufsize);
 char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles);

@@ -1134,6 +1134,39 @@ struct useList_t
 	float score;
 };
 
+#define KEY_MASK_NONE        	0
+
+#define KEY_MASK_FORWARD        127
+#define KEY_MASK_BACK           -127
+#define KEY_MASK_MOVERIGHT      127
+#define KEY_MASK_MOVELEFT       -127
+
+#define KEY_MASK_FIRE           1
+#define KEY_MASK_MELEE          4
+#define KEY_MASK_USE            8
+#define KEY_MASK_RELOAD         16
+#define KEY_MASK_LEANLEFT       64
+#define KEY_MASK_LEANRIGHT      128
+#define KEY_MASK_PRONE          256
+#define KEY_MASK_CROUCH         512
+#define KEY_MASK_JUMP           1024
+#define KEY_MASK_ADS_MODE       4096
+#define KEY_MASK_MELEE_BREATH   32772
+#define KEY_MASK_HOLDBREATH     32768
+#define KEY_MASK_FRAG           65536
+#define KEY_MASK_SMOKE          131072
+
+#define EF_VOTED 0x00100000
+#define EF_TALK 0x00200000
+#define EF_TAUNT 0x00400000
+#define EF_FIRING 0x00000020
+#define EF_MANTLE 0x00004000
+#define EF_CROUCHING 0x00000004
+#define EF_PRONE 0x00000008
+#define EF_DEAD 0x00020000
+#define EF_USETURRET 0x00000300
+#define EF_AIMDOWNSIGHT 0x00040000
+
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
@@ -1356,6 +1389,7 @@ void P_DamageFeedback(gentity_s *player);
 void Scr_ParseGameTypeList();
 
 void SetClientViewAngle(gentity_s *ent, const float *angle);
+void hook_ClientUserinfoChanged(int clientNum);
 void ClientUserinfoChanged(int clientNum);
 void ClientImpacts(gentity_s *ent, pmove_t *pm);
 void G_TouchTriggers(gentity_s *ent);
