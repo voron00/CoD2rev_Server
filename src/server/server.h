@@ -352,6 +352,7 @@ void SV_ResetEntityParsePoint();
 
 qboolean SV_IsLocalClient(int clientNum);
 qboolean SV_MapExists(const char *name);
+bool hook_SV_MapExists(const char *mapname);
 const char *SV_GetMapBaseName(const char *mapname);
 XModel* SV_XModelGet(const char *name);
 int SV_NumForGentity( gentity_t *ent );

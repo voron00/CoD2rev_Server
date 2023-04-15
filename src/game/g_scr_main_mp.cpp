@@ -2699,11 +2699,7 @@ void GScr_UpdateClientNames()
 			{
 				I_strncpyz(oldname, client->sess.state.name, 32);
 				I_strncpyz(client->sess.state.name, client->sess.name, 32);
-#ifdef LIBCOD
-				hook_ClientUserinfoChanged(clientNum);
-#else
 				ClientUserinfoChanged(clientNum);
-#endif
 			}
 		}
 
@@ -3170,7 +3166,11 @@ void GScr_MapExists()
 	{
 		mapname = Scr_GetString(0);
 
+#ifdef LIBCOD
+		if ( hook_SV_MapExists(mapname) )
+#else
 		if ( SV_MapExists(mapname) )
+#endif
 			Scr_AddInt(1);
 		else
 			Scr_AddInt(0);
@@ -3576,7 +3576,11 @@ void GScr_LoadMap()
 	{
 		mapname = Scr_GetString(0);
 
+#ifdef LIBCOD
+		if ( hook_SV_MapExists(mapname) )
+#else
 		if ( SV_MapExists(mapname) )
+#endif
 		{
 			if ( level.finished )
 			{

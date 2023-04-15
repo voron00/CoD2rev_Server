@@ -435,6 +435,11 @@ Fill up msg with data
 extern dvar_t *sv_allowDownload;
 extern dvar_t *sv_maxRate;
 extern dvar_t *sv_pure;
+
+#ifdef LIBCOD
+extern dvar_t *sv_downloadMessage;
+#endif
+
 void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 {
 	int curindex;
@@ -458,6 +463,21 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 #if PROTOCOL_VERSION > 115
 	if ( cl->wwwDlAck )
 		return; // wwwDl acknowleged
+#endif
+
+#ifdef LIBCOD
+	if (strlen(sv_downloadMessage->current.string))
+	{
+		Com_sprintf(errorMessage, sizeof(errorMessage), sv_downloadMessage->current.string);
+
+		MSG_WriteByte( msg, svc_download );
+		MSG_WriteShort( msg, 0 ); // client is expecting block zero
+		MSG_WriteLong( msg, -1 ); // illegal file size
+		MSG_WriteString( msg, errorMessage );
+
+		*cl->downloadName = 0;
+		return; // Download message instead of download
+	}
 #endif
 
 #if PROTOCOL_VERSION > 115
@@ -1543,9 +1563,112 @@ void SV_Disconnect_f(client_t *cl)
 	SV_DropClient(cl, "EXE_DISCONNECTED");
 }
 
-void SV_VerifyIwds_f( client_t *cl )
+void SV_VerifyIwds_f(client_s *client)
 {
-	cl->pureAuthentic = 1; // VoroN: Fix this later
+	const char *pArg;
+	const char *pPaks;
+	int bGood;
+	const char *pureSums;
+	int nServerChkSum[1024];
+	int nClientChkSum[1024];
+	int nCurArg;
+	int j;
+	signed int i;
+	int nServerPaks;
+	int nClientPaks;
+	int nChkSum1;
+	int checksumFeed;
+
+	bGood = 1;
+	nChkSum1 = 0;
+	checksumFeed = 0;
+	nClientPaks = SV_Cmd_Argc();
+	nCurArg = 1;
+
+	if ( nClientPaks > 1 )
+	{
+		if ( *SV_Cmd_Argv(nCurArg++) == 64 )
+		{
+			i = 0;
+
+			while ( nCurArg < nClientPaks )
+			{
+				pArg = SV_Cmd_Argv(nCurArg++);
+				nClientChkSum[i] = atoi(pArg);
+				++i;
+			}
+
+			nClientPaks = i - 1;
+
+			for ( i = 0; i < nClientPaks; ++i )
+			{
+				for ( j = 0; j < nClientPaks; ++j )
+				{
+					if ( i != j && nClientChkSum[i] == nClientChkSum[j] )
+					{
+						bGood = 0;
+						break;
+					}
+				}
+
+				if ( !bGood )
+					break;
+			}
+
+			if ( bGood )
+			{
+				pureSums = FS_LoadedIwdPureChecksums();
+				SV_Cmd_TokenizeString(pureSums);
+				nServerPaks = SV_Cmd_Argc();
+
+				if ( nServerPaks > 1024 )
+					nServerPaks = 1024;
+
+				for ( i = 0; i < nServerPaks; ++i )
+				{
+					pPaks = SV_Cmd_Argv(i);
+					nServerChkSum[i] = atoi(pPaks);
+				}
+
+				for ( i = 0; i < nClientPaks; ++i )
+				{
+					for ( j = 0; j < nServerPaks && nClientChkSum[i] != nServerChkSum[j]; ++j );
+
+					if ( j >= nServerPaks )
+					{
+						bGood = 0;
+						break;
+					}
+				}
+
+				if ( bGood )
+				{
+					checksumFeed = sv.checksumFeed;
+
+					for ( i = 0; i < nClientPaks; ++i )
+						checksumFeed ^= nClientChkSum[i];
+
+					checksumFeed ^= nClientPaks;
+
+					if ( checksumFeed != nClientChkSum[nClientPaks] )
+						bGood = 0;
+				}
+			}
+		}
+		else
+		{
+			bGood = 0;
+		}
+	}
+	else
+	{
+		bGood = 0;
+	}
+
+	if ( bGood )
+		client->pureAuthentic = 1;
+	else
+		client->pureAuthentic = 2;
 }
 
 #ifdef LIBCOD

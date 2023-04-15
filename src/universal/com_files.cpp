@@ -15,6 +15,10 @@ dvar_t* fs_gameDirVar;
 dvar_t* fs_restrict;
 dvar_t* fs_ignoreLocalized;
 
+#ifdef LIBCOD
+dvar_t* fs_library;
+#endif
+
 static searchpath_t *fs_searchpaths;
 static fileHandleData_t fsh[MAX_FILE_HANDLES];
 static char fs_gamedir[MAX_OSPATH];
@@ -93,7 +97,7 @@ qboolean FS_UseSearchPath(const searchpath_t *pSearch)
 	return !pSearch->localized || !fs_ignoreLocalized->current.boolean;
 }
 
-inline char FS_IsBackupSubStr(const char* filenameSubStr)
+char FS_IsBackupSubStr(const char* filenameSubStr)
 {
 	if (*filenameSubStr == 46 && filenameSubStr[1] == 46)
 	{
@@ -286,7 +290,7 @@ int FS_FilenameCompare(const char *s1, const char *s2)
 	return 0;       // strings are equal
 }
 
-inline int FS_PathCmp(const char* s1, const char* s2)
+int FS_PathCmp(const char* s1, const char* s2)
 {
 	int c2;
 	int c1;
@@ -386,7 +390,7 @@ static signed int iwdsort(const void *cmp1_arg, const void *cmp2_arg)
 	return FS_PathCmp(cmp1, cmp2);
 }
 
-static void FS_ReplaceSeparators( char *path )
+void FS_ReplaceSeparators( char *path )
 {
 	char    *s;
 
@@ -399,7 +403,7 @@ static void FS_ReplaceSeparators( char *path )
 	}
 }
 
-inline void FS_AddSearchPath(searchpath_t* search)
+void FS_AddSearchPath(searchpath_t* search)
 {
 	searchpath_t** pSearch;
 
@@ -1758,6 +1762,9 @@ void FS_RegisterDvars()
 	fs_gameDirVar = Dvar_RegisterString("fs_game", "", 0x101Cu);
 	fs_restrict = Dvar_RegisterBool("fs_restrict", 0, 0x1010u);
 	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x1010u);
+#ifdef LIBCOD
+	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE);
+#endif
 }
 
 void FS_ClearIwdReferences()
@@ -2362,7 +2369,7 @@ const char *FS_ReferencedIwdNames()
 		if ( !search->iwd )
 			continue;
 
-		if ( search->iwd->referenced )
+		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
 		{
 			if ( *info )
 				I_strncat( info, sizeof( info ), " " );
@@ -2389,7 +2396,7 @@ const char *FS_ReferencedIwdChecksums()
 			continue;
 
 		// is the element a iwd file and has it been referenced based on flag?
-		if ( search->iwd->referenced )
+		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
 			I_strncat( info, sizeof( info ), va( "%i ", search->iwd->checksum ) );
 	}
 
@@ -2728,7 +2735,7 @@ void FS_SetRestrictions()
 
 		for (s = fs_searchpaths; s; s = s->next)
 		{
-			if (FS_UseSearchPath(s) && s->iwd && s->iwd->checksum != -1309305355)
+			if (FS_UseSearchPath(s) && s->iwd && s->iwd->checksum != -1277981599)
 				Com_Error(ERR_FATAL, "Corrupted iw0.iwd: %u", s->iwd->iwdFilename);
 		}
 	}

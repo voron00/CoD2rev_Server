@@ -521,6 +521,157 @@ void SV_FastRestart_f()
 	SV_MapRestart(1);
 }
 
+#ifdef LIBCOD
+extern dvar_t *fs_library;
+void manymaps_prepare(const char *mapname, int read)
+{
+	char map_check[MAX_OSPATH];
+	char library_path[MAX_OSPATH];
+
+	dvar_t *fs_homepath = Dvar_FindVar("fs_homepath");
+	dvar_t *fs_game = Dvar_FindVar("fs_game");
+	dvar_t *map = Dvar_FindVar("mapname");
+
+	if (strlen(fs_library->current.string))
+		strncpy(library_path, fs_library->current.string, sizeof(library_path));
+	else
+		snprintf(library_path, sizeof(library_path), "%s/%s/Library", fs_homepath->current.string, fs_game->current.string);
+
+	Com_sprintf(map_check, MAX_OSPATH, "%s/%s.iwd", library_path, mapname);
+
+#if PROTOCOL_VERSION < 117
+	const char *stock_maps[] = { "mp_breakout", "mp_brecourt", "mp_burgundy", "mp_carentan", "mp_dawnville", "mp_decoy", "mp_downtown", "mp_farmhouse", "mp_leningrad", "mp_matmata", "mp_railyard", "mp_toujane", "mp_trainstation" };
+#else
+	const char *stock_maps[] = { "mp_breakout", "mp_brecourt", "mp_burgundy", "mp_carentan", "mp_dawnville", "mp_decoy", "mp_downtown", "mp_farmhouse", "mp_leningrad", "mp_matmata", "mp_railyard", "mp_toujane", "mp_trainstation", "mp_rhine", "mp_harbor" };
+#endif
+
+	bool map_found = false, from_stock_map = false;
+
+	for (int i = 0; i < int( sizeof(stock_maps) / sizeof(stock_maps[0]) ); i++)
+	{
+		if (strcmp(map->current.string, stock_maps[i]) == 0)
+		{
+			from_stock_map = true;
+			break;
+		}
+	}
+
+	for (int i = 0; i < int( sizeof(stock_maps) / sizeof(stock_maps[0]) ); i++)
+	{
+		if (strcmp(mapname, stock_maps[i]) == 0)
+		{
+			map_found = true;
+
+			if (from_stock_map) // When changing from stock map to stock map do not trigger manymap
+				return;
+			else
+				break;
+		}
+	}
+
+	int map_exists = access(map_check, F_OK) != -1;
+
+	if (!map_exists && !map_found)
+		return;
+
+	DIR *dir;
+	struct dirent *dir_ent;
+
+	dir = opendir(library_path);
+
+	if (!dir)
+		return;
+
+	while ((dir_ent = readdir(dir)) != NULL)
+	{
+		if (strcmp(dir_ent->d_name, ".") == 0 || strcmp(dir_ent->d_name, "..") == 0)
+			continue;
+
+		char fileDelete[MAX_OSPATH];
+		Com_sprintf(fileDelete, MAX_OSPATH, "%s/%s/%s", fs_homepath->current.string, fs_game->current.string, dir_ent->d_name);
+
+		if (access(fileDelete, F_OK) != -1)
+		{
+#ifdef _WIN32
+			char delcmd[COD2_MAX_STRINGLENGTH];
+			FS_ReplaceSeparators( fileDelete );
+			Com_sprintf(delcmd, sizeof(delcmd), "del /F %s", fileDelete);
+			int unlink_success = system(delcmd) == 0;
+#else
+			int unlink_success = unlink(fileDelete) == 0;
+#endif
+			Com_Printf("manymaps> REMOVED OLD LINK: %s result of unlink: %s\n", fileDelete, unlink_success?"success":"failed");
+		}
+	}
+
+	closedir(dir);
+
+	if (map_exists)
+	{
+		char src[MAX_OSPATH];
+		char dst[MAX_OSPATH];
+
+		Com_sprintf(src, MAX_OSPATH, "%s/%s.iwd", library_path, mapname);
+		Com_sprintf(dst, MAX_OSPATH, "%s/%s/%s.iwd", fs_homepath->current.string, fs_game->current.string, mapname);
+
+		if (access(src, F_OK) != -1)
+		{
+#ifdef _WIN32
+			char linkcmd[COD2_MAX_STRINGLENGTH];
+			FS_ReplaceSeparators( dst );
+			FS_ReplaceSeparators( src );
+			Com_sprintf(linkcmd, sizeof(linkcmd), "mklink /h %s %s", dst, src);
+			int link_success = system(linkcmd) == 0;
+#else
+			int link_success = symlink(src, dst) == 0;
+#endif
+			Com_Printf("manymaps> NEW LINK: src=%s dst=%s result of link: %s\n", src, dst, link_success?"success":"failed");
+
+			if (link_success && read == -1) // FS_LoadDir is needed when empty.iwd is missing (then .d3dbsp isn't referenced anywhere)
+				FS_AddIwdFilesForGameDirectory(fs_homepath->current.string, fs_game->current.string);
+		}
+	}
+}
+
+int hook_findMap(const char *qpath, void **buffer)
+{
+	int read = FS_ReadFile(qpath, buffer);
+	manymaps_prepare(Cmd_Argv(1), read);
+
+	if (read != -1)
+		return read;
+	else
+		return FS_ReadFile(qpath, buffer);
+}
+
+bool hook_SV_MapExists(const char *mapname)
+{
+	bool map_exists = SV_MapExists(mapname);
+
+	if (map_exists)
+	{
+		return map_exists;
+	}
+	else
+	{
+		char map_check[MAX_OSPATH];
+		char library_path[MAX_OSPATH];
+
+		dvar_t *fs_homepath = Dvar_FindVar("fs_homepath");
+		dvar_t *fs_game = Dvar_FindVar("fs_game");
+
+		if (strlen(fs_library->current.string))
+			strncpy(library_path, fs_library->current.string, sizeof(library_path));
+		else
+			snprintf(library_path, sizeof(library_path), "%s/%s/Library", fs_homepath->current.string, fs_game->current.string);
+
+		Com_sprintf(map_check, MAX_OSPATH, "%s/%s.iwd", library_path, mapname);
+
+		return access(map_check, F_OK) != -1;
+	}
+}
+#endif
+
 extern dvar_t *sv_cheats;
 void SV_Map_f()
 {
@@ -538,7 +689,11 @@ void SV_Map_f()
 		I_strlwr(mapname);
 		qpath = va("maps/mp/%s.%s", mapname, GetBspExtension());
 
+#ifdef LIBCOD
+		if ( hook_findMap(qpath, 0) != -1 )
+#else
 		if ( FS_ReadFile(qpath, 0) != -1 )
+#endif
 		{
 			FS_ConvertPath(mapname);
 			SV_SpawnServer(mapname);

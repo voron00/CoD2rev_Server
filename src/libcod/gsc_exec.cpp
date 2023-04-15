@@ -224,7 +224,12 @@ void gsc_exec_async_create()
 
 	threadid_t exec_doer;
 
-	Sys_CreateNewThread(exec_async, &exec_doer, newtask);
+	if (!Sys_CreateNewThread(exec_async, &exec_doer, newtask))
+	{
+		stackError("gsc_exec_async_create() error creating exec async handler thread!");
+		stackPushUndefined();
+		return;
+	}
 
 	stackPushInt(1);
 }
@@ -310,7 +315,12 @@ void gsc_exec_async_create_nosave()
 
 	threadid_t exec_doer;
 
-	Sys_CreateNewThread(exec_async, &exec_doer, newtask);
+	if (!Sys_CreateNewThread(exec_async, &exec_doer, newtask))
+	{
+		stackError("gsc_exec_async_create_nosave() error creating exec async handler thread!");
+		stackPushUndefined();
+		return;
+	}
 
 	stackPushInt(1);
 }

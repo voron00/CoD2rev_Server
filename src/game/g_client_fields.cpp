@@ -52,11 +52,7 @@ void ClientScr_SetSessionTeam(gclient_s *pSelf, const game_client_field_t *pFiel
 		Scr_Error(va("'%s' is an illegal sessionteam string. Must be allies, axis, none, or spectator.", SL_ConvertToString(str)));
 	}
 
-#ifdef LIBCOD
-	hook_ClientUserinfoChanged(pSelf - level.clients);
-#else
 	ClientUserinfoChanged(pSelf - level.clients);
-#endif
 	CalculateRanks();
 }
 
