@@ -594,7 +594,6 @@ void manymaps_prepare(const char *mapname, int read)
 		{
 #ifdef _WIN32
 			char delcmd[COD2_MAX_STRINGLENGTH];
-			FS_ReplaceSeparators( fileDelete );
 			Com_sprintf(delcmd, sizeof(delcmd), "del /F %s", fileDelete);
 			int unlink_success = system(delcmd) == 0;
 #else
@@ -618,8 +617,6 @@ void manymaps_prepare(const char *mapname, int read)
 		{
 #ifdef _WIN32
 			char linkcmd[COD2_MAX_STRINGLENGTH];
-			FS_ReplaceSeparators( dst );
-			FS_ReplaceSeparators( src );
 			Com_sprintf(linkcmd, sizeof(linkcmd), "mklink /h %s %s", dst, src);
 			int link_success = system(linkcmd) == 0;
 #else

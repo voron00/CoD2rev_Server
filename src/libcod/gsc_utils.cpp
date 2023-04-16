@@ -180,8 +180,8 @@ void gsc_utils_sprintf()
 
 void gsc_utils_outofbandprint()
 {
-	char * address;
-	char * msg;
+	char *address;
+	char *msg;
 
 	if (!stackGetParams("ss", &address, &msg))
 	{
@@ -345,10 +345,13 @@ void gsc_utils_file_link()
 		stackPushUndefined();
 		return;
 	}
-#ifndef _WIN32
-	stackPushInt( symlink(source, dest) == 0 );
+
+#ifdef _WIN32
+	char linkcmd[COD2_MAX_STRINGLENGTH];
+	Com_sprintf(linkcmd, sizeof(linkcmd), "mklink /h %s %s", dest, source);
+	stackPushInt( system(linkcmd) == 0 );
 #else
-	stackPushInt( 0 );
+	stackPushInt( symlink(source, dest) == 0 );
 #endif
 }
 
@@ -649,11 +652,6 @@ void gsc_utils_ftime()
 		return;
 	}
 
-#ifdef _WIN32
-	stackPushString( "" );
-	return;
-#endif
-
 	struct stat buf;
 	fstat(fileno(file), &buf);
 
@@ -901,7 +899,7 @@ void gsc_utils_remove_file()
 
 void gsc_utils_remotecommand()
 {
-	char * sFrom;
+	char *sFrom;
 	int pointerMsg;
 
 	if (!stackGetParams("si", &sFrom, &pointerMsg))
