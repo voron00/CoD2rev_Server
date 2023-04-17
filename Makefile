@@ -4,7 +4,7 @@ CXX = g++
 NASM = nasm
 WINDRES=windres
 CFLAGS=-m32 -std=gnu++11
-CFLAGS_LIBS=-m32
+CFLAGS_LIBS=-m32 -O2
 LFLAGS=-m32 -no-pie
 
 ifeq ($(OS),Windows_NT)
