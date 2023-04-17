@@ -582,7 +582,6 @@ void SV_FreeClients()
 	Z_Free(svs.clients);
 }
 
-
 void SV_Shutdown(const char *finalmsg)
 {
 	bool loading;
@@ -603,6 +602,10 @@ void SV_Shutdown(const char *finalmsg)
 
 		if ( svs.clients )
 			SV_FreeClients();
+
+#if COMPILE_SQLITE == 1
+		free_sqlite_db_stores_and_tasks();
+#endif
 
 		SV_ShutdownArchivedSnapshot();
 		memset(&svs, 0, sizeof(svs));
