@@ -12,7 +12,6 @@ struct BspHeader
 {
 	unsigned int ident;
 	unsigned int version;
-	unsigned int chunkCount;
 	BspChunk chunks[MAX_BSP_CHUNCKS];
 };
 
@@ -75,7 +74,7 @@ byte* Com_ValidateBspLumpData(int type, unsigned int offset, unsigned int length
 {
 	if ( length )
 	{
-		if ( length + offset > comBspGlob.fileSize )
+		if ( type != LUMP_ENTITIES && length + offset > comBspGlob.fileSize )
 		{
 			Com_Error(ERR_DROP, "CM_LoadMap: lump %i extends past end of file", type);
 		}
@@ -96,13 +95,15 @@ byte* Com_ValidateBspLumpData(int type, unsigned int offset, unsigned int length
 
 byte* Com_GetBspLump(int type, unsigned int elemSize, unsigned int *count)
 {
-	return Com_ValidateBspLumpData(type, comBspGlob.header->chunks[type].type, *(&comBspGlob.header->chunkCount + 2 * type), elemSize, count);
+	return Com_ValidateBspLumpData(type, comBspGlob.header->chunks[type].length, comBspGlob.header->chunks[type].type, elemSize, count);
 }
 
 bool Com_BspHasLump(int type)
 {
 	unsigned int count;
+
 	Com_GetBspLump(type, 1u, &count);
+
 	return count != 0;
 }
 
