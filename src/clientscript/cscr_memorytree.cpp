@@ -25,7 +25,6 @@ typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
 static_assert((sizeof(scrMemTreeGlob_t) == 0x80380), "ERROR: scrMemTreeGlob_t size is invalid!");
 
 scrMemTreeGlob_t scrMemTreeGlob;
-scrMemTreeGlob_t *scrMemTreePub;
 
 int Scr_GetStringUsage()
 {
@@ -554,7 +553,6 @@ void MT_Init()
 {
 	int i;
 
-	scrMemTreePub = &scrMemTreeGlob;
 	MT_InitBits();
 
 	for ( i = 0; i <= MEMORY_NODE_BITS; ++i )

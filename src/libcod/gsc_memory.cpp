@@ -132,7 +132,7 @@ void gsc_binarybuffer_seek()
 void gsc_binarybuffer_write()
 {
 	struct binarybuffer *bb;
-	char *type;
+	const char *type;
 	if ( ! stackGetParams("is", &bb, &type))
 	{
 		stackError("gsc_binarybuffer_write() one or more arguments is undefined or has a wrong type");
@@ -201,7 +201,7 @@ void gsc_binarybuffer_write()
 void gsc_binarybuffer_read()
 {
 	struct binarybuffer *bb;
-	char *type;
+	const char *type;
 	if ( ! stackGetParams("is", &bb, &type))
 	{
 		stackError("gsc_binarybuffer_read() one or more arguments is undefined or has a wrong type");

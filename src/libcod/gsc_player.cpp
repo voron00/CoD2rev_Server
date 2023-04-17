@@ -76,7 +76,7 @@ void gsc_player_clientuserinfochanged(scr_entref_t id)
 
 void gsc_player_get_userinfo(scr_entref_t id)
 {
-	char *key;
+	const char *key;
 
 	if ( ! stackGetParams("s", &key))
 	{
@@ -103,7 +103,7 @@ void gsc_player_get_userinfo(scr_entref_t id)
 
 void gsc_player_set_userinfo(scr_entref_t id)
 {
-	char *key, *value;
+	const char *key, *value;
 
 	if ( ! stackGetParams("ss", &key, &value))
 	{
@@ -288,7 +288,7 @@ void gsc_player_stance_get(scr_entref_t id)
 
 void gsc_player_stance_set(scr_entref_t id)
 {
-	char *stance;
+	const char *stance;
 
 	if ( ! stackGetParams("s", &stance))
 	{
@@ -439,7 +439,7 @@ void gsc_player_addresstype(scr_entref_t id)
 
 void gsc_player_renameclient(scr_entref_t id)
 {
-	char *name;
+	const char *name;
 
 	if ( ! stackGetParams("s", &name))
 	{
@@ -472,7 +472,7 @@ void gsc_player_renameclient(scr_entref_t id)
 
 void gsc_player_outofbandprint(scr_entref_t id)
 {
-	char *cmd;
+	const char *cmd;
 
 	if ( ! stackGetParams("s", &cmd))
 	{
@@ -495,7 +495,7 @@ void gsc_player_outofbandprint(scr_entref_t id)
 
 void gsc_player_connectionlesspacket(scr_entref_t id)
 {
-	char *cmd;
+	const char *cmd;
 
 	if ( ! stackGetParams("s", &cmd))
 	{
@@ -757,7 +757,7 @@ void gsc_player_getcooktime(scr_entref_t id)
 void gsc_kick_slot()
 {
 	int clientId;
-	char* msg;
+	const char* msg;
 	char tmp[128];
 
 	if ( ! stackGetParams("is", &clientId, &msg))

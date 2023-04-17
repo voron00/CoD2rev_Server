@@ -4,7 +4,7 @@
 
 void gsc_bots_set_walkdir(scr_entref_t id)
 {
-	char *dir;
+	const char *dir;
 
 	if ( ! stackGetParams("s", &dir))
 	{
@@ -57,7 +57,7 @@ void gsc_bots_set_walkdir(scr_entref_t id)
 
 void gsc_bots_set_lean(scr_entref_t id)
 {
-	char *lean;
+	const char *lean;
 
 	if ( ! stackGetParams("s", &lean))
 	{
@@ -102,7 +102,7 @@ void gsc_bots_set_lean(scr_entref_t id)
 
 void gsc_bots_set_stance(scr_entref_t id)
 {
-	char *stance;
+	const char *stance;
 
 	if ( ! stackGetParams("s", &stance))
 	{

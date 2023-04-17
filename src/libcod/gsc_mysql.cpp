@@ -118,7 +118,7 @@ int mysql_async_query_initializer(char *sql, bool save) //cannot be called from 
 
 void gsc_mysql_async_create_query_nosave()
 {
-	char *query;
+	const char *query;
 	if ( ! stackGetParams("s", &query))
 	{
 		stackError("gsc_mysql_async_create_query_nosave() argument is undefined or has a wrong type");
@@ -132,7 +132,7 @@ void gsc_mysql_async_create_query_nosave()
 
 void gsc_mysql_async_create_query()
 {
-	char *query;
+	const char *query;
 	if ( ! stackGetParams("s", &query))
 	{
 		stackError("gsc_mysql_async_create_query() argument is undefined or has a wrong type");
@@ -221,7 +221,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 	}
 
 	int port, connection_count;
-	char *host, *user, *pass, *db;
+	const char *host, *user, *pass, *db;
 
 	if ( ! stackGetParams("ssssii", &host, &user, &pass, &db, &port, &connection_count))
 	{
@@ -290,7 +290,7 @@ void gsc_mysql_reuse_connection()
 void gsc_mysql_real_connect()
 {
 	int mysql, port;
-	char *host, *user, *pass, *db;
+	const char *host, *user, *pass, *db;
 
 	if ( ! stackGetParams("issssi", &mysql, &host, &user, &pass, &db, &port))
 	{
@@ -325,7 +325,7 @@ void gsc_mysql_close()
 void gsc_mysql_query()
 {
 	int mysql;
-	char *query;
+	const char *query;
 
 	if ( ! stackGetParams("is", &mysql, &query))
 	{
@@ -520,7 +520,7 @@ void gsc_mysql_free_result()
 void gsc_mysql_real_escape_string()
 {
 	int mysql;
-	char *str;
+	const char *str;
 
 	if ( ! stackGetParams("is", &mysql, &str))
 	{

@@ -15,7 +15,7 @@ qboolean isValidWeaponId(int id)
 void gsc_weapons_getweaponmaxammo()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -42,7 +42,7 @@ void gsc_weapons_getweaponmaxammo()
 void gsc_weapons_getweaponclipsize()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -69,7 +69,7 @@ void gsc_weapons_getweaponclipsize()
 void gsc_weapons_getweapondamage()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -96,7 +96,7 @@ void gsc_weapons_getweapondamage()
 void gsc_weapons_getweaponmeleedamage()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -123,7 +123,7 @@ void gsc_weapons_getweaponmeleedamage()
 void gsc_weapons_getweaponfiretime()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -150,7 +150,7 @@ void gsc_weapons_getweaponfiretime()
 void gsc_weapons_getweaponmeleetime()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -177,7 +177,7 @@ void gsc_weapons_getweaponmeleetime()
 void gsc_weapons_getweaponreloadtime()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -204,7 +204,7 @@ void gsc_weapons_getweaponreloadtime()
 void gsc_weapons_getweaponreloademptytime()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -231,7 +231,7 @@ void gsc_weapons_getweaponreloademptytime()
 void gsc_weapons_getweaponcookable()
 {
 	int id;
-	char *name;
+	const char *name;
 
 	if (stackGetParams("s", &name))
 	{
@@ -258,7 +258,7 @@ void gsc_weapons_getweaponcookable()
 void gsc_weapons_setweapondamage()
 {
 	int id;
-	char *name;
+	const char *name;
 	int damage;
 
 	if (stackGetParams("si", &name, &damage))
@@ -288,7 +288,7 @@ void gsc_weapons_setweapondamage()
 void gsc_weapons_setweaponmaxammo()
 {
 	int id;
-	char *name;
+	const char *name;
 	int ammo;
 
 	if (stackGetParams("si", &name, &ammo))
@@ -318,7 +318,7 @@ void gsc_weapons_setweaponmaxammo()
 void gsc_weapons_setweaponclipsize()
 {
 	int id;
-	char *name;
+	const char *name;
 	int clipSize;
 
 	if (stackGetParams("si", &name, &clipSize))
@@ -348,7 +348,7 @@ void gsc_weapons_setweaponclipsize()
 void gsc_weapons_setweaponmeleedamage()
 {
 	int id;
-	char *name;
+	const char *name;
 	int damage;
 
 	if (stackGetParams("si", &name, &damage))
@@ -378,7 +378,7 @@ void gsc_weapons_setweaponmeleedamage()
 void gsc_weapons_setweaponfiretime()
 {
 	int id;
-	char *name;
+	const char *name;
 	int time;
 
 	if (stackGetParams("si", &name, &time))
@@ -408,7 +408,7 @@ void gsc_weapons_setweaponfiretime()
 void gsc_weapons_setweaponmeleetime()
 {
 	int id;
-	char *name;
+	const char *name;
 	int time;
 
 	if (stackGetParams("si", &name, &time))
@@ -438,7 +438,7 @@ void gsc_weapons_setweaponmeleetime()
 void gsc_weapons_setweaponreloadtime()
 {
 	int id;
-	char *name;
+	const char *name;
 	int time;
 
 	if (stackGetParams("si", &name, &time))
@@ -468,7 +468,7 @@ void gsc_weapons_setweaponreloadtime()
 void gsc_weapons_setweaponreloademptytime()
 {
 	int id;
-	char *name;
+	const char *name;
 	int time;
 
 	if (stackGetParams("si", &name, &time))
@@ -498,7 +498,7 @@ void gsc_weapons_setweaponreloademptytime()
 void gsc_weapons_setweaponcookable()
 {
 	int id;
-	char *name;
+	const char *name;
 	int cookable;
 
 	if (stackGetParams("si", &name, &time))
@@ -545,8 +545,8 @@ int getHitLocOffset(const char *hitloc)
 void gsc_weapons_getweaponhitlocmultiplier()
 {
 	int id;
-	char *name;
-	char *hitloc;
+	const char *name;
+	const char *hitloc;
 
 	if (stackGetParams("ss", &name, &hitloc))
 	{
@@ -575,9 +575,9 @@ void gsc_weapons_getweaponhitlocmultiplier()
 void gsc_weapons_setweaponhitlocmultiplier()
 {
 	int id;
-	char *name;
+	const char *name;
 	float multiplier;
-	char* hitloc;
+	const char* hitloc;
 
 	if (stackGetParams("ssf", &name, &hitloc, &multiplier))
 	{

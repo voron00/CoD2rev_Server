@@ -1314,7 +1314,7 @@ void Scr_EvalArray(VariableValue *value, VariableValue *index)
 				index->type = VAR_STRING;
 				str[0] = string[index->u.intValue];
 				str[1] = 0;
-				index->u.intValue = SL_GetStringOfLen(str, 0, sizeof(str));
+				index->u.stringValue = SL_GetStringOfLen(str, 0, sizeof(str));
 				SL_RemoveRefToString(value->u.intValue);
 			}
 		}

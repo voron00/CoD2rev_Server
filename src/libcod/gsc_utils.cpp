@@ -44,7 +44,7 @@ void gsc_utils_getarraykeys()
 void gsc_utils_printf()
 {
 	char result[COD2_MAX_STRINGLENGTH];
-	char *str;
+	const char *str;
 
 	if (!stackGetParams("s", &str))
 	{
@@ -113,7 +113,7 @@ void gsc_utils_printf()
 void gsc_utils_sprintf()
 {
 	char result[COD2_MAX_STRINGLENGTH];
-	char *str;
+	const char *str;
 
 	if (!stackGetParams("s", &str))
 	{
@@ -180,8 +180,8 @@ void gsc_utils_sprintf()
 
 void gsc_utils_outofbandprint()
 {
-	char *address;
-	char *msg;
+	const char *address;
+	const char *msg;
 
 	if (!stackGetParams("ss", &address, &msg))
 	{
@@ -197,7 +197,7 @@ void gsc_utils_outofbandprint()
 
 void gsc_utils_getAscii()
 {
-	char *str;
+	const char *str;
 
 	if ( ! stackGetParams("s", &str))
 	{
@@ -244,28 +244,45 @@ void gsc_utils_putchar()
 
 void gsc_utils_toupper()
 {
-	char *str;
+	const char *string;
+	int i;
+	char c;
+	char tempString[1024];
 
-	if ( ! stackGetParams("s", &str))
+	if ( ! stackGetParams("s", &string))
 	{
 		stackError("gsc_utils_toupper() argument is undefined or has a wrong type");
 		stackPushUndefined();
 		return;
 	}
 
-	if (!strlen(str))
+	if (!strlen(string))
 	{
 		stackError("gsc_utils_toupper() string length is 0");
 		stackPushUndefined();
 		return;
 	}
 
-	stackPushString( I_strupr(str) );
+	for ( i = 0; i < 1024; ++i )
+	{
+		c = toupper(*string);
+		tempString[i] = c;
+
+		if ( !c )
+		{
+			stackPushString(tempString);
+			return;
+		}
+
+		++string;
+	}
+
+	stackPushString( tempString );
 }
 
 void gsc_utils_system()
 {
-	char *cmd;
+	const char *cmd;
 
 	if ( ! stackGetParams("s",  &cmd))
 	{
@@ -337,7 +354,7 @@ void gsc_utils_round()
 
 void gsc_utils_file_link()
 {
-	char *source, *dest;
+	const char *source, *dest;
 
 	if ( ! stackGetParams("ss",  &source, &dest))
 	{
@@ -357,7 +374,7 @@ void gsc_utils_file_link()
 
 void gsc_utils_file_unlink()
 {
-	char *file;
+	const char *file;
 
 	if ( ! stackGetParams("s",  &file))
 	{
@@ -372,7 +389,7 @@ void gsc_utils_file_unlink()
 
 void gsc_utils_file_exists()
 {
-	char *filename;
+	const char *filename;
 
 	if ( ! stackGetParams("s", &filename))
 	{
@@ -387,7 +404,7 @@ void gsc_utils_file_exists()
 
 void gsc_utils_FS_LoadDir()
 {
-	char *path, *dir;
+	const char *path, *dir;
 
 	if ( ! stackGetParams("ss", &path, &dir))
 	{
@@ -450,7 +467,7 @@ void gsc_utils_float()
 
 void gsc_utils_ExecuteString()
 {
-	char *str;
+	const char *str;
 
 	if ( ! stackGetParams("s", &str))
 	{
@@ -466,7 +483,7 @@ void gsc_utils_ExecuteString()
 void gsc_utils_sendgameservercommand()
 {
 	int clientNum;
-	char *message;
+	const char *message;
 
 	if ( ! stackGetParams("is", &clientNum, &message))
 	{
@@ -481,7 +498,10 @@ void gsc_utils_sendgameservercommand()
 
 void gsc_utils_scandir()
 {
-	char *dirname;
+	const char *dirname;
+	char** files;
+	int numfiles;
+	int i;
 
 	if ( ! stackGetParams("s", &dirname))
 	{
@@ -490,12 +510,9 @@ void gsc_utils_scandir()
 		return;
 	}
 
-	DIR *dir;
-	struct dirent *dir_ent;
+	files = Sys_ListFiles(dirname, "", 0, &numfiles, 0);
 
-	dir = opendir(dirname);
-
-	if ( ! dir)
+	if (!numfiles)
 	{
 		stackPushUndefined();
 		return;
@@ -503,19 +520,19 @@ void gsc_utils_scandir()
 
 	stackPushArray();
 
-	while ( (dir_ent = readdir(dir)) != NULL)
+	for(i = 0; i < numfiles; i++)
 	{
-		stackPushString(dir_ent->d_name);
+		stackPushString(files[i]);
 		stackPushArrayLast();
 	}
 
-	closedir(dir);
+	Sys_FreeFileList(files);
 }
 
 void gsc_utils_fopen()
 {
 	FILE *file;
-	char *filename, *mode;
+	const char *filename, *mode;
 
 	if ( ! stackGetParams("ss", &filename, &mode))
 	{
@@ -570,7 +587,7 @@ void gsc_utils_fread()
 void gsc_utils_fwrite()
 {
 	FILE *file;
-	char *buffer;
+	const char *buffer;
 
 	if ( ! stackGetParams("is", &file, &buffer))
 	{
@@ -674,7 +691,7 @@ void gsc_utils_ftime()
 // http://code.metager.de/source/xref/RavenSoftware/jediacademy/code/game/g_utils.cpp#36
 void gsc_G_FindConfigstringIndexOriginal()
 {
-	char *name;
+	const char *name;
 	int min, max, create;
 
 	if ( ! stackGetParams("siii", &name, &min, &max, &create))
@@ -697,7 +714,7 @@ void gsc_G_FindConfigstringIndexOriginal()
 // simple version, without crash
 void gsc_G_FindConfigstringIndex()
 {
-	char *name;
+	const char *name;
 	int min, max;
 
 	if ( ! stackGetParams("sii", &name, &min, &max))
@@ -759,7 +776,7 @@ void gsc_get_configstring()
 void gsc_set_configstring()
 {
 	int index;
-	char *string;
+	const char *string;
 
 	if ( ! stackGetParams("is", &index, &string))
 	{
@@ -816,7 +833,7 @@ void gsc_utils_sqrtInv()
 
 void gsc_make_localized_string()
 {
-	char *str;
+	const char *str;
 
 	if ( ! stackGetParams("s", &str))
 	{
@@ -885,7 +902,7 @@ void gsc_utils_vectorscale()
 
 void gsc_utils_remove_file()
 {
-	char *filename;
+	const char *filename;
 
 	if (!stackGetParams("s", &filename))
 	{
@@ -899,7 +916,7 @@ void gsc_utils_remove_file()
 
 void gsc_utils_remotecommand()
 {
-	char *sFrom;
+	const char *sFrom;
 	int pointerMsg;
 
 	if (!stackGetParams("si", &sFrom, &pointerMsg))

@@ -87,8 +87,6 @@ const char *stackGetParamTypeAsString(int param)
 	}
 }
 
-void NULL_FUNC(void) {}
-
 scr_function_t scriptFunctions[] =
 {
 #if COMPILE_EXEC == 1

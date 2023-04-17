@@ -35,11 +35,23 @@ RefString *GetRefString(const char* string)
 
 int SL_GetRefStringLen(RefString *refString)
 {
-	int i;
+	int len;
 
-	for ( i = refString->length - 1; refString->str[i]; i += 256 );
+	if(!refString->length)
+	{
+		len = 256 - 1; //Bugfix for 256 % 256 = 0 or 512 % 256 = 0 or... Just promote it to 256
+	}
+	else
+	{
+		len = refString->length - 1;
+	}
 
-	return i;
+	while(refString->str[len])
+	{
+		len += 256;
+	}
+
+	return len;
 }
 
 int SL_GetStringLen(unsigned int stringValue)
@@ -255,6 +267,8 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 	unsigned short status;
 	int i;
 
+	assert(str != NULL);
+
 	hash = GetHashCode(str, len);
 	entry = &scrStringGlob.hashTable[hash];
 
@@ -271,6 +285,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 				;
 			}
 
+			assert(i != 0);
 			newIndex = scrStringGlob.hashTable->status_next;
 
 			if ( !scrStringGlob.hashTable->status_next )
@@ -296,6 +311,8 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 			scrStringGlob.hashTable[prevNode].status_next = scrStringGlob.hashTable[prevNode].status_next & 0xC000 | newIndex;
 			scrStringGlob.hashTable[newIndex].prev = prevNode;
 		}
+
+		assert(stringValue != 0);
 
 		entry->status_next = hash | 0x8000;
 		entry->prev = stringValue;
