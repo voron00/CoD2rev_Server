@@ -91,7 +91,7 @@ void *mysql_async_query_handler(void* input_nothing) //is threaded after initial
 	return NULL;
 }
 
-int mysql_async_query_initializer(char *sql, bool save) //cannot be called from gsc, helper function
+int mysql_async_query_initializer(const char *sql, bool save) //cannot be called from gsc, helper function
 {
 	static int id = 0;
 	id++;

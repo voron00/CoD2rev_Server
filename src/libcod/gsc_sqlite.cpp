@@ -11,7 +11,7 @@
 #define MAX_SQLITE_TASKS 512
 #define MAX_SQLITE_DB_STORES 64
 
-#define SQLITE_TIMEOUT 2000
+#define SQLITE_TIMEOUT 4000
 
 enum
 {
