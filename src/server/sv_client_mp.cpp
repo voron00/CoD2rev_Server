@@ -225,7 +225,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 	if (sv_cracked->current.boolean)
 	{
 		s = "accept";
-		//r = "";
+		r = "KEY_IS_GOOD";
 	}
 #endif
 
