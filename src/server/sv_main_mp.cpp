@@ -1279,7 +1279,7 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 			{
 				cl->reliableAcknowledge = MSG_ReadLong(msg);
 
-				if ( cl->reliableSequence - cl->reliableAcknowledge < 128 )
+				if ( cl->reliableSequence - cl->reliableAcknowledge < MAX_RELIABLE_COMMANDS )
 				{
 					SV_Netchan_Decode(cl, &msg->data[msg->readcount], msg->cursize - msg->readcount);
 

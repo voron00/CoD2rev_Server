@@ -212,7 +212,21 @@ void gunrandom(float *x, float *y)
 	*y = r * sinT;
 }
 
-void Bullet_RandomSpread(float spread, float *end, const weaponParms *wp, float maxRange)
+extern dvar_t *g_fixedWeaponSpreads;
+vec2_t fixed_spread_grid[] =
+{
+	{ 0.0, 0.0 },
+	{ 1.0, 0.0 },
+	{ -1.0, 0.0 },
+	{ 0.0, 1.0 },
+	{ 0.0, -1.0 },
+	{ 1.0, 1.0 },
+	{ -1.0, 1.0 },
+	{ 1.0, -1.0 },
+	{ -1.0, -1.0 },
+};
+
+void Bullet_RandomSpread(float spread, float *end, const weaponParms *wp, float maxRange, int shot)
 {
 	float r;
 	float aimOffset;
@@ -222,7 +236,13 @@ void Bullet_RandomSpread(float spread, float *end, const weaponParms *wp, float 
 	r = tan(spread * 0.017453292);
 	aimOffset = r * maxRange;
 
-	gunrandom(&right, &up);
+	if (g_fixedWeaponSpreads->current.boolean && shot < COUNT_OF(fixed_spread_grid))
+	{
+		right = fixed_spread_grid[shot][0];
+		up = fixed_spread_grid[shot][1];
+	}
+	else
+		gunrandom(&right, &up);
 
 	right = right * aimOffset;
 	up = up * aimOffset;
@@ -237,12 +257,17 @@ void Bullet_Fire_Spread(const gentity_s *weaponEnt, gentity_s *attacker, const w
 	int i;
 	vec3_t start;
 	vec3_t end;
+	int shotCount;
 
 	VectorCopy(wp->muzzleTrace, start);
+	shotCount = wp->weapDef->shotCount;
 
-	for ( i = 0; i < wp->weapDef->shotCount; ++i )
+	if (g_fixedWeaponSpreads->current.boolean)
+		shotCount++; // Extra bullet for a center shot.
+
+	for ( i = 0; i < shotCount; ++i )
 	{
-		Bullet_RandomSpread(spread, end, wp, wp->weapDef->minDamageRange);
+		Bullet_RandomSpread(spread, end, wp, wp->weapDef->minDamageRange, i);
 		Bullet_Fire_Extended(weaponEnt, attacker, start, end, 1.0, 0, wp, weaponEnt, gameTime);
 	}
 }
@@ -260,7 +285,7 @@ void Bullet_Fire(gentity_s *attacker, float spread, weaponParms *wp, const genti
 	}
 	else
 	{
-		Bullet_RandomSpread(spread, endpos, wp, 8192.0);
+		Bullet_RandomSpread(spread, endpos, wp, 8192.0, 0);
 		Bullet_Fire_Extended(ent, attacker, wp->muzzleTrace, endpos, 1.0, 0, wp, ent, gameTime);
 	}
 

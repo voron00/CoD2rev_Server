@@ -1010,7 +1010,6 @@ void G_SayTo(gentity_s *ent, gentity_s *other, int mode, int color, const char *
 	}
 }
 
-extern dvar_t *dedicated;
 void G_Say(gentity_s *ent, gentity_s *target, int mode, const char *chatText)
 {
 	const char *team_color;
@@ -1086,8 +1085,7 @@ void G_Say(gentity_s *ent, gentity_s *target, int mode, const char *chatText)
 	}
 	else
 	{
-		if ( dedicated->current.integer )
-			Com_Printf("%s%s\n", cleanname, message);
+		Com_Printf("%s%s\n", cleanname, message);
 
 		for ( i = 0; i < level.maxclients; ++i )
 		{

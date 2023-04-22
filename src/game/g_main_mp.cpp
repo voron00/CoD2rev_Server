@@ -14,7 +14,6 @@ dvar_t *g_log;
 dvar_t *g_logSync;
 dvar_t *g_password;
 dvar_t *g_banIPs;
-dvar_t *dedicated;
 dvar_t *g_speed;
 dvar_t *g_gravity;
 dvar_t *g_knockback;
@@ -64,6 +63,8 @@ dvar_t *g_mantleBlockTimeBuffer;
 dvar_t *g_playerCollision;
 dvar_t *g_playerEject;
 #endif
+
+dvar_t *g_fixedWeaponSpreads;
 
 entityHandler_t entityHandlers[] =
 {
@@ -254,10 +255,10 @@ static signed int SortRanks(const void *num1, const void *num2)
 	client2 = &level.clients[*(int *)num1];
 	client1 = &level.clients[*(int *)num2];
 
-	if ( client2->sess.connected == CS_ZOMBIE )
+	if ( client2->sess.connected == CON_CONNECTING )
 		return 1;
 
-	if ( client1->sess.connected == CS_ZOMBIE )
+	if ( client1->sess.connected == CON_CONNECTING )
 		return -1;
 
 	if ( client2->sess.state.team == TEAM_SPECTATOR && client1->sess.state.team == TEAM_SPECTATOR )
@@ -916,8 +917,8 @@ void G_ShutdownGame(int freeScripts)
 void G_RegisterDvars()
 {
 	g_cheats = Dvar_RegisterBool("sv_cheats", 0, 0x1000u);
-	Dvar_RegisterString("gamename", "Call of Duty 2", 0x1044u);
-	Dvar_RegisterString("gamedate", "Oct 24 2005", 0x1040u);
+	Dvar_RegisterString("gamename", GAMEVERSION, 0x1044u);
+	Dvar_RegisterString("gamedate", __DATE__, 0x1040u);
 	Dvar_RegisterString("sv_mapname", "", 0x1044u);
 	g_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024u);
 	g_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 64, 0x1025u);
@@ -926,9 +927,6 @@ void G_RegisterDvars()
 	g_logSync = Dvar_RegisterBool("g_logSync", 0, 0x1001u);
 	g_password = Dvar_RegisterString("g_password", "", 0x1000u);
 	g_banIPs = Dvar_RegisterString("g_banIPs", "", 0x1001u);
-	dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020u);
-	if ( dedicated->current.integer )
-		Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040u);
 	g_speed = Dvar_RegisterInt("g_speed", 190, 0x80000000, 0x7FFFFFFF, 0x1000u);
 	g_gravity = Dvar_RegisterFloat("g_gravity", 800.0, 1.0, 3.4028235e38, 0x1000u);
 	g_knockback = Dvar_RegisterFloat("g_knockback", 1000.0, -3.4028235e38, 3.4028235e38, 0x1000u);
@@ -978,4 +976,5 @@ void G_RegisterDvars()
 	g_playerCollision = Dvar_RegisterBool("g_playerCollision", true, DVAR_ARCHIVE);
 	g_playerEject = Dvar_RegisterBool("g_playerEject", true, DVAR_ARCHIVE);
 #endif
+	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", 0, 0x1000u);
 }
