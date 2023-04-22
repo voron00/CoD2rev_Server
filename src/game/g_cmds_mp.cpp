@@ -357,7 +357,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 	char name[64];
 	char arg3[256];
 	char arg2[256];
-	char arg1[264];
+	char arg1[256];
 	dvar_t *mapname;
 	int kicknum;
 	const char *kickType;

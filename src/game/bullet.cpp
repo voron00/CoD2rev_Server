@@ -236,7 +236,7 @@ void Bullet_RandomSpread(float spread, float *end, const weaponParms *wp, float 
 	r = tan(spread * 0.017453292);
 	aimOffset = r * maxRange;
 
-	if (g_fixedWeaponSpreads->current.boolean && shot < COUNT_OF(fixed_spread_grid))
+	if (g_fixedWeaponSpreads->current.boolean && shot != -1 && shot < COUNT_OF(fixed_spread_grid))
 	{
 		right = fixed_spread_grid[shot][0];
 		up = fixed_spread_grid[shot][1];
@@ -285,7 +285,7 @@ void Bullet_Fire(gentity_s *attacker, float spread, weaponParms *wp, const genti
 	}
 	else
 	{
-		Bullet_RandomSpread(spread, endpos, wp, 8192.0, 0);
+		Bullet_RandomSpread(spread, endpos, wp, 8192.0, -1);
 		Bullet_Fire_Extended(ent, attacker, wp->muzzleTrace, endpos, 1.0, 0, wp, ent, gameTime);
 	}
 
