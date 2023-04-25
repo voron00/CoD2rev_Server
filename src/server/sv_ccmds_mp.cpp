@@ -877,6 +877,10 @@ void SV_ConTell_f( void )
 	}
 
 	num = atoi(Cmd_Argv(1));
+
+	if (num < 0 || num > sv_maxclients->current.integer)
+		return;
+
 	cl = &svs.clients[num];
 
 	if (cl->state != CS_ACTIVE)
@@ -887,7 +891,7 @@ void SV_ConTell_f( void )
 	strcpy( text, "console: " );
 	p = Cmd_Args();
 
-	if (num < 9)
+	if (num < 10)
 		p+=2;
 	else
 		p+=3;
