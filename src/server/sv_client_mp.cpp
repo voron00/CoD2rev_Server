@@ -756,10 +756,13 @@ void SV_DropClient(client_s *drop, const char *reason)
 			}
 		}
 
-		if ( !I_stricmpn(reason, "EXE", 3) || !I_stricmpn(reason, "GAME", 4) || !I_stricmpn(reason, "PC", 2) )
-			SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
-		else
-			SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
+		if ( I_stricmp(reason, "EXE_DISCONNECTED") )
+		{
+			if ( !I_stricmpn(reason, "EXE", 3) || !I_stricmpn(reason, "GAME", 4) || !I_stricmpn(reason, "PC", 2) )
+				SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
+			else
+				SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
+		}
 
 		Com_Printf("%i:%s %s\n", drop - svs.clients, name, reason);
 
@@ -773,12 +776,33 @@ void SV_DropClient(client_s *drop, const char *reason)
 	}
 }
 
+#if COMPILE_PLAYER == 1
+int clientfps[MAX_CLIENTS] = {0};
+int clientframes[MAX_CLIENTS] = {0};
+uint64_t clientframetime[MAX_CLIENTS] = {0};
+#endif
+
 void SV_ClientThink(client_s *cl, usercmd_s *cmd)
 {
 	memcpy(&cl->lastUsercmd, cmd, sizeof(cl->lastUsercmd));
 
 	if ( cl->state == CS_ACTIVE )
 	{
+#if COMPILE_PLAYER == 1
+		int clientnum = cl - svs.clients;
+
+		clientframes[clientnum]++;
+
+		if (Sys_Milliseconds64() - clientframetime[clientnum] >= 1000)
+		{
+			if (clientframes[clientnum] > 1000)
+				clientframes[clientnum] = 1000;
+
+			clientfps[clientnum] = clientframes[clientnum];
+			clientframetime[clientnum] = Sys_Milliseconds64();
+			clientframes[clientnum] = 0;
+		}
+#endif
 		G_SetLastServerTime(cl - svs.clients, cmd->serverTime);
 		ClientThink(cl - svs.clients);
 	}
@@ -800,13 +824,6 @@ void SV_ClientEnterWorld(client_s *client, usercmd_s *cmd)
 	client->lastUsercmd = *cmd;
 	ClientBegin(client - svs.clients);
 }
-
-#if COMPILE_PLAYER == 1
-int clientfps[MAX_CLIENTS] = {0};
-int clientframes[MAX_CLIENTS] = {0};
-uint64_t clientframetime[MAX_CLIENTS] = {0};
-int previousbuttons[MAX_CLIENTS] = {0};
-#endif
 
 /*
 ==================
@@ -917,22 +934,6 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 		}
 		SV_ClientThink(cl, &cmds[ i ]);
 	}
-
-#if COMPILE_PLAYER == 1
-	int clientnum = cl - svs.clients;
-
-	clientframes[clientnum]++;
-
-	if (Sys_Milliseconds64() - clientframetime[clientnum] >= 1000)
-	{
-		if (clientframes[clientnum] > 1000)
-			clientframes[clientnum] = 1000;
-
-		clientfps[clientnum] = clientframes[clientnum];
-		clientframetime[clientnum] = Sys_Milliseconds64();
-		clientframes[clientnum] = 0;
-	}
-#endif
 }
 
 #if COMPILE_BOTS == 1

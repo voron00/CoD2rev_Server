@@ -2,6 +2,7 @@
 
 void SV_FreeClientScriptId(client_s *cl)
 {
+	assert(cl->clscriptid);
 	Scr_FreeValue(cl->clscriptid);
 	cl->clscriptid = 0;
 }

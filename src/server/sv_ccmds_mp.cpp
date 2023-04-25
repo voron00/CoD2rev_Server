@@ -852,10 +852,61 @@ void SV_ConSay_f( void )
 	SV_SendServerCommand(0, 0, "%c \"\x15%s\"", 104, text);
 }
 
+/*
+==================
+SV_ConTell_f
+==================
+*/
+void SV_ConTell_f( void )
+{
+	char    *p;
+	char text[1024];
+	client_t *cl;
+	int num;
+
+	// make sure server is running
+	if ( !com_sv_running->current.boolean )
+	{
+		Com_Printf( "Server is not running.\n" );
+		return;
+	}
+
+	if ( Cmd_Argc() < 3 )
+	{
+		return;
+	}
+
+	num = atoi(Cmd_Argv(1));
+	cl = &svs.clients[num];
+
+	if (cl->state != CS_ACTIVE)
+	{
+		return;
+	}
+
+	strcpy( text, "console: " );
+	p = Cmd_Args();
+
+	if (num < 9)
+		p+=2;
+	else
+		p+=3;
+
+	if ( *p == '"' )
+	{
+		p++;
+		p[strlen( p ) - 1] = 0;
+	}
+
+	strcat( text, p );
+
+	SV_SendServerCommand(cl, 0, "%c \"\x15%s\"", 104, text);
+}
+
 void SV_AddDedicatedCommands()
 {
 	Cmd_AddCommand("say", SV_ConSay_f);
-	//Cmd_AddCommand("tell", SV_ConTell_f);
+	Cmd_AddCommand("tell", SV_ConTell_f);
 }
 
 void SV_AddOperatorCommands()

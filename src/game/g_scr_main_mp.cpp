@@ -3257,7 +3257,6 @@ void GScr_SetVoteNoCount()
 	{
 		count = Scr_GetInt(0);
 
-		SV_SetConfigstring(0x11u, va("%i", level.voteYes));
 		SV_SetConfigstring(0x12u, va("%i", count));
 	}
 }
