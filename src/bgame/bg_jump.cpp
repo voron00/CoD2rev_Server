@@ -19,7 +19,7 @@ bool getJumpSlowdownEnable(playerState_t* ps)
 	if(player_jump_slowdownenable_enabled[clientid])
 		return player_jump_slowdownenable[clientid];
 #endif
-	return jump_slowdownEnable->current.decimal;
+	return jump_slowdownEnable->current.boolean;
 }
 
 void QDECL Jump_ClearState(playerState_s *ps)
