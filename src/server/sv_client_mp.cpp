@@ -1128,11 +1128,6 @@ SV_DirectConnect
 A "connect" OOB command has been received
 ==================
 */
-
-#if COMPILE_RATELIMITER == 1
-extern leakyBucket_t outboundLeakyBucket;
-#endif
-
 extern dvar_t *sv_reconnectlimit;
 extern dvar_t *sv_minPing;
 extern dvar_t *sv_maxPing;
@@ -1154,23 +1149,6 @@ void SV_DirectConnect( netadr_t from )
 	const char *denied;
 	int count;
 	int guid;
-
-#if COMPILE_RATELIMITER == 1
-	// Prevent using connect as an amplifier
-	if ( SVC_RateLimitAddress( from, 10, 1000 ) )
-	{
-		Com_DPrintf( "SV_DirectConnect: rate limit from %s exceeded, dropping request\n", NET_AdrToString( from ) );
-		return;
-	}
-
-	// Allow connect to be DoSed relatively easily, but prevent
-	// excess outbound bandwidth usage when being flooded inbound
-	if ( SVC_RateLimit( &outboundLeakyBucket, 10, 100 ) )
-	{
-		Com_DPrintf( "SV_DirectConnect: rate limit exceeded, dropping request\n" );
-		return;
-	}
-#endif
 
 	Com_DPrintf("SV_DirectConnect()\n");
 	Q_strncpyz( userinfo, Cmd_Argv( 1 ), sizeof( userinfo ) );

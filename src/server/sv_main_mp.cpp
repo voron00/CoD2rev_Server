@@ -455,9 +455,6 @@ bool SVC_RateLimit( leakyBucket_t *bucket, int burst, int period )
 
 bool SVC_RateLimitAddress( netadr_t from, int burst, int period )
 {
-	if (from.type != NA_IP)
-		return false;
-
 	if (Sys_IsLANAddress(from))
 		return false;
 
