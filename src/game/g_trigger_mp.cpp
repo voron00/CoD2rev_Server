@@ -15,6 +15,7 @@ void G_Trigger(gentity_s *self, gentity_s *other)
 		else
 		{
 			trigger_info = &level.pendingTriggerList[level.pendingTriggerListSize++];
+
 			trigger_info->entnum = self->s.number;
 			trigger_info->otherEntnum = other->s.number;
 			trigger_info->useCount = self->useCount;

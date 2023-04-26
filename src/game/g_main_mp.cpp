@@ -532,13 +532,12 @@ void G_XAnimUpdateEnt(gentity_s *ent)
 
 void G_RunFrame(int time)
 {
-	trigger_info_t *currentTrigger;
 	float nextFrameTime;
 	byte entIndex[1024];
 	int entnum;
 	trigger_info_t *trigger_info;
 	gentity_s *other;
-	gentity_s *entity;
+	gentity_s *ent;
 	int bMoreTriggered;
 	int index;
 	int i;
@@ -551,24 +550,26 @@ void G_RunFrame(int time)
 	level_bgs.latestSnapshotTime = time;
 	level_bgs.frametime = time - level.previousTime;
 	bgs = &level_bgs;
-	entity = g_entities;
+	ent = g_entities;
 	i = 0;
 
 	while ( i < level.num_entities )
 	{
-		if ( entity->r.inuse )
+		if ( ent->r.inuse )
 		{
 			nextFrameTime = (float)level.frameTime * 0.001;
-			SV_DObjInitServerTime(entity, nextFrameTime);
+			SV_DObjInitServerTime(ent, nextFrameTime);
 		}
 
 		++i;
-		++entity;
+		++ent;
 	}
 
 	memset(entIndex, 0, sizeof(entIndex));
 	index = 0;
+
 	Com_Memcpy(level.currentTriggerList, level.pendingTriggerList, sizeof(trigger_info_t) * level.pendingTriggerListSize);
+
 	level.currentTriggerListSize = level.pendingTriggerListSize;
 	level.pendingTriggerListSize = 0;
 
@@ -581,9 +582,9 @@ void G_RunFrame(int time)
 		{
 			trigger_info = &level.currentTriggerList[i];
 			entnum = trigger_info->entnum;
-			entity = &g_entities[entnum];
+			ent = &g_entities[entnum];
 
-			if ( entity->useCount == trigger_info->useCount )
+			if ( ent->useCount == trigger_info->useCount )
 			{
 				other = &g_entities[trigger_info->otherEntnum];
 
@@ -597,50 +598,46 @@ void G_RunFrame(int time)
 
 					entIndex[entnum] = index;
 					Scr_AddEntity(other);
-					Scr_Notify(entity, scr_const.trigger, 1u);
+					Scr_Notify(ent, scr_const.trigger, 1u);
 				}
 			}
 
 			--level.currentTriggerListSize;
 			--i;
 
-			currentTrigger = &level.currentTriggerList[level.currentTriggerListSize];
-
-			trigger_info->entnum = currentTrigger->entnum;
-			trigger_info->useCount = currentTrigger->useCount;
-			trigger_info->otherUseCount = currentTrigger->otherUseCount;
+			Com_Memcpy(trigger_info, &level.currentTriggerList[level.currentTriggerListSize], sizeof(trigger_info_t));
 		}
 
 		Scr_RunCurrentThreads();
 	}
 	while ( bMoreTriggered );
 
-	entity = g_entities;
+	ent = g_entities;
 	i = 0;
 
 	while ( i < level.num_entities )
 	{
-		G_XAnimUpdateEnt(entity);
+		G_XAnimUpdateEnt(ent);
 		++i;
-		++entity;
+		++ent;
 	}
 
 	Scr_IncTime();
-	entity = g_entities;
+	ent = g_entities;
 	level.currentEntityThink = 0;
 
 	while ( level.currentEntityThink < level.num_entities )
 	{
-		if ( entity->r.inuse )
+		if ( ent->r.inuse )
 		{
-			if ( entity->tagInfo )
-				G_RunFrameForEntity(entity->tagInfo->parent);
+			if ( ent->tagInfo )
+				G_RunFrameForEntity(ent->tagInfo->parent);
 
-			G_RunFrameForEntity(entity);
+			G_RunFrameForEntity(ent);
 		}
 
 		++level.currentEntityThink;
-		++entity;
+		++ent;
 	}
 
 	level.currentEntityThink = -1;
@@ -648,16 +645,16 @@ void G_RunFrame(int time)
 	G_UpdateObjectiveToClients();
 	G_UpdateHudElemsToClients();
 
-	entity = g_entities;
+	ent = g_entities;
 	i = 0;
 
 	while ( i < level.maxclients )
 	{
-		if ( entity->r.inuse )
-			ClientEndFrame(entity);
+		if ( ent->r.inuse )
+			ClientEndFrame(ent);
 
 		++i;
-		++entity;
+		++ent;
 	}
 
 	CheckTeamStatus();
