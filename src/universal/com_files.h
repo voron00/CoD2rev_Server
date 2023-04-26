@@ -9,14 +9,8 @@
 #define NUM_IW_IWDS 25
 
 #define BASEGAME "main"
-
-#define DEFAULT_CONFIG "default_mp.cfg"
-
-#ifdef DEDICATED
 #define CONFIG_NAME "config_mp_server.cfg"
-#else
-#define CONFIG_NAME "config_mp.cfg"
-#endif
+#define DEFAULT_CONFIG "default_mp.cfg"
 
 enum FsThread
 {
