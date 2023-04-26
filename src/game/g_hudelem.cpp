@@ -219,20 +219,16 @@ void HudElem_GetColor(game_hudelem_t *hud, int offset)
 {
 	vec3_t color;
 
-	color[0] = hud->elem.color.split.r * 0.0039215689;
-	color[1] = hud->elem.color.split.g * 0.0039215689;
-	color[2] = hud->elem.color.split.b * 0.0039215689;
+	color[0] = (float)hud->elem.color.split.r * 0.0039215689;
+	color[1] = (float)hud->elem.color.split.g * 0.0039215689;
+	color[2] = (float)hud->elem.color.split.b * 0.0039215689;
 
 	Scr_AddVector(color);
 }
 
 void HudElem_GetAlpha(game_hudelem_t *hud, int offset)
 {
-	float alpha;
-
-	alpha = hud->elem.color.split.a * 0.0039215689;
-
-	Scr_AddFloat(alpha);
+	Scr_AddFloat((float)hud->elem.color.split.a * 0.0039215689);
 }
 
 void HudElem_ClearTypeSettings(game_hudelem_t *hud)
