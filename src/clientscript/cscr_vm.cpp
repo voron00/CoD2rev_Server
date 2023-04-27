@@ -1185,21 +1185,21 @@ void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, Variabl
 	unsigned int variable;
 	unsigned int array;
 	unsigned int newObject;
+	VariableValue stackValue;
 	VariableValue value;
-	VariableValue nextValue;
 	VariableValue value2;
-	bool isPreCodePos;
+	bool bNoStack;
 	int notifyListEntry;
 	unsigned int selfNameId;
 	unsigned int selfId;
-	int numBytes;
+	int bufLen;
 	size_t len;
-	int secondStackSize;
-	int secondStackPosSize;
+	int newSize;
+	int size;
 	char *buf;
 	VariableStackBuffer *stackBuf;
-	VariableStackBuffer *secondStackBuf;
-	VariableValueInternal_u *stackValue;
+	VariableStackBuffer *newStackBuf;
+	VariableValueInternal_u *stackId;
 	VariableValue *vars;
 	unsigned int startLocalId;
 	unsigned int notifyListId;
@@ -1229,100 +1229,100 @@ next:
 				selfNameId = FindObject(localId);
 				if ( GetVarType(notifyListEntry) )
 				{
-					stackValue = GetVariableValueAddress(notifyListEntry);
-					secondStackBuf = stackValue->u.stackValue;
-					if ( *((byte *)secondStackBuf->pos - 1) == 119 )
+					stackId = GetVariableValueAddress(notifyListEntry);
+					newStackBuf = stackId->u.stackValue;
+					if ( *((byte *)newStackBuf->pos - 1) == OP_waittillmatch )
 					{
-						secondStackPosSize = *secondStackBuf->pos;
-						buf = &secondStackBuf->buf[5 * (secondStackBuf->size - secondStackPosSize)];
-						for ( vars = top; secondStackPosSize; --vars )
+						size = *newStackBuf->pos;
+						buf = &newStackBuf->buf[5 * (newStackBuf->size - size)];
+						for ( vars = top; size; --vars )
 						{
 							if ( vars->type == VAR_PRECODEPOS )
 								goto next;
-							--secondStackPosSize;
-							nextValue.type = (unsigned char)*buf;
-							if ( nextValue.type == VAR_PRECODEPOS )
+							--size;
+							value.type = (unsigned char)*buf;
+							if ( value.type == VAR_PRECODEPOS )
 								break;
-							nextValue.u.intValue = *(int *)++buf;
+							value.u.intValue = *(int *)++buf;
 							buf += 4;
-							AddRefToValue(&nextValue);
+							AddRefToValue(&value);
 							type = vars->type;
 							value2.u.intValue = vars->u.intValue;
 							value2.type = type;
 							AddRefToValue(&value2);
-							Scr_EvalEquality(&nextValue, &value2);
+							Scr_EvalEquality(&value, &value2);
 							if ( scrVarPub.error_message )
 							{
 								scriptError(
-								    secondStackBuf->pos,
-								    *secondStackBuf->pos - secondStackPosSize + 3,
+								    newStackBuf->pos,
+								    *newStackBuf->pos - size + 3,
 								    scrVarPub.error_message,
 								    scrVmGlob.dialog_error_message);
 								Scr_ClearErrorMessage();
 								goto next;
 							}
-							if ( !nextValue.u.intValue )
+							if ( !value.u.intValue )
 								goto next;
 						}
-						++secondStackBuf->pos;
-						isPreCodePos = 1;
+						++newStackBuf->pos;
+						bNoStack = 1;
 					}
 					else
 					{
-						isPreCodePos = top->type == VAR_PRECODEPOS;
+						bNoStack = top->type == VAR_PRECODEPOS;
 					}
-					value.type = VAR_STACK;
-					value.u.stackValue = secondStackBuf;
+					stackValue.type = VAR_STACK;
+					stackValue.u.stackValue = newStackBuf;
 					variable = GetVariable(scrVarPub.timeArrayId, scrVarPub.time);
 					array = GetArray(variable);
 					newObject = GetNewObjectVariable(array, startLocalId);
-					SetNewVariableValue(newObject, &value);
-					stackValue = GetVariableValueAddress(newObject);
+					SetNewVariableValue(newObject, &stackValue);
+					stackId = GetVariableValueAddress(newObject);
 					VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
 					RemoveObjectVariable(selfNameId, startLocalId);
 					if ( !GetArraySize(selfNameId) )
 						RemoveObjectVariable(scrVarPub.pauseArrayId, selfId);
 					Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
-					if ( isPreCodePos )
+					if ( bNoStack )
 					{
 						notifyListEntry = notifyNameListId;
 					}
 					else
 					{
-						secondStackPosSize = secondStackBuf->size;
-						secondStackSize = secondStackPosSize;
+						size = newStackBuf->size;
+						newSize = size;
 						vars = top;
 						do
 						{
-							++secondStackSize;
+							++newSize;
 							--vars;
 						}
 						while ( vars->type != VAR_PRECODEPOS );
-						len = 5 * secondStackPosSize;
-						numBytes = 5 * secondStackSize + 11;
-						if ( !MT_Realloc(secondStackBuf->bufLen, numBytes) )
+						len = 5 * size;
+						bufLen = 5 * newSize + 11;
+						if ( !MT_Realloc(newStackBuf->bufLen, bufLen) )
 						{
-							stackBuf = (VariableStackBuffer *)MT_Alloc(numBytes);
-							stackBuf->bufLen = numBytes;
-							stackBuf->pos = secondStackBuf->pos;
-							stackBuf->localId = secondStackBuf->localId;
-							memcpy(stackBuf->buf, secondStackBuf->buf, len);
-							MT_Free(secondStackBuf, secondStackBuf->bufLen);
-							secondStackBuf = stackBuf;
-							stackValue->u.stackValue = stackBuf;
+							stackBuf = (VariableStackBuffer *)MT_Alloc(bufLen);
+							stackBuf->bufLen = bufLen;
+							stackBuf->pos = newStackBuf->pos;
+							stackBuf->localId = newStackBuf->localId;
+							memcpy(stackBuf->buf, newStackBuf->buf, len);
+							MT_Free(newStackBuf, newStackBuf->bufLen);
+							newStackBuf = stackBuf;
+							stackId->u.stackValue = stackBuf;
 						}
-						secondStackBuf->size = secondStackSize;
-						buf = &secondStackBuf->buf[len];
-						secondStackSize -= secondStackPosSize;
+						newStackBuf->size = newSize;
+						buf = &newStackBuf->buf[len];
+						newSize -= size;
 						do
 						{
 							AddRefToValue(++vars);
 							*buf++ = vars->type;
 							*(int *)buf = vars->u.intValue;
 							buf += 4;
-							--secondStackSize;
+							--newSize;
 						}
-						while ( secondStackSize );
+						while ( newSize );
 						notifyListEntry = notifyNameListId;
 					}
 				}
