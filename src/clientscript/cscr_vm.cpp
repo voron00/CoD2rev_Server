@@ -1087,7 +1087,7 @@ void VM_UnarchiveStack(unsigned int startLocalId, function_stack_t *stack, Varia
 	VariableValue *startTop;
 	int size;
 	const char *buf;
-	const char *nextPos;
+	const char *pos;
 
 	scrVmPub.function_frame->fs.pos = stackValue->pos;
 	++scrVmPub.function_count;
@@ -1101,20 +1101,20 @@ void VM_UnarchiveStack(unsigned int startLocalId, function_stack_t *stack, Varia
 		++startTop;
 		--size;
 		startTop->type = *(unsigned char *)buf;
-		nextPos = buf + 1;
+		pos = buf + 1;
 
 		if ( startTop->type == VAR_CODEPOS )
 		{
-			scrVmPub.function_frame->fs.pos = *(const char **)nextPos;
+			scrVmPub.function_frame->fs.pos = *(const char **)pos;
 			++scrVmPub.function_count;
 			++scrVmPub.function_frame;
 		}
 		else
 		{
-			startTop->u.intValue = *(int *)nextPos;
+			startTop->u.intValue = *(int *)pos;
 		}
 
-		buf = nextPos + 4;
+		buf = pos + 4;
 	}
 
 	stack->pos = stackValue->pos;
