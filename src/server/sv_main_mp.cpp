@@ -1247,10 +1247,12 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 		{
 			continue;
 		}
+
 		if ( !NET_CompareBaseAdr( from, cl->netchan.remoteAddress ) )
 		{
 			continue;
 		}
+
 		// it is possible to have multiple clients from a single IP
 		// address, so they are differentiated by the qport variable
 		if ( cl->netchan.qport != qport )
@@ -1273,25 +1275,33 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 			cl->serverId = MSG_ReadByte(msg);
 			cl->messageAcknowledge = MSG_ReadLong(msg);
 
-			if ( cl->messageAcknowledge >= 0 )
+			if ( cl->messageAcknowledge < 0 )
 			{
-				cl->reliableAcknowledge = MSG_ReadLong(msg);
+				Com_Printf("Invalid reliableAcknowledge message from %s - reliableAcknowledge is %i\n", cl->name, cl->reliableAcknowledge);
+				return;
+			}
 
-				if ( cl->reliableSequence - cl->reliableAcknowledge < MAX_RELIABLE_COMMANDS )
-				{
-					SV_Netchan_Decode(cl, &msg->data[msg->readcount], msg->cursize - msg->readcount);
+			cl->reliableAcknowledge = MSG_ReadLong(msg);
 
-					if ( cl->state != CS_ZOMBIE )
-					{
-						cl->lastPacketTime = svs.time;
-						SV_ExecuteClientMessage(cl, msg);
-						bgs = 0;
-					}
-				}
-				else
-				{
-					cl->reliableAcknowledge = cl->reliableSequence;
-				}
+			// New: Fix for invalid reliableAcknowledge exploit, see https://github.com/callofduty4x/CoD4x_Server/pull/407
+			if ( ( cl->reliableSequence - cl->reliableAcknowledge ) > ( MAX_RELIABLE_COMMANDS - 1 ) || cl->reliableAcknowledge < 0 || ( cl->reliableSequence - cl->reliableAcknowledge ) < 0 )
+			{
+				Com_Printf("Out of range reliableAcknowledge message from %s - cl->reliableSequence is %i, reliableAcknowledge is %i\n",
+				           cl->name, cl->reliableSequence, cl->reliableAcknowledge);
+				cl->reliableAcknowledge = cl->reliableSequence;
+				return;
+			}
+
+			SV_Netchan_Decode(cl, &msg->data[msg->readcount], msg->cursize - msg->readcount);
+
+			// zombie clients still need to do the Netchan_Process
+			// to make sure they don't need to retransmit the final
+			// reliable message, but they don't do any other processing
+			if ( cl->state != CS_ZOMBIE )
+			{
+				cl->lastPacketTime = svs.time;
+				SV_ExecuteClientMessage(cl, msg);
+				bgs = 0;
 			}
 		}
 		return;
