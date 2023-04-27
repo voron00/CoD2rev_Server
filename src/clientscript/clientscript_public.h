@@ -23,7 +23,7 @@ struct VariableStackBuffer
 	uint16_t size;
 	uint16_t bufLen;
 	uint16_t localId;
-	char time;
+	unsigned char time;
 	char buf[1];
 };
 
