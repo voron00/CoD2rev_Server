@@ -61,6 +61,7 @@ typedef struct
 	int			unsentLength;
 	byte		unsentBuffer[MAX_MSGLEN];
 	netProfileInfo_t *prof;
+	int protocol;
 } netchan_t;
 //static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
 

@@ -1157,7 +1157,7 @@ void SV_DirectConnect( netadr_t from )
 	// NOTE TTimo: but we might need to store the protocol around for potential non http/ftp clients
 	version = atoi( Info_ValueForKey( userinfo, "protocol" ) );
 
-	if ( version != PROTOCOL_VERSION )
+	if ( version < 115 || version > 118)
 	{
 		NET_OutOfBandPrint( NS_SERVER, from, va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s\n", PRODUCT_VERSION) );
 		Com_DPrintf( "    rejected connect from protocol version %i (should be %i)\n", version, PROTOCOL_VERSION );
@@ -1328,6 +1328,7 @@ gotnewcl:
 
 	// save the address
 	Netchan_Prepare(NS_SERVER, &newcl->netchan, from, qport);
+	newcl->netchan.protocol = version;
 	// init the netchan queue
 	newcl->unsentVoiceData = 0;
 	newcl->hasVoip = 1;
