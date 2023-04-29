@@ -677,7 +677,6 @@ void gsc_utils_ftime()
 
 	if (!timestring)
 	{
-		stackError("gsc_utils_ftime() returned a error");
 		stackPushUndefined();
 		return;
 	}

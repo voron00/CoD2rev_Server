@@ -951,4 +951,17 @@ void gsc_player_setjump_slowdownenable(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+void gsc_player_getprotocol(scr_entref_t id)
+{
+	if (id.entnum >= MAX_CLIENTS)
+	{
+		stackError("gsc_player_getprotocol() entity %i is not a player", id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	client_t *client = &svs.clients[id.entnum];
+	stackPushInt(client->netchan.protocol);
+}
+
 #endif
