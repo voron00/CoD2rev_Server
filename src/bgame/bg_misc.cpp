@@ -411,6 +411,49 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 	}
 }
 
+/*
+================
+BG_CreateRotationMatrix
+================
+*/
+void BG_CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] )
+{
+	AngleVectors( angles, matrix[0], matrix[1], matrix[2] );
+	VectorInverse( matrix[1] );
+}
+
+/*
+================
+BG_TransposeMatrix
+================
+*/
+void BG_TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] )
+{
+	int i, j;
+	for ( i = 0; i < 3; i++ )
+	{
+		for ( j = 0; j < 3; j++ )
+		{
+			transpose[i][j] = matrix[j][i];
+		}
+	}
+}
+
+/*
+================
+BG_RotatePoint
+================
+*/
+void BG_RotatePoint( vec3_t point, const vec3_t matrix[3] )
+{
+	vec3_t tvec;
+
+	VectorCopy( point, tvec );
+	point[0] = DotProduct( matrix[0], tvec );
+	point[1] = DotProduct( matrix[1], tvec );
+	point[2] = DotProduct( matrix[2], tvec );
+}
+
 void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler)
 {
 	int flags;

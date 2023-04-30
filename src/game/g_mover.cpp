@@ -12,7 +12,120 @@ struct pushed_t
 pushed_t pushed[1024];
 pushed_t *pushed_p;
 
-gentity_s* QDECL G_TestEntityPosition(gentity_s *ent, float *origin)
+/*
+==================
+G_TryPushingEntity
+
+Returns qfalse if the move is blocked
+==================
+*/
+qboolean G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, vec3_t amove )
+{
+	vec3_t org, org2, move2, amove2;
+	gentity_t   *block;
+	vec3_t matrix[3], transpose[3];
+	float x, fx, y, fy, z, fz;
+#define JITTER_INC  4
+#define JITTER_MAX  ( check->r.maxs[0] / 2.0 )
+
+	// figure movement due to the pusher's amove
+	VectorAdd(check->r.currentOrigin, move, org);
+	BG_CreateRotationMatrix(amove, transpose);
+	BG_TransposeMatrix(transpose, matrix);
+	VectorSubtract(org, pusher->r.currentOrigin, amove2);
+	VectorCopy(amove2, org2);
+	BG_RotatePoint(org2, matrix);
+	VectorSubtract(org2, amove2, move2);
+	VectorAdd(org, move2, org);
+
+	block = G_TestEntityPosition(check, org);
+
+	if ( !block )
+	{
+		// pushed ok
+		if ( check->s.groundEntityNum != pusher->s.number )
+			check->s.groundEntityNum = 1023;
+
+		// try moving the contacted entity
+		VectorCopy(org, check->r.currentOrigin);
+		VectorCopy(org, check->s.pos.trBase);
+
+		if ( check->client )
+		{
+			// make sure the client's view rotates when on a rotating mover
+			// RF, this is done client-side now
+			// ydnar: only do this if player is prone or using set mortar
+			check->client->ps.delta_angles[1] += ANGLE2SHORT( amove[YAW] );
+			VectorCopy(org, check->client->ps.origin);
+		}
+
+		++pushed_p;
+		return qtrue;
+	}
+
+	// RF, if still not valid, move them around to see if we can find a good spot
+	if ( JITTER_MAX > JITTER_INC )
+	{
+		VectorCopy(org, amove2);
+
+		for ( z = 0; z < JITTER_MAX; z += JITTER_INC )
+			for ( fz = -z; fz <= z; fz += 2 * z )
+			{
+				for ( x = JITTER_INC; x < JITTER_MAX; x += JITTER_INC )
+					for ( fx = -x; fx <= x; fx += 2 * x )
+					{
+						for ( y = JITTER_INC; y < JITTER_MAX; y += JITTER_INC )
+							for ( fy = -y; fy <= y; fy += 2 * y )
+							{
+								VectorSet(move2, fx, fy, fz);
+								VectorAdd(amove2, move2, org2);
+
+								//
+								// do the test
+								block = G_TestEntityPosition( check, org2 );
+								if ( !block )
+								{
+									// pushed ok
+									if ( check->s.groundEntityNum != pusher->s.number )
+										check->s.groundEntityNum = 1023;
+
+									VectorCopy(org2, check->r.currentOrigin);
+									VectorCopy(org2, check->s.pos.trBase);
+
+									if ( check->client )
+									{
+										check->client->ps.delta_angles[1] += ANGLE2SHORT( amove[YAW] );
+										VectorCopy(org2, check->client->ps.origin);
+									}
+
+									++pushed_p;
+									return qtrue;
+								}
+							}
+					}
+				if ( !fz )
+				{
+					break;
+				}
+			}
+	}
+
+	// if it is ok to leave in the old position, do it
+	// this is only relevent for riding entities, not pushed
+	// Sliding trapdoors can cause this.
+	block = G_TestEntityPosition( check, check->r.currentOrigin );
+
+	if ( !block )
+	{
+		check->s.groundEntityNum = 1023;
+		return 1;
+	}
+
+	// blocked
+	return qfalse;
+}
+
+gentity_s* G_TestEntityPosition(gentity_s *ent, float *origin)
 {
 	int contentmask;
 	trace_t trace;

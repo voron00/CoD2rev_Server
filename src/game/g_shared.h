@@ -1254,17 +1254,8 @@ void G_RunMover(gentity_s *ent);
 void G_RunMissile(gentity_s *ent);
 void G_RunFrameForEntity(gentity_s *ent);
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-gentity_s* QDECL G_TestEntityPosition(gentity_s *ent, float *origin);
-qboolean QDECL G_TryPushingEntity(gentity_s *check, gentity_s *pusher, vec3_t move, vec3_t amove);
-
-#ifdef __cplusplus
-}
-#endif
+gentity_s* G_TestEntityPosition(gentity_s *ent, float *origin);
+qboolean G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, vec3_t amove );
 
 int G_CallSpawnEntity(gentity_s *ent);
 void G_CallSpawn(void);

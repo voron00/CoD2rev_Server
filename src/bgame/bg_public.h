@@ -1108,6 +1108,10 @@ qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched)
 int BG_GetWeaponSlotForName(const char *name);
 const char* BG_GetWeaponSlotNameForIndex(int index);
 
+void BG_CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );
+void BG_TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] );
+void BG_RotatePoint( vec3_t point, const vec3_t matrix[3] );
+
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);
 void BG_StringCopy(unsigned char *member, const char *keyValue);
