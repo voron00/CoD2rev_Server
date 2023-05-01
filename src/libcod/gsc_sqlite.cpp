@@ -929,6 +929,8 @@ void gsc_sqlite_close()
 		return;
 	}
 
+	Sys_EnterCriticalSection(CRITSECT_SQLITE);
+
 	sqlite_db_store *current = first_sqlite_db_store;
 
 	while (current != NULL)
@@ -951,6 +953,8 @@ void gsc_sqlite_close()
 	}
 
 	stackPushBool(qtrue);
+
+	Sys_LeaveCriticalSection(CRITSECT_SQLITE);
 }
 
 void gsc_sqlite_escape_string()
