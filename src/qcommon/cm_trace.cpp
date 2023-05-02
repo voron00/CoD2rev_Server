@@ -991,6 +991,100 @@ int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end
 	return CM_BoxSightTrace(hitNum, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask);
 }
 
+void CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace)
+{
+	float halfwidth;
+	float lengthZ;
+	float offs;
+	float radius;
+	float halfheight;
+	vec3_t symetricSize[2];
+	vec3_t offset;
+	vec3_t endpos;
+	vec3_t botom;
+	vec3_t top;
+	vec3_t startbottom;
+	vec3_t starttop;
+	int i;
+
+	VectorCopy(tw->extents.start, starttop);
+	starttop[2] = starttop[2] + tw->offsetZ;
+	VectorCopy(tw->extents.start, startbottom);
+	startbottom[2] = startbottom[2] - tw->offsetZ;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		offset[i] = (tw->threadInfo.box_model->mins[i] + tw->threadInfo.box_model->maxs[i]) * 0.5;
+
+		symetricSize[0][i] = tw->threadInfo.box_model->mins[i] - offset[i];
+		symetricSize[1][i] = tw->threadInfo.box_model->maxs[i] - offset[i];
+	}
+
+	if ( symetricSize[1][0] <= symetricSize[1][2] )
+		halfwidth = symetricSize[1][0];
+	else
+		halfwidth = symetricSize[1][2];
+
+	halfheight = symetricSize[1][2] - halfwidth;
+	radius = (tw->radius + halfwidth) * (tw->radius + halfwidth);
+	VectorCopy(offset, top);
+	top[2] = top[2] + halfheight;
+	VectorSubtract(top, starttop, endpos);
+
+	if ( radius > VectorLengthSquared(endpos) )
+	{
+		trace->allsolid = 1;
+		trace->startsolid = 1;
+		trace->fraction = 0.0;
+	}
+
+	VectorSubtract(top, startbottom, endpos);
+
+	if ( radius > VectorLengthSquared(endpos) )
+	{
+		trace->allsolid = 1;
+		trace->startsolid = 1;
+		trace->fraction = 0.0;
+	}
+
+	VectorCopy(offset, botom);
+	botom[2] = botom[2] - halfheight;
+	VectorSubtract(botom, starttop, endpos);
+
+	if ( radius > VectorLengthSquared(endpos) )
+	{
+		trace->allsolid = 1;
+		trace->startsolid = 1;
+		trace->fraction = 0.0;
+	}
+
+	VectorSubtract(botom, startbottom, endpos);
+
+	if ( radius > VectorLengthSquared(endpos) )
+	{
+		trace->allsolid = 1;
+		trace->startsolid = 1;
+		trace->fraction = 0.0;
+	}
+
+	offs = tw->extents.start[2] - offset[2];
+	lengthZ = halfheight + tw->size[2] - tw->radius;
+
+	if ( lengthZ >= fabs(offs) )
+	{
+		top[2] = 0.0;
+		starttop[2] = 0.0;
+		VectorSubtract(starttop, top, endpos);
+
+		if ( radius > VectorLengthSquared(endpos) )
+		{
+			trace->allsolid = 1;
+			trace->startsolid = 1;
+			trace->fraction = 0.0;
+		}
+	}
+}
+
 void CM_Trace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask)
 {
 	vec_t radius;

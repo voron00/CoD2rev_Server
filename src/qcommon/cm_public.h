@@ -65,6 +65,7 @@ void CM_PointTraceStaticModels_r(locTraceWork_t *tw, unsigned short nodeIndex, c
 int CM_PointTraceStaticModelsComplete_r(staticmodeltrace_t *clip, unsigned short nodeIndex, const float *p1_, const float *p2);
 bool CM_TraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs);
+void CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace);
 void CM_PositionTest(traceWork_t *tw, trace_t *trace);
 int CM_PointContents(const float *p, unsigned int model);
 void CM_StoreLeafs( leafList_t *ll, int nodenum );
@@ -94,7 +95,6 @@ void QDECL CM_TraceThroughBrush(traceWork_t *tw, cbrush_s *brush, trace_t *trace
 void QDECL CM_TestInLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, trace_t *trace);
 void QDECL CM_TestBoxInBrush(traceWork_t *tw, cbrush_s *brush, trace_t *trace);
 void QDECL CM_TracePointThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, trace_t *trace);
-void QDECL CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace);
 void QDECL CM_TraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace);
 
 #ifdef __cplusplus
