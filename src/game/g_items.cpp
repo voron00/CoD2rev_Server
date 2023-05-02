@@ -39,15 +39,15 @@ void RegisterItem(unsigned int index, int global)
 
 void SaveRegisteredItems()
 {
-	char string[256];
+	char last_non_zero_char;
+	char *ptr;
 	int bits;
-	int weapIdx;
-	int n;
 	int digit;
-	int last_non_zero_char;
+	int n;
+	int weapIdx;
+	char string[256];
 
 	level.bRegisterItems = 0;
-	last_non_zero_char = 0;
 
 	n = 0;
 	digit = 0;
@@ -60,10 +60,14 @@ void SaveRegisteredItems()
 
 		if ( ++bits == 4 )
 		{
-			string[n++] = digit + (digit >= 10 ? 87 : 48);
+			ptr = &string[n++];
 
-			if ( digit )
-				last_non_zero_char = n;
+			if ( digit > 9 )
+				last_non_zero_char = digit + 87;
+			else
+				last_non_zero_char = digit + 48;
+
+			*ptr = last_non_zero_char;
 
 			digit = 0;
 			bits = 0;
@@ -72,13 +76,17 @@ void SaveRegisteredItems()
 
 	if ( bits )
 	{
-		string[n++] = digit + (digit >= 10 ? 87 : 48);
+		ptr = &string[n++];
 
-		if ( digit )
-			last_non_zero_char = n;
+		if ( digit > 9 )
+			last_non_zero_char = digit + 87;
+		else
+			last_non_zero_char = digit + 48;
+
+		*ptr = last_non_zero_char;
 	}
 
-	string[last_non_zero_char] = 0;
+	string[n] = 0;
 	SV_SetConfigstring(8u, string);
 }
 
