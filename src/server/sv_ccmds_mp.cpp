@@ -435,8 +435,12 @@ void SV_MapRestart(int fast_restart)
 	char mapname[64];
 	int i;
 
+	// make sure server is running
 	if ( !com_sv_running->current.boolean )
-		return Com_Printf("Server is not running.\n");
+	{
+		Com_Printf( "Server is not running.\n" );
+		return;
+	}
 
 	SV_SetGametype();
 	I_strncpyz(sv.gametype, sv_gametype->current.string, 64);
@@ -798,7 +802,8 @@ retry:
 
 void SV_GameCompleteStatus_f(void)
 {
-	SV_MasterGameCompleteStatus();
+	if ( com_sv_running->current.boolean )
+		SV_MasterGameCompleteStatus();
 }
 
 void SV_KillServer_f(void)
