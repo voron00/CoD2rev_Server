@@ -295,8 +295,6 @@ qboolean SV_Netchan_TransmitNextFragment(netchan_t *chan);
 bool SV_Netchan_Transmit(client_t *client, byte *data, int length);
 void SV_Netchan_Encode( client_t *client, byte *data, int cursize );
 void SV_Netchan_Decode( client_t *client, byte *data, int remaining );
-void SV_Netchan_UpdateProfileStats();
-void SV_Netchan_PrintProfileStats(qboolean format);
 void SV_AddServerCommand(client_t *client, int type, const char *cmd);
 void SV_DelayDropClient(client_t *client, const char *dropmsg);
 char *SV_ExpandNewlines( char *in );

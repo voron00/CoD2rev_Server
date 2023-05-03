@@ -212,7 +212,7 @@ void NetProf_PrepProfiling(netProfileInfo_t **prof)
 				net_iProfilingOn = 1;
 			else
 				net_iProfilingOn = 2;
-			Com_Printf("Net Profiling turned on: %s\n", netsrcString[ net_iProfilingOn ]);
+			Com_Printf("Net Profiling turned on: %s\n", netsrcString[ net_iProfilingOn - 1 ]);
 		}
 
 		if ( !*prof )
@@ -814,14 +814,6 @@ qboolean NET_IsLocalAddress( netadr_t adr )
 	return adr.type == NA_LOOPBACK || adr.type == NA_BOT;
 }
 
-void Net_DumpProfile_f()
-{
-	if ( net_iProfilingOn )
-		SV_Netchan_PrintProfileStats(1);
-	else
-		Com_Printf("Network profiling is not on. Set net_profile to turn on network profiling\n");
-}
-
 void Netchan_Init(uint16_t port)
 {
 	showpackets = Dvar_RegisterBool("showpackets", 0, 4096);
@@ -831,5 +823,4 @@ void Netchan_Init(uint16_t port)
 	net_profile = Dvar_RegisterInt("net_profile", 0, 0, 2, 4096);
 	net_showprofile = Dvar_RegisterInt("net_showprofile", 0, 0, 3, 4096);
 	net_lanauthorize = Dvar_RegisterBool("net_lanauthorize", 0, 4096);
-	Cmd_AddCommand("net_dumpprofile", Net_DumpProfile_f);
 }
