@@ -319,6 +319,7 @@ scr_method_t scriptMethods[] =
 	{"getcurrentoffhandslotammo", gsc_player_getcurrentoffhandslotammo, 0},
 	{"setjump_slowdownenable", gsc_player_setjump_slowdownenable, 0},
 	{"getprotocol", gsc_player_getprotocol, 0},
+	{"islocalclient", gsc_player_islocalclient, 0},
 #endif
 
 #if COMPILE_SQLITE == 1

@@ -964,4 +964,17 @@ void gsc_player_getprotocol(scr_entref_t id)
 	stackPushInt(client->netchan.protocol);
 }
 
+void gsc_player_islocalclient(scr_entref_t id)
+{
+	if (id.entnum >= MAX_CLIENTS)
+	{
+		stackError("gsc_player_islocalclient() entity %i is not a player", id.entnum);
+		stackPushUndefined();
+		return;
+	}
+
+	client_t *client = &svs.clients[id.entnum];
+	stackPushInt(Sys_IsLANAddress(client->netchan.remoteAddress));
+}
+
 #endif
