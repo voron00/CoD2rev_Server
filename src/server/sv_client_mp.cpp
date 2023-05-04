@@ -385,14 +385,11 @@ void SV_UserinfoChanged( client_t *cl )
 	if ( cl->rate < 5000 )
 		cl->hasVoip = 0;
 
-#if PROTOCOL_VERSION > 115
 	// wwwdl command
 	val = Info_ValueForKey (cl->userinfo, "cl_wwwDownload");
 	cl->wwwDownload = atoi(val) > 0;
-#endif
 }
 
-#if PROTOCOL_VERSION > 115
 extern dvar_t *sv_wwwDownload;
 extern dvar_t *sv_wwwBaseURL;
 extern dvar_t *sv_wwwDlDisconnected;
@@ -423,7 +420,6 @@ qboolean SV_WWWRedirectClient(client_t *cl, msg_t *msg)
 		return qfalse;
 	}
 }
-#endif
 
 /*
 ==================
@@ -460,10 +456,8 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	if (strcmp(&cl->downloadName[strlen(cl->downloadName) - 4], ".iwd") != 0)
 		return; // Not a iwd file
 
-#if PROTOCOL_VERSION > 115
 	if ( cl->wwwDlAck )
 		return; // wwwDl acknowleged
-#endif
 
 #ifdef LIBCOD
 	if (strlen(sv_downloadMessage->current.string))
@@ -480,7 +474,6 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	}
 #endif
 
-#if PROTOCOL_VERSION > 115
 	if (sv_wwwDownload->current.boolean && cl->wwwDownload)
 	{
 		if (!cl->wwwDl_failed)
@@ -489,7 +482,6 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 			return; // wwwDl redirect
 		}
 	}
-#endif
 
 	if (!cl->download)
 	{
@@ -1758,7 +1750,6 @@ void SV_UnmutePlayer_f(client_t *cl)
 		Com_Printf("Invalid unmute client %i\n", muteClient);
 }
 
-#if PROTOCOL_VERSION > 115
 void SV_WWWDownload_f(client_t *cl)
 {
 	const char *subcmd;
@@ -1828,7 +1819,6 @@ void SV_WWWDownload_f(client_t *cl)
 	Com_Printf("SV_WWWDownload: unknown wwwdl subcommand '%s' for client '%s'\n", subcmd, cl->name);
 	SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
 }
-#endif
 
 typedef struct
 {
@@ -1849,9 +1839,7 @@ ucmd_t ucmds[] =
 	{"retransdl",    SV_RetransmitDownload_f, },
 	{"muteplayer",   SV_MutePlayer_f,         },
 	{"unmuteplayer", SV_UnmutePlayer_f,       },
-#if PROTOCOL_VERSION > 115
 	{ "wwwdl",       SV_WWWDownload_f,        },
-#endif
 	{NULL, NULL}
 };
 
