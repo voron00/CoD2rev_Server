@@ -1573,14 +1573,16 @@ void Scr_EvalVariableFieldInternal(VariableValue *pValue, unsigned int id)
 
 void Scr_CastDebugString(VariableValue *value)
 {
-	const char *s;
+	XAnim_s *anims;
 	unsigned int stringValue;
+	const char *s;
+	scr_anim_s anim;
 
 	switch ( value->type )
 	{
 	case VAR_OBJECT:
-		stringValue = SL_GetString_(var_typename[value->u.pointerValue], 0);
-		break;
+		s = var_typename[GetVarType(value->u.pointerValue)];
+		goto setstring;
 	case VAR_STRING:
 	case VAR_VECTOR:
 	case VAR_FLOAT:
@@ -1591,17 +1593,19 @@ void Scr_CastDebugString(VariableValue *value)
 		value->type = VAR_STRING;
 		return;
 	case VAR_ANIMATION:
-		s = XAnimGetAnimDebugName(Scr_GetAnims(value->u.pointerValue >> 16), (uint16_t)value->u.pointerValue);
-		stringValue = SL_GetString_(s, 0);
-		break;
+		anim.linkPointer = value->u.codePosValue;
+		anims = Scr_GetAnims(HIWORD(value->u.intValue));
+		s = XAnimGetAnimDebugName(anims, anim.index);
+		goto setstring;
 	default:
-		stringValue = SL_GetString_(var_typename[value->type], 0);
-		break;
+		s = var_typename[value->type];
+setstring:
+		stringValue = SL_GetString_(s, 0);
+		RemoveRefToValue(value);
+		value->type = VAR_STRING;
+		value->u.stringValue = stringValue;
+		return;
 	}
-
-	RemoveRefToValue(value);
-	value->type = VAR_STRING;
-	value->u.stringValue = stringValue;
 }
 
 void Scr_UnmatchingTypesError(VariableValue *value1, VariableValue *value2)
