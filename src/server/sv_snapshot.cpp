@@ -181,12 +181,9 @@ void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_
 		fogOpaqueDistSqrd = 0.0;
 	}
 
-	int maxCachedSnapshotEntities = 0x4000; // sizeof(svs.cachedSnapshotEntities) / sizeof(svs.cachedSnapshotEntities[0]); NOT for CoD2, CoD2 uses malloc for that
-
 	for ( e = 0 ; e < from_num_entities ; e++ )
 	{
-
-		aent = &svs.cachedSnapshotEntities[(e + from_first_entity) % maxCachedSnapshotEntities];
+		aent = &svs.cachedSnapshotEntities[(e + from_first_entity) % 0x4000];
 		if ( (1 << (clientNum & 31)) & aent->r.clientMask[clientNum >> 5] || aent->s.number == clientNum )
 		{
 			continue;
@@ -1358,7 +1355,7 @@ void SV_ArchiveSnapshot()
 	client_s *client;
 	int i;
 	svEntity_t *svEnt;
-	archivedEntity_s aEnt;
+	archivedEntity_s to;
 	gentity_s *ent;
 	int num;
 
@@ -1464,19 +1461,19 @@ void SV_ArchiveSnapshot()
 							        || (ent->r.svFlags & 1) == 0
 							        && ((svEnt = SV_SvEntityForGentity(ent), (ent->r.svFlags & 0x18) != 0) || svEnt->numClusters) )
 							{
-								memcpy(&aEnt.s, &ent->s, sizeof(entityState_t));
-								aEnt.r.svFlags = ent->r.svFlags;
+								memcpy(&to.s, &ent->s, sizeof(entityState_t));
+								to.r.svFlags = ent->r.svFlags;
 
 								if ( ent->r.broadcastTime )
-									aEnt.r.svFlags |= 8u;
+									to.r.svFlags |= 8u;
 
-								aEnt.r.clientMask[0] = ent->r.clientMask[0];
-								aEnt.r.clientMask[0] = ent->r.clientMask[0];
+								to.r.clientMask[0] = ent->r.clientMask[0];
+								to.r.clientMask[1] = ent->r.clientMask[1];
 
-								VectorCopy(ent->r.absmin, aEnt.r.absmin);
-								VectorCopy(ent->r.absmax, aEnt.r.absmax);
+								VectorCopy(ent->r.absmin, to.r.absmin);
+								VectorCopy(ent->r.absmax, to.r.absmax);
 
-								MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, &aEnt, 1);
+								MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, &to, 1);
 							}
 						}
 					}
