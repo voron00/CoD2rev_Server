@@ -138,33 +138,33 @@ void AnimTreeCompileError(const char *msg)
 
 void ConnectScriptToAnim(unsigned int names, int index, unsigned int filename, unsigned short name, int treeIndex)
 {
-	scr_anim_s newAnim;
-	const char *linkPointer;
-	scr_anim_s *i;
-	scr_anim_s **adr;
+	scr_anim_s anim;
+	const char *nextCodePos;
+	const char *codePos;
+	VariableValueInternal_u *value;
 	unsigned int id;
 
 	id = FindVariable(names, name);
 
 	if ( id )
 	{
-		adr = (scr_anim_s **)GetVariableValueAddress(id);
+		value = GetVariableValueAddress(id);
 
-		if ( !*adr )
+		if ( !value->u.intValue )
 		{
 			Com_Error(ERR_DROP, "duplicate animation '%s' in 'animtrees/%s.atr'", SL_ConvertToString(name), SL_ConvertToString(filename));
 		}
 
-		newAnim.index = index;
-		newAnim.tree = treeIndex;
+		anim.index = index;
+		anim.tree = treeIndex;
 
-		for ( i = *adr; i; i = (scr_anim_s *)linkPointer )
+		for ( codePos = value->u.codePosValue; codePos; codePos = nextCodePos )
 		{
-			linkPointer = i->linkPointer;
-			*i = newAnim;
+			nextCodePos = *(const char **)codePos;
+			*(scr_anim_s *)codePos = anim;
 		}
 
-		*adr = 0;
+		value->u.intValue = 0;
 	}
 }
 
