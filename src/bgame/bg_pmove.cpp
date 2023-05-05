@@ -1309,12 +1309,10 @@ void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out)
 extern dvar_t *jump_bounceEnable;
 void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 {
-	float v3;
-	float v4;
-	float v5;
-	float v6;
-	float v7;
-	float v8;
+	float lengthSq2D;
+	float adjusted;
+	float newZ;
+	float lengthScale;
 
 	if (!jump_bounceEnable->current.boolean)
 	{
@@ -1322,27 +1320,25 @@ void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *ve
 		return;
 	}
 
-	v3 = *velIn;
-	v4 = velIn[1];
-	v5 = (float)(v3 * v3) + (float)(v4 * v4);
+	lengthSq2D = (float)(velIn[0] * velIn[0]) + (float)(velIn[1] * velIn[1]);
 
-	if ( fabs(normal[2]) < 0.001 || v5 == 0.0 )
+	if ( fabs(normal[2]) < 0.001 || lengthSq2D == 0.0 )
 	{
-		*velOut = v3;
+		velOut[0] = velIn[0];
 		velOut[1] = velIn[1];
 		velOut[2] = velIn[2];
 	}
 	else
 	{
-		v6 = (float)-(float)((float)(v3 * *normal) + (float)(v4 * normal[1])) / normal[2];
-		v7 = velIn[2];
-		v8 = sqrt((float)((float)(v7 * v7) + v5) / (float)(v5 + (float)(v6 * v6)));
+		newZ = (float)-(float)((float)(velIn[0] * normal[0]) + (float)(velIn[1] * normal[1])) / normal[2];
+		adjusted = velIn[1];
+		lengthScale = sqrt((float)((float)(velIn[2] * velIn[2]) + lengthSq2D) / (float)((float)(newZ * newZ) + lengthSq2D));
 
-		if ( v8 < 1.0 || v6 < 0.0 || v7 > 0.0 )
+		if ( lengthScale < 1.0 || newZ < 0.0 || velIn[2] > 0.0 )
 		{
-			*velOut = v3 * v8;
-			velOut[1] = v4 * v8;
-			velOut[2] = v6 * v8;
+			velOut[0] = lengthScale * velIn[0];
+			velOut[1] = lengthScale * adjusted;
+			velOut[2] = lengthScale * newZ;
 		}
 	}
 }
