@@ -337,7 +337,7 @@ extern "C" {
 
 void Com_InitDvars();
 void Com_StartupVariable( const char *match );
-void Com_PrintMessage( conChannel_t channel, const char *fmt, ... );
+void Com_PrintMessage( conChannel_t channel, const char *msg );
 void QDECL Com_Printf( const char *fmt, ...);
 void QDECL Com_DPrintf( const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);

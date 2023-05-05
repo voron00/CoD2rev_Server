@@ -414,15 +414,10 @@ void Info_Print( const char *s )
 	}
 }
 
-void Com_PrintMessage( conChannel_t channel, const char *fmt, ... )
+void Com_PrintMessage( conChannel_t channel, const char *msg )
 {
 	va_list		argptr;
-	char		msg[MAXPRINTMSG];
 	static qboolean opening_qconsole = qfalse;
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
-	va_end (argptr);
 
 	if ( rd_buffer )
 	{
@@ -498,7 +493,8 @@ void QDECL Com_Printf( const char *fmt, ...)
 	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
-	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, "%s", msg);
+	msg[MAXPRINTMSG - 1] = 0;
+	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, msg);
 }
 
 void QDECL Com_DPrintf( const char *fmt, ...)
@@ -515,7 +511,8 @@ void QDECL Com_DPrintf( const char *fmt, ...)
 	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
-	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, "%s", msg);
+	msg[MAXPRINTMSG - 1] = 0;
+	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, msg);
 }
 
 qboolean Com_SafeMode( void )
