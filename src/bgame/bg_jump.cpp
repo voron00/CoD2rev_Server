@@ -6,6 +6,7 @@ dvar_t *jump_stepSize;
 dvar_t *jump_slowdownEnable;
 dvar_t *jump_ladderPushVel;
 dvar_t *jump_spreadAdd;
+dvar_t *jump_bounceEnable;
 
 #if COMPILE_PLAYER == 1
 bool player_jump_slowdownenable_enabled[MAX_CLIENTS] = {0};
@@ -274,4 +275,5 @@ void Jump_RegisterDvars()
 	jump_slowdownEnable = Dvar_RegisterBool("jump_slowdownEnable", 1, 0x1180u);
 	jump_ladderPushVel = Dvar_RegisterFloat("jump_ladderPushVel", 128.0, 0.0, 1024.0, 0x1180u);
 	jump_spreadAdd = Dvar_RegisterFloat("jump_spreadAdd", 64.0, 0.0, 512.0, 0x1180u);
+	jump_bounceEnable = Dvar_RegisterBool("jump_bounceEnable", 0, 0x1180u);
 }

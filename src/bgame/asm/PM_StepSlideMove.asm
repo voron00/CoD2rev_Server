@@ -11,6 +11,7 @@ extern floor
 extern sqrt
 extern PM_AddTouchEnt
 extern PM_ClipVelocity
+extern PM_ProjectVelocity
 
 
 global PM_StepSlideMove
@@ -1561,7 +1562,7 @@ loc_80E816C:
    mov     eax, [ebp-0E0h]
    add     eax, 20h
    mov     [esp], eax
-   call    PM_ClipVelocity
+   call    PM_ProjectVelocity
    jmp     loc_80E81F2
 loc_80E81C5:
    fld     dword [ebp-0B8h]

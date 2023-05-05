@@ -1306,6 +1306,47 @@ void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out)
 	VectorMA(in, -change, normal, out);
 }
 
+extern dvar_t *jump_bounceEnable;
+void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
+{
+	float v3;
+	float v4;
+	float v5;
+	float v6;
+	float v7;
+	float v8;
+
+	if (!jump_bounceEnable->current.boolean)
+	{
+		PM_ClipVelocity(velIn, normal, velOut);
+		return;
+	}
+
+	v3 = *velIn;
+	v4 = velIn[1];
+	v5 = (float)(v3 * v3) + (float)(v4 * v4);
+
+	if ( fabs(normal[2]) < 0.001 || v5 == 0.0 )
+	{
+		*velOut = v3;
+		velOut[1] = velIn[1];
+		velOut[2] = velIn[2];
+	}
+	else
+	{
+		v6 = (float)-(float)((float)(v3 * *normal) + (float)(v4 * normal[1])) / normal[2];
+		v7 = velIn[2];
+		v8 = sqrt((float)((float)(v7 * v7) + v5) / (float)(v5 + (float)(v6 * v6)));
+
+		if ( v8 < 1.0 || v6 < 0.0 || v7 > 0.0 )
+		{
+			*velOut = v3 * v8;
+			velOut[1] = v4 * v8;
+			velOut[2] = v6 * v8;
+		}
+	}
+}
+
 void QDECL PM_AirMove(pmove_t *pm, pml_t *pml)
 {
 	playerState_s *ps;

@@ -1035,6 +1035,8 @@ float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycl
 void QDECL BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
 void QDECL BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
 
+void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
+
 #ifdef __cplusplus
 }
 #endif
