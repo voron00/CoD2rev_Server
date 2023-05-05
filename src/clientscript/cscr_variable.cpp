@@ -70,7 +70,7 @@ struct scr_classStruct_t scrClassMap[] =
 
 #define CLASS_NUM_COUNT 4
 
-unsigned int GetVarType(int varIndex)
+unsigned int GetObjectType(int varIndex)
 {
 	return scrVarGlob.variableList[varIndex].w.status & VAR_MASK;
 }
@@ -82,7 +82,7 @@ qboolean IsObject(VariableValueInternal *var)
 
 qboolean IsObjectVal(int varIndex)
 {
-	return GetVarType(varIndex) > VAR_THREAD_LIST;
+	return GetObjectType(varIndex) > VAR_THREAD_LIST;
 }
 
 unsigned int FindNextSibling(unsigned int id)
@@ -1581,7 +1581,7 @@ void Scr_CastDebugString(VariableValue *value)
 	switch ( value->type )
 	{
 	case VAR_OBJECT:
-		s = var_typename[GetVarType(value->u.pointerValue)];
+		s = var_typename[GetObjectType(value->u.pointerValue)];
 		goto setstring;
 	case VAR_STRING:
 	case VAR_VECTOR:
@@ -1610,28 +1610,31 @@ setstring:
 
 void Scr_UnmatchingTypesError(VariableValue *value1, VariableValue *value2)
 {
-	const char *error;
+	int type1;
+	int type2;
+	const char *error_message;
 
 	if ( scrVarPub.error_message )
 	{
-		error = 0;
+		error_message = NULL;
 	}
 	else
 	{
+		type1 = value1->type;
+		type2 = value2->type;
 		Scr_CastDebugString(value1);
 		Scr_CastDebugString(value2);
-		error = va(
-		            "pair '%s' and '%s' has unmatching types '%s' and '%s'",
-		            SL_ConvertToString(value1->u.stringValue),
-		            SL_ConvertToString(value2->u.stringValue),
-		            var_typename[value1->type],
-		            var_typename[value2->type]);
+
+		assert(value1->type == VAR_STRING);
+		assert(value2->type == VAR_STRING);
+
+		error_message = va("pair '%s' and '%s' has unmatching types '%s' and '%s'", SL_ConvertToString(value1->u.intValue), SL_ConvertToString(value2->u.intValue), var_typename[type1], var_typename[type2]);
 	}
 	RemoveRefToValue(value1);
 	value1->type = VAR_UNDEFINED;
 	RemoveRefToValue(value2);
 	value2->type = VAR_UNDEFINED;
-	Scr_Error(error);
+	Scr_Error(error_message);
 }
 
 VariableValue Scr_EvalVariableField(unsigned int id)

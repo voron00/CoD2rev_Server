@@ -187,7 +187,7 @@ int Scr_GetPointerType(unsigned int index)
 		Scr_Error(va("type %s is not a pointer", var_typename[scrVmPub.top[-index].type]));
 	}
 
-	return GetVarType(scrVmPub.top[-index].u.intValue);
+	return GetObjectType(scrVmPub.top[-index].u.intValue);
 }
 
 void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index)
@@ -203,14 +203,14 @@ void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index)
 		{
 			entId = entryValue->u.pointerValue;
 
-			if ( GetVarType(entryValue->u.pointerValue) == VAR_ENTITY )
+			if ( GetObjectType(entryValue->u.pointerValue) == VAR_ENTITY )
 			{
 				Scr_GetEntityIdRef(entRef, entId);
 				return;
 			}
 
 			scrVarPub.error_index = index + 1;
-			Scr_Error(va("type %s is not an entity", var_typename[GetVarType(entId)]));
+			Scr_Error(va("type %s is not an entity", var_typename[GetObjectType(entId)]));
 		}
 
 		scrVarPub.error_index = index + 1;
@@ -851,7 +851,7 @@ void Scr_CancelNotifyList(unsigned int notifyListOwnerId)
 
 		startLocalId = GetVariableKeyObject(stackId);
 
-		if ( GetVarType(stackId) == VAR_STACK )
+		if ( GetObjectType(stackId) == VAR_STACK )
 		{
 			stackValue = GetVariableValueAddress(stackId)->u.stackValue;
 			Scr_CancelWaittill(startLocalId);
@@ -1005,7 +1005,7 @@ void Scr_TerminateThread(unsigned int localId)
 	int startLocalId;
 
 	startLocalId = GetStartLocalId(localId);
-	type = GetVarType(startLocalId);
+	type = GetObjectType(startLocalId);
 
 	if ( type == VAR_NOTIFY_THREAD )
 	{
@@ -1227,7 +1227,7 @@ next:
 				selfId = Scr_GetSelf(startLocalId);
 				localId = FindObjectVariable(scrVarPub.pauseArrayId, selfId);
 				selfNameId = FindObject(localId);
-				if ( GetVarType(notifyListEntry) )
+				if ( GetObjectType(notifyListEntry) )
 				{
 					stackId = GetVariableValueAddress(notifyListEntry);
 					newStackBuf = stackId->u.stackValue;

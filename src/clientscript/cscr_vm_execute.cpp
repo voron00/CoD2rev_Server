@@ -530,7 +530,7 @@ LABEL_58:
 			++top;
 			VM_GetShort((_WORD **)&pos);
 LABEL_269:
-			type2 = GetVarType(objectRef);
+			type2 = GetObjectType(objectRef);
 			goto LABEL_270;
 		case OP_EvalFieldVariable:
 LABEL_62:
@@ -680,7 +680,7 @@ LABEL_106:
 			if ( top->type != VAR_OBJECT )
 				goto LABEL_110;
 			objectRef = top->u.intValue;
-			if ( GetVarType(objectRef) == VAR_ENTITY )
+			if ( GetObjectType(objectRef) == VAR_ENTITY )
 			{
 				Scr_GetEntityIdRef(&entRef, objectRef);
 				entRef2 = entRef;
@@ -713,7 +713,7 @@ LABEL_94:
 				}
 				continue;
 			}
-			type2 = GetVarType(objectRef);
+			type2 = GetObjectType(objectRef);
 			RemoveRefToObject(objectRef);
 			scrVarPub.error_index = -1;
 			v64 = va("%s is not an entity", var_typename[type2]);
@@ -1186,7 +1186,7 @@ LABEL_180:
 			scrVarPub.error_index = 3;
 			Scr_Error("first parameter of waittill must evaluate to a string");
 LABEL_266:
-			type2 = GetVarType(top->u.intValue);
+			type2 = GetObjectType(top->u.intValue);
 LABEL_268:
 			scrVarPub.error_index = 2;
 LABEL_270:
@@ -1446,7 +1446,7 @@ LABEL_296:
 			}
 			Scr_Error("first parameter of endon must evaluate to a string");
 LABEL_264:
-			type2 = GetVarType(top->u.intValue);
+			type2 = GetObjectType(top->u.intValue);
 LABEL_267:
 			scrVarPub.error_index = 1;
 			goto LABEL_270;
