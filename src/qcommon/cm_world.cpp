@@ -306,7 +306,7 @@ void CM_LinkEntity(svEntity_t *ent, float *absmin, float *absmax, clipHandle_t c
 	model = CM_ClipHandleToModel(clipHandle);
 	contents = model->leaf.brushContents | model->leaf.terrainContents;
 
-	if ( model->leaf.brushContents + model->leaf.terrainContents )
+	if ( *(uint64_t *)&model->leaf.brushContents )
 	{
 		while ( 1 )
 		{
