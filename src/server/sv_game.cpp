@@ -392,11 +392,11 @@ int SV_EntityContact(const float *mins, const float *maxs, gentity_s *gEnt)
 			{
 				if ( mins[2] < (float)(gEnt->r.currentOrigin[2] + gEnt->r.maxs[2]) )
 				{
-					center[0] = *mins + *maxs;
+					center[0] = mins[0] + maxs[0];
 					center[1] = mins[1] + maxs[1];
 					center[0] = 0.5 * center[0];
 					center[1] = 0.5 * center[1];
-					dist = (float)(*maxs - center[0]) + gEnt->r.maxs[0];
+					dist = (float)(maxs[0] - center[0]) + gEnt->r.maxs[0];
 					return (float)(dist * dist) > (float)((float)((float)(center[0] - gEnt->r.currentOrigin[0])
 					                                      * (float)(center[0] - gEnt->r.currentOrigin[0]))
 					                                      + (float)((float)(center[1] - gEnt->r.currentOrigin[1])
@@ -414,11 +414,11 @@ int SV_EntityContact(const float *mins, const float *maxs, gentity_s *gEnt)
 		}
 		else
 		{
-			center[0] = *mins + *maxs;
+			center[0] = mins[0] + maxs[0];
 			center[1] = mins[1] + maxs[1];
 			center[0] = 0.5 * center[0];
 			center[1] = 0.5 * center[1];
-			dist = (float)((float)(*maxs - center[0]) + gEnt->r.maxs[0]) - 64.0;
+			dist = (float)((float)(maxs[0] - center[0]) + gEnt->r.maxs[0]) - 64.0;
 			return (float)((float)((float)(center[0] - gEnt->r.currentOrigin[0])
 			                       * (float)(center[0] - gEnt->r.currentOrigin[0]))
 			               + (float)((float)(center[1] - gEnt->r.currentOrigin[1])

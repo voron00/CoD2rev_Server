@@ -76,16 +76,16 @@ void SV_LinkEntity(gentity_s *ent)
 	currentOrigin = ent->r.currentOrigin;
 	SnapAngles(ent->r.currentAngles);
 
-	if ( !ent->r.bmodel || *angles == 0.0 && angles[1] == 0.0 && angles[2] == 0.0 )
+	if ( !ent->r.bmodel || angles[0] == 0.0 && angles[1] == 0.0 && angles[2] == 0.0 )
 	{
 		VectorAdd(currentOrigin, ent->r.mins, ent->r.absmin);
 		VectorAdd(currentOrigin, ent->r.maxs, ent->r.absmax);
 	}
-	else if ( *angles == 0.0 && angles[2] == 0.0 )
+	else if ( angles[0] == 0.0 && angles[2] == 0.0 )
 	{
 		max2d = RadiusFromBounds2D(ent->r.mins, ent->r.maxs);
 
-		for ( i = 0; i <= 1; ++i )
+		for ( i = 0; i < 2; ++i )
 		{
 			ent->r.absmin[i] = currentOrigin[i] - max2d;
 			ent->r.absmax[i] = currentOrigin[i] + max2d;
@@ -98,7 +98,7 @@ void SV_LinkEntity(gentity_s *ent)
 	{
 		max = RadiusFromBounds(ent->r.mins, ent->r.maxs);
 
-		for ( j = 0; j <= 2; ++j )
+		for ( j = 0; j < 3; ++j )
 		{
 			ent->r.absmin[j] = currentOrigin[j] - max;
 			ent->r.absmax[j] = currentOrigin[j] + max;
@@ -111,6 +111,7 @@ void SV_LinkEntity(gentity_s *ent)
 	ent->r.absmax[0] = ent->r.absmax[0] + 1.0;
 	ent->r.absmax[1] = ent->r.absmax[1] + 1.0;
 	ent->r.absmax[2] = ent->r.absmax[2] + 1.0;
+
 	svEnt->numClusters = 0;
 	svEnt->lastCluster = 0;
 
@@ -165,6 +166,7 @@ unlink:
 			Vector2Add(currentOrigin, mins, mins);
 			Vector2Add(currentOrigin, maxs, maxs);
 		}
+
 		CM_LinkEntity(svEnt, mins, maxs, handle);
 	}
 	else
@@ -344,11 +346,11 @@ LABEL_26:
 int SV_PointSightTraceToEntity(sightpointtrace_t *clip, svEntity_t *check)
 {
 	vec3_t entAxis[4];
-	float absmax[4];
-	float absmin[4];
+	vec3_t absmax;
+	vec3_t absmin;
 	DObjTrace_s objTrace;
-	float maxs[4];
-	float mins[7];
+	vec3_t maxs;
+	vec3_t mins;
 	DObj_s *obj;
 	TraceExtents extents;
 	int num;
@@ -705,7 +707,7 @@ int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask)
 
 signed int SV_SightTraceToEntity(const float *start, const float *mins, const float *maxs, const float *end, int entityNum, int contentmask)
 {
-	struct gentity_s *touch;
+	gentity_s *touch;
 	signed int i;
 	unsigned int clipHandle;
 	const float *angles;
