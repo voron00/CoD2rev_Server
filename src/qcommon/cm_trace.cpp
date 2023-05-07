@@ -120,6 +120,57 @@ void CM_TestBoxInBrush(traceWork_t *tw, cbrush_s *brush, trace_t *trace)
 	}
 }
 
+void CM_TestInLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, trace_t *trace)
+{
+	cbrush_s *b;
+	int i;
+
+	while ( (node->contents & tw->contents) != 0 )
+	{
+		if ( node->leafBrushCount )
+		{
+			if ( node->leafBrushCount > 0 )
+			{
+				for ( i = 0; i < node->leafBrushCount; ++i )
+				{
+					b = &cm.brushes[node->data.leaf.brushes[i]];
+
+					if ( (b->contents & tw->contents) != 0 )
+					{
+						CM_TestBoxInBrush(tw, b, trace);
+
+						if ( trace->allsolid )
+							break;
+					}
+				}
+				return;
+			}
+
+			CM_TestInLeafBrushNode_r(tw, node + 1, trace);
+
+			if ( trace->allsolid )
+				return;
+		}
+
+		if ( tw->bounds[0][node->axis] <= node->data.children.dist )
+		{
+			if ( tw->bounds[1][node->axis] >= node->data.children.dist )
+			{
+				CM_TestInLeafBrushNode_r(tw, &node[node->data.children.childOffset[0]], trace);
+
+				if ( trace->allsolid )
+					return;
+			}
+
+			node += node->data.children.childOffset[1];
+		}
+		else
+		{
+			node += node->data.children.childOffset[0];
+		}
+	}
+}
+
 int CM_TestInLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
 {
 	int i;
@@ -233,6 +284,148 @@ void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree
 		CM_TraceThroughAabbTree(tw, aabbTree, trace);
 }
 
+void CM_TraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, const float *p1_, const float *p2, trace_t *trace)
+{
+	float v5;
+	float v6;
+	float v7;
+	float v8;
+	float v9;
+	int side;
+	float diff;
+	float t1;
+	float frac;
+	int k;
+	float p1[4];
+	float offset;
+	float tmax;
+	float t2;
+	float frac2;
+	unsigned short *brushes;
+	float absDiff;
+	float invDist;
+	float tmin;
+	int brushnum;
+	float mid[4];
+
+	p1[0] = p1_[0];
+	p1[1] = p1_[1];
+	p1[2] = p1_[2];
+	p1[3] = p1_[3];
+
+	while ( (tw->contents & node->contents) != 0 )
+	{
+		if ( node->leafBrushCount )
+		{
+			if ( node->leafBrushCount > 0 )
+			{
+				brushes = node->data.leaf.brushes;
+
+				for ( k = 0; k < node->leafBrushCount; ++k )
+				{
+					brushnum = brushes[k];
+
+					if ( (tw->contents & cm.brushes[brushnum].contents) != 0 )
+						CM_TraceThroughBrush(tw, &cm.brushes[brushnum], trace);
+				}
+
+				return;
+			}
+
+			CM_TraceThroughLeafBrushNode_r(tw, node + 1, p1, p2, trace);
+		}
+
+		t1 = p1[node->axis] - node->data.children.dist;
+		t2 = p2[node->axis] - node->data.children.dist;
+
+		offset = (float)(tw->size[node->axis] + 0.125) - node->data.children.range;
+
+		if ( (float)(t1 - t2) < 0.0 )
+			v9 = t2;
+		else
+			v9 = t1;
+
+		tmax = v9;
+
+		if ( (float)(t2 - t1) < 0.0 )
+			v8 = t2;
+		else
+			v8 = t1;
+
+		tmin = v8;
+
+		if ( v8 < offset )
+		{
+			if ( -offset < tmax )
+			{
+				if ( p1[3] >= trace->fraction )
+					return;
+
+				diff = t2 - t1;
+				absDiff = fabs(t2 - t1);
+
+				if ( absDiff <= 0.00000047683716 )
+				{
+					side = 0;
+					frac = 1.0;
+					frac2 = 0.0;
+				}
+				else
+				{
+					if ( diff < 0.0 )
+						v7 = t1;
+					else
+						v7 = -t1;
+
+					invDist = 1.0 / absDiff;
+
+					frac2 = (float)(v7 - offset) * (float)(1.0 / absDiff);
+					frac = (float)(v7 + offset) * (float)(1.0 / absDiff);
+
+					side = diff >= 0.0;
+				}
+
+				if ( (float)(1.0 - frac) < 0.0 )
+					v6 = 1.0;
+				else
+					v6 = frac;
+
+				mid[0] = (float)((float)(*p2 - p1[0]) * v6) + p1[0];
+				mid[1] = (float)((float)(p2[1] - p1[1]) * v6) + p1[1];
+				mid[2] = (float)((float)(p2[2] - p1[2]) * v6) + p1[2];
+				mid[3] = (float)((float)(p2[3] - p1[3]) * v6) + p1[3];
+
+				CM_TraceThroughLeafBrushNode_r(tw, &node[node->data.children.childOffset[side]], p1, mid, trace);
+
+				if ( (float)(frac2 - 0.0) < 0.0 )
+					v5 = 0.0;
+				else
+					v5 = frac2;
+
+				frac2 = v5;
+
+				p1[0] = (float)((float)(*p2 - p1[0]) * v5) + p1[0];
+				p1[1] = (float)((float)(p2[1] - p1[1]) * v5) + p1[1];
+				p1[2] = (float)((float)(p2[2] - p1[2]) * v5) + p1[2];
+				p1[3] = (float)((float)(p2[3] - p1[3]) * v5) + p1[3];
+
+				node += node->data.children.childOffset[1 - side];
+			}
+			else
+			{
+				node += node->data.children.childOffset[1];
+			}
+		}
+		else
+		{
+			if ( -offset >= tmax )
+				return;
+
+			node += node->data.children.childOffset[0];
+		}
+	}
+}
+
 bool CM_TraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
 {
 	vec4_t start;
@@ -257,7 +450,7 @@ bool CM_TraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace
 	return 0.0 == trace->fraction;
 }
 
-void QDECL CM_TraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
+void CM_TraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
 {
 	int i;
 
@@ -270,7 +463,7 @@ void QDECL CM_TraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
 	}
 }
 
-int QDECL CM_SightTraceThroughBrush(traceWork_t *tw, cbrush_t *brush)
+int CM_SightTraceThroughBrush(traceWork_t *tw, cbrush_t *brush)
 {
 	float d1;
 	cbrushside_t *side;
@@ -395,6 +588,160 @@ int QDECL CM_SightTraceThroughBrush(traceWork_t *tw, cbrush_t *brush)
 	return brush - cm.brushes + 1;
 }
 
+int CM_SightTraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *remoteNode, const float *p1_, const float *p2)
+{
+	float v6;
+	float v7;
+	float v8;
+	float v9;
+	float v10;
+	unsigned short *brushes;
+	int side;
+	float diff;
+	float t1;
+	float frac;
+	int k;
+	float p1[3];
+	float offset;
+	float tmax;
+	float t2;
+	float frac2;
+	float absDiff;
+	float invDist;
+	int hitNum;
+	float tmin;
+	int brushnum;
+	float mid[3];
+
+	p1[0] = p1_[0];
+	p1[1] = p1_[1];
+	p1[2] = p1_[2];
+
+	while ( 1 )
+	{
+		if ( (tw->contents & remoteNode->contents) == 0 )
+			return 0;
+
+		if ( remoteNode->leafBrushCount )
+			break;
+
+retry:
+		t1 = p1[remoteNode->axis] - remoteNode->data.children.dist;
+		t2 = p2[remoteNode->axis] - remoteNode->data.children.dist;
+
+		offset = (float)(tw->size[remoteNode->axis] + 0.125) - remoteNode->data.children.range;
+
+		if ( (float)(t1 - t2) < 0.0 )
+			v10 = t2;
+		else
+			v10 = t1;
+
+		tmax = v10;
+
+		if ( (float)(t2 - t1) < 0.0 )
+			v9 = t2;
+		else
+			v9 = t1;
+
+		tmin = v9;
+
+		if ( v9 < offset )
+		{
+			if ( -offset < tmax )
+			{
+				diff = t2 - t1;
+				absDiff = fabs(t2 - t1);
+
+				if ( absDiff <= 0.00000047683716 )
+				{
+					side = 0;
+					frac = 1.0;
+					frac2 = 0.0;
+				}
+				else
+				{
+					if ( diff < 0.0 )
+						v8 = t1;
+					else
+						v8 = -t1;
+
+					invDist = 1.0 / absDiff;
+
+					frac2 = (float)(v8 - offset) * (float)(1.0 / absDiff);
+					frac = (float)(v8 + offset) * (float)(1.0 / absDiff);
+
+					side = diff >= 0.0;
+				}
+
+				if ( (float)(1.0 - frac) < 0.0 )
+					v7 = 1.0;
+				else
+					v7 = frac;
+
+				mid[0] = (float)((float)(*p2 - p1[0]) * v7) + p1[0];
+				mid[1] = (float)((float)(p2[1] - p1[1]) * v7) + p1[1];
+				mid[2] = (float)((float)(p2[2] - p1[2]) * v7) + p1[2];
+
+				hitNum = CM_SightTraceThroughLeafBrushNode_r(tw, &remoteNode[remoteNode->data.children.childOffset[side]], p1, mid);
+
+				if ( hitNum )
+					return hitNum;
+
+				if ( (float)(frac2 - 0.0) < 0.0 )
+					v6 = 0.0;
+				else
+					v6 = frac2;
+
+				frac2 = v6;
+
+				p1[0] = (float)((float)(*p2 - p1[0]) * v6) + p1[0];
+				p1[1] = (float)((float)(p2[1] - p1[1]) * v6) + p1[1];
+				p1[2] = (float)((float)(p2[2] - p1[2]) * v6) + p1[2];
+
+				remoteNode += remoteNode->data.children.childOffset[1 - side];
+			}
+			else
+			{
+				remoteNode += remoteNode->data.children.childOffset[1];
+			}
+		}
+		else
+		{
+			if ( -offset >= tmax )
+				return 0;
+
+			remoteNode += remoteNode->data.children.childOffset[0];
+		}
+	}
+
+	if ( remoteNode->leafBrushCount <= 0 )
+	{
+		hitNum = CM_SightTraceThroughLeafBrushNode_r(tw, remoteNode + 1, p1, p2);
+
+		if ( hitNum )
+			return hitNum;
+
+		goto retry;
+	}
+
+	brushes = remoteNode->data.leaf.brushes;
+
+	for ( k = 0; k < remoteNode->leafBrushCount; ++k )
+	{
+		brushnum = brushes[k];
+
+		if ( (tw->contents & cm.brushes[brushnum].contents) != 0 )
+		{
+			hitNum = CM_SightTraceThroughBrush(tw, &cm.brushes[brushnum]);
+
+			if ( hitNum )
+				return hitNum;
+		}
+	}
+
+	return 0;
+}
+
 int CM_SightTraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf)
 {
 	vec3_t absmax;
@@ -413,7 +760,7 @@ int CM_SightTraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf)
 		           tw->extents.end);
 }
 
-int QDECL CM_SightTraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
+int CM_SightTraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
 {
 	int hitNum;
 	int i;
@@ -625,7 +972,7 @@ int CM_SightTraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace)
 	return -1;
 }
 
-void QDECL CM_TraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace)
+void CM_TraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace)
 {
 	cNode_t *node;
 	int side;
@@ -728,7 +1075,7 @@ void QDECL CM_TraceThroughTree(traceWork_t *tw, int num, const float *p1_, const
 	CM_TraceThroughLeaf(tw, &cm.leafs[-1 - num], trace);
 }
 
-int QDECL CM_SightTraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace)
+int CM_SightTraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace)
 {
 	float v7;
 	float v8;
@@ -989,6 +1336,83 @@ int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end
 	}
 
 	return CM_BoxSightTrace(hitNum, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask);
+}
+
+void CM_TraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace)
+{
+	float radius;
+	float offs;
+	vec3_t symetricSize[2];
+	vec3_t offset;
+	vec3_t endbottom;
+	vec3_t endtop;
+	vec3_t startbottom;
+	vec3_t starttop;
+	vec3_t bottom;
+	vec3_t top;
+	int i;
+
+	if ( tw->bounds[0][0] <= tw->threadInfo.box_model->maxs[0] + 1.0
+	        && tw->bounds[0][1] <= tw->threadInfo.box_model->maxs[1] + 1.0
+	        && tw->bounds[0][2] <= tw->threadInfo.box_model->maxs[2] + 1.0
+	        && tw->threadInfo.box_model->mins[0] - 1.0 <= tw->bounds[1][0]
+	        && tw->threadInfo.box_model->mins[1] - 1.0 <= tw->bounds[1][1]
+	        && tw->threadInfo.box_model->mins[2] - 1.0 <= tw->bounds[1][2] )
+	{
+		VectorCopy(tw->extents.start, starttop);
+		starttop[2] = starttop[2] + tw->offsetZ;
+		VectorCopy(tw->extents.start, startbottom);
+		startbottom[2] = startbottom[2] - tw->offsetZ;
+		VectorCopy(tw->extents.end, endtop);
+		endtop[2] = endtop[2] + tw->offsetZ;
+		VectorCopy(tw->extents.end, endbottom);
+		endbottom[2] = endbottom[2] - tw->offsetZ;
+
+		for ( i = 0; i < 3; ++i )
+		{
+			offset[i] = (tw->threadInfo.box_model->mins[i] + tw->threadInfo.box_model->maxs[i]) * 0.5;
+
+			symetricSize[0][i] = tw->threadInfo.box_model->mins[i] - offset[i];
+			symetricSize[1][i] = tw->threadInfo.box_model->maxs[i] - offset[i];
+		}
+
+		if ( symetricSize[1][0] <= symetricSize[1][2] )
+			radius = symetricSize[1][0];
+		else
+			radius = symetricSize[1][2];
+
+		offs = symetricSize[1][2] - radius;
+		VectorCopy(offset, top);
+		top[2] = top[2] + offs;
+		VectorCopy(offset, bottom);
+		bottom[2] = bottom[2] - offs;
+
+		if ( startbottom[2] <= top[2] )
+		{
+			if ( bottom[2] > starttop[2]
+			        && (!CM_TraceSphereThroughSphere(tw, starttop, endtop, bottom, radius, trace) || tw->delta[2] <= 0.0) )
+			{
+				return;
+			}
+		}
+		else if ( !CM_TraceSphereThroughSphere(tw, startbottom, endbottom, top, radius, trace) || tw->delta[2] >= 0.0 )
+		{
+			return;
+		}
+
+		if ( CM_TraceCylinderThroughCylinder(tw, offset, offs, radius, trace) )
+		{
+			if ( endbottom[2] <= top[2] )
+			{
+				if ( bottom[2] > endtop[2] && starttop[2] >= bottom[2] )
+					CM_TraceSphereThroughSphere(tw, starttop, endtop, bottom, radius, trace);
+			}
+			else if ( top[2] >= startbottom[2] )
+			{
+				CM_TraceSphereThroughSphere(tw, startbottom, endbottom, top, radius, trace);
+			}
+		}
+	}
 }
 
 void CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace)

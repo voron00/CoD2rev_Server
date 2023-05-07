@@ -126,7 +126,7 @@ typedef union cLeafBrushNodeData_s
 typedef struct cLeafBrushNode_s
 {
 	byte axis;
-	uint16_t leafBrushCount;
+	int16_t leafBrushCount;
 	int contents;
 	cLeafBrushNodeData_t data;
 } cLeafBrushNode_t;

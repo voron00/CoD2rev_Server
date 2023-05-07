@@ -144,6 +144,61 @@ byte *CM_ClusterPVS( int cluster )
 	return cm.visibility + cluster * cm.clusterBytes;
 }
 
+int CM_PointContentsLeafBrushNode_r(const float *p, cLeafBrushNode_s *node)
+{
+	cbrushside_t *side;
+	int contents;
+	int k;
+	cbrush_t *b;
+	int i;
+	int numsides;
+
+	contents = 0;
+
+	while ( 1 )
+	{
+		if ( !node->leafBrushCount )
+			goto appendnode;
+
+		if ( node->leafBrushCount > 0 )
+			break;
+
+		contents |= CM_PointContentsLeafBrushNode_r(p, node + 1);
+appendnode:
+		node += node->data.children.childOffset[node->data.children.dist >= p[node->axis]];
+	}
+
+	for ( k = 0; k < node->leafBrushCount; ++k )
+	{
+		b = &cm.brushes[node->data.leaf.brushes[k]];
+
+		for ( i = 0; i < 3; ++i )
+		{
+			if ( b->mins[i] > p[i] || p[i] > b->maxs[i] )
+				goto miss;
+		}
+
+		side = b->sides;
+		numsides = b->numsides;
+
+		while ( numsides )
+		{
+			if ( (float)((float)((float)(*p * side->plane->normal[0]) + (float)(p[1] * side->plane->normal[1]))
+			             + (float)(p[2] * side->plane->normal[2])) > side->plane->dist )
+				goto miss;
+
+			--numsides;
+			++side;
+		}
+
+		contents |= b->contents;
+miss:
+		;
+	}
+
+	return contents;
+}
+
 int CM_PointContents(const float *p, unsigned int model)
 {
 	int i;
