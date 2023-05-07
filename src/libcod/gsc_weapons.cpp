@@ -379,13 +379,13 @@ void gsc_weapons_setweaponfiretime()
 {
 	int id;
 	const char *name;
-	int time;
+	int iTime;
 
-	if (stackGetParams("si", &name, &time))
+	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
 	}
-	else if ( ! stackGetParams("ii", &id, &time))
+	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
 		stackError("gsc_weapons_setweaponfiretime() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -400,7 +400,7 @@ void gsc_weapons_setweaponfiretime()
 	}
 
 	WeaponDef *weapon = BG_GetWeaponDef(id);
-	weapon->fireTime = time;
+	weapon->fireTime = iTime;
 
 	stackPushBool(qtrue);
 }
@@ -409,13 +409,13 @@ void gsc_weapons_setweaponmeleetime()
 {
 	int id;
 	const char *name;
-	int time;
+	int iTime;
 
-	if (stackGetParams("si", &name, &time))
+	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
 	}
-	else if ( ! stackGetParams("ii", &id, &time))
+	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
 		stackError("gsc_weapons_setweaponmeleetime() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -430,7 +430,7 @@ void gsc_weapons_setweaponmeleetime()
 	}
 
 	WeaponDef *weapon = BG_GetWeaponDef(id);
-	weapon->meleeTime = time;
+	weapon->meleeTime = iTime;
 
 	stackPushBool(qtrue);
 }
@@ -439,13 +439,13 @@ void gsc_weapons_setweaponreloadtime()
 {
 	int id;
 	const char *name;
-	int time;
+	int iTime;
 
-	if (stackGetParams("si", &name, &time))
+	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
 	}
-	else if ( ! stackGetParams("ii", &id, &time))
+	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
 		stackError("gsc_weapons_setweaponreloadtime() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -460,7 +460,7 @@ void gsc_weapons_setweaponreloadtime()
 	}
 
 	WeaponDef *weapon = BG_GetWeaponDef(id);
-	weapon->reloadTime = time;
+	weapon->reloadTime = iTime;
 
 	stackPushBool(qtrue);
 }
@@ -469,13 +469,13 @@ void gsc_weapons_setweaponreloademptytime()
 {
 	int id;
 	const char *name;
-	int time;
+	int iTime;
 
-	if (stackGetParams("si", &name, &time))
+	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
 	}
-	else if ( ! stackGetParams("ii", &id, &time))
+	else if ( ! stackGetParams("ii", &id, &iTime))
 	{
 		stackError("gsc_weapons_setweaponreloademptytime() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -490,7 +490,7 @@ void gsc_weapons_setweaponreloademptytime()
 	}
 
 	WeaponDef *weapon = BG_GetWeaponDef(id);
-	weapon->reloadEmptyTime = time;
+	weapon->reloadEmptyTime = iTime;
 
 	stackPushBool(qtrue);
 }
@@ -500,8 +500,9 @@ void gsc_weapons_setweaponcookable()
 	int id;
 	const char *name;
 	int cookable;
+	int iTime;
 
-	if (stackGetParams("si", &name, &time))
+	if (stackGetParams("si", &name, &iTime))
 	{
 		id = BG_FindWeaponIndexForName(name);
 	}
