@@ -100,7 +100,7 @@ gentity_s* fire_rocket(gentity_s *parent, float *start, float *dir)
 	VectorCopy(start, rocket->r.currentOrigin);
 	vectoangles(dir, rocket->r.currentAngles);
 	G_SetAngle(rocket, rocket->r.currentAngles);
-	rocket->missile.time = (long double)weaponDef->destabilizeDistance / (long double)weaponDef->projectileSpeed * 1000.0;
+	rocket->missile.time = (float)weaponDef->destabilizeDistance / (float)weaponDef->projectileSpeed * 1000.0;
 	rocket->flags |= parent->flags & 0x20000;
 
 	return rocket;
@@ -216,8 +216,8 @@ void RunMissile_CreateWaterSplash(gentity_s *missile, trace_t *trace)
 
 void MissileLandAngles(gentity_s *ent, trace_t *trace, float *vAngles, int bForceAlign)
 {
-	long double aNorm;
-	long double vNorm;
+	float aNorm;
+	float vNorm;
 	float vPitch;
 	float aPitch;
 	float random;
@@ -228,7 +228,7 @@ void MissileLandAngles(gentity_s *ent, trace_t *trace, float *vAngles, int bForc
 	float fSurfacePitch;
 	int hitTime;
 
-	hitTime = level.previousTime + (int)((long double)(level.time - level.previousTime) * trace->fraction);
+	hitTime = level.previousTime + (int)((float)(level.time - level.previousTime) * trace->fraction);
 	BG_EvaluateTrajectory(&ent->s.apos, hitTime, vAngles);
 	VectorCopy(vAngles, vAng);
 
@@ -236,7 +236,7 @@ void MissileLandAngles(gentity_s *ent, trace_t *trace, float *vAngles, int bForc
 	{
 		if ( !bForceAlign )
 		{
-			random = (long double)((rand() & 0x7F) - 63) + ent->s.apos.trDelta[0];
+			random = (float)((rand() & 0x7F) - 63) + ent->s.apos.trDelta[0];
 			ent->s.apos.trDelta[0] = AngleNormalize360(random);
 		}
 	}
@@ -316,7 +316,7 @@ int BounceMissile(gentity_s *ent, trace_t *trace)
 
 	BG_EvaluateTrajectoryDelta(
 	    &ent->s.pos,
-	    level.previousTime + (int)((long double)(level.time - level.previousTime) * trace->fraction),
+	    level.previousTime + (int)((float)(level.time - level.previousTime) * trace->fraction),
 	    velocity);
 
 	dot = DotProduct(velocity, trace->normal);
@@ -381,7 +381,7 @@ void sub_811D53A(float *a1, float *a2)
 
 	for ( i = 0; i <= 2; ++i )
 	{
-		if ( a1[i] < (long double)a2[i] )
+		if ( a1[i] < (float)a2[i] )
 			a1[i] = ceil(a1[i]);
 		else
 			a1[i] = floor(a1[i]);
@@ -533,7 +533,7 @@ float sub_810B988(float a1)
 
 void RunMissile_Destabilize(gentity_s *missile)
 {
-	long double time;
+	float time;
 	float speed;
 	WeaponDef *weaponDef;
 	float angleMax;

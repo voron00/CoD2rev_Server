@@ -355,7 +355,7 @@ void NetProf_UpdateStatistics(netProfileStream_t *pStream)
 			if ( packetTime > 0 && packetCount )
 			{
 				if ( packetSize )
-					pStream->iBytesPerSecond = (int)((long double)packetSize / ((long double)packetTime * 0.001));
+					pStream->iBytesPerSecond = (int)((float)packetSize / ((float)packetTime * 0.001));
 				else
 					pStream->iBytesPerSecond = 0;
 

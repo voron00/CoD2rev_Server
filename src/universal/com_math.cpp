@@ -234,7 +234,7 @@ vec_t Vec4Normalize( vec4_t v )
 	return length;
 }
 
-double Vec2NormalizeTo(const float *v, float *out)
+float Vec2NormalizeTo(const float *v, float *out)
 {
 	float length;
 
@@ -414,7 +414,7 @@ void SnapAngles(vec3_t angles)
 	for ( i = 0; i < 3; ++i )
 	{
 		r = Q_rint(angles[i]);
-		delta = (long double)r - angles[i];
+		delta = (float)r - angles[i];
 
 		if ( Square(delta) < 0.0000010000001 )
 			angles[i] = (float)r;
@@ -479,7 +479,7 @@ vec_t vectosignedpitch(const vec3_t vec)
 
 void AxisToAngles( vec3_t axis[3], vec3_t angles )
 {
-	long double a;
+	float a;
 	vec3_t right;
 	float temp;
 	float pitch;
@@ -546,10 +546,10 @@ float AngleSubtract( float a1, float a2 )
 	return a;
 }
 
-double vectosignedyaw(float *vec)
+float vectosignedyaw(float *vec)
 {
 	float at;
-	double yaw;
+	float yaw;
 
 	if ( 0.0 != vec[1] || 0.0 != vec[0] )
 	{
@@ -602,7 +602,7 @@ void Vec3Lerp(const float *from, const float *to, float frac, float *result)
 	result[2] = (to[2] - from[2]) * frac + from[2];
 }
 
-double DiffTrack(float tgt, float cur, float rate, float deltaTime)
+float DiffTrack(float tgt, float cur, float rate, float deltaTime)
 {
 	float step;
 	float d, ad;
@@ -620,7 +620,7 @@ double DiffTrack(float tgt, float cur, float rate, float deltaTime)
 	return cur + step;
 }
 
-double DiffTrackAngle(float tgt, float cur, float rate, float deltaTime)
+float DiffTrackAngle(float tgt, float cur, float rate, float deltaTime)
 {
 	float angle;
 
@@ -638,7 +638,7 @@ double DiffTrackAngle(float tgt, float cur, float rate, float deltaTime)
 	return AngleNormalize180(angle);
 }
 
-long double AngleNormalize180Accurate(float angle)
+float AngleNormalize180Accurate(float angle)
 {
 	if ( angle > -180.0 )
 	{
@@ -663,7 +663,7 @@ long double AngleNormalize180Accurate(float angle)
 	}
 }
 
-long double AngleNormalize360Accurate(float angle)
+float AngleNormalize360Accurate(float angle)
 {
 	if ( angle >= 0.0 )
 	{
@@ -690,7 +690,7 @@ long double AngleNormalize360Accurate(float angle)
 
 void VectorAngleMultiply(float *vec, float angle)
 {
-	long double a;
+	float a;
 	float temp;
 	float x;
 	float y;
@@ -771,7 +771,7 @@ void YawVectors(const float yaw, vec3_t forward, vec3_t right)
 	}
 }
 
-double PitchForYawOnNormal(const float fYaw, const vec3_t normal)
+float PitchForYawOnNormal(const float fYaw, const vec3_t normal)
 {
 	vec3_t forward;
 
@@ -786,7 +786,7 @@ double PitchForYawOnNormal(const float fYaw, const vec3_t normal)
 	return 270.0;
 }
 
-double Abs(const float *v)
+float Abs(const float *v)
 {
 	return (float)sqrt((float)((float)((float)(*v * *v) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
 }
@@ -1082,7 +1082,7 @@ void Rand_Init(int seed)
 	holdrand = seed;
 }
 
-double flrand(float min, float max)
+float flrand(float min, float max)
 {
 	float result;
 
@@ -1097,7 +1097,7 @@ int irand(int min, int max)
 	return ((holdrand >> 17) * (max - min) >> 15) + min;
 }
 
-double Vec3DistanceSq(const float *p1, const float *p2)
+float Vec3DistanceSq(const float *p1, const float *p2)
 {
 	vec3_t d;
 
@@ -1105,7 +1105,7 @@ double Vec3DistanceSq(const float *p1, const float *p2)
 	return VectorLengthSquared( d );
 }
 
-double RotationToYaw(float *rot)
+float RotationToYaw(float *rot)
 {
 	float zz;
 	float r;

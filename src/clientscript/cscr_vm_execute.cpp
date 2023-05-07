@@ -51,7 +51,7 @@ int QDECL VM_GetInt(_DWORD **a1)
 	return *(*a1)++;
 }
 
-long double QDECL VM_GetFloat(_DWORD **a1)
+float QDECL VM_GetFloat(_DWORD **a1)
 {
 	return *(float *)(*a1)++;
 }

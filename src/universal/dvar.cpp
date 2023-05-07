@@ -1566,7 +1566,7 @@ float Dvar_GetFloat(const char *dvarName)
 			return dvar->current.decimal;
 
 		if (dvar->type == DVAR_TYPE_INT)
-			return (double)dvar->current.integer;
+			return (float)dvar->current.integer;
 
 		if (dvar->type == DVAR_TYPE_STRING)
 			return Dvar_StringToFloat(dvar->current.string);

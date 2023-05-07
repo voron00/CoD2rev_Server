@@ -458,7 +458,7 @@ void PlayerCmd_getFractionStartAmmo(scr_entref_t entRef)
 	{
 		if ( ent->client->ps.ammo[weaponDef->ammoIndex] > 0 )
 		{
-			ammo = (long double)ent->client->ps.ammo[weaponDef->ammoIndex] / (long double)weaponDef->startAmmo;
+			ammo = (float)ent->client->ps.ammo[weaponDef->ammoIndex] / (float)weaponDef->startAmmo;
 			Scr_AddFloat(ammo);
 		}
 		else
@@ -503,7 +503,7 @@ void PlayerCmd_getFractionMaxAmmo(scr_entref_t entRef)
 	{
 		if ( ent->client->ps.ammo[weaponDef->ammoIndex] > 0 )
 		{
-			ammo = (long double)ent->client->ps.ammo[weaponDef->ammoIndex] / (long double)BG_GetMaxAmmo(weaponDef->ammoIndex);
+			ammo = (float)ent->client->ps.ammo[weaponDef->ammoIndex] / (float)BG_GetMaxAmmo(weaponDef->ammoIndex);
 			Scr_AddFloat(ammo);
 		}
 		else
@@ -1053,7 +1053,7 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 				dmgRange = 0.15000001;
 			}
 
-			minDmg = (int)((long double)damage * dmgRange);
+			minDmg = (int)((float)damage * dmgRange);
 
 			if ( minDmg > 60 )
 				minDmg = 60;
@@ -1062,7 +1062,7 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 			{
 				if ( (ent->client->ps.eFlags & 0x300) == 0 )
 				{
-					knockback = (long double)minDmg * g_knockback->current.decimal / 250.0;
+					knockback = (float)minDmg * g_knockback->current.decimal / 250.0;
 					VectorScale(localdir, knockback, velocaityScale);
 					VectorAdd(ent->client->ps.velocity, velocaityScale, ent->client->ps.velocity);
 
@@ -1128,7 +1128,7 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 				damage = ent->health - 1;
 
 			maxTime = player_dmgtimer_maxTime->current.decimal;
-			dmgTime = (long double)damage * player_dmgtimer_timePerPoint->current.decimal;
+			dmgTime = (float)damage * player_dmgtimer_timePerPoint->current.decimal;
 			ent->client->ps.damageTimer += (int)dmgTime;
 
 			if ( dir )
@@ -1148,7 +1148,7 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 
 			ent->client->ps.flinchYaw -= (int)flinch;
 
-			if ( (long double)ent->client->ps.damageTimer > maxTime )
+			if ( (float)ent->client->ps.damageTimer > maxTime )
 				ent->client->ps.damageTimer = (int)maxTime;
 
 			ent->client->ps.damageDuration = ent->client->ps.damageTimer;

@@ -10,7 +10,7 @@ void CMod_LoadCollisionAabbTrees();
 void CMod_LoadLeafs(bool usePvs);
 void CMod_LoadSubmodels();
 int CMod_GetLeafTerrainContents(cLeaf_s *leaf);
-double CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist);
+float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist);
 void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf);
 void CMod_LoadLeafBrushNodes();
 void CMod_LoadSubmodelBrushNodes();

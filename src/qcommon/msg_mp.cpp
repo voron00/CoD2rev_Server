@@ -1068,7 +1068,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 			return;
 		}
 		MSG_WriteBit1(msg);
-		if ( (long double)signedbits == floatbits && (unsigned int)(signedbits + 4096) <= 0x1FFF )
+		if ( (float)signedbits == floatbits && (unsigned int)(signedbits + 4096) <= 0x1FFF )
 		{
 			MSG_WriteBit0(msg);
 			MSG_WriteBits(msg, signedbits + 4096, 5);
@@ -1086,7 +1086,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 			return;
 		}
 		MSG_WriteBit1(msg);
-		if ( (long double)signedbits == floatbits && (unsigned int)(signedbits + 512) <= 0x3FF )
+		if ( (float)signedbits == floatbits && (unsigned int)(signedbits + 512) <= 0x3FF )
 		{
 			MSG_WriteBit0(msg);
 			MSG_WriteBits(msg, signedbits + 512, 4);
@@ -1412,9 +1412,9 @@ void MSG_WriteDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, qb
 	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, 22, 6, clientStateFields, 1);
 }
 
-double MSG_ReadAngle16(msg_t *msg)
+float MSG_ReadAngle16(msg_t *msg)
 {
-	return SHORT2ANGLE((double)MSG_ReadShort(msg));
+	return SHORT2ANGLE((float)MSG_ReadShort(msg));
 }
 
 void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t *field, qboolean print)
@@ -1861,7 +1861,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 		switch (field->bits)
 		{
 		case 0:
-			if ( (long double)signedbits == floatbits && (unsigned int)(signedbits + 4096) <= 0x1FFF )
+			if ( (float)signedbits == floatbits && (unsigned int)(signedbits + 4096) <= 0x1FFF )
 			{
 				MSG_WriteBit0(msg);
 				MSG_WriteBits(msg, signedbits + 4096, 5);

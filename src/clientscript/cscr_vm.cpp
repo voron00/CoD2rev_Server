@@ -242,7 +242,7 @@ int Scr_GetInt(unsigned int index)
 	return entryValue->u.intValue;
 }
 
-double Scr_GetFloat(unsigned int index)
+float Scr_GetFloat(unsigned int index)
 {
 	VariableValue *entryValue;
 

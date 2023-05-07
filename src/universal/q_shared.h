@@ -296,8 +296,8 @@ extern "C" {
 
 int QDECL Com_sprintf(char *dest, size_t size, const char *format, ...);
 
-long double QDECL GetLeanFraction(const float fFrac);
-long double QDECL UnGetLeanFraction(const float fFrac);
+float QDECL GetLeanFraction(const float fFrac);
+float QDECL UnGetLeanFraction(const float fFrac);
 
 #ifdef __cplusplus
 }

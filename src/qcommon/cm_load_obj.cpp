@@ -376,7 +376,7 @@ cLeafBrushNode_s *CMod_AllocLeafBrushNode()
 	return node;
 }
 
-double CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist)
+float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist)
 {
 	signed int bc;
 	float max;

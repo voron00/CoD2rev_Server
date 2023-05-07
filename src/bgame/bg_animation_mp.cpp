@@ -1762,13 +1762,13 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 				length = XAnimGetLengthMsec(anim, index) + 200;
 			else
 				length = 1000;
-			oldTime = (long double)(bgs->time % length) / (long double)length + (long double)ci->clientNum * 0.36000001;
-			fStartTime = oldTime - (long double)(int)oldTime;
+			oldTime = (float)(bgs->time % length) / (float)length + (float)ci->clientNum * 0.36000001;
+			fStartTime = oldTime - (float)(int)oldTime;
 		}
 	}
 	if ( animation )
 	{
-		blendTime = (long double)lf->animationTime * 0.001;
+		blendTime = (float)lf->animationTime * 0.001;
 		XAnimClearGoalWeight(tree, animNum & 0xFFFFFDFF, blendTime);
 	}
 	if ( animIndex )
@@ -1784,7 +1784,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 				Com_Error(ERR_DROP, "death animation '%s' is looping", anim2->name);
 			if ( isComplete )
 			{
-				newGoalTime = (long double)lf->animationTime * 0.001;
+				newGoalTime = (float)lf->animationTime * 0.001;
 				XAnimSetCompleteGoalWeight(tree, animIndex, 1.0, newGoalTime, 1.0, 0, 0, 0);
 			}
 			else
@@ -1798,14 +1798,14 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 			hasTime = 0;
 			if ( anim2->moveSpeed != 0.0 && XAnimGetWeight(tree, animIndex) == 0.0 )
 				hasTime = 1;
-			goalTime2 = (long double)lf->animationTime * 0.001;
+			goalTime2 = (float)lf->animationTime * 0.001;
 			XAnimSetCompleteGoalWeight(tree, animIndex, 1.0, goalTime2, 1.0, 0, anim2->noteType, lf != &ci->legs);
 			if ( hasTime )
 				XAnimSetTime(tree, animIndex, fStartTime);
 		}
 		if ( lf != &ci->legs )
 		{
-			nextGoalTime = (long double)lf->animationTime * 0.001;
+			nextGoalTime = (float)lf->animationTime * 0.001;
 			XAnimSetCompleteGoalWeight(
 			    tree,
 			    bgs->animData.animScriptData.torsoAnim,
@@ -1815,7 +1815,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 			    0,
 			    anim2->noteType,
 			    0);
-			goalTime = (long double)lf->animationTime * 0.001;
+			goalTime = (float)lf->animationTime * 0.001;
 			XAnimSetCompleteGoalWeight(
 			    tree,
 			    bgs->animData.animScriptData.legsAnim,
@@ -1829,9 +1829,9 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 	}
 	else if ( lf != &ci->legs )
 	{
-		time1 = (long double)lf->animationTime * 0.001;
+		time1 = (float)lf->animationTime * 0.001;
 		XAnimSetCompleteGoalWeight(tree, bgs->animData.animScriptData.torsoAnim, 0.0, time1, 1.0, 0, 0, 0);
-		time2 = (long double)lf->animationTime * 0.001;
+		time2 = (float)lf->animationTime * 0.001;
 		XAnimSetCompleteGoalWeight(tree, bgs->animData.animScriptData.legsAnim, 1.0, time2, 1.0, 0, 0, 0);
 	}
 }
@@ -1877,7 +1877,7 @@ void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, co
 			{
 				dist = Vec3Distance(lf->oldFramePos, es->pos.trBase);
 			}
-			newPos = dist / ((long double)(bgs->latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001);
+			newPos = dist / ((float)(bgs->latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001);
 			lf->animSpeedScale = newPos / animation->moveSpeed;
 			lf->oldFrameSnapshotTime = bgs->latestSnapshotTime;
 			VectorCopy(es->pos.trBase, lf->oldFramePos);
@@ -1895,7 +1895,7 @@ void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, co
 						if ( animation->moveSpeed >= 20.0 )
 						{
 							newSpeedScale = 3.0 - (animation->moveSpeed - 20.0) / 130.0;
-							if ( lf->animSpeedScale > (long double)newSpeedScale )
+							if ( lf->animSpeedScale > (float)newSpeedScale )
 								lf->animSpeedScale = newSpeedScale;
 						}
 						else if ( lf->animSpeedScale > 3.0 )

@@ -310,7 +310,7 @@ qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm)
 	if ( SLOBYTE(ps->pm_flags) >= 0 )
 	{
 		if ( !flags )
-			return pm->xyspeed >= (long double)player_footstepsThreshhold->current.decimal;
+			return pm->xyspeed >= (float)player_footstepsThreshhold->current.decimal;
 
 		return 0;
 	}
@@ -318,7 +318,7 @@ qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm)
 	if ( flags )
 		return 0;
 
-	return pm->xyspeed >= (long double)player_footstepsThreshhold->current.decimal;
+	return pm->xyspeed >= (float)player_footstepsThreshhold->current.decimal;
 }
 
 int QDECL PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel)
@@ -591,9 +591,9 @@ float PM_ViewHeightTableLerp(int iFrac, viewLerpWaypoint_s *pTable, float *pfPos
 			}
 			if ( pCurr->iFrac > iFrac )
 			{
-				fEntryFrac = (long double)(iFrac - pTable[i - 1].iFrac) / (long double)(pCurr->iFrac - pTable[i - 1].iFrac);
-				*pfPosOfs = (long double)pTable[i - 1].iOffset
-				            + (long double)(pCurr->iOffset - pTable[i - 1].iOffset) * fEntryFrac;
+				fEntryFrac = (float)(iFrac - pTable[i - 1].iFrac) / (float)(pCurr->iFrac - pTable[i - 1].iFrac);
+				*pfPosOfs = (float)pTable[i - 1].iOffset
+				            + (float)(pCurr->iOffset - pTable[i - 1].iOffset) * fEntryFrac;
 				return (pCurr->fViewHeight - pTable[i - 1].fViewHeight) * fEntryFrac + pTable[i - 1].fViewHeight;
 			}
 			pCurr = &pTable[++i];
@@ -624,7 +624,7 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 
 	if ( ps->viewHeightTarget && ps->viewHeightCurrent != 0.0 )
 	{
-		if ( ps->viewHeightCurrent != (long double)ps->viewHeightTarget || ps->viewHeightLerpTime )
+		if ( ps->viewHeightCurrent != (float)ps->viewHeightTarget || ps->viewHeightLerpTime )
 		{
 			iFrac = 0;
 
@@ -733,7 +733,7 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 						else
 						{
 							time = PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
-							ps->viewHeightLerpTime = pm->cmd.serverTime - (int)((long double)iFrac * 0.0099999998 * (long double)time);
+							ps->viewHeightLerpTime = pm->cmd.serverTime - (int)((float)iFrac * 0.0099999998 * (float)time);
 
 							if ( ps->viewHeightLerpTarget == 11 )
 							{
@@ -755,7 +755,7 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 						}
 					}
 				}
-				else if ( ps->viewHeightCurrent != (long double)ps->viewHeightTarget )
+				else if ( ps->viewHeightCurrent != (float)ps->viewHeightTarget )
 				{
 					ps->viewHeightLerpTime = pm->cmd.serverTime;
 
@@ -770,7 +770,7 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 						break;
 
 					case 0x28:
-						ps->viewHeightLerpDown = ps->viewHeightCurrent > (long double)ps->viewHeightTarget;
+						ps->viewHeightLerpDown = ps->viewHeightCurrent > (float)ps->viewHeightTarget;
 						ps->viewHeightLerpTarget = 40;
 						break;
 
@@ -788,18 +788,18 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 			{
 				ps->viewHeightLerpTime = 0;
 
-				if ( (long double)ps->viewHeightTarget <= ps->viewHeightCurrent )
+				if ( (float)ps->viewHeightTarget <= ps->viewHeightCurrent )
 				{
 					ps->viewHeightCurrent = ps->viewHeightCurrent - pml->frametime * 180.0;
 
-					if ( (long double)ps->viewHeightTarget >= ps->viewHeightCurrent )
+					if ( (float)ps->viewHeightTarget >= ps->viewHeightCurrent )
 						ps->viewHeightCurrent = (float)ps->viewHeightTarget;
 				}
 				else
 				{
 					ps->viewHeightCurrent = pml->frametime * 180.0 + ps->viewHeightCurrent;
 
-					if ( ps->viewHeightCurrent >= (long double)ps->viewHeightTarget )
+					if ( ps->viewHeightCurrent >= (float)ps->viewHeightTarget )
 						ps->viewHeightCurrent = (float)ps->viewHeightTarget;
 				}
 			}
@@ -1420,8 +1420,8 @@ float PM_CmdScaleForStance(const pmove_t *pm, int iTarget, int bDown)
 		        || bDown == ps->viewHeightLerpTarget
 		        && (bDown != 40 || iTarget == 11 && !ps->viewHeightLerpDown || iTarget == 60 && ps->viewHeightLerpDown) )
 		{
-			time = (long double)(pm->cmd.serverTime - ps->viewHeightLerpTime)
-			       / (long double)PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
+			time = (float)(pm->cmd.serverTime - ps->viewHeightLerpTime)
+			       / (float)PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
 			if ( time >= 0.0 )
 			{
 				if ( time > 1.0 )
@@ -1466,10 +1466,10 @@ float PM_CmdScale_Walk(pmove_t *pm, usercmd_s *cmd)
 	if ( cmd->forwardmove >= 0 )
 		forward = (float)cmd->forwardmove;
 	else
-		forward = (long double)cmd->forwardmove * player_backSpeedScale->current.decimal;
+		forward = (float)cmd->forwardmove * player_backSpeedScale->current.decimal;
 
 	absTotal = fabs(forward);
-	totalRight = (long double)cmd->rightmove * player_strafeSpeedScale->current.decimal;
+	totalRight = (float)cmd->rightmove * player_strafeSpeedScale->current.decimal;
 	rightSquared = fabs(totalRight);
 	maxTotal = I_fmax(absTotal, rightSquared);
 
@@ -1479,7 +1479,7 @@ float PM_CmdScale_Walk(pmove_t *pm, usercmd_s *cmd)
 	}
 	else
 	{
-		totalSpeed = (long double)ps->speed * maxTotal / (forwardSquared * 127.0);
+		totalSpeed = (float)ps->speed * maxTotal / (forwardSquared * 127.0);
 
 		if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
 			totalSpeed = totalSpeed * 0.40000001;
@@ -1534,7 +1534,7 @@ float PM_CmdScale_Walk(pmove_t *pm, usercmd_s *cmd)
 
 void PM_WalkMove(pmove_t *pm, pml_t *pml)
 {
-	long double dmgscale;
+	float dmgscale;
 	playerState_s *ps;
 	int stance;
 	float len;
@@ -1612,7 +1612,7 @@ void PM_WalkMove(pmove_t *pm, pml_t *pml)
 		PM_Accelerate(ps, pml, wishdir, wishspeed, accel);
 
 		if ( (pml->groundTrace.surfaceFlags & 2) != 0 || (ps->pm_flags & 0x400) != 0 )
-			ps->velocity[2] = ps->velocity[2] - (long double)ps->gravity * pml->frametime;
+			ps->velocity[2] = ps->velocity[2] - (float)ps->gravity * pml->frametime;
 
 		len = VectorLength(ps->velocity);
 		VectorCopy(ps->velocity, wishvel);
@@ -1863,7 +1863,7 @@ void PM_GroundTraceMissed(pmove_t *pm, pml_t *pml)
 
 void PM_GroundTrace(pmove_t *pm, pml_t *pml)
 {
-	long double height;
+	float height;
 	playerState_s *ps;
 	trace_t trace;
 	vec3_t end;
@@ -1966,16 +1966,16 @@ void PM_FoliageSounds(pmove_t *pm)
 
 	ps = pm->ps;
 
-	if ( bg_foliagesnd_minspeed->current.decimal <= (long double)pm->xyspeed )
+	if ( bg_foliagesnd_minspeed->current.decimal <= (float)pm->xyspeed )
 	{
 		speedFrac = (pm->xyspeed - bg_foliagesnd_minspeed->current.decimal)
 		            / (bg_foliagesnd_maxspeed->current.decimal - bg_foliagesnd_minspeed->current.decimal);
 		if ( speedFrac > 1.0 )
 			speedFrac = 1.0;
-		interval = (int)((long double)(bg_foliagesnd_fastinterval->current.integer
+		interval = (int)((float)(bg_foliagesnd_fastinterval->current.integer
 		                               - bg_foliagesnd_slowinterval->current.integer)
 		                 * speedFrac
-		                 + (long double)bg_foliagesnd_slowinterval->current.integer);
+		                 + (float)bg_foliagesnd_slowinterval->current.integer);
 		if ( interval + ps->foliageSoundTime < pm->cmd.serverTime )
 		{
 			VectorScale(pm->mins, 0.75, mins);
@@ -2015,8 +2015,8 @@ int PM_GetFlinchAnimType(float yaw)
 
 void PM_Footsteps(pmove_t *pm, pml_t *pml)
 {
-	long double newSpeedScale;
-	long double xyzSpeedScale;
+	float newSpeedScale;
+	float xyzSpeedScale;
 	float velocitySquared;
 	float flinchYaw;
 	int animType;
@@ -2078,7 +2078,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 			else
 				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBUP, 1);
 			currentBobCycle = ps->bobCycle;
-			ps->bobCycle = (unsigned char)(int)((long double)currentBobCycle + (long double)pml->msec * bobCycleScale);
+			ps->bobCycle = (unsigned char)(int)((float)currentBobCycle + (float)pml->msec * bobCycleScale);
 			PM_FootstepEvent(pm, pml, currentBobCycle, ps->bobCycle, 1);
 		}
 		if ( stance == (ps->pm_flags & 3) )
@@ -2087,7 +2087,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 	animWalking = 0;
 	if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
 		animWalking = 1;
-	if ( player_moveThreshhold->current.decimal > (long double)pm->xyspeed || ps->pm_type == 1 )
+	if ( player_moveThreshhold->current.decimal > (float)pm->xyspeed || ps->pm_type == 1 )
 	{
 		if ( pm->xyspeed < 1.0 )
 			ps->bobCycle = 0;
@@ -2098,7 +2098,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, bgs->time);
 			if ( ci->legs.yawing )
 			{
-				if ( ci->legs.yawAngle <= (long double)ci->torso.yawAngle )
+				if ( ci->legs.yawAngle <= (float)ci->torso.yawAngle )
 					turnAnimType = 15;
 				else
 					turnAnimType = 14;
@@ -2322,7 +2322,7 @@ LABEL_11:
 LABEL_136:
 	bFootStep = PM_ShouldMakeFootsteps(pm);
 	iOldBobCycle = ps->bobCycle;
-	ps->bobCycle = (unsigned char)(int)((long double)iOldBobCycle + (long double)pml->msec * newspeed);
+	ps->bobCycle = (unsigned char)(int)((float)iOldBobCycle + (float)pml->msec * newspeed);
 	if ( pm->cmd.forwardmove || pm->cmd.rightmove )
 	{
 		if ( animResult < 0 )
@@ -2475,7 +2475,7 @@ void PM_CheckLadderMove(pmove_t *pm, pml_t *pml)
 void PmoveSingle(pmove_t *pmove)
 {
 	int flags;
-	long double length;
+	float length;
 	float forwardmove;
 	float oldFmove;
 	float rightmove;
@@ -2590,7 +2590,7 @@ void PmoveSingle(pmove_t *pmove)
 	ps->commandTime = pmove->cmd.serverTime;
 	VectorCopy(ps->origin, pml.previous_origin);
 	VectorCopy(ps->velocity, pml.previous_velocity);
-	pml.frametime = (long double)pml.msec * 0.001;
+	pml.frametime = (float)pml.msec * 0.001;
 	PM_AdjustAimSpreadScale(pmove, &pml);
 	msec = (float)pml.msec;
 	PM_UpdateViewAngles(ps, msec, &pmove->cmd, pmove->handler);
@@ -2863,17 +2863,17 @@ void PM_CrashLand(playerState_s *pm, pml_t *pml)
 	{
 		t = (-vel - sqrt(den)) / (acc + acc);
 		landVel = t * -gravity + vel;
-		fallHeight = -landVel * -landVel / ((long double)pm->gravity + (long double)pm->gravity);
+		fallHeight = -landVel * -landVel / ((float)pm->gravity + (float)pm->gravity);
 
-		if ( bg_fallDamageMinHeight->current.decimal < (long double)bg_fallDamageMaxHeight->current.decimal )
+		if ( bg_fallDamageMinHeight->current.decimal < (float)bg_fallDamageMaxHeight->current.decimal )
 		{
-			if ( bg_fallDamageMinHeight->current.decimal >= (long double)fallHeight
+			if ( bg_fallDamageMinHeight->current.decimal >= (float)fallHeight
 			        || (pml->groundTrace.surfaceFlags & 1) != 0
 			        || pm->pm_type > PM_INTERMISSION )
 			{
 				damage = 0;
 			}
-			else if ( fallHeight < (long double)bg_fallDamageMaxHeight->current.decimal )
+			else if ( fallHeight < (float)bg_fallDamageMaxHeight->current.decimal )
 			{
 				damage = PM_ClampFallDamage(
 				             (int)((fallHeight - bg_fallDamageMinHeight->current.decimal)
@@ -2922,7 +2922,7 @@ void PM_CrashLand(playerState_s *pm, pml_t *pml)
 				if ( stunTime > 500 )
 				{
 					if ( stunTime <= 1499 )
-						fSpeedMult = 0.5 - ((long double)stunTime - 500.0) / 1000.0 * 0.30000001;
+						fSpeedMult = 0.5 - ((float)stunTime - 500.0) / 1000.0 * 0.30000001;
 					else
 						fSpeedMult = 0.2;
 				}
@@ -3014,11 +3014,11 @@ void PM_LadderMove(pmove_t *pm, pml_t *pml)
 		VectorClear(wishvel);
 
 		if ( pm->cmd.forwardmove )
-			wishvel[2] = upscale * 0.5 * scale * (long double)pm->cmd.forwardmove;
+			wishvel[2] = upscale * 0.5 * scale * (float)pm->cmd.forwardmove;
 
 		if ( pm->cmd.rightmove )
 		{
-			sc = scale * 0.2 * (long double)pm->cmd.rightmove;
+			sc = scale * 0.2 * (float)pm->cmd.rightmove;
 			VectorMA(wishvel, sc, pml->right, wishvel);
 		}
 
@@ -3029,14 +3029,14 @@ void PM_LadderMove(pmove_t *pm, pml_t *pml)
 		{
 			if ( ps->velocity[2] <= 0.0 )
 			{
-				ps->velocity[2] = (long double)ps->gravity * pml->frametime + ps->velocity[2];
+				ps->velocity[2] = (float)ps->gravity * pml->frametime + ps->velocity[2];
 
 				if ( ps->velocity[2] > 0.0 )
 					ps->velocity[2] = 0.0;
 			}
 			else
 			{
-				ps->velocity[2] = ps->velocity[2] - (long double)ps->gravity * pml->frametime;
+				ps->velocity[2] = ps->velocity[2] - (float)ps->gravity * pml->frametime;
 
 				if ( ps->velocity[2] < 0.0 )
 					ps->velocity[2] = 0.0;

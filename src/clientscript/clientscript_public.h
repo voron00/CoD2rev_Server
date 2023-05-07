@@ -630,7 +630,7 @@ void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index);
 unsigned short Scr_ExecEntThreadNum(int entnum, unsigned int classnum, int handle, unsigned int paramcount);
 void Scr_FreeThread(unsigned short handle);
 int Scr_GetInt(unsigned int index);
-double Scr_GetFloat(unsigned int index);
+float Scr_GetFloat(unsigned int index);
 unsigned int Scr_GetConstString(unsigned int index);
 unsigned int Scr_GetConstStringIncludeNull(unsigned int index);
 unsigned int Scr_AllocString(const char *string);

@@ -197,7 +197,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 
 void gunrandom(float *x, float *y)
 {
-	long double v2;
+	float v2;
 	float sinT;
 	float theta;
 	float r;

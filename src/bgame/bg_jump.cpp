@@ -31,7 +31,7 @@ void QDECL Jump_ClearState(playerState_s *ps)
 
 bool QDECL Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize)
 {
-	if ( ps->jumpOriginZ + jump_height->current.decimal <= (long double)origin[2] )
+	if ( ps->jumpOriginZ + jump_height->current.decimal <= (float)origin[2] )
 		return 0;
 
 	*stepSize = jump_stepSize->current.decimal;
@@ -95,7 +95,7 @@ float Jump_ReduceFriction(playerState_s *ps)
 	if ( getJumpSlowdownEnable(ps) )
 	{
 		if ( ps->pm_time <= 1699 )
-			return (long double)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+			return (float)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
 		else
 			return 2.5;
 	}
@@ -117,10 +117,10 @@ void QDECL Jump_ClampVelocity(playerState_s *ps, const float *origin)
 
 		if ( heightDiff >= 0.1 )
 		{
-			temp = (heightDiff + heightDiff) * (long double)ps->gravity;
+			temp = (heightDiff + heightDiff) * (float)ps->gravity;
 			maxJumpVel = sqrt(temp);
 
-			if ( ps->velocity[2] > (long double)maxJumpVel )
+			if ( ps->velocity[2] > (float)maxJumpVel )
 				ps->velocity[2] = maxJumpVel;
 		}
 		else
@@ -135,7 +135,7 @@ float Jump_GetLandFactor(playerState_s *ps)
 	if ( getJumpSlowdownEnable(ps) )
 	{
 		if ( ps->pm_time <= 1699 )
-			return (long double)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+			return (float)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
 		else
 			return 2.5;
 	}
@@ -199,7 +199,7 @@ void Jump_Start(pmove_t *pm, pml_t *pml, float height)
 	float velocitySqrd;
 
 	ps = pm->ps;
-	velocitySqrd = (height + height) * (long double)pm->ps->gravity;
+	velocitySqrd = (height + height) * (float)pm->ps->gravity;
 
 	if ( (pm->ps->pm_flags & 0x80000) != 0 && ps->pm_time <= 1800 )
 	{

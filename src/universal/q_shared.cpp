@@ -1209,12 +1209,12 @@ void COM_BitClear(int array[], int bitNum)
 	array[bitNum >> 5] &= ~(1 << (bitNum & 0x1F));
 }
 
-long double QDECL GetLeanFraction(const float fFrac)
+float QDECL GetLeanFraction(const float fFrac)
 {
 	return (2.0f - fabs(fFrac)) * fFrac;
 }
 
-long double QDECL UnGetLeanFraction(const float fFrac)
+float QDECL UnGetLeanFraction(const float fFrac)
 {
 	return 1.0f - sqrtf(1.0f - fFrac);
 }

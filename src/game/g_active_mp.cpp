@@ -404,13 +404,13 @@ void ClientEvents(gentity_s *ent, int oldEventSequence)
 				return;
 
 			if ( dmg <= 99 )
-				dmgScale = (long double)dmg * 0.0099999998;
+				dmgScale = (float)dmg * 0.0099999998;
 			else
 				dmgScale = 1.1;
 
 			if ( dmgScale != 0.0 )
 			{
-				dmgScale = (long double)client->ps.stats[2] * dmgScale;
+				dmgScale = (float)client->ps.stats[2] * dmgScale;
 				VectorSet(dir, 0.0, 0.0, 1.0);
 				G_Damage(ent, 0, 0, 0, 0, (int)dmgScale, 0, 11, HITLOC_NONE, 0);
 			}
@@ -855,12 +855,12 @@ void P_DamageFeedback(gentity_s *player)
 			if ( damage > 127 )
 				damage = 127;
 
-			client->ps.aimSpreadScale = (long double)damage + client->ps.aimSpreadScale;
+			client->ps.aimSpreadScale = (float)damage + client->ps.aimSpreadScale;
 
 			if ( client->ps.aimSpreadScale > 255.0 )
 				client->ps.aimSpreadScale = 255.0;
 
-			kick = (long double)damage * 0.2;
+			kick = (float)damage * 0.2;
 
 			if ( kick >= 5.0 )
 			{

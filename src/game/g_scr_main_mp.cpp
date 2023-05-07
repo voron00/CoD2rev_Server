@@ -1545,7 +1545,7 @@ void Scr_RandomFloatRange()
 
 void GScr_sin()
 {
-	long double number;
+	float number;
 	float value;
 
 	number = Scr_GetFloat(0);
@@ -1555,7 +1555,7 @@ void GScr_sin()
 
 void GScr_cos()
 {
-	long double number;
+	float number;
 	float value;
 
 	number = Scr_GetFloat(0);
@@ -1565,7 +1565,7 @@ void GScr_cos()
 
 void GScr_tan()
 {
-	long double number;
+	float number;
 	float sinT;
 	float cosT;
 
@@ -1614,7 +1614,7 @@ void GScr_acos()
 
 void GScr_atan()
 {
-	long double number;
+	float number;
 	float value;
 
 	number = Scr_GetFloat(0);
@@ -2355,7 +2355,7 @@ void Scr_SetFog(const char *cmd, float start, float density, float heightDensity
 		Scr_Error(va("%s: transition time must be >= 0 seconds", cmd));
 	}
 
-	G_setfog(va("%g %g %g %g %g %g %.0f", start, density, heightDensity, r, g, b, (double)(time * 1000.0)));
+	G_setfog(va("%g %g %g %g %g %g %.0f", start, density, heightDensity, r, g, b, (float)(time * 1000.0)));
 }
 
 void Scr_SetLinearFog()
@@ -4090,7 +4090,7 @@ void ScrCmd_GetNormalHealth(scr_entref_t entref)
 	{
 		if ( ent->health )
 		{
-			playerHealth = (long double)ent->health / (long double)ent->client->sess.maxHealth;
+			playerHealth = (float)ent->health / (float)ent->client->sess.maxHealth;
 			Scr_AddFloat(playerHealth);
 		}
 		else
@@ -4120,13 +4120,13 @@ void ScrCmd_SetNormalHealth(scr_entref_t entref)
 
 	if ( ent->client )
 	{
-		temp = (long double)ent->client->sess.maxHealth * normalHealth;
+		temp = (float)ent->client->sess.maxHealth * normalHealth;
 		newHealth = floorf(temp);
 		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%i\"", 73, 0));
 	}
 	else if ( ent->maxHealth )
 	{
-		newHealth = (int)((long double)ent->maxHealth * normalHealth);
+		newHealth = (int)((float)ent->maxHealth * normalHealth);
 	}
 	else
 	{
@@ -4225,7 +4225,7 @@ void GScr_ShellShock(scr_entref_t entref)
 
 	if ( duration >= 0xEA61 )
 	{
-		Scr_ParamError(1, va("duration %g should be >= 0 and <= 60", (double)((long double)(int)duration * 0.001)));
+		Scr_ParamError(1, va("duration %g should be >= 0 and <= 60", (float)((float)(int)duration * 0.001)));
 	}
 
 	ent->client->ps.shellshockIndex = i;
@@ -4256,7 +4256,7 @@ void GScr_StopShellShock(scr_entref_t entref)
 void GScr_ViewKick(scr_entref_t entref)
 {
 	gclient_s *client;
-	long double damage;
+	float damage;
 	vec3_t origin;
 	gentity_s *ent;
 

@@ -267,8 +267,8 @@ void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
 			{
 				for ( i = 0; i <= 1; ++i )
 				{
-					temp3 = (long double)pm->oldcmd.angles[i] * 0.0054931641;
-					temp1 = (long double)pm->cmd.angles[i] * 0.0054931641;
+					temp3 = (float)pm->oldcmd.angles[i] * 0.0054931641;
+					temp1 = (float)pm->cmd.angles[i] * 0.0054931641;
 					temp2 = AngleSubtract(temp1, temp3);
 
 					sppedSquared = fabs(temp2) * 0.0099999998 * weaponDef->hipSpreadTurnAdd / pml->frametime + sppedSquared;
@@ -394,7 +394,7 @@ void PM_ExitAimDownSight(playerState_s *ps)
 
 void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml)
 {
-	long double lerpRate;
+	float lerpRate;
 	playerState_s *ps;
 	bool adsRequested;
 	unsigned int weaponIndex;
@@ -453,9 +453,9 @@ void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml)
 		if ( adsRequested && ps->fWeaponPosFrac != 1.0 || !adsRequested && ps->fWeaponPosFrac != 0.0 )
 		{
 			if ( adsRequested )
-				lerpRate = (long double)pml->msec * weaponDef->OOPosAnimLength[0] + ps->fWeaponPosFrac;
+				lerpRate = (float)pml->msec * weaponDef->OOPosAnimLength[0] + ps->fWeaponPosFrac;
 			else
-				lerpRate = ps->fWeaponPosFrac - (long double)pml->msec * weaponDef->OOPosAnimLength[1];
+				lerpRate = ps->fWeaponPosFrac - (float)pml->msec * weaponDef->OOPosAnimLength[1];
 			ps->fWeaponPosFrac = lerpRate;
 
 			ps->fWeaponPosFrac = I_fclamp(ps->fWeaponPosFrac, 0.0, 1.0);
@@ -535,7 +535,7 @@ void PM_UpdateHoldBreath(pmove_t *pm, pml_t *pml)
 		}
 		else
 		{
-			time = (long double)ps->holdBreathTimer / (long double)(hold_time + gasp_time);
+			time = (float)ps->holdBreathTimer / (float)(hold_time + gasp_time);
 			targetScale = (player_breath_gasp_scale->current.decimal - 1.0) * time + 1.0;
 			lerp = player_breath_gasp_lerp->current.decimal;
 		}
@@ -2325,14 +2325,14 @@ void PM_Weapon(pmove_t *pm, pml_t *pml)
 
 float BG_GetBobCycle(gclient_s *client)
 {
-	return (long double)LOBYTE(client->ps.bobCycle) / 255.0 * 3.141592653589793
-	       + (long double)LOBYTE(client->ps.bobCycle) / 255.0 * 3.141592653589793
+	return (float)LOBYTE(client->ps.bobCycle) / 255.0 * 3.141592653589793
+	       + (float)LOBYTE(client->ps.bobCycle) / 255.0 * 3.141592653589793
 	       + 6.283185307179586;
 }
 
 float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
 {
-	long double v4;
+	float v4;
 	float v6;
 	float v7;
 	float v8;
@@ -2351,7 +2351,7 @@ float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle,
 			v4 = speed * bg_bobAmplitudeStanding->current.decimal;
 		amplitude = v4;
 	}
-	if ( amplitude > (long double)maxAmp )
+	if ( amplitude > (float)maxAmp )
 		amplitude = maxAmp;
 	v6 = sin(cycle + cycle);
 	v10 = sin(cycle * 4.0 + 1.570796326794897);
@@ -2362,7 +2362,7 @@ float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle,
 
 float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
 {
-	long double v4;
+	float v4;
 	float v6;
 	float amplitude;
 
@@ -2378,7 +2378,7 @@ float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycl
 			v4 = speed * bg_bobAmplitudeStanding->current.decimal;
 		amplitude = v4;
 	}
-	if ( amplitude > (long double)maxAmp )
+	if ( amplitude > (float)maxAmp )
 		amplitude = maxAmp;
 	v6 = sin(cycle);
 	return v6 * amplitude;

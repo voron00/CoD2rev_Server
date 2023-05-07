@@ -375,9 +375,9 @@ gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag)
 			else
 			{
 				randomTemp = (G_random() + 1.0) * 0.5;
-				randomAmmo = (long double)(BG_GetClipSize(weaponIndex) - 1) * randomTemp;
+				randomAmmo = (float)(BG_GetClipSize(weaponIndex) - 1) * randomTemp;
 				clientAmmoCount = Q_rint(randomAmmo) + 1;
-				randomClip = (G_random() * 0.5 + 0.25) * (long double)clientAmmoCount;
+				randomClip = (G_random() * 0.5 + 0.25) * (float)clientAmmoCount;
 				clipIndex = Q_rint(randomClip);
 				clientAmmoCount -= clipIndex;
 			}
@@ -718,11 +718,11 @@ int Pickup_Health(gentity_s *ent, gentity_s *other)
 		max = item->quantity;
 
 	oldHealth = other->health;
-	other->health = oldHealth + (int)((long double)max * (long double)other->client->ps.stats[2] * 0.0099999998);
+	other->health = oldHealth + (int)((float)max * (float)other->client->ps.stats[2] * 0.0099999998);
 
 	if ( other->health <= newHealth )
 	{
-		maxHealthScale = (int)((long double)(100 * other->health) / (long double)other->client->ps.stats[2]);
+		maxHealthScale = (int)((float)(100 * other->health) / (float)other->client->ps.stats[2]);
 
 		if ( maxHealthScale > 0 )
 		{
@@ -734,7 +734,7 @@ int Pickup_Health(gentity_s *ent, gentity_s *other)
 			maxHealthScale = 1;
 		}
 
-		healthScale = (int)((long double)(100 * oldHealth) / (long double)other->client->ps.stats[2]);
+		healthScale = (int)((float)(100 * oldHealth) / (float)other->client->ps.stats[2]);
 
 		if ( healthScale <= 0 )
 			healthScale = 1;
@@ -840,7 +840,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			{
 				tempRandom = (G_random() + 1.0) * 0.5;
 				clipForRandom = BG_ClipForWeapon(weaponIndex);
-				randomClipSize = (long double)(BG_GetClipSize(clipForRandom) - 1) * tempRandom;
+				randomClipSize = (float)(BG_GetClipSize(clipForRandom) - 1) * tempRandom;
 				ent->count = Q_rint(randomClipSize) + 1;
 			}
 		}

@@ -246,7 +246,7 @@ void SP_turret(gentity_s *ent)
 
 void G_PlayerTurretPositionAndBlend(gentity_s *ent, gentity_s *pTurretEnt)
 {
-	double rotYaw;
+	float rotYaw;
 	gclient_s *client;
 	float *pCurrentOrigin;
 	float *pOrigin;
@@ -713,9 +713,9 @@ int turret_UpdateTargetAngles(gentity_s *self, const float *desiredAngles, int b
 		fSpeed[i] = fSpeed[i] * 0.050000001;
 		fDelta = AngleSubtract(desiredAngles[i], self->s.angles2[i]);
 
-		if ( fDelta <= (long double)fSpeed[i] )
+		if ( fDelta <= (float)fSpeed[i] )
 		{
-			if ( -fSpeed[i] > (long double)fDelta )
+			if ( -fSpeed[i] > (float)fDelta )
 			{
 				bComplete = 0;
 				fDelta = -fSpeed[i];
@@ -737,12 +737,12 @@ int turret_UpdateTargetAngles(gentity_s *self, const float *desiredAngles, int b
 	{
 		if ( (pTurretInfo->flags & 0x400) != 0 )
 		{
-			if ( pTurretInfo->triggerDown <= (long double)self->s.angles2[0] )
+			if ( pTurretInfo->triggerDown <= (float)self->s.angles2[0] )
 				pTurretInfo->flags &= ~0x100u;
 			else
 				deltaAngles[0] = pTurretInfo->triggerDown;
 		}
-		else if ( self->s.angles2[0] <= (long double)pTurretInfo->triggerDown )
+		else if ( self->s.angles2[0] <= (float)pTurretInfo->triggerDown )
 		{
 			pTurretInfo->flags &= ~0x100u;
 		}
@@ -754,9 +754,9 @@ int turret_UpdateTargetAngles(gentity_s *self, const float *desiredAngles, int b
 
 	fDelta = AngleSubtract(deltaAngles[0], deltaAngles[1]);
 
-	if ( fDelta <= (long double)fSpeed[0] )
+	if ( fDelta <= (float)fSpeed[0] )
 	{
-		if ( -fSpeed[0] > (long double)fDelta )
+		if ( -fSpeed[0] > (float)fDelta )
 		{
 			bComplete = 0;
 			fDelta = -fSpeed[0];

@@ -71,7 +71,7 @@ int ScriptMover_UpdateMove(trajectory_t *pTr, float *vCurrPos, float fSpeed, flo
 		pTr->trDuration = trDuration;
 		VectorCopy(vPos1, pTr->trBase);
 		VectorSubtract(vPos2, vPos1, vMove);
-		fDelta = 1000.0 / (long double)trDuration;
+		fDelta = 1000.0 / (float)trDuration;
 		VectorScale(vMove, fDelta, pTr->trDelta);
 		pTr->trType = TR_LINEAR_STOP;
 
@@ -175,7 +175,7 @@ void ScriptMover_SetupMove(trajectory_t *pTr, float *vPos, float fTotalTime, flo
 		*pfDecelTime = 0.0;
 		VectorCopy(vPos, vPos3);
 		VectorCopy(vCurrPos, pTr->trBase);
-		fDelta = 1000.0 / (long double)pTr->trDuration;
+		fDelta = 1000.0 / (float)pTr->trDuration;
 		VectorScale(vMove, fDelta, pTr->trDelta);
 		pTr->trType = TR_LINEAR_STOP;
 		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
@@ -207,7 +207,7 @@ void ScriptMover_SetupMove(trajectory_t *pTr, float *vPos, float fTotalTime, flo
 				pTr->trDuration = (int)(*pfMidTime * 1000.0);
 				VectorCopy(vCurrPos, pTr->trBase);
 				VectorScale(vMaxSpeed, *pfMidTime, vMove);
-				fDelta = 1000.0 / (long double)pTr->trDuration;
+				fDelta = 1000.0 / (float)pTr->trDuration;
 				VectorScale(vMove, fDelta, pTr->trDelta);
 				pTr->trType = TR_LINEAR_STOP;
 			}

@@ -839,7 +839,7 @@ int SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_t *ps
 
 bool SV_GetClientPositionsAtTime(int clientNum, int gametime, float *origin)
 {
-	long double delta;
+	float delta;
 	int pArchiveTime;
 	int rewindDeltaTime;
 	int frameTime;
@@ -893,7 +893,7 @@ bool SV_GetClientPositionsAtTime(int clientNum, int gametime, float *origin)
 
 	if ( foundStart && foundEnd )
 	{
-		progress = (long double)(gametime % frameTime) / (long double)(startOffset - endOffset);
+		progress = (float)(gametime % frameTime) / (float)(startOffset - endOffset);
 	}
 	else if ( foundStart )
 	{
