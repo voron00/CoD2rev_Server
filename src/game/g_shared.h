@@ -1532,9 +1532,6 @@ void GScr_FreeScripts();
 
 void G_RegisterDvars();
 
-
-
-
 void Touch_Multi(gentity_s *self, gentity_s *other, int touched);
 void hurt_use(gentity_s *self, gentity_s *ent, gentity_s *other);
 void Use_trigger_damage(gentity_s *pEnt, gentity_s *pOther, gentity_s *pActivator);

@@ -357,7 +357,6 @@ int SV_DObjUpdateServerTime(gentity_s *ent, float dtime, int bNotify);
 void SV_DObjDisplayAnim(gentity_s *ent);
 void SV_DObjInitServerTime(gentity_s *ent, float dtime);
 qboolean SV_DObjExists(gentity_s *ent);
-qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 XAnimTree_s* SV_DObjGetTree(gentity_s *ent);
 
 #include "../qcommon/cm_public.h"
@@ -377,6 +376,7 @@ int SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_t *ps
 signed int SV_SightTraceToEntity(const float *start, const float *mins, const float *maxs, const float *end, int entityNum, int contentmask);
 void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, playerState_s *clients, int sizeofGameClient);
 void SV_AddCachedEntitiesVisibleFromPoint(int from_num_entities, int from_first_entity, float *origin, signed int clientNum, snapshotEntityNumbers_t *eNums);
+qboolean SV_inSnapshot(const float *origin, int iEntityNum);
 cachedSnapshot_t* SV_GetCachedSnapshot(int *pArchiveTime);
 void SV_BuildClientSnapshot( client_t *client );
 void SV_WriteSnapshotToClient(client_s *client, msg_t *msg);

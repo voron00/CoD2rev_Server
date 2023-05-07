@@ -284,6 +284,203 @@ void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree
 		CM_TraceThroughAabbTree(tw, aabbTree, trace);
 }
 
+void CM_TraceThroughBrush(traceWork_t *tw, cbrush_t *brush, trace_t *trace)
+{
+	float v3;
+	float v4;
+	float v5;
+	float d1;
+	cbrushside_t *side;
+	int j;
+	cplane_s *plane;
+	float enterFrac;
+	float delta;
+	bool allsolid;
+	float frac;
+	float dist;
+	cbrushside_t *leadside;
+	cbrushside_t axialSide;
+	cplane_s axialPlane;
+	float sign;
+	float d2;
+	const float *bounds;
+	float f;
+	int index;
+	float leaveFrac;
+	float offsetDotNormal;
+	int i;
+
+	enterFrac = 0.0;
+	leaveFrac = trace->fraction;
+	allsolid = 1;
+	leadside = 0;
+	sign = -1.0;
+	bounds = brush->mins;
+	index = 0;
+
+	while ( 2 )
+	{
+		for ( j = 0; j < 3; ++j )
+		{
+			d1 = (float)((float)(tw->extents.start[j] - bounds[j]) * sign) - tw->radiusOffset[j];
+			d2 = (float)((float)(tw->extents.end[j] - bounds[j]) * sign) - tw->radiusOffset[j];
+
+			if ( d1 <= 0.0 )
+			{
+				if ( d2 > 0.0 )
+				{
+					frac = (float)(d1 * tw->extents.invDelta[j]) * sign;
+
+					if ( enterFrac >= frac )
+						return;
+
+					allsolid = 0;
+
+					if ( (float)(frac - leaveFrac) < 0.0 )
+						v4 = (float)(d1 * tw->extents.invDelta[j]) * sign;
+					else
+						v4 = leaveFrac;
+
+					leaveFrac = v4;
+				}
+			}
+			else
+			{
+				if ( (float)(0.125 - d1) < 0.0 )
+					v5 = 0.125;
+				else
+					v5 = d1;
+
+				if ( d2 >= v5 )
+					return;
+
+				frac = (float)((float)(d1 - 0.125) * tw->extents.invDelta[j]) * sign;
+
+				if ( frac >= leaveFrac )
+					return;
+
+				if ( d2 > 0.0 )
+					allsolid = 0;
+
+				if ( frac <= enterFrac )
+				{
+					if ( leadside )
+						continue;
+				}
+				else
+				{
+					enterFrac = (float)((float)(d1 - 0.125) * tw->extents.invDelta[j]) * sign;
+				}
+
+				axialSide.materialNum = brush->axialMaterialNum[index][j];
+				memset(&axialPlane, 0, 12);
+				axialPlane.normal[j] = sign;
+				axialSide.plane = &axialPlane;
+				leadside = &axialSide;
+			}
+		}
+
+		if ( !index )
+		{
+			sign = 1.0;
+			bounds = brush->maxs;
+			index = 1;
+			continue;
+		}
+
+		break;
+	}
+
+	if ( brush->numsides )
+	{
+		side = brush->sides;
+		i = brush->numsides;
+
+		while ( i )
+		{
+			plane = side->plane;
+
+			offsetDotNormal = fabs(plane->normal[2] * tw->offsetZ);
+			dist = (float)(plane->dist + tw->radius) + offsetDotNormal;
+
+			d1 = (float)((float)((float)(tw->extents.start[0] * plane->normal[0]) + (float)(tw->extents.start[1] * plane->normal[1])) + (float)(tw->extents.start[2] * plane->normal[2])) - dist;
+			d2 = (float)((float)((float)(tw->extents.end[0] * plane->normal[0]) + (float)(tw->extents.end[1] * plane->normal[1])) + (float)(tw->extents.end[2] * plane->normal[2])) - dist;
+
+			if ( d1 <= 0.0 )
+			{
+				if ( d2 > 0.0 )
+				{
+					delta = d1 - d2;
+
+					if ( d1 > (float)(leaveFrac * delta) )
+					{
+						leaveFrac = d1 / delta;
+
+						if ( enterFrac >= (float)(d1 / delta) )
+							return;
+					}
+
+					allsolid = 0;
+				}
+			}
+			else
+			{
+				if ( (float)(0.125 - d1) < 0.0 )
+					v3 = 0.125;
+				else
+					v3 = d1;
+
+				if ( d2 >= v3 )
+					return;
+
+				if ( d2 > 0.0 )
+					allsolid = 0;
+
+				delta = d1 - d2;
+				f = d1 - 0.125;
+
+				if ( (float)(d1 - 0.125) <= (float)(enterFrac * delta) )
+				{
+					if ( leadside )
+						goto nextside;
+				}
+				else
+				{
+					enterFrac = f / delta;
+
+					if ( (float)(f / delta) >= leaveFrac )
+						return;
+				}
+
+				leadside = side;
+			}
+nextside:
+			--i;
+			++side;
+		}
+	}
+
+	trace->contents = brush->contents;
+
+	if ( leadside )
+	{
+		trace->fraction = enterFrac;
+		VectorCopy(leadside->plane->normal, trace->normal);
+		trace->surfaceFlags = cm.materials[leadside->materialNum].surfaceFlags;
+		trace->material = &cm.materials[leadside->materialNum];
+	}
+	else
+	{
+		trace->startsolid = 1;
+
+		if ( allsolid )
+		{
+			trace->allsolid = 1;
+			trace->fraction = 0.0;
+		}
+	}
+}
+
 void CM_TraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, const float *p1_, const float *p2, trace_t *trace)
 {
 	float v5;
@@ -390,7 +587,7 @@ void CM_TraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, con
 				else
 					v6 = frac;
 
-				mid[0] = (float)((float)(*p2 - p1[0]) * v6) + p1[0];
+				mid[0] = (float)((float)(p2[0] - p1[0]) * v6) + p1[0];
 				mid[1] = (float)((float)(p2[1] - p1[1]) * v6) + p1[1];
 				mid[2] = (float)((float)(p2[2] - p1[2]) * v6) + p1[2];
 				mid[3] = (float)((float)(p2[3] - p1[3]) * v6) + p1[3];
@@ -404,7 +601,7 @@ void CM_TraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, con
 
 				frac2 = v5;
 
-				p1[0] = (float)((float)(*p2 - p1[0]) * v5) + p1[0];
+				p1[0] = (float)((float)(p2[0] - p1[0]) * v5) + p1[0];
 				p1[1] = (float)((float)(p2[1] - p1[1]) * v5) + p1[1];
 				p1[2] = (float)((float)(p2[2] - p1[2]) * v5) + p1[2];
 				p1[3] = (float)((float)(p2[3] - p1[3]) * v5) + p1[3];
@@ -624,7 +821,6 @@ int CM_SightTraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *remot
 
 		if ( remoteNode->leafBrushCount )
 			break;
-
 retry:
 		t1 = p1[remoteNode->axis] - remoteNode->data.children.dist;
 		t2 = p2[remoteNode->axis] - remoteNode->data.children.dist;
@@ -678,7 +874,7 @@ retry:
 				else
 					v7 = frac;
 
-				mid[0] = (float)((float)(*p2 - p1[0]) * v7) + p1[0];
+				mid[0] = (float)((float)(p2[0] - p1[0]) * v7) + p1[0];
 				mid[1] = (float)((float)(p2[1] - p1[1]) * v7) + p1[1];
 				mid[2] = (float)((float)(p2[2] - p1[2]) * v7) + p1[2];
 
@@ -694,7 +890,7 @@ retry:
 
 				frac2 = v6;
 
-				p1[0] = (float)((float)(*p2 - p1[0]) * v6) + p1[0];
+				p1[0] = (float)((float)(p2[0] - p1[0]) * v6) + p1[0];
 				p1[1] = (float)((float)(p2[1] - p1[1]) * v6) + p1[1];
 				p1[2] = (float)((float)(p2[2] - p1[2]) * v6) + p1[2];
 
@@ -1230,7 +1426,7 @@ int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const 
 	tw.radius = radius;
 	tw.offsetZ = tw.size[2] - radius;
 
-	for ( i = 0; i <= 1; ++i )
+	for ( i = 0; i < 2; ++i )
 	{
 		if ( tw.delta[i - 6] <= tw.extents.start[i] )
 		{
@@ -1336,6 +1532,198 @@ int CM_TransformedBoxSightTrace(int hitNum, const float *start, const float *end
 	}
 
 	return CM_BoxSightTrace(hitNum, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask);
+}
+
+int CM_TraceCylinderThroughCylinder(traceWork_t *tw, const float *vStationary, float fStationaryHalfHeight, float radius, trace_t *trace)
+{
+	float frac;
+	float fDiscriminant;
+	float fEntry;
+	float fHitHeight;
+	float fEpsilon;
+	float fTotalHeight;
+	float fC;
+	float fB;
+	float fA;
+	float vNormal[3];
+	float vDelta[3];
+	float fDeltaLen;
+
+	vDelta[0] = tw->extents.start[0] - vStationary[0];
+	vDelta[1] = tw->extents.start[1] - vStationary[1];
+	vDelta[2] = tw->extents.start[2] - vStationary[2];
+
+	fC = (float)((float)(vDelta[0] * vDelta[0]) + (float)(vDelta[1] * vDelta[1])) - (float)((float)(radius + tw->radius) * (float)(radius + tw->radius));
+
+	if ( fC > 0.0 )
+	{
+		fB = (float)(tw->delta[0] * vDelta[0]) + (float)(tw->delta[1] * vDelta[1]);
+
+		if ( fB < 0.0 )
+		{
+			fA = (float)(tw->delta[0] * tw->delta[0]) + (float)(tw->delta[1] * tw->delta[1]);
+			fDiscriminant = (float)(fB * fB) - (float)(fA * fC);
+
+			if ( fDiscriminant >= 0.0 )
+			{
+				vDelta[2] = 0.0;
+				fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
+				fEpsilon = (float)(fDeltaLen * 0.125) / fB;
+				fEntry = (float)((float)(-fB - sqrt(fDiscriminant)) / fA) + fEpsilon;
+
+				if ( trace->fraction <= fEntry )
+				{
+					return 1;
+				}
+				else
+				{
+					fTotalHeight = (float)(tw->size[2] - tw->radius) + fStationaryHalfHeight;
+					fHitHeight = (float)((float)((float)(fEntry - fEpsilon) * tw->delta[2]) + tw->extents.start[2]) - vStationary[2];
+
+					if ( fabs(fHitHeight) <= fTotalHeight )
+					{
+						if ( (float)(fEntry - 0.0) < 0.0 )
+							frac = 0.0;
+						else
+							frac = fEntry;
+
+						trace->fraction = frac;
+
+						trace->normal[0] = vNormal[0];
+						trace->normal[1] = vNormal[1];
+						trace->normal[2] = vNormal[2];
+
+						trace->contents = tw->threadInfo.box_brush->contents;
+						return 0;
+					}
+					else
+					{
+						return 1;
+					}
+				}
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		fTotalHeight = (float)(tw->size[2] - tw->radius) + fStationaryHalfHeight;
+
+		if ( fabs(vDelta[2]) <= fTotalHeight )
+		{
+			trace->fraction = 0.0;
+			trace->startsolid = 1;
+
+			vDelta[2] = 0.0;
+			Vec3NormalizeTo(vDelta, trace->normal);
+
+			trace->contents = tw->threadInfo.box_brush->contents;
+
+			vDelta[0] = tw->extents.end[0] - vStationary[0];
+			vDelta[1] = tw->extents.end[1] - vStationary[1];
+			vDelta[2] = tw->extents.end[2] - vStationary[2];
+
+			if ( fTotalHeight >= fabs(vDelta[2]) )
+				trace->allsolid = 1;
+
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+}
+
+int CM_TraceSphereThroughSphere(traceWork_t *tw, const float *vStart, const float *vEnd, const float *vStationary, float radius, trace_t *trace)
+{
+	float frac;
+	float fDiscriminant;
+	float fEntry;
+	float fRadiusSqrd;
+	float fC;
+	float fB;
+	float fA;
+	float vNormal[3];
+	float vDelta[3];
+	float fDeltaLen;
+
+	vDelta[0] = vStart[0] - vStationary[0];
+	vDelta[1] = vStart[1] - vStationary[1];
+	vDelta[2] = vStart[2] - vStationary[2];
+
+	fRadiusSqrd = (float)(radius + tw->radius) * (float)(radius + tw->radius);
+	fC = (float)((float)((float)(vDelta[0] * vDelta[0]) + (float)(vDelta[1] * vDelta[1])) + (float)(vDelta[2] * vDelta[2])) - fRadiusSqrd;
+
+	if ( fC > 0.0 )
+	{
+		fB = (float)((float)(tw->delta[0] * vDelta[0]) + (float)(tw->delta[1] * vDelta[1])) + (float)(tw->delta[2] * vDelta[2]);
+
+		if ( fB < 0.0 )
+		{
+			fA = tw->deltaLenSq;
+			fDiscriminant = (float)(fB * fB) - (float)(fA * fC);
+
+			if ( fDiscriminant >= 0.0 )
+			{
+				fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
+				fEntry = (float)((float)(-fB - sqrt(fDiscriminant)) / fA) + (float)((float)(fDeltaLen * 0.125) / fB);
+
+				if ( trace->fraction <= fEntry )
+				{
+					return 1;
+				}
+				else
+				{
+					if ( (float)(fEntry - 0.0) < 0.0 )
+						frac = 0.0;
+					else
+						frac = fEntry;
+
+					trace->fraction = frac;
+
+					trace->normal[0] = vNormal[0];
+					trace->normal[1] = vNormal[1];
+					trace->normal[2] = vNormal[2];
+
+					trace->contents = tw->threadInfo.box_brush->contents;
+					return 0;
+				}
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		trace->fraction = 0.0;
+		trace->startsolid = 1;
+
+		Vec3NormalizeTo(vDelta, trace->normal);
+		trace->contents = tw->threadInfo.box_brush->contents;
+
+		vDelta[0] = vEnd[0] - vStationary[0];
+		vDelta[1] = vEnd[1] - vStationary[1];
+		vDelta[2] = vEnd[2] - vStationary[2];
+
+		if ( fRadiusSqrd >= (float)((float)((float)(vDelta[0] * vDelta[0]) + (float)(vDelta[1] * vDelta[1])) + (float)(vDelta[2] * vDelta[2])) )
+			trace->allsolid = 1;
+
+		return 0;
+	}
 }
 
 void CM_TraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace)
@@ -1546,7 +1934,7 @@ void CM_Trace(trace_t *results, const float *start, const float *end, const floa
 	tw.radius = radius;
 	tw.offsetZ = tw.size[2] - radius;
 
-	for ( i = 0; i <= 1; ++i )
+	for ( i = 0; i < 2; ++i )
 	{
 		if ( tw.delta[i - 6] <= tw.extents.start[i] )
 		{
@@ -1726,4 +2114,23 @@ void CM_TransformedBoxTraceExternal(trace_t *results, const float *start, const 
 	memset(results, 0, sizeof(trace_t));
 	results->fraction = 0.0;
 	CM_TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, origin, angles);
+}
+
+void CM_CalcTraceExtents(TraceExtents *extents)
+{
+	float delta;
+	float diff;
+	int i;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		diff = extents->start[i] - extents->end[i];
+
+		if ( diff == 0.0 )
+			delta = 0.0;
+		else
+			delta = 1.0 / diff;
+
+		extents->invDelta[i] = delta;
+	}
 }

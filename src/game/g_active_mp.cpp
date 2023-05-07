@@ -1144,6 +1144,124 @@ int StuckInClient(gentity_s *self)
 	return 1;
 }
 
+unsigned int G_GetNonPVSPlayerInfo(gentity_s *pSelf, float *vPosition, int iLastUpdateEnt)
+{
+	unsigned int index;
+	int iNext;
+	int iNum;
+	int team;
+	gentity_s *pEnt;
+	float fScale;
+	float fScale_4;
+	vec2_t fPos;
+	int iPos;
+	int iPos_4;
+	int num;
+	int iCurrentEnt;
+	int iEntCount;
+	int iBaseEnt;
+
+	team = pSelf->client->sess.state.team;
+
+	if ( team == TEAM_FREE || team == TEAM_SPECTATOR )
+		return 0;
+
+	if ( iLastUpdateEnt == 1023 )
+		iBaseEnt = 0;
+	else
+		iBaseEnt = iLastUpdateEnt + 1;
+
+	for ( iEntCount = 0; ; ++iEntCount )
+	{
+		if ( iEntCount > 63 )
+			return 0;
+
+		iNum = iEntCount + iBaseEnt;
+		iNext = iEntCount + iBaseEnt + (iEntCount + iBaseEnt < 0 ? 0x3F : 0);
+		iCurrentEnt = (iEntCount + iBaseEnt) % 64;
+		pEnt = &g_entities[iCurrentEnt];
+
+		if ( pEnt->r.inuse )
+		{
+			if ( pEnt->client
+			        && pEnt->client->sess.sessionState == STATE_PLAYING
+			        && pEnt->client->sess.state.team == team
+			        && pSelf != pEnt
+			        && !SV_inSnapshot(vPosition, pEnt->s.number) )
+			{
+				break;
+			}
+		}
+	}
+
+	num = pEnt->s.number;
+	Vector2Subtract(pEnt->r.currentOrigin, vPosition, fPos);
+
+	iPos = (int)(fPos[0] + 0.5);
+	iPos_4 = (int)(fPos[1] + 0.5);
+
+	fScale = 1.0;
+	fScale_4 = 1.0;
+
+	if ( iPos <= 1024 )
+	{
+		if ( iPos < -1022 )
+			fScale = -1022.0 / iPos;
+	}
+	else
+	{
+		fScale = 1024.0 / iPos;
+	}
+
+	if ( iPos_4 <= 1024 )
+	{
+		if ( iPos_4 < -1022 )
+			fScale_4 = -1022.0 / iPos_4;
+	}
+	else
+	{
+		fScale_4 = 1024.0 / iPos_4;
+	}
+
+	if ( fScale < 1.0 || fScale_4 < 1.0 )
+	{
+		if ( fScale_4 <= fScale )
+		{
+			if ( fScale > fScale_4 )
+				iPos = (int)(iPos * fScale_4);
+		}
+		else
+		{
+			iPos_4 = (int)(iPos_4 * fScale);
+		}
+	}
+
+	if ( iPos <= 1024 )
+	{
+		if ( iPos < -1022 )
+			iPos = -1022;
+	}
+	else
+	{
+		iPos = 1024;
+	}
+
+	if ( iPos_4 <= 1024 )
+	{
+		if ( iPos_4 < -1022 )
+			iPos_4 = -1022;
+	}
+	else
+	{
+		iPos_4 = 1024;
+	}
+
+	index = num & 0xFFFF803F;
+	num = num & 0xFF00003F | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15);
+
+	return (index | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6)) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15) & 0xFFFFFF | ((unsigned char)(int)(g_entities[iNum - (iNext >> 6 << 6)].r.currentAngles[1] * 0.71111113) << 24);
+}
+
 #if COMPILE_PLAYER == 1
 int player_g_speed[MAX_CLIENTS] = {0};
 int player_g_gravity[MAX_CLIENTS] = {0};
@@ -1255,9 +1373,9 @@ void ClientEndFrame(gentity_s *entity)
 
 			if ( entity->health > 0 && StuckInClient(entity) )
 				entity->r.contents = 0x4000000;
-#ifndef DEDICATED //  !!! WARNING: VoroN: I can't find any references to iCompassFriendInfo, disabling it doesn't seem to have any effect.
+
 			G_GetPlayerViewOrigin(entity, viewOrigin);
-			client->ps.iCompassFriendInfo = G_GetNonPVSFriendlyInfo(entity, viewOrigin, client->iLastCompassFriendlyInfoEnt);
+			client->ps.iCompassFriendInfo = G_GetNonPVSPlayerInfo(entity, viewOrigin, client->iLastCompassFriendlyInfoEnt);
 
 			if ( client->ps.iCompassFriendInfo )
 			{
@@ -1274,7 +1392,7 @@ void ClientEndFrame(gentity_s *entity)
 			{
 				client->iLastCompassFriendlyInfoEnt = 1023;
 			}
-#endif
+
 			if ( entity->s.eType == ET_PLAYER )
 			{
 				if ( entity->health <= 0 )
