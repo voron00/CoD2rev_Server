@@ -45,7 +45,7 @@ qboolean G_IsPlaying(gentity_s *ent)
 
 void G_setfog(const char *fogstring)
 {
-	float time;
+	float fTime;
 	float r;
 	float g;
 	float b;
@@ -58,7 +58,7 @@ void G_setfog(const char *fogstring)
 	level.fFogOpaqueDist = 3.4028235e38;
 	level.fFogOpaqueDistSqrd = 3.4028235e38;
 
-	if ( sscanf(fogstring, "%f %f %f %f %f %f %f", &fNear, &fFar, &fDensity, &r, &g, &b, &time) == 7 && fDensity >= 1.0 )
+	if ( sscanf(fogstring, "%f %f %f %f %f %f %f", &fNear, &fFar, &fDensity, &r, &g, &b, &fTime) == 7 && fDensity >= 1.0 )
 	{
 		level.fFogOpaqueDist = fFar - fNear + fNear;
 		level.fFogOpaqueDistSqrd = level.fFogOpaqueDist * level.fFogOpaqueDist;
