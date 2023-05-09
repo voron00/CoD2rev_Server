@@ -181,10 +181,8 @@ static_assert((sizeof(cbrush_t) == 48), "ERROR: cbrush_t size is invalid!");
 
 typedef struct CollisionEdge_s
 {
-	vec3_t discEdgeAxis;
-	vec3_t midpoint;
-	vec3_t start_v;
-	vec3_t discNormalAxis;
+	vec3_t origin;
+	vec3_t axis[3];
 } CollisionEdge_t;
 static_assert((sizeof(CollisionEdge_t) == 48), "ERROR: CollisionEdge_t size is invalid!");
 

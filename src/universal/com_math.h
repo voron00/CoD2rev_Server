@@ -225,3 +225,5 @@ void MatrixInverseOrthogonal43(const float in[4][3], float out[4][3]);
 void ExpandBoundsToWidth(float *mins, float *maxs);
 void YawToAxis(float yaw, vec3_t axis[3]);
 void ProjectPointOnPlane(const float *p, const float *normal, float *dst);
+void RoundFloatArray(float *x, float *y);
+float convertDegreesToTan(float d);

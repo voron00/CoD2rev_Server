@@ -375,19 +375,6 @@ land:
 	}
 }
 
-void sub_811D53A(float *a1, float *a2)
-{
-	int i;
-
-	for ( i = 0; i <= 2; ++i )
-	{
-		if ( a1[i] < (float)a2[i] )
-			a1[i] = ceil(a1[i]);
-		else
-			a1[i] = floor(a1[i]);
-	}
-}
-
 void MissileImpact(gentity_s *ent, trace_t *trace, float *dir, float *endpos)
 {
 	unsigned int iDir;
@@ -485,7 +472,7 @@ void MissileImpact(gentity_s *ent, trace_t *trace, float *dir, float *endpos)
 		ent->s.eFlags ^= 2u;
 		ent->s.eFlags |= 0x20u;
 		ent->flags |= 0x800u;
-		sub_811D53A(endpos, ent->s.pos.trBase);
+		RoundFloatArray(endpos, ent->s.pos.trBase);
 		G_SetOrigin(ent, endpos);
 
 		if ( weaponDef->explosionInnerDamage )
@@ -523,14 +510,6 @@ void Missile_TraceNoContents(trace_t *results, int hitId, gentity_s *ent, const 
 	g_entities[hitId].r.contents = contents;
 }
 
-float sub_810B988(float a1)
-{
-	float v1;
-
-	v1 = a1 * 0.0174532925199433;
-	return tan(v1);
-}
-
 void RunMissile_Destabilize(gentity_s *missile)
 {
 	float time;
@@ -546,7 +525,7 @@ void RunMissile_Destabilize(gentity_s *missile)
 		weaponDef = BG_GetWeaponDef(missile->s.weapon);
 		VectorCopy(missile->s.pos.trDelta, newAPos);
 		Vec3Normalize(newAPos);
-		angleMax = sub_810B988(weaponDef->destabilizationAngleMax);
+		angleMax = convertDegreesToTan(weaponDef->destabilizationAngleMax);
 
 		for ( i = 0; i < 3; ++i )
 			newAngleAccel[i] = flrand(-1.0, 1.0);

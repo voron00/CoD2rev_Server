@@ -76,6 +76,10 @@ void CM_TraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_TraceThroughTree(traceWork_t *tw, int num, const float *p1_, const float *p2, trace_t *trace);
 int CM_TraceCylinderThroughCylinder(traceWork_t *tw, const float *vStationary, float fStationaryHalfHeight, float radius, trace_t *trace);
 int CM_TraceSphereThroughSphere(traceWork_t *tw, const float *vStart, const float *vEnd, const float *vStationary, float radius, trace_t *trace);
+void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
+void CM_TracePointThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, trace_t *trace);
+void CM_TraceCapsuleThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, float offsetZ, trace_t *trace);
+void CM_TraceCapsuleThroughBorder(traceWork_t *tw, CollisionBorder *border, trace_t *trace);
 void CM_TraceThroughBrush(traceWork_t *tw, cbrush_t *brush, trace_t *trace);
 void CM_PositionTest(traceWork_t *tw, trace_t *trace);
 int CM_PointContents(const float *p, unsigned int model);
@@ -91,11 +95,6 @@ extern "C" {
 #endif
 
 qboolean QDECL CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction);
-
-void QDECL CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace);
-void QDECL CM_TracePointThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, trace_t *trace);
-void QDECL CM_TraceCapsuleThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, float offsetZ, trace_t *trace);
-void QDECL CM_TraceCapsuleThroughBorder(traceWork_t *tw, CollisionBorder *border, trace_t *trace);
 
 #ifdef __cplusplus
 }

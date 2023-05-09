@@ -950,10 +950,8 @@ void CMod_LoadCollisionVerts()
 struct EdgeInfo
 {
 	float discriminant;
-	vec3_t discEdgeAxis;
-	vec3_t midpoint;
-	vec3_t start_v;
-	vec3_t discNormalAxis;
+	vec3_t origin;
+	vec3_t axis[3];
 	float discNormalDist;
 };
 
@@ -963,7 +961,7 @@ void CMod_LoadCollisionEdges()
 	unsigned int edgeIter;
 	EdgeInfo *in;
 	unsigned int count;
-	float normal;
+	float dist;
 
 	in = (EdgeInfo *)Com_GetBspLump(LUMP_COLLISIONEDGES, sizeof(EdgeInfo), &count);
 
@@ -972,13 +970,14 @@ void CMod_LoadCollisionEdges()
 
 	for (edgeIter = 0, out = cm.edges ; edgeIter < count; ++in, ++out, ++edgeIter )
 	{
-		VectorCopy(in->discEdgeAxis, out->discEdgeAxis);
-		VectorCopy(in->midpoint, out->midpoint);
-		VectorCopy(in->start_v, out->start_v);
-		VectorCopy(in->discNormalAxis, out->discNormalAxis);
+		VectorCopy(in->origin, out->origin);
 
-		normal = 1.0 / in->discNormalDist;
-		VectorScale(out->discNormalAxis, normal, out->discNormalAxis);
+		VectorCopy(in->axis[0], out->axis[0]);
+		VectorCopy(in->axis[1], out->axis[1]);
+		VectorCopy(in->axis[2], out->axis[2]);
+
+		dist = 1.0 / in->discNormalDist;
+		VectorScale(out->axis[2], dist, out->axis[2]);
 	}
 }
 

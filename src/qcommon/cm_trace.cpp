@@ -175,7 +175,7 @@ int CM_TestInLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
 {
 	int i;
 
-	for ( i = 0; i <= 2; ++i )
+	for ( i = 0; i < 3; ++i )
 	{
 		if ( leaf->mins[i] >= tw->bounds[1][i] )
 			return 0;
@@ -208,7 +208,7 @@ void CM_PositionTest(traceWork_t *tw, trace_t *trace)
 		VectorSubtract(tw->extents.start, tw->size, ll.bounds[0]);
 		VectorAdd(tw->extents.start, tw->size, ll.bounds[1]);
 
-		for ( i = 0; i <= 2; ++i )
+		for ( i = 0; i < 3; ++i )
 		{
 			ll.bounds[0][i] = ll.bounds[0][i] - 1.0;
 			ll.bounds[1][i] = ll.bounds[1][i] + 1.0;
@@ -1109,7 +1109,7 @@ int CM_SightTraceCapsuleThroughCapsule(traceWork_t *tw, trace_t *trace)
 	VectorCopy(tw->extents.end, endbottom);
 	endbottom[2] = endbottom[2] - tw->offsetZ;
 
-	for ( i = 0; i <= 2; ++i )
+	for ( i = 0; i < 3; ++i )
 	{
 		offset[i] = (tw->threadInfo.box_model->mins[i] + tw->threadInfo.box_model->maxs[i]) * 0.5;
 		symetricSize[0][i] = tw->threadInfo.box_model->mins[i] - offset[i];

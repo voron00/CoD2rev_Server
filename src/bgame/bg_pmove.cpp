@@ -1973,7 +1973,7 @@ void PM_FoliageSounds(pmove_t *pm)
 		if ( speedFrac > 1.0 )
 			speedFrac = 1.0;
 		interval = (int)((float)(bg_foliagesnd_fastinterval->current.integer
-		                               - bg_foliagesnd_slowinterval->current.integer)
+		                         - bg_foliagesnd_slowinterval->current.integer)
 		                 * speedFrac
 		                 + (float)bg_foliagesnd_slowinterval->current.integer);
 		if ( interval + ps->foliageSoundTime < pm->cmd.serverTime )
@@ -2730,7 +2730,7 @@ void PmoveSingle(pmove_t *pmove)
 					VectorScale(velocity, frametime, ps->velocity);
 				}
 				Vector2Subtract(ps->velocity, ps->oldVelocity, newVelocity);
-				newFrame = I_fmax(pml.frametime, 1.0);
+				newFrame = I_fmin(pml.frametime, 1.0);
 				Vec2Scale(newVelocity, newFrame, newVelocity);
 				Vector2Add(ps->oldVelocity, newVelocity, ps->oldVelocity);
 				VectorRint(ps->velocity);
@@ -2785,7 +2785,7 @@ float BG_GetSpeed(const playerState_s *ps, int time)
 	}
 }
 
-int sub_80E731C(int x, int y, int z)
+int PM_ClampFallDamageMax(int x, int y, int z)
 {
 	if ( x < 0 )
 		return z;
@@ -2796,8 +2796,8 @@ int PM_ClampFallDamage(int val, int min, int max)
 {
 	int x;
 
-	x = sub_80E731C(val - max, max, val);
-	return sub_80E731C(min - val, min, x);
+	x = PM_ClampFallDamageMax(val - max, max, val);
+	return PM_ClampFallDamageMax(min - val, min, x);
 }
 
 int PM_DamageLandingForSurface(pml_t *pml)

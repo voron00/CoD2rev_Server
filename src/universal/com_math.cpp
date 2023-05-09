@@ -1211,3 +1211,24 @@ void ProjectPointOnPlane(const float *p, const float *normal, float *dst)
 	dst[1] = (d * normal[1]) + p[1];
 	dst[2] = (d * normal[2]) + p[2];
 }
+
+void RoundFloatArray(float *x, float *y)
+{
+	int i;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		if ( x[i] < y[i] )
+			x[i] = ceil(x[i]);
+		else
+			x[i] = floor(x[i]);
+	}
+}
+
+float convertDegreesToTan(float d)
+{
+	float x;
+
+	x = d * 0.0174532925199433;
+	return tan(x);
+}
