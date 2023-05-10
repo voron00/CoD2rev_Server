@@ -996,7 +996,7 @@ extern "C" {
 #endif
 
 unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
-void QDECL BG_Player_DoControllersInternal(DObj_s *obj, const entityState_s *es, int *partBits, const clientInfo_t *ci, clientControllers_t *info);
+void QDECL BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 void QDECL PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
 void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
 qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm);
@@ -1081,7 +1081,6 @@ void PM_LadderMove(pmove_t *pm, pml_t *pml);
 void Pmove(pmove_t *pmove);
 
 qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item, int atTime);
-void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result);
 int PM_WeaponAmmoAvailable(playerState_s *ps);

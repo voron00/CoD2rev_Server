@@ -2056,28 +2056,6 @@ void BG_LerpOffset(float *offset_goal, float maxOffsetChange, float *offset)
 	}
 }
 
-void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime)
-{
-	float range;
-	clientControllers_t controllers;
-	float maxAngleChange;
-	int i;
-
-	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &controllers);
-	maxAngleChange = (float)frametime * 0.36000001;
-
-	for ( i = 0; i < 6; ++i )
-	{
-		BG_LerpAngles(controllers.angles[i], maxAngleChange, ci->control.angles[i]);
-		DObjSetControlTagAngles(obj, partBits, *controller_names[i], ci->control.angles[i]);
-	}
-
-	BG_LerpAngles(controllers.tag_origin_angles, maxAngleChange, ci->control.tag_origin_angles);
-	range = (float)frametime * 0.1;
-	BG_LerpOffset(controllers.tag_origin_offset, range, ci->control.tag_origin_offset);
-	DObjSetLocalTag(obj, partBits, scr_const.tag_origin, ci->control.tag_origin_offset, ci->control.tag_origin_angles);
-}
-
 void BG_PlayerAnimation_VerifyAnim(XAnimTree_s *pAnimTree, lerpFrame_t *lf)
 {
 	if ( lf->animationNumber )
