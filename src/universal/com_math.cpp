@@ -384,7 +384,7 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs )
 	return VectorLength( corner );
 }
 
-float RadiusFromBounds2D( const vec3_t mins, const vec3_t maxs )
+float RadiusFromBounds2D( const vec2_t mins, const vec2_t maxs )
 {
 	int i;
 	vec2_t corner;
@@ -1231,4 +1231,27 @@ float convertDegreesToTan(float d)
 
 	x = d * 0.0174532925199433;
 	return tan(x);
+}
+
+void TransposeMatrix(const float (*matrix)[3], float (*transpose)[3])
+{
+	int j;
+	int i;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		for ( j = 0; j < 3; ++j )
+			(*transpose)[3 * i + j] = (*matrix)[3 * j + i];
+	}
+}
+
+void RotatePoint(float *point, const float (*mat)[3])
+{
+	vec3_t tvec;
+
+	VectorCopy(point, tvec);
+
+	point[0] = (*mat)[0] * tvec[0] + (*mat)[1] * tvec[1] + (*mat)[2] * tvec[2];
+	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
+	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
 }

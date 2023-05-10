@@ -103,28 +103,6 @@ int DObjSetRotTransIndex(const DObj_s *obj, const int *partBits, int boneIndex)
 	return 1;
 }
 
-int DObjSetRotTransIndexControl(const DObj_s *obj, const int *partBits, int boneIndex)
-{
-	DSkelPart_s *skelPart;
-	int boneIndexHigh;
-	int boneIndexLow;
-
-	boneIndexLow = boneIndex >> 5;
-	boneIndexHigh = 1 << (boneIndex & 0x1F);
-
-	if ( (partBits[boneIndex >> 5] & boneIndexHigh) == 0 )
-		return 0;
-
-	skelPart = obj->skel.skelPart;
-
-	if ( (skelPart->partBits.skel[boneIndexLow] & boneIndexHigh) != 0 )
-		return 0;
-
-	skelPart->partBits.anim[boneIndexLow] |= boneIndexHigh;
-
-	return 1;
-}
-
 void DObjSetAngles(DObjAnimMat *rotTrans, const float *angles)
 {
 	float v1;
@@ -231,19 +209,6 @@ void DObjSetLocalTagInternal(const DObj *obj, const float *trans, const float *a
 			DObjClearAngles(childRotTrans);
 
 		DObjSetTrans(childRotTrans, trans);
-	}
-}
-
-void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles)
-{
-	int index;
-
-	index = DObjGetBoneIndex(obj, boneIndex);
-
-	if ( index >= 0 )
-	{
-		if ( DObjSetRotTransIndexControl(obj, partBits, index) )
-			DObjSetLocalTagInternal(obj, trans, angles, index);
 	}
 }
 

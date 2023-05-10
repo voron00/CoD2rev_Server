@@ -354,7 +354,6 @@ void DObjShutdown();
 void DObjFree(DObj_s *obj);
 void DObjAbort();
 
-void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
 int DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *angles);
 void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
 

@@ -1374,17 +1374,6 @@ int CM_SightTraceThroughTree(traceWork_t *tw, int num, const float *p1_, const f
 	return hitNum;
 }
 
-void RotatePoint(float *point, const float (*mat)[3])
-{
-	vec3_t tvec;
-
-	VectorCopy(point, tvec);
-
-	point[0] = (*mat)[0] * tvec[0] + (*mat)[1] * tvec[1] + (*mat)[2] * tvec[2];
-	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
-	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
-}
-
 int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask)
 {
 	float radius;
@@ -2019,20 +2008,6 @@ void CM_BoxTrace(trace_t *results, const float *start, const float *end, const f
 	memset(results, 0, sizeof(trace_t));
 	results->fraction = 1.0;
 	CM_Trace(results, start, end, mins, maxs, model, brushmask);
-}
-
-void TransposeMatrix(const float (*matrix)[3], float (*transpose)[3])
-{
-	int j;
-	int i;
-
-	for ( i = 0; i < 3; ++i )
-	{
-		for ( j = 0; j < 3; ++j )
-		{
-			*(&(*transpose)[3 * i] + j) = *(&(*matrix)[3 * j] + i);
-		}
-	}
 }
 
 void CM_TransformedBoxTraceRotated(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask, const float *origin, const float (*matrix)[3])

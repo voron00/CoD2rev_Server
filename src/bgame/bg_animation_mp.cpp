@@ -2000,62 +2000,6 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	}
 }
 
-void BG_LerpAngles(float *angles_goal, float maxAngleChange, float *angles)
-{
-	int i;
-	float diff;
-
-	for ( i = 0; i < 3; ++i )
-	{
-		diff = angles_goal[i] - angles[i];
-
-		if ( diff <= maxAngleChange )
-		{
-			if ( -maxAngleChange <= diff )
-				angles[i] = angles_goal[i];
-			else
-				angles[i] = angles[i] - maxAngleChange;
-		}
-		else
-		{
-			angles[i] = angles[i] + maxAngleChange;
-		}
-	}
-}
-
-void BG_LerpOffset(float *offset_goal, float maxOffsetChange, float *offset)
-{
-	float diff;
-	float diff_4;
-	float diff_8;
-	float error;
-	float error2;
-
-	diff =   offset_goal[0] - offset[1];
-	diff_4 = offset_goal[1] - offset[1];
-	diff_8 = offset_goal[2] - offset[2];
-
-	error = (float)((float)(diff * diff) + (float)(diff_4 * diff_4)) + (float)(diff_8 * diff_8);
-
-	if ( error != 0.0 )
-	{
-		error2 = I_rsqrt(error) * maxOffsetChange;
-
-		if ( error2 >= 1.0 )
-		{
-			offset[0] = offset_goal[0];
-			offset[1] = offset_goal[1];
-			offset[2] = offset_goal[2];
-		}
-		else
-		{
-			offset[0] = (float)(error2 * diff)   + offset[0];
-			offset[1] = (float)(error2 * diff_4) + offset[1];
-			offset[2] = (float)(error2 * diff_8) + offset[2];
-		}
-	}
-}
-
 void BG_PlayerAnimation_VerifyAnim(XAnimTree_s *pAnimTree, lerpFrame_t *lf)
 {
 	if ( lf->animationNumber )
