@@ -107,8 +107,8 @@ void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int cont
 	XModel *model;
 	trace_t trace;
 
-	results->modelIndex = 0;
 	results->partName = 0;
+	results->partGroup = 0;
 	trace.fraction = results->fraction;
 	trace.surfaceFlags = 0;
 	VectorClear(trace.normal);
@@ -125,14 +125,14 @@ void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int cont
 			boneIndex = XModelTraceLine(model, &trace, pose, localStart, localEnd, contentmask);
 
 			if ( boneIndex >= 0 )
-				results->modelIndex = boneName[boneIndex];
+				results->partName = boneName[boneIndex];
 
 			pose += modelParts->numBones;
 		}
 	}
 
 	results->fraction = trace.fraction;
-	results->sflags = trace.surfaceFlags;
+	results->surfaceflags = trace.surfaceFlags;
 
 	VectorCopy(trace.normal, results->normal);
 }

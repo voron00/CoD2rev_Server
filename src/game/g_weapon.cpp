@@ -302,22 +302,22 @@ void Weapon_Melee(gentity_s *ent, weaponParms *wp, float range, float width, flo
 
 	if ( Melee_Trace(ent, wp, damage, range, width, height, &trace, origin) )
 	{
-		self = &g_entities[trace.hitId];
+		self = &g_entities[trace.entityNum];
 
 		if ( self->client )
 			tempEnt = G_TempEntity(origin, EV_MELEE_HIT);
 		else
 			tempEnt = G_TempEntity(origin, EV_MELEE_MISS);
 
-		tempEnt->s.otherEntityNum = trace.hitId;
+		tempEnt->s.otherEntityNum = trace.entityNum;
 		tempEnt->s.eventParm = DirToByte(trace.normal);
 		tempEnt->s.weapon = ent->s.weapon;
 
-		if ( trace.hitId != 1022 )
+		if ( trace.entityNum != 1022 )
 		{
 			if ( self->takedamage )
 			{
-				G_Damage(self, ent, ent, wp->forward, origin, damage + rand() % 5, 0, 7, trace.partName, 0);
+				G_Damage(self, ent, ent, wp->forward, origin, damage + rand() % 5, 0, 7, trace.partGroup, 0);
 			}
 		}
 	}

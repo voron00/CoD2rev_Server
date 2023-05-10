@@ -341,10 +341,10 @@ struct XAnimDeltaInfo
 struct DObjTrace_s
 {
 	float fraction;
-	int sflags;
+	int surfaceflags;
 	float normal[3];
-	unsigned short modelIndex;
 	unsigned short partName;
+	unsigned short partGroup;
 };
 
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum);

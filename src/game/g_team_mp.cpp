@@ -64,9 +64,9 @@ void TeamplayInfoMessage(gentity_s *ent)
 	}
 
 	G_TraceCapsule(&trace, vStart, vec3_origin, vec3_origin, vEnd, ent->client->ps.clientNum, 33554433);
-	ident_num = trace.hitId;
+	ident_num = trace.entityNum;
 
-	if ( trace.hitId <= 0x3Fu
+	if ( trace.entityNum <= 0x3Fu
 	        && g_entities[ident_num].client
 	        && (!G_IsPlaying(ent) || g_entities[ident_num].client->sess.state.team == ent->client->sess.state.team) )
 	{

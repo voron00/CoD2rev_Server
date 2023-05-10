@@ -115,7 +115,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 
 		Vec3Lerp(start, end, trace.fraction, origin);
 		G_CheckHitTriggerDamage(attacker, start, origin, wp->weapDef->damage, meansOfDeath);
-		self = &g_entities[trace.hitId];
+		self = &g_entities[trace.entityNum];
 		VectorSubtract(end, start, dir);
 		Vec3Normalize(dir);
 		dot = DotProduct(dir, trace.normal) * -2.0;
@@ -176,7 +176,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 				dist = VectorLength(temp);
 				damage = (int)((float)Bullet_CalcDamageRange(wp, dist) * dmgScale);
 
-				G_Damage(self, attacker, attacker, wp->forward, origin, damage, dflags, meansOfDeath, trace.partName, level.time - gameTime);
+				G_Damage(self, attacker, attacker, wp->forward, origin, damage, dflags, meansOfDeath, trace.partGroup, level.time - gameTime);
 
 				if ( self->client )
 				{

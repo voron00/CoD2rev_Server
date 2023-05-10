@@ -151,7 +151,7 @@ void QDECL PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, con
 	{
 		if ( (results->contents & 0x2000000) != 0 )
 		{
-			PM_AddTouchEnt(pm, results->hitId);
+			PM_AddTouchEnt(pm, results->entityNum);
 			pm->tracemask &= ~0x2000000u;
 			pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask & 0xFDFFFFFF);
 		}
@@ -1928,8 +1928,8 @@ void PM_GroundTrace(pmove_t *pm, pml_t *pml)
 				if ( ps->groundEntityNum == 1023 )
 					PM_CrashLand(ps, pml);
 
-				ps->groundEntityNum = trace.hitId;
-				PM_AddTouchEnt(pm, trace.hitId);
+				ps->groundEntityNum = trace.entityNum;
+				PM_AddTouchEnt(pm, trace.entityNum);
 			}
 			else
 			{

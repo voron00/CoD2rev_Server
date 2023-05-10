@@ -324,7 +324,7 @@ int BounceMissile(gentity_s *ent, trace_t *trace)
 	VectorMA(velocity, dotScale, trace->normal, ent->s.pos.trDelta);
 
 	if ( trace->normal[2] > 0.7 )
-		ent->s.groundEntityNum = trace->hitId;
+		ent->s.groundEntityNum = trace->entityNum;
 
 	if ( (ent->s.eFlags & 0x1000000) == 0 )
 		goto land;
@@ -392,7 +392,7 @@ void MissileImpact(gentity_s *ent, trace_t *trace, float *dir, float *endpos)
 	gentity_s *inflictor;
 
 	loghit = 0;
-	inflictor = &g_entities[trace->hitId];
+	inflictor = &g_entities[trace->entityNum];
 	ent->s.surfType = (trace->surfaceFlags & 0x1F00000) >> 20;
 
 	if ( inflictor->takedamage || (ent->s.eFlags & 0x1000000) == 0 )
@@ -455,7 +455,7 @@ void MissileImpact(gentity_s *ent, trace_t *trace, float *dir, float *endpos)
 
 		isModel = 0;
 
-		if ( loghit || trace->modelIndex )
+		if ( loghit || trace->partName )
 			isModel = 1;
 
 		iDir = DirToByte(trace->normal);
@@ -500,14 +500,14 @@ explode:
 		G_AddEvent(ent, EV_GRENADE_BOUNCE, (trace->surfaceFlags & 0x1F00000) >> 20);
 }
 
-void Missile_TraceNoContents(trace_t *results, int hitId, gentity_s *ent, const float *origin)
+void Missile_TraceNoContents(trace_t *results, int entityNum, gentity_s *ent, const float *origin)
 {
 	int contents;
 
-	contents = g_entities[hitId].r.contents;
-	g_entities[hitId].r.contents = 0;
+	contents = g_entities[entityNum].r.contents;
+	g_entities[entityNum].r.contents = 0;
 	G_MissileTrace(results, ent->r.currentOrigin, origin, ent->r.ownerNum, ent->clipmask);
-	g_entities[hitId].r.contents = contents;
+	g_entities[entityNum].r.contents = contents;
 }
 
 void RunMissile_Destabilize(gentity_s *missile)
@@ -601,8 +601,8 @@ void G_RunMissile(gentity_s *ent)
 
 	modIndex = entityHandlers[ent->handler].methodOfDeath;
 
-	if ( modIndex == MOD_GRENADE && SLOWORD(g_entities[trace.hitId].flags) < 0 )
-		Missile_TraceNoContents(&trace, trace.hitId, ent, origin);
+	if ( modIndex == MOD_GRENADE && SLOWORD(g_entities[trace.entityNum].flags) < 0 )
+		Missile_TraceNoContents(&trace, trace.entityNum, ent, origin);
 
 	Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
 	VectorCopy(endpos, ent->r.currentOrigin);
@@ -614,7 +614,7 @@ void G_RunMissile(gentity_s *ent)
 		origin[2] = origin[2] - 1.5;
 		G_MissileTrace(&traceDown, ent->r.currentOrigin, origin, ent->r.ownerNum, ent->clipmask);
 
-		if ( traceDown.fraction != 1.0 && traceDown.hitId == 1022 )
+		if ( traceDown.fraction != 1.0 && traceDown.entityNum == 1022 )
 		{
 			trace = traceDown;
 			Vec3Lerp(ent->r.currentOrigin, origin, traceDown.fraction, endpos);

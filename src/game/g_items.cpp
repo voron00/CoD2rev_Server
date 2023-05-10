@@ -1155,7 +1155,7 @@ void FinishSpawningItem(gentity_s *ent)
 			return;
 		}
 
-		ent->s.groundEntityNum = trace.hitId;
+		ent->s.groundEntityNum = trace.entityNum;
 		Vec3Lerp(start, end, trace.fraction, endpos);
 		G_SetOrigin(ent, endpos);
 
@@ -1286,7 +1286,7 @@ void G_RunItem(gentity_s *ent)
 			{
 				G_OrientItemToGround(ent, &trace);
 				G_SetOrigin(ent, endpos);
-				ent->s.groundEntityNum = trace.hitId;
+				ent->s.groundEntityNum = trace.entityNum;
 				SV_LinkEntity(ent);
 			}
 		}

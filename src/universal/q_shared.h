@@ -231,9 +231,9 @@ typedef struct
 	int surfaceFlags;
 	int contents;
 	dmaterial_t *material;
-	unsigned short hitId;
-	unsigned short modelIndex;
+	unsigned short entityNum;
 	unsigned short partName;
+	unsigned short partGroup;
 	byte allsolid;
 	byte startsolid;
 } trace_t;

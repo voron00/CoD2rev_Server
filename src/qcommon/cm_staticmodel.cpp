@@ -33,7 +33,7 @@ void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *star
 
 	if ( XModelTraceLine(sm->xmodel, results, pose, localStart, localEnd, contentmask) >= 0 )
 	{
-		results->hitId = 1022;
+		results->entityNum = 1022;
 		MatrixTransposeTransformVector(results->normal, sm->invScaledAxis, normal);
 		Vec3Normalize(normal);
 		VectorCopy(normal, results->normal);

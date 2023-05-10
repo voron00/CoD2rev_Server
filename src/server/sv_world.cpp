@@ -222,7 +222,7 @@ void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace)
 			    touch->r.currentOrigin,
 			    angles);
 			if ( trace->fraction < fraction )
-				trace->hitId = touch->s.number;
+				trace->entityNum = touch->s.number;
 		}
 	}
 }
@@ -286,12 +286,12 @@ LABEL_14:
 						if ( objTrace.fraction < trace->fraction )
 						{
 							trace->fraction = objTrace.fraction;
-							trace->surfaceFlags = objTrace.sflags;
-							trace->modelIndex = objTrace.modelIndex;
+							trace->surfaceFlags = objTrace.surfaceflags;
 							trace->partName = objTrace.partName;
+							trace->partGroup = objTrace.partGroup;
 							MatrixTransformVector(objTrace.normal, entAxis, trace->normal);
 LABEL_26:
-							trace->hitId = ent->s.number;
+							trace->entityNum = ent->s.number;
 							trace->contents = ent->r.contents;
 							trace->material = 0;
 							return;
@@ -336,8 +336,8 @@ LABEL_26:
 		if ( trace->fraction < fraction )
 		{
 			trace->surfaceFlags = 0;
-			trace->modelIndex = 0;
 			trace->partName = 0;
+			trace->partGroup = 0;
 			goto LABEL_26;
 		}
 	}
@@ -494,7 +494,7 @@ int SV_ClipSightToEntity(sightclip_t *clip, svEntity_t *check)
 
 void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, char *priorityMap, int staticmodels)
 {
-	unsigned short hitId;
+	unsigned short entityNum;
 	moveclip_t clip;
 	pointtrace_t pt;
 	vec3_t temp;
@@ -502,11 +502,11 @@ void SV_Trace(trace_t *results, const float *start, const float *mins, const flo
 	CM_BoxTrace(results, start, end, mins, maxs, 0, contentmask);
 
 	if ( results->fraction == 1.0 )
-		hitId = 1023;
+		entityNum = 1023;
 	else
-		hitId = 1022;
+		entityNum = 1022;
 
-	results->hitId = hitId;
+	results->entityNum = entityNum;
 
 	if ( results->fraction != 0.0 )
 	{

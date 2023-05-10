@@ -36,7 +36,7 @@ void G_BounceCorpse(gentity_s *ent, corpseInfo_t *corpseInfo, trace_t *trace, fl
 		ent->s.pos.trTime = 0;
 		ent->s.pos.trDuration = 0;
 		VectorClear(ent->s.pos.trDelta);
-		ent->s.groundEntityNum = trace->hitId;
+		ent->s.groundEntityNum = trace->entityNum;
 
 		if ( trace->allsolid )
 		{

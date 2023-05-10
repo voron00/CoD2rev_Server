@@ -148,7 +148,7 @@ gentity_s* G_TestEntityPosition(gentity_s *ent, float *origin)
 		G_TraceCapsule(&trace, origin, ent->r.mins, ent->r.maxs, origin, ent->s.number, contentmask);
 
 	if ( trace.startsolid || trace.allsolid )
-		return &g_entities[trace.hitId];
+		return &g_entities[trace.entityNum];
 	else
 		return 0;
 }

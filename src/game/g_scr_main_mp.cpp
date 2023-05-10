@@ -1297,10 +1297,10 @@ void Scr_BulletTrace()
 	Scr_AddVector(value);
 	Scr_AddArrayStringIndexed(scr_const.position);
 
-	if ( trace.hitId == 1023 || trace.hitId == 1022 )
+	if ( trace.entityNum == 1023 || trace.entityNum == 1022 )
 		Scr_AddUndefined();
 	else
-		Scr_AddEntity(&g_entities[trace.hitId]);
+		Scr_AddEntity(&g_entities[trace.entityNum]);
 
 	Scr_AddArrayStringIndexed(scr_const.entity);
 
@@ -4454,7 +4454,7 @@ void GScr_PlaceSpawnPoint(scr_entref_t entref)
 
 	G_TraceCapsule(&trace, vStart, playerMins, playerMaxs, vEnd, ent->s.number, 42008593);
 
-	ent->s.groundEntityNum = trace.hitId;
+	ent->s.groundEntityNum = trace.entityNum;
 	Vec3Lerp(vStart, vEnd, trace.fraction, vStart);
 
 	G_TraceCapsule(&trace, vStart, playerMins, playerMaxs, vStart, ent->s.number, 42008593);

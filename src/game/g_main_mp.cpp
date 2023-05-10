@@ -229,11 +229,11 @@ gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float 
 
 	G_LocationalTrace(trace, start, end, passentitynum, contentmask, priorityMap);
 
-	if ( trace->hitId > 1021 )
+	if ( trace->entityNum > 1021 )
 		return 0;
 
 #ifdef DEDICATED
-	return &g_entities[trace->hitId];
+	return &g_entities[trace->entityNum];
 #else
 	dist = trace->fraction * 15000.0;
 	VectorMA(start, dist, forwardAngles, endPos);
@@ -241,7 +241,7 @@ gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float 
 	visible = SV_FX_GetVisibility(start, endPos);
 
 	if ( visible >= 0.2 )
-		return &g_entities[trace->hitId];
+		return &g_entities[trace->entityNum];
 	else
 		return 0;
 #endif
