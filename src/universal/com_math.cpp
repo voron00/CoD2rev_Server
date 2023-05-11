@@ -1255,3 +1255,16 @@ void RotatePoint(float *point, const float (*mat)[3])
 	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
 	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
 }
+
+void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3)
+{
+	v3[0] = AngleNormalize180(v1[0] - v2[0]);
+	v3[1] = AngleNormalize180(v1[1] - v2[1]);
+	v3[2] = AngleNormalize180(v1[2] - v2[2]);
+}
+
+void I_sinCos(float value, float *pSin, float *pCos)
+{
+  *pSin = sin(value);
+  *pCos = cos(value);
+}

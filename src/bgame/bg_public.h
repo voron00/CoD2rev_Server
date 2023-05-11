@@ -266,7 +266,7 @@ typedef struct clientInfo_s
 	clientControllers_t control;
 	int clientConditions[NUM_ANIM_CONDITIONS][2];
 	XAnimTree_s *pXAnimTree;
-	int weaponIndex;
+	int iDObjWeapon;
 	int stanceTransitionTime;
 	int turnAnimEndTime;
 	char turnAnimType;
@@ -996,7 +996,6 @@ extern "C" {
 #endif
 
 unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
-void QDECL BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 void QDECL PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
 void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
 qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm);
@@ -1052,6 +1051,7 @@ void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
 int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean force);
+void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
 void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims, unsigned int *piNumAnims);
 void BG_FindAnimTrees();
 void BG_FindAnims();

@@ -355,6 +355,7 @@ void DObjFree(DObj_s *obj);
 void DObjAbort();
 
 int DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *angles);
+void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
 void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
 
 int DObjSkelExists(DObj_s *obj, int timeStamp);

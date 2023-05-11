@@ -1618,7 +1618,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 
 	if ( pDObj )
 	{
-		if ( ci->weaponIndex == weapon && !ci->dobjDirty )
+		if ( ci->iDObjWeapon == weapon && !ci->dobjDirty )
 			return;
 
 		bgs->SafeDObjFree(es->number);
@@ -1640,7 +1640,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 		}
 	}
 
-	ci->weaponIndex = weapon;
+	ci->iDObjWeapon = weapon;
 	bgs->CreateDObj(models, numModels, tree, es->number);
 	ci->dobjDirty = 0;
 }
@@ -2255,6 +2255,234 @@ loadAnim_t* BG_GetAnim(unsigned int index)
 	}
 
 	return 0;
+}
+
+void BG_LerpAngles(float *angles_goal, float maxAngleChange, float *angles)
+{
+	int i;
+	float diff;
+
+	for ( i = 0; i < 3; ++i )
+	{
+		diff = angles_goal[i] - angles[i];
+
+		if ( diff <= maxAngleChange )
+		{
+			if ( -maxAngleChange <= diff )
+				angles[i] = angles_goal[i];
+			else
+				angles[i] = angles[i] - maxAngleChange;
+		}
+		else
+		{
+			angles[i] = angles[i] + maxAngleChange;
+		}
+	}
+}
+
+void BG_LerpOffset(float *offset_goal, float maxOffsetChange, float *offset)
+{
+	float scale;
+	float error;
+	vec3_t diff;
+
+	VectorSubtract(offset_goal, offset, diff);
+
+	scale = VectorLengthSquared(diff);
+
+	if ( scale != 0.0 )
+	{
+		error = I_rsqrt(scale) * maxOffsetChange;
+
+		if ( error >= 1.0 )
+			VectorCopy(offset_goal, offset);
+		else
+			VectorMA(offset, error, diff, offset);
+	}
+}
+
+void BG_Player_DoControllersInternal(DObj_s *obj, const entityState_s *es, int *partBits, clientInfo_t *ci, clientControllers_t *info)
+{
+	float ang;
+	float ang2;
+	float vTorsoScale;
+	int i;
+	float fCos;
+	float fSin;
+	vec3_t vHeadAngles;
+	vec3_t vTorsoAngles;
+	float fLeanFrac;
+	vec2_t tag_origin_offset;
+	vec3_t tag_origin_angles;
+	float angles[6][3];
+
+	if ( (es->eFlags & 0x300) != 0 )
+	{
+		memset(info, 0, sizeof(clientControllers_t));
+	}
+	else
+	{
+		VectorClear(tag_origin_angles);
+		VectorClear(vTorsoAngles);
+		VectorCopy(ci->playerAngles, vHeadAngles);
+
+		tag_origin_angles[1] = ci->legs.yawAngle;
+		vTorsoAngles[1] = ci->torso.yawAngle;
+
+		if ( (BG_GetConditionValue(ci, 3, 0) & 0xC0000) == 0 )
+		{
+			vTorsoAngles[0] = ci->torso.pitchAngle;
+
+			if ( (es->eFlags & 8) != 0 )
+			{
+				vTorsoAngles[0] = AngleNormalize180(vTorsoAngles[0]);
+
+				if ( vTorsoAngles[0] <= 0.0 )
+					vTorsoAngles[0] = vTorsoAngles[0] * 0.25;
+				else
+					vTorsoAngles[0] = vTorsoAngles[0] * 0.5;
+			}
+		}
+
+		AnglesSubtract(vHeadAngles, vTorsoAngles, vHeadAngles);
+		AnglesSubtract(vTorsoAngles, tag_origin_angles, vTorsoAngles);
+		VectorSet(tag_origin_offset, 0.0, 0.0, es->fTorsoHeight);
+
+		fLeanFrac = GetLeanFraction(ci->lerpLean);
+		vTorsoAngles[2] = fLeanFrac * 50.0 * 0.92500001;
+		vHeadAngles[2] = vTorsoAngles[2];
+
+		if ( fLeanFrac != 0.0 )
+		{
+			if ( (es->eFlags & 4) != 0 )
+			{
+				if ( fLeanFrac <= 0.0 )
+					tag_origin_offset[1] = -fLeanFrac * 12.5 + tag_origin_offset[1];
+				else
+					tag_origin_offset[1] = -fLeanFrac * 2.5 + tag_origin_offset[1];
+			}
+			else if ( fLeanFrac <= 0.0 )
+			{
+				tag_origin_offset[1] = -fLeanFrac * 5.0 + tag_origin_offset[1];
+			}
+			else
+			{
+				tag_origin_offset[1] = -fLeanFrac * 2.5 + tag_origin_offset[1];
+			}
+		}
+
+		if ( (es->eFlags & 0x20000) == 0 )
+			tag_origin_angles[1] = AngleSubtract(tag_origin_angles[1], ci->playerAngles[1]);
+
+		if ( (es->eFlags & 8) != 0 )
+		{
+			if ( fLeanFrac != 0.0 )
+				vHeadAngles[2] = vHeadAngles[2] * 0.5;
+
+			tag_origin_angles[0] = tag_origin_angles[0] + es->fTorsoPitch;
+			vTorsoScale = vTorsoAngles[1] * 0.0174532925199433;
+			I_sinCos(vTorsoScale, &fSin, &fCos);
+			tag_origin_offset[0] = (1.0 - fCos) * -24.0 + tag_origin_offset[0];
+			tag_origin_offset[1] = fSin * -12.0 + tag_origin_offset[1];
+
+			if ( fLeanFrac * fSin > 0.0 )
+				tag_origin_offset[1] = -fLeanFrac * (1.0 - fCos) * 16.0 + tag_origin_offset[1];
+
+			angles[0][0] = 0.0;
+			angles[0][1] = vTorsoAngles[2] * -1.2;
+			angles[0][2] = vTorsoAngles[2] * 0.30000001;
+
+			if ( es->fTorsoPitch != 0.0 || es->fWaistPitch != 0.0 )
+			{
+				ang = AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+				angles[0][0] = ang + angles[0][0];
+			}
+
+			angles[1][0] = 0.0;
+			angles[1][1] = vTorsoAngles[1] * 0.1 - vTorsoAngles[2] * 0.2;
+			angles[1][2] = vTorsoAngles[2] * 0.2;
+			angles[2][0] = vTorsoAngles[0];
+			angles[2][1] = vTorsoAngles[1] * 0.80000001 + vTorsoAngles[2];
+			angles[2][2] = vTorsoAngles[2] * -0.2;
+		}
+		else
+		{
+			if ( fLeanFrac != 0.0 )
+			{
+				if ( (es->eFlags & 4) != 0 )
+				{
+					if ( fLeanFrac <= 0.0 )
+					{
+						vTorsoAngles[2] = vTorsoAngles[2] * 1.25;
+						vHeadAngles[2] = vHeadAngles[2] * 1.25;
+					}
+				}
+				else
+				{
+					vTorsoAngles[2] = vTorsoAngles[2] * 1.25;
+					vHeadAngles[2] = vHeadAngles[2] * 1.25;
+				}
+			}
+
+			tag_origin_angles[2] = fLeanFrac * 50.0 * 0.075000003 + tag_origin_angles[2];
+
+			angles[0][0] = vTorsoAngles[0] * 0.2;
+			angles[0][1] = vTorsoAngles[1] * 0.40000001;
+			angles[0][2] = vTorsoAngles[2] * 0.5;
+
+			if ( es->fTorsoPitch != 0.0 || es->fWaistPitch != 0.0 )
+			{
+				ang2 = AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+				angles[0][0] = ang2 + angles[0][0];
+			}
+
+			angles[1][0] = vTorsoAngles[0] * 0.30000001;
+			angles[1][1] = vTorsoAngles[1] * 0.40000001;
+			angles[1][2] = vTorsoAngles[2] * 0.5;
+			angles[2][0] = vTorsoAngles[0] * 0.5;
+			angles[2][1] = vTorsoAngles[1] * 0.2;
+			angles[2][2] = vTorsoAngles[2] * -0.60000002;
+		}
+
+		angles[3][0] = vHeadAngles[0] * 0.30000001;
+		angles[3][1] = vHeadAngles[1] * 0.30000001;
+		angles[3][2] = 0.0;
+		angles[4][0] = vHeadAngles[0] * 0.69999999;
+		angles[4][1] = vHeadAngles[1] * 0.69999999;
+		angles[4][2] = vHeadAngles[2] * -0.30000001;
+		VectorClear(angles[5]);
+
+		if ( es->fWaistPitch != 0.0 || es->fTorsoPitch != 0.0 )
+			angles[5][0] = AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
+
+		for ( i = 0; i < 6; ++i )
+			VectorCopy(angles[i], info->angles[i]);
+
+		VectorCopy(tag_origin_angles, info->tag_origin_angles);
+		VectorCopy(tag_origin_offset, info->tag_origin_offset);
+	}
+}
+
+void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime)
+{
+	float maxOffsetChange;
+	clientControllers_t controllers;
+	float maxAngleChange;
+	int i;
+
+	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &controllers);
+	maxAngleChange = (float)frametime * 0.36000001;
+
+	for ( i = 0; i < 6; ++i )
+	{
+		BG_LerpAngles(controllers.angles[i], maxAngleChange, ci->control.angles[i]);
+		DObjSetControlTagAngles(obj, partBits, *controller_names[i], ci->control.angles[i]);
+	}
+
+	BG_LerpAngles(controllers.tag_origin_angles, maxAngleChange, ci->control.tag_origin_angles);
+	maxOffsetChange = (float)frametime * 0.1;
+	BG_LerpOffset(controllers.tag_origin_offset, maxOffsetChange, ci->control.tag_origin_offset);
+	DObjSetLocalTag(obj, partBits, scr_const.tag_origin, ci->control.tag_origin_offset, ci->control.tag_origin_angles);
 }
 
 void BG_SetupAnimNoteTypes(animScriptData_t *scriptData)

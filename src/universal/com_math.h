@@ -229,3 +229,5 @@ void RoundFloatArray(float *x, float *y);
 float convertDegreesToTan(float d);
 void TransposeMatrix(const float (*matrix)[3], float (*transpose)[3]);
 void RotatePoint(float *point, const float (*mat)[3]);
+void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3);
+void I_sinCos(float value, float *pSin, float *pCos);
