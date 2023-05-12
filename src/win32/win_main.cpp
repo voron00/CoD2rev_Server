@@ -114,6 +114,7 @@ Sys_Error
 Show the early console as an error dialog
 =============
 */
+extern void Sys_HideInput( void );
 void Sys_Error( const char *error, ... ) {
 	va_list		argptr;
 	char		text[4096];
@@ -137,6 +138,8 @@ void Sys_Error( const char *error, ... ) {
 #ifndef DEDICATED
 	IN_Shutdown();
 #endif
+
+	Sys_HideInput();
 
 	// wait for the user to quit
 	while ( 1 ) {

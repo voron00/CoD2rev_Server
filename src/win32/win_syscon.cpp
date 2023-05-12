@@ -425,6 +425,15 @@ void Sys_CreateConsole( void ) {
 }
 
 /*
+** Sys_HideInput
+*/
+void Sys_HideInput( void ) {
+	if ( s_wcd.hwndInputLine ) {
+		ShowWindow( s_wcd.hwndInputLine, SW_HIDE );
+	}
+}
+
+/*
 ** Sys_DestroyConsole
 */
 void Sys_DestroyConsole( void ) {
