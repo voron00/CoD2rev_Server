@@ -681,8 +681,6 @@ void Com_ErrorCleanup( void )
 	if ( com_errorType == ERR_DROP )
 		Cbuf_Init();
 
-	lastErrorTime = Sys_MilliSeconds();
-
 	// if we are getting a solid stream of ERR_DROP, do an ERR_FATAL
 	currentTime = Sys_Milliseconds();
 	if ( currentTime - lastErrorTime < 100 )
