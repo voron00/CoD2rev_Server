@@ -770,7 +770,7 @@ animScriptItem_t *BG_FirstValidItem( int client, animScript_t *script )
 
 	for ( i = 0, ppScriptItem = script->items; i < script->numItems; i++, ppScriptItem++ )
 	{
-		if ( BG_EvaluateConditions( &bgs->clientinfo[client], *ppScriptItem ) )
+		if ( BG_EvaluateConditions( &level_bgs.clientinfo[client], *ppScriptItem ) )
 		{
 			return *ppScriptItem;
 		}
@@ -817,13 +817,13 @@ void BG_UpdateConditionValue(int client, int condition, int value, qboolean chec
 {
 	if ( !checkConversion || animConditionsTable[condition].type )
 	{
-		bgs->clientinfo[client].clientConditions[condition][0] = value;
+		level_bgs.clientinfo[client].clientConditions[condition][0] = value;
 	}
 	else
 	{
-		bgs->clientinfo[client].clientConditions[condition][0] = 0;
-		bgs->clientinfo[client].clientConditions[condition][1] = 0;
-		COM_BitSet(bgs->clientinfo[client].clientConditions[condition], value);
+		level_bgs.clientinfo[client].clientConditions[condition][0] = 0;
+		level_bgs.clientinfo[client].clientConditions[condition][1] = 0;
+		COM_BitSet(level_bgs.clientinfo[client].clientConditions[condition], value);
 	}
 }
 
@@ -887,16 +887,16 @@ void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci)
 
 	legsAnim = es->legsAnim & 0xFFFFFDFF;
 
-	if ( bgs->animData.animScriptData.animations[legsAnim].movetype && BG_GetConditionValue(ci, 3, 0) != bgs->animData.animScriptData.animations[legsAnim].movetype )
+	if ( level_bgs.animData.animScriptData.animations[legsAnim].movetype && BG_GetConditionValue(ci, 3, 0) != level_bgs.animData.animScriptData.animations[legsAnim].movetype )
 	{
-		BG_UpdateConditionValue(es->clientNum, ANIM_COND_MOVETYPE, bgs->animData.animScriptData.animations[legsAnim].movetype, 0);
+		BG_UpdateConditionValue(es->clientNum, ANIM_COND_MOVETYPE, level_bgs.animData.animScriptData.animations[legsAnim].movetype, 0);
 	}
 
-	if ( (bgs->animData.animScriptData.animations[legsAnim].flags & 0x10) != 0 )
+	if ( (level_bgs.animData.animScriptData.animations[legsAnim].flags & 0x10) != 0 )
 	{
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, 1, 1);
 	}
-	else if ( (bgs->animData.animScriptData.animations[legsAnim].flags & 0x20) != 0 )
+	else if ( (level_bgs.animData.animScriptData.animations[legsAnim].flags & 0x20) != 0 )
 	{
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, 2, 1);
 	}
@@ -977,7 +977,7 @@ unsigned int BG_AnimationIndexForString(const char *string)
 		}
 
 		loadAnim = &g_pLoadAnims[*g_piNumLoadAnims];
-		Scr_FindAnim("multiplayer", string, &loadAnim->anim, bgs->anim_user);
+		Scr_FindAnim("multiplayer", string, &loadAnim->anim, level_bgs.anim_user);
 		strcpy(loadAnim->name, string);
 		loadAnim->nameHash = hash;
 
@@ -1612,7 +1612,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 	if ( !ci->infoValid || !ci->model[0] )
 	{
 		XAnimClearTree(tree);
-		bgs->SafeDObjFree(es->number);
+		level_bgs.SafeDObjFree(es->number);
 		return;
 	}
 
@@ -1621,10 +1621,10 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 		if ( ci->iDObjWeapon == weapon && !ci->dobjDirty )
 			return;
 
-		bgs->SafeDObjFree(es->number);
+		level_bgs.SafeDObjFree(es->number);
 	}
 
-	models->model = bgs->GetXModel(ci->model);
+	models->model = level_bgs.GetXModel(ci->model);
 	models->parentModelName = 0;
 	models->ignoreCollision = 0;
 
@@ -1634,14 +1634,14 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 	{
 		if ( ci->attachModelNames[i][0] )
 		{
-			models[numModels].model = bgs->GetXModel(ci->attachModelNames[i]);
+			models[numModels].model = level_bgs.GetXModel(ci->attachModelNames[i]);
 			models[numModels].parentModelName = ci->attachTagNames[i];
 			models[numModels++].ignoreCollision = (attachIgnoreCollision >> i) & 1;
 		}
 	}
 
 	ci->iDObjWeapon = weapon;
-	bgs->CreateDObj(models, numModels, tree, es->number);
+	level_bgs.CreateDObj(models, numModels, tree, es->number);
 	ci->dobjDirty = 0;
 }
 
@@ -1702,13 +1702,13 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 		firstAnim = 1;
 	lf->animationNumber = newAnimation;
 	animIndex = newAnimation & 0xFFFFFDFF;
-	if ( animIndex >= bgs->animData.animScriptData.numAnimations )
-		Com_Error(ERR_DROP, "Player animation index out of range (%i): %i", bgs->animData.animScriptData.numAnimations, animIndex);
+	if ( animIndex >= level_bgs.animData.animScriptData.numAnimations )
+		Com_Error(ERR_DROP, "Player animation index out of range (%i): %i", level_bgs.animData.animScriptData.numAnimations, animIndex);
 	tree = ci->pXAnimTree;
-	anim = bgs->animData.animScriptData.animTree.anims;
+	anim = level_bgs.animData.animScriptData.animTree.anims;
 	if ( animIndex )
 	{
-		anim2 = &bgs->animData.animScriptData.animations[animIndex];
+		anim2 = &level_bgs.animData.animScriptData.animations[animIndex];
 		lf->animation = anim2;
 		lf->animationTime = anim2->initialLerp;
 		croucnAnim = BG_IsCrouchingAnim(ci, animIndex);
@@ -1716,7 +1716,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 		proneAnim = BG_IsProneAnim(ci, animIndex);
 		proneMatch = proneAnim == BG_IsProneAnim(ci, animNum);
 		if ( lf == &ci->legs && (!crouchMatch || !proneMatch) )
-			ci->stanceTransitionTime = bgs->time + 400;
+			ci->stanceTransitionTime = level_bgs.time + 400;
 	}
 	else
 	{
@@ -1744,8 +1744,8 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 				transitionMin = 120;
 			}
 		}
-		if ( ci->stanceTransitionTime - bgs->time > transitionMin )
-			transitionMin = ci->stanceTransitionTime - bgs->time;
+		if ( ci->stanceTransitionTime - level_bgs.time > transitionMin )
+			transitionMin = ci->stanceTransitionTime - level_bgs.time;
 		if ( lf->animationTime < transitionMin )
 			lf->animationTime = transitionMin;
 	}
@@ -1762,7 +1762,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 				length = XAnimGetLengthMsec(anim, index) + 200;
 			else
 				length = 1000;
-			oldTime = (float)(bgs->time % length) / (float)length + (float)ci->clientNum * 0.36000001;
+			oldTime = (float)(level_bgs.time % length) / (float)length + (float)ci->clientNum * 0.36000001;
 			fStartTime = oldTime - (float)(int)oldTime;
 		}
 	}
@@ -1789,7 +1789,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 			}
 			else
 			{
-				XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, bgs->animData.generic_human.root.index, 1.0, 0.0, 1.0, 0, 0);
+				XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, level_bgs.animData.generic_human.root.index, 1.0, 0.0, 1.0, 0, 0);
 				XAnimSetTime(tree, animIndex, 1.0);
 			}
 		}
@@ -1808,7 +1808,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 			nextGoalTime = (float)lf->animationTime * 0.001;
 			XAnimSetCompleteGoalWeight(
 			    tree,
-			    bgs->animData.animScriptData.torsoAnim,
+			    level_bgs.animData.animScriptData.torsoAnim,
 			    1.0,
 			    nextGoalTime,
 			    1.0,
@@ -1818,7 +1818,7 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 			goalTime = (float)lf->animationTime * 0.001;
 			XAnimSetCompleteGoalWeight(
 			    tree,
-			    bgs->animData.animScriptData.legsAnim,
+			    level_bgs.animData.animScriptData.legsAnim,
 			    0.0099999998,
 			    goalTime,
 			    1.0,
@@ -1830,9 +1830,9 @@ void BG_SetNewAnimation(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qbo
 	else if ( lf != &ci->legs )
 	{
 		time1 = (float)lf->animationTime * 0.001;
-		XAnimSetCompleteGoalWeight(tree, bgs->animData.animScriptData.torsoAnim, 0.0, time1, 1.0, 0, 0, 0);
+		XAnimSetCompleteGoalWeight(tree, level_bgs.animData.animScriptData.torsoAnim, 0.0, time1, 1.0, 0, 0, 0);
 		time2 = (float)lf->animationTime * 0.001;
-		XAnimSetCompleteGoalWeight(tree, bgs->animData.animScriptData.legsAnim, 1.0, time2, 1.0, 0, 0, 0);
+		XAnimSetCompleteGoalWeight(tree, level_bgs.animData.animScriptData.legsAnim, 1.0, time2, 1.0, 0, 0, 0);
 	}
 }
 
@@ -1863,10 +1863,10 @@ void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, co
 		if ( animation->moveSpeed == 0.0 || !lf->oldFrameSnapshotTime )
 		{
 			lf->animSpeedScale = 1.0;
-			lf->oldFrameSnapshotTime = bgs->latestSnapshotTime;
+			lf->oldFrameSnapshotTime = level_bgs.latestSnapshotTime;
 			VectorCopy(es->pos.trBase, lf->oldFramePos);
 		}
-		else if ( bgs->latestSnapshotTime != lf->oldFrameSnapshotTime )
+		else if ( level_bgs.latestSnapshotTime != lf->oldFrameSnapshotTime )
 		{
 			if ( bNewAnim )
 			{
@@ -1877,9 +1877,9 @@ void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, co
 			{
 				dist = Vec3Distance(lf->oldFramePos, es->pos.trBase);
 			}
-			newPos = dist / ((float)(bgs->latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001);
+			newPos = dist / ((float)(level_bgs.latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001);
 			lf->animSpeedScale = newPos / animation->moveSpeed;
-			lf->oldFrameSnapshotTime = bgs->latestSnapshotTime;
+			lf->oldFrameSnapshotTime = level_bgs.latestSnapshotTime;
 			VectorCopy(es->pos.trBase, lf->oldFramePos);
 			if ( lf->animSpeedScale >= 0.1 )
 			{
@@ -1969,7 +1969,7 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	// swing towards the destination angle
 	if ( swing >= 0 )
 	{
-		move = bgs->frametime * scale * speed;
+		move = level_bgs.frametime * scale * speed;
 		if ( move >= swing )
 		{
 			move = swing;
@@ -1979,7 +1979,7 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	}
 	else if ( swing < 0 )
 	{
-		move = bgs->frametime * scale * -speed;
+		move = level_bgs.frametime * scale * -speed;
 		if ( move <= swing )
 		{
 			move = swing;
@@ -2114,7 +2114,7 @@ void BG_PlayerAngles(const entityState_s *es, clientInfo_t *ci)
 		ci->legs.yawing = 0;
 		ci->legs.yawAngle = headAngles[1] + lerpMoveDir;
 	}
-	else if ( (bgs->animData.animScriptData.animations[es->legsAnim & 0xFFFFFDFF].flags & 0x30) != 0 )
+	else if ( (level_bgs.animData.animScriptData.animations[es->legsAnim & 0xFFFFFDFF].flags & 0x30) != 0 )
 	{
 		ci->legs.yawing = 0;
 		legsAngles[1] = headAngles[1];
@@ -2496,7 +2496,7 @@ void BG_SetupAnimNoteTypes(animScriptData_t *scriptData)
 	for ( i = 0; i < scriptData->numAnimations; ++i )
 		scriptData->animations[i].noteType = 0;
 
-	if ( !bgs->anim_user )
+	if ( !level_bgs.anim_user )
 	{
 		script = &scriptData->scriptEvents[10];
 
@@ -2633,21 +2633,21 @@ void BG_FindAnimTrees()
 	scr_animtree_t *animTree;
 	scr_animtree_t loadAnimTree;
 
-	animTree = &bgs->animData.generic_human.tree;
+	animTree = &level_bgs.animData.generic_human.tree;
 	BG_FindAnimTree(&loadAnimTree, "multiplayer", 1);
 	animTree->anims = loadAnimTree.anims;
-	bgs->animData.animScriptData.animTree.anims = bgs->animData.generic_human.tree.anims;
-	bgs->animData.animScriptData.torsoAnim = bgs->animData.generic_human.torso.index;
-	bgs->animData.animScriptData.legsAnim = bgs->animData.generic_human.legs.index;
-	bgs->animData.animScriptData.turningAnim = bgs->animData.generic_human.turning.index;
+	level_bgs.animData.animScriptData.animTree.anims = level_bgs.animData.generic_human.tree.anims;
+	level_bgs.animData.animScriptData.torsoAnim = level_bgs.animData.generic_human.torso.index;
+	level_bgs.animData.animScriptData.legsAnim = level_bgs.animData.generic_human.legs.index;
+	level_bgs.animData.animScriptData.turningAnim = level_bgs.animData.generic_human.turning.index;
 }
 
 void BG_FindAnims()
 {
-	Scr_FindAnim("multiplayer", "root", &bgs->animData.generic_human.root, bgs->anim_user);
-	Scr_FindAnim("multiplayer", "torso", &bgs->animData.generic_human.torso, bgs->anim_user);
-	Scr_FindAnim("multiplayer", "legs", &bgs->animData.generic_human.legs, bgs->anim_user);
-	Scr_FindAnim("multiplayer", "turning", &bgs->animData.generic_human.turning, bgs->anim_user);
+	Scr_FindAnim("multiplayer", "root", &level_bgs.animData.generic_human.root, level_bgs.anim_user);
+	Scr_FindAnim("multiplayer", "torso", &level_bgs.animData.generic_human.torso, level_bgs.anim_user);
+	Scr_FindAnim("multiplayer", "legs", &level_bgs.animData.generic_human.legs, level_bgs.anim_user);
+	Scr_FindAnim("multiplayer", "turning", &level_bgs.animData.generic_human.turning, level_bgs.anim_user);
 }
 
 // VoroN: Made this thing static because it was crashing otherwise
@@ -2657,8 +2657,8 @@ void BG_LoadAnim()
 	memset( playerAnims, 0, sizeof( playerAnims ) );
 
 	BG_FindAnims();
-	BG_AnimParseAnimScript(&bgs->animData.animScriptData, playerAnims, &iNumPlayerAnims);
-	Scr_PrecacheAnimTrees(bgs->AllocXAnim, bgs->anim_user);
+	BG_AnimParseAnimScript(&level_bgs.animData.animScriptData, playerAnims, &iNumPlayerAnims);
+	Scr_PrecacheAnimTrees(level_bgs.AllocXAnim, level_bgs.anim_user);
 	BG_FindAnimTrees();
 	Scr_EndLoadAnimTrees();
 	BG_FinalizePlayerAnims();

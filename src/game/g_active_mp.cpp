@@ -729,7 +729,6 @@ void ClientThink(int clientNum)
 	gentity_s *ent;
 
 	ent = &g_entities[clientNum];
-	bgs = &level_bgs;
 
 	memcpy(&ent->client->sess.oldcmd, &ent->client->sess.cmd, sizeof(ent->client->sess.oldcmd));
 	SV_GetUsercmd(clientNum, &ent->client->sess.cmd);
@@ -737,8 +736,6 @@ void ClientThink(int clientNum)
 
 	if ( !g_synchronousClients->current.boolean )
 		ClientThink_real(ent, &ent->client->sess.cmd);
-
-	bgs = 0;
 }
 
 void G_SetLastServerTime(int clientNum, int lastServerTime)
@@ -760,7 +757,6 @@ void G_PlayerController(gentity_s *self, int *partBits)
 	clientInfo_t *ci;
 
 	ci = &level_bgs.clientinfo[self->s.clientNum];
-	bgs = &level_bgs;
 	obj = Com_GetServerDObj(self->s.number);
 
 	BG_Player_DoControllers(obj, self, partBits, ci, level.frameTime);

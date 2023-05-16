@@ -1301,7 +1301,6 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 			{
 				cl->lastPacketTime = svs.time;
 				SV_ExecuteClientMessage(cl, msg);
-				bgs = 0;
 			}
 		}
 		return;

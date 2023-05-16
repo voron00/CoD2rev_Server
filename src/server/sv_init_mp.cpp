@@ -618,7 +618,6 @@ void SV_Shutdown(const char *finalmsg)
 			DObjAbort();
 			XAnimAbort();
 			Scr_Abort();
-			bgs = 0;
 		}
 	}
 }

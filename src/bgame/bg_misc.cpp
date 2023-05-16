@@ -2,7 +2,6 @@
 #include "bg_public.h"
 
 bgs_t level_bgs;
-bgs_t *bgs;
 
 dvar_t *player_view_pitch_up;
 dvar_t *player_view_pitch_down;

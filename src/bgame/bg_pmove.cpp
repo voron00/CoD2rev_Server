@@ -2044,7 +2044,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 	if ( ps->clientNum > 63 )
 		ci = 0;
 	else
-		ci = &bgs->clientinfo[ps->clientNum];
+		ci = &level_bgs.clientinfo[ps->clientNum];
 	damageTime = ps->damageDuration - player_dmgtimer_stumbleTime->current.integer;
 	if ( damageTime < 0 )
 		damageTime = 0;
@@ -2095,7 +2095,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 		if ( ci && player_turnAnims->current.boolean )
 		{
 			if ( ci->turnAnimType && ci->turnAnimEndTime )
-				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, bgs->time);
+				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, level_bgs.time);
 			if ( ci->legs.yawing )
 			{
 				if ( ci->legs.yawAngle <= (float)ci->torso.yawAngle )
@@ -2104,12 +2104,12 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 					turnAnimType = 14;
 				ci->legs.yawAngle = ci->torso.yawAngle;
 				ci->turnAnimType = turnAnimType;
-				if ( ci->turnAnimEndTime < bgs->time )
+				if ( ci->turnAnimEndTime < level_bgs.time )
 					ci->turnAnimEndTime = 0;
 			}
 			else
 			{
-				if ( ci->turnAnimEndTime > bgs->time )
+				if ( ci->turnAnimEndTime > level_bgs.time )
 				{
 					ci->legs.yawAngle = ci->torso.yawAngle;
 					return;
@@ -2131,13 +2131,13 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 			{
 				animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHTCR, 1);
 				if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-					ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+					ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
 			}
 			else if ( turnAnimType == 15 )
 			{
 				animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFTCR, 1);
 				if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-					ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+					ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
 			}
 			else
 			{
@@ -2148,13 +2148,13 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 		{
 			animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHT, 1);
 			if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-				ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+				ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
 		}
 		else if ( turnAnimType == 15 )
 		{
 			animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFT, 1);
 			if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-				ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+				ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
 		}
 		else
 		{

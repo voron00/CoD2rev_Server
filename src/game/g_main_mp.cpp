@@ -549,7 +549,6 @@ void G_RunFrame(int time)
 	level_bgs.time = time;
 	level_bgs.latestSnapshotTime = time;
 	level_bgs.frametime = time - level.previousTime;
-	bgs = &level_bgs;
 	ent = g_entities;
 	i = 0;
 
@@ -681,7 +680,6 @@ void G_RunFrame(int time)
 		SaveRegisteredItems();
 
 	DebugDumpAnims();
-	bgs = 0;
 }
 
 void G_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle)
@@ -757,13 +755,11 @@ void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars)
 
 	Mantle_CreateAnims(Hunk_AllocXAnimServer);
 
-	bgs = &level_bgs;
-
 	if ( !restart )
 	{
-		memset(bgs, 0, sizeof(animScriptData_t));
-		bgs->animData.animScriptData.soundAlias = Com_FindSoundAlias;
-		bgs->animData.animScriptData.playSoundAlias = G_AnimScriptSound;
+		memset(&level_bgs.animData.animScriptData, 0, sizeof(animScriptData_t));
+		level_bgs.animData.animScriptData.soundAlias = Com_FindSoundAlias;
+		level_bgs.animData.animScriptData.playSoundAlias = G_AnimScriptSound;
 		GScr_LoadScripts();
 		BG_LoadAnim();
 		BG_PostLoadAnim();
@@ -811,7 +807,6 @@ void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars)
 	for ( j = 0; j < 8; ++j )
 		g_scr_data.playerCorpseInfo[j].entnum = -1;
 
-	bgs = 0;
 	level.initializing = 0;
 
 	SaveRegisteredWeapons();
@@ -878,7 +873,6 @@ void G_ShutdownGame(int freeScripts)
 		FS_FCloseFile(level.logFile);
 	}
 
-	bgs = 0;
 	G_FreeEntities();
 
 	HudElem_DestroyAll();

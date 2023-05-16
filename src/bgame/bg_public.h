@@ -311,7 +311,6 @@ typedef struct __attribute__((aligned(8))) bgs_s
 static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
 
 extern bgs_t level_bgs;
-extern bgs_t *bgs;
 
 enum weapType_t
 {

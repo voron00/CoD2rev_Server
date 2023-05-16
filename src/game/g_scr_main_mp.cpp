@@ -4234,7 +4234,6 @@ void GScr_ShellShock(scr_entref_t entref)
 
 	if ( ent->health > 0 )
 	{
-		bgs = &level_bgs;
 		BG_AnimScriptEvent(&ent->client->ps, ANIM_ET_SHELLSHOCK, 0, 1);
 	}
 }

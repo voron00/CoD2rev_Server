@@ -247,8 +247,6 @@ void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int 
 	        && self->client->ps.pm_type <= 1
 	        && (self->client->ps.pm_flags & 0x400000) == 0 )
 	{
-		bgs = &level_bgs;
-
 		if ( attacker->s.eType == ET_TURRET && attacker->r.ownerNum != 1023 )
 			attacker = &g_entities[attacker->r.ownerNum];
 
