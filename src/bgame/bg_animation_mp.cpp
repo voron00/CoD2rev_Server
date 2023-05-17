@@ -209,8 +209,6 @@ static const char *globalFilename = "mp/playeranim.script";  		  // to prevent r
 loadAnim_t *g_pLoadAnims;
 unsigned int *g_piNumLoadAnims;
 
-unsigned int iNumPlayerAnims;
-
 static int parseMovetype;
 static int parseEvent;
 
@@ -2636,7 +2634,7 @@ void BG_FindAnimTrees()
 	animTree = &level_bgs.animData.generic_human.tree;
 	BG_FindAnimTree(&loadAnimTree, "multiplayer", 1);
 	animTree->anims = loadAnimTree.anims;
-	level_bgs.animData.animScriptData.animTree.anims = level_bgs.animData.generic_human.tree.anims;
+	level_bgs.animData.animScriptData.animTree = level_bgs.animData.generic_human.tree;
 	level_bgs.animData.animScriptData.torsoAnim = level_bgs.animData.generic_human.torso.index;
 	level_bgs.animData.animScriptData.legsAnim = level_bgs.animData.generic_human.legs.index;
 	level_bgs.animData.animScriptData.turningAnim = level_bgs.animData.generic_human.turning.index;
@@ -2651,10 +2649,12 @@ void BG_FindAnims()
 }
 
 // VoroN: Made this thing static because it was crashing otherwise
-loadAnim_t playerAnims[sizeof(loadAnim_t) * MAX_MODEL_ANIMATIONS];
+loadAnim_t playerAnims[MAX_MODEL_ANIMATIONS];
+unsigned int iNumPlayerAnims;
 void BG_LoadAnim()
 {
 	memset( playerAnims, 0, sizeof( playerAnims ) );
+	iNumPlayerAnims = 0;
 
 	BG_FindAnims();
 	BG_AnimParseAnimScript(&level_bgs.animData.animScriptData, playerAnims, &iNumPlayerAnims);
