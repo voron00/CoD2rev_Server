@@ -483,6 +483,11 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 		}
 	}
 
+#ifdef LIBCOD
+	cl->rate = 90000;
+	cl->snapshotMsec = 50;
+#endif
+
 	if (!cl->download)
 	{
 		// We open the file here
@@ -602,7 +607,9 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	if (blockspersnap < 0)
 		blockspersnap = 1;
 
+#ifdef LIBCOD
 	blockspersnap = 1;
+#endif
 
 	while (blockspersnap--)
 	{
