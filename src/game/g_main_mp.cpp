@@ -57,6 +57,7 @@ dvar_t *player_meleeHeight;
 dvar_t *g_dumpAnims;
 dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
+dvar_t *g_mantleBlockEnable;
 dvar_t *g_mantleBlockTimeBuffer;
 
 #ifdef LIBCOD
@@ -961,6 +962,7 @@ void G_RegisterDvars()
 	g_dumpAnims = Dvar_RegisterInt("g_dumpAnims", -1, -1, 1023, 0x1080u);
 	g_useholdtime = Dvar_RegisterInt("g_useholdtime", 0, 0, 0x7FFFFFFF, 0x1000u);
 	g_useholdspawndelay = Dvar_RegisterInt("g_useholdspawndelay", 1, 0, 10, 0x1081u);
+	g_mantleBlockEnable = Dvar_RegisterBool("g_mantleBlockEnable", 1, 0x1000u);
 	g_mantleBlockTimeBuffer = Dvar_RegisterInt("g_mantleBlockTimeBuffer", 500, 0, 60000, 0x1080u);
 	BG_RegisterDvars();
 #ifdef LIBCOD

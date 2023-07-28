@@ -418,11 +418,15 @@ void ClientEvents(gentity_s *ent, int oldEventSequence)
 	}
 }
 
+extern dvar_t *g_mantleBlockEnable;
 extern dvar_t *g_mantleBlockTimeBuffer;
 void G_AddPlayerMantleBlockage(float *endPos, int duration, pmove_t *pm)
 {
 	gentity_s *owner;
 	gentity_s *ent;
+
+	if (!g_mantleBlockEnable->current.boolean)
+		return;
 
 	owner = &g_entities[pm->ps->clientNum];
 	ent = G_Spawn();
