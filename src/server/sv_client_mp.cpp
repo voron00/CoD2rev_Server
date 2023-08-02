@@ -195,7 +195,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 
 	if ( !NET_CompareBaseAdr( from, svs.authorizeAddress ) )
 	{
-		Com_DPrintf( "SV_AuthorizeIpPacket: not from authorize server\n" );
+		Com_Printf( "SV_AuthorizeIpPacket: not from authorize server\n" );
 		return;
 	}
 
@@ -211,7 +211,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 
 	if ( i == MAX_CHALLENGES )
 	{
-		Com_DPrintf( "SV_AuthorizeIpPacket: challenge not found\n" );
+		Com_Printf( "SV_AuthorizeIpPacket: challenge not found\n" );
 		return;
 	}
 
@@ -316,9 +316,6 @@ void SV_AuthorizeIpPacket( netadr_t from )
 			return;
 		}
 	}
-
-	// clear the challenge record so it won't timeout and let them through
-	memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
 }
 
 void SV_UserinfoChanged( client_t *cl )
