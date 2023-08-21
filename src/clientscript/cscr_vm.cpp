@@ -3585,15 +3585,8 @@ loop_dec_top:
 			continue;
 
 		default:
-			scrVmPub.function_frame->fs.top = startTop;
-			scrVmPub.function_frame->topType = startTop->type;
-			startTop->type = VAR_PRECODEPOS;
-			++gParamCount;
-			scrVmPub.function_frame->fs.localVarCount = localVarCount;
-			localVarCount = 0;
-			++scrVmPub.function_count;
-			++scrVmPub.function_frame;
-			scrVmPub.function_frame->fs.localId = localId;
+			scrVmPub.terminal_error = 1;
+			runtimeError(CON_CHANNEL_DONT_FILTER, pos, 0, va("CODE ERROR: unknown opcode %d", gOpcode));
 			continue;
 		}
 	}
