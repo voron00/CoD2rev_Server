@@ -179,7 +179,7 @@ void Scr_MakeArray()
 {
 	IncInParam();
 	scrVmPub.top->type = VAR_OBJECT;
-	scrVmPub.top->u.intValue = Scr_AllocArray();
+	scrVmPub.top->u.pointerValue = Scr_AllocArray();
 }
 
 void Scr_AddArray()
@@ -219,7 +219,7 @@ int Scr_GetPointerType(unsigned int index)
 		Scr_Error(va("type %s is not a pointer", var_typename[scrVmPub.top[-index].type]));
 	}
 
-	return GetObjectType(scrVmPub.top[-index].u.intValue);
+	return GetObjectType(scrVmPub.top[-index].u.pointerValue);
 }
 
 void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index)
@@ -316,7 +316,7 @@ unsigned int Scr_GetConstString(unsigned int index)
 		Scr_ErrorInternal();
 	}
 
-	return entryValue->u.intValue;
+	return entryValue->u.stringValue;
 }
 
 unsigned int Scr_GetConstStringIncludeNull(unsigned int index)
@@ -353,7 +353,7 @@ unsigned int Scr_GetConstIString(unsigned int index)
 		Scr_Error(va("type %s is not a localized string", var_typename[entryValue->type]));
 	}
 
-	return entryValue->u.intValue;
+	return entryValue->u.stringValue;
 }
 
 const char* Scr_GetIString(unsigned int index)
@@ -398,7 +398,7 @@ const char* Scr_GetDebugString(unsigned int index)
 	{
 		value = &scrVmPub.top[-index];
 		Scr_CastDebugString(value);
-		return SL_ConvertToString(value->u.intValue);
+		return SL_ConvertToString(value->u.stringValue);
 	}
 }
 
@@ -614,15 +614,12 @@ bool SetEntityFieldValue(unsigned int classnum, int entnum, int offset, Variable
 
 void GetEntityFieldValue(VariableValue *pValue, unsigned int classnum, int entnum, int offset)
 {
-	int type;
-
 	scrVmPub.top = scrVmGlob.eval_stack - 1;
 	scrVmGlob.eval_stack->type = VAR_UNDEFINED;
 	Scr_GetObjectField(classnum, entnum, offset);
 	scrVmPub.inparamcount = 0;
-	type = scrVmGlob.eval_stack->type;
-	pValue->u.intValue = scrVmGlob.eval_stack->u.intValue;
-	pValue->type = type;
+	pValue->u = scrVmGlob.eval_stack->u;
+	pValue->type = scrVmGlob.eval_stack->type;
 }
 
 void VM_CancelNotifyInternal(unsigned int notifyListOwnerId, unsigned int startLocalId, unsigned int notifyListId, unsigned int notifyNameListId, unsigned int stringValue)
@@ -841,7 +838,7 @@ void Scr_CancelWaittill(unsigned int startLocalId)
 	selfNameId = FindObject(localId);
 	parentId = FindObjectVariable(selfNameId, startLocalId);
 	adr = GetVariableValueAddress(parentId);
-	VM_CancelNotify(adr->u.intValue, startLocalId);
+	VM_CancelNotify(adr->u.stringValue, startLocalId);
 	RemoveObjectVariable(selfNameId, startLocalId);
 
 	if ( !GetArraySize(selfNameId) )
@@ -1248,7 +1245,7 @@ next:
 							buf += 4;
 							AddRefToValue(&value);
 							type = vars->type;
-							value2.u.intValue = vars->u.intValue;
+							value2.u = vars->u;
 							value2.type = type;
 							AddRefToValue(&value2);
 							Scr_EvalEquality(&value, &value2);
