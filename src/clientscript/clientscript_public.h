@@ -649,8 +649,7 @@ unsigned int Scr_GetConstLowercaseString(unsigned int index);
 unsigned int Scr_GetObject(unsigned int paramnum);
 void Scr_SetStructField(unsigned int structId, unsigned int index);
 
-unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int numArgs);
-unsigned int QDECL VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int varCount, VariableValue *top, VariableValue *startTop);
+unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int paramcount);
 
 void Scr_IncTime();
 void Scr_DecTime();
