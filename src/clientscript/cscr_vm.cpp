@@ -2227,7 +2227,6 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 			else
 			{
 				Scr_Error("function called with too many parameters");
-				fieldValueId = scrVmPub.localVars[0];
 			}
 			continue;
 
@@ -3089,9 +3088,6 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 			{
 				RemoveRefToValue(top--);
 				Scr_Error(va("%s is not a function pointer", var_typename[top[1].type]));
-				RemoveRefToValue(top);
-				--top;
-				continue;
 			}
 			tempCodePos = top->u.codePosValue;
 			--top;
@@ -3105,7 +3101,7 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 				scrVarPub.error_index = 1;
 				Scr_Error("script stack overflow (too many embedded function calls)");
 			}
-			localId = AllocThread(top->u.intValue);
+			localId = AllocThread(top->u.stringValue);
 			--top;
 			scrVmPub.function_frame->fs.pos = pos;
 			scrVmPub.function_frame->fs.startTop = startTop;
@@ -3488,9 +3484,10 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 			gCaseCount = Scr_ReadUnsignedShort(&pos);
 			if ( top->type == VAR_STRING )
 			{
-				goto case_value_string;
+				caseValue = top->u.stringValue;
+				SL_RemoveRefToString(top->u.stringValue);
 			}
-			if ( top->type == VAR_INTEGER )
+			else if ( top->type == VAR_INTEGER )
 			{
 				if ( IsValidArrayIndex(top->u.pointerValue) )
 				{
@@ -3499,9 +3496,6 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 				else
 				{
 					Scr_Error(va("switch index %d out of range", top->u.intValue));
-case_value_string:
-					caseValue = top->u.stringValue;
-					SL_RemoveRefToString(top->u.stringValue);
 				}
 			}
 			else
@@ -3552,8 +3546,8 @@ loop_dec_top:
 			++top;
 			classnum = Scr_ReadUnsigned(&pos);
 			entnum = Scr_ReadUnsigned(&pos);
-			top->u.intValue = FindEntityId(entnum, classnum);
-			if ( !top->u.intValue )
+			top->u.pointerValue = FindEntityId(entnum, classnum);
+			if ( !top->u.pointerValue )
 			{
 				top->type = VAR_UNDEFINED;
 				Scr_Error("unknown object");
@@ -3581,8 +3575,6 @@ loop_dec_top:
 			if ( fieldValueId )
 				continue;
 			Scr_Error("cannot create a new local variable in the debugger");
-			++pos;
-			continue;
 
 		case OP_prof_begin:
 			++pos;
