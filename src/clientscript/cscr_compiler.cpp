@@ -304,7 +304,7 @@ void EmitValue(VariableCompileValue *constValue)
 
 void EmitOpcode(unsigned int op, int offset, int callType)
 {
-	int index;
+	unsigned int index;
 	int count;
 	int i;
 
@@ -328,6 +328,7 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 
 	if ( scrCompileGlob.maxOffset < scrCompileGlob.cumulOffset )
 		scrCompileGlob.maxOffset = scrCompileGlob.cumulOffset;
+
 	if ( callType && scrCompileGlob.maxCallOffset < scrCompileGlob.cumulOffset )
 		scrCompileGlob.maxCallOffset = scrCompileGlob.cumulOffset;
 
@@ -452,6 +453,7 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 				*scrCompilePub.opcodePos = OP_ScriptFunctionCall2;
 			}
 			return;
+
 		case OP_ScriptMethodThreadCall:
 			if ( *scrCompilePub.opcodePos != OP_GetSelf )
 				goto setopcodepos;
