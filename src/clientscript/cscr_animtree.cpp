@@ -57,6 +57,7 @@ unsigned int Scr_UsingTreeInternal(const char *filename, unsigned int *index, in
 				break;
 			}
 		}
+
 		var = GetVariable(parentId, 0);
 	}
 	else
@@ -84,7 +85,7 @@ void Scr_UsingTree(const char *filename, unsigned int sourcePos)
 
 void Scr_EmitAnimationInternal(char *pos, unsigned int animName, unsigned int names)
 {
-	VariableValueInternal_u *adr;
+	VariableValueInternal_u *value;
 	unsigned int animId;
 	unsigned int newAnimId;
 	VariableValue tempValue;
@@ -93,9 +94,9 @@ void Scr_EmitAnimationInternal(char *pos, unsigned int animName, unsigned int na
 
 	if ( animId )
 	{
-		adr = GetVariableValueAddress(animId);
-		*(VariableValueInternal_u *)pos = *adr;
-		adr->u.codePosValue = pos;
+		value = GetVariableValueAddress(animId);
+		*(VariableValueInternal_u *)pos = *value;
+		value->u.codePosValue = pos;
 	}
 	else
 	{
@@ -183,6 +184,7 @@ int Scr_CreateAnimationTree(unsigned int parentNode, unsigned int names, XAnim_s
 	unsigned int animIndex;
 
 	num = 0;
+
 	for ( i = FindNextSibling(parentNode); i; i = FindNextSibling(i) )
 	{
 		if ( GetVariableName(i) <= 0xFFFF )
@@ -240,19 +242,19 @@ int Scr_CreateAnimationTree(unsigned int parentNode, unsigned int names, XAnim_s
 
 void Scr_CheckAnimsDefined(unsigned int names, unsigned int filename)
 {
-	VariableValueInternal_u *adr;
+	VariableValueInternal_u *value;
 	unsigned int i;
 	unsigned int name;
 
 	for ( i = FindNextSibling(names); i; i = FindNextSibling(i) )
 	{
 		name = GetVariableName(i);
-		adr = GetVariableValueAddress(i);
+		value = GetVariableValueAddress(i);
 
-		if ( adr->u.intValue )
+		if ( value->u.intValue )
 		{
-			if ( Scr_IsInOpcodeMemory(adr->u.codePosValue) )
-				CompileError2(adr->u.codePosValue, "%s", va("animation '%s' not defined in anim tree '%s'", SL_ConvertToString(name), SL_ConvertToString(filename)));
+			if ( Scr_IsInOpcodeMemory(value->u.codePosValue) )
+				CompileError2(value->u.codePosValue, "%s", va("animation '%s' not defined in anim tree '%s'", SL_ConvertToString(name), SL_ConvertToString(filename)));
 
 			Com_Error(ERR_DROP, "%s", va("animation '%s' not defined in anim tree '%s'", SL_ConvertToString(name), SL_ConvertToString(filename)));
 		}

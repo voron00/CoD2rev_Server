@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "clientscript_public.h"
 
-#define MAX_SCRIPT_STRINGS 16384
+#define HASH_TABLE_SIZE 16384
 
 struct HashEntry
 {
@@ -15,7 +15,7 @@ struct HashEntry
 
 typedef struct __attribute__((aligned(128))) scrStringGlob_s
 {
-	HashEntry hashTable[MAX_SCRIPT_STRINGS];
+	HashEntry hashTable[HASH_TABLE_SIZE];
 	bool inited;
 	HashEntry *nextFreeEntry;
 } scrStringGlob_t;

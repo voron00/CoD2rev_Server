@@ -564,6 +564,13 @@ enum scr_abort_t
 	SCR_ABORT_MAX = 0x3,
 };
 
+enum Scr_SourceType_t
+{
+	SOURCE_TYPE_NONE = 0x0,
+	SOURCE_TYPE_BREAKPOINT = 0x1,
+	SOURCE_TYPE_CALL = 0x2,
+};
+
 struct scr_block_s
 {
 	int abortLevel;

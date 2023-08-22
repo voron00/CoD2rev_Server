@@ -1479,7 +1479,7 @@ float Scr_ReadFloat(const char **pos)
 
 const float* Scr_ReadVector(const char **pos)
 {
-	const float *value = (reinterpret_cast<const float*>(*pos));
+	const float *value = reinterpret_cast<const float*>(*pos);
 	*pos += sizeof(vec3_t);
 	return value;
 }

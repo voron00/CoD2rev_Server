@@ -179,13 +179,13 @@ void EvalIString(unsigned int value, sval_u sourcePos, VariableCompileValue *con
 void EmitGetUndefined(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetUndefined, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitGetString(unsigned int value, sval_u sourcePos)
 {
 	EmitOpcode(OP_GetString, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitShort(value);
 	CompileTransferRefToString(value, 1);
 }
@@ -193,7 +193,7 @@ void EmitGetString(unsigned int value, sval_u sourcePos)
 void EmitGetIString(unsigned int value, sval_u sourcePos)
 {
 	EmitOpcode(OP_GetIString, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitShort(value);
 	CompileTransferRefToString(value, 1);
 }
@@ -203,7 +203,7 @@ void EmitGetVector(const float *value, sval_u sourcePos)
 	int i;
 
 	EmitOpcode(OP_GetVector, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 
 	for ( i = 0; i < 3; ++i )
 		EmitFloat(value[i]);
@@ -214,7 +214,7 @@ void EmitGetVector(const float *value, sval_u sourcePos)
 void EmitGetFloat(float value, sval_u sourcePos)
 {
 	EmitOpcode(OP_GetFloat, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitFloat(value);
 }
 
@@ -225,7 +225,7 @@ void EmitGetInteger(int value, sval_u sourcePos)
 		if ( value > -256 )
 		{
 			EmitOpcode(OP_GetNegByte, 1, CALL_NONE);
-			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 			EmitByte(-(byte)value);
 			return;
 		}
@@ -233,7 +233,7 @@ void EmitGetInteger(int value, sval_u sourcePos)
 		if ( value > -65536 )
 		{
 			EmitOpcode(OP_GetNegUnsignedShort, 1, CALL_NONE);
-			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 			EmitShort(-(short)value);
 			return;
 		}
@@ -243,29 +243,29 @@ void EmitGetInteger(int value, sval_u sourcePos)
 		if ( !value )
 		{
 			EmitOpcode(OP_GetZero, 1, CALL_NONE);
-			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 			return;
 		}
 
-		if ( value <= 255 )
+		if ( value < 256 )
 		{
 			EmitOpcode(OP_GetByte, 1, CALL_NONE);
-			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 			EmitByte(value);
 			return;
 		}
 
-		if ( value <= 0xFFFF )
+		if ( value < 65536 )
 		{
 			EmitOpcode(OP_GetUnsignedShort, 1, CALL_NONE);
-			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 			EmitShort(value);
 			return;
 		}
 	}
 
 	EmitOpcode(OP_GetInteger, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitCodepos((const char *)value);
 }
 
@@ -304,8 +304,7 @@ void EmitValue(VariableCompileValue *constValue)
 
 void EmitOpcode(unsigned int op, int offset, int callType)
 {
-	unsigned int firstpos;
-	unsigned int lastpos;
+	int index;
 	int count;
 	int i;
 
@@ -321,6 +320,7 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 	}
 
 	scrCompilePub.allowedBreakpoint = 0;
+
 	if ( !scrCompileGlob.cumulOffset || callType == CALL_THREAD || callType == CALL_FUNCTION )
 		scrCompilePub.allowedBreakpoint = 1;
 
@@ -337,137 +337,148 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 	if ( scrCompilePub.opcodePos )
 	{
 		scrCompileGlob.codePos = scrCompilePub.opcodePos;
+
 		switch ( op )
 		{
 		case OP_EvalArray:
-			if ( *scrCompilePub.opcodePos == 30 )
+			if ( *scrCompilePub.opcodePos == OP_EvalLocalVariableCached )
 			{
 				RemoveOpcodePos();
-				*scrCompilePub.opcodePos = 31;
+				*scrCompilePub.opcodePos = OP_EvalLocalArrayCached;
 				return;
 			}
-			firstpos = (byte)*scrCompilePub.opcodePos - 24;
-			if ( firstpos > 5 )
+			index = (byte)*scrCompilePub.opcodePos - OP_EvalLocalVariableCached0;
+			if ( index > OP_GetNegByte )
 				goto setopcodepos;
 			RemoveOpcodePos();
-			*scrCompilePub.opcodePos = 31;
-			EmitByte(firstpos);
+			*scrCompilePub.opcodePos = OP_EvalLocalArrayCached;
+			EmitByte(index);
 			return;
+
 		case OP_EvalArrayRef:
-			if ( *scrCompilePub.opcodePos == 55 )
+			if ( *scrCompilePub.opcodePos == OP_EvalLocalVariableRefCached )
 			{
 				RemoveOpcodePos();
-				*scrCompilePub.opcodePos = 34;
+				*scrCompilePub.opcodePos = OP_EvalLocalArrayRefCached;
 				return;
 			}
-			if ( *scrCompilePub.opcodePos != 54 )
+			if ( *scrCompilePub.opcodePos != OP_EvalLocalVariableRefCached0 )
 				goto setopcodepos;
 			RemoveOpcodePos();
-			*scrCompilePub.opcodePos = 33;
+			*scrCompilePub.opcodePos = OP_EvalLocalArrayRefCached0;
 			return;
+
 		case OP_EvalFieldVariable:
-			if ( *scrCompilePub.opcodePos == 38 )
+			if ( *scrCompilePub.opcodePos == OP_GetSelfObject )
 			{
-				*scrCompilePub.opcodePos = 41;
+				*scrCompilePub.opcodePos = OP_EvalSelfFieldVariable;
 				return;
 			}
-			if ( *scrCompilePub.opcodePos == 13 )
+			if ( *scrCompilePub.opcodePos == OP_GetLevelObject )
 			{
-				*scrCompilePub.opcodePos = 39;
+				*scrCompilePub.opcodePos = OP_EvalLevelFieldVariable;
 				return;
 			}
-			if ( *scrCompilePub.opcodePos != 14 )
+			if ( *scrCompilePub.opcodePos != OP_GetAnimObject )
 				goto setopcodepos;
-			*scrCompilePub.opcodePos = 40;
+			*scrCompilePub.opcodePos = OP_EvalAnimFieldVariable;
 			return;
+
 		case OP_EvalFieldVariableRef:
-			if ( *scrCompilePub.opcodePos == 38 )
+			if ( *scrCompilePub.opcodePos == OP_GetSelfObject )
 			{
-				*scrCompilePub.opcodePos = 45;
+				*scrCompilePub.opcodePos = OP_EvalSelfFieldVariableRef;
 				return;
 			}
-			if ( *scrCompilePub.opcodePos == 13 )
+			if ( *scrCompilePub.opcodePos == OP_GetLevelObject )
 			{
-				*scrCompilePub.opcodePos = 43;
+				*scrCompilePub.opcodePos = OP_EvalLevelFieldVariableRef;
 				return;
 			}
-			if ( *scrCompilePub.opcodePos != 14 )
+			if ( *scrCompilePub.opcodePos != OP_GetAnimObject )
 				goto setopcodepos;
-			*scrCompilePub.opcodePos = 44;
+			*scrCompilePub.opcodePos = OP_EvalAnimFieldVariableRef;
 			return;
+
 		case OP_SafeSetVariableFieldCached0:
-			if ( *scrCompilePub.opcodePos != 22 )
+			if ( *scrCompilePub.opcodePos != OP_CreateLocalVariable )
 				goto setopcodepos;
-			*scrCompilePub.opcodePos = 48;
+			*scrCompilePub.opcodePos = OP_SafeCreateVariableFieldCached;
 			return;
+
 		case OP_SetVariableField:
 			switch ( *scrCompilePub.opcodePos )
 			{
-			case '7':
+			case OP_EvalLocalVariableRefCached:
 				RemoveOpcodePos();
-				*scrCompilePub.opcodePos = 61;
+				*scrCompilePub.opcodePos = OP_SetLocalVariableFieldCached;
 				return;
-			case '6':
+			case OP_EvalLocalVariableRefCached0:
 				RemoveOpcodePos();
-				*scrCompilePub.opcodePos = 60;
+				*scrCompilePub.opcodePos = OP_SetLocalVariableFieldCached0;
 				return;
-			case '-':
+			case OP_EvalSelfFieldVariableRef:
 				RemoveOpcodePos();
-				*scrCompilePub.opcodePos = 59;
+				*scrCompilePub.opcodePos = OP_SetSelfFieldVariableField;
 				return;
-			case '+':
+			case OP_EvalLevelFieldVariableRef:
 				RemoveOpcodePos();
-				*scrCompilePub.opcodePos = 56;
+				*scrCompilePub.opcodePos = OP_SetLevelFieldVariableField;
 				return;
 			}
-			if ( *scrCompilePub.opcodePos != 44 )
+			if ( *scrCompilePub.opcodePos != OP_EvalAnimFieldVariableRef )
 				goto setopcodepos;
 			RemoveOpcodePos();
-			*scrCompilePub.opcodePos = 58;
+			*scrCompilePub.opcodePos = OP_SetAnimFieldVariableField;
 			return;
+
 		case OP_ScriptFunctionCall:
-			if ( *scrCompilePub.opcodePos != 78 )
+			if ( *scrCompilePub.opcodePos != OP_PreScriptCall )
 				goto setopcodepos;
-			*scrCompilePub.opcodePos = 79;
+			*scrCompilePub.opcodePos = OP_ScriptFunctionCall2;
 			return;
+
 		case OP_ScriptMethodCall:
-			if ( *scrCompilePub.opcodePos != 15 )
+			if ( *scrCompilePub.opcodePos != OP_GetSelf )
 				goto setopcodepos;
 			RemoveOpcodePos();
-			*scrCompilePub.opcodePos = 80;
-			if ( *scrCompileGlob.prevOpcodePos == 78 )
+			*scrCompilePub.opcodePos = OP_ScriptFunctionCall;
+			if ( *scrCompileGlob.prevOpcodePos == OP_PreScriptCall )
 			{
 				TempMemorySetPos(scrCompilePub.opcodePos);
 				--scrCompilePub.opcodePos;
 				scrCompileGlob.prevOpcodePos = 0;
 				scrCompileGlob.codePos = scrCompilePub.opcodePos;
-				*scrCompilePub.opcodePos = 79;
+				*scrCompilePub.opcodePos = OP_ScriptFunctionCall2;
 			}
 			return;
 		case OP_ScriptMethodThreadCall:
-			if ( *scrCompilePub.opcodePos != 15 )
+			if ( *scrCompilePub.opcodePos != OP_GetSelf )
 				goto setopcodepos;
 			RemoveOpcodePos();
-			*scrCompilePub.opcodePos = 84;
+			*scrCompilePub.opcodePos = OP_ScriptThreadCall;
 			return;
+
 		case OP_CastFieldObject:
-			if ( *scrCompilePub.opcodePos == 30 )
+			if ( *scrCompilePub.opcodePos == OP_EvalLocalVariableCached )
 			{
-				*scrCompilePub.opcodePos = 90;
+				*scrCompilePub.opcodePos = OP_EvalLocalVariableObjectCached;
 				return;
 			}
-			lastpos = (byte)*scrCompilePub.opcodePos - 24;
-			if ( lastpos > 5 )
+			index = (byte)*scrCompilePub.opcodePos - OP_EvalLocalVariableCached0;
+			if ( index > OP_GetNegByte )
 				goto setopcodepos;
-			*scrCompilePub.opcodePos = 90;
-			EmitByte(lastpos);
-			break;
+			*scrCompilePub.opcodePos = OP_EvalLocalVariableObjectCached;
+			EmitByte(index);
+			return;
+
 		case OP_JumpOnFalse:
-			if ( *scrCompilePub.opcodePos != 92 )
+			if ( *scrCompilePub.opcodePos != OP_BoolNot )
 				goto setopcodepos;
 			RemoveOpcodePos();
-			*scrCompilePub.opcodePos = 95;
+			*scrCompilePub.opcodePos = OP_JumpOnTrue;
 			return;
+
 		default:
 			goto setopcodepos;
 		}
@@ -484,35 +495,35 @@ setopcodepos:
 
 void LinkThread(unsigned int threadCountId, VariableValue *pos, bool allowFarCall)
 {
-	VariableValue val;
+	VariableValue tempValue;
 	int type;
 	int i;
-	int varIndex;
-	VariableValueInternal_u *adr;
-	unsigned int index;
+	int valueId;
+	VariableValueInternal_u *value;
+	unsigned int countId;
 
-	index = FindVariable(threadCountId, 0);
+	countId = FindVariable(threadCountId, 0);
 
-	if ( index )
+	if ( countId )
 	{
-		Scr_EvalVariable(&val, index);
+		Scr_EvalVariable(&tempValue, countId);
 
-		for ( i = 0; i < val.u.intValue; ++i )
+		for ( i = 0; i < tempValue.u.intValue; ++i )
 		{
-			varIndex = FindVariable(threadCountId, i + 2);
-			adr = GetVariableValueAddress(varIndex);
-			type = GetObjectType(varIndex);
+			valueId = FindVariable(threadCountId, i + 2);
+			value = GetVariableValueAddress(valueId);
+			type = GetObjectType(valueId);
 
 			if ( pos->type == VAR_DEVELOPER_CODEPOS && type == VAR_CODEPOS )
-				CompileError2(adr->u.codePosValue, "normal script cannot reference a function in a /# ... #/ comment");
+				CompileError2(value->u.codePosValue, "normal script cannot reference a function in a /# ... #/ comment");
 
 			if ( pos->type == VAR_UNDEFINED )
-				CompileError2(adr->u.codePosValue, "unknown function");
+				CompileError2(value->u.codePosValue, "unknown function");
 
-			if ( !allowFarCall && *(uint32_t *)adr->u.intValue == 1 )
-				CompileError2(adr->u.codePosValue, "unknown function");
+			if ( !allowFarCall && *(uint32_t *)value->u.codePosValue == 1 )
+				CompileError2(value->u.codePosValue, "unknown function");
 
-			*(uint32_t *)adr->u.intValue = pos->u.intValue;
+			value->u.stackValue->pos = pos->u.codePosValue;
 		}
 	}
 }
@@ -585,16 +596,16 @@ void EmitIncludeList(sval_u val)
 
 unsigned int SpecifyThreadPosition(unsigned int posId, unsigned int name, unsigned int sourcePos, int type)
 {
-	VariableValue val;
+	VariableValue tempValue;
 	unsigned int buffer;
 	unsigned int id;
 	VariableValue value;
 
 	id = GetVariable(posId, 1u);
-	Scr_EvalVariable(&val, id);
-	value = val;
+	Scr_EvalVariable(&tempValue, id);
+	value = tempValue;
 
-	if ( val.type )
+	if ( tempValue.type )
 	{
 		if ( value.u.intValue )
 		{
@@ -712,7 +723,7 @@ void Scr_CalcLocalVarsFormalParameterListInternal(sval_u *node, scr_block_s *blo
 		if ( !node )
 			break;
 
-		Scr_CalcLocalVarsSafeSetVariableField(*node->node, node->node[1], block);
+		Scr_CalcLocalVarsSafeSetVariableField(node->node[0], node->node[1], block);
 	}
 }
 
@@ -810,28 +821,28 @@ void Scr_MergeChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_s
 void Scr_TransferBlock(scr_block_s *from, scr_block_s *to)
 {
 	unsigned int name;
-	int LocalVar;
+	int localVar;
 	int startIndex;
 
 	for ( startIndex = 0; startIndex < to->localVarsPublicCount || startIndex < from->localVarsCreateCount; ++startIndex )
 	{
 		name = from->localVars[startIndex];
-		LocalVar = Scr_FindLocalVar(to, startIndex, name);
+		localVar = Scr_FindLocalVar(to, startIndex, name);
 
-		if ( LocalVar < 0 )
+		if ( localVar < 0 )
 		{
-			LocalVar = to->localVarsCount;
-			Scr_CheckLocalVarsCount(LocalVar);
+			localVar = to->localVarsCount;
+			Scr_CheckLocalVarsCount(localVar);
 			++to->localVarsCount;
 		}
 
-		if ( LocalVar >= to->localVarsPublicCount )
+		if ( localVar >= to->localVarsPublicCount )
 			++to->localVarsPublicCount;
 
-		while ( LocalVar > startIndex )
+		while ( localVar > startIndex )
 		{
-			to->localVars[LocalVar] = to->localVarsInitBits[LocalVar + 1];
-			--LocalVar;
+			to->localVars[localVar] = to->localVarsInitBits[localVar + 1];
+			--localVar;
 		}
 
 		to->localVars[startIndex] = name;
@@ -1060,7 +1071,7 @@ char EvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sva
 	}
 	else
 	{
-		constValue->value.u.intValue = constValue1.value.u.intValue;
+		constValue->value.u = constValue1.value.u;
 		constValue->value.type = constValue1.value.type;
 		constValue->sourcePos = sourcePos;
 		return 1;
@@ -1088,7 +1099,7 @@ bool EvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, VariableComp
 	count = GetExpressionCount(exprlist);
 
 	if ( count == 1 )
-		return EvalExpression(*exprlist.node->node->node, constValue);
+		return EvalExpression(exprlist.node->node->node[0], constValue);
 
 	if ( count != 3 )
 		return 0;
@@ -1097,7 +1108,7 @@ bool EvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, VariableComp
 
 	for ( node = exprlist.node->node; node; node = node[1].node )
 	{
-		if ( !EvalExpression(*node->node, &constValue2[i]) )
+		if ( !EvalExpression(node->node[0], &constValue2[i]) )
 			return 0;
 		++i;
 	}
@@ -1399,7 +1410,7 @@ void Scr_CalcLocalVarsStatementList(sval_u val, scr_block_s *block)
 	sval_u *node;
 
 	for ( node = val.node->node[1].node; node; node = node[1].node )
-		Scr_CalcLocalVarsStatement(*node, block);
+		Scr_CalcLocalVarsStatement(node[0], block);
 }
 
 void Scr_CalcLocalVarsDeveloperStatementList(sval_u val, scr_block_s *block, sval_u *devStatBlock)
@@ -1505,37 +1516,37 @@ sval_u *GetSingleParameter(sval_u exprlist)
 void EmitCastFieldObject(sval_u sourcePos)
 {
 	EmitOpcode(OP_CastFieldObject, -1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitSelfObject(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetSelfObject, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitLevelObject(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetLevelObject, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitAnimObject(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetAnimObject, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitBoolComplement(sval_u sourcePos)
 {
 	EmitOpcode(OP_BoolComplement, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitBoolNot(sval_u sourcePos)
 {
 	EmitOpcode(OP_BoolNot, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitDecTop()
@@ -1565,7 +1576,7 @@ void EmitSafeSetVariableField(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	if ( index )
 		EmitByte(index);
 
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitCanonicalStringConst(unsigned int stringValue)
@@ -1581,8 +1592,8 @@ void EmitCanonicalStringConst(unsigned int stringValue)
 void EmitEvalArray(sval_u sourcePos, sval_u indexSourcePos)
 {
 	EmitOpcode(OP_EvalArray, -1, CALL_NONE);
-	AddOpcodePos(indexSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(indexSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 unsigned int Scr_GetBuiltin(sval_u func_name)
@@ -1659,7 +1670,7 @@ void AddExpressionListOpcodePos(sval_u exprlist)
 	if ( scrVarPub.developer )
 	{
 		for ( node = exprlist.node->node; node; node = node[1].node )
-			AddOpcodePos(node->node[1].sourcePosValue, 0);
+			AddOpcodePos(node->node[1].sourcePosValue, SOURCE_TYPE_NONE);
 	}
 }
 
@@ -1716,10 +1727,10 @@ void EmitCallBuiltinOpcode(int param_count, sval_u sourcePos)
 	if ( param_count > 5 )
 		opcode = OP_CallBuiltin;
 	else
-		opcode = param_count + 62;
+		opcode = param_count + OP_CallBuiltin0;
 
 	EmitOpcode(opcode, 1 - param_count, CALL_BUILTIN);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 
 	if ( opcode == OP_CallBuiltin )
 		EmitByte(param_count);
@@ -1732,10 +1743,10 @@ void EmitCallBuiltinMethodOpcode(int param_count, sval_u sourcePos)
 	if ( param_count > 5 )
 		opcode = OP_CallBuiltinMethod;
 	else
-		opcode = param_count + 69;
+		opcode = param_count + OP_CallBuiltinMethod0;
 
 	EmitOpcode(opcode, -param_count, CALL_BUILTIN);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 
 	if ( opcode == OP_CallBuiltinMethod )
 		EmitByte(param_count);
@@ -1744,37 +1755,37 @@ void EmitCallBuiltinMethodOpcode(int param_count, sval_u sourcePos)
 void EmitSelf(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetSelf, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitLevel(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetLevel, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitGame(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetGame, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitAnim(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetAnim, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitEmptyArray(sval_u sourcePos)
 {
 	EmitOpcode(OP_EmptyArray, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitAnimation(sval_u anim, sval_u sourcePos)
 {
 	EmitOpcode(OP_GetAnimation, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitCodepos((const char *)0xFFFFFFFF);
 	Scr_EmitAnimation(scrCompileGlob.codePos, anim.stringValue, sourcePos.sourcePosValue);
 	Scr_CompileRemoveRefToString(anim.stringValue);
@@ -1783,7 +1794,7 @@ void EmitAnimation(sval_u anim, sval_u sourcePos)
 void EmitCastBool(sval_u sourcePos)
 {
 	EmitOpcode(OP_CastBool, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitAnimTree(sval_u sourcePos)
@@ -1798,7 +1809,7 @@ void Scr_PushValue(VariableCompileValue *constValue)
 {
 	int index;
 
-	if ( scrCompilePub.value_count <= 31 )
+	if ( scrCompilePub.value_count < 32 )
 	{
 		index = scrCompilePub.value_count;
 		scrCompileGlob.value_start[index].value.type = constValue->value.u.intValue;
@@ -1827,7 +1838,7 @@ bool EmitOrEvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, Variab
 	expr_count = GetExpressionCount(exprlist);
 
 	if ( expr_count == 1 )
-		return EmitOrEvalExpression(*exprlist.node->node->node, constValue, block);
+		return EmitOrEvalExpression(exprlist.node->node->node[0], constValue, block);
 
 	if ( expr_count == 3 )
 	{
@@ -1837,14 +1848,14 @@ bool EmitOrEvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, Variab
 		{
 			if ( success )
 			{
-				success = EmitOrEvalExpression(*node->node, &constValue2, block);
+				success = EmitOrEvalExpression(node->node[0], &constValue2, block);
 
 				if ( success )
 					Scr_PushValue(&constValue2);
 			}
 			else
 			{
-				EmitExpression(*node->node, block);
+				EmitExpression(node->node[0], block);
 			}
 		}
 		if ( success )
@@ -1857,7 +1868,7 @@ bool EmitOrEvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, Variab
 		else
 		{
 			EmitOpcode(OP_vector, -2, CALL_NONE);
-			AddOpcodePos(sourcePos.sourcePosValue, 1);
+			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 			AddExpressionListOpcodePos(exprlist);
 			return 0;
 		}
@@ -1876,7 +1887,7 @@ void EmitBoolOrExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sva
 
 	EmitExpression(expr1, block);
 	EmitOpcode(OP_JumpOnTrueExpr, -1, CALL_NONE);
-	AddOpcodePos(expr1sourcePos.sourcePosValue, 0);
+	AddOpcodePos(expr1sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitShort(0);
 	pos = scrCompileGlob.codePos;
 	nextPos = (intptr_t)TempMalloc(0);
@@ -1892,7 +1903,7 @@ void EmitBoolAndExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sv
 
 	EmitExpression(expr1, block);
 	EmitOpcode(OP_JumpOnFalseExpr, -1, CALL_NONE);
-	AddOpcodePos(expr1sourcePos.sourcePosValue, 0);
+	AddOpcodePos(expr1sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitShort(0);
 	pos = scrCompileGlob.codePos;
 	nextPos = (intptr_t)TempMalloc(0);
@@ -1901,7 +1912,7 @@ void EmitBoolAndExpression(sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sv
 	*(uint16_t *)pos = (intptr_t)TempMalloc(0) - nextPos;
 }
 
-char EmitOrEvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue, scr_block_s *block)
+bool EmitOrEvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue, scr_block_s *block)
 {
 	VariableCompileValue constValue2;
 	VariableCompileValue constValue1;
@@ -1909,19 +1920,22 @@ char EmitOrEvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcod
 	if ( !EmitOrEvalExpression(expr1, &constValue1, block) )
 	{
 		EmitExpression(expr2, block);
-emitOpcode:
-		EmitOpcode(SLOBYTE(opcode.sourcePosValue), -1, CALL_NONE);
-		AddOpcodePos(sourcePos.sourcePosValue, 0);
+		EmitOpcode(opcode.type, -1, CALL_NONE);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 		return 0;
 	}
 
 	Scr_PushValue(&constValue1);
 
 	if ( !EmitOrEvalExpression(expr2, &constValue2, block) )
-		goto emitOpcode;
+	{
+		EmitOpcode(opcode.type, -1, CALL_NONE);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+		return 0;
+	}
 
 	Scr_PopValue();
-	Scr_EvalBinaryOperator(opcode.type, &constValue1.value, &constValue2.value);
+	Scr_EvalBinaryOperator(opcode.intValue, &constValue1.value, &constValue2.value);
 
 	if ( scrVarPub.error_message )
 	{
@@ -1930,7 +1944,7 @@ emitOpcode:
 	}
 	else
 	{
-		constValue->value.u.intValue = constValue1.value.u.intValue;
+		constValue->value.u = constValue1.value.u;
 		constValue->value.type = constValue1.value.type;
 		constValue->sourcePos = sourcePos;
 		return 1;
@@ -1941,13 +1955,13 @@ void EmitSize(sval_u expr, sval_u sourcePos, scr_block_s *block)
 {
 	EmitPrimitiveExpression(expr, block);
 	EmitOpcode(OP_size, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitGetFunction(sval_u func, sval_u sourcePos)
 {
 	EmitOpcode(OP_GetFunction, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 3);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT|SOURCE_TYPE_CALL);
 	EmitFunction(func, sourcePos);
 }
 
@@ -2087,7 +2101,7 @@ void EmitPostScriptFunction(sval_u func, int param_count, bool bMethod, sval_u n
 	else
 		EmitOpcode(OP_ScriptFunctionCall, -param_count, CALL_FUNCTION);
 
-	AddOpcodePos(nameSourcePos.sourcePosValue, 3);
+	AddOpcodePos(nameSourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT|SOURCE_TYPE_CALL);
 	EmitFunction(func, nameSourcePos);
 }
 
@@ -2100,8 +2114,8 @@ void EmitPostScriptFunctionPointer(sval_u expr, int param_count, bool bMethod, s
 	else
 		EmitOpcode(OP_ScriptFunctionCallPointer, -param_count - 1, CALL_FUNCTION);
 
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
-	AddOpcodePos(nameSourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(nameSourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitPostScriptFunctionCall(sval_u func_name, int param_count, bool bMethod, sval_u nameSourcePos, scr_block_s *block)
@@ -2123,7 +2137,7 @@ void EmitPostScriptThread(sval_u func, int param_count, bool bMethod, sval_u sou
 	else
 		EmitOpcode(OP_ScriptThreadCall, 1 - param_count, CALL_THREAD);
 
-	AddOpcodePos(sourcePos.sourcePosValue, 3);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT|SOURCE_TYPE_CALL);
 	EmitFunction(func, sourcePos);
 	EmitCodepos((const char *)param_count);
 }
@@ -2137,7 +2151,7 @@ void EmitPostScriptThreadPointer(sval_u expr, int param_count, bool bMethod, sva
 	else
 		EmitOpcode(OP_ScriptThreadCallPointer, -param_count, CALL_THREAD);
 
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitCodepos((const char *)param_count);
 }
 
@@ -2153,14 +2167,14 @@ void EmitPostScriptThreadCall(sval_u func_name, int param_count, bool bMethod, s
 		EmitPostScriptThreadPointer(func_name.node[1], param_count, bMethod, func_name.node[2], block);
 	}
 
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitFieldVariable(sval_u expr, sval_u field, sval_u sourcePos, scr_block_s *block)
 {
 	EmitPrimitiveExpressionFieldObject(expr, sourcePos, block);
 	EmitOpcode(OP_EvalFieldVariable, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitCanonicalString(field.stringValue);
 }
 
@@ -2246,7 +2260,7 @@ void EmitLocalVariable(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	if ( opcode == OP_EvalLocalVariableCached )
 		EmitByte(index);
 
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitFormalParameterListInternal(sval_u *node, scr_block_s *block)
@@ -2266,7 +2280,7 @@ void EmitFormalParameterList(sval_u exprlist, sval_u sourcePos, scr_block_s *blo
 {
 	EmitFormalParameterListInternal(exprlist.node->node, block);
 	EmitOpcode(OP_checkclearparams, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 bool Scr_IsLastStatement(sval_u *node)
@@ -2304,8 +2318,8 @@ bool IsUndefinedExpression(sval_u expr)
 void EmitEvalArrayRef(sval_u sourcePos, sval_u indexSourcePos)
 {
 	EmitOpcode(OP_EvalArrayRef, -1, CALL_NONE);
-	AddOpcodePos(indexSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(indexSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitArrayVariableRef(sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block)
@@ -2332,7 +2346,7 @@ void EmitLocalVariableRef(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	if ( index )
 		EmitByte(index);
 
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitFieldVariableRef(sval_u expr, sval_u field, sval_u sourcePos, scr_block_s *block)
@@ -2372,7 +2386,7 @@ void EmitVariableExpressionRef(sval_u expr, scr_block_s *block)
 void EmitGameRef(sval_u sourcePos)
 {
 	EmitOpcode(OP_GetGameRef, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitArrayPrimitiveExpressionRef(sval_u expr, sval_u sourcePos, scr_block_s *block)
@@ -2395,21 +2409,21 @@ void EmitClearFieldVariable(sval_u expr, sval_u field, sval_u sourcePos, sval_u 
 {
 	EmitPrimitiveExpressionFieldObject(expr, sourcePos, block);
 	EmitOpcode(OP_ClearFieldVariable, 0, CALL_NONE);
-	AddOpcodePos(rhsSourcePos.sourcePosValue, 0);
+	AddOpcodePos(rhsSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitCanonicalString(field.stringValue);
 }
 
 void EmitClearArray(sval_u sourcePos, sval_u indexSourcePos)
 {
 	EmitOpcode(OP_ClearArray, -1, CALL_NONE);
-	AddOpcodePos(indexSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(indexSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitSetVariableField(sval_u sourcePos)
 {
 	EmitOpcode(OP_SetVariableField, -1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitClearArrayVariable(sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block)
@@ -2466,7 +2480,7 @@ void EmitEndStatement(sval_u sourcePos, scr_block_s *block)
 		block->abortLevel = SCR_ABORT_RETURN;
 
 	EmitEnd();
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 }
 
 void EmitRemoveLocalVars(scr_block_s *block, scr_block_s *outerBlock)
@@ -2495,7 +2509,7 @@ void EmitNOP2(bool lastStatement, unsigned int endSourcePos, scr_block_s *block)
 	if ( lastStatement )
 	{
 		EmitEnd();
-		AddOpcodePos(endSourcePos, 1);
+		AddOpcodePos(endSourcePos, SOURCE_TYPE_BREAKPOINT);
 	}
 	else
 	{
@@ -2512,7 +2526,7 @@ void EmitIfStatement(sval_u expr, sval_u stmt, sval_u sourcePos, bool lastStatem
 
 	EmitExpression(expr, block);
 	EmitOpcode(OP_JumpOnFalse, -1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitShort(0);
 	pos = scrCompileGlob.codePos;
 	nextPos = (intptr_t)TempMalloc(0);
@@ -2526,9 +2540,9 @@ void EmitWaitStatement(sval_u expr, sval_u sourcePos, sval_u waitSourcePos, scr_
 {
 	EmitExpression(expr, block);
 	EmitOpcode(OP_wait, -1, CALL_NONE);
-	AddOpcodePos(waitSourcePos.sourcePosValue, 0);
-	AddOpcodePos(waitSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitReturnStatement(sval_u expr, sval_u sourcePos, scr_block_s *block)
@@ -2538,7 +2552,7 @@ void EmitReturnStatement(sval_u expr, sval_u sourcePos, scr_block_s *block)
 
 	EmitExpression(expr, block);
 	EmitReturn();
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitAssignmentStatement(sval_u lhs, sval_u rhs, sval_u sourcePos, sval_u rhsSourcePos, scr_block_s *block)
@@ -2623,7 +2637,7 @@ void EmitBinaryEqualsOperatorExpression(sval_u lhs, sval_u rhs, sval_u opcode, s
 	scrCompileGlob.bConstRefCount = 0;
 	EmitExpression(rhs, block);
 	EmitOpcode(SLOBYTE(opcode.sourcePosValue), -1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitVariableExpressionRef(lhs, block);
 	EmitSetVariableField(sourcePos);
 }
@@ -2634,7 +2648,7 @@ void EmitIncStatement(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	EmitVariableExpressionRef(expr, block);
 	scrCompileGlob.forceNotCreate = 0;
 	EmitOpcode(OP_inc, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitSetVariableField(sourcePos);
 }
 
@@ -2644,7 +2658,7 @@ void EmitDecStatement(sval_u expr, sval_u sourcePos, scr_block_s *block)
 	EmitVariableExpressionRef(expr, block);
 	scrCompileGlob.forceNotCreate = 0;
 	EmitOpcode(OP_dec, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitSetVariableField(sourcePos);
 }
 
@@ -2752,7 +2766,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	else
 	{
 		EmitOpcode(OP_JumpOnFalse, -1, CALL_NONE);
-		AddOpcodePos(sourcePos.sourcePosValue, 0);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 		EmitShort(0);
 		codePos = scrCompileGlob.codePos;
 		nextPos2 = (char *)TempMalloc(0);
@@ -2775,9 +2789,9 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	Scr_InitFromChildBlocks(childBlocks, newContinueChildCount, forStatPostBlock->block);
 	EmitStatement(stmt2, 0, 0, forStatPostBlock->block);
 	EmitOpcode(OP_jumpback, 0, CALL_NONE);
-	AddOpcodePos(forSourcePos.sourcePosValue, 0);
+	AddOpcodePos(forSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	if ( *(uint32_t *)stmt.type == 44 )
-		AddOpcodePos(stmt.node[3].sourcePosValue, 1);
+		AddOpcodePos(stmt.node[3].sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitShort(0);
 	*(uint16_t *)scrCompileGlob.codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos;
 	if ( codePos )
@@ -2866,7 +2880,7 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	else
 	{
 		EmitOpcode(OP_JumpOnFalse, -1, CALL_NONE);
-		AddOpcodePos(sourcePos.sourcePosValue, 0);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 		EmitShort(0);
 		codePos = scrCompileGlob.codePos;
 		nextPos2 = (char *)TempMalloc(0);
@@ -2888,9 +2902,9 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	scrCompileGlob.bCanContinue[1] = 0;
 	ConnectContinueStatements();
 	EmitOpcode(OP_jumpback, 0, CALL_NONE);
-	AddOpcodePos(whileSourcePos.sourcePosValue, 0);
+	AddOpcodePos(whileSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	if ( stmt.node->type == 44 )
-		AddOpcodePos(stmt.node[3].sourcePosValue, 1);
+		AddOpcodePos(stmt.node[3].sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	EmitShort(0);
 	*(uint16_t *)scrCompileGlob.codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos;
 	if ( codePos )
@@ -2927,7 +2941,7 @@ void EmitIfElseStatement(sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourceP
 	childCount = 0;
 	EmitExpression(expr, block);
 	EmitOpcode(OP_JumpOnFalse, -1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitShort(0);
 	codePos = scrCompileGlob.codePos;
 	pos1 = (char *)TempMalloc(0);
@@ -2944,14 +2958,14 @@ void EmitIfElseStatement(sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourceP
 	{
 		EmitEnd();
 		EmitCodepos(0);
-		AddOpcodePos(endSourcePos, 1);
+		AddOpcodePos(endSourcePos, SOURCE_TYPE_BREAKPOINT);
 		pos2 = 0;
 		nextPos = 0;
 	}
 	else
 	{
 		EmitOpcode(OP_jump, 0, CALL_NONE);
-		AddOpcodePos(elseSourcePos.sourcePosValue, 1);
+		AddOpcodePos(elseSourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 		EmitCodepos(0);
 		pos2 = scrCompileGlob.codePos;
 		nextPos = (char *)TempMalloc(0);
@@ -3100,7 +3114,7 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 	scrCompileGlob.firstThread[2] = 0;
 	scrCompileGlob.bCanBreak[1] = 0;
 	EmitOpcode(OP_endswitch, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitShort(0);
 	pos2 = scrCompileGlob.codePos;
 	*(uint32_t *)pos1 = scrCompileGlob.codePos - nextPos;
@@ -3150,7 +3164,7 @@ void EmitBreakStatement(sval_u sourcePos, scr_block_s *block)
 		EmitRemoveLocalVars(block, scrCompileGlob.breakBlock);
 		block->abortLevel = SCR_ABORT_BREAK;
 		EmitOpcode(OP_jump, 0, CALL_NONE);
-		AddOpcodePos(sourcePos.sourcePosValue, 1);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 		EmitCodepos(0);
 		newBreakStatement = (BreakStatementInfo *)Hunk_AllocateTempMemoryHighInternal(sizeof(BreakStatementInfo));
 		newBreakStatement->codePos = scrCompileGlob.codePos;
@@ -3174,7 +3188,7 @@ void EmitContinueStatement(sval_u sourcePos, scr_block_s *block)
 		EmitRemoveLocalVars(block, block);
 		block->abortLevel = SCR_ABORT_CONTINUE;
 		EmitOpcode(OP_jump, 0, CALL_NONE);
-		AddOpcodePos(sourcePos.sourcePosValue, 1);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 		EmitCodepos(0);
 		newContinueStatement = (ContinueStatementInfo *)Hunk_AllocateTempMemoryHighInternal(sizeof(ContinueStatementInfo));
 		newContinueStatement->codePos = scrCompileGlob.codePos;
@@ -3238,8 +3252,8 @@ void EmitStatementList(sval_u val, bool lastStatement, unsigned int endSourcePos
 void EmitWaittillFrameEnd(sval_u sourcePos)
 {
 	EmitOpcode(OP_waittillFrameEnd, 0, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitNotifyStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u notifySourcePos, scr_block_s *block)
@@ -3249,7 +3263,7 @@ void EmitNotifyStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u n
 	sval_u *startNode;
 
 	EmitOpcode(OP_voidCodepos, 1, CALL_NONE);
-	AddOpcodePos(sourcePos.sourcePosValue, 1);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 	expr_count = 0;
 	startNode = 0;
 
@@ -3262,9 +3276,9 @@ void EmitNotifyStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u n
 
 	EmitPrimitiveExpression(obj, block);
 	EmitOpcode(OP_notify, -expr_count - 2, CALL_NONE);
-	AddOpcodePos(notifySourcePos.sourcePosValue, 0);
-	AddOpcodePos(startNode->node[1].sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(notifySourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(startNode->node[1].sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitEndOnStatement(sval_u obj, sval_u expr, sval_u sourcePos, sval_u exprSourcePos, scr_block_s *block)
@@ -3272,8 +3286,8 @@ void EmitEndOnStatement(sval_u obj, sval_u expr, sval_u sourcePos, sval_u exprSo
 	EmitExpression(expr, block);
 	EmitPrimitiveExpression(obj, block);
 	EmitOpcode(OP_endon, -2, CALL_NONE);
-	AddOpcodePos(exprSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(exprSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitWaittillmatchStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u waitSourcePos, scr_block_s *block)
@@ -3298,10 +3312,10 @@ void EmitWaittillmatchStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, s
 	EmitExpression(*node->node, block);
 	EmitPrimitiveExpression(obj, block);
 	EmitOpcode(OP_waittillmatch, -2 - i, CALL_NONE);
-	AddOpcodePos(waitSourcePos.sourcePosValue, 0);
-	AddOpcodePos(waitSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
-	AddOpcodePos(node->node[1].sourcePosValue, 0);
+	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(node->node[1].sourcePosValue, SOURCE_TYPE_NONE);
 
 	while ( 1 )
 	{
@@ -3310,7 +3324,7 @@ void EmitWaittillmatchStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, s
 		if ( !node )
 			break;
 
-		AddOpcodePos(node->node[1].sourcePosValue, 0);
+		AddOpcodePos(node->node[1].sourcePosValue, SOURCE_TYPE_NONE);
 	}
 
 	EmitByte(i);
@@ -3357,7 +3371,7 @@ void EmitSafeSetWaittillVariableField(sval_u expr, sval_u sourcePos, scr_block_s
 	index = Scr_FindLocalVarIndex(expr.sourcePosValue, sourcePos, 1, block);
 	EmitOpcode(OP_SafeSetWaittillVariableFieldCached, 0, CALL_NONE);
 	EmitByte(index);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitFormalWaittillParameterListRefInternal(sval_u *node, scr_block_s *block)
@@ -3381,10 +3395,10 @@ void EmitWaittillStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u
 	EmitExpression(*node->node, block);
 	EmitPrimitiveExpression(obj, block);
 	EmitOpcode(OP_waittill, -2, CALL_NONE);
-	AddOpcodePos(waitSourcePos.sourcePosValue, 0);
-	AddOpcodePos(waitSourcePos.sourcePosValue, 0);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
-	AddOpcodePos(node->node[1].sourcePosValue, 0);
+	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
+	AddOpcodePos(node->node[1].sourcePosValue, SOURCE_TYPE_NONE);
 	EmitFormalWaittillParameterListRefInternal(node, block);
 	EmitOpcode(OP_clearparams, 0, CALL_NONE);
 }
@@ -3851,7 +3865,7 @@ void EmitFunction(sval_u func, sval_u sourcePos)
 	SetNewVariableValue(id, &value);
 	++value2.u.intValue;
 	SetVariableValue(countId, &value2);
-	AddOpcodePos(sourcePos.sourcePosValue, 0);
+	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourcePos, bool bStatement, scr_block_s *block)
@@ -3913,7 +3927,7 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 				EmitCallBuiltinMethodOpcode(param_count, sourcePos);
 				newFuncIndex = AddFunction((int)meth);
 				EmitShort(newFuncIndex);
-				AddOpcodePos(methodSourcePos.sourcePosValue, 0);
+				AddOpcodePos(methodSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 				AddExpressionListOpcodePos(params);
 				if ( statement )
 					EmitDecTop();
@@ -3932,7 +3946,7 @@ script_method:
 		param_count = EmitExpressionList(params, block);
 		EmitPrimitiveExpression(expr, block);
 		EmitPostFunctionCall(func_name, param_count, 1, block);
-		AddOpcodePos(methodSourcePos.sourcePosValue, 0);
+		AddOpcodePos(methodSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 		AddExpressionListOpcodePos(params);
 		if ( statement )
 			EmitDecTop();
@@ -3956,8 +3970,8 @@ void InitThread(int type)
 	{
 		scrCompileGlob.firstThread[type] = 0;
 		EmitEnd();
-		AddOpcodePos(0, 0);
-		AddOpcodePos(0xFFFFFFFE, 0);
+		AddOpcodePos(0, SOURCE_TYPE_NONE);
+		AddOpcodePos(0xFFFFFFFE, SOURCE_TYPE_NONE);
 	}
 }
 
@@ -3982,8 +3996,8 @@ void EmitThreadInternal(unsigned int id, sval_u val, sval_u sourcePos, sval_u en
 	EmitFormalParameterList(val.node[2], sourcePos, block);
 	EmitStatementList(val.node[3], 1, endSourcePos.sourcePosValue, block);
 	EmitEnd();
-	AddOpcodePos(endSourcePos.sourcePosValue, 1);
-	AddOpcodePos(0xFFFFFFFE, 0);
+	AddOpcodePos(endSourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
+	AddOpcodePos(0xFFFFFFFE, SOURCE_TYPE_NONE);
 
 	if ( scrCompileGlob.maxOffset + 32 * scrCompileGlob.maxCallOffset > 2047 )
 		CompileError(sourcePos.sourcePosValue, "function exceeds operand stack size");
