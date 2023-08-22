@@ -30,7 +30,7 @@ struct PrecacheEntry
 	unsigned short filename;
 	bool include;
 	unsigned int sourcePos;
-	int latchedValue;
+	PrecacheEntry *next;
 };
 
 typedef struct scrCompileGlob_s
@@ -315,7 +315,7 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 
 		for ( i = 0; i < count; ++i )
 		{
-			EmitValue((VariableCompileValue *)(const char *)(&scrCompileGlob.value_start[i].sourcePos.codePosValue - 1));
+			EmitValue((VariableCompileValue *)&scrCompileGlob.value_start[i].value.type);
 		}
 	}
 
@@ -545,7 +545,7 @@ void LinkFile(unsigned int filePosId)
 	for ( i = FindNextSibling(filePosId); i; i = FindNextSibling(i) )
 	{
 		parentId = FindObject(i);
-		index = FindVariable(parentId, 1u);
+		index = FindVariable(parentId, 1);
 
 		if ( index )
 		{
@@ -603,7 +603,7 @@ unsigned int SpecifyThreadPosition(unsigned int posId, unsigned int name, unsign
 	unsigned int id;
 	VariableValue value;
 
-	id = GetVariable(posId, 1u);
+	id = GetVariable(posId, 1);
 	Scr_EvalVariable(&tempValue, id);
 	value = tempValue;
 
@@ -1170,7 +1170,7 @@ void Scr_CalcLocalVarsSwitchStatement(sval_u stmtlist, scr_block_s *block)
 		}
 		else if ( currentBlock )
 		{
-			Scr_CalcLocalVarsStatement(*node, currentBlock);
+			Scr_CalcLocalVarsStatement(node[0], currentBlock);
 
 			if ( currentBlock->abortLevel )
 			{
@@ -1624,27 +1624,32 @@ unsigned int Scr_GetBuiltin(sval_u func_name)
 
 int Scr_FindLocalVarIndex(unsigned int name, sval_u sourcePos, bool create, scr_block_s *block)
 {
-	const char *s;
 	int i;
 
 	if ( !block )
 		goto unreachable;
+
 	for ( i = 0; ; ++i )
 	{
 		if ( i >= block->localVarsCount )
 			goto out;
+
 		if ( i == block->localVarsCreateCount )
 		{
 			++block->localVarsCreateCount;
 			EmitOpcode(OP_CreateLocalVariable, 0, CALL_NONE);
 			EmitCanonicalStringConst(block->localVars[i]);
 		}
+
 		if ( block->localVars[i] == name )
 			break;
 	}
+
 	Scr_CompileRemoveRefToString(name);
+
 	if ( (*((byte *)block->localVarsInitBits + (i >> 3)) & (unsigned char)(1 << (i & 7))) != 0 )
 		return block->localVarsCreateCount - i - 1;
+
 	if ( create && !scrCompileGlob.forceNotCreate )
 	{
 		*((byte *)block->localVarsInitBits + (i >> 3)) |= 1 << (i & 7);
@@ -1653,8 +1658,7 @@ int Scr_FindLocalVarIndex(unsigned int name, sval_u sourcePos, bool create, scr_
 out:
 	if ( !create || scrCompileGlob.forceNotCreate )
 	{
-		s = SL_ConvertToString(name);
-		CompileError(sourcePos.sourcePosValue, "uninitialised variable '%s'", s);
+		CompileError(sourcePos.sourcePosValue, "uninitialised variable '%s'", SL_ConvertToString(name));
 		return 0;
 	}
 	else
@@ -1712,9 +1716,9 @@ void Scr_EndDevScript(int type, char **savedPos)
 int Scr_GetCacheType(int type)
 {
 	if ( type )
-		return 12;
+		return VAR_DEVELOPER_CODEPOS;
 	else
-		return 7;
+		return VAR_CODEPOS;
 }
 
 bool Scr_IsVariable(int type)
@@ -1815,7 +1819,7 @@ void Scr_PushValue(VariableCompileValue *constValue)
 	{
 		index = scrCompilePub.value_count;
 		scrCompileGlob.value_start[index].value.type = constValue->value.u.intValue;
-		scrCompileGlob.value_start[index].sourcePos.type = constValue->value.type;
+		scrCompileGlob.value_start[index].sourcePos.intValue = constValue->value.type;
 		scrCompileGlob.value_start[index + 1].value.u.intValue = constValue->sourcePos.intValue;
 		++scrCompilePub.value_count;
 	}
@@ -1860,10 +1864,11 @@ bool EmitOrEvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, Variab
 				EmitExpression(node->node[0], block);
 			}
 		}
+
 		if ( success )
 		{
 			scrCompilePub.value_count -= 3;
-			Scr_CreateVector((VariableCompileValue *)(const char *)(&scrCompileGlob.value_start[scrCompilePub.value_count].sourcePos.codePosValue - 1), &constValue->value);
+			Scr_CreateVector((VariableCompileValue *)&scrCompileGlob.value_start[scrCompilePub.value_count].value.type, &constValue->value);
 			constValue->sourcePos = sourcePos;
 			return 1;
 		}
@@ -2228,6 +2233,7 @@ void EmitObject(sval_u expr, sval_u sourcePos)
 				}
 			}
 		}
+
 		goto out;
 	}
 
@@ -2252,10 +2258,10 @@ void EmitLocalVariable(sval_u expr, sval_u sourcePos, scr_block_s *block)
 
 	index = Scr_FindLocalVarIndex(expr.sourcePosValue, sourcePos, 0, block);
 
-	if ( index > 5 )
+	if ( index > OP_GetNegByte )
 		opcode = OP_EvalLocalVariableCached;
 	else
-		opcode = index + 24;
+		opcode = index + OP_EvalLocalVariableCached0;
 
 	EmitOpcode(opcode, 1, CALL_NONE);
 
@@ -2638,7 +2644,7 @@ void EmitBinaryEqualsOperatorExpression(sval_u lhs, sval_u rhs, sval_u opcode, s
 	EmitVariableExpression(lhs, block);
 	scrCompileGlob.bConstRefCount = 0;
 	EmitExpression(rhs, block);
-	EmitOpcode(SLOBYTE(opcode.sourcePosValue), -1, CALL_NONE);
+	EmitOpcode(opcode.type, -1, CALL_NONE);
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitVariableExpressionRef(lhs, block);
 	EmitSetVariableField(sourcePos);
@@ -2725,16 +2731,20 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	block->localVarsCreateCount = forStatBlock->block->localVarsCreateCount;
 	Scr_TransferBlock(block, forStatPostBlock->block);
 	nextPos = (char *)TempMalloc(0);
-	if ( expr.node->type == 65 )
+
+	if ( expr.node->type == ENUM_expression )
 	{
 		constConditional = 0;
+
 		if ( EmitOrEvalExpression(expr.node[1], &value, block) )
 		{
 			if ( value.value.type == VAR_INTEGER || value.value.type == VAR_FLOAT )
 			{
 				Scr_CastBool(&value.value);
+
 				if ( !value.value.u.intValue )
 					CompileError(sourcePos.sourcePosValue, "conditional expression cannot be always false");
+
 				constConditional = 1;
 			}
 			else
@@ -2747,6 +2757,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	{
 		constConditional = 1;
 	}
+
 	oldBreakChildBlocks = scrCompileGlob.breakChildBlocks;
 	oldBreakChildCount = scrCompileGlob.breakChildCount;
 	breakBlock = scrCompileGlob.breakBlock;
@@ -2758,6 +2769,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	scrCompileGlob.continueChildBlocks = childBlocks;
 	scrCompileGlob.continueChildCount = &newContinueChildCount;
 	scrCompileGlob.breakBlock = forStatBlock->block;
+
 	if ( constConditional )
 	{
 		codePos = 0;
@@ -2774,6 +2786,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 		nextPos2 = (char *)TempMalloc(0);
 		oldContinueChildBlocks = 0;
 	}
+
 	scrCompileGlob.breakChildBlocks = oldContinueChildBlocks;
 	scrCompileGlob.bCanBreak[0] = 1;
 	scrCompileGlob.bCanBreak[1] = scrCompilePub.developer_statement != 0;
@@ -2792,12 +2805,17 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	EmitStatement(stmt2, 0, 0, forStatPostBlock->block);
 	EmitOpcode(OP_jumpback, 0, CALL_NONE);
 	AddOpcodePos(forSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
-	if ( *(uint32_t *)stmt.type == 44 )
+
+	if ( stmt.node->type == ENUM_statement_list )
 		AddOpcodePos(stmt.node[3].sourcePosValue, SOURCE_TYPE_BREAKPOINT);
+
 	EmitShort(0);
+
 	*(uint16_t *)scrCompileGlob.codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos;
+
 	if ( codePos )
 		*(uint16_t *)codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos2;
+
 	ConnectBreakStatements();
 	scrCompileGlob.bCanBreak[0] = break1;
 	scrCompileGlob.bCanBreak[1] = break2;
@@ -2805,8 +2823,10 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	scrCompileGlob.bCanContinue[0] = cont1;
 	scrCompileGlob.bCanContinue[1] = cont2;
 	scrCompileGlob.currentContinueStatement = currentContinueStatement;
+
 	if ( constConditional )
 		Scr_InitFromChildBlocks(oldContinueChildBlocks, newBreakChildCount, block);
+
 	scrCompileGlob.breakChildBlocks = oldBreakChildBlocks;
 	scrCompileGlob.breakChildCount = oldBreakChildCount;
 	scrCompileGlob.breakBlock = breakBlock;
@@ -2850,13 +2870,16 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	block->localVarsCreateCount = whileStatBlock->block->localVarsCreateCount;
 	nextPos = (char *)TempMalloc(0);
 	constConditional = 0;
+
 	if ( EmitOrEvalExpression(expr, &value, block) )
 	{
 		if ( value.value.type == VAR_INTEGER || value.value.type == VAR_FLOAT )
 		{
 			Scr_CastBool(&value.value);
+
 			if ( !value.value.u.intValue )
 				CompileError(sourcePos.sourcePosValue, "conditional expression cannot be always false");
+
 			constConditional = 1;
 		}
 		else
@@ -2864,6 +2887,7 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 			EmitValue(&value);
 		}
 	}
+
 	breakChildBlocks = scrCompileGlob.breakChildBlocks;
 	breakChildCount = scrCompileGlob.breakChildCount;
 	breakBlock = scrCompileGlob.breakBlock;
@@ -2872,6 +2896,7 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	childCount = 0;
 	scrCompileGlob.continueChildBlocks = 0;
 	scrCompileGlob.breakBlock = whileStatBlock->block;
+
 	if ( constConditional )
 	{
 		codePos = 0;
@@ -2888,6 +2913,7 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 		nextPos2 = (char *)TempMalloc(0);
 		childBlocks = 0;
 	}
+
 	scrCompileGlob.breakChildBlocks = childBlocks;
 	scrCompileGlob.bCanBreak[0] = 1;
 	scrCompileGlob.bCanBreak[1] = scrCompilePub.developer_statement != 0;
@@ -2896,8 +2922,10 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	scrCompileGlob.bCanContinue[1] = scrCompilePub.developer_statement != 0;
 	scrCompileGlob.currentContinueStatement = 0;
 	EmitStatement(stmt, 0, 0, whileStatBlock->block);
+
 	if ( whileStatBlock->block->abortLevel != SCR_ABORT_RETURN )
 		whileStatBlock->block->abortLevel = SCR_ABORT_NONE;
+
 	scrCompileGlob.bCanBreak[0] = 0;
 	scrCompileGlob.bCanBreak[1] = 0;
 	scrCompileGlob.bCanContinue[0] = 0;
@@ -2905,12 +2933,16 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	ConnectContinueStatements();
 	EmitOpcode(OP_jumpback, 0, CALL_NONE);
 	AddOpcodePos(whileSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
-	if ( stmt.node->type == 44 )
+
+	if ( stmt.node->type == ENUM_statement_list )
 		AddOpcodePos(stmt.node[3].sourcePosValue, SOURCE_TYPE_BREAKPOINT);
+
 	EmitShort(0);
 	*(uint16_t *)scrCompileGlob.codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos;
+
 	if ( codePos )
 		*(uint16_t *)codePos = (intptr_t)TempMalloc(0) - (intptr_t)nextPos2;
+
 	ConnectBreakStatements();
 	scrCompileGlob.bCanBreak[0] = break1;
 	scrCompileGlob.bCanBreak[1] = break2;
@@ -2918,8 +2950,10 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	scrCompileGlob.bCanContinue[0] = cont1;
 	scrCompileGlob.bCanContinue[1] = cont2;
 	scrCompileGlob.currentContinueStatement = currentContinueStatement;
+
 	if ( constConditional )
 		Scr_InitFromChildBlocks(childBlocks, childCount, block);
+
 	scrCompileGlob.breakChildBlocks = breakChildBlocks;
 	scrCompileGlob.breakChildCount = breakChildCount;
 	scrCompileGlob.breakBlock = breakBlock;
@@ -2950,12 +2984,15 @@ void EmitIfElseStatement(sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourceP
 	Scr_TransferBlock(block, ifStatBlock->block);
 	EmitStatement(stmt1, lastStatement, endSourcePos, ifStatBlock->block);
 	EmitRemoveLocalVars(ifStatBlock->block, ifStatBlock->block);
+
 	if ( ifStatBlock->block->abortLevel == SCR_ABORT_NONE )
 	{
 		childBlocks[0] = ifStatBlock->block;
 		childCount = 1;
 	}
+
 	checksum = scrVarPub.checksum;
+
 	if ( last )
 	{
 		EmitEnd();
@@ -2972,18 +3009,22 @@ void EmitIfElseStatement(sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourceP
 		pos2 = scrCompileGlob.codePos;
 		nextPos = (char *)TempMalloc(0);
 	}
+
 	scrVarPub.checksum = checksum + 1;
 	*(uint16_t *)codePos = (intptr_t)TempMalloc(0) - (intptr_t)pos1;
 	Scr_TransferBlock(block, elseStatBlock->block);
 	EmitStatement(stmt2, last, endSourcePos, elseStatBlock->block);
 	EmitNOP2(last, endSourcePos, elseStatBlock->block);
+
 	if ( elseStatBlock->block->abortLevel == SCR_ABORT_NONE )
 		childBlocks[childCount++] = elseStatBlock->block;
+
 	if ( !last )
 	{
 		pos = pos2;
 		*(uint32_t *)pos = (char *)TempMalloc(0) - nextPos;
 	}
+
 	Scr_InitFromChildBlocks(childBlocks, childCount, block);
 }
 
@@ -3014,6 +3055,7 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 	for ( nextNode = val.node->node[1].node; nextNode; nextNode = node )
 	{
 		node = nextNode[1].node;
+
 		if ( nextNode->node->type == ENUM_case || nextNode->node->type == ENUM_default )
 		{
 			if ( scrCompileGlob.breakBlock )
@@ -3021,6 +3063,7 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 				scrCompileGlob.bCanBreak[0] = 0;
 				EmitRemoveLocalVars(scrCompileGlob.breakBlock, scrCompileGlob.breakBlock);
 			}
+
 			if ( nextNode->node->type == ENUM_case )
 			{
 				scrCompileGlob.breakBlock = nextNode->node[3].block;
@@ -3032,6 +3075,7 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 				hasDefault = 1;
 				EmitDefaultStatement(nextNode->node[1]);
 			}
+
 			Scr_TransferBlock(block, scrCompileGlob.breakBlock);
 			scrCompileGlob.bCanBreak[0] = 1;
 		}
@@ -3042,10 +3086,14 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 				CompileError(endSourcePos, "missing case statement");
 				return;
 			}
+
 			last = 0;
+
 			if ( isDefault && Scr_IsLastStatement(node) )
 				last = 1;
+
 			EmitStatement(*nextNode, last, endSourcePos, scrCompileGlob.breakBlock);
+
 			if ( scrCompileGlob.breakBlock && scrCompileGlob.breakBlock->abortLevel )
 			{
 				scrCompileGlob.breakBlock = 0;
@@ -3064,6 +3112,7 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 	{
 		if ( scrCompileGlob.breakBlock )
 			Scr_AddBreakBlock(scrCompileGlob.breakBlock);
+
 		Scr_InitFromChildBlocks(childBlocks, childCount, block);
 	}
 
@@ -3123,6 +3172,7 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 	pos3 = TempMallocAlignStrict(0);
 	num = 0;
 	currentStatement = scrCompileGlob.currentCaseStatement;
+
 	while ( currentStatement )
 	{
 		EmitCodepos((const char *)currentStatement->name);
@@ -3130,8 +3180,10 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 		currentStatement = currentStatement->next;
 		++num;
 	}
+
 	*(uint16_t *)pos2 = num;
 	qsort(pos3, num, 8u, CompareCaseInfo);
+
 	while ( num > 1 )
 	{
 		if ( *(uint32_t *)pos3 == *((uint32_t *)pos3 + 2) )
@@ -3145,9 +3197,11 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 				}
 			}
 		}
+
 		--num;
 		pos3 += 8;
 	}
+
 	ConnectBreakStatements();
 	scrCompileGlob.firstThread[2] = oldThread;
 	scrCompileGlob.currentCaseStatement = currentCaseStatement;
@@ -4143,7 +4197,7 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 	if ( newEntry )
 	{
-		entry->latchedValue = scrCompileGlob.value_start[0].value.u.intValue;
+		entry->next = (PrecacheEntry *)scrCompileGlob.value_start[0].value.u.intValue;
 		scrCompileGlob.value_start[0].value.u.intValue = (int)entry;
 	}
 
@@ -4208,7 +4262,7 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 	if ( entry )
 	{
-		scrCompileGlob.value_start[0].value.u.intValue = entry->latchedValue;
+		scrCompileGlob.value_start[0].value.u.intValue = (int)entry->next;
 		Z_FreeInternal(entry);
 	}
 
