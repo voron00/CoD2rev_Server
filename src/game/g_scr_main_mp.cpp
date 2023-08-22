@@ -3299,7 +3299,7 @@ void GScr_OpenFile()
 
 			if ( len >= 0 )
 			{
-				level.openScriptIOFileBuffers[filenum] = (char *)Z_MallocInternal(len + 1);
+				level.openScriptIOFileBuffers[filenum] = (char *)Z_MallocInternal(len + sizeof(int));
 				FS_Read(level.openScriptIOFileBuffers[filenum], len, tempFile);
 				FS_FCloseFile(tempFile);
 				level.openScriptIOFileBuffers[filenum][len] = 0;
