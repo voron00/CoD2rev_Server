@@ -1456,10 +1456,10 @@ error:
 	}
 }
 
-unsigned short Scr_ReadUnsignedShort(const char **pos)
+const char* Scr_ReadCodePos(const char **pos)
 {
-	unsigned short value = *(reinterpret_cast<const unsigned short*>(*pos));
-	*pos += sizeof(unsigned short);
+	const char* value = *(reinterpret_cast<const char**>(const_cast<char *>(*pos)));
+	*pos += sizeof(const char *);
 	return value;
 }
 
@@ -1468,6 +1468,22 @@ unsigned int Scr_ReadUnsigned(const char **pos)
 	unsigned int value = *(reinterpret_cast<const unsigned int*>(*pos));
 	*pos += sizeof(unsigned int);
 	return value;
+}
+
+unsigned short Scr_ReadUnsignedShort(const char **pos)
+{
+	unsigned short value = *(reinterpret_cast<const unsigned short*>(*pos));
+	*pos += sizeof(unsigned short);
+	return value;
+}
+
+const unsigned int* Scr_ReadIntArray(const char **pos, int count)
+{
+	const unsigned int *val;
+
+	val = reinterpret_cast<const unsigned int *>(*pos);
+	*pos += sizeof(unsigned int) * count;
+	return val;
 }
 
 float Scr_ReadFloat(const char **pos)
@@ -1482,22 +1498,6 @@ const float* Scr_ReadVector(const char **pos)
 	const float *value = reinterpret_cast<const float*>(*pos);
 	*pos += sizeof(vec3_t);
 	return value;
-}
-
-const char* Scr_ReadCodePos(const char **pos)
-{
-	const char* value = *(reinterpret_cast<const char**>(const_cast<char *>(*pos)));
-	*pos += sizeof(const char*);
-	return value;
-}
-
-const unsigned int* Scr_ReadIntArray(const char **pos, int count)
-{
-	const unsigned int *val;
-
-	val = reinterpret_cast<const unsigned int*>(*pos);
-	*pos += sizeof(unsigned int) * count;
-	return val;
 }
 
 unsigned int Scr_GetLocalVar(const char *pos)
@@ -1796,7 +1796,7 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 
 	while ( 1 )
 	{
-		gOpcode = static_cast<unsigned char>(*pos++);
+		gOpcode = *(unsigned char *)pos++;
 
 		switch ( gOpcode )
 		{
@@ -1886,13 +1886,13 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 		case OP_GetByte:
 			++top;
 			top->type = VAR_INTEGER;
-			top->u.intValue = *reinterpret_cast<const unsigned char*>(pos++);
+			top->u.intValue = *(unsigned char *)pos++;
 			continue;
 
 		case OP_GetNegByte:
 			++top;
 			top->type = VAR_INTEGER;
-			top->u.intValue = -*reinterpret_cast<const unsigned char*>(pos++);
+			top->u.intValue = -*(unsigned char *)pos++;
 			continue;
 
 		case OP_GetUnsignedShort:
@@ -2454,7 +2454,7 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 			continue;
 
 		case OP_CallBuiltin:
-			scrVmPub.outparamcount = *reinterpret_cast<const unsigned char*>(pos++);
+			scrVmPub.outparamcount = *(unsigned char *)pos++;
 			scrVmPub.top = top;
 			builtinIndex = Scr_ReadUnsignedShort(&pos);
 			scrVmPub.function_frame->fs.pos = pos;
@@ -2760,7 +2760,7 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 			Scr_Error(va("%s is not an entity", var_typename[GetObjectType(objectId)]));
 
 		case OP_CallBuiltinMethod:
-			scrVmPub.outparamcount = *reinterpret_cast<const unsigned char*>(pos++);
+			scrVmPub.outparamcount = *(unsigned char *)pos++;
 			scrVmPub.top = top - 1;
 			builtinIndex = Scr_ReadUnsignedShort(&pos);
 			if ( top->type != VAR_OBJECT )
