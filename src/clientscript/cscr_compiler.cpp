@@ -58,23 +58,24 @@ typedef struct scrCompileGlob_s
 	int *continueChildCount;
 	bool forceNotCreate;
 	PrecacheEntry *precachescriptList;
+	PrecacheEntry *precachescriptListHead;
 	VariableCompileValue value_start[32];
 } scrCompileGlob_t;
-static_assert((sizeof(scrCompileGlob_t) == 0x1D8), "ERROR: scrCompileGlob_t size is invalid!");
+static_assert((sizeof(scrCompileGlob_t) == 0x1DC), "ERROR: scrCompileGlob_t size is invalid!");
 
 scrCompileGlob_t scrCompileGlob;
 
 int GetExpressionCount(sval_u exprlist)
 {
-	int count;
+	int expr_count;
 	sval_u *node;
 
-	count = 0;
+	expr_count = 0;
 
 	for ( node = exprlist.node->node; node; node = node[1].node )
-		++count;
+		++expr_count;
 
-	return count;
+	return expr_count;
 }
 
 void Scr_CompileRemoveRefToString(unsigned int stringValue)
@@ -315,7 +316,7 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 
 		for ( i = 0; i < count; ++i )
 		{
-			EmitValue((VariableCompileValue *)&scrCompileGlob.value_start[i].value.type);
+			EmitValue(&scrCompileGlob.value_start[i]);
 		}
 	}
 
@@ -532,51 +533,46 @@ void LinkThread(unsigned int threadCountId, VariableValue *pos, bool allowFarCal
 
 void LinkFile(unsigned int filePosId)
 {
-	VariableValue setValue;
-	VariableValue newValue;
-	VariableValue linkValue;
-	unsigned int index;
-	unsigned int parentId;
-	unsigned int i;
+	VariableValue pos;
+	VariableValue emptyValue;
+	unsigned int nameId;
+	unsigned int threadCountId;
+	unsigned int threadCountPtr;
 
-	newValue.type = VAR_UNDEFINED;
-	newValue.u.intValue = 0;
+	emptyValue.type = VAR_UNDEFINED;
+	emptyValue.u.intValue = 0;
 
-	for ( i = FindNextSibling(filePosId); i; i = FindNextSibling(i) )
+	for ( threadCountPtr = FindNextSibling(filePosId); threadCountPtr; threadCountPtr = FindNextSibling(threadCountPtr) )
 	{
-		parentId = FindObject(i);
-		index = FindVariable(parentId, 1);
+		threadCountId = FindObject(threadCountPtr);
+		nameId = FindVariable(threadCountId, 1);
 
-		if ( index )
+		if ( nameId )
 		{
-			Scr_EvalVariable(&setValue, index);
-			linkValue = setValue;
+			Scr_EvalVariable(&pos, nameId);
 
-			if ( setValue.type == VAR_INCLUDE_CODEPOS )
-				SetVariableValue(i, &newValue);
+			if ( pos.type == VAR_INCLUDE_CODEPOS )
+				SetVariableValue(threadCountPtr, &emptyValue);
 			else
-				LinkThread(parentId, &linkValue, 1);
+				LinkThread(threadCountId, &pos, 1);
 		}
 		else
 		{
-			LinkThread(parentId, &newValue, 1);
+			LinkThread(threadCountId, &emptyValue, 1);
 		}
 	}
 }
 
 unsigned int AddFilePrecache(unsigned int filename, unsigned int sourcePos, bool include)
 {
-	unsigned int var;
-
 	SL_AddRefToString(filename);
 	Scr_CompileRemoveRefToString(filename);
 	scrCompileGlob.precachescriptList->filename = filename;
 	scrCompileGlob.precachescriptList->sourcePos = sourcePos;
 	scrCompileGlob.precachescriptList->include = include;
 	++scrCompileGlob.precachescriptList;
-	var = GetVariable(scrCompilePub.scriptsPos, filename);
 
-	return GetObjectA(var);
+	return GetObjectA(GetVariable(scrCompilePub.scriptsPos, filename));
 }
 
 void EmitInclude(sval_u val)
@@ -593,25 +589,23 @@ void EmitIncludeList(sval_u val)
 	sval_u *node;
 
 	for ( node = val.node->node[1].node; node; node = node[1].node )
-		EmitInclude(*node);
+		EmitInclude(node[0]);
 }
 
 unsigned int SpecifyThreadPosition(unsigned int posId, unsigned int name, unsigned int sourcePos, int type)
 {
-	VariableValue tempValue;
 	unsigned int buffer;
 	unsigned int id;
-	VariableValue value;
+	VariableValue pos;
 
 	id = GetVariable(posId, 1);
-	Scr_EvalVariable(&tempValue, id);
-	value = tempValue;
+	Scr_EvalVariable(&pos, id);
 
-	if ( tempValue.type )
+	if ( pos.type )
 	{
-		if ( value.u.intValue )
+		if ( pos.u.intValue )
 		{
-			buffer = Scr_GetSourceBuffer(value.u.codePosValue);
+			buffer = Scr_GetSourceBuffer(pos.u.codePosValue);
 			CompileError(sourcePos, "function '%s' already defined in '%s'", SL_ConvertToString(name), scrParserPub.sourceBufferLookup[buffer].buf);
 		}
 		else
@@ -622,9 +616,9 @@ unsigned int SpecifyThreadPosition(unsigned int posId, unsigned int name, unsign
 	}
 	else
 	{
-		value.type = type;
-		value.u.intValue = 0;
-		SetNewVariableValue(id, &value);
+		pos.type = type;
+		pos.u.intValue = 0;
+		SetNewVariableValue(id, &pos);
 		return id;
 	}
 }
@@ -729,11 +723,6 @@ void Scr_CalcLocalVarsFormalParameterListInternal(sval_u *node, scr_block_s *blo
 	}
 }
 
-void Scr_CalcLocalVarsSafeSetVariableField2(sval_u expr, sval_u sourcePos, scr_block_s *block)
-{
-	Scr_RegisterLocalVar(expr.sourcePosValue, sourcePos, block);
-}
-
 void Scr_CalcLocalVarsWaittillStatement(sval_u exprlist, scr_block_s *block)
 {
 	Scr_CalcLocalVarsFormalParameterListInternal(exprlist.node->node[1].node, block);
@@ -753,7 +742,7 @@ void Scr_CalcLocalVarsVariableExpressionRef(sval_u expr, scr_block_s *block)
 {
 	if ( expr.node->type == ENUM_local_variable )
 	{
-		Scr_CalcLocalVarsSafeSetVariableField2(expr.node[1], expr.node[2], block);
+		Scr_CalcLocalVarsSafeSetVariableField(expr.node[1], expr.node[2], block);
 	}
 	else if ( expr.node->type == ENUM_array_variable )
 	{
@@ -885,7 +874,7 @@ void Scr_AppendChildBlocks(scr_block_s **childBlocks, int childCount, scr_block_
 	if ( childCount && !block->abortLevel )
 	{
 		for ( i = 0; i < childCount; ++i )
-			childBlocks[i]->abortLevel = 0;
+			childBlocks[i]->abortLevel = SCR_ABORT_NONE;
 
 		for ( j = 0; j < (*childBlocks)->localVarsCount; ++j )
 		{
@@ -937,6 +926,7 @@ void Scr_InitFromChildBlocks(scr_block_s **childBlocks, int childCount, scr_bloc
 					if ( (((unsigned char)((int)*((unsigned char *)childBlocks[k]->localVarsInitBits + (j >> 3)) >> (j & 7)) ^ 1) & 1) != 0 )
 						goto out;
 				}
+
 				*((byte *)block->localVarsInitBits + (j >> 3)) |= 1 << (j & 7);
 			}
 out:
@@ -1139,7 +1129,7 @@ void Scr_CalcLocalVarsSwitchStatement(sval_u stmtlist, scr_block_s *block)
 	scr_block_s **newBreakChildBlocks;
 	sval_u *node;
 
-	abortLevel = 3;
+	abortLevel = SCR_ABORT_RETURN;
 	breakChildBlocks = scrCompileGlob.breakChildBlocks;
 	breakChildCount = scrCompileGlob.breakChildCount;
 	newChildCount = 0;
@@ -1174,10 +1164,10 @@ void Scr_CalcLocalVarsSwitchStatement(sval_u stmtlist, scr_block_s *block)
 
 			if ( currentBlock->abortLevel )
 			{
-				if ( currentBlock->abortLevel == 2 )
+				if ( currentBlock->abortLevel == SCR_ABORT_BREAK )
 				{
-					currentBlock->abortLevel = 0;
-					abortLevel = 0;
+					currentBlock->abortLevel = SCR_ABORT_NONE;
+					abortLevel = SCR_ABORT_NONE;
 					Scr_CheckMaxSwitchCases(count);
 					childBlocks[count++] = currentBlock;
 				}
@@ -1366,7 +1356,7 @@ void Scr_CalcLocalVarsIfElseStatement(sval_u stmt1, sval_u stmt2, scr_block_s *b
 	scr_block_s *childBlocks[2];
 
 	childCount = 0;
-	abortLevel = 3;
+	abortLevel = SCR_ABORT_RETURN;
 
 	Scr_CopyBlock(block, (scr_block_s **)ifStatBlock);
 	Scr_CalcLocalVarsStatement(stmt1, ifStatBlock->block);
@@ -1426,7 +1416,7 @@ void Scr_CalcLocalVarsThread(sval_u exprlist, sval_u stmtlist, sval_u *stmttbloc
 {
 	scrCompileGlob.forceNotCreate = 0;
 	stmttblock->block = (scr_block_s *)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s));
-	stmttblock->block->abortLevel = 0;
+	stmttblock->block->abortLevel = SCR_ABORT_NONE;
 	stmttblock->block->localVarsCreateCount = 0;
 	stmttblock->block->localVarsCount = 0;
 	stmttblock->block->localVarsPublicCount = 0;
@@ -1684,7 +1674,7 @@ void Scr_BeginDevScript(int *type, char **savedPos)
 {
 	if ( scrCompilePub.developer_statement )
 	{
-		*type = 0;
+		*type = BUILTIN_ANY;
 	}
 	else
 	{
@@ -1698,13 +1688,13 @@ void Scr_BeginDevScript(int *type, char **savedPos)
 			scrCompilePub.developer_statement = 2;
 		}
 
-		*type = 1;
+		*type = BUILTIN_DEVELOPER_ONLY;
 	}
 }
 
 void Scr_EndDevScript(int type, char **savedPos)
 {
-	if ( type == 1 )
+	if ( type == BUILTIN_DEVELOPER_ONLY )
 	{
 		scrCompilePub.developer_statement = 0;
 
@@ -1818,14 +1808,14 @@ void Scr_PushValue(VariableCompileValue *constValue)
 	if ( scrCompilePub.value_count < 32 )
 	{
 		index = scrCompilePub.value_count;
-		scrCompileGlob.value_start[index].value.type = constValue->value.u.intValue;
-		scrCompileGlob.value_start[index].sourcePos.intValue = constValue->value.type;
-		scrCompileGlob.value_start[index + 1].value.u.intValue = constValue->sourcePos.intValue;
+		scrCompileGlob.value_start[index].value.u = constValue->value.u;
+		scrCompileGlob.value_start[index].value.type = constValue->value.type;
+		scrCompileGlob.value_start[index].sourcePos.sourcePosValue = constValue->sourcePos.sourcePosValue;
 		++scrCompilePub.value_count;
 	}
 	else
 	{
-		CompileError(constValue->sourcePos.sourcePosValue, "VALUE_STACK_SIZE exceeded");
+		CompileError(constValue->sourcePos.stringValue, "VALUE_STACK_SIZE exceeded");
 	}
 }
 
@@ -1868,7 +1858,7 @@ bool EmitOrEvalPrimitiveExpressionList(sval_u exprlist, sval_u sourcePos, Variab
 		if ( success )
 		{
 			scrCompilePub.value_count -= 3;
-			Scr_CreateVector((VariableCompileValue *)&scrCompileGlob.value_start[scrCompilePub.value_count].value.type, &constValue->value);
+			Scr_CreateVector(&scrCompileGlob.value_start[scrCompilePub.value_count], &constValue->value);
 			constValue->sourcePos = sourcePos;
 			return 1;
 		}
@@ -2234,14 +2224,14 @@ void EmitObject(sval_u expr, sval_u sourcePos)
 			}
 		}
 
-		goto out;
+		goto error;
 	}
 
 	classnum = (const char *)Scr_GetClassnumForCharId(*s);
 
 	if ( (int)classnum < 0 || (entnum = (const char *)atoi(s + 1)) == 0 && s[1] != 48 )
 	{
-out:
+error:
 		CompileError(sourcePos.sourcePosValue, "bad expression");
 		return;
 	}
@@ -2280,7 +2270,7 @@ void EmitFormalParameterListInternal(sval_u *node, scr_block_s *block)
 		if ( !node )
 			break;
 
-		EmitSafeSetVariableField(*node->node, node->node[1], block);
+		EmitSafeSetVariableField(node->node[0], node->node[1], block);
 	}
 }
 
@@ -3092,7 +3082,7 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 			if ( isDefault && Scr_IsLastStatement(node) )
 				last = 1;
 
-			EmitStatement(*nextNode, last, endSourcePos, scrCompileGlob.breakBlock);
+			EmitStatement(nextNode[0], last, endSourcePos, scrCompileGlob.breakBlock);
 
 			if ( scrCompileGlob.breakBlock && scrCompileGlob.breakBlock->abortLevel )
 			{
@@ -3258,9 +3248,13 @@ void EmitContinueStatement(sval_u sourcePos, scr_block_s *block)
 	}
 }
 
-void EmitBreakpointStatement()
+void EmitBreakpointStatement(sval_u sourcePos)
 {
-	;
+	if ( scrVarPub.developer_script )
+	{
+		EmitOpcode(OP_breakpoint, 0, CALL_NONE);
+		AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
+	}
 }
 
 void EmitProfStatement(sval_u profileName, sval_u sourcePos, int op)
@@ -3268,7 +3262,7 @@ void EmitProfStatement(sval_u profileName, sval_u sourcePos, int op)
 	if ( scrVarPub.developer_script )
 	{
 		Scr_CompileRemoveRefToString(profileName.stringValue);
-		EmitOpcode((unsigned char)op, 0, CALL_NONE);
+		EmitOpcode(op, 0, CALL_NONE);
 		EmitByte(0);
 	}
 	else
@@ -3301,7 +3295,7 @@ void EmitStatementList(sval_u val, bool lastStatement, unsigned int endSourcePos
 		if ( lastStatement && Scr_IsLastStatement(node) )
 			isLastStatement = 1;
 
-		EmitStatement(*nextNode, isLastStatement, endSourcePos, block);
+		EmitStatement(nextNode[0], isLastStatement, endSourcePos, block);
 	}
 }
 
@@ -3326,7 +3320,7 @@ void EmitNotifyStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u n
 	for ( node = exprlist.node->node; node; node = node[1].node )
 	{
 		startNode = node;
-		EmitExpression(*node->node, block);
+		EmitExpression(node->node[0], block);
 		++expr_count;
 	}
 
@@ -3361,11 +3355,11 @@ void EmitWaittillmatchStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, s
 		if ( !nextNode )
 			break;
 
-		EmitExpression(*nextNode->node, block);
+		EmitExpression(nextNode->node[0], block);
 	}
 
 	node = exprlist.node->node[1].node;
-	EmitExpression(*node->node, block);
+	EmitExpression(node->node[0], block);
 	EmitPrimitiveExpression(obj, block);
 	EmitOpcode(OP_waittillmatch, -2 - i, CALL_NONE);
 	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
@@ -3439,7 +3433,7 @@ void EmitFormalWaittillParameterListRefInternal(sval_u *node, scr_block_s *block
 		if ( !node )
 			break;
 
-		EmitSafeSetWaittillVariableField(*node->node, node->node[1], block);
+		EmitSafeSetWaittillVariableField(node->node[0], node->node[1], block);
 	}
 }
 
@@ -3448,7 +3442,7 @@ void EmitWaittillStatement(sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u
 	sval_u *node;
 
 	node = exprlist.node->node[1].node;
-	EmitExpression(*node->node, block);
+	EmitExpression(node->node[0], block);
 	EmitPrimitiveExpression(obj, block);
 	EmitOpcode(OP_waittill, -2, CALL_NONE);
 	AddOpcodePos(waitSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
@@ -3560,7 +3554,7 @@ void EmitStatement(sval_u val, bool lastStatement, unsigned int endSourcePos, sc
 		break;
 
 	case ENUM_breakpoint:
-		EmitBreakpointStatement();
+		EmitBreakpointStatement(val.node[1]);
 		break;
 
 	case ENUM_prof_begin:
@@ -3628,7 +3622,7 @@ void EmitExpressionListFieldObject(sval_u exprlist, sval_u sourcePos, scr_block_
 	node = GetSingleParameter(exprlist);
 
 	if ( node )
-		EmitExpressionFieldObject(*node->node, node->node[1], block);
+		EmitExpressionFieldObject(node->node[0], node->node[1], block);
 	else
 		CompileError(sourcePos.sourcePosValue, "not an object");
 }
@@ -3699,7 +3693,7 @@ int EmitExpressionList(sval_u exprlist, scr_block_s *block)
 
 	for ( node = exprlist.node->node; node; node = node[1].node )
 	{
-		EmitExpression(*node->node, block);
+		EmitExpression(node->node[0], block);
 		++expr_count;
 	}
 
@@ -3738,7 +3732,6 @@ int AddFunction(int func)
 void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *block)
 {
 	short newFuncIndex;
-	VariableValue lValue;
 	VariableValue value;
 	unsigned int funcId;
 	char *savedPos;
@@ -3748,9 +3741,7 @@ void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *blo
 	sval_u sourcePos;
 	unsigned int index;
 	int param_count;
-	bool statement;
 
-	statement = bStatement;
 	index = Scr_GetBuiltin(func_name);
 
 	if ( !index )
@@ -3762,23 +3753,23 @@ void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *blo
 
 	if ( funcId )
 	{
-		Scr_EvalVariable(&lValue, funcId);
-		value = lValue;
-		type = Scr_IsVariable(lValue.type);
+		Scr_EvalVariable(&value, funcId);
+		type = Scr_IsVariable(value.type);
 		func = (void (*)())value.u.intValue;
 	}
 	else
 	{
-		type = 0;
+		type = BUILTIN_ANY;
 		func = Scr_GetFunction(&pName, &type);
 		funcId = GetNewVariable(scrCompilePub.builtinFunc, index);
 		value.type = Scr_GetCacheType(type);
 		value.u.intValue = (int)func;
 		SetVariableValue(funcId, &value);
 	}
+
 	if ( func )
 	{
-		if ( type == 1 && (Scr_BeginDevScript(&type, &savedPos), type == 1) && !statement )
+		if ( type == BUILTIN_DEVELOPER_ONLY && (Scr_BeginDevScript(&type, &savedPos), type == BUILTIN_DEVELOPER_ONLY) && !bStatement )
 		{
 			CompileError(
 			    sourcePos.sourcePosValue,
@@ -3787,15 +3778,18 @@ void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *blo
 		else
 		{
 			param_count = EmitExpressionList(params, block);
-			if ( param_count <= 255 )
+
+			if ( param_count < 256 )
 			{
 				Scr_CompileRemoveRefToString(index);
 				EmitCallBuiltinOpcode(param_count, sourcePos);
 				newFuncIndex = AddFunction((int)func);
 				EmitShort(newFuncIndex);
 				AddExpressionListOpcodePos(params);
-				if ( statement )
+
+				if ( bStatement )
 					EmitDecTop();
+
 				Scr_EndDevScript(type, &savedPos);
 			}
 			else
@@ -3811,7 +3805,8 @@ script_function:
 		param_count = EmitExpressionList(params, block);
 		EmitPostFunctionCall(func_name, param_count, 0, block);
 		AddExpressionListOpcodePos(params);
-		if ( statement )
+
+		if ( bStatement )
 			EmitDecTop();
 	}
 }
@@ -3819,42 +3814,39 @@ script_function:
 void EmitFunction(sval_u func, sval_u sourcePos)
 {
 	const char *funcName;
-	unsigned int Variable;
-	VariableValue evalValue2;
-	VariableValue evalValue;
-	VariableValue val;
 	int scope;
-	VariableValue lValue;
-	unsigned int index;
-	bool defined;
+	bool bExists;
 	unsigned int name;
-	unsigned int parentId;
+	unsigned int fileId;
 	unsigned int id;
 	unsigned int countId;
-	int varIndex;
-	unsigned int object;
+	unsigned int threadName;
+	unsigned int threadId;
+	unsigned int posId;
 	VariableValue value;
-	VariableValue value2;
+	VariableValue count;
 
 	if ( scrCompilePub.developer_statement == 2 )
 	{
 		Scr_CompileRemoveRefToString(func.node[1].stringValue);
+
 		if ( func.node->type == ENUM_far_function )
 		{
 			Scr_CompileRemoveRefToString(func.node[2].stringValue);
 			--scrCompilePub.far_function_count;
 		}
+
 		return;
 	}
 
-	object = 0;
+	threadId = 0;
 
 	if ( func.node->type == ENUM_local_function )
 	{
 		scope = 0;
-		varIndex = GetVariable(scrCompileGlob.filePosId, func.node[1].idValue);
+		threadName = GetVariable(scrCompileGlob.filePosId, func.node[1].idValue);
 		CompileTransferRefToString(func.node[1].stringValue, 2u);
-		object = GetObjectA(varIndex);
+		threadId = GetObjectA(threadName);
 	}
 	else
 	{
@@ -3862,15 +3854,15 @@ void EmitFunction(sval_u func, sval_u sourcePos)
 		funcName = SL_ConvertToString(func.node[1].stringValue);
 		name = Scr_CreateCanonicalFilename(funcName);
 		Scr_CompileRemoveRefToString(func.node[1].stringValue);
-		Variable = FindVariable(scrCompilePub.loadedscripts, name);
-		Scr_EvalVariable(&val, Variable);
-		value = val;
-		defined = val.type != VAR_UNDEFINED;
-		parentId = AddFilePrecache(name, sourcePos.sourcePosValue, 0);
-		if ( defined )
+		Scr_EvalVariable(&value, FindVariable(scrCompilePub.loadedscripts, name));
+		bExists = value.type != VAR_UNDEFINED;
+		fileId = AddFilePrecache(name, sourcePos.sourcePosValue, 0);
+
+		if ( bExists )
 		{
-			varIndex = FindVariable(parentId, func.node[2].idValue);
-			if ( !varIndex || GetObjectType(varIndex) != VAR_OBJECT )
+			threadName = FindVariable(fileId, func.node[2].idValue);
+
+			if ( !threadName || GetObjectType(threadName) != VAR_OBJECT )
 			{
 				CompileError(sourcePos.sourcePosValue, "unknown function");
 				return;
@@ -3878,58 +3870,64 @@ void EmitFunction(sval_u func, sval_u sourcePos)
 		}
 		else
 		{
-			varIndex = GetVariable(parentId, func.node[2].idValue);
+			threadName = GetVariable(fileId, func.node[2].idValue);
 		}
+
 		CompileTransferRefToString(func.node[2].stringValue, 2u);
-		object = GetObjectA(varIndex);
-		index = FindVariable(object, 1u);
-		if ( index )
+		threadId = GetObjectA(threadName);
+		posId = FindVariable(threadId, 1u);
+
+		if ( posId )
 		{
-			Scr_EvalVariable(&evalValue, index);
-			lValue = evalValue;
-			if ( evalValue.type == VAR_INCLUDE_CODEPOS )
+			Scr_EvalVariable(&value, posId);
+
+			if ( value.type == VAR_INCLUDE_CODEPOS )
 			{
 				CompileError(sourcePos.sourcePosValue, "unknown function");
 				return;
 			}
-			if ( lValue.u.intValue )
+
+			if ( value.u.intValue )
 			{
-				if ( lValue.type == VAR_CODEPOS || scrCompilePub.developer_statement )
-					EmitCodepos(lValue.u.codePosValue);
+				if ( value.type == VAR_CODEPOS || scrCompilePub.developer_statement )
+					EmitCodepos(value.u.codePosValue);
 				else
 					CompileError(sourcePos.sourcePosValue, "normal script cannot reference a function in a /# ... #/ comment");
+
 				return;
 			}
 		}
 	}
 
 	EmitCodepos((const char *)scope);
-	countId = GetVariable(object, 0);
-	Scr_EvalVariable(&evalValue2, countId);
-	value2 = evalValue2;
-	if ( evalValue2.type == VAR_UNDEFINED )
+	countId = GetVariable(threadId, 0);
+	Scr_EvalVariable(&count, countId);
+
+	if ( count.type == VAR_UNDEFINED )
 	{
-		value2.type = VAR_INTEGER;
-		value2.u.intValue = 0;
+		count.type = VAR_INTEGER;
+		count.u.intValue = 0;
 	}
-	id = GetNewVariable(object, value2.u.intValue + 2);
+
+	id = GetNewVariable(threadId, count.u.intValue + 2);
 	value.u.codePosValue = scrCompileGlob.codePos;
+
 	if ( scrCompilePub.developer_statement )
 		value.type = VAR_DEVELOPER_CODEPOS;
 	else
 		value.type = VAR_CODEPOS;
+
 	SetNewVariableValue(id, &value);
-	++value2.u.intValue;
-	SetVariableValue(countId, &value2);
+	++count.u.intValue;
+	SetVariableValue(countId, &count);
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 }
 
 void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourcePos, bool bStatement, scr_block_s *block)
 {
-	short newFuncIndex;
-	VariableValue lValue;
+	short newMethIndex;
 	VariableValue value;
-	unsigned int funcId;
+	unsigned int methId;
 	char *savedPos;
 	void (*meth)(scr_entref_t);
 	int type;
@@ -3937,9 +3935,7 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 	sval_u sourcePos;
 	unsigned int index;
 	int param_count;
-	bool statement;
 
-	statement = bStatement;
 	index = Scr_GetBuiltin(func_name);
 
 	if ( !index )
@@ -3947,27 +3943,27 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 
 	pName = SL_ConvertToString(index);
 	sourcePos.sourcePosValue = func_name.node[2].sourcePosValue;
-	funcId = FindVariable(scrCompilePub.builtinMeth, index);
+	methId = FindVariable(scrCompilePub.builtinMeth, index);
 
-	if ( funcId )
+	if ( methId )
 	{
-		Scr_EvalVariable(&lValue, funcId);
-		value = lValue;
-		type = Scr_IsVariable(lValue.type);
+		Scr_EvalVariable(&value, methId);
+		type = Scr_IsVariable(value.type);
 		meth = (void (*)(scr_entref_t))value.u.intValue;
 	}
 	else
 	{
-		type = 0;
+		type = BUILTIN_ANY;
 		meth = Scr_GetMethod(&pName, &type);
-		funcId = GetNewVariable(scrCompilePub.builtinMeth, index);
+		methId = GetNewVariable(scrCompilePub.builtinMeth, index);
 		value.type = Scr_GetCacheType(type);
 		value.u.intValue = (int)meth;
-		SetVariableValue(funcId, &value);
+		SetVariableValue(methId, &value);
 	}
+
 	if ( meth )
 	{
-		if ( type == 1 && (Scr_BeginDevScript(&type, &savedPos), type == 1) && !statement )
+		if ( type == BUILTIN_DEVELOPER_ONLY && (Scr_BeginDevScript(&type, &savedPos), type == BUILTIN_DEVELOPER_ONLY) && !bStatement )
 		{
 			CompileError(
 			    sourcePos.sourcePosValue,
@@ -3977,16 +3973,19 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 		{
 			param_count = EmitExpressionList(params, block);
 			EmitPrimitiveExpression(expr, block);
-			if ( param_count <= 255 )
+
+			if ( param_count < 256 )
 			{
 				Scr_CompileRemoveRefToString(index);
 				EmitCallBuiltinMethodOpcode(param_count, sourcePos);
-				newFuncIndex = AddFunction((int)meth);
-				EmitShort(newFuncIndex);
+				newMethIndex = AddFunction((int)meth);
+				EmitShort(newMethIndex);
 				AddOpcodePos(methodSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 				AddExpressionListOpcodePos(params);
-				if ( statement )
+
+				if ( bStatement )
 					EmitDecTop();
+
 				Scr_EndDevScript(type, &savedPos);
 			}
 			else
@@ -4004,7 +4003,8 @@ script_method:
 		EmitPostFunctionCall(func_name, param_count, 1, block);
 		AddOpcodePos(methodSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 		AddExpressionListOpcodePos(params);
-		if ( statement )
+
+		if ( bStatement )
 			EmitDecTop();
 	}
 }
@@ -4034,11 +4034,11 @@ void InitThread(int type)
 void SetThreadPosition(unsigned int posId)
 {
 	unsigned int nextPosId;
-	VariableValueInternal_u *adr;
+	VariableValueInternal_u *value;
 
 	nextPosId = FindVariable(posId, 1u);
-	adr = GetVariableValueAddress(nextPosId);
-	adr->u.codePosValue = (const char *)TempMalloc(0);
+	value = GetVariableValueAddress(nextPosId);
+	value->u.codePosValue = (const char *)TempMalloc(0);
 }
 
 void EmitThreadInternal(unsigned int id, sval_u val, sval_u sourcePos, sval_u endSourcePos, scr_block_s *block)
@@ -4062,20 +4062,20 @@ void EmitThreadInternal(unsigned int id, sval_u val, sval_u sourcePos, sval_u en
 void EmitNormalThread(sval_u val, sval_u *stmttblock)
 {
 	unsigned int posId;
-	unsigned int parentId;
+	unsigned int threadId;
 
 	InitThread(0);
 	posId = FindVariable(scrCompileGlob.filePosId, val.node[1].sourcePosValue);
-	parentId = FindObject(posId);
-	SetThreadPosition(parentId);
-	EmitThreadInternal(parentId, val, val.node[4], val.node[5], stmttblock->block);
+	threadId = FindObject(posId);
+	SetThreadPosition(threadId);
+	EmitThreadInternal(threadId, val, val.node[4], val.node[5], stmttblock->block);
 }
 
 void EmitDeveloperThread(sval_u val, sval_u *stmttblock)
 {
 	unsigned int posId;
 	char *pos;
-	unsigned int parentId;
+	unsigned int threadId;
 	unsigned int checksum;
 
 	if ( scrVarPub.developer_script )
@@ -4083,9 +4083,9 @@ void EmitDeveloperThread(sval_u val, sval_u *stmttblock)
 		scrCompilePub.developer_statement = 1;
 		InitThread(1);
 		posId = FindVariable(scrCompileGlob.filePosId, val.node[1].sourcePosValue);
-		parentId = FindObject(posId);
-		SetThreadPosition(parentId);
-		EmitThreadInternal(parentId, val, val.node[4], val.node[5], stmttblock->block);
+		threadId = FindObject(posId);
+		SetThreadPosition(threadId);
+		EmitThreadInternal(threadId, val, val.node[4], val.node[5], stmttblock->block);
 	}
 	else
 	{
@@ -4145,7 +4145,7 @@ void EmitThreadList(sval_u val)
 	scrCompileGlob.in_developer_thread = 0;
 
 	for ( node = val.node->node[1].node; node; node = node[1].node )
-		SpecifyThread(*node);
+		SpecifyThread(node[0]);
 
 	if ( scrCompileGlob.in_developer_thread )
 		CompileError(scrCompileGlob.developer_thread_sourcePos, "/# has no matching #/");
@@ -4154,33 +4154,28 @@ void EmitThreadList(sval_u val)
 	scrCompileGlob.firstThread[1] = 1;
 
 	for ( node2 = val.node->node[1].node; node2; node2 = node2[1].node )
-		EmitThread(*node2);
+		EmitThread(node2[0]);
 }
 
 void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 {
-	const char *scriptName;
-	const char *scriptName2;
-	unsigned int Variable;
-	VariableValueInternal_u *adr;
-	PrecacheEntry *newEntry;
-	VariableValue lValue;
+	VariableValueInternal_u *pos;
 	unsigned int includePosId;
 	unsigned int threadCountId;
-	VariableValue pValue;
+	VariableValue includePos;
 	unsigned int index;
 	unsigned short name;
 	VariableValue value;
-	unsigned int parentId;
+	unsigned int posId;
 	unsigned int k;
 	unsigned int id;
-	PrecacheEntry *precachescript2;
 	PrecacheEntry *precachescript;
-	unsigned short string;
+	PrecacheEntry *precachescript2;
+	PrecacheEntry *precachescriptList;
+	unsigned short filename;
 	int func_count;
 	int j;
 	int i;
-	PrecacheEntry *entry;
 
 	scrCompileGlob.filePosId = filePosId;
 	scrCompileGlob.bConstRefCount = 0;
@@ -4188,20 +4183,19 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 	scrCompilePub.developer_statement = 0;
 
 	if ( scrCompilePub.far_function_count )
-		newEntry = (PrecacheEntry *)Z_MallocInternal(sizeof(PrecacheEntry) * scrCompilePub.far_function_count);
+		precachescriptList = (PrecacheEntry *)Z_MallocInternal(sizeof(PrecacheEntry) * scrCompilePub.far_function_count);
 	else
-		newEntry = 0;
+		precachescriptList = 0;
 
-	entry = newEntry;
-	scrCompileGlob.precachescriptList = newEntry;
+	scrCompileGlob.precachescriptList = precachescriptList;
 
-	if ( newEntry )
+	if ( precachescriptList )
 	{
-		entry->next = (PrecacheEntry *)scrCompileGlob.value_start[0].value.u.intValue;
-		scrCompileGlob.value_start[0].value.u.intValue = (int)entry;
+		precachescriptList->next = scrCompileGlob.precachescriptListHead;
+		scrCompileGlob.precachescriptListHead = precachescriptList;
 	}
 
-	EmitIncludeList(*val.node);
+	EmitIncludeList(val.node[0]);
 	EmitThreadList(val.node[1]);
 	scrCompilePub.programLen = (char *)TempMalloc(0) - scrVarPub.programBuffer;
 	Hunk_ClearTempMemoryHighInternal();
@@ -4209,50 +4203,55 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 	for ( i = 0; i < func_count; ++i )
 	{
-		precachescript = &entry[i];
-		string = precachescript->filename;
-		scriptName = SL_ConvertToString(string);
-		id = Scr_LoadScript(scriptName);
+		precachescript = &precachescriptList[i];
+		filename = precachescript->filename;
+		id = Scr_LoadScript(SL_ConvertToString(filename));
+
 		if ( !id )
 		{
-			scriptName2 = SL_ConvertToString(string);
-			CompileError(precachescript->sourcePos, "Could not find script '%s'", scriptName2);
+			CompileError(precachescript->sourcePos, "Could not find script '%s'", SL_ConvertToString(filename));
 			return;
 		}
-		SL_RemoveRefToString(string);
+
+		SL_RemoveRefToString(filename);
+
 		if ( precachescript->include )
 		{
 			for ( j = i + 1; j < func_count; ++j )
 			{
-				precachescript2 = &entry[j];
+				precachescript2 = &precachescriptList[j];
+
 				if ( !precachescript2->include )
 					break;
-				if ( precachescript2->filename == string )
+
+				if ( precachescript2->filename == filename )
 				{
 					CompileError(precachescript2->sourcePos, "Duplicate #include");
 					return;
 				}
 			}
+
 			precachescript->include = 0;
+
 			for ( k = FindNextSibling(id); k; k = FindNextSibling(k) )
 			{
 				if ( GetObjectType(k) == VAR_OBJECT )
 				{
-					parentId = FindObject(k);
-					index = FindVariable(parentId, 1u);
+					posId = FindObject(k);
+					index = FindVariable(posId, 1);
+
 					if ( index )
 					{
-						Scr_EvalVariable(&lValue, index);
-						pValue = lValue;
-						if ( lValue.type != VAR_INCLUDE_CODEPOS )
+						Scr_EvalVariable(&includePos, index);
+
+						if ( includePos.type != VAR_INCLUDE_CODEPOS )
 						{
 							name = GetVariableName(k);
-							Variable = GetVariable(filePosId, name);
-							threadCountId = GetObjectA(Variable);
+							threadCountId = GetObjectA(GetVariable(filePosId, name));
 							includePosId = SpecifyThreadPosition(threadCountId, name, precachescript->sourcePos, VAR_INCLUDE_CODEPOS);
-							adr = GetVariableValueAddress(includePosId);
-							*adr = *GetVariableValueAddress(index);
-							LinkThread(threadCountId, &pValue, 0);
+							pos = GetVariableValueAddress(includePosId);
+							*pos = *GetVariableValueAddress(index);
+							LinkThread(threadCountId, &includePos, 0);
 						}
 					}
 				}
@@ -4260,10 +4259,10 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 		}
 	}
 
-	if ( entry )
+	if ( precachescriptList )
 	{
-		scrCompileGlob.value_start[0].value.u.intValue = (int)entry->next;
-		Z_FreeInternal(entry);
+		scrCompileGlob.precachescriptListHead = precachescriptList->next;
+		Z_FreeInternal(precachescriptList);
 	}
 
 	LinkFile(filePosId);
@@ -4273,12 +4272,12 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 void Scr_CompileShutdown()
 {
-	VariableStackBuffer *stack;
+	PrecacheEntry *precachescriptList;
 
-	while ( scrCompileGlob.value_start[0].value.u.intValue )
+	while ( scrCompileGlob.precachescriptListHead )
 	{
-		stack = scrCompileGlob.value_start[0].value.u.stackValue;
-		scrCompileGlob.value_start[0].value.u.intValue = *(uint32_t *)&scrCompileGlob.value_start[0].value.u.stackValue->localId;
-		Z_FreeInternal(stack);
+		precachescriptList = scrCompileGlob.precachescriptListHead;
+		scrCompileGlob.precachescriptListHead = scrCompileGlob.precachescriptListHead->next;
+		Z_FreeInternal(precachescriptList);
 	}
 }

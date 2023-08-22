@@ -571,6 +571,12 @@ enum Scr_SourceType_t
 	SOURCE_TYPE_CALL = 0x2,
 };
 
+enum scr_builtin_type_t
+{
+	BUILTIN_ANY = 0x0,
+	BUILTIN_DEVELOPER_ONLY = 0x1,
+};
+
 struct scr_block_s
 {
 	int abortLevel;
