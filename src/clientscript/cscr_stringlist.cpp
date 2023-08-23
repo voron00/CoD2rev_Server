@@ -3,6 +3,11 @@
 
 #define HASH_TABLE_SIZE 16384
 
+#define HASH_NEXT_MASK 0x3FFF
+#define HASH_STAT_MASK 0xC000
+#define HASH_STAT_HEAD 0x8000
+#define HASH_STAT_MOVABLE 0x4000
+
 struct HashEntry
 {
 	uint16_t status_next;
@@ -196,7 +201,7 @@ void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len
 	index = GetHashCode(refStr->str, len);
 	entry = &scrStringGlob.hashTable[index];
 	MT_FreeIndex(stringValue, len + 4);
-	newIndex = entry->status_next & 0x3FFF;
+	newIndex = entry->status_next & HASH_NEXT_MASK;
 	newEntry = &scrStringGlob.hashTable[newIndex];
 
 	if ( entry->prev == stringValue )
@@ -208,7 +213,7 @@ void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len
 		}
 		else
 		{
-			entry->status_next = newEntry->status_next & 0x3FFF | 0x8000;
+			entry->status_next = newEntry->status_next & HASH_NEXT_MASK | HASH_STAT_HEAD;
 			entry->prev = newEntry->prev;
 			scrStringGlob.nextFreeEntry = &scrStringGlob.hashTable[index];
 		}
@@ -222,11 +227,11 @@ void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len
 			assert(newEntry != entry);
 
 			prev = newIndex;
-			newIndex = newEntry->status_next & 0x3FFF;
+			newIndex = newEntry->status_next & HASH_NEXT_MASK;
 			newEntry = &scrStringGlob.hashTable[newIndex];
 		}
 
-		scrStringGlob.hashTable[prev].status_next = scrStringGlob.hashTable[prev].status_next & 0xC000 | newEntry->status_next & 0x3FFF;
+		scrStringGlob.hashTable[prev].status_next = scrStringGlob.hashTable[prev].status_next & HASH_STAT_MASK | newEntry->status_next & HASH_NEXT_MASK;
 	}
 
 	newNext = scrStringGlob.hashTable->status_next;
@@ -264,7 +269,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 	HashEntry *entry;
 	HashEntry *prev;
 	HashEntry *newEntry;
-	unsigned short status;
+	unsigned short next;
 	int i;
 
 	assert(str != NULL);
@@ -272,15 +277,15 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 	hash = GetHashCode(str, len);
 	entry = &scrStringGlob.hashTable[hash];
 
-	if ( (entry->status_next & 0xC000) != 0x8000 )
+	if ( (entry->status_next & HASH_STAT_MASK) != HASH_STAT_HEAD )
 	{
-		if ( (entry->status_next & 0xC000) != 0 )
+		if ( (entry->status_next & HASH_STAT_MASK) != 0 )
 		{
-			status = entry->status_next & 0x3FFF;
+			next = entry->status_next & HASH_NEXT_MASK;
 
-			for ( i = status;
-			        (scrStringGlob.hashTable[i].status_next & 0x3FFF) != hash;
-			        i = scrStringGlob.hashTable[i].status_next & 0x3FFF )
+			for ( i = next;
+			        (scrStringGlob.hashTable[i].status_next & HASH_NEXT_MASK) != hash;
+			        i = scrStringGlob.hashTable[i].status_next & HASH_NEXT_MASK )
 			{
 				;
 			}
@@ -297,24 +302,24 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 
 			stringValue = MT_AllocIndex(len + 4);
 			newEntry = &scrStringGlob.hashTable[newIndex];
-			scrStringGlob.hashTable->status_next = newEntry->status_next & 0x3FFF;
+			scrStringGlob.hashTable->status_next = newEntry->status_next & HASH_NEXT_MASK;
 			scrStringGlob.hashTable[scrStringGlob.hashTable->status_next].prev = 0;
-			scrStringGlob.hashTable[i].status_next = scrStringGlob.hashTable[i].status_next & 0xC000 | newIndex;
-			newEntry->status_next = status | 0x4000;
+			scrStringGlob.hashTable[i].status_next = scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK | newIndex;
+			newEntry->status_next = next | HASH_STAT_MOVABLE;
 			newEntry->prev = entry->prev;
 		}
 		else
 		{
 			stringValue = MT_AllocIndex(len + 4);
-			newIndex = entry->status_next & 0x3FFF;
+			newIndex = entry->status_next & HASH_NEXT_MASK;
 			prevNode = entry->prev;
-			scrStringGlob.hashTable[prevNode].status_next = scrStringGlob.hashTable[prevNode].status_next & 0xC000 | newIndex;
+			scrStringGlob.hashTable[prevNode].status_next = scrStringGlob.hashTable[prevNode].status_next & HASH_STAT_MASK | newIndex;
 			scrStringGlob.hashTable[newIndex].prev = prevNode;
 		}
 
 		assert(stringValue != 0);
 
-		entry->status_next = hash | 0x8000;
+		entry->status_next = hash | HASH_STAT_HEAD;
 		entry->prev = stringValue;
 		refStr = GetRefString(stringValue);
 		memcpy(refStr->str, str, len);
@@ -329,7 +334,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 
 	if ( refStr->length != len || memcmp(refStr->str, str, len) )
 	{
-		newIndex = entry->status_next & 0x3FFF;
+		newIndex = entry->status_next & HASH_NEXT_MASK;
 
 		for ( prev = &scrStringGlob.hashTable[newIndex]; prev != entry; prev = &scrStringGlob.hashTable[newIndex] )
 		{
@@ -337,9 +342,9 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 
 			if ( refStr->length == len && !memcmp(refStr->str, str, len) )
 			{
-				scrStringGlob.hashTable[hash].status_next = scrStringGlob.hashTable[hash].status_next & 0xC000 | prev->status_next & 0x3FFF;
-				prev->status_next = prev->status_next & 0xC000 | entry->status_next & 0x3FFF;
-				entry->status_next = entry->status_next & 0xC000 | newIndex;
+				scrStringGlob.hashTable[hash].status_next = scrStringGlob.hashTable[hash].status_next & HASH_STAT_MASK | prev->status_next & HASH_NEXT_MASK;
+				prev->status_next = prev->status_next & HASH_STAT_MASK | entry->status_next & HASH_NEXT_MASK;
+				entry->status_next = entry->status_next & HASH_STAT_MASK | newIndex;
 				stringValue = prev->prev;
 				prev->prev = entry->prev;
 				entry->prev = stringValue;
@@ -349,7 +354,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 			}
 
 			hash = newIndex;
-			newIndex = prev->status_next & 0x3FFF;
+			newIndex = prev->status_next & HASH_NEXT_MASK;
 		}
 
 		newNext = scrStringGlob.hashTable->status_next;
@@ -363,10 +368,10 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 
 		stringValue = MT_AllocIndex(len + 4);
 		newEntry = &scrStringGlob.hashTable[newNext];
-		scrStringGlob.hashTable->status_next = newEntry->status_next & 0x3FFF;
+		scrStringGlob.hashTable->status_next = newEntry->status_next & HASH_NEXT_MASK;
 		scrStringGlob.hashTable[scrStringGlob.hashTable->status_next].prev = 0;
-		newEntry->status_next = entry->status_next & 0x3FFF | 0x4000;
-		entry->status_next = entry->status_next & 0xC000 | newNext & 0x3FFF;
+		newEntry->status_next = entry->status_next & HASH_NEXT_MASK | HASH_STAT_MOVABLE;
+		entry->status_next = entry->status_next & HASH_STAT_MASK | newNext & HASH_NEXT_MASK;
 		newEntry->prev = entry->prev;
 		entry->prev = stringValue;
 		refStr = GetRefString(stringValue);
@@ -395,7 +400,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 	hash = GetHashCode(str, len);
 	entry = &scrStringGlob.hashTable[hash];
 
-	if ( (entry->status_next & 0xC000) != 0x8000 )
+	if ( (entry->status_next & HASH_STAT_MASK) != HASH_STAT_HEAD )
 		return 0;
 
 	refStr = GetRefString(entry->prev);
@@ -403,7 +408,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 	if ( refStr->length != len || memcmp(refStr->str, str, len) )
 	{
 		index = hash;
-		newIndex = entry->status_next & 0x3FFF;
+		newIndex = entry->status_next & HASH_NEXT_MASK;
 
 		for ( newEntry = &scrStringGlob.hashTable[newIndex]; newEntry != entry; newEntry = &scrStringGlob.hashTable[newIndex] )
 		{
@@ -411,9 +416,9 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 
 			if ( refStr->length == len && !memcmp(refStr->str, str, len) )
 			{
-				scrStringGlob.hashTable[index].status_next = scrStringGlob.hashTable[index].status_next & 0xC000 | newEntry->status_next & 0x3FFF;
-				newEntry->status_next = newEntry->status_next & 0xC000 | entry->status_next & 0x3FFF;
-				entry->status_next = entry->status_next & 0xC000 | newIndex;
+				scrStringGlob.hashTable[index].status_next = scrStringGlob.hashTable[index].status_next & HASH_STAT_MASK | newEntry->status_next & HASH_NEXT_MASK;
+				newEntry->status_next = newEntry->status_next & HASH_STAT_MASK | entry->status_next & HASH_NEXT_MASK;
+				entry->status_next = entry->status_next & HASH_STAT_MASK | newIndex;
 				prev = newEntry->prev;
 				newEntry->prev = entry->prev;
 				entry->prev = prev;
@@ -422,7 +427,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 			}
 
 			index = newIndex;
-			newIndex = newEntry->status_next & 0x3FFF;
+			newIndex = newEntry->status_next & HASH_NEXT_MASK;
 		}
 
 		return 0;
@@ -538,9 +543,9 @@ void SL_ChangeUser(unsigned char from, unsigned char to)
 	RefString *RefString;
 	unsigned int i;
 
-	for ( i = 1; i <= 0x3FFF; ++i )
+	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
 	{
-		if ( (scrStringGlob.hashTable[i].status_next & 0xC000) != 0 )
+		if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) != 0 )
 		{
 			RefString = GetRefString(scrStringGlob.hashTable[i].prev);
 
@@ -616,11 +621,11 @@ void SL_RelocateSystem()
 	HashEntry *entry;
 	unsigned int i;
 
-	for ( i = 1; i <= 0x3FFF; ++i )
+	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
 	{
 		do
 		{
-			if ( (scrStringGlob.hashTable[i].status_next & 0xC000) == 0 )
+			if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) == 0 )
 				break;
 
 			scrStringGlob.nextFreeEntry = 0;
@@ -631,11 +636,11 @@ void SL_RelocateSystem()
 
 	ptr = (byte *)MT_BeginRelocate();
 
-	for ( i = 1; i <= 0x3FFF; ++i )
+	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
 	{
 		entry = &scrStringGlob.hashTable[i];
 
-		if ( (entry->status_next & 0xC000) != 0 && (GetRefString(entry->prev)->user & 4) != 0 )
+		if ( (entry->status_next & HASH_STAT_MASK) != 0 && (GetRefString(entry->prev)->user & 4) != 0 )
 		{
 			string = SL_ConvertToString(entry->prev);
 			length = I_strlen(string);
@@ -652,13 +657,13 @@ void SL_ShutdownSystem(unsigned char user)
 	HashEntry *entry;
 	unsigned int i;
 
-	for ( i = 1; i <= 0x3FFF; ++i )
+	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
 	{
 		do
 		{
 			entry = &scrStringGlob.hashTable[i];
 
-			if ( (entry->status_next & 0xC000) == 0 )
+			if ( (entry->status_next & HASH_STAT_MASK) == 0 )
 				break;
 
 			refStr = GetRefString(entry->prev);
@@ -689,7 +694,7 @@ void SL_Init()
 	scrStringGlob.hashTable->status_next = 0;
 	prev = 0;
 
-	for ( hash = 1; hash <= 0x3FFF; ++hash )
+	for ( hash = 1; hash < HASH_TABLE_SIZE; ++hash )
 	{
 		scrStringGlob.hashTable[hash].status_next = 0;
 		scrStringGlob.hashTable[prev].status_next |= hash;
