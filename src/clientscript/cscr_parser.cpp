@@ -38,6 +38,7 @@ unsigned int Scr_GetLineNumInternal(const char *buf, unsigned int sourcePos, con
 			*startLine = buf + 1;
 			++lineNum;
 		}
+
 		++buf;
 		--sourcePos;
 	}
@@ -202,7 +203,7 @@ void AddOpcodePos(unsigned int sourcePos, int type)
 	if ( scrVarPub.developer && scrCompilePub.developer_statement != 2 )
 	{
 		if ( !scrCompilePub.allowedBreakpoint )
-			type &= ~1u;
+			type &= ~SOURCE_TYPE_BREAKPOINT;
 
 		if ( scrParserGlob.opcodeLookupLen >= scrParserGlob.opcodeLookupMaxLen )
 		{
@@ -247,7 +248,7 @@ void AddOpcodePos(unsigned int sourcePos, int type)
 		{
 			scrParserGlob.threadStartSourceIndex = sourcePosLookupIndex;
 		}
-		else if ( scrParserGlob.delayedSourceIndex >= 0 && (type & 1) != 0 )
+		else if ( scrParserGlob.delayedSourceIndex >= 0 && (type & SOURCE_TYPE_BREAKPOINT) != 0 )
 		{
 			scrParserGlob.sourcePosLookup[scrParserGlob.delayedSourceIndex].sourcePos = sourcePos;
 			scrParserGlob.delayedSourceIndex = -1;
@@ -344,21 +345,26 @@ void Scr_AddSourceBufferInternal(const char *extFilename, const char *codePos, c
 		size = strlen(extFilename) + 1;
 		dest = (char *)Z_MallocInternal(size + len + 2);
 		strcpy(dest, extFilename);
+
 		if ( sourceBuf )
 			source = &dest[size];
 		else
 			source = 0;
+
 		buf = sourceBuf;
 		tmp = (char *)source;
+
 		if ( doEolFixup )
 		{
 			for ( i = 0; i <= len; ++i )
 			{
 				c = *buf++;
+
 				if ( c == 10 || c == 13 && *buf != 10 )
 					*tmp = 0;
 				else
 					*tmp = c;
+
 				++tmp;
 			}
 		}
@@ -370,6 +376,7 @@ void Scr_AddSourceBufferInternal(const char *extFilename, const char *codePos, c
 				*tmp++ = count;
 			}
 		}
+
 		newBuffer = Scr_GetNewSourceBuffer();
 		newBuffer->codePos = codePos;
 		newBuffer->buf = dest;
@@ -377,6 +384,7 @@ void Scr_AddSourceBufferInternal(const char *extFilename, const char *codePos, c
 		newBuffer->len = len;
 		newBuffer->sortedIndex = -1;
 		newBuffer->archive = archive;
+
 		if ( source )
 			scrParserPub.sourceBuf = source;
 	}

@@ -1815,7 +1815,7 @@ void Scr_PushValue(VariableCompileValue *constValue)
 	}
 	else
 	{
-		CompileError(constValue->sourcePos.stringValue, "VALUE_STACK_SIZE exceeded");
+		CompileError(constValue->sourcePos.sourcePosValue, "VALUE_STACK_SIZE exceeded");
 	}
 }
 

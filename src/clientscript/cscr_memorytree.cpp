@@ -392,7 +392,9 @@ unsigned short MT_AllocIndex(int numBytes)
 			MT_Error("MT_AllocIndex", numBytes);
 			return 0;
 		}
+
 		nodeNum = scrMemTreeGlob.head[newSize];
+
 		if (scrMemTreeGlob.head[newSize])
 		{
 			break;
@@ -495,14 +497,18 @@ void MT_RelocateNode(int nodeNum)
 		{
 			size = 0;
 			newNode = nodeNum;
+
 			while ( 1 )
 			{
 				bits = 1 << size;
+
 				if ( size == MEMORY_NODE_SIZE || !MT_RemoveMemoryNode(newNode ^ bits, size) )
 					break;
+
 				newNode &= ~bits;
 				++size;
 			}
+
 			break;
 		}
 	}

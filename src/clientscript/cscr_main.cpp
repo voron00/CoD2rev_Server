@@ -92,7 +92,6 @@ void Scr_GetGenericField(const byte *data, int fieldtype, int offset)
 
 void Scr_SetGenericField(byte *data, int fieldtype, int offset)
 {
-	unsigned int stringValue;
 	vec3_t vector;
 
 	switch ( fieldtype )
@@ -106,15 +105,14 @@ void Scr_SetGenericField(byte *data, int fieldtype, int offset)
 		break;
 
 	case F_STRING:
-		stringValue = Scr_GetConstStringIncludeNull(0);
-		Scr_SetString((unsigned short *)&data[offset], stringValue);
+		Scr_SetString((unsigned short *)&data[offset], Scr_GetConstStringIncludeNull(0));
 		break;
 
 	case F_VECTOR:
 		Scr_GetVector(0, vector);
-		*(vec_t *)&data[offset] = vector[0];
-		*(vec_t *)&data[offset + 4] = vector[1];
-		*(vec_t *)&data[offset + 8] = vector[2];
+		*(float *)&data[offset] = vector[0];
+		*(float *)&data[offset + 4] = vector[1];
+		*(float *)&data[offset + 8] = vector[2];
 		break;
 
 	case F_ENTITY:
@@ -123,7 +121,7 @@ void Scr_SetGenericField(byte *data, int fieldtype, int offset)
 
 	case F_VECTORHACK:
 		Scr_GetVector(0, vector);
-		*(vec_t *)&data[offset] = vector[1];
+		*(float *)&data[offset] = vector[1];
 		break;
 
 	default:
@@ -208,8 +206,7 @@ unsigned int Scr_LoadScript(const char *filename)
 	const char *fileName;
 	const char *codePos;
 	const char *name;
-	unsigned int var;
-	unsigned int id;
+	unsigned int filePosPtr;
 	unsigned int scriptPosIdIndex;
 	unsigned int loadedScriptsIdIndex;
 	const char *sourceBuf;
@@ -224,9 +221,10 @@ unsigned int Scr_LoadScript(const char *filename)
 	if ( FindVariable(scrCompilePub.loadedscripts, index) )
 	{
 		SL_RemoveRefToString(index);
-		id = FindVariable(scrCompilePub.scriptsPos, index);
-		if ( id )
-			return FindObject(id);
+		filePosPtr = FindVariable(scrCompilePub.scriptsPos, index);
+
+		if ( filePosPtr )
+			return FindObject(filePosPtr);
 		else
 			return 0;
 	}
@@ -250,11 +248,11 @@ unsigned int Scr_LoadScript(const char *filename)
 			scrCompilePub.in_ptr = "+";
 			scrCompilePub.parseBuf = sourceBuffer;
 			ScriptParse(&parseData, 0);
-			var = GetVariable(scrCompilePub.scriptsPos, index);
-			scriptPosIdIndex = GetObjectA(var);
+			scriptPosIdIndex = GetObjectA(GetVariable(scrCompilePub.scriptsPos, index));
 			ScriptCompile(parseData, scriptPosIdIndex, loadedScriptsIdIndex);
 			scrParserPub.scriptfilename = scriptfilename;
 			scrParserPub.sourceBuf = sourceBuf;
+
 			return scriptPosIdIndex;
 		}
 		else
