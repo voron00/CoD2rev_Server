@@ -190,8 +190,8 @@ void Scr_AddArray()
 	--scrVmPub.top;
 	--scrVmPub.inparamcount;
 
-	ArraySize = GetArraySize(scrVmPub.top->u.stringValue);
-	id = GetNewArrayVariable(scrVmPub.top->u.stringValue, ArraySize);
+	ArraySize = GetArraySize(scrVmPub.top->u.pointerValue);
+	id = GetNewArrayVariable(scrVmPub.top->u.pointerValue, ArraySize);
 	SetNewVariableValue(id, scrVmPub.top + 1);
 }
 
@@ -202,7 +202,7 @@ void Scr_AddArrayStringIndexed(unsigned int stringValue)
 	--scrVmPub.top;
 	--scrVmPub.inparamcount;
 
-	id = GetNewVariable(scrVmPub.top->u.stringValue, stringValue);
+	id = GetNewVariable(scrVmPub.top->u.pointerValue, stringValue);
 	SetNewVariableValue(id, scrVmPub.top + 1);
 }
 
@@ -513,7 +513,7 @@ unsigned int Scr_GetObject(unsigned int paramnum)
 
 	var = &scrVmPub.top[-paramnum];
 
-	if (var->type == 1)
+	if (var->type == VAR_OBJECT)
 	{
 		return var->u.pointerValue;
 	}
@@ -580,13 +580,13 @@ void Scr_IncTime()
 	Scr_RunCurrentThreads();
 	Scr_FreeEntityList();
 	++scrVarPub.time;
-	scrVarPub.time &= 0xFFFFFFu;
+	scrVarPub.time &= VAR_NAME_LOW_MASK;
 }
 
 void Scr_DecTime()
 {
 	--scrVarPub.time;
-	scrVarPub.time &= 0xFFFFFFu;
+	scrVarPub.time &= VAR_NAME_LOW_MASK;
 }
 
 bool SetEntityFieldValue(unsigned int classnum, int entnum, int offset, VariableValue *value)
@@ -1209,6 +1209,7 @@ void VM_Notify(unsigned int notifyListOwnerId, unsigned int stringValue, Variabl
 	{
 		notifyListId = FindObject(notifyListId);
 		notifyNameListId = FindVariable(notifyListId, stringValue);
+
 		if ( notifyNameListId )
 		{
 			notifyNameListId = FindObject(notifyNameListId);
@@ -1219,28 +1220,36 @@ next:
 			while ( 1 )
 			{
 				notifyListEntry = FindLastSibling(notifyListEntry);
+
 				if ( !notifyListEntry )
 					break;
+
 				startLocalId = GetVariableKeyObject(notifyListEntry);
 				selfId = Scr_GetSelf(startLocalId);
 				localId = FindObjectVariable(scrVarPub.pauseArrayId, selfId);
 				selfNameId = FindObject(localId);
+
 				if ( Scr_GetObjectType(notifyListEntry) )
 				{
 					stackId = GetVariableValueAddress(notifyListEntry);
 					newStackBuf = stackId->u.stackValue;
+
 					if ( *((byte *)newStackBuf->pos - 1) == OP_waittillmatch )
 					{
 						size = *newStackBuf->pos;
 						buf = &newStackBuf->buf[5 * (newStackBuf->size - size)];
+
 						for ( vars = top; size; --vars )
 						{
 							if ( vars->type == VAR_PRECODEPOS )
 								goto next;
+
 							--size;
 							value.type = (unsigned char)*buf;
+
 							if ( value.type == VAR_PRECODEPOS )
 								break;
+
 							value.u.intValue = *(int *)++buf;
 							buf += 4;
 							AddRefToValue(&value);
@@ -1249,6 +1258,7 @@ next:
 							value2.type = type;
 							AddRefToValue(&value2);
 							Scr_EvalEquality(&value, &value2);
+
 							if ( scrVarPub.error_message )
 							{
 								scriptError(
@@ -1259,9 +1269,11 @@ next:
 								Scr_ClearErrorMessage();
 								goto next;
 							}
+
 							if ( !value.u.intValue )
 								goto next;
 						}
+
 						++newStackBuf->pos;
 						bNoStack = 1;
 					}
@@ -1269,6 +1281,7 @@ next:
 					{
 						bNoStack = top->type == VAR_PRECODEPOS;
 					}
+
 					stackValue.type = VAR_STACK;
 					stackValue.u.stackValue = newStackBuf;
 					variable = GetVariable(scrVarPub.timeArrayId, scrVarPub.time);
@@ -1278,9 +1291,12 @@ next:
 					stackId = GetVariableValueAddress(newObject);
 					VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
 					RemoveObjectVariable(selfNameId, startLocalId);
+
 					if ( !GetArraySize(selfNameId) )
 						RemoveObjectVariable(scrVarPub.pauseArrayId, selfId);
+
 					Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
+
 					if ( bNoStack )
 					{
 						notifyListEntry = notifyNameListId;
@@ -1290,14 +1306,17 @@ next:
 						size = newStackBuf->size;
 						newSize = size;
 						vars = top;
+
 						do
 						{
 							++newSize;
 							--vars;
 						}
 						while ( vars->type != VAR_PRECODEPOS );
+
 						len = 5 * size;
 						bufLen = 5 * newSize + 11;
+
 						if ( !MT_Realloc(newStackBuf->bufLen, bufLen) )
 						{
 							stackBuf = (VariableStackBuffer *)MT_Alloc(bufLen);
@@ -1309,9 +1328,11 @@ next:
 							newStackBuf = stackBuf;
 							stackId->u.stackValue = stackBuf;
 						}
+
 						newStackBuf->size = newSize;
 						buf = &newStackBuf->buf[len];
 						newSize -= size;
+
 						do
 						{
 							AddRefToValue(++vars);
@@ -1320,6 +1341,7 @@ next:
 							buf += 4;
 							--newSize;
 						}
+
 						while ( newSize );
 						notifyListEntry = notifyNameListId;
 					}
@@ -1329,12 +1351,15 @@ next:
 					VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
 					Scr_KillEndonThread(startLocalId);
 					RemoveObjectVariable(selfNameId, startLocalId);
+
 					if ( !GetArraySize(selfNameId) )
 						RemoveObjectVariable(scrVarPub.pauseArrayId, selfId);
+
 					Scr_TerminateThread(selfId);
 					notifyListEntry = notifyNameListId;
 				}
 			}
+
 			RemoveRefToObject(notifyNameListId);
 			scrVarPub.evaluate = 0;
 		}
@@ -1418,7 +1443,7 @@ void scriptError(const char *codePos, unsigned int index, const char *errorMsg, 
 			Com_Printf("%s\n", errorMsg);
 
 			if ( scrVmPub.terminal_error )
-				goto error;
+				goto drop;
 		}
 		else
 		{
@@ -1437,11 +1462,12 @@ void scriptError(const char *codePos, unsigned int index, const char *errorMsg, 
 #endif
 			if ( drop )
 			{
-error:
+drop:
 				fmt = format;
 
 				if ( !format )
 					fmt = "";
+
 				if ( format )
 					line = "\n";
 				else

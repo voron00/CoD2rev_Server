@@ -12,22 +12,11 @@ static_assert((sizeof(scrVarGlob_t) == 0x100000), "ERROR: scrVarGlob_t size is i
 scrVarGlob_t scrVarGlob;
 scrVarPub_t scrVarPub;
 
-#define VAR_MASK 0x1F
-#define VAR_NAME_LOW_MASK 0xFFFFFF
-#define VAR_NAME_HIGH_MASK 0xFFFFFF00
-#define VAR_NAME_BITS 8
-
-#define VAR_STAT_FREE 0
-#define VAR_STAT_MOVABLE 32
-#define VAR_STAT_HEAD 64
-#define VAR_STAT_MASK 96
-#define VAR_STAT_EXTERNAL VAR_STAT_MASK
-
-#define VARIABLE_FIELD_INDEX 65534
+#define VARIABLELIST_SIZE 0xFFFE
 #define SL_MAX_STRING_INDEX 0x10000
 #define MAX_ARRAYINDEX 0x800000
-#define VARIABLELIST_CHILD_SIZE 0xFFFE
 
+#define VAR_MASK 0x1F
 #define VAR_TYPE(var) (var->w.type & VAR_MASK)
 
 const char *var_typename[] =
@@ -148,7 +137,7 @@ unsigned int FindVariable(unsigned int parentId, unsigned int name)
 
 unsigned int FindVariableIndex(unsigned int parentId, unsigned int name)
 {
-	return FindVariableIndexInternal(name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
+	return FindVariableIndexInternal(name, (parentId + name) % (VARIABLELIST_SIZE - 1) + 1);
 }
 
 unsigned int FindObjectVariable(unsigned int parentId, unsigned int id)
@@ -453,10 +442,10 @@ unsigned int GetVariableIndexInternal(unsigned int parentId, unsigned int name)
 {
 	unsigned int index;
 
-	index = FindVariableIndexInternal(name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
+	index = FindVariableIndexInternal(name, (parentId + name) % (VARIABLELIST_SIZE - 1) + 1);
 
 	if ( !index )
-		return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
+		return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % (VARIABLELIST_SIZE - 1) + 1);
 
 	return index;
 }
@@ -473,7 +462,7 @@ unsigned int GetArrayVariable(unsigned int parentId, unsigned int index)
 
 unsigned int GetNewVariableIndexInternal(unsigned int parentId, unsigned int name)
 {
-	return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
+	return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % (VARIABLELIST_SIZE - 1) + 1);
 }
 
 unsigned int GetNewVariableIndexReverseInternal2(unsigned int parentId, unsigned int name, unsigned int index)
@@ -497,7 +486,7 @@ unsigned int GetNewVariableIndexReverseInternal2(unsigned int parentId, unsigned
 
 unsigned int GetNewVariableIndexReverseInternal(unsigned int parentId, unsigned int name)
 {
-	return GetNewVariableIndexReverseInternal2(parentId, name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
+	return GetNewVariableIndexReverseInternal2(parentId, name, (parentId + name) % (VARIABLELIST_SIZE - 1) + 1);
 }
 
 unsigned int GetNewObjectVariableReverse(unsigned int parentId, unsigned int id)
@@ -1069,7 +1058,7 @@ void Scr_FreeObjects()
 	VariableValueInternal *entryValue;
 	unsigned int id;
 
-	for ( id = 1; id < VARIABLELIST_CHILD_SIZE; ++id )
+	for ( id = 1; id < VARIABLELIST_SIZE; ++id )
 	{
 		entryValue = &scrVarGlob.variableList[id];
 
@@ -1441,7 +1430,7 @@ unsigned int Scr_GetVariableField(unsigned int fieldId, unsigned int index)
 		{
 			scrVarPub.entId = fieldId;
 			scrVarPub.entFieldName = index;
-			return VARIABLE_FIELD_INDEX;
+			return VARIABLELIST_SIZE;
 		}
 	}
 	else
@@ -1570,7 +1559,7 @@ void Scr_EvalVariableFieldInternal(VariableValue *pValue, unsigned int id)
 {
 	VariableValue value;
 
-	if ( id == VARIABLE_FIELD_INDEX )
+	if ( id == VARIABLELIST_SIZE )
 	{
 		Scr_EvalVariableEntityField(&value, scrVarPub.entId, scrVarPub.entFieldName);
 	}
@@ -2405,7 +2394,7 @@ void ClearArray(unsigned int parentId, VariableValue *value)
 	VariableValueInternal *parentValue;
 	VariableValueInternal *entryValue;
 
-	if ( parentId == VARIABLE_FIELD_INDEX )
+	if ( parentId == VARIABLELIST_SIZE )
 	{
 		newEntryValue = &scrVarGlob.variableList[scrVarPub.entId];
 		fieldId = FindArrayVariable(
@@ -2503,7 +2492,7 @@ unsigned int Scr_EvalArrayRef(unsigned int parentId)
 	VariableValueInternal *entryValue;
 	VariableValueInternal *parentValue;
 
-	if ( parentId != VARIABLE_FIELD_INDEX )
+	if ( parentId != VARIABLELIST_SIZE )
 	{
 		parentValue = &scrVarGlob.variableList[parentId];
 		value.type = VAR_TYPE(parentValue);
@@ -2631,7 +2620,7 @@ void SetVariableValue(unsigned int id, VariableValue *value)
 
 void SetVariableFieldValue(unsigned int id, VariableValue *value)
 {
-	if ( id == VARIABLE_FIELD_INDEX )
+	if ( id == VARIABLELIST_SIZE )
 		SetVariableEntityFieldValue(scrVarPub.entId, scrVarPub.entFieldName, value);
 	else
 		SetVariableValue(id, value);
@@ -2921,7 +2910,7 @@ void Scr_DumpScriptThreads()
 	{
 		num = 0;
 
-		for ( i = 1; i < VARIABLELIST_CHILD_SIZE; ++i )
+		for ( i = 1; i < VARIABLELIST_SIZE; ++i )
 		{
 			entryValue = &scrVarGlob.variableList[i];
 
@@ -3159,7 +3148,7 @@ void Var_ResetAll()
 
 	hash.prev = 0;
 
-	for ( i = 1; i < VARIABLELIST_CHILD_SIZE; ++i )
+	for ( i = 1; i < VARIABLELIST_SIZE; ++i )
 	{
 		entryValue = &scrVarGlob.variableList[i];
 		entryValue->w.status = 0;

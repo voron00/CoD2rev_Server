@@ -164,6 +164,25 @@ enum var_type_t
 	VAR_COUNT
 };
 
+enum var_bits_t
+{
+	VAR_NAME_BITS = 0x8,
+	VAR_NAME_LOW_MASK = 0xFFFFFF,
+	VAR_NAME_HIGH_MASK = 0xFFFFFF00,
+	VAR_MIN_INT = 0xFF800000,
+	VAR_MAX_INT = 0x7FFFFF,
+	ENTITY_NUM_BITS = 0xE,
+};
+
+enum var_stat_t
+{
+	VAR_STAT_FREE = 0x0,
+	VAR_STAT_MOVABLE = 0x20,
+	VAR_STAT_HEAD = 0x40,
+	VAR_STAT_EXTERNAL = 0x60,
+	VAR_STAT_MASK = 0x60,
+};
+
 extern const char *var_typename[];
 
 struct function_stack_t
