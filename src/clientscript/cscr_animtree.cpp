@@ -219,7 +219,7 @@ int Scr_CreateAnimationTree(unsigned int parentNode, unsigned int names, XAnim_s
 		{
 			ConnectScriptToAnim(names, animIndex, filename, index, treeIndex);
 
-			if ( GetObjectType(j) == VAR_OBJECT )
+			if ( Scr_GetObjectType(j) == VAR_OBJECT )
 			{
 				name = SL_ConvertToString(index);
 				id = FindObject(j);
@@ -274,7 +274,7 @@ void Scr_PrecacheAnimationTree(unsigned int parentNode)
 
 		if ( index <= 0xFFFF )
 		{
-			if ( GetObjectType(i) == VAR_OBJECT )
+			if ( Scr_GetObjectType(i) == VAR_OBJECT )
 			{
 				id = FindObject(i);
 				Scr_PrecacheAnimationTree(id);
@@ -300,7 +300,7 @@ int Scr_GetAnimTreeSize(unsigned int parentNode)
 	{
 		if ( GetVariableName(i) <= 0xFFFF )
 		{
-			if ( GetObjectType(i) == VAR_OBJECT )
+			if ( Scr_GetObjectType(i) == VAR_OBJECT )
 			{
 				id = FindObject(i);
 				count += Scr_GetAnimTreeSize(id);

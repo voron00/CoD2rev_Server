@@ -172,7 +172,7 @@ int Scr_GetFunctionHandleInternal(const char *filename, const char *name)
 	if ( !filePosId )
 		return 0;
 
-	if ( GetObjectType(filePosId) != VAR_OBJECT )
+	if ( Scr_GetObjectType(filePosId) != VAR_OBJECT )
 		return 0;
 
 	object = FindObject(filePosId);

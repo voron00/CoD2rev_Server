@@ -812,7 +812,7 @@ unsigned int FindArrayVariable(unsigned int parentId, unsigned int index);
 unsigned int GetParentLocalId(unsigned int threadId);
 unsigned int GetSafeParentLocalId(unsigned int threadId);
 unsigned int GetStartLocalId(unsigned int threadId);
-unsigned int GetObjectType(int varIndex);
+unsigned int Scr_GetObjectType(int varIndex);
 unsigned int AllocVariable();
 unsigned int AllocValue();
 unsigned int AllocEntity(unsigned int classnum, unsigned short entnum);

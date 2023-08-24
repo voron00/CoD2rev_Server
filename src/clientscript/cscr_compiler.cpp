@@ -515,7 +515,7 @@ void LinkThread(unsigned int threadCountId, VariableValue *pos, bool allowFarCal
 		{
 			valueId = FindVariable(threadCountId, i + 2);
 			value = GetVariableValueAddress(valueId);
-			type = GetObjectType(valueId);
+			type = Scr_GetObjectType(valueId);
 
 			if ( pos->type == VAR_DEVELOPER_CODEPOS && type == VAR_CODEPOS )
 				CompileError2(value->u.codePosValue, "normal script cannot reference a function in a /# ... #/ comment");
@@ -2213,7 +2213,7 @@ void EmitObject(sval_u expr, sval_u sourcePos)
 		{
 			if ( idValue <= 0xFFFD && !IsObjectFree((unsigned short)idValue) )
 			{
-				type = GetObjectType((unsigned short)idValue);
+				type = Scr_GetObjectType((unsigned short)idValue);
 
 				if ( type >= VAR_THREAD && (type <= VAR_CHILD_THREAD || type == VAR_REMOVED_THREAD) )
 				{
@@ -3862,7 +3862,7 @@ void EmitFunction(sval_u func, sval_u sourcePos)
 		{
 			threadName = FindVariable(fileId, func.node[2].idValue);
 
-			if ( !threadName || GetObjectType(threadName) != VAR_OBJECT )
+			if ( !threadName || Scr_GetObjectType(threadName) != VAR_OBJECT )
 			{
 				CompileError(sourcePos.sourcePosValue, "unknown function");
 				return;
@@ -4235,7 +4235,7 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 			for ( k = FindNextSibling(id); k; k = FindNextSibling(k) )
 			{
-				if ( GetObjectType(k) == VAR_OBJECT )
+				if ( Scr_GetObjectType(k) == VAR_OBJECT )
 				{
 					posId = FindObject(k);
 					index = FindVariable(posId, 1);
