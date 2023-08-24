@@ -13,6 +13,7 @@ scrVarGlob_t scrVarGlob;
 scrVarPub_t scrVarPub;
 
 #define VAR_MASK 0x1F
+#define VAR_NAME_LOW_MASK 0xFFFFFF
 #define VAR_NAME_HIGH_MASK 0xFFFFFF00
 #define VAR_NAME_BITS 8
 
@@ -21,6 +22,11 @@ scrVarPub_t scrVarPub;
 #define VAR_STAT_HEAD 64
 #define VAR_STAT_MASK 96
 #define VAR_STAT_EXTERNAL VAR_STAT_MASK
+
+#define VARIABLE_FIELD_INDEX 65534
+#define SL_MAX_STRING_INDEX 0x10000
+#define MAX_ARRAYINDEX 0x800000
+#define VARIABLELIST_CHILD_SIZE 0xFFFE
 
 #define VAR_TYPE(var) (var->w.type & VAR_MASK)
 
@@ -142,12 +148,12 @@ unsigned int FindVariable(unsigned int parentId, unsigned int name)
 
 unsigned int FindVariableIndex(unsigned int parentId, unsigned int name)
 {
-	return FindVariableIndexInternal(name, (parentId + name) % 0xFFFD + 1);
+	return FindVariableIndexInternal(name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
 }
 
 unsigned int FindObjectVariable(unsigned int parentId, unsigned int id)
 {
-	return scrVarGlob.variableList[FindVariableIndex(parentId, id + 0x10000)].hash.id;
+	return scrVarGlob.variableList[FindVariableIndex(parentId, id + SL_MAX_STRING_INDEX)].hash.id;
 }
 
 unsigned int FindObject(unsigned int id)
@@ -178,17 +184,17 @@ void RemoveRefToVector(const float *vectorValue)
 
 void Scr_GetArrayIndexValue(VariableValue *value, unsigned int name)
 {
-	if ( name > 0xFFFF )
+	if ( name >= SL_MAX_STRING_INDEX )
 	{
 		if ( name > 0x1FFFD )
 		{
 			value->type = VAR_INTEGER;
-			value->u.intValue = name - 0x800000;
+			value->u.intValue = name - MAX_ARRAYINDEX;
 		}
 		else
 		{
 			value->type = VAR_OBJECT;
-			value->u.intValue = name - 0x10000;
+			value->u.intValue = name - SL_MAX_STRING_INDEX;
 		}
 	}
 	else
@@ -447,17 +453,17 @@ unsigned int GetVariableIndexInternal(unsigned int parentId, unsigned int name)
 {
 	unsigned int index;
 
-	index = FindVariableIndexInternal(name, (parentId + name) % 0xFFFD + 1);
+	index = FindVariableIndexInternal(name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
 
 	if ( !index )
-		return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % 0xFFFD + 1);
+		return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
 
 	return index;
 }
 
 unsigned int GetArrayVariableIndex(unsigned int parentId, unsigned int index)
 {
-	return GetVariableIndexInternal(parentId, (index + 0x800000) & 0xFFFFFF);
+	return GetVariableIndexInternal(parentId, (index + MAX_ARRAYINDEX) & VAR_NAME_LOW_MASK);
 }
 
 unsigned int GetArrayVariable(unsigned int parentId, unsigned int index)
@@ -467,7 +473,7 @@ unsigned int GetArrayVariable(unsigned int parentId, unsigned int index)
 
 unsigned int GetNewVariableIndexInternal(unsigned int parentId, unsigned int name)
 {
-	return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % 0xFFFD + 1);
+	return GetNewVariableIndexInternal2(parentId, name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
 }
 
 unsigned int GetNewVariableIndexReverseInternal2(unsigned int parentId, unsigned int name, unsigned int index)
@@ -491,22 +497,22 @@ unsigned int GetNewVariableIndexReverseInternal2(unsigned int parentId, unsigned
 
 unsigned int GetNewVariableIndexReverseInternal(unsigned int parentId, unsigned int name)
 {
-	return GetNewVariableIndexReverseInternal2(parentId, name, (parentId + name) % 0xFFFD + 1);
+	return GetNewVariableIndexReverseInternal2(parentId, name, (parentId + name) % (VARIABLELIST_CHILD_SIZE - 1) + 1);
 }
 
 unsigned int GetNewObjectVariableReverse(unsigned int parentId, unsigned int id)
 {
-	return scrVarGlob.variableList[GetNewVariableIndexReverseInternal(parentId, id + 0x10000)].hash.id;
+	return scrVarGlob.variableList[GetNewVariableIndexReverseInternal(parentId, id + SL_MAX_STRING_INDEX)].hash.id;
 }
 
 unsigned int GetNewObjectVariable(unsigned int parentId, unsigned int id)
 {
-	return scrVarGlob.variableList[GetNewVariableIndexInternal(parentId, id + 0x10000)].hash.id;
+	return scrVarGlob.variableList[GetNewVariableIndexInternal(parentId, id + SL_MAX_STRING_INDEX)].hash.id;
 }
 
 unsigned int GetObjectVariable(unsigned int parentId, unsigned int id)
 {
-	return scrVarGlob.variableList[GetVariableIndexInternal(parentId, id + 0x10000)].hash.id;
+	return scrVarGlob.variableList[GetVariableIndexInternal(parentId, id + SL_MAX_STRING_INDEX)].hash.id;
 }
 
 unsigned int GetVariable(unsigned int parentId, unsigned int name)
@@ -528,7 +534,7 @@ unsigned int GetNewVariable(unsigned int parentId, unsigned int name)
 
 unsigned int GetNewArrayVariableIndex(unsigned int parentId, unsigned int index)
 {
-	return GetNewVariableIndexInternal(parentId, (index + 0x800000) & 0xFFFFFF);
+	return GetNewVariableIndexInternal(parentId, (index + MAX_ARRAYINDEX) & VAR_NAME_LOW_MASK);
 }
 
 unsigned int GetNewArrayVariable(unsigned int parentId, unsigned int index)
@@ -548,7 +554,7 @@ unsigned int Scr_GetSelf(unsigned int id)
 
 void SafeRemoveArrayVariable(unsigned int parentId, unsigned int name)
 {
-	SafeRemoveVariable(parentId, (name + 0x800000) & 0xFFFFFF);
+	SafeRemoveVariable(parentId, (name + MAX_ARRAYINDEX) & VAR_NAME_LOW_MASK);
 }
 
 void Scr_GetEntityIdRef(scr_entref_t *entRef, unsigned int entId)
@@ -564,7 +570,7 @@ union VariableValueInternal_u* GetVariableValueAddress(unsigned int id)
 
 unsigned int GetVariableKeyObject(unsigned int id)
 {
-	return (scrVarGlob.variableList[id].w.name >> VAR_NAME_BITS) - 0x10000;
+	return (scrVarGlob.variableList[id].w.name >> VAR_NAME_BITS) - SL_MAX_STRING_INDEX;
 }
 
 unsigned int Scr_GetThreadWaitTime(unsigned int startLocalId)
@@ -720,12 +726,12 @@ void RemoveNextVariable(unsigned int index)
 
 void RemoveObjectVariable(unsigned int parentId, unsigned int id)
 {
-	RemoveVariable(parentId, id + 0x10000);
+	RemoveVariable(parentId, id + SL_MAX_STRING_INDEX);
 }
 
 void RemoveArrayVariable(unsigned int parentId, unsigned int unsignedValue)
 {
-	RemoveVariable(parentId, (unsignedValue + 0x800000) & 0xFFFFFF);
+	RemoveVariable(parentId, (unsignedValue + MAX_ARRAYINDEX) & VAR_NAME_LOW_MASK);
 }
 
 void RemoveRefToObject(unsigned int id)
@@ -1063,7 +1069,7 @@ void Scr_FreeObjects()
 	VariableValueInternal *entryValue;
 	unsigned int id;
 
-	for ( id = 1; id <= 0xFFFD; ++id )
+	for ( id = 1; id < VARIABLELIST_CHILD_SIZE; ++id )
 	{
 		entryValue = &scrVarGlob.variableList[id];
 
@@ -1218,17 +1224,17 @@ unsigned int AllocValue()
 
 bool IsValidArrayIndex(unsigned int index)
 {
-	return index < 0x800000;
+	return index < MAX_ARRAYINDEX;
 }
 
 unsigned int GetInternalVariableIndex(unsigned int index)
 {
-	return (index + 0x800000) & 0xFFFFFF;
+	return (index + MAX_ARRAYINDEX) & VAR_NAME_LOW_MASK;
 }
 
 unsigned int FindArrayVariableIndex(unsigned int parentId, unsigned int index)
 {
-	return FindVariableIndex(parentId, (index + 0x800000) & 0xFFFFFF);
+	return FindVariableIndex(parentId, (index + MAX_ARRAYINDEX) & VAR_NAME_LOW_MASK);
 }
 
 unsigned int FindArrayVariable(unsigned int parentId, unsigned int index)
@@ -1435,7 +1441,7 @@ unsigned int Scr_GetVariableField(unsigned int fieldId, unsigned int index)
 		{
 			scrVarPub.entId = fieldId;
 			scrVarPub.entFieldName = index;
-			return 65534;
+			return VARIABLE_FIELD_INDEX;
 		}
 	}
 	else
@@ -1564,7 +1570,7 @@ void Scr_EvalVariableFieldInternal(VariableValue *pValue, unsigned int id)
 {
 	VariableValue value;
 
-	if ( id == 65534 )
+	if ( id == VARIABLE_FIELD_INDEX )
 	{
 		Scr_EvalVariableEntityField(&value, scrVarPub.entId, scrVarPub.entFieldName);
 	}
@@ -2399,7 +2405,7 @@ void ClearArray(unsigned int parentId, VariableValue *value)
 	VariableValueInternal *parentValue;
 	VariableValueInternal *entryValue;
 
-	if ( parentId == 65534 )
+	if ( parentId == VARIABLE_FIELD_INDEX )
 	{
 		newEntryValue = &scrVarGlob.variableList[scrVarPub.entId];
 		fieldId = FindArrayVariable(
@@ -2497,7 +2503,7 @@ unsigned int Scr_EvalArrayRef(unsigned int parentId)
 	VariableValueInternal *entryValue;
 	VariableValueInternal *parentValue;
 
-	if ( parentId != 65534 )
+	if ( parentId != VARIABLE_FIELD_INDEX )
 	{
 		parentValue = &scrVarGlob.variableList[parentId];
 		value.type = VAR_TYPE(parentValue);
@@ -2625,7 +2631,7 @@ void SetVariableValue(unsigned int id, VariableValue *value)
 
 void SetVariableFieldValue(unsigned int id, VariableValue *value)
 {
-	if ( id == 65534 )
+	if ( id == VARIABLE_FIELD_INDEX )
 		SetVariableEntityFieldValue(scrVarPub.entId, scrVarPub.entFieldName, value);
 	else
 		SetVariableValue(id, value);
@@ -2915,7 +2921,7 @@ void Scr_DumpScriptThreads()
 	{
 		num = 0;
 
-		for ( i = 1; i <= 0xFFFD; ++i )
+		for ( i = 1; i < VARIABLELIST_CHILD_SIZE; ++i )
 		{
 			entryValue = &scrVarGlob.variableList[i];
 
@@ -3153,7 +3159,7 @@ void Var_ResetAll()
 
 	hash.prev = 0;
 
-	for ( i = 1; i <= 0xFFFD; ++i )
+	for ( i = 1; i < VARIABLELIST_CHILD_SIZE; ++i )
 	{
 		entryValue = &scrVarGlob.variableList[i];
 		entryValue->w.status = 0;
