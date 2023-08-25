@@ -4,7 +4,7 @@ CXX = g++
 NASM = nasm
 WINDRES=windres
 CFLAGS=-m32 -std=gnu++11
-CFLAGS_LIBS=-m32 -O2
+CFLAGS_LIBS=-m32
 LFLAGS=-m32 -no-pie
 
 ifeq ($(OS),Windows_NT)
@@ -32,10 +32,10 @@ endif
 BIN_DIR=bin
 OBJ_DIR=obj
 SRC_DIR=src
+
 LINUX_DIR=$(SRC_DIR)/unix
 WIN32_DIR=$(SRC_DIR)/win32
 ZLIB_DIR=$(SRC_DIR)/zlib
-SQLITE_DIR=$(SRC_DIR)/sqlite
 
 # Source dirs
 BOTLIB_DIR=$(SRC_DIR)/botlib
@@ -43,12 +43,15 @@ CLIENTSCR_DIR=$(SRC_DIR)/clientscript
 GAME_DIR=$(SRC_DIR)/game
 BGAME_DIR=$(SRC_DIR)/bgame
 CGAME_DIR=$(SRC_DIR)/cgame
-LIBCOD_DIR=$(SRC_DIR)/libcod
 QCOMMON_DIR=$(SRC_DIR)/qcommon
 SERVER_DIR=$(SRC_DIR)/server
 STRINGED_DIR=$(SRC_DIR)/stringed
 UNIVERSAL_DIR=$(SRC_DIR)/universal
 XANIM_DIR=$(SRC_DIR)/xanim
+
+# Libcod dirs
+LIBCOD_DIR=$(SRC_DIR)/libcod
+SQLITE_DIR=$(SRC_DIR)/libcod/sqlite
 
 # Target files
 TARGET=$(addprefix $(BIN_DIR)/,$(BIN_NAME)$(BIN_EXT))
