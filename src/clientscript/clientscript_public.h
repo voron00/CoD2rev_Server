@@ -941,9 +941,7 @@ void Scr_FindAnim(const char *filename, const char *animName, scr_anim_s *anim, 
 void Scr_LoadAnimTreeAtIndex(unsigned int index, void *(*Alloc)(int), int user);
 void Scr_EndLoadAnimTrees();
 void Scr_PrecacheAnimTrees(void *(*Alloc)(int), int user);
-
 void Scr_FindAnimTreeInternal(scr_animtree_t *pTree, const char *filename);
-scr_animtree_t Scr_FindAnimTree( const char *filename);
 
 qboolean Scr_IsInOpcodeMemory(const char *pos);
 void Scr_GetGenericField(const byte *data, int fieldtype, int offset);

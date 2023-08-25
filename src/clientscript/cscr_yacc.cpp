@@ -228,7 +228,7 @@ sval_u* QDECL prepend_node(sval_u *val1, sval_u *val2)
 	return val2;
 }
 
-sval_u *QDECL linked_list_end(sval_u *val)
+sval_u* QDECL linked_list_end(sval_u *val)
 {
 	sval_u *result;
 	sval_u *node;
