@@ -222,7 +222,7 @@ sval_u* QDECL prepend_node(sval_u *val1, sval_u *val2)
 	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
 
 	result->node = val1;
-	result[1] = val2[0];
+	result[1].node = val2[0].node;
 	val2->node = result;
 
 	return val2;
@@ -236,7 +236,7 @@ sval_u *QDECL linked_list_end(sval_u *val)
 	node = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
 
 	node->node = val;
-	node[1].type = 0;
+	node[1].node = 0;
 
 	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
 
