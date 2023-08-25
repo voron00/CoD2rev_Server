@@ -1,6 +1,9 @@
 #ifndef _GSC_HPP_
 #define _GSC_HPP_
 
+#include "../qcommon/qcommon.h"
+#include "../game/g_shared.h"
+
 #define COD2_MAX_STRINGLENGTH 1024
 
 /* default stuff */

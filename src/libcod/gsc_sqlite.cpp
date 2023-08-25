@@ -3,7 +3,7 @@
 #if COMPILE_SQLITE == 1
 
 #include "../qcommon/sys_thread.h"
-#include "../sqlite/sqlite3.h"
+#include "sqlite/sqlite3.h"
 
 #define MAX_SQLITE_FIELDS 128
 #define MAX_SQLITE_ROWS 128
