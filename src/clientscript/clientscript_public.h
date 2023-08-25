@@ -183,6 +183,14 @@ enum var_stat_t
 	VAR_STAT_MASK = 0x60,
 };
 
+enum hash_stat_t
+{
+	HASH_STAT_FREE = 0x0,
+	HASH_STAT_MOVABLE = 0x4000,
+	HASH_STAT_HEAD = 0x8000,
+	HASH_STAT_MASK = 0xC000,
+};
+
 extern const char *var_typename[];
 
 struct function_stack_t

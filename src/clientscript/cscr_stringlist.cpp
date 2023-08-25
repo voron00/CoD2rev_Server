@@ -3,11 +3,6 @@
 
 #define HASH_TABLE_SIZE 16384
 
-#define HASH_NEXT_MASK 0x3FFF
-#define HASH_STAT_MASK 0xC000
-#define HASH_STAT_HEAD 0x8000
-#define HASH_STAT_MOVABLE 0x4000
-
 struct HashEntry
 {
 	uint16_t status_next;
@@ -25,6 +20,8 @@ typedef struct __attribute__((aligned(128))) scrStringGlob_s
 	HashEntry *nextFreeEntry;
 } scrStringGlob_t;
 static_assert((sizeof(scrStringGlob_t) == 0x10080), "ERROR: scrStringGlob_t size is invalid!");
+
+#define HASH_NEXT_MASK 0x3FFF
 
 scrStringGlob_t scrStringGlob;
 
@@ -279,7 +276,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 
 	if ( (entry->status_next & HASH_STAT_MASK) != HASH_STAT_HEAD )
 	{
-		if ( (entry->status_next & HASH_STAT_MASK) != 0 )
+		if ( (entry->status_next & HASH_STAT_MASK) != HASH_STAT_FREE )
 		{
 			next = entry->status_next & HASH_NEXT_MASK;
 
@@ -545,7 +542,7 @@ void SL_ChangeUser(unsigned char from, unsigned char to)
 
 	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
 	{
-		if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) != 0 )
+		if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) != HASH_STAT_FREE )
 		{
 			RefString = GetRefString(scrStringGlob.hashTable[i].prev);
 
@@ -625,7 +622,7 @@ void SL_RelocateSystem()
 	{
 		do
 		{
-			if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) == 0 )
+			if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) == HASH_STAT_FREE )
 				break;
 
 			scrStringGlob.nextFreeEntry = 0;
@@ -640,7 +637,7 @@ void SL_RelocateSystem()
 	{
 		entry = &scrStringGlob.hashTable[i];
 
-		if ( (entry->status_next & HASH_STAT_MASK) != 0 && (GetRefString(entry->prev)->user & 4) != 0 )
+		if ( (entry->status_next & HASH_STAT_MASK) != HASH_STAT_FREE && (GetRefString(entry->prev)->user & 4) != HASH_STAT_FREE )
 		{
 			string = SL_ConvertToString(entry->prev);
 			length = I_strlen(string);
@@ -663,7 +660,7 @@ void SL_ShutdownSystem(unsigned char user)
 		{
 			entry = &scrStringGlob.hashTable[i];
 
-			if ( (entry->status_next & HASH_STAT_MASK) == 0 )
+			if ( (entry->status_next & HASH_STAT_MASK) == HASH_STAT_FREE )
 				break;
 
 			refStr = GetRefString(entry->prev);
@@ -691,12 +688,12 @@ void SL_Init()
 	unsigned int hash;
 
 	MT_Init();
-	scrStringGlob.hashTable->status_next = 0;
+	scrStringGlob.hashTable->status_next = HASH_STAT_FREE;
 	prev = 0;
 
 	for ( hash = 1; hash < HASH_TABLE_SIZE; ++hash )
 	{
-		scrStringGlob.hashTable[hash].status_next = 0;
+		scrStringGlob.hashTable[hash].status_next = HASH_STAT_FREE;
 		scrStringGlob.hashTable[prev].status_next |= hash;
 		scrStringGlob.hashTable[hash].prev = prev;
 		prev = hash;
