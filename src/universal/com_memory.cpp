@@ -490,24 +490,6 @@ void TempMemoryReset()
 	currentPos = 0;
 }
 
-// VoroN: CoD2 don't have Hunk users, so these are just a wrappers for copmatibility with CoD4x code and assembly
-// VoroN: These should NOT be used in the actual code.
-HunkUser* QDECL Hunk_UserCreate(int size, const char *name, byte flaga, byte flagb, int type)
-{
-	return NULL;
-}
-
-void* QDECL Hunk_UserAlloc(HunkUser *user, int size, int aligment)
-{
-	return Hunk_AllocateTempMemoryHighInternal(size);
-}
-
-void QDECL Hunk_UserDestroy(HunkUser *user)
-{
-	Hunk_ClearTempMemoryHighInternal();
-}
-// VoroN: End of Hunk User hacks.
-
 int Hunk_HideTempMemory()
 {
 	int permanent;

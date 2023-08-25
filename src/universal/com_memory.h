@@ -58,19 +58,6 @@ enum filedata_type_t
 	FILEDATA_VEHICLEDEF
 };
 
-struct HunkUser
-{
-	struct HunkUser *current;
-	struct HunkUser *next;
-	int maxSize;
-	int end;
-	int pos;
-	const char *name;
-	byte flags[2];
-	int type;
-	char buf[1];
-};
-
 void *Z_TryMallocInternal( int size );
 void *Z_MallocInternal( int size );
 void *Z_MallocGarbageInternal( int size );
@@ -111,18 +98,6 @@ void TempMemoryReset();
 int Hunk_HideTempMemory();
 void Hunk_ShowTempMemory(int memory);
 void Com_InitHunkMemory( void );
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-HunkUser* QDECL Hunk_UserCreate(int size, const char *name, byte flaga, byte flagb, int type);
-void* QDECL Hunk_UserAlloc(HunkUser *user, int size, int aligment);
-void QDECL Hunk_UserDestroy(HunkUser *user);
-
-#ifdef __cplusplus
-}
-#endif
 
 #define Z_Malloc Z_MallocInternal
 #define S_Malloc Z_MallocInternal

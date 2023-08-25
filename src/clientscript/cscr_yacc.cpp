@@ -44,6 +44,208 @@ FILE* QDECL yy_stdout()
 	return stdout;
 }
 
+sval_u* node0(unsigned char type)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(4);
+	result->type = type;
+
+	return result;
+}
+
+sval_u* node1(unsigned char type, sval_u val1)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
+	result->type = type;
+
+	result[1].node = val1.node;
+
+	return result;
+}
+
+sval_u* node1_(sval_u val1)
+{
+	return val1.node;
+}
+
+sval_u* node2(unsigned char type, sval_u val1, sval_u val2)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(12);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+
+	return result;
+}
+
+sval_u* node2_(sval_u val1, sval_u val2)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
+
+	result[0].node = val1.node;
+	result[1].node = val2.node;
+
+	return result;
+}
+
+sval_u* node3(unsigned char type, sval_u val1, sval_u val2, sval_u val3)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(16);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+	result[3].node = val3.node;
+
+	return result;
+}
+
+sval_u* node4(unsigned char type, sval_u val1, sval_u val2, sval_u val3, sval_u val4)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(20);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+	result[3].node = val3.node;
+	result[4].node = val4.node;
+
+	return result;
+}
+
+sval_u* node5(unsigned char type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(24);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+	result[3].node = val3.node;
+	result[4].node = val4.node;
+	result[5].node = val5.node;
+
+	return result;
+}
+
+sval_u* node6(unsigned char type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, sval_u val6)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(28);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+	result[3].node = val3.node;
+	result[4].node = val4.node;
+	result[5].node = val5.node;
+	result[6].node = val6.node;
+
+	return result;
+}
+
+sval_u* node7(unsigned char type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, sval_u val6, sval_u val7)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(32);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+	result[3].node = val3.node;
+	result[4].node = val4.node;
+	result[5].node = val5.node;
+	result[6].node = val6.node;
+	result[7].node = val7.node;
+
+	return result;
+}
+
+sval_u* node8(unsigned char type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, sval_u val6, sval_u val7, sval_u val8)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(36);
+	result->type = type;
+
+	result[1].node = val1.node;
+	result[2].node = val2.node;
+	result[3].node = val3.node;
+	result[4].node = val4.node;
+	result[5].node = val5.node;
+	result[6].node = val6.node;
+	result[7].node = val7.node;
+	result[8].node = val8.node;
+
+	return result;
+}
+
+sval_u node_pos(sval_u pool)
+{
+	return pool;
+}
+
+sval_u append_node(sval_u val1, sval_u val2)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
+
+	result[0] = val2;
+	result[1].type = 0;
+
+	val1.node[1].node[1].node = result;
+	val1.node[1].node = result;
+
+	return val1;
+}
+
+sval_u prepend_node(sval_u val1, sval_u val2)
+{
+	sval_u *result;
+
+	result = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
+
+	result[0] = val1;
+	result[1] = val2.node[0];
+
+	val2.node->node = result;
+
+	return val2;
+}
+
+sval_u linked_list_end(sval_u val)
+{
+	sval_u result;
+	sval_u *node;
+
+	node = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
+
+	node[0] = val;
+	node[1].type = 0;
+
+	result.node = (sval_u *)Hunk_AllocateTempMemoryHighInternal(8);
+	result.node->node = node;
+	result.node[1].node = node;
+
+	return result;
+}
+
 yy_buffer_state* QDECL yy_create_buffer(FILE *file, int bufferSize)
 {
 	yy_buffer_state *yybufState;
