@@ -413,7 +413,7 @@ void PM_Friction(playerState_s *ps, pml_t *pml)
 			drop = control * friction->current.decimal * pml->frametime + 0.0;
 		}
 
-		if ( ps->pm_type == 4 )
+		if ( ps->pm_type == PM_SPECTATOR )
 			drop = speed * 5.0 * pml->frametime + drop;
 
 		newspeed = speed - drop;
@@ -460,13 +460,13 @@ float PM_MoveScale(playerState_s *ps, float fmove, float rmove, float umove)
 		if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
 			scale = scale * 0.40000001;
 
-		if ( ps->pm_type == 2 )
+		if ( ps->pm_type == PM_NOCLIP )
 			scale = scale * 3.0;
 
-		if ( ps->pm_type == 3 )
+		if ( ps->pm_type == PM_UFO )
 			scale = scale * 6.0;
 
-		if ( ps->pm_type == 4 )
+		if ( ps->pm_type == PM_SPECTATOR )
 			return scale * player_spectateSpeedScale->current.decimal;
 
 		return scale;
@@ -513,13 +513,13 @@ float QDECL PM_CmdScale(playerState_s *ps, usercmd_s *cmd)
 		if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
 			scale = scale * 0.40000001;
 
-		if ( ps->pm_type == 2 )
+		if ( ps->pm_type == PM_NOCLIP )
 			scale = scale * 3.0;
 
-		if ( ps->pm_type == 3 )
+		if ( ps->pm_type == PM_UFO )
 			scale = scale * 6.0;
 
-		if ( ps->pm_type == 4 )
+		if ( ps->pm_type == PM_SPECTATOR )
 			return scale * player_spectateSpeedScale->current.decimal;
 
 		return scale;
@@ -805,7 +805,7 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 			}
 		}
 	}
-	else if ( ps->pm_type == 4 )
+	else if ( ps->pm_type == PM_SPECTATOR )
 	{
 		ps->viewHeightCurrent = 0.0;
 	}
@@ -830,7 +830,7 @@ void PM_CheckDuck(pmove_t *pm, pml_t *pml)
 	ps = pm->ps;
 	pm->proneChange = 0;
 
-	if ( ps->pm_type == 4 )
+	if ( ps->pm_type == PM_SPECTATOR )
 	{
 		pm->mins[0] = -8.0;
 		pm->mins[1] = -8.0;
@@ -860,7 +860,7 @@ void PM_CheckDuck(pmove_t *pm, pml_t *pml)
 		pm->maxs[1] = ps->maxs[1];
 		pm->mins[2] = ps->mins[2];
 
-		if ( ps->pm_type <= 5 )
+		if ( ps->pm_type <= PM_INTERMISSION )
 		{
 			if ( (ps->eFlags & 0x300) != 0 )
 			{
@@ -1191,7 +1191,7 @@ void PM_UpdatePlayerWalkingFlag(pmove_t *pm)
 	ps = pm->ps;
 	ps->pm_flags &= ~0x100u;
 
-	if ( ps->pm_type <= 5
+	if ( ps->pm_type <= PM_INTERMISSION
 	        && (pm->cmd.buttons & 0x1000) != 0
 	        && (ps->pm_flags & 1) == 0
 	        && (ps->pm_flags & 0x40) != 0
@@ -1484,11 +1484,11 @@ float PM_CmdScale_Walk(pmove_t *pm, usercmd_s *cmd)
 		if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
 			totalSpeed = totalSpeed * 0.40000001;
 
-		if ( ps->pm_type == 2 )
+		if ( ps->pm_type == PM_NOCLIP )
 		{
 			totalSpeed = totalSpeed * 3.0;
 		}
-		else if ( ps->pm_type == 3 )
+		else if ( ps->pm_type == PM_UFO )
 		{
 			totalSpeed = totalSpeed * 6.0;
 		}
@@ -2039,7 +2039,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 	float newspeed;
 
 	ps = pm->ps;
-	if ( pm->ps->pm_type > 5 )
+	if ( pm->ps->pm_type > PM_INTERMISSION )
 		return;
 	if ( ps->clientNum > 63 )
 		ci = 0;
@@ -2062,7 +2062,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 		goto LABEL_145;
 	}
 	stance = PM_GetEffectiveStance(ps);
-	if ( ps->groundEntityNum == 1023 && ps->pm_type != 1 )
+	if ( ps->groundEntityNum == 1023 && ps->pm_type != PM_NORMAL_LINKED )
 	{
 		if ( (ps->pm_flags & 0x20) != 0 )
 		{
@@ -2087,7 +2087,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 	animWalking = 0;
 	if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
 		animWalking = 1;
-	if ( player_moveThreshhold->current.decimal > (float)pm->xyspeed || ps->pm_type == 1 )
+	if ( player_moveThreshhold->current.decimal > (float)pm->xyspeed || ps->pm_type == PM_NORMAL_LINKED )
 	{
 		if ( pm->xyspeed < 1.0 )
 			ps->bobCycle = 0;
@@ -2415,7 +2415,7 @@ void PM_CheckLadderMove(pmove_t *pm, pml_t *pml)
 
 			Vec3Normalize(vLadderCheckDir);
 		}
-		if ( ps->pm_type <= 5 )
+		if ( ps->pm_type <= PM_INTERMISSION )
 		{
 			if ( (ps->pm_flags & 0x40000) != 0 || PM_GetEffectiveStance(ps) == 1 || pm->cmd.serverTime - ps->jumpTime <= 299 )
 			{
@@ -2513,7 +2513,7 @@ void PmoveSingle(pmove_t *pmove)
 
 	ps->pm_flags &= ~0x10000u;
 
-	if ( ps->pm_type > 5 )
+	if ( ps->pm_type > PM_INTERMISSION )
 		pmove->tracemask &= ~0x2000000u;
 
 	if ( (ps->pm_flags & 1) != 0 )
@@ -2562,7 +2562,7 @@ void PmoveSingle(pmove_t *pmove)
 	ps->eFlags = flags;
 	ps->eFlags &= ~0x40u;
 
-	if ( ps->pm_type != 5
+	if ( ps->pm_type != PM_INTERMISSION
 	        && (ps->pm_flags & 0x1000) == 0
 	        && (ps->weaponstate == WEAPON_READY || ps->weaponstate == WEAPON_FIRING)
 	        && PM_WeaponAmmoAvailable(ps)
@@ -2571,7 +2571,7 @@ void PmoveSingle(pmove_t *pmove)
 		ps->eFlags |= 0x40u;
 	}
 
-	if ( ps->pm_type <= 5 && (pmove->cmd.buttons & 0x4001) == 0 )
+	if ( ps->pm_type <= PM_INTERMISSION && (pmove->cmd.buttons & 0x4001) == 0 )
 		ps->pm_flags &= ~0x1000u;
 
 	memset(&pml, 0, sizeof(pml));
@@ -2605,7 +2605,7 @@ void PmoveSingle(pmove_t *pmove)
 	{
 		ps->pm_flags |= 0x80u;
 	}
-	if ( ps->pm_type > 5 )
+	if ( ps->pm_type > PM_INTERMISSION )
 	{
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.rightmove = 0;
@@ -2618,8 +2618,8 @@ void PmoveSingle(pmove_t *pmove)
 	Mantle_ClearHint(ps);
 	switch ( ps->pm_type )
 	{
-	case 1:
-	case 7:
+	case PM_NORMAL_LINKED:
+	case PM_DEAD_LINKED:
 		PM_ClearLadderFlag(ps);
 		ps->groundEntityNum = 1023;
 		memset(&pml.walking, 0, 12);
@@ -2631,7 +2631,7 @@ void PmoveSingle(pmove_t *pmove)
 		PM_Footsteps(pmove, &pml);
 		PM_Weapon(pmove, &pml);
 		break;
-	case 2:
+	case PM_NOCLIP:
 		PM_ClearLadderFlag(ps);
 		PM_UpdateAimDownSightFlag(pmove, &pml);
 		PM_UpdatePlayerWalkingFlag(pmove);
@@ -2639,7 +2639,7 @@ void PmoveSingle(pmove_t *pmove)
 		PM_DropTimers(ps, &pml);
 		PM_UpdateAimDownSightLerp(pmove, &pml);
 		break;
-	case 3:
+	case PM_UFO:
 		PM_ClearLadderFlag(ps);
 		PM_UpdateAimDownSightFlag(pmove, &pml);
 		PM_UpdatePlayerWalkingFlag(pmove);
@@ -2647,7 +2647,7 @@ void PmoveSingle(pmove_t *pmove)
 		PM_DropTimers(ps, &pml);
 		PM_UpdateAimDownSightLerp(pmove, &pml);
 		break;
-	case 4:
+	case PM_SPECTATOR:
 		PM_ClearLadderFlag(ps);
 		PM_UpdateAimDownSightFlag(pmove, &pml);
 		PM_UpdatePlayerWalkingFlag(pmove);
@@ -2656,7 +2656,7 @@ void PmoveSingle(pmove_t *pmove)
 		PM_DropTimers(ps, &pml);
 		PM_UpdateAimDownSightLerp(pmove, &pml);
 		break;
-	case 5:
+	case PM_INTERMISSION:
 		PM_ClearLadderFlag(ps);
 		PM_UpdateAimDownSightFlag(pmove, &pml);
 		PM_UpdateAimDownSightLerp(pmove, &pml);
@@ -2700,7 +2700,7 @@ void PmoveSingle(pmove_t *pmove)
 				PM_UpdateAimDownSightFlag(pmove, &pml);
 				PM_UpdatePlayerWalkingFlag(pmove);
 				PM_UpdatePronePitch(pmove, &pml);
-				if ( ps->pm_type == 6 )
+				if ( ps->pm_type == PM_DEAD )
 					PM_DeadMove(ps, &pml);
 				PM_CheckLadderMove(pmove, &pml);
 				PM_DropTimers(ps, &pml);

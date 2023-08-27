@@ -788,7 +788,7 @@ int QDECL BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, q
 	animScriptCommand_t *script;
 	animScriptItem_t *item;
 
-	if ( event != ANIM_ET_DEATH && ps->pm_type > 5 )
+	if ( event != ANIM_ET_DEATH && ps->pm_type > PM_INTERMISSION )
 		return -1;
 
 	if ( !globalScriptData->scriptEvents[event].numItems )
@@ -917,7 +917,7 @@ int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean 
 
 	item = 0;
 
-	if ( ps->pm_type > 5 )
+	if ( ps->pm_type > PM_INTERMISSION )
 		return -1;
 
 	while ( !item && state >= AISTATE_RELAXED )

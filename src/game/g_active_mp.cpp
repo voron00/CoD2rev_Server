@@ -180,7 +180,7 @@ void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, 
 	if ( (ps->eFlags & 0x300) != 0 )
 		s->otherEntityNum = ps->viewlocked_entNum;
 
-	if ( ps->pm_type <= 5 )
+	if ( ps->pm_type <= PM_INTERMISSION )
 		flags = s->eFlags & 0xFFFDFFFF;
 	else
 		flags = s->eFlags | 0x20000;
@@ -274,7 +274,7 @@ void G_TouchTriggers(gentity_s *ent)
 	int entities;
 	int i;
 
-	if ( ent->client->ps.pm_type <= 1 )
+	if ( ent->client->ps.pm_type <= PM_NORMAL_LINKED )
 	{
 		VectorSubtract(ent->client->ps.origin, TouchTriggersgentity_range, mins);
 		VectorAdd(ent->client->ps.origin, TouchTriggersgentity_range, maxs);
@@ -525,7 +525,7 @@ void SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
 
 	if ( (client->ps.pm_flags & 0x400000) == 0 )
 	{
-		client->ps.pm_type = 4;
+		client->ps.pm_type = PM_SPECTATOR;
 
 		if ( G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
 			client->ps.speed = 400;
@@ -603,7 +603,7 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 				memcpy(&pm.cmd, ucmd, sizeof(pm.cmd));
 				pm.oldcmd = client->sess.oldcmd;
 
-				if ( client->ps.pm_type <= 5 )
+				if ( client->ps.pm_type <= PM_INTERMISSION )
 					pm.tracemask = 42008593;
 				else
 					pm.tracemask = 8454161;
@@ -1274,7 +1274,6 @@ void ClientEndFrame(gentity_s *entity)
 {
 	int flags;
 	byte handler;
-	int pm_type;
 	DObj_s *pDObj;
 	vec3_t angles;
 	vec3_t origin;
@@ -1326,11 +1325,10 @@ void ClientEndFrame(gentity_s *entity)
 			else if ( client->sess.sessionState == STATE_DEAD )
 			{
 				if ( entity->tagInfo )
-					pm_type = PM_DEAD_LINKED;
+					client->ps.pm_type = PM_DEAD_LINKED;
 				else
-					pm_type = PM_DEAD;
+					client->ps.pm_type = PM_DEAD;
 
-				client->ps.pm_type = pm_type;
 				entity->r.svFlags |= 1u;
 				entity->r.svFlags &= ~2u;
 				entity->takedamage = 0;
@@ -1449,8 +1447,6 @@ void ClientEndFrame(gentity_s *entity)
 
 void G_RunClient(gentity_s *ent)
 {
-	int pm_type;
-
 	if ( g_synchronousClients->current.boolean )
 	{
 		ent->client->sess.cmd.serverTime = level.time;
@@ -1462,11 +1458,10 @@ void G_RunClient(gentity_s *ent)
 		if ( ent->tagInfo )
 		{
 			if ( ent->client->sess.sessionState == STATE_DEAD )
-				pm_type = PM_DEAD_LINKED;
+				ent->client->ps.pm_type = PM_DEAD_LINKED;
 			else
-				pm_type = PM_NORMAL_LINKED;
+				ent->client->ps.pm_type = PM_NORMAL_LINKED;
 
-			ent->client->ps.pm_type = pm_type;
 			G_SetFixedLink(ent, 2);
 			G_SetOrigin(ent, ent->r.currentOrigin);
 			G_SetAngle(ent, ent->r.currentAngles);

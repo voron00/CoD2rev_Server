@@ -235,7 +235,6 @@ void LookAtKiller(gentity_s *self, gentity_s *inflictor, gentity_s *attacker)
 
 void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int meansOfDeath, int iWeapon, const float *vDir, int hitLoc, int psTimeOffset)
 {
-	int type;
 	gentity_s *turret;
 	gclient_s *client;
 	vec3_t origin;
@@ -244,7 +243,7 @@ void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int 
 	int i;
 
 	if ( Com_GetServerDObj(self->client->ps.clientNum)
-	        && self->client->ps.pm_type <= 1
+	        && self->client->ps.pm_type <= PM_NORMAL_LINKED
 	        && (self->client->ps.pm_flags & 0x400000) == 0 )
 	{
 		if ( attacker->s.eType == ET_TURRET && attacker->r.ownerNum != 1023 )
@@ -278,12 +277,11 @@ void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int 
 			fire_grenade(self, origin, dir, self->client->ps.offHandIndex, self->client->ps.grenadeTimeLeft);
 		}
 
-		if ( self->client->ps.pm_type == 1 )
-			type = 7;
+		if ( self->client->ps.pm_type == PM_NORMAL_LINKED )
+			self->client->ps.pm_type = PM_DEAD_LINKED;
 		else
-			type = 6;
+			self->client->ps.pm_type = PM_DEAD;
 
-		self->client->ps.pm_type = type;
 		deathAnimDuration = BG_AnimScriptEvent(&self->client->ps, ANIM_ET_DEATH, 0, 1);
 
 		Scr_PlayerKilled(

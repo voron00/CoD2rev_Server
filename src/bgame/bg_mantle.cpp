@@ -452,7 +452,7 @@ void Mantle_Check(pmove_t *pmove, pml_t *pml)
 		ps = pmove->ps;
 		Mantle_ClearHint(pmove->ps);
 
-		if ( ps->pm_type <= 5 )
+		if ( ps->pm_type <= PM_INTERMISSION )
 		{
 			if ( (ps->pm_flags & 4) != 0 )
 			{

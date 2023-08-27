@@ -237,7 +237,7 @@ void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
 	}
 	else
 	{
-		if ( ps->groundEntityNum != 1023 || ps->pm_type == 1 )
+		if ( ps->groundEntityNum != 1023 || ps->pm_type == PM_NORMAL_LINKED )
 		{
 			if ( (ps->eFlags & 8) != 0 )
 			{
@@ -283,7 +283,7 @@ void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
 					sppedSquared = sppedSquared + weaponDef->hipSpreadMoveAdd;
 			}
 
-			if ( ps->groundEntityNum == 1023 && ps->pm_type != 1 )
+			if ( ps->groundEntityNum == 1023 && ps->pm_type != PM_NORMAL_LINKED )
 			{
 				for ( j = 0; j <= 1; ++j )
 					sppedSquared = sppedSquared + 1.28;
@@ -582,7 +582,7 @@ bool PM_UpdateGrenadeThrow(playerState_s *ps, pml_t *pml)
 
 void PM_StartWeaponAnim(playerState_s *ps, int anim)
 {
-	if ( ps->pm_type <= 5 )
+	if ( ps->pm_type <= PM_INTERMISSION )
 		ps->weapAnim = anim | ps->weapAnim & 0x200 ^ 0x200;
 }
 
@@ -1818,12 +1818,12 @@ bool PM_IsAdsAllowed(playerState_s *ps, pml_t *pml)
 {
 	unsigned int weapon;
 
-	if ( ps->pm_type == 1 )
+	if ( ps->pm_type == PM_NORMAL_LINKED )
 	{
 		if ( pml->almostGroundPlane )
 			return 0;
 	}
-	else if ( ps->pm_type >= 1 && ps->pm_type <= 7 )
+	else if ( ps->pm_type >= PM_NORMAL_LINKED && ps->pm_type <= PM_DEAD_LINKED )
 	{
 		return 0;
 	}
@@ -2203,7 +2203,7 @@ void PM_Weapon(pmove_t *pm, pml_t *pml)
 
 	if ( (pm->ps->pm_flags & 0x1000) == 0 )
 	{
-		if ( ps->pm_type <= 5 )
+		if ( ps->pm_type <= PM_INTERMISSION )
 		{
 			if ( (ps->eFlags & 0x300) == 0 )
 			{

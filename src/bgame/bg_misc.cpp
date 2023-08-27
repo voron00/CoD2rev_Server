@@ -496,7 +496,7 @@ void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, 
 	if ( (ps->eFlags & 0x300) != 0 )
 		s->otherEntityNum = ps->viewlocked_entNum;
 
-	if ( ps->pm_type <= 5 )
+	if ( ps->pm_type <= PM_INTERMISSION )
 		flags = s->eFlags & 0xFFFDFFFF;
 	else
 		flags = s->eFlags | 0x20000;

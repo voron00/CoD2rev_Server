@@ -237,7 +237,7 @@ bool QDECL Jump_Check(pmove_t *pm, pml_t *pml)
 	if ( (ps->pm_flags & 4) != 0 )
 		return 0;
 
-	if ( ps->pm_type > 5 )
+	if ( ps->pm_type > PM_INTERMISSION )
 		return 0;
 
 	if ( PM_GetEffectiveStance(ps) )
