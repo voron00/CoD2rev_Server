@@ -710,7 +710,7 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 	int size;
 	char *buf;
 	VariableUnion tempValue;
-	unsigned int parentId;
+	unsigned int parentLocalId;
 	unsigned int localId;
 
 	size = stackValue->size;
@@ -726,7 +726,7 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 
 		if ( type == VAR_CODEPOS )
 		{
-			parentId = GetParentLocalId(localId);
+			parentLocalId = GetParentLocalId(localId);
 			Scr_KillThread(localId);
 			RemoveRefToObject(localId);
 
@@ -736,7 +736,7 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 				*buf = 0;
 				Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
 				stackValue->pos = tempValue.codePosValue;
-				stackValue->localId = parentId;
+				stackValue->localId = parentLocalId;
 				stackValue->size = size;
 				entryValue.type = VAR_STACK;
 				entryValue.u.stackValue = stackValue;
@@ -747,7 +747,7 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 				return;
 			}
 
-			localId = parentId;
+			localId = parentLocalId;
 		}
 		else
 		{

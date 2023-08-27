@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #define MAX_SUBMODELS 1024
-#define CAPSULE_MODEL_HANDLE 1023
 #define RADIUS_EPSILON 1.0f
 
 // plane types are used to speed some tests

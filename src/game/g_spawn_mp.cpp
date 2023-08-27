@@ -405,9 +405,9 @@ void G_ParseEntityField(const char *key, const char *value, gentity_s *ent)
 	case F_VECTOR:
 		VectorClear(vector);
 		sscanf(value, "%f %f %f", vector, &vector[1], &vector[2]);
-		*(vec_t *)((char *)&entity->s.number + f->ofs) = vector[0];
-		*(vec_t *)((char *)&entity->s.eType + f->ofs) = vector[1];
-		*(vec_t *)((char *)&entity->s.eFlags + f->ofs) = vector[2];
+		*(float *)((char *)&entity->s.number + f->ofs) = vector[0];
+		*(float *)((char *)&entity->s.eType + f->ofs) = vector[1];
+		*(float *)((char *)&entity->s.eFlags + f->ofs) = vector[2];
 		break;
 
 	case F_MODEL:

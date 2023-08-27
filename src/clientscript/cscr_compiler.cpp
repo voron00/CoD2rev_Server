@@ -4167,8 +4167,8 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 	unsigned short name;
 	VariableValue value;
 	unsigned int posId;
-	unsigned int k;
 	unsigned int id;
+	unsigned int includeFilePosId;
 	PrecacheEntry *precachescript;
 	PrecacheEntry *precachescript2;
 	PrecacheEntry *precachescriptList;
@@ -4205,9 +4205,9 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 	{
 		precachescript = &precachescriptList[i];
 		filename = precachescript->filename;
-		id = Scr_LoadScript(SL_ConvertToString(filename));
+		includeFilePosId = Scr_LoadScript(SL_ConvertToString(filename));
 
-		if ( !id )
+		if ( !includeFilePosId )
 		{
 			CompileError(precachescript->sourcePos, "Could not find script '%s'", SL_ConvertToString(filename));
 			return;
@@ -4233,11 +4233,11 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 			precachescript->include = 0;
 
-			for ( k = FindNextSibling(id); k; k = FindNextSibling(k) )
+			for ( id = FindNextSibling(includeFilePosId); id; id = FindNextSibling(id) )
 			{
-				if ( Scr_GetObjectType(k) == VAR_OBJECT )
+				if ( Scr_GetObjectType(id) == VAR_OBJECT )
 				{
-					posId = FindObject(k);
+					posId = FindObject(id);
 					index = FindVariable(posId, 1);
 
 					if ( index )
@@ -4246,7 +4246,7 @@ void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId)
 
 						if ( includePos.type != VAR_INCLUDE_CODEPOS )
 						{
-							name = GetVariableName(k);
+							name = GetVariableName(id);
 							threadCountId = GetObjectA(GetVariable(filePosId, name));
 							includePosId = SpecifyThreadPosition(threadCountId, name, precachescript->sourcePos, VAR_INCLUDE_CODEPOS);
 							pos = GetVariableValueAddress(includePosId);

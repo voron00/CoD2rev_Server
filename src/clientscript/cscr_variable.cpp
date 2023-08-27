@@ -2132,7 +2132,7 @@ void Scr_EvalSizeValue(VariableValue *value)
 	else if ( value->type == VAR_STRING )
 	{
 		value->type = VAR_INTEGER;
-		stringValue = value->u.intValue;
+		stringValue = value->u.stringValue;
 		value->u.intValue = strlen(SL_ConvertToString(value->u.intValue));
 		SL_RemoveRefToString(stringValue);
 	}
