@@ -3100,3 +3100,111 @@ void PM_LadderMove(pmove_t *pm, pml_t *pml)
 		ps->movementDir = (char)moveyaw;
 	}
 }
+
+void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
+{
+	int bProneOK;
+	unsigned char handler;
+	playerState_s *ps;
+	float delta;
+	float fTargPitch;
+
+	ps = pm->ps;
+
+	if ( ((LOBYTE(pm->ps->pm_flags) ^ 1) & 1) == 0 )
+	{
+		if ( ps->groundEntityNum == 1023 )
+		{
+			handler = pm->handler;
+
+			if ( pml->groundPlane )
+				bProneOK = BG_CheckProne(
+				               ps->clientNum,
+				               ps->origin,
+				               ps->maxs[0],
+				               30.0,
+				               ps->proneDirection,
+				               &ps->fTorsoHeight,
+				               &ps->fTorsoPitch,
+				               &ps->fWaistPitch,
+				               1,
+				               ps->groundEntityNum != 1023,
+				               pml->groundTrace.normal,
+				               handler,
+				               0,
+				               66.0);
+			else
+				bProneOK = BG_CheckProne(
+				               ps->clientNum,
+				               ps->origin,
+				               ps->maxs[0],
+				               30.0,
+				               ps->proneDirection,
+				               &ps->fTorsoHeight,
+				               &ps->fTorsoPitch,
+				               &ps->fWaistPitch,
+				               1,
+				               ps->groundEntityNum != 1023,
+				               0,
+				               handler,
+				               0,
+				               66.0);
+			if ( !bProneOK )
+			{
+				BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 0, ps);
+				ps->pm_flags |= 0x10000u;
+			}
+		}
+		else if ( pml->groundPlane && pml->groundTrace.normal[2] < 0.69999999 )
+		{
+			BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 0, ps);
+		}
+
+		if ( pml->groundPlane )
+			fTargPitch = PitchForYawOnNormal(ps->proneDirection, pml->groundTrace.normal);
+		else
+			fTargPitch = 0.0;
+
+		delta = AngleDelta(fTargPitch, ps->proneDirectionPitch);
+
+		if ( delta != 0.0 )
+		{
+			if ( fabs(delta) <= pml->frametime * 70.0 )
+				ps->proneDirectionPitch = ps->proneDirectionPitch + delta;
+			else
+			{
+				if ( delta < 0.0 )
+					delta = -1.0;
+				else
+					delta = 1.0;
+
+				ps->proneDirectionPitch = (float)((float)(70.0 * pml->frametime) * delta) + ps->proneDirectionPitch;
+			}
+
+			ps->proneDirectionPitch = AngleNormalize180Accurate(ps->proneDirectionPitch);
+		}
+		if ( pml->groundPlane )
+			fTargPitch = PitchForYawOnNormal(ps->viewangles[1], pml->groundTrace.normal);
+		else
+			fTargPitch = 0.0;
+
+		delta = AngleDelta(fTargPitch, ps->proneTorsoPitch);
+
+		if ( delta != 0.0 )
+		{
+			if ( fabs(delta) <= pml->frametime * 70.0 )
+				ps->proneTorsoPitch = ps->proneTorsoPitch + delta;
+			else
+			{
+				if ( delta < 0.0 )
+					delta = -1.0;
+				else
+					delta = 1.0;
+
+				ps->proneTorsoPitch = (float)((float)(70.0 * pml->frametime) * delta) + ps->proneTorsoPitch;
+			}
+
+			ps->proneTorsoPitch = AngleNormalize180Accurate(ps->proneTorsoPitch);
+		}
+	}
+}

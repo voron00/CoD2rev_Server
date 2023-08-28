@@ -998,7 +998,7 @@ unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolea
 void QDECL PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
 void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
 qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm);
-int QDECL BG_CheckProne(int clientNum, const float *vPos, float fSize, float fHeight, float fYaw, float *pfTorsoPitch, float *pfWaistPitch, float *angles, int isAlreadyProne, int isOnGround, float *a11, unsigned char handler, int proneCheckType, float prone_feet_dist);
+int QDECL BG_CheckProne(int passEntityNum, float const * const vPos, float fSize, float fHeight, float fYaw, float * pfTorsoHeight, float * pfTorsoPitch, float * pfWaistPitch, int bAlreadyProne, int bOnGround, float * const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist);
 int QDECL PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel);
 void QDECL PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
 void QDECL PM_AddTouchEnt(pmove_t *pm, int entityNum);

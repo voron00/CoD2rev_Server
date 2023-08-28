@@ -595,6 +595,248 @@ qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item
 	       && ps->origin[2] - origin[2] >= -88.0;
 }
 
+int BG_CheckProneValid(int passEntityNum, const float *const vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, int bAlreadyProne, int bOnGround, float *const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist)
+{
+	float feetPitch;
+	float feetPosPitch;
+	float proneFeedScale;
+	float feetDist;
+	float yawDist;
+	char bLanded;
+	void (*traceFunc)(trace_t *, const float *, const float *, const float *, const float *, int, int);
+	float frac;
+	int bFirstTraceHit;
+	float feetFrac;
+	float feetHeight;
+	float normalPos;
+	float dist;
+	float angle1;
+	float angle2;
+	vec3_t vEnd;
+	vec3_t vWaistPos;
+	vec3_t vEndPos;
+	vec3_t vUp;
+	vec3_t vRight;
+	vec3_t vForward;
+	vec3_t vFeetPos;
+	vec3_t maxs;
+	vec3_t mins;
+	vec3_t angles;
+	vec3_t start;
+	trace_t trace;
+	int contentMask;
+
+	bFirstTraceHit = 0;
+	bLanded = 1;
+
+	traceFunc = pmoveHandlers[handler].trace;
+
+	VectorSet(mins, -fSize, -fSize, 0.0);
+	VectorAdd(mins, vPos, mins);
+	VectorSet(maxs, fSize, fSize, fHeight);
+	VectorAdd(maxs, vPos, maxs);
+
+	if ( proneCheckType )
+		contentMask = 8519697;
+	else
+		contentMask = 8454161;
+
+	if ( !bAlreadyProne )
+	{
+		VectorSet(mins, -fSize, -fSize, 0.0);
+		VectorSet(maxs, fSize, fSize, fHeight);
+		VectorCopy(vPos, start);
+		VectorCopy(vPos, angles);
+		angles[2] = angles[2] + 10.0;
+
+		traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+		if ( trace.allsolid )
+			return 0;
+	}
+
+	if ( bOnGround && vGroundNormal && vGroundNormal[2] < 0.69999999 )
+		return 0;
+
+	VectorSet(mins, -6.0, -6.0, -6.0);
+	VectorSet(maxs, 6.0, 6.0, 6.0);
+	yawDist = fYaw - 180.0;
+	VectorSet(angles, 0.0, yawDist, 0.0);
+	AngleVectors(angles, vForward, vRight, vUp);
+	feetHeight = fHeight - 6.0;
+	VectorCopy(vPos, start);
+	start[2] = start[2] + feetHeight;
+	proneFeedScale = prone_feet_dist - 6.0;
+	VectorMA(start, proneFeedScale, vForward, angles);
+	traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+	if ( trace.fraction >= 1.0 )
+	{
+		feetFrac = prone_feet_dist;
+	}
+	else
+	{
+		if ( !bOnGround )
+			return 0;
+
+		bFirstTraceHit = 1;
+		feetFrac = (prone_feet_dist - 6.0) * trace.fraction + 6.0;
+
+		if ( fSize + 2.0 > feetFrac )
+			return 0;
+
+		if ( feetHeight * 0.69999999 + 48.0 > feetFrac )
+		{
+			bFirstTraceHit = 0;
+			angles[2] = angles[2] + 22.0;
+			VectorSubtract(angles, start, vFeetPos);
+			normalPos = Vec3NormalizeTo(vFeetPos, vForward);
+
+			traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+			if ( trace.fraction >= 1.0 )
+			{
+				feetFrac = prone_feet_dist;
+			}
+			else
+			{
+				bFirstTraceHit = 1;
+				feetFrac = trace.fraction * normalPos + 6.0;
+
+				if ( feetHeight * 0.69999999 + 48.0 > feetFrac )
+					return 0;
+			}
+		}
+	}
+
+	Vec3Lerp(start, angles, trace.fraction, vEnd);
+	VectorMA(vPos, 48.0, vForward, start);
+	start[2] = start[2] + feetHeight;
+	VectorCopy(start, angles);
+	angles[2] = angles[2] - (fSize * 2.5 + feetHeight - 6.0);
+
+	traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+	if ( trace.fraction != 1.0 )
+	{
+		if ( trace.normal[2] < 0.69999999 )
+			return 0;
+
+		frac = (fSize * 2.5 + feetHeight - 6.0) * trace.fraction + 6.0;
+		Vec3Lerp(start, angles, trace.fraction, vWaistPos);
+		vWaistPos[2] = vWaistPos[2] - 6.0;
+
+		if ( !bFirstTraceHit )
+			goto LABEL_30;
+
+		if ( frac * -0.75 <= feetFrac - frac )
+		{
+			VectorSubtract(vEnd, vWaistPos, vFeetPos);
+			VectorMA(vFeetPos, 6.0, vForward, vFeetPos);
+			vFeetPos[2] = vFeetPos[2] + 6.0;
+			Vec3Normalize(vFeetPos);
+			feetDist = prone_feet_dist - 6.0 - 48.0;
+			VectorMA(start, feetDist, vFeetPos, angles);
+			angles[0] = ((prone_feet_dist - 6.0) * vForward[0] + vPos[0] + angles[0]) * 0.5;
+			angles[1] = ((prone_feet_dist - 6.0) * vForward[1] + vPos[1] + angles[1]) * 0.5;
+
+			traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+			if ( trace.fraction >= 1.0
+			        || (Vec3Lerp(start, angles, trace.fraction, start),
+			            start[2] = start[2] + 18.0,
+			            angles[2] = angles[2] + 18.0,
+			            traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask),
+			            trace.fraction >= 1.0) )
+			{
+				Vec3Lerp(start, angles, trace.fraction, vEnd);
+LABEL_30:
+				VectorCopy(vEnd, start);
+				VectorCopy(start, angles);
+				angles[2] = angles[2] - (start[2] - vWaistPos[2] + start[2] - vWaistPos[2] + fSize);
+				traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+				if ( trace.fraction != 1.0 )
+				{
+					if ( trace.normal[2] < 0.69999999 )
+						return 0;
+
+					Vec3Lerp(start, angles, trace.fraction, vEnd);
+					vEnd[2] = vEnd[2] - 6.0;
+					VectorCopy(vPos, vEndPos);
+					VectorSubtract(vWaistPos, vEndPos, vFeetPos);
+					angle2 = vectopitch(vFeetPos);
+					VectorSubtract(vEnd, vWaistPos, vFeetPos);
+					angle1 = vectopitch(vFeetPos);
+					dist = AngleSubtract(angle1, angle2);
+
+					if ( dist < -50.0 || dist > 70.0 )
+						bLanded = 0;
+
+					VectorSet(mins, -0.0, -0.0, -0.0);
+					VectorSet(maxs, 0.0, 0.0, 0.0);
+					VectorCopy(vEndPos, start);
+					start[2] = start[2] + 5.0;
+					VectorCopy(vWaistPos, angles);
+					angles[2] = angles[2] + 5.0;
+					traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+					if ( trace.fraction < 1.0 )
+						bLanded = 0;
+
+					VectorCopy(angles, start);
+					VectorCopy(vEnd, angles);
+					angles[2] = angles[2] + 5.0;
+
+					traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
+
+					if ( trace.fraction < 1.0 )
+						bLanded = 0;
+
+					if ( pfTorsoHeight )
+						*pfTorsoHeight = 0.0;
+
+					if ( pfTorsoPitch )
+					{
+						VectorSubtract(vEndPos, vWaistPos, vFeetPos);
+						feetPitch = vectopitch(vFeetPos);
+						*pfTorsoPitch = AngleNormalize180(feetPitch);
+					}
+
+					if ( pfWaistPitch )
+					{
+						VectorSubtract(vWaistPos, vEnd, vFeetPos);
+						feetPosPitch = vectopitch(vFeetPos);
+						*pfWaistPitch = AngleNormalize180(feetPosPitch);
+					}
+
+					if ( bLanded )
+						return 1;
+				}
+			}
+		}
+	}
+
+	if ( bOnGround )
+		return 0;
+
+	if ( pfTorsoHeight )
+		*pfTorsoHeight = 0.0;
+
+	if ( pfTorsoPitch )
+		*pfTorsoPitch = 0.0;
+
+	if ( pfWaistPitch )
+		*pfWaistPitch = 0.0;
+
+	return 1;
+}
+
+int QDECL BG_CheckProne(int passEntityNum, const float *const vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, int bAlreadyProne, int bOnGround, float *const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist)
+{
+	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
+}
+
 void BG_RegisterDvars()
 {
 	player_view_pitch_up = Dvar_RegisterFloat("player_view_pitch_up", 85.0, 0.0, 90.0, 0x1180u);

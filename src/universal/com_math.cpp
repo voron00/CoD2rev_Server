@@ -771,19 +771,45 @@ void YawVectors(const float yaw, vec3_t forward, vec3_t right)
 	}
 }
 
+float vectopitch( const vec3_t vec )
+{
+	double forward;
+	float at;
+	float a;
+
+	if ( 0.0 != vec[1] || 0.0 != vec[0] )
+	{
+		at = atan2(vec[2], sqrt(Square(vec[1]) + Square(vec[0])));
+		a = at * -180.0 / M_PI;
+		if ( a < 0.0 )
+		{
+			forward = a + 360.0;
+		}
+		else
+		{
+			forward = a + 0.0;
+		}
+	}
+	else if ( -vec[2] < 0.0 )
+	{
+		forward = 270.0;
+	}
+	else
+	{
+		forward = 90.0;
+	}
+	return forward;
+}
+
 float PitchForYawOnNormal(const float fYaw, const vec3_t normal)
 {
+	vec3_t dst;
 	vec3_t forward;
 
 	YawVectors(fYaw, forward, 0);
+	ProjectPointOnPlane(forward, normal, dst);
 
-	if ( normal[2] != 0 )
-	{
-		forward[2] = (normal[0] * forward[0] + normal[1] * forward[1]) / normal[2];
-		return atan(forward[2]) * 180.0 / M_PI;
-	}
-
-	return 270.0;
+	return vectopitch(dst);
 }
 
 float Abs(const float *v)
@@ -1265,6 +1291,6 @@ void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3)
 
 void I_sinCos(float value, float *pSin, float *pCos)
 {
-  *pSin = sin(value);
-  *pCos = cos(value);
+	*pSin = sin(value);
+	*pCos = cos(value);
 }

@@ -201,6 +201,7 @@ float AngleNormalize180Accurate(float angle);
 float AngleNormalize360Accurate(float angle);
 void VectorAngleMultiply(float *vec, float angle);
 float vectoyaw( const vec3_t vec );
+float vectopitch( const vec3_t vec );
 float PitchForYawOnNormal(const float fYaw, const vec3_t normal);
 float Abs(const float *v);
 void VectorRint(float *v);
