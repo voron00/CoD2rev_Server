@@ -344,7 +344,7 @@ qboolean ConsoleCommand()
 
 	if ( Q_stricmp( cmd, "say" ) == 0 )
 	{
-		SV_GameSendServerCommand(-1, 0, va("%c \"GAME_SERVER\x15: %s\"", 101, ConcatArgs(1)));
+		SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_SERVER\x15: %s\"", 101, ConcatArgs(1)));
 		return qtrue;
 	}
 

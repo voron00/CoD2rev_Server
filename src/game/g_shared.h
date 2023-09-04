@@ -53,10 +53,10 @@ typedef enum
 
 typedef enum
 {
-	STATE_PLAYING,
-	STATE_DEAD,
-	STATE_SPECTATOR,
-	STATE_INTERMISSION
+	SESS_STATE_PLAYING,
+	SESS_STATE_DEAD,
+	SESS_STATE_SPECTATOR,
+	SESS_STATE_INTERMISSION,
 } sessionState_t;
 
 typedef enum
@@ -1145,6 +1145,7 @@ struct useList_t
 #define KEY_MASK_MELEE          4
 #define KEY_MASK_USE            8
 #define KEY_MASK_RELOAD         16
+#define KEY_MASK_USERELOAD      32
 #define KEY_MASK_LEANLEFT       64
 #define KEY_MASK_LEANRIGHT      128
 #define KEY_MASK_PRONE          256
@@ -1543,7 +1544,7 @@ void Touch_Item_Auto(gentity_s *ent, gentity_s *other, int touched);
 void G_PlayerController(gentity_s *self, int *partBits);
 void BodyEnd(gentity_s *ent);
 void turret_think(gentity_s *self);
-void SendWeaponChangeInfo(int clientnum, int weapon);
+void G_SelectWeaponIndex(int clientNum, int iWeaponIndex);
 void G_Say(gentity_s *ent, gentity_s *target, int mode, const char *chatText);
 void GScr_AddEntity(gentity_s *pEnt);
 gentity_s* Drop_Item(gentity_s *ent, const gitem_s *item, float angle, int novelocity);

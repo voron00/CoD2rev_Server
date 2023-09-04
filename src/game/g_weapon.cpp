@@ -48,7 +48,7 @@ void G_AntiLagRewindClientPos(int gameTime, AntilagClientStore *antilagStore)
 			for ( clientNum = 0; clientNum < level.maxclients; ++clientNum )
 			{
 				if ( level.clients[clientNum].sess.connected == CON_CONNECTED
-				        && level.clients[clientNum].sess.sessionState == STATE_PLAYING
+				        && level.clients[clientNum].sess.sessionState == SESS_STATE_PLAYING
 				        && SV_GetClientPositionsAtTime(clientNum, gameTime, origin) )
 				{
 					//snapshotTime = gameTime;
@@ -136,7 +136,7 @@ void G_CalcMuzzlePoints(const gentity_s *ent, weaponParms *wp)
 
 void G_SetEquippedOffHand(int clientNum, int offHandIndex)
 {
-	SV_GameSendServerCommand(clientNum, 1, va("%c %i", 67, offHandIndex));
+	SV_GameSendServerCommand(clientNum, SV_CMD_RELIABLE, va("%c %i", 67, offHandIndex));
 }
 
 int G_GivePlayerWeapon(playerState_s *ps, int weapon)

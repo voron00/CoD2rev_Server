@@ -273,6 +273,12 @@ struct leakyBucket_s
 	leakyBucket_t *prev, *next;
 };
 
+enum svscmd_type
+{
+	SV_CMD_CAN_IGNORE = 0x0,
+	SV_CMD_RELIABLE = 0x1,
+};
+
 extern int sv_serverId_value;
 
 extern dvar_t *nextmap;

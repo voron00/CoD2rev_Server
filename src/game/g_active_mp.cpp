@@ -86,7 +86,7 @@ void G_UpdatePlayerContents(gentity_s *ent)
 	{
 		ent->r.contents = 0;
 	}
-	else if ( ent->client->sess.sessionState == STATE_DEAD )
+	else if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
 	{
 		ent->r.contents = 0;
 	}
@@ -469,7 +469,7 @@ int ClientInactivityTimer(gclient_s *client)
 		if ( level.time > client->inactivityTime - 10000 && !client->inactivityWarning )
 		{
 			client->inactivityWarning = 1;
-			SV_GameSendServerCommand(client - level.clients, 0, va("%c \"GAME_INACTIVEDROPWARNING\"", 99));
+			SV_GameSendServerCommand(client - level.clients, SV_CMD_CAN_IGNORE, va("%c \"GAME_INACTIVEDROPWARNING\"", 99));
 		}
 
 		return 1;
@@ -587,11 +587,11 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 
 			client->ps.pm_flags = flags;
 
-			if ( client->sess.sessionState == STATE_INTERMISSION )
+			if ( client->sess.sessionState == SESS_STATE_INTERMISSION )
 			{
 				ClientIntermissionThink(ent);
 			}
-			else if ( client->sess.sessionState == STATE_SPECTATOR )
+			else if ( client->sess.sessionState == SESS_STATE_SPECTATOR )
 			{
 				SpectatorThink(ent, ucmd);
 			}
@@ -1073,7 +1073,7 @@ int StuckInClient(gentity_s *self)
 
 		if ( hit->r.inuse
 		        && (hit->client->ps.pm_flags & 0x800000) != 0
-		        && hit->client->sess.sessionState == STATE_PLAYING
+		        && hit->client->sess.sessionState == SESS_STATE_PLAYING
 		        && hit != self
 		        && hit->client
 		        && hit->health > 0
@@ -1184,7 +1184,7 @@ unsigned int G_GetNonPVSPlayerInfo(gentity_s *pSelf, float *vPosition, int iLast
 		if ( pEnt->r.inuse )
 		{
 			if ( pEnt->client
-			        && pEnt->client->sess.sessionState == STATE_PLAYING
+			        && pEnt->client->sess.sessionState == SESS_STATE_PLAYING
 			        && pEnt->client->sess.state.team == team
 			        && pSelf != pEnt
 			        && !SV_inSnapshot(vPosition, pEnt->s.number) )
@@ -1290,12 +1290,12 @@ void ClientEndFrame(gentity_s *entity)
 
 	if ( client->sess.connected == CON_CONNECTED )
 	{
-		if ( client->sess.sessionState == STATE_INTERMISSION )
+		if ( client->sess.sessionState == SESS_STATE_INTERMISSION )
 		{
 			IntermissionClientEndFrame(entity);
 			entity->client->buttonsSinceLastFrame = 0;
 		}
-		else if ( client->sess.sessionState == STATE_SPECTATOR )
+		else if ( client->sess.sessionState == SESS_STATE_SPECTATOR )
 		{
 			SpectatorClientEndFrame(entity);
 			entity->client->buttonsSinceLastFrame = 0;
@@ -1322,7 +1322,7 @@ void ClientEndFrame(gentity_s *entity)
 			{
 				client->ps.pm_type = PM_UFO;
 			}
-			else if ( client->sess.sessionState == STATE_DEAD )
+			else if ( client->sess.sessionState == SESS_STATE_DEAD )
 			{
 				if ( entity->tagInfo )
 					client->ps.pm_type = PM_DEAD_LINKED;
@@ -1457,7 +1457,7 @@ void G_RunClient(gentity_s *ent)
 	{
 		if ( ent->tagInfo )
 		{
-			if ( ent->client->sess.sessionState == STATE_DEAD )
+			if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
 				ent->client->ps.pm_type = PM_DEAD_LINKED;
 			else
 				ent->client->ps.pm_type = PM_NORMAL_LINKED;

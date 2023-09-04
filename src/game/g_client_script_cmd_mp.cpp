@@ -64,16 +64,20 @@ scr_method_t player_methods[] =
 	{ "getguid", PlayerCmd_GetGuid, 0, },
 };
 
+void BodyEnd(gentity_s *ent)
+{
+	ent->s.eFlags &= ~0x80000u;
+	ent->r.contents = 0x4000000;
+	ent->r.svFlags = 0;
+}
+
 void PlayerCmd_giveWeapon(scr_entref_t entRef)
 {
-	WeaponDef *weapDef2;
-	WeaponDef *weapDef1;
 	gentity_s *pSelf;
-	gclient_s *client;
 	int hadWeapon;
 	int ammoCount;
-	int weapon;
-	const char *weaponName;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 	WeaponDef *weaponDef;
 
 	if ( entRef.classnum )
@@ -91,121 +95,113 @@ void PlayerCmd_giveWeapon(scr_entref_t entRef)
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weapon = G_GetWeaponIndexForName(weaponName);
-	client = pSelf->client;
-	hadWeapon = COM_BitTest(client->ps.weapons, weapon);
-	weaponDef = BG_GetWeaponDef(weapon);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
+	hadWeapon = COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex);
+	weaponDef = BG_GetWeaponDef(iWeaponIndex);
 
-	if ( BG_DoesWeaponNeedSlot(weapon) && !BG_GetEmptySlotForWeapon(&client->ps, weapon) )
+	if ( BG_DoesWeaponNeedSlot(iWeaponIndex) && !BG_GetEmptySlotForWeapon(&pSelf->client->ps, iWeaponIndex) )
 	{
-		weapDef2 = BG_GetWeaponDef(client->ps.weaponslots[2]);
-		weapDef1 = BG_GetWeaponDef(client->ps.weaponslots[1]);
-		Scr_ParamError(0, va("Cannot give %s weapon %s without having an empty weapon slot - player currently has a %s and a %s\n", pSelf->client->sess.state.name, weaponDef->szDisplayName, weapDef1->szDisplayName, weapDef2->szDisplayName));
+		Scr_ParamError(0, va("Cannot give %s weapon %s without having an empty weapon slot - player currently has a %s and a %s\n",
+		                     pSelf->client->sess.state.name, weaponDef->szDisplayName, BG_GetWeaponDef(pSelf->client->ps.weaponslots[1])->szDisplayName, BG_GetWeaponDef(pSelf->client->ps.weaponslots[2])->szDisplayName));
 	}
 
-	if ( G_GivePlayerWeapon(&client->ps, weapon) )
+	if ( G_GivePlayerWeapon(&pSelf->client->ps, iWeaponIndex) )
 	{
-		SV_GameSendServerCommand(pSelf - g_entities, 0, va("%c \"%i\"", 73, 1));
+		SV_GameSendServerCommand(pSelf - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 1));
 	}
 
-	ammoCount = weaponDef->startAmmo - client->ps.ammo[weaponDef->ammoIndex];
+	ammoCount = weaponDef->startAmmo - pSelf->client->ps.ammo[weaponDef->ammoIndex];
 
 	if ( ammoCount > 0 )
-		Add_Ammo(pSelf, weapon, ammoCount, hadWeapon == 0);
+		Add_Ammo(pSelf, iWeaponIndex, ammoCount, hadWeapon == 0);
 }
 
 void PlayerCmd_takeWeapon(scr_entref_t entref)
 {
-	gclient_s *client;
-	gentity_s *ent;
-	int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	client = ent->client;
-	client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
-	client = ent->client;
-	client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
+	pSelf->client->ps.ammo[BG_AmmoForWeapon(iWeaponIndex)] = 0;
+	pSelf->client->ps.ammoclip[BG_ClipForWeapon(iWeaponIndex)] = 0;
 
-	BG_TakePlayerWeapon(&ent->client->ps, weaponIndex);
+	BG_TakePlayerWeapon(&pSelf->client->ps, iWeaponIndex);
 }
 
 void PlayerCmd_takeAllWeapons(scr_entref_t entref)
 {
-	gclient_s *client;
-	gentity_s *ent;
-	int weaponIndex;
+	gentity_s *pSelf;
+	int iWeaponIndex;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	ent->client->ps.weapon = 0;
+	pSelf->client->ps.weapon = 0;
 
-	for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
+	for ( iWeaponIndex = 1; iWeaponIndex <= BG_GetNumWeapons(); ++iWeaponIndex )
 	{
-		client = ent->client;
-		client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
-		client = ent->client;
-		client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
+		pSelf->client->ps.ammo[BG_AmmoForWeapon(iWeaponIndex)] = 0;
+		pSelf->client->ps.ammoclip[BG_ClipForWeapon(iWeaponIndex)] = 0;
 
-		BG_TakePlayerWeapon(&ent->client->ps, weaponIndex);
+		BG_TakePlayerWeapon(&pSelf->client->ps, iWeaponIndex);
 	}
 }
 
 void PlayerCmd_getCurrentWeapon(scr_entref_t entref)
 {
-	gentity_s *ent;
-	int weaponIndex;
+	gentity_s *pSelf;
+	int iWeaponIndex;
 	WeaponDef *weaponDef;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( G_IsPlaying(ent) && (weaponIndex = ent->client->ps.weapon, weaponIndex > 0) )
+	if ( G_IsPlaying(pSelf) && (iWeaponIndex = pSelf->client->ps.weapon, iWeaponIndex > 0) )
 	{
-		weaponDef = BG_GetWeaponDef(weaponIndex);
+		weaponDef = BG_GetWeaponDef(iWeaponIndex);
 		Scr_AddString(weaponDef->szInternalName);
 	}
 	else
@@ -216,27 +212,27 @@ void PlayerCmd_getCurrentWeapon(scr_entref_t entref)
 
 void PlayerCmd_getCurrentOffhand(scr_entref_t entRef)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	WeaponDef *weaponDef;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	if ( G_IsPlaying(ent) && ent->client->ps.offHandIndex > 0 )
+	if ( G_IsPlaying(pSelf) && pSelf->client->ps.offHandIndex > 0 )
 	{
-		weaponDef = BG_GetWeaponDef(ent->client->ps.offHandIndex);
+		weaponDef = BG_GetWeaponDef(pSelf->client->ps.offHandIndex);
 		Scr_AddString(weaponDef->szInternalName);
 	}
 	else
@@ -247,29 +243,29 @@ void PlayerCmd_getCurrentOffhand(scr_entref_t entRef)
 
 void PlayerCmd_hasWeapon(scr_entref_t entref)
 {
-	gentity_s *ent;
-	int index;
-	const char *weaponName;
+	gentity_s *pSelf;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	index = BG_FindWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = BG_FindWeaponIndexForName(pszWeaponName);
 
-	if ( index && COM_BitTest(ent->client->ps.weapons, index) )
+	if ( iWeaponIndex && COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
 		Scr_AddBool(1);
 	else
 		Scr_AddBool(0);
@@ -277,36 +273,36 @@ void PlayerCmd_hasWeapon(scr_entref_t entref)
 
 void PlayerCmd_switchToWeapon(scr_entref_t entRef)
 {
-	gentity_s *ent;
-	int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( !weaponIndex )
+	if ( !iWeaponIndex )
 	{
-		Scr_ParamError(0, va("unknown weapon '%s'", weaponName));
+		Scr_ParamError(0, va("unknown weapon '%s'", pszWeaponName));
 	}
 
-	if ( COM_BitTest(ent->client->ps.weapons, weaponIndex) )
+	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
-		SendWeaponChangeInfo(entRef.entnum, weaponIndex);
+		G_SelectWeaponIndex(entRef.entnum, iWeaponIndex);
 		Scr_AddBool(1);
 	}
 	else
@@ -317,36 +313,36 @@ void PlayerCmd_switchToWeapon(scr_entref_t entRef)
 
 void PlayerCmd_switchToOffhand(scr_entref_t entref)
 {
-	gentity_s *ent;
-	int index;
-	const char *weaponName;
+	gentity_s *pSelf;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	index = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( !index )
+	if ( !iWeaponIndex )
 	{
-		Scr_ParamError(0, va("unknown weapon '%s'", weaponName));
+		Scr_ParamError(0, va("unknown weapon '%s'", pszWeaponName));
 	}
 
-	if ( COM_BitTest(ent->client->ps.weapons, index) )
+	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
-		G_SetEquippedOffHand(entref.entnum, index);
+		G_SetEquippedOffHand(entref.entnum, iWeaponIndex);
 		Scr_AddBool(1);
 	}
 	else
@@ -357,109 +353,109 @@ void PlayerCmd_switchToOffhand(scr_entref_t entref)
 
 void PlayerCmd_giveStartAmmo(scr_entref_t entref)
 {
-	gentity_s *ent;
-	int ammo;
-	int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	int ammoCount;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 	WeaponDef *weaponDef;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(ent->client->ps.weapons, weaponIndex) )
+	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
-		weaponDef = BG_GetWeaponDef(weaponIndex);
-		ammo = weaponDef->startAmmo - ent->client->ps.ammo[weaponDef->ammoIndex];
+		weaponDef = BG_GetWeaponDef(iWeaponIndex);
+		ammoCount = weaponDef->startAmmo - pSelf->client->ps.ammo[weaponDef->ammoIndex];
 
-		if ( ammo > 0 )
-			Add_Ammo(ent, weaponIndex, ammo, 0);
+		if ( ammoCount > 0 )
+			Add_Ammo(pSelf, iWeaponIndex, ammoCount, 0);
 	}
 }
 
 void PlayerCmd_giveMaxAmmo(scr_entref_t entRef)
 {
-	gentity_s *ent;
-	int ammo;
-	int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	int ammoCount;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 	WeaponDef *weaponDef;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(ent->client->ps.weapons, weaponIndex) )
+	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
-		weaponDef = BG_GetWeaponDef(weaponIndex);
-		ammo = BG_GetMaxAmmo(weaponDef->ammoIndex) - ent->client->ps.ammo[weaponDef->ammoIndex];
+		weaponDef = BG_GetWeaponDef(iWeaponIndex);
+		ammoCount = BG_GetMaxAmmo(weaponDef->ammoIndex) - pSelf->client->ps.ammo[weaponDef->ammoIndex];
 
-		if ( ammo > 0 )
-			Add_Ammo(ent, weaponIndex, ammo, 0);
+		if ( ammoCount > 0 )
+			Add_Ammo(pSelf, iWeaponIndex, ammoCount, 0);
 	}
 }
 
 void PlayerCmd_getFractionStartAmmo(scr_entref_t entRef)
 {
-	gentity_s *ent;
-	float ammo;
-	int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	float fAmmoFrac;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 	WeaponDef *weaponDef;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(ent->client->ps.weapons, weaponIndex)
-	        && (weaponDef = BG_GetWeaponDef(weaponIndex), weaponDef->startAmmo > 0) )
+	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex)
+	        && (weaponDef = BG_GetWeaponDef(iWeaponIndex), weaponDef->startAmmo > 0) )
 	{
-		if ( ent->client->ps.ammo[weaponDef->ammoIndex] > 0 )
+		if ( pSelf->client->ps.ammo[weaponDef->ammoIndex] > 0 )
 		{
-			ammo = (float)ent->client->ps.ammo[weaponDef->ammoIndex] / (float)weaponDef->startAmmo;
-			Scr_AddFloat(ammo);
+			fAmmoFrac = (float)pSelf->client->ps.ammo[weaponDef->ammoIndex] / (float)weaponDef->startAmmo;
+			Scr_AddFloat(fAmmoFrac);
 		}
 		else
 		{
@@ -474,37 +470,37 @@ void PlayerCmd_getFractionStartAmmo(scr_entref_t entRef)
 
 void PlayerCmd_getFractionMaxAmmo(scr_entref_t entRef)
 {
-	gentity_s *ent;
-	float ammo;
-	int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	float fAmmoFrac;
+	int iWeaponIndex;
+	const char *pszWeaponName;
 	WeaponDef *weaponDef;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(ent->client->ps.weapons, weaponIndex)
-	        && (weaponDef = BG_GetWeaponDef(weaponIndex), BG_GetMaxAmmo(weaponDef->ammoIndex) > 0) )
+	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex)
+	        && (weaponDef = BG_GetWeaponDef(iWeaponIndex), BG_GetMaxAmmo(weaponDef->ammoIndex) > 0) )
 	{
-		if ( ent->client->ps.ammo[weaponDef->ammoIndex] > 0 )
+		if ( pSelf->client->ps.ammo[weaponDef->ammoIndex] > 0 )
 		{
-			ammo = (float)ent->client->ps.ammo[weaponDef->ammoIndex] / (float)BG_GetMaxAmmo(weaponDef->ammoIndex);
-			Scr_AddFloat(ammo);
+			fAmmoFrac = (float)pSelf->client->ps.ammo[weaponDef->ammoIndex] / (float)BG_GetMaxAmmo(weaponDef->ammoIndex);
+			Scr_AddFloat(fAmmoFrac);
 		}
 		else
 		{
@@ -519,240 +515,228 @@ void PlayerCmd_getFractionMaxAmmo(scr_entref_t entRef)
 
 void PlayerCmd_setOrigin(scr_entref_t entRef)
 {
-	gentity_s *ent;
-	vec3_t origin;
+	gentity_s *pSelf;
+	vec3_t vNewOrigin;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	Scr_GetVector(0, origin);
-	SV_UnlinkEntity(ent);
-	VectorCopy(origin, ent->client->ps.origin);
-	ent->client->ps.origin[2] = ent->client->ps.origin[2] + 1.0;
-	ent->client->ps.eFlags ^= 2u;
-	BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, 1, 1u);
-	VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
-	SV_LinkEntity(ent);
+	Scr_GetVector(0, vNewOrigin);
+	SV_UnlinkEntity(pSelf);
+	VectorCopy(vNewOrigin, pSelf->client->ps.origin);
+	pSelf->client->ps.origin[2] = pSelf->client->ps.origin[2] + 1.0;
+	pSelf->client->ps.eFlags ^= 2u;
+	BG_PlayerStateToEntityState(&pSelf->client->ps, &pSelf->s, 1, 1u);
+	VectorCopy(pSelf->client->ps.origin, pSelf->r.currentOrigin);
+	SV_LinkEntity(pSelf);
 }
 
 void PlayerCmd_setAngles(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	vec3_t angles;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
 	Scr_GetVector(0, angles);
-	SetClientViewAngle(ent, angles);
+	SetClientViewAngle(pSelf, angles);
 }
 
 void PlayerCmd_getAngles(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	Scr_AddVector(ent->client->ps.viewangles);
+	Scr_AddVector(pSelf->client->ps.viewangles);
 }
 
 void PlayerCmd_useButtonPressed(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( ((ent->client->buttonsSinceLastFrame | ent->client->buttons) & 0x28) != 0 )
-		Scr_AddInt(1);
-	else
-		Scr_AddInt(0);
+	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & (KEY_MASK_USE | KEY_MASK_USERELOAD) ? true : false);
 }
 
 void PlayerCmd_attackButtonPressed(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( ((LOBYTE(ent->client->buttonsSinceLastFrame) | LOBYTE(ent->client->buttons)) & 1) != 0 )
-		Scr_AddInt(1);
-	else
-		Scr_AddInt(0);
+	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & KEY_MASK_FIRE ? true : false);
 }
 
 void PlayerCmd_meleeButtonPressed(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( ((ent->client->buttonsSinceLastFrame | ent->client->buttons) & 4) != 0 )
-		Scr_AddInt(1);
-	else
-		Scr_AddInt(0);
+	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & KEY_MASK_MELEE ? true : false);
 }
 
 void PlayerCmd_playerADS(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	Scr_AddFloat(ent->client->ps.fWeaponPosFrac);
+	Scr_AddFloat(pSelf->client->ps.fWeaponPosFrac);
 }
 
 void PlayerCmd_isOnGround(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( ent->client->ps.groundEntityNum == 1023 )
-		Scr_AddInt(0);
-	else
-		Scr_AddInt(1);
+	Scr_AddBool( pSelf->client->ps.groundEntityNum != 1023 );
 }
 
 void PlayerCmd_pingPlayer(scr_entref_t entRef)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	ent->client->ps.eFlags |= 0x400000u;
-	ent->client->compassPingTime = level.time + 3000;
+	pSelf->client->ps.eFlags |= 0x400000u;
+	pSelf->client->compassPingTime = level.time + 3000;
 }
 
 void PlayerCmd_SetViewmodel(scr_entref_t entRef)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	const char *modelName;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
@@ -763,36 +747,35 @@ void PlayerCmd_SetViewmodel(scr_entref_t entRef)
 	if ( !modelName || !*modelName )
 		Scr_ParamError(0, "usage: setviewmodel(<model name>)");
 
-	ent->client->sess.viewmodelIndex = G_ModelIndex(modelName);
+	pSelf->client->sess.viewmodelIndex = G_ModelIndex(modelName);
 }
 
 void PlayerCmd_GetViewmodel(scr_entref_t entRef)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	const char *modelName;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	modelName = G_ModelName(ent->client->sess.viewmodelIndex);
+	modelName = G_ModelName(pSelf->client->sess.viewmodelIndex);
 	Scr_AddString(modelName);
 }
 
 void PlayerCmd_SayAll(scr_entref_t entref)
 {
-	int paramNum;
 	gentity_s *pSelf;
 	char szString[1024];
 
@@ -811,15 +794,13 @@ void PlayerCmd_SayAll(scr_entref_t entref)
 		}
 	}
 
-	paramNum = Scr_GetNumParam();
-	Scr_ConstructMessageString(0, paramNum - 1, "Client Chat Message", &szString[1], 0x3FFu);
+	Scr_ConstructMessageString(0, Scr_GetNumParam() - 1, "Client Chat Message", &szString[1], sizeof(szString) - 1);
 	szString[0] = 20;
 	G_Say(pSelf, 0, 0, szString);
 }
 
 void PlayerCmd_SayTeam(scr_entref_t entref)
 {
-	int paramNum;
 	gentity_s *pSelf;
 	char szString[1024];
 
@@ -838,69 +819,68 @@ void PlayerCmd_SayTeam(scr_entref_t entref)
 		}
 	}
 
-	paramNum = Scr_GetNumParam();
-	Scr_ConstructMessageString(0, paramNum - 1, "Client Chat Message", &szString[1], 0x3FFu);
+	Scr_ConstructMessageString(0, Scr_GetNumParam() - 1, "Client Chat Message", &szString[1], sizeof(szString) - 1);
 	szString[0] = 20;
 	G_Say(pSelf, 0, 1, szString);
 }
 
 void PlayerCmd_showScoreboard(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	Cmd_Score_f(ent);
+	Cmd_Score_f(pSelf);
 }
 
 void PlayerCmd_setSpawnWeapon(scr_entref_t entRef)
 {
-	gentity_s *ent;
-	unsigned int weaponIndex;
-	const char *weaponName;
+	gentity_s *pSelf;
+	unsigned int iWeaponIndex;
+	const char *pszWeaponName;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
 	}
 
-	weaponName = Scr_GetString(0);
-	weaponIndex = G_GetWeaponIndexForName(weaponName);
+	pszWeaponName = Scr_GetString(0);
+	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( BG_IsWeaponValid(&ent->client->ps, weaponIndex) )
+	if ( BG_IsWeaponValid(&pSelf->client->ps, iWeaponIndex) )
 	{
-		ent->client->ps.weapon = weaponIndex;
-		ent->client->ps.weaponstate = WEAPON_READY;
+		pSelf->client->ps.weapon = iWeaponIndex;
+		pSelf->client->ps.weaponstate = WEAPON_READY;
 	}
 }
 
 void PlayerCmd_dropItem(scr_entref_t entref)
 {
 	gentity_s *pSelf;
-	const gitem_s *item;
+	gitem_s *item;
 	gentity_s *pEnt;
 	unsigned int dropTag;
 	int iWeaponIndex;
@@ -949,51 +929,50 @@ void PlayerCmd_dropItem(scr_entref_t entref)
 extern dvar_t *g_knockback;
 void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 {
-	const char *mod;
-	const char *weaponName;
-	unsigned short hitloc;
+	const char *pszModName;
+	const char *pszWeaponName;
 	gentity_s *tempEnt;
-	gclient_s *client;
 	float knockback;
-	gentity_s *ent;
-	float flinch;
+	gentity_s *pSelf;
+	float flinchYawDir;
 	float dmgTime;
 	float maxTime;
-	void (*pain)(struct gentity_s *, struct gentity_s *, int, const float *, const int, const float *, int); // [esp+58h] [ebp-B0h]
-	void (*die)(struct gentity_s *, struct gentity_s *, struct gentity_s *, int, int, const int, const float *, int, int); // [esp+5Ch] [ebp-ACh]
-	int iSurfType;
+	void (*pain)(struct gentity_s *, struct gentity_s *, int, const float *, const int, const float *, int);
+	void (*die)(struct gentity_s *, struct gentity_s *, struct gentity_s *, int, int, const int, const float *, int, int);
+	int psTimeOffset;
 	int maxDmg;
-	vec3_t velocaityScale;
+	vec3_t kVel;
 	vec3_t localdir;
-	float dmgRange;
+	float dmgScale;
 	int minDmg;
-	int hitlocStr;
-	int weaponIndex;
-	int modIndex;
+	int hitloc;
+	int iWeaponIndex;
+	int iModIndex;
 	int dflags;
 	int damage;
 	const float *point;
 	vec3_t vPoint;
 	vec_t *dir;
 	vec3_t vDir;
-	gentity_s *attacker;
 	gentity_s *inflictor;
+	gentity_s *attacker;
 
 	inflictor = &g_entities[1022];
 	attacker = &g_entities[1022];
+
 	dir = 0;
 	point = 0;
 
 	if ( entRef.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entRef.entnum];
+		pSelf = &g_entities[entRef.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
 		}
@@ -1004,16 +983,16 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 	if ( damage > 0 )
 	{
 		if ( Scr_GetType(0) && Scr_GetPointerType(0) == VAR_ENTITY )
-			inflictor = Scr_GetEntity(1u);
+			inflictor = Scr_GetEntity(0);
 
 		if ( Scr_GetType(1u) && Scr_GetPointerType(1u) == VAR_ENTITY )
 			attacker = Scr_GetEntity(1u);
 
 		dflags = Scr_GetInt(3u);
-		mod = Scr_GetString(4u);
-		modIndex = G_IndexForMeansOfDeath(mod);
-		weaponName = Scr_GetString(5u);
-		weaponIndex = G_GetWeaponIndexForName(weaponName);
+		pszModName = Scr_GetString(4u);
+		iModIndex = G_IndexForMeansOfDeath(pszModName);
+		pszWeaponName = Scr_GetString(5u);
+		iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
 		if ( Scr_GetType(6u) )
 		{
@@ -1027,46 +1006,45 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 			dir = vDir;
 		}
 
-		hitloc = Scr_GetConstString(8u);
-		hitlocStr = G_GetHitLocationIndexFromString(hitloc);
-		iSurfType = Scr_GetInt(9u);
+		hitloc = G_GetHitLocationIndexFromString(Scr_GetConstString(8u));
+		psTimeOffset = Scr_GetInt(9u);
 
 		if ( dir )
 			Vec3NormalizeTo(dir, localdir);
 		else
 			VectorClear(localdir);
 
-		if ( (ent->flags & 8) != 0 || (dflags & 4) != 0 )
+		if ( (pSelf->flags & 8) != 0 || (dflags & 4) != 0 )
 		{
 			minDmg = 0;
 		}
 		else
 		{
-			dmgRange = 0.30000001;
+			dmgScale = 0.30000001;
 
-			if ( (ent->client->ps.pm_flags & 1) != 0 )
+			if ( (pSelf->client->ps.pm_flags & 1) != 0 )
 			{
-				dmgRange = 0.02;
+				dmgScale = 0.02;
 			}
-			else if ( (ent->client->ps.pm_flags & 2) != 0 )
+			else if ( (pSelf->client->ps.pm_flags & 2) != 0 )
 			{
-				dmgRange = 0.15000001;
+				dmgScale = 0.15000001;
 			}
 
-			minDmg = (int)((float)damage * dmgRange);
+			minDmg = (int)((float)damage * dmgScale);
 
 			if ( minDmg > 60 )
 				minDmg = 60;
 
 			if ( minDmg )
 			{
-				if ( (ent->client->ps.eFlags & 0x300) == 0 )
+				if ( (pSelf->client->ps.eFlags & 0x300) == 0 )
 				{
 					knockback = (float)minDmg * g_knockback->current.decimal / 250.0;
-					VectorScale(localdir, knockback, velocaityScale);
-					VectorAdd(ent->client->ps.velocity, velocaityScale, ent->client->ps.velocity);
+					VectorScale(localdir, knockback, kVel);
+					VectorAdd(pSelf->client->ps.velocity, kVel, pSelf->client->ps.velocity);
 
-					if ( !ent->client->ps.pm_time )
+					if ( !pSelf->client->ps.pm_time )
 					{
 						maxDmg = 2 * minDmg;
 
@@ -1076,18 +1054,18 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 						if ( maxDmg > 200 )
 							maxDmg = 200;
 
-						ent->client->ps.pm_time = maxDmg;
-						ent->client->ps.pm_flags |= 0x400u;
+						pSelf->client->ps.pm_time = maxDmg;
+						pSelf->client->ps.pm_flags |= 0x400u;
 					}
 				}
 			}
 		}
 
-		if ( (ent->flags & 1) == 0 )
+		if ( (pSelf->flags & 1) == 0 )
 		{
-			if ( weaponIndex && BG_GetWeaponDef(weaponIndex)->weaponType == WEAPTYPE_BULLET )
+			if ( iWeaponIndex && BG_GetWeaponDef(iWeaponIndex)->weaponType == WEAPTYPE_BULLET )
 			{
-				if ( BG_GetWeaponDef(weaponIndex)->rifleBullet )
+				if ( BG_GetWeaponDef(iWeaponIndex)->rifleBullet )
 					tempEnt = G_TempEntity(vPoint, EV_SHOTGUN_HIT);
 				else
 					tempEnt = G_TempEntity(vPoint, EV_BULLET_HIT_LARGE);
@@ -1096,146 +1074,145 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entRef)
 				tempEnt->s.scale = DirToByte(localdir);
 				tempEnt->s.surfType = 7;
 				tempEnt->s.otherEntityNum = attacker->s.number;
-				tempEnt->r.clientMask[ent->client->ps.clientNum >> 5] |= 1 << (ent->client->ps.clientNum & 0x1F);
+				tempEnt->r.clientMask[pSelf->client->ps.clientNum >> 5] |= 1 << (pSelf->client->ps.clientNum & 0x1F);
 
-				if ( BG_GetWeaponDef(weaponIndex)->rifleBullet )
+				if ( BG_GetWeaponDef(iWeaponIndex)->rifleBullet )
 					tempEnt = G_TempEntity(vPoint, EV_BULLET_HIT_CLIENT_LARGE);
 				else
 					tempEnt = G_TempEntity(vPoint, EV_BULLET_HIT_CLIENT_SMALL);
 
 				tempEnt->s.surfType = 7;
 				tempEnt->s.otherEntityNum = attacker->s.number;
-				tempEnt->s.clientNum = ent->client->ps.clientNum;
+				tempEnt->s.clientNum = pSelf->client->ps.clientNum;
 				tempEnt->r.clientMask[0] = -1;
 				tempEnt->r.clientMask[1] = -1;
-				tempEnt->r.clientMask[ent->client->ps.clientNum >> 5] &= ~(1 << (ent->client->ps.clientNum & 0x1F));
+				tempEnt->r.clientMask[pSelf->client->ps.clientNum >> 5] &= ~(1 << (pSelf->client->ps.clientNum & 0x1F));
 			}
 
-			ent->client->damage_blood += damage;
+			pSelf->client->damage_blood += damage;
 
 			if ( dir )
 			{
-				VectorCopy(localdir, ent->client->damage_from);
-				ent->client->damage_fromWorld = 0;
+				VectorCopy(localdir, pSelf->client->damage_from);
+				pSelf->client->damage_fromWorld = 0;
 			}
 			else
 			{
-				VectorCopy(ent->r.currentOrigin, ent->client->damage_from);
-				ent->client->damage_fromWorld = 1;
+				VectorCopy(pSelf->r.currentOrigin, pSelf->client->damage_from);
+				pSelf->client->damage_fromWorld = 1;
 			}
 
-			if ( (ent->flags & 2) != 0 && ent->health - damage <= 0 )
-				damage = ent->health - 1;
+			if ( (pSelf->flags & 2) != 0 && pSelf->health - damage <= 0 )
+				damage = pSelf->health - 1;
 
 			maxTime = player_dmgtimer_maxTime->current.decimal;
 			dmgTime = (float)damage * player_dmgtimer_timePerPoint->current.decimal;
-			ent->client->ps.damageTimer += (int)dmgTime;
+			pSelf->client->ps.damageTimer += (int)dmgTime;
 
 			if ( dir )
 			{
-				client = ent->client;
-				client->ps.flinchYaw = (int)vectoyaw(dir);
+				pSelf->client->ps.flinchYaw = (int)vectoyaw(dir);
 			}
 			else
 			{
-				ent->client->ps.flinchYaw = 0;
+				pSelf->client->ps.flinchYaw = 0;
 			}
 
-			flinch = ent->client->ps.viewangles[1];
+			flinchYawDir = pSelf->client->ps.viewangles[1];
 
-			if ( flinch < 0.0 )
-				flinch = flinch + 360.0;
+			if ( flinchYawDir < 0.0 )
+				flinchYawDir = flinchYawDir + 360.0;
 
-			ent->client->ps.flinchYaw -= (int)flinch;
+			pSelf->client->ps.flinchYaw -= (int)flinchYawDir;
 
-			if ( (float)ent->client->ps.damageTimer > maxTime )
-				ent->client->ps.damageTimer = (int)maxTime;
+			if ( (float)pSelf->client->ps.damageTimer > maxTime )
+				pSelf->client->ps.damageTimer = (int)maxTime;
 
-			ent->client->ps.damageDuration = ent->client->ps.damageTimer;
-			ent->health -= damage;
+			pSelf->client->ps.damageDuration = pSelf->client->ps.damageTimer;
+			pSelf->health -= damage;
+
 			Scr_AddEntity(attacker);
 			Scr_AddInt(damage);
-			Scr_Notify(ent, scr_const.damage, 2u);
+			Scr_Notify(pSelf, scr_const.damage, 2u);
 
-			if ( ent->health > 0 )
+			if ( pSelf->health > 0 )
 			{
-				pain = entityHandlers[ent->handler].pain;
+				pain = entityHandlers[pSelf->handler].pain;
 
 				if ( pain )
-					pain(ent, attacker, damage, point, modIndex, localdir, hitlocStr);
+					pain(pSelf, attacker, damage, point, iModIndex, localdir, hitloc);
 			}
 			else
 			{
-				if ( ent->health < -999 )
-					ent->health = -999;
+				if ( pSelf->health < -999 )
+					pSelf->health = -999;
 
-				die = entityHandlers[ent->handler].die;
+				die = entityHandlers[pSelf->handler].die;
 
 				if ( die )
-					die(ent, inflictor, attacker, damage, modIndex, weaponIndex, localdir, hitlocStr, iSurfType);
+					die(pSelf, inflictor, attacker, damage, iModIndex, iWeaponIndex, localdir, hitloc, psTimeOffset);
 
-				if ( !ent->r.inuse )
+				if ( !pSelf->r.inuse )
 					return;
 			}
 
-			ent->client->ps.stats[0] = ent->health;
+			pSelf->client->ps.stats[STAT_HEALTH] = pSelf->health;
 		}
 	}
 }
 
 void PlayerCmd_Suicide(scr_entref_t entref)
 {
-	gclient_s *client;
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	ent->flags &= 0xFFFFFFFC;
-	client = ent->client;
-	ent->health = 0;
-	client->ps.stats[0] = 0;
-	player_die(ent, ent, ent, 100000, 12, 0, 0, HITLOC_NONE, 0);
+	pSelf->flags &= 0xFFFFFFFC;
+	pSelf->health = 0;
+	pSelf->client->ps.stats[STAT_HEALTH] = 0;
+
+	player_die(pSelf, pSelf, pSelf, 100000, 12, 0, 0, HITLOC_NONE, 0);
 }
 
 void PlayerCmd_OpenMenu(scr_entref_t entref)
 {
 	const char *menuName;
-	gentity_s *ent;
-	int menuIndex;
+	gentity_s *pSelf;
+	int iMenuIndex;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( ent->client->sess.connected == CON_CONNECTED )
+	if ( pSelf->client->sess.connected == CON_CONNECTED )
 	{
 		menuName = Scr_GetString(0);
-		menuIndex = GScr_GetScriptMenuIndex(menuName);
-		SV_GameSendServerCommand(entref.entnum, 1, va("%c %i", 116, menuIndex));
+		iMenuIndex = GScr_GetScriptMenuIndex(menuName);
+		SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i", 116, iMenuIndex));
 		Scr_AddInt(1);
 	}
 	else
@@ -1247,29 +1224,29 @@ void PlayerCmd_OpenMenu(scr_entref_t entref)
 void PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
 {
 	const char *menuName;
-	gentity_s *ent;
-	int menuIndex;
+	gentity_s *pSelf;
+	int iMenuIndex;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( ent->client->sess.connected == CON_CONNECTED )
+	if ( pSelf->client->sess.connected == CON_CONNECTED )
 	{
 		menuName = Scr_GetString(0);
-		menuIndex = GScr_GetScriptMenuIndex(menuName);
-		SV_GameSendServerCommand(entref.entnum, 1, va("%c %i 1", 116, menuIndex));
+		iMenuIndex = GScr_GetScriptMenuIndex(menuName);
+		SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i 1", 116, iMenuIndex));
 		Scr_AddInt(1);
 	}
 	else
@@ -1289,7 +1266,7 @@ void PlayerCmd_CloseMenu(scr_entref_t entref)
 		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 	}
 
-	SV_GameSendServerCommand(entref.entnum, 1, va("%c", 117));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c", 117));
 }
 
 void PlayerCmd_CloseInGameMenu(scr_entref_t entref)
@@ -1303,75 +1280,73 @@ void PlayerCmd_CloseInGameMenu(scr_entref_t entref)
 		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 	}
 
-	SV_GameSendServerCommand(entref.entnum, 1, va("%c", 75));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c", 75));
 }
 
 void PlayerCmd_FreezeControls(scr_entref_t entref)
 {
-	gclient_s *client;
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	client = ent->client;
-	client->bFrozen = Scr_GetInt(0);
+	pSelf->client->bFrozen = Scr_GetInt(0);
 }
 
 void PlayerCmd_DisableWeapon(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	ent->client->ps.pm_flags |= 0x4000000u;
+	pSelf->client->ps.pm_flags |= 0x4000000u;
 }
 
 void PlayerCmd_EnableWeapon(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	ent->client->ps.pm_flags &= ~0x4000000u;
+	pSelf->client->ps.pm_flags &= ~0x4000000u;
 }
 
 void PlayerCmd_SetReverb(scr_entref_t entref)
@@ -1435,7 +1410,7 @@ settype:
 	{
 		Scr_Error("priority must be \'snd_enveffectsprio_level\' or \'snd_enveffectsprio_shellshock\'\n");
 	}
-	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i \"%s\" %g %g %g", 114, priority, roomtype, drylevel, wetlevel, fadetime));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i \"%s\" %g %g %g", 114, priority, roomtype, drylevel, wetlevel, fadetime));
 }
 
 void PlayerCmd_DeactivateReverb(scr_entref_t entref)
@@ -1481,7 +1456,7 @@ void PlayerCmd_DeactivateReverb(scr_entref_t entref)
 	{
 		Scr_Error("priority must be \'snd_enveffectsprio_level\' or \'snd_enveffectsprio_shellshock\'\n");
 	}
-	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %g", 68, priority, fadetime));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %g", 68, priority, fadetime));
 }
 
 void PlayerCmd_SetChannelVolumes(scr_entref_t entref)
@@ -1531,7 +1506,7 @@ void PlayerCmd_SetChannelVolumes(scr_entref_t entref)
 	{
 		Scr_Error("priority must be \'snd_channelvolprio_holdbreath\', \'snd_channelvolprio_pain\', or \'snd_channelvolprio_shellshock\'\n");
 	}
-	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %i %g", 69, priority, G_FindConfigstringIndex(Scr_GetString(1), 1166, 16, 0, NULL), fadetime));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %i %g", 69, priority, G_FindConfigstringIndex(Scr_GetString(1), 1166, 16, 0, NULL), fadetime));
 }
 
 void PlayerCmd_DeactivateChannelVolumes(scr_entref_t entref)
@@ -1581,50 +1556,52 @@ void PlayerCmd_DeactivateChannelVolumes(scr_entref_t entref)
 	{
 		Scr_Error("priority must be \'snd_channelvolprio_holdbreath\', \'snd_channelvolprio_pain\', or \'snd_channelvolprio_shellshock\'\n");
 	}
-	SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %g", 70, priority, fadetime));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %g", 70, priority, fadetime));
 }
 
 void PlayerCmd_GetWeaponSlotWeapon(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	WeaponDef *weaponDef;
 	int slot;
-	unsigned short slotName;
+	unsigned short slotNameConst;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( !G_IsPlaying(ent) )
-		goto out;
+	if ( !G_IsPlaying(pSelf) )
+	{
+		Scr_AddConstString(scr_const.none);
+		return;
+	}
 
-	slotName = Scr_GetConstString(0);
-	slot = BG_GetWeaponSlotForName(SL_ConvertToString(slotName));
+	slotNameConst = Scr_GetConstString(0);
+	slot = BG_GetWeaponSlotForName(SL_ConvertToString(slotNameConst));
 
 	if ( !slot )
 	{
-		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotName)));
+		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotNameConst)));
 	}
 
-	if ( ent->client->ps.weaponslots[slot] )
+	if ( pSelf->client->ps.weaponslots[slot] )
 	{
-		weaponDef = BG_GetWeaponDef(ent->client->ps.weaponslots[slot]);
+		weaponDef = BG_GetWeaponDef(pSelf->client->ps.weaponslots[slot]);
 		Scr_AddString(weaponDef->szInternalName);
 	}
 	else
 	{
-out:
 		Scr_AddConstString(scr_const.none);
 	}
 }
@@ -1632,16 +1609,16 @@ out:
 void PlayerCmd_SetWeaponSlotWeapon(scr_entref_t entref)
 {
 	gentity_s *pSelf;
-	int primary;
+	int isOnlyWeapon;
 	int hadWeapon;
 	WeaponDef *weaponDef;
-	const char *weaponName;
-	int ammo;
-	int weaponIndex;
-	int slotNameStr;
+	const char *pszWeaponName;
+	int ammoCount;
+	int iWeaponIndex;
+	int slot;
 	unsigned short slotNameConst;
 
-	primary = 0;
+	isOnlyWeapon = 0;
 
 	if ( entref.classnum )
 	{
@@ -1659,88 +1636,89 @@ void PlayerCmd_SetWeaponSlotWeapon(scr_entref_t entref)
 	}
 
 	slotNameConst = Scr_GetConstString(0);
-	slotNameStr = BG_GetWeaponSlotForName(SL_ConvertToString(slotNameConst));
+	slot = BG_GetWeaponSlotForName(SL_ConvertToString(slotNameConst));
 
-	if ( !slotNameStr )
+	if ( !slot )
 	{
 		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotNameConst)));
 	}
 
-	weaponName = Scr_GetString(1u);
+	pszWeaponName = Scr_GetString(1u);
 
-	if ( I_stricmp(weaponName, "none") )
+	if ( I_stricmp(pszWeaponName, "none") )
 	{
-		weaponIndex = G_GetWeaponIndexForName(weaponName);
+		iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-		if ( !weaponIndex )
+		if ( !iWeaponIndex )
 		{
-			Scr_ParamError(1, va("Unknown weapon %s.", weaponName));
+			Scr_ParamError(1, va("Unknown weapon %s.", pszWeaponName));
 		}
 
-		weaponDef = BG_GetWeaponDef(weaponIndex);
+		weaponDef = BG_GetWeaponDef(iWeaponIndex);
 
-		if ( weaponDef->weaponSlot != slotNameStr
-		        && (weaponDef->weaponSlot != 1 && weaponDef->weaponSlot != 2 || slotNameStr != 1 && slotNameStr != 2) )
+		if ( weaponDef->weaponSlot != slot
+		        && (weaponDef->weaponSlot != SLOT_PRIMARY && weaponDef->weaponSlot != SLOT_PRIMARYB || slot != SLOT_PRIMARY && slot != SLOT_PRIMARYB) )
 		{
-			Scr_ParamError(1, va("Weapon %s goes in the %s weaponslot, not the %s weaponslot.", weaponName, BG_GetWeaponSlotNameForIndex(weaponDef->weaponSlot), BG_GetWeaponSlotNameForIndex(slotNameStr)));
+			Scr_ParamError(1, va("Weapon %s goes in the %s weaponslot, not the %s weaponslot.", pszWeaponName, BG_GetWeaponSlotNameForIndex(weaponDef->weaponSlot), BG_GetWeaponSlotNameForIndex(slot)));
 		}
 	}
 	else
 	{
-		weaponIndex = 0;
+		iWeaponIndex = 0;
 		weaponDef = 0;
 	}
 
-	if ( pSelf->client->ps.weaponslots[slotNameStr] )
-		BG_TakePlayerWeapon(&pSelf->client->ps, pSelf->client->ps.weaponslots[slotNameStr]);
+	if ( pSelf->client->ps.weaponslots[slot] )
+		BG_TakePlayerWeapon(&pSelf->client->ps, pSelf->client->ps.weaponslots[slot]);
 
-	if ( weaponIndex )
+	if ( iWeaponIndex )
 	{
-		if ( slotNameStr == 2 && !pSelf->client->ps.weaponslots[1] )
-			primary = 1;
+		if ( slot == SLOT_PRIMARYB && !pSelf->client->ps.weaponslots[1] )
+			isOnlyWeapon = 1;
 
-		hadWeapon = COM_BitTest(pSelf->client->ps.weapons, weaponIndex);
-		G_GivePlayerWeapon(&pSelf->client->ps, weaponIndex);
+		hadWeapon = COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex);
+		G_GivePlayerWeapon(&pSelf->client->ps, iWeaponIndex);
 
-		if ( primary )
+		if ( isOnlyWeapon )
 		{
 			pSelf->client->ps.weaponslots[2] = pSelf->client->ps.weaponslots[1];
 			pSelf->client->ps.weaponslots[1] = 0;
 		}
 
-		ammo = weaponDef->startAmmo - pSelf->client->ps.ammo[weaponDef->ammoIndex];
+		ammoCount = weaponDef->startAmmo - pSelf->client->ps.ammo[weaponDef->ammoIndex];
 
-		if ( ammo > 0 )
-			Add_Ammo(pSelf, weaponIndex, ammo, hadWeapon == 0);
+		if ( ammoCount > 0 )
+			Add_Ammo(pSelf, iWeaponIndex, ammoCount, hadWeapon == 0);
 	}
 }
 
 void PlayerCmd_GetWeaponSlotAmmo(scr_entref_t entref)
 {
-	gentity_s *ent;
-	int clip;
-	int ammo;
-	int weaponIndex;
+	gentity_s *pSelf;
 	int slot;
+	int iWeaponIndex;
 	unsigned short slotNameConst;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( !G_IsPlaying(ent) )
-		goto out;
+	if ( !G_IsPlaying(pSelf) )
+	{
+		Scr_AddInt(0);
+		return;
+	}
 
 	slotNameConst = Scr_GetConstString(0);
 	slot = BG_GetWeaponSlotForName(SL_ConvertToString(slotNameConst));
@@ -1750,48 +1728,45 @@ void PlayerCmd_GetWeaponSlotAmmo(scr_entref_t entref)
 		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotNameConst)));
 	}
 
-	weaponIndex = ent->client->ps.weaponslots[slot];
+	iWeaponIndex = pSelf->client->ps.weaponslots[slot];
 
-	if ( ent->client->ps.weaponslots[slot] )
+	if ( pSelf->client->ps.weaponslots[slot] )
 	{
-		if ( BG_WeaponIsClipOnly(weaponIndex) )
+		if ( BG_WeaponIsClipOnly(iWeaponIndex) )
 		{
-			clip = BG_ClipForWeapon(weaponIndex);
-			Scr_AddInt(ent->client->ps.ammoclip[clip]);
+			Scr_AddInt(pSelf->client->ps.ammoclip[BG_ClipForWeapon(iWeaponIndex)]);
 		}
 		else
 		{
-			ammo = BG_AmmoForWeapon(weaponIndex);
-			Scr_AddInt(ent->client->ps.ammo[ammo]);
+			Scr_AddInt(pSelf->client->ps.ammo[BG_AmmoForWeapon(iWeaponIndex)]);
 		}
 	}
 	else
 	{
-out:
 		Scr_AddInt(0);
 	}
 }
 
 void PlayerCmd_SetWeaponSlotAmmo(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	int clipIndex;
 	int ammoIndex;
-	int ammo;
-	int weaponIndex;
+	int ammoCount;
+	int iWeaponIndex;
 	int slot;
 	unsigned short slotNameConst;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
@@ -1805,47 +1780,47 @@ void PlayerCmd_SetWeaponSlotAmmo(scr_entref_t entref)
 		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotNameConst)));
 	}
 
-	ammo = Scr_GetInt(1u);
-	weaponIndex = ent->client->ps.weaponslots[slot];
+	ammoCount = Scr_GetInt(1u);
+	iWeaponIndex = pSelf->client->ps.weaponslots[slot];
 
-	if ( ent->client->ps.weaponslots[slot] )
+	if ( pSelf->client->ps.weaponslots[slot] )
 	{
-		if ( BG_WeaponIsClipOnly(weaponIndex) )
+		if ( BG_WeaponIsClipOnly(iWeaponIndex) )
 		{
-			clipIndex = BG_ClipForWeapon(weaponIndex);
+			clipIndex = BG_ClipForWeapon(iWeaponIndex);
 
 			if ( clipIndex )
 			{
-				if ( ammo >= 0 )
+				if ( ammoCount >= 0 )
 				{
-					if ( ammo > BG_GetClipSize(clipIndex) )
-						ammo = BG_GetClipSize(clipIndex);
+					if ( ammoCount > BG_GetClipSize(clipIndex) )
+						ammoCount = BG_GetClipSize(clipIndex);
 				}
 				else
 				{
-					ammo = 0;
+					ammoCount = 0;
 				}
 
-				ent->client->ps.ammoclip[clipIndex] = ammo;
+				pSelf->client->ps.ammoclip[clipIndex] = ammoCount;
 			}
 		}
 		else
 		{
-			ammoIndex = BG_AmmoForWeapon(weaponIndex);
+			ammoIndex = BG_AmmoForWeapon(iWeaponIndex);
 
 			if ( ammoIndex )
 			{
-				if ( ammo >= 0 )
+				if ( ammoCount >= 0 )
 				{
-					if ( ammo > BG_GetMaxAmmo(ammoIndex) )
-						ammo = BG_GetMaxAmmo(ammoIndex);
+					if ( ammoCount > BG_GetMaxAmmo(ammoIndex) )
+						ammoCount = BG_GetMaxAmmo(ammoIndex);
 				}
 				else
 				{
-					ammo = 0;
+					ammoCount = 0;
 				}
 
-				ent->client->ps.ammo[ammoIndex] = ammo;
+				pSelf->client->ps.ammo[ammoIndex] = ammoCount;
 			}
 		}
 	}
@@ -1853,7 +1828,7 @@ void PlayerCmd_SetWeaponSlotAmmo(scr_entref_t entref)
 
 void PlayerCmd_GetWeaponSlotClipAmmo(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	int clipIndex;
 	int slot;
 	unsigned short slotNameConst;
@@ -1861,20 +1836,23 @@ void PlayerCmd_GetWeaponSlotClipAmmo(scr_entref_t entref)
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	if ( !G_IsPlaying(ent) )
-		goto out;
+	if ( !G_IsPlaying(pSelf) )
+	{
+		Scr_AddInt(0);
+		return;
+	}
 
 	slotNameConst = Scr_GetConstString(0);
 	slot = BG_GetWeaponSlotForName(SL_ConvertToString(slotNameConst));
@@ -1884,31 +1862,31 @@ void PlayerCmd_GetWeaponSlotClipAmmo(scr_entref_t entref)
 		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotNameConst)));
 	}
 
-	if ( ent->client->ps.weaponslots[slot] && (clipIndex = BG_ClipForWeapon(ent->client->ps.weaponslots[slot])) != 0 )
-		Scr_AddInt(ent->client->ps.ammoclip[clipIndex]);
+	if ( pSelf->client->ps.weaponslots[slot] && (clipIndex = BG_ClipForWeapon(pSelf->client->ps.weaponslots[slot])) != 0 )
+		Scr_AddInt(pSelf->client->ps.ammoclip[clipIndex]);
 	else
-out:
+
 		Scr_AddInt(0);
 }
 
 void PlayerCmd_SetWeaponSlotClipAmmo(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	int clipIndex;
-	int ammo;
+	int ammoCount;
 	int slot;
 	unsigned short slotNameConst;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
@@ -1922,21 +1900,21 @@ void PlayerCmd_SetWeaponSlotClipAmmo(scr_entref_t entref)
 		Scr_ParamError(0, va("Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"", SL_ConvertToString(slotNameConst)));
 	}
 
-	ammo = Scr_GetInt(1u);
+	ammoCount = Scr_GetInt(1u);
 
-	if ( ent->client->ps.weaponslots[slot] )
+	if ( pSelf->client->ps.weaponslots[slot] )
 	{
-		clipIndex = BG_ClipForWeapon(ent->client->ps.weaponslots[slot]);
+		clipIndex = BG_ClipForWeapon(pSelf->client->ps.weaponslots[slot]);
 
 		if ( clipIndex )
 		{
-			if ( ammo < 0 )
-				ammo = 0;
+			if ( ammoCount < 0 )
+				ammoCount = 0;
 
-			if ( ammo > BG_GetClipSize(clipIndex) )
-				ammo = BG_GetClipSize(clipIndex);
+			if ( ammoCount > BG_GetClipSize(clipIndex) )
+				ammoCount = BG_GetClipSize(clipIndex);
 
-			ent->client->ps.ammoclip[clipIndex] = ammo;
+			pSelf->client->ps.ammoclip[clipIndex] = ammoCount;
 		}
 	}
 	else
@@ -1947,29 +1925,29 @@ void PlayerCmd_SetWeaponSlotClipAmmo(scr_entref_t entref)
 
 void PlayerCmd_SetWeaponClipAmmo(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	int clipIndex;
-	int ammo;
+	int ammoCount;
 	int weaponIndex;
 	const char *weaponName;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
 	weaponName = Scr_GetString(0);
-	ammo = Scr_GetInt(1u);
+	ammoCount = Scr_GetInt(1u);
 	weaponIndex = G_GetWeaponIndexForName(weaponName);
 
 	if ( weaponIndex )
@@ -1978,13 +1956,13 @@ void PlayerCmd_SetWeaponClipAmmo(scr_entref_t entref)
 
 		if ( clipIndex )
 		{
-			if ( ammo < 0 )
-				ammo = 0;
+			if ( ammoCount < 0 )
+				ammoCount = 0;
 
-			if ( ammo > BG_GetClipSize(clipIndex) )
-				ammo = BG_GetClipSize(clipIndex);
+			if ( ammoCount > BG_GetClipSize(clipIndex) )
+				ammoCount = BG_GetClipSize(clipIndex);
 
-			ent->client->ps.ammoclip[clipIndex] = ammo;
+			pSelf->client->ps.ammoclip[clipIndex] = ammoCount;
 		}
 	}
 	else
@@ -2050,167 +2028,6 @@ void PlayerCmd_spawn(scr_entref_t entref)
 
 void PlayerCmd_setEnterTime(scr_entref_t entref)
 {
-	gclient_s *client;
-	gentity_s *ent;
-
-	if ( entref.classnum )
-	{
-		Scr_ObjectError("not an entity");
-		ent = 0;
-	}
-	else
-	{
-		ent = &g_entities[entref.entnum];
-
-		if ( !ent->client )
-		{
-			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
-		}
-	}
-
-	client = ent->client;
-	client->sess.enterTime = Scr_GetInt(0);
-}
-
-extern dvar_t *g_clonePlayerMaxVelocity;
-void PlayerCmd_ClonePlayer(scr_entref_t entRef)
-{
-	gentity_s *entity;
-	int i;
-	XAnimTree_s *tree;
-	corpseInfo_t *corpse;
-	int index;
-	DObj_s *obj;
-	gclient_s *client;
-	gentity_s *ent;
-	int duration;
-
-	if ( entRef.classnum )
-	{
-		Scr_ObjectError("not an entity");
-		entity = 0;
-	}
-	else
-	{
-		entity = &g_entities[entRef.entnum];
-
-		if ( !entity->client )
-		{
-			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
-		}
-	}
-
-	duration = Scr_GetInt(0);
-	client = entity->client;
-	ent = G_SpawnPlayerClone();
-	ent->s.clientNum = client->ps.clientNum;
-	ent->s.eFlags = client->ps.eFlags & 0xFFFFFFFD | ent->s.eFlags & 2 | 0xA0000;
-	G_SetOrigin(ent, client->ps.origin);
-	G_SetAngle(ent, entity->r.currentAngles);
-	ent->s.pos.trType = TR_GRAVITY;
-	ent->s.pos.trTime = level.time;
-	VectorCopy(client->ps.velocity, ent->s.pos.trDelta);
-	ent->s.eType = ET_PLAYER_CORPSE;
-	ent->physicsObject = 1;
-	obj = Com_GetServerDObj(client->ps.clientNum);
-	tree = DObjGetTree(obj);
-
-	for ( i = 0; i < 2; ++i )
-	{
-		if ( ent->s.pos.trDelta[i] > g_clonePlayerMaxVelocity->current.decimal )
-			ent->s.pos.trDelta[i] = g_clonePlayerMaxVelocity->current.decimal;
-	}
-
-	ent->corpse.deathAnimStartTime = level.time;
-	index = G_GetFreePlayerCorpseIndex();
-	corpse = &g_scr_data.playerCorpseInfo[index];
-	g_scr_data.playerCorpseInfo[index].entnum = ent->s.number;
-	corpse->time = level.time;
-	corpse->falling = 1;
-	memcpy(&corpse->ci, &level_bgs.clientinfo[client->ps.clientNum], sizeof(corpse->ci));
-	corpse->ci.pXAnimTree = corpse->tree;
-	XAnimCloneAnimTree(tree, g_scr_data.playerCorpseInfo[index].tree);
-	ent->s.groundEntityNum = 1023;
-	ent->r.svFlags = 2;
-	VectorCopy(entity->r.mins, ent->r.mins);
-	VectorCopy(entity->r.maxs, ent->r.maxs);
-	VectorCopy(entity->r.absmin, ent->r.absmin);
-	VectorCopy(entity->r.absmax, ent->r.absmax);
-	ent->s.legsAnim = client->ps.legsAnim;
-	ent->s.torsoAnim = client->ps.torsoAnim;
-	ent->clipmask = 65537;
-	ent->r.contents = 67117056;
-	SV_LinkEntity(ent);
-	ent->nextthink = level.time + duration;
-	ent->handler = 12;
-
-	GScr_AddEntity(ent);
-}
-
-void PlayerCmd_SetClientDvar(scr_entref_t entref)
-{
-	unsigned int paramNum;
-	char c;
-	char szOutString[1024];
-	char szString[1024];
-	char *pCh;
-	char *pszText;
-	const char *pszDvar;
-	size_t len;
-	int i;
-
-	if ( entref.classnum )
-	{
-		Scr_ObjectError("not an entity");
-	}
-	else if ( !g_entities[entref.entnum].client )
-	{
-		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
-	}
-
-	pszDvar = Scr_GetString(0);
-
-	if ( Scr_GetType(1u) == VAR_ISTRING )
-	{
-		paramNum = Scr_GetNumParam();
-		Scr_ConstructMessageString(1, paramNum - 1, "Client Dvar Value", szString, 1024);
-		pszText = szString;
-	}
-	else
-	{
-		pszText = (char *)Scr_GetString(1u);
-	}
-
-	len = strlen(pszText);
-
-	if ( Dvar_IsValidName(pszDvar) )
-	{
-		pCh = szOutString;
-		memset(szOutString, 0, sizeof(szOutString));
-		i = 0;
-
-		while ( i <= 0x1FFF && pszText[i] )
-		{
-			c = I_CleanChar(pszText[i]);
-			*pCh = c;
-			if ( *pCh == 34 )
-				*pCh = 39;
-			++i;
-			++pCh;
-		}
-
-		SV_GameSendServerCommand(entref.entnum, 1, va("%c %s \"%s\"", 118, pszDvar, szOutString));
-	}
-	else
-	{
-		Scr_Error(va("Dvar %s has an invalid dvar name", pszDvar));
-	}
-}
-
-void ScrCmd_IsLookingAt(scr_entref_t entref)
-{
-	gclient_s *client;
-	gentity_s *pOther;
 	gentity_s *pSelf;
 
 	if ( entref.classnum )
@@ -2228,9 +2045,159 @@ void ScrCmd_IsLookingAt(scr_entref_t entref)
 		}
 	}
 
-	client = pSelf->client;
+	pSelf->client->sess.enterTime = Scr_GetInt(0);
+}
+
+extern dvar_t *g_clonePlayerMaxVelocity;
+void PlayerCmd_ClonePlayer(scr_entref_t entRef)
+{
+	gentity_s *pSelf;
+	int i;
+	XAnimTree_s *tree;
+	corpseInfo_t *corpseInfo;
+	int corpseIndex;
+	DObj_s *obj;
+	gentity_s *body;
+	int deathAnimDuration;
+
+	if ( entRef.classnum )
+	{
+		Scr_ObjectError("not an entity");
+		pSelf = 0;
+	}
+	else
+	{
+		pSelf = &g_entities[entRef.entnum];
+
+		if ( !pSelf->client )
+		{
+			Scr_ObjectError(va("entity %i is not a player", entRef.entnum));
+		}
+	}
+
+	deathAnimDuration = Scr_GetInt(0);
+	body = G_SpawnPlayerClone();
+	body->s.clientNum = pSelf->client->ps.clientNum;
+	body->s.eFlags = pSelf->client->ps.eFlags & 0xFFFFFFFD | body->s.eFlags & 2 | 0xA0000;
+	G_SetOrigin(body, pSelf->client->ps.origin);
+	G_SetAngle(body, pSelf->r.currentAngles);
+	body->s.pos.trType = TR_GRAVITY;
+	body->s.pos.trTime = level.time;
+	VectorCopy(pSelf->client->ps.velocity, body->s.pos.trDelta);
+	body->s.eType = ET_PLAYER_CORPSE;
+	body->physicsObject = 1;
+	obj = Com_GetServerDObj(pSelf->client->ps.clientNum);
+	tree = DObjGetTree(obj);
+
+	for ( i = 0; i < 2; ++i )
+	{
+		if ( body->s.pos.trDelta[i] > g_clonePlayerMaxVelocity->current.decimal )
+			body->s.pos.trDelta[i] = g_clonePlayerMaxVelocity->current.decimal;
+	}
+
+	body->corpse.deathAnimStartTime = level.time;
+	corpseIndex = G_GetFreePlayerCorpseIndex();
+	corpseInfo = &g_scr_data.playerCorpseInfo[corpseIndex];
+	g_scr_data.playerCorpseInfo[corpseIndex].entnum = body->s.number;
+	corpseInfo->time = level.time;
+	corpseInfo->falling = 1;
+	memcpy(&corpseInfo->ci, &level_bgs.clientinfo[pSelf->client->ps.clientNum], sizeof(corpseInfo->ci));
+	corpseInfo->ci.pXAnimTree = corpseInfo->tree;
+	XAnimCloneAnimTree(tree, g_scr_data.playerCorpseInfo[corpseIndex].tree);
+	body->s.groundEntityNum = 1023;
+	body->r.svFlags = 2;
+	VectorCopy(pSelf->r.mins, body->r.mins);
+	VectorCopy(pSelf->r.maxs, body->r.maxs);
+	VectorCopy(pSelf->r.absmin, body->r.absmin);
+	VectorCopy(pSelf->r.absmax, body->r.absmax);
+	body->s.legsAnim = pSelf->client->ps.legsAnim;
+	body->s.torsoAnim = pSelf->client->ps.torsoAnim;
+	body->clipmask = 65537;
+	body->r.contents = 67117056;
+	SV_LinkEntity(body);
+	body->nextthink = level.time + deathAnimDuration;
+	body->handler = 12;
+
+	GScr_AddEntity(body);
+}
+
+void PlayerCmd_SetClientDvar(scr_entref_t entref)
+{
+	char c;
+	char szOutString[1024];
+	char szString[1024];
+	char *pCh;
+	char *pszText;
+	const char *pszDvar;
+	int i;
+
+	if ( entref.classnum )
+	{
+		Scr_ObjectError("not an entity");
+	}
+	else if ( !g_entities[entref.entnum].client )
+	{
+		Scr_ObjectError(va("entity %i is not a player", entref.entnum));
+	}
+
+	pszDvar = Scr_GetString(0);
+
+	if ( Scr_GetType(1u) == VAR_ISTRING )
+	{
+		Scr_ConstructMessageString(1, Scr_GetNumParam() - 1, "Client Dvar Value", szString, 1024);
+		pszText = szString;
+	}
+	else
+	{
+		pszText = (char *)Scr_GetString(1u);
+	}
+
+	if ( Dvar_IsValidName(pszDvar) )
+	{
+		pCh = szOutString;
+		memset(szOutString, 0, sizeof(szOutString));
+		i = 0;
+
+		while ( i <= 0x1FFF && pszText[i] )
+		{
+			c = I_CleanChar(pszText[i]);
+			*pCh = c;
+			if ( *pCh == 34 )
+				*pCh = 39;
+			++i;
+			++pCh;
+		}
+
+		SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %s \"%s\"", 118, pszDvar, szOutString));
+	}
+	else
+	{
+		Scr_Error(va("Dvar %s has an invalid dvar name", pszDvar));
+	}
+}
+
+void ScrCmd_IsLookingAt(scr_entref_t entref)
+{
+	gentity_s *pSelf;
+	gentity_s *pOther;
+
+	if ( entref.classnum )
+	{
+		Scr_ObjectError("not an entity");
+		pSelf = 0;
+	}
+	else
+	{
+		pSelf = &g_entities[entref.entnum];
+
+		if ( !pSelf->client )
+		{
+			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
+		}
+	}
+
 	pOther = Scr_GetEntity(0);
-	Scr_AddInt(client->pLookatEnt == pOther);
+	Scr_AddInt(pSelf->client->pLookatEnt == pOther);
 }
 
 void ScrCmd_PlayLocalSound(scr_entref_t entref)
@@ -2250,31 +2217,31 @@ void ScrCmd_PlayLocalSound(scr_entref_t entref)
 	soundName = Scr_GetString(0);
 	soundIndex = G_SoundAliasIndex(soundName);
 
-	SV_GameSendServerCommand(entref.entnum, 0, va("%c %i", 115, soundIndex));
+	SV_GameSendServerCommand(entref.entnum, SV_CMD_CAN_IGNORE, va("%c %i", 115, soundIndex));
 }
 
 extern dvar_t *g_voiceChatTalkingDuration;
 void PlayerCmd_IsTalking(scr_entref_t entref)
 {
-	gentity_s *ent;
+	gentity_s *pSelf;
 	int elapsedTime;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
 	}
 
-	elapsedTime = level.time - ent->client->lastVoiceTime;
+	elapsedTime = level.time - pSelf->client->lastVoiceTime;
 
 	if ( elapsedTime < 0 || elapsedTime >= g_voiceChatTalkingDuration->current.integer )
 		Scr_AddInt(0);
@@ -2284,22 +2251,20 @@ void PlayerCmd_IsTalking(scr_entref_t entref)
 
 void PlayerCmd_AllowSpectateTeam(scr_entref_t entref)
 {
-	gclient_s *client;
-	int spectate;
-	gentity_s *ent;
+	gentity_s *pSelf;
 	int teamBit;
 	unsigned short teamString;
 
 	if ( entref.classnum )
 	{
 		Scr_ObjectError("not an entity");
-		ent = 0;
+		pSelf = 0;
 	}
 	else
 	{
-		ent = &g_entities[entref.entnum];
+		pSelf = &g_entities[entref.entnum];
 
-		if ( !ent->client )
+		if ( !pSelf->client )
 		{
 			Scr_ObjectError(va("entity %i is not a player", entref.entnum));
 		}
@@ -2328,18 +2293,11 @@ void PlayerCmd_AllowSpectateTeam(scr_entref_t entref)
 	{
 		Scr_ParamError(0, "team must be \"axis\", \"allies\", \"none\", or \"freelook\"");
 	}
-	if ( Scr_GetInt(1u) )
-	{
-		client = ent->client;
-		spectate = client->sess.noSpectate & ~teamBit;
-	}
-	else
-	{
-		client = ent->client;
-		spectate = client->sess.noSpectate | teamBit;
-	}
 
-	client->sess.noSpectate = spectate;
+	if ( Scr_GetInt(1u) )
+		pSelf->client->sess.noSpectate &= ~teamBit;
+	else
+		pSelf->client->sess.noSpectate |= teamBit;
 }
 
 void PlayerCmd_GetGuid(scr_entref_t entref)
@@ -2379,11 +2337,4 @@ void (*Player_GetMethod(const char **pName))(scr_entref_t)
 	}
 
 	return NULL;
-}
-
-void BodyEnd(gentity_s *ent)
-{
-	ent->s.eFlags &= ~0x80000u;
-	ent->r.contents = 0x4000000;
-	ent->r.svFlags = 0;
 }

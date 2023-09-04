@@ -40,7 +40,7 @@ char *ConcatArgs( int start )
 
 qboolean G_IsPlaying(gentity_s *ent)
 {
-	return ent->client->sess.sessionState == STATE_PLAYING;
+	return ent->client->sess.sessionState == SESS_STATE_PLAYING;
 }
 
 void G_setfog(const char *fogstring)
@@ -76,13 +76,13 @@ int CheatsOk(gentity_s *ent)
 		}
 		else
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_MUSTBEALIVECOMMAND\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_MUSTBEALIVECOMMAND\"", 101));
 			return 0;
 		}
 	}
 	else
 	{
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
 		return 0;
 	}
 }
@@ -148,7 +148,7 @@ void DeathmatchScoreboardMessage(gentity_s *ent)
 		stringlength += len;
 	}
 
-	SV_GameSendServerCommand(ent - g_entities, 1, va("%c %i %i %i%s", 98, i, level.teamScores[1], level.teamScores[2], string));
+	SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c %i %i %i%s", 98, i, level.teamScores[1], level.teamScores[2], string));
 }
 
 void Cmd_Score_f(gentity_s *ent)
@@ -209,7 +209,7 @@ int Cmd_FollowCycle_f(gentity_s *ent, int dir)
 	if ( dir != 1 && dir != -1 )
 		Com_Error(ERR_DROP, "Cmd_FollowCycle_f: bad dir %i", dir);
 
-	if ( ent->client->sess.sessionState != STATE_SPECTATOR )
+	if ( ent->client->sess.sessionState != SESS_STATE_SPECTATOR )
 		return 0;
 
 	if ( ent->client->sess.forceSpectatorClient >= 0 )
@@ -236,7 +236,7 @@ int Cmd_FollowCycle_f(gentity_s *ent, int dir)
 		        && G_ClientCanSpectateTeam(ent->client, (team_t)cstate.team) )
 		{
 			ent->client->spectatorClient = clientNum;
-			ent->client->sess.sessionState = STATE_SPECTATOR;
+			ent->client->sess.sessionState = SESS_STATE_SPECTATOR;
 			return 1;
 		}
 	}
@@ -284,12 +284,12 @@ void Cmd_SetViewpos_f(gentity_s *ent)
 		}
 		else
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
 		}
 	}
 	else
 	{
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
 	}
 }
 
@@ -307,23 +307,23 @@ void Cmd_Vote_f(gentity_s *ent)
 	{
 		if ( !level.voteTime )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_NOVOTEINPROGRESS\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOVOTEINPROGRESS\"", 101));
 			return;
 		}
 
 		if ( (ent->client->ps.eFlags & 0x100000) != 0 )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_VOTEALREADYCAST\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEALREADYCAST\"", 101));
 			return;
 		}
 
 		if ( ent->client->sess.state.team == 3 )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_NOSPECTATORVOTE\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOSPECTATORVOTE\"", 101));
 			return;
 		}
 
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_VOTECAST\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTECAST\"", 101));
 		ent->client->ps.eFlags |= 0x100000u;
 	}
 
@@ -366,7 +366,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 	if ( !g_allowVote->current.boolean )
 	{
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_VOTINGNOTENABLED\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTINGNOTENABLED\"", 101));
 		return;
 	}
 
@@ -374,19 +374,19 @@ void Cmd_CallVote_f(gentity_s *ent)
 	{
 		if ( level.voteTime )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_VOTEALREADYINPROGRESS\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEALREADYINPROGRESS\"", 101));
 			return;
 		}
 
 		if ( ent->client->sess.teamVoteCount > 2 )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_MAXVOTESCALLED\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_MAXVOTESCALLED\"", 101));
 			return;
 		}
 
 		if ( ent->client->sess.state.team == TEAM_SPECTATOR )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_NOSPECTATORCALLVOTE\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOSPECTATORCALLVOTE\"", 101));
 			return;
 		}
 	}
@@ -398,7 +398,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 	if ( strchr(arg1, 59) || strchr(arg2, 59) || strchr(arg3, 59) )
 	{
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_INVALIDVOTESTRING\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDVOTESTRING\"", 101));
 		return;
 	}
 
@@ -418,8 +418,8 @@ void Cmd_CallVote_f(gentity_s *ent)
 	        && I_stricmp(arg1, "tempBanUser")
 	        && I_stricmp(arg1, "tempBanClient") )
 	{
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_INVALIDVOTESTRING\"", 101));
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_VOTECOMMANDSARE\x15 map_restart, map_rotate, map <mapname>, g_gametype <typename>, typemap <typename> <mapname>, kick <player>, clientkick <clientnum>, tempBanUser <player>, tempBanClient <clientNum>\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDVOTESTRING\"", 101));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTECOMMANDSARE\x15 map_restart, map_rotate, map <mapname>, g_gametype <typename>, typemap <typename> <mapname>, kick <player>, clientkick <clientnum>, tempBanUser <player>, tempBanClient <clientNum>\"", 101));
 		return;
 	}
 
@@ -433,7 +433,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 	{
 		if ( !Scr_IsValidGameType(arg2) )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_INVALIDGAMETYPE\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDGAMETYPE\"", 101));
 			return;
 		}
 
@@ -444,13 +444,13 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 		if (strlen(arg3) > MAX_QPATH)
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"\x15Map name is too long\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15Map name is too long\"", 101));
 			return;
 		}
 
 		if ( !SV_MapExists(arg3) )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"\x15The server doesn't have that map\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15The server doesn't have that map\"", 101));
 			return;
 		}
 
@@ -461,7 +461,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 		if ( !arg2[0] && !arg3[0] )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_TYPEMAP_NOCHANGE\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_TYPEMAP_NOCHANGE\"", 101));
 			return;
 		}
 
@@ -494,7 +494,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 	{
 		if ( !Scr_IsValidGameType(arg2) )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_INVALIDGAMETYPE\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDGAMETYPE\"", 101));
 			return;
 		}
 
@@ -524,13 +524,13 @@ void Cmd_CallVote_f(gentity_s *ent)
 	{
 		if (strlen(arg2) > MAX_QPATH)
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"\x15Map name is too long\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15Map name is too long\"", 101));
 			return;
 		}
 
 		if ( !SV_MapExists(arg2) )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"\x15The server doesn't have that map\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15The server doesn't have that map\"", 101));
 			return;
 		}
 
@@ -580,7 +580,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 		if ( kicknum == MAX_CLIENTS )
 		{
-			SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_CLIENTNOTONSERVER\"", 101));
+			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CLIENTNOTONSERVER\"", 101));
 			return;
 		}
 
@@ -596,7 +596,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 	}
 
 start_vote:
-	SV_GameSendServerCommand(-1, 0, va("%c \"GAME_CALLEDAVOTE\x15%s\"", 101, ent->client->sess.state.name));
+	SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_CALLEDAVOTE\x15%s\"", 101, ent->client->sess.state.name));
 
 	level.voteTime = level.time + 30000;
 	level.voteYes = 1;
@@ -616,14 +616,14 @@ start_vote:
 void Cmd_Where_f(gentity_s *ent)
 {
 	if ( g_cheats->current.boolean )
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 101, vtos(ent->r.currentOrigin)));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, vtos(ent->r.currentOrigin)));
 }
 
 void Cmd_Kill_f(gentity_s *ent)
 {
 	gclient_s *client;
 
-	if ( ent->client->sess.sessionState == STATE_PLAYING )
+	if ( ent->client->sess.sessionState == SESS_STATE_PLAYING )
 	{
 		ent->flags &= 0xFFFFFFFC;
 		client = ent->client;
@@ -645,7 +645,7 @@ void Cmd_UFO_f(gentity_s *ent)
 			enabled = "GAME_UFOON";
 
 		ent->client->ufo = ent->client->ufo == 0;
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 101, enabled));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
 	}
 }
 
@@ -661,7 +661,7 @@ void Cmd_Noclip_f(gentity_s *ent)
 			enabled = "GAME_NOCLIPON";
 
 		ent->client->noclip = ent->client->noclip == 0;
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 101, enabled));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
 	}
 }
 
@@ -678,7 +678,7 @@ void Cmd_Notarget_f(gentity_s *ent)
 		else
 			enabled = va("%c \"%s\"", 101, "GAME_NOTARGETOFF");
 
-		SV_GameSendServerCommand(ent - g_entities, 0, enabled);
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, enabled);
 	}
 }
 
@@ -695,7 +695,7 @@ void Cmd_DemiGod_f(gentity_s *ent)
 		else
 			enabled = "GAME_DEMI_GODMODE_OFF";
 
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 101, enabled));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
 	}
 }
 
@@ -712,7 +712,7 @@ void Cmd_God_f(gentity_s *ent)
 		else
 			enabled = "GAME_GODMODE_OFF";
 
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 101, enabled));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
 	}
 }
 
@@ -768,7 +768,7 @@ take:
 					if ( ent->client->ps.weapon )
 					{
 						ent->client->ps.weapon = 0;
-						SendWeaponChangeInfo(ent - g_entities, 0);
+						G_SelectWeaponIndex(ent - g_entities, 0);
 					}
 					if ( take_all )
 					{
@@ -1006,7 +1006,7 @@ void G_SayTo(gentity_s *ent, gentity_s *other, int mode, int color, const char *
 		else
 			type = 104;
 
-		SV_GameSendServerCommand(other - g_entities, 0, va("%c \"\x15%s%c%c%s\"", type, cleanname, 94, color, message));
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15%s%c%c%s\"", type, cleanname, 94, color, message));
 	}
 }
 
@@ -1045,7 +1045,7 @@ void G_Say(gentity_s *ent, gentity_s *target, int mode, const char *chatText)
 	{
 		Com_sprintf(teamname, sizeof(teamname), "\x15(\x14GAME_SPECTATOR\x15)");
 	}
-	else if ( ent->client->sess.sessionState == STATE_DEAD )
+	else if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
 	{
 		Com_sprintf(teamname, sizeof(teamname), "\x15%s(\x14GAME_DEAD\x15)", team_color);
 	}
@@ -1315,5 +1315,5 @@ void ClientCommand( int clientNum )
 		return;
 	}
 
-	SV_GameSendServerCommand(clientNum, 0, va("%c \"GAME_UNKNOWNCLIENTCOMMAND\x15%s\"", 101, cmd));
+	SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_UNKNOWNCLIENTCOMMAND\x15%s\"", 101, cmd));
 }

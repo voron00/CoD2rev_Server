@@ -301,7 +301,7 @@ void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int 
 			client = &level.clients[i];
 
 			if ( client->sess.connected == CS_CONNECTED
-			        && client->sess.sessionState == STATE_SPECTATOR
+			        && client->sess.sessionState == SESS_STATE_SPECTATOR
 			        && client->spectatorClient == self->s.number )
 			{
 				Cmd_Score_f(&g_entities[i]);

@@ -16,7 +16,7 @@ int SV_KickClient(client_s *cl, char *playerName, int maxPlayerNameLen)
 
 	if ( cl->netchan.remoteAddress.type == NA_LOOPBACK )
 	{
-		SV_SendServerCommand(0, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
+		SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
 		return 0;
 	}
 	else
@@ -854,7 +854,7 @@ void SV_ConSay_f( void )
 
 	strcat( text, p );
 
-	SV_SendServerCommand(0, 0, "%c \"\x15%s\"", 104, text);
+	SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"\x15%s\"", 104, text);
 }
 
 /*
@@ -909,7 +909,7 @@ void SV_ConTell_f( void )
 
 	strcat( text, p );
 
-	SV_SendServerCommand(cl, 0, "%c \"\x15%s\"", 104, text);
+	SV_SendServerCommand(cl, SV_CMD_CAN_IGNORE, "%c \"\x15%s\"", 104, text);
 }
 
 void SV_AddDedicatedCommands()

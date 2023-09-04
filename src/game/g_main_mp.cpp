@@ -460,7 +460,7 @@ void CheckVote()
 			                           + level.voteNo) )
 			{
 pass:
-				SV_GameSendServerCommand(-1, 0, va("%c \"GAME_VOTEPASSED\"", 101));
+				SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101));
 				level.voteExecuteTime = level.time + 3000;
 fail:
 				level.voteTime = 0;
@@ -469,7 +469,7 @@ fail:
 			}
 		}
 
-		SV_GameSendServerCommand(-1, 0, va("%c \"GAME_VOTEFAILED\"", 101));
+		SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101));
 		goto fail;
 	}
 }

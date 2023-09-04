@@ -275,7 +275,7 @@ void ClientDisconnect(int clientNum)
 	for ( i = 0; i < level.maxclients; ++i )
 	{
 		if ( level.clients[i].sess.connected
-		        && level.clients[i].sess.sessionState == STATE_SPECTATOR
+		        && level.clients[i].sess.sessionState == SESS_STATE_SPECTATOR
 		        && level.clients[i].spectatorClient == clientNum )
 		{
 			StopFollowing(&g_entities[i]);
@@ -328,7 +328,7 @@ const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId)
 	gclient->sess.connected = CS_ZOMBIE;
 	gclient->sess.pers = id;
 	gclient->sess.state.team = 3;
-	gclient->sess.sessionState = STATE_SPECTATOR;
+	gclient->sess.sessionState = SESS_STATE_SPECTATOR;
 	gclient->spectatorClient = -1;
 	gclient->sess.forceSpectatorClient = -1;
 	G_InitGentity(ent);
@@ -375,7 +375,7 @@ void G_BroadcastVoice(gentity_s *talker, VoicePacket_t *voicePacket)
 		        && ent->client
 		        && (voice_global->current.boolean || OnSameTeam(talker, ent) || talker->client->sess.state.team == TEAM_NONE)
 		        && (ent->client->sess.sessionState == talker->client->sess.sessionState
-		            || (ent->client->sess.sessionState == STATE_DEAD || talker->client->sess.sessionState == STATE_DEAD)
+		            || (ent->client->sess.sessionState == SESS_STATE_DEAD || talker->client->sess.sessionState == SESS_STATE_DEAD)
 		            && voice_deadChat->current.boolean)
 		        && (talker != ent || voice_localEcho->current.boolean)
 		        && !SV_ClientHasClientMuted(listener, talker->s.number)

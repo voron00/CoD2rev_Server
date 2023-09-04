@@ -139,7 +139,7 @@ int GetFreeDropCueIdx()
 
 		for ( j = 0; j < level.maxclients; ++j )
 		{
-			if ( level.clients[j].sess.connected == CON_CONNECTED && level.clients[j].sess.sessionState == STATE_PLAYING )
+			if ( level.clients[j].sess.connected == CON_CONNECTED && level.clients[j].sess.sessionState == SESS_STATE_PLAYING )
 			{
 				fClientDistSqrd = Vec3DistanceSq(g_entities[j].r.currentOrigin, ent->r.currentOrigin);
 
@@ -682,7 +682,7 @@ qboolean Pickup_Ammo(gentity_s *ent, gentity_s *other)
 		pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
 	}
 
-	SV_GameSendServerCommand(other - g_entities, 0, pickupMsg);
+	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupMsg);
 	Scr_AddEntity(other);
 	Scr_Notify(ent, scr_const.trigger, 1u);
 
@@ -691,7 +691,7 @@ qboolean Pickup_Ammo(gentity_s *ent, gentity_s *other)
 	else
 		pickupCmd = va("%c \"%i\"", 73, 1);
 
-	SV_GameSendServerCommand(other - g_entities, 0, pickupCmd);
+	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupCmd);
 	return 1;
 }
 
@@ -754,8 +754,8 @@ int Pickup_Health(gentity_s *ent, gentity_s *other)
 
 	other->client->ps.stats[0] = other->health;
 
-	SV_GameSendServerCommand(other - g_entities, 0, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 102, max));
-	SV_GameSendServerCommand(other - g_entities, 0, va("%c \"%i\"", 73, 0));
+	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 102, max));
+	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 0));
 
 	Scr_AddEntity(other);
 	Scr_Notify(ent, scr_const.trigger, 1u);
@@ -763,9 +763,9 @@ int Pickup_Health(gentity_s *ent, gentity_s *other)
 	return 1;
 }
 
-void SendWeaponChangeInfo(int clientnum, int weapon)
+void G_SelectWeaponIndex(int clientnum, int iWeaponIndex)
 {
-	SV_GameSendServerCommand(clientnum, 1, va("%c %i", 97, weapon));
+	SV_GameSendServerCommand(clientnum, SV_CMD_RELIABLE, va("%c %i", 97, iWeaponIndex));
 }
 
 extern dvar_t *g_weaponAmmoPools;
@@ -931,7 +931,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 						}
 						if ( i > 2 )
 						{
-							SV_GameSendServerCommand(other - g_entities, 0, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
+							SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
 							return 0;
 						}
 					}
@@ -946,7 +946,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			}
 			G_GivePlayerWeapon(&other->client->ps, weaponIndex);
 			if ( !touched )
-				SendWeaponChangeInfo(other - g_entities, weaponIndex);
+				G_SelectWeaponIndex(other - g_entities, weaponIndex);
 		}
 		else
 		{
@@ -964,7 +964,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 				pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
 			else
 				pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
-			SV_GameSendServerCommand(other - g_entities, 0, pickupMsg);
+			SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupMsg);
 		}
 		if ( newAmmoCount != oldAmmoCount )
 		{
@@ -1007,7 +1007,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 		pickupCmd = va("%c \"%i\"", 73, 4);
 	else
 		pickupCmd = va("%c \"%i\"", 73, 1);
-	SV_GameSendServerCommand(other - g_entities, 0, pickupCmd);
+	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupCmd);
 	return 1;
 }
 
@@ -1086,11 +1086,11 @@ void Touch_Item(gentity_s *ent, gentity_s *other, int touched)
 					if ( COM_BitTest(other->client->ps.weapons, item->giTag) )
 					{
 						weaponDef = BG_GetWeaponDef(item->giTag);
-						SV_GameSendServerCommand(other - g_entities, 0, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weaponDef->szDisplayName));
+						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weaponDef->szDisplayName));
 					}
 					else if ( (unsigned int)(BG_GetWeaponDef(item->giTag)->weaponSlot - 1) <= 1 )
 					{
-						SV_GameSendServerCommand(other - g_entities, 0, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
+						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
 					}
 				}
 			}

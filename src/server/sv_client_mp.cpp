@@ -86,7 +86,7 @@ void SV_BanClient(client_t *cl)
 
 	if ( cl->netchan.remoteAddress.type == NA_LOOPBACK )
 	{
-		SV_SendServerCommand(0, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
+		SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
 	}
 	else if ( cl->guid )
 	{
@@ -755,15 +755,15 @@ void SV_DropClient(client_s *drop, const char *reason)
 		if ( I_stricmp(reason, "EXE_DISCONNECTED") )
 		{
 			if ( !I_stricmpn(reason, "EXE", 3) || !I_stricmpn(reason, "GAME", 4) || !I_stricmpn(reason, "PC", 2) )
-				SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
+				SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
 			else
-				SV_SendServerCommand(0, 0, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
+				SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
 		}
 
 		Com_Printf("%i:%s %s\n", drop - svs.clients, name, reason);
 
-		SV_SendServerCommand(0, 1, "%c %d", 74, drop - svs.clients);
-		SV_SendServerCommand(drop, 1, "%c \"%s\"", 119, reason);
+		SV_SendServerCommand(0, SV_CMD_RELIABLE, "%c %d", 74, drop - svs.clients);
+		SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s\"", 119, reason);
 
 		for ( j = 0; j < sv_maxclients->current.integer && svs.clients[j].state <= CS_ZOMBIE; ++j );
 

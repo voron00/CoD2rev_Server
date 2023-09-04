@@ -196,7 +196,7 @@ void SV_SetConfigstring(unsigned int index, const char *val)
 				}
 
 				Q_strncpyz( buf, &val[sent], maxChunkSize );
-				SV_SendServerCommand( client, 1, "%c %i %s", cmd, index, buf );
+				SV_SendServerCommand( client, SV_CMD_RELIABLE, "%c %i %s", cmd, index, buf );
 
 				sent += ( maxChunkSize - 1 );
 				remaining -= ( maxChunkSize - 1 );
@@ -206,7 +206,7 @@ void SV_SetConfigstring(unsigned int index, const char *val)
 		{
 			// standard cs, just send it
 			cmd = 'd';
-			SV_SendServerCommand( client, 1, "%c %i %s", cmd, index, val );
+			SV_SendServerCommand( client, SV_CMD_RELIABLE, "%c %i %s", cmd, index, val );
 		}
 	}
 }
@@ -526,8 +526,8 @@ void SV_FinalMessage(const char *message)
 			{
 				if ( client->netchan.remoteAddress.type != NA_LOOPBACK )
 				{
-					SV_SendServerCommand(client, 0, "%c \"%s\"", 101, message);
-					SV_SendServerCommand(client, 1, "%c \"%s\"", 119, message);
+					SV_SendServerCommand(client, SV_CMD_CAN_IGNORE, "%c \"%s\"", 101, message);
+					SV_SendServerCommand(client, SV_CMD_RELIABLE, "%c \"%s\"", 119, message);
 				}
 
 				client->nextSnapshotTime = -1;

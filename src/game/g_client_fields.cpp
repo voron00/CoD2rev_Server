@@ -64,20 +64,20 @@ void ClientScr_SetSessionState(gclient_s *pSelf, const game_client_field_t *pFie
 
 	if ( str == scr_const.playing )
 	{
-		pSelf->sess.sessionState = STATE_PLAYING;
+		pSelf->sess.sessionState = SESS_STATE_PLAYING;
 	}
 	else if ( str == scr_const.dead )
 	{
-		pSelf->sess.sessionState = STATE_DEAD;
+		pSelf->sess.sessionState = SESS_STATE_DEAD;
 	}
 	else if ( str == scr_const.spectator )
 	{
-		pSelf->sess.sessionState = STATE_SPECTATOR;
+		pSelf->sess.sessionState = SESS_STATE_SPECTATOR;
 	}
 	else if ( str == scr_const.intermission )
 	{
 		pSelf->ps.eFlags ^= 2u;
-		pSelf->sess.sessionState = STATE_INTERMISSION;
+		pSelf->sess.sessionState = SESS_STATE_INTERMISSION;
 	}
 	else
 	{
@@ -198,22 +198,22 @@ void ClientScr_GetSessionState(gclient_s *pSelf, const game_client_field_t *pFie
 
 	sessionState = pSelf->sess.sessionState;
 
-	if ( sessionState == STATE_DEAD )
+	if ( sessionState == SESS_STATE_DEAD )
 	{
 		Scr_AddConstString(scr_const.dead);
 	}
-	else if ( sessionState > STATE_DEAD )
+	else if ( sessionState > SESS_STATE_DEAD )
 	{
-		if ( sessionState == STATE_SPECTATOR )
+		if ( sessionState == SESS_STATE_SPECTATOR )
 		{
 			Scr_AddConstString(scr_const.spectator);
 		}
-		else if ( sessionState == STATE_INTERMISSION )
+		else if ( sessionState == SESS_STATE_INTERMISSION )
 		{
 			Scr_AddConstString(scr_const.intermission);
 		}
 	}
-	else if ( sessionState == STATE_PLAYING )
+	else if ( sessionState == SESS_STATE_PLAYING )
 	{
 		Scr_AddConstString(scr_const.playing);
 	}

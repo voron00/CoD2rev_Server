@@ -663,7 +663,7 @@ void Scr_MakeGameMessage(int iClientNum, const char *pszCmd)
 
 	paramnum = Scr_GetNumParam();
 	Scr_ConstructMessageString(0, paramnum - 1, "Game Message", string, 0x400u);
-	SV_GameSendServerCommand(iClientNum, 0, va("%s \"%s\"", pszCmd, string));
+	SV_GameSendServerCommand(iClientNum, SV_CMD_CAN_IGNORE, va("%s \"%s\"", pszCmd, string));
 }
 
 void iprintln()
@@ -1925,7 +1925,7 @@ skip:
 
 void Scr_MusicPlay()
 {
-	SV_GameSendServerCommand(-1, 1, va("%c %s", 111, Scr_GetString(0)));
+	SV_GameSendServerCommand(-1, SV_CMD_RELIABLE, va("%c %s", 111, Scr_GetString(0)));
 }
 
 void Scr_MusicStop()
@@ -1955,7 +1955,7 @@ void Scr_MusicStop()
 		Scr_Error(va("musicStop: fade time must be >= 0\n"));
 	}
 
-	SV_GameSendServerCommand(-1, 1, va("%c %i", 112, iFadeTime));
+	SV_GameSendServerCommand(-1, SV_CMD_RELIABLE, va("%c %i", 112, iFadeTime));
 }
 
 void Scr_SoundFade()
@@ -1970,7 +1970,7 @@ void Scr_SoundFade()
 	else
 		iFadeTime = (int)(Scr_GetFloat(1u) * 1000.0);
 
-	SV_GameSendServerCommand(-1, 1, va("%c %f %i\n", 113, fTargetVol, iFadeTime));
+	SV_GameSendServerCommand(-1, SV_CMD_RELIABLE, va("%c %f %i\n", 113, fTargetVol, iFadeTime));
 }
 
 void Scr_AmbientPlay()
@@ -2597,7 +2597,7 @@ void GScr_Announcement()
 
 	paramNum = Scr_GetNumParam();
 	Scr_ConstructMessageString(0, paramNum - 1, "Announcement", string, 1024);
-	SV_GameSendServerCommand(-1, 0, va("%c \"%s\" 2", 99, string));
+	SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"%s\" 2", 99, string));
 }
 
 void GScr_ClientAnnouncement()
@@ -2609,7 +2609,7 @@ void GScr_ClientAnnouncement()
 	ent = Scr_GetEntity(0);
 	paramNum = Scr_GetNumParam();
 	Scr_ConstructMessageString(1, paramNum - 1, "Announcement", string, 1024);
-	SV_GameSendServerCommand(ent->s.number, 0, va("%c \"%s\" 2", 99, string));
+	SV_GameSendServerCommand(ent->s.number, SV_CMD_CAN_IGNORE, va("%c \"%s\" 2", 99, string));
 }
 
 void GScr_GetTeamScore()
@@ -2655,7 +2655,7 @@ void GScr_SetTeamScore()
 		pszScore = va("%c %i", 71, score);
 	}
 
-	SV_GameSendServerCommand(-1, 0, pszScore);
+	SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, pszScore);
 	level.bUpdateScoresForIntermission = 1;
 }
 
@@ -3141,7 +3141,7 @@ void GScr_AllClientsPrint()
 	if ( Scr_GetNumParam() )
 	{
 		msg = Scr_GetString(0);
-		SV_GameSendServerCommand(-1, 0, va("%c \"%s\"", 101, msg));
+		SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg));
 	}
 }
 
@@ -3154,7 +3154,7 @@ void GScr_ClientPrint()
 	{
 		ent = Scr_GetEntity(0);
 		msg = Scr_GetString(1u);
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 101, msg));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg));
 	}
 }
 
@@ -4122,7 +4122,7 @@ void ScrCmd_SetNormalHealth(scr_entref_t entref)
 	{
 		temp = (float)ent->client->sess.maxHealth * normalHealth;
 		newHealth = floorf(temp);
-		SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%i\"", 73, 0));
+		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 0));
 	}
 	else if ( ent->maxHealth )
 	{
@@ -4470,8 +4470,8 @@ void GScr_UpdateScores(scr_entref_t entref)
 
 	ent = GetEntity(entref);
 
-	SV_GameSendServerCommand(ent - g_entities, 0, va("%c %i", 72, level.teamScores[2]));
-	SV_GameSendServerCommand(ent - g_entities, 0, va("%c %i", 71, level.teamScores[1]));
+	SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c %i", 72, level.teamScores[2]));
+	SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c %i", 71, level.teamScores[1]));
 }
 
 void GScr_SetTeamForTrigger(scr_entref_t entref)
