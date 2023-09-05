@@ -311,7 +311,6 @@ void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const cha
 {
 	unsigned int charIndex;
 	unsigned int tokenLen;
-	int type;
 	gentity_t *ent;
 	int parmIndex;
 	const char *token;
@@ -321,9 +320,7 @@ void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const cha
 
 	for ( parmIndex = firstParmIndex; parmIndex <= lastParmIndex; ++parmIndex )
 	{
-		type = Scr_GetType(parmIndex);
-
-		if ( type == VAR_ISTRING )
+		if ( Scr_GetType(parmIndex) == VAR_ISTRING )
 		{
 			token = Scr_GetIString(parmIndex);
 			tokenLen = strlen(token);
@@ -339,7 +336,7 @@ void Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const cha
 				string[stringLen++] = 20;
 			}
 		}
-		else if ( type != VAR_OBJECT || Scr_GetPointerType(parmIndex) != VAR_ENTITY )
+		else if ( Scr_GetType(parmIndex) != VAR_OBJECT || Scr_GetPointerType(parmIndex) != VAR_ENTITY )
 		{
 			token = Scr_GetString(parmIndex);
 			tokenLen = strlen(token);
@@ -488,18 +485,18 @@ unsigned int GScr_AllocString(const char *string)
 
 int GScr_GetHeadIconIndex(const char *pszIcon)
 {
-	char dest[MAX_STRING_CHARS];
-	int i;
+	char szConfigString[MAX_STRING_CHARS];
+	int iConfigNum;
 
 	if ( !*pszIcon )
 		return 0;
 
-	for ( i = 0; i < 15; ++i )
+	for ( iConfigNum = 0; iConfigNum < 15; ++iConfigNum )
 	{
-		SV_GetConfigstring(i + 31, dest, 1024);
+		SV_GetConfigstring(iConfigNum + 31, szConfigString, 1024);
 
-		if ( !I_stricmp(dest, pszIcon) )
-			return i + 1;
+		if ( !I_stricmp(szConfigString, pszIcon) )
+			return iConfigNum + 1;
 	}
 
 	Scr_Error(va("Head icon '%s' was not precached\n", pszIcon));
@@ -508,18 +505,18 @@ int GScr_GetHeadIconIndex(const char *pszIcon)
 
 int GScr_GetStatusIconIndex(const char *pszIcon)
 {
-	char dest[MAX_STRING_CHARS];
-	int i;
+	char szConfigString[MAX_STRING_CHARS];
+	int iConfigNum;
 
 	if ( !*pszIcon )
 		return 0;
 
-	for ( i = 0; i < 8; ++i )
+	for ( iConfigNum = 0; iConfigNum < 8; ++iConfigNum )
 	{
-		SV_GetConfigstring(i + 23, dest, 1024);
+		SV_GetConfigstring(iConfigNum + 23, szConfigString, 1024);
 
-		if ( !I_stricmp(dest, pszIcon) )
-			return i + 1;
+		if ( !I_stricmp(szConfigString, pszIcon) )
+			return iConfigNum + 1;
 	}
 
 	Scr_Error(va("Status icon '%s' was not precached\n", pszIcon));
@@ -528,23 +525,23 @@ int GScr_GetStatusIconIndex(const char *pszIcon)
 
 int G_GetHintStringIndex(int *piIndex, const char *pszString)
 {
-	char string[1024];
-	int i;
+	char szConfigString[MAX_STRING_CHARS];
+	int iConfigNum;
 
-	for ( i = 0; i < 32; ++i )
+	for ( iConfigNum = 0; iConfigNum < 32; ++iConfigNum )
 	{
-		SV_GetConfigstring(i + 1278, string, 1024);
+		SV_GetConfigstring(iConfigNum + 1278, szConfigString, 1024);
 
-		if ( !string[0] )
+		if ( !szConfigString[0] )
 		{
-			SV_SetConfigstring(i + 1278, pszString);
-			*piIndex = i;
+			SV_SetConfigstring(iConfigNum + 1278, pszString);
+			*piIndex = iConfigNum;
 			return 1;
 		}
 
-		if ( !strcmp(pszString, string) )
+		if ( !strcmp(pszString, szConfigString) )
 		{
-			*piIndex = i;
+			*piIndex = iConfigNum;
 			return 1;
 		}
 	}
@@ -567,7 +564,7 @@ void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker
 	weaponDef = BG_GetWeaponDef(iWeapon);
 	Scr_AddString(weaponDef->szInternalName);
 
-	if ( meansOfDeath < 0xF )
+	if ( meansOfDeath < MOD_NUM )
 		Scr_AddString(modNames[meansOfDeath]);
 	else
 		Scr_AddString("badMOD");
@@ -576,7 +573,7 @@ void Scr_PlayerDamage(gentity_s *self, gentity_s *inflictor, gentity_s *attacker
 	Scr_AddInt(damage);
 	GScr_AddEntity(attacker);
 	GScr_AddEntity(inflictor);
-	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerdamage, 0xAu);
+	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerdamage, 10);
 	Scr_FreeThread(callback);
 }
 
@@ -594,7 +591,7 @@ void Scr_PlayerKilled(gentity_s *self, gentity_s *inflictor, gentity_s *attacker
 	weaponDef = BG_GetWeaponDef(iWeapon);
 	Scr_AddString(weaponDef->szInternalName);
 
-	if ( meansOfDeath < 0xF )
+	if ( meansOfDeath < MOD_NUM )
 		Scr_AddString(modNames[meansOfDeath]);
 	else
 		Scr_AddString("badMOD");
@@ -602,7 +599,7 @@ void Scr_PlayerKilled(gentity_s *self, gentity_s *inflictor, gentity_s *attacker
 	Scr_AddInt(damage);
 	GScr_AddEntity(attacker);
 	GScr_AddEntity(inflictor);
-	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerkilled, 9u);
+	callback = Scr_ExecEntThread(self, g_scr_data.gametype.playerkilled, 9);
 	Scr_FreeThread(callback);
 }
 
@@ -617,7 +614,7 @@ void Scr_PlayerDisconnect(gentity_s *self)
 void Scr_PlayerVote(gentity_s *self, const char *option)
 {
 	Scr_AddString(option);
-	Scr_Notify(self, scr_const.vote, 1u);
+	Scr_Notify(self, scr_const.vote, 1);
 }
 
 void Scr_VoteCalled(gentity_s *self, const char *command, const char *param1, const char *param2)
@@ -625,7 +622,7 @@ void Scr_VoteCalled(gentity_s *self, const char *command, const char *param1, co
 	Scr_AddString(param2);
 	Scr_AddString(param1);
 	Scr_AddString(command);
-	Scr_Notify(self, scr_const.call_vote, 3u);
+	Scr_Notify(self, scr_const.call_vote, 3);
 }
 
 extern dvar_t *g_no_script_spam;
@@ -658,11 +655,9 @@ void println()
 
 void Scr_MakeGameMessage(int iClientNum, const char *pszCmd)
 {
-	unsigned int paramnum;
-	char string[1024];
+	char string[MAX_STRING_CHARS];
 
-	paramnum = Scr_GetNumParam();
-	Scr_ConstructMessageString(0, paramnum - 1, "Game Message", string, 0x400u);
+	Scr_ConstructMessageString(0, Scr_GetNumParam() - 1, "Game Message", string, sizeof(string));
 	SV_GameSendServerCommand(iClientNum, SV_CMD_CAN_IGNORE, va("%s \"%s\"", pszCmd, string));
 }
 
@@ -761,53 +756,33 @@ void assertCmd()
 
 void assertexCmd()
 {
-	const char *string;
-
 	if ( !Scr_GetInt(0) )
-	{
-		string = Scr_GetString(1u);
-		Scr_Error(va("assert fail: %s", string));
-	}
+		Scr_Error(va("assert fail: %s", Scr_GetString(1u)));
 }
 
 void assertmsgCmd()
 {
-	const char *string;
-
-	string = Scr_GetString(0);
-	Scr_Error(va("assert fail: %s", string));
+	Scr_Error(va("assert fail: %s", Scr_GetString(0)));
 }
 
 void GScr_IsDefined()
 {
-	int defined;
-	int type;
-	int pointer_type;
-
-	type = Scr_GetType(0);
-
-	if ( type == VAR_OBJECT )
+	if ( Scr_GetType(0) == VAR_OBJECT )
 	{
-		pointer_type = Scr_GetPointerType(0);
-		defined = 0;
-
-		if ( pointer_type <= VAR_ARRAY && pointer_type != VAR_REMOVED_ENTITY )
-			defined = 1;
-
-		Scr_AddInt(defined);
+		if ( Scr_GetPointerType(0) <= VAR_ARRAY && Scr_GetPointerType(0) != VAR_REMOVED_ENTITY )
+			Scr_AddInt(1);
+		else
+			Scr_AddInt(0);
 	}
 	else
 	{
-		Scr_AddInt(type != VAR_UNDEFINED);
+		Scr_AddInt(Scr_GetType(0) != VAR_UNDEFINED);
 	}
 }
 
 void GScr_IsString()
 {
-	int type;
-
-	type = Scr_GetType(0);
-	Scr_AddInt(type == VAR_STRING);
+	Scr_AddInt(Scr_GetType(0) == VAR_STRING);
 }
 
 void GScr_IsAlive()
@@ -820,59 +795,55 @@ void GScr_IsAlive()
 
 void GScr_GetDvar()
 {
-	const char *string;
 	const char *dvarName;
+	const char *dvarValue;
 
 	dvarName = Scr_GetString(0);
-	string = Dvar_GetVariantString(dvarName);
-	Scr_AddString(string);
+	dvarValue = Dvar_GetVariantString(dvarName);
+	Scr_AddString(dvarValue);
 }
 
 void GScr_GetDvarInt()
 {
 	int value;
-	const char *string;
+	const char *dvarValue;
 	const char *dvarName;
 
 	dvarName = Scr_GetString(0);
-	string = Dvar_GetVariantString(dvarName);
-	value = atoi(string);
+	dvarValue = Dvar_GetVariantString(dvarName);
+	value = atoi(dvarValue);
 	Scr_AddInt(value);
 }
 
 void GScr_GetDvarFloat()
 {
 	float value;
-	const char *string;
+	const char *dvarValue;
 	const char *dvarName;
 
 	dvarName = Scr_GetString(0);
-	string = Dvar_GetVariantString(dvarName);
-	value = atof(string);
+	dvarValue = Dvar_GetVariantString(dvarName);
+	value = atof(dvarValue);
 	Scr_AddFloat(value);
 }
 
 void GScr_SetDvar()
 {
-	unsigned int paramnum;
 	char chr;
 	int norestart;
 	dvar_s *var;
 	const char *pName;
 	const char *dvarName;
-	char outString[1024];
-	char string[1024];
+	char outString[MAX_STRING_CHARS];
+	char string[MAX_STRING_CHARS];
 	char *pString;
-	int type;
 	int count;
 
 	dvarName = Scr_GetString(0);
-	type = Scr_GetType(1u);
 
-	if ( type == VAR_ISTRING )
+	if ( Scr_GetType(1u) == VAR_ISTRING )
 	{
-		paramnum = Scr_GetNumParam();
-		Scr_ConstructMessageString(1, paramnum - 1, "Dvar Value", string, sizeof(string));
+		Scr_ConstructMessageString(1, Scr_GetNumParam() - 1, "Dvar Value", string, sizeof(string));
 		pName = string;
 	}
 	else
@@ -928,7 +899,7 @@ void Scr_GetEntByNum()
 
 	num = Scr_GetInt(0);
 
-	if ( num < 1024 )
+	if ( num < MAX_GENTITIES )
 	{
 		if ( g_entities[num].r.inuse )
 			Scr_AddEntity(&g_entities[num]);
