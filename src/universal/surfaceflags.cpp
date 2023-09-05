@@ -1,66 +1,128 @@
 #include "../qcommon/qcommon.h"
 
+/*
+   Clear    Surface    Contents     Tool
+   Solid     Flags                  Flags
+------------------------------------------------------------
+0x00000000 0x00000000 0x00000000 0x00000000 NoLightMap
+0x00000000 0x00000000 0x00000000 0x00000001 Occluder
+0x00000000 0x00000000 0x00000000 0x00000002 DrawToggle
+0x00000001 0x00000000 0x00000000 0x00000004 Origin
+0x00000000 0x00000000 0x00000000 0x00000008 RadialNormals
+0x00000001 0x00000000 0x00000004 0x00000000 NonColliding
+0x00000000 0x00000000 0x00000040 0x00000000 CanShootClip
+0x00000001 0x00000000 0x00000080 0x00000000 MissileClip
+0x00000001 0x00000000 0x00000200 0x00000000 VehicleClip
+0x00000001 0x00000000 0x00000400 0x00000000 ItemClip
+0x00000001 0x00000000 0x00001000 0x00000000 AISightClip
+0x00000001 0x00000000 0x00002000 0x00000000 BulletClip
+0x00000001 0x00000000 0x00010000 0x00000000 PlayerClip
+0x00000001 0x00000000 0x00020000 0x00000000 AIClip
+0x00000000 0x00000000 0x08000000 0x00000000 Detail
+0x00000000 0x00000000 0x10000000 0x00000000 Structural
+0x00000000 0x00000000 0x20000000 0x00000000 Tranparent
+0x00000001 0x00000000 0x80000000 0x00000000 NoDrop
+0x00000000 0x00000001 0x00000000 0x00000000 NoFallDamage
+0x00000000 0x00000002 0x00000000 0x00000000 Slick
+0x00000001 0x00000004 0x00000800 0x00000000 Sky
+0x00000000 0x00000008 0x00000000 0x00000000 Ladder
+0x00000000 0x00000010 0x00000000 0x00000000 NoImpact
+0x00000000 0x00000020 0x00000000 0x00000000 NoMarks
+0x00000000 0x00000080 0x00000000 0x00000000 NoDraw
+0x00000000 0x00002000 0x00000000 0x00000000 NoSteps
+0x00000001 0x00004000 0x00000000 0x00000000 NonSolid
+0x00000000 0x00020000 0x00000000 0x00000000 NoDynamicLight
+0x00000000 0x00040000 0x00000000 0x00000000 NoCastShadow
+0x00000000 0x00100000 0x00000000 0x00000000 Bark
+0x00000000 0x00200000 0x00000000 0x00000000 Brick
+0x00000000 0x00300000 0x00000000 0x00000000 Carpet
+0x00000000 0x00400000 0x00000000 0x00000000 Cloth
+0x00000000 0x00500000 0x00000000 0x00000000 Concrete
+0x00000000 0x00600000 0x00000000 0x00000000 Dirt
+0x00000000 0x00700000 0x00000000 0x00000000 Flesh
+0x00000001 0x00800000 0x00000002 0x00000000 Foliage
+0x00000001 0x00900000 0x00000010 0x00000000 Glass
+0x00000000 0x00A00000 0x00000000 0x00000000 Grass
+0x00000000 0x00B00000 0x00000000 0x00000000 Gravel
+0x00000000 0x00C00000 0x00000000 0x00000000 Ice
+0x00000000 0x00D00000 0x00000000 0x00000000 Metal
+0x00000000 0x00E00000 0x00000000 0x00000000 Mud
+0x00000000 0x00F00000 0x00000000 0x00000000 Paper
+0x00000000 0x01000000 0x00000000 0x00000000 Plaster
+0x00000000 0x01100000 0x00000000 0x00000000 Rock
+0x00000000 0x01200000 0x00000000 0x00000000 Sand
+0x00000000 0x01300000 0x00000000 0x00000000 Snow
+0x00000001 0x01400000 0x00000020 0x00000000 Water
+0x00000000 0x01500000 0x00000000 0x00000000 Wood
+0x00000000 0x01600000 0x00000000 0x00000000 Asphalt
+0x00000000 0x02000000 0x01000000 0x00000000 MantleOn
+0x00000000 0x04000000 0x01000000 0x00000000 MantleOver
+0x00000001 0x80000000 0x00000000 0x00000000 Portal
+*/
+
 infoParm_t infoParms[] =
 {
 	{ NULL, 0, 0, 0, 0 },
-	{ "bark", 0, 1048576, 0, 0 },
-	{ "brick", 0, 2097152, 0, 0 },
-	{ "carpet", 0, 3145728, 0, 0 },
-	{ "cloth", 0, 4194304, 0, 0 },
-	{ "concrete", 0, 5242880, 0, 0 },
-	{ "dirt", 0, 6291456, 0, 0 },
-	{ "flesh", 0, 7340032, 0, 0 },
-	{ "foliage", 1, 8388608, 2, 0 },
-	{ "glass", 1, 9437184, 16, 0 },
-	{ "grass", 0, 10485760, 0, 0 },
-	{ "gravel", 0, 11534336, 0, 0 },
-	{ "ice", 0, 12582912, 0, 0 },
-	{ "metal", 0, 13631488, 0, 0 },
-	{ "mud", 0, 14680064, 0, 0 },
-	{ "paper", 0, 15728640, 0, 0 },
-	{ "plaster", 0, 16777216, 0, 0 },
-	{ "rock", 0, 17825792, 0, 0 },
-	{ "sand", 0, 18874368, 0, 0 },
-	{ "snow", 0, 19922944, 0, 0 },
-	{ "water", 1, 20971520, 32, 0 },
-	{ "wood", 0, 22020096, 0, 0 },
-	{ "asphalt", 0, 23068672, 0, 0 },
-	{ "opaqueglass", 0, 9437184, 0, 0 },
+	{ "bark", 0, SURF_BARK, 0, 0 },
+	{ "brick", 0, SURF_BRICK, 0, 0 },
+	{ "carpet", 0, SURF_CARPET, 0, 0 },
+	{ "cloth", 0, SURF_CLOTH, 0, 0 },
+	{ "concrete", 0, SURF_CONCRETE, 0, 0 },
+	{ "dirt", 0, SURF_DIRT, 0, 0 },
+	{ "flesh", 0, SURF_FLESH, 0, 0 },
+	{ "foliage", 1, SURF_FOLIAGE, 2, 0 },
+	{ "glass", 1, SURF_GLASS, 16, 0 },
+	{ "grass", 0, SURF_GRASS, 0, 0 },
+	{ "gravel", 0, SURF_GRAVEL, 0, 0 },
+	{ "ice", 0, SURF_ICE, 0, 0 },
+	{ "metal", 0, SURF_METAL, 0, 0 },
+	{ "mud", 0, SURF_MUD, 0, 0 },
+	{ "paper", 0, SURF_PAPER, 0, 0 },
+	{ "plaster", 0, SURF_PLASTER, 0, 0 },
+	{ "rock", 0, SURF_ROCK, 0, 0 },
+	{ "sand", 0, SURF_SAND, 0, 0 },
+	{ "snow", 0, SURF_SNOW, 0, 0 },
+	{ "water", 1, SURF_WATER, CONTENTS_WATER, 0 },
+	{ "wood", 0, SURF_WOOD, 0, 0 },
+	{ "asphalt", 0, SURF_ASPHALT, 0, 0 },
 
-	{ "clipmissile", 1, 0, 128, 0 },
-	{ "ai_nosight", 1, 0, 4096, 0 },
-	{ "clipshot", 1, 0, 8192, 0 },
-	{ "playerclip", 1, 0, 65536, 0 },
-	{ "monsterclip", 1, 0, 131072, 0 },
-	{ "vehicleclip", 1, 0, 512, 0 },
-	{ "itemclip", 1, 0, 1024, 0 },
-	{ "nodrop", 1, 0, -2147483648, 0 },
-	{ "nonsolid", 1, 16384, 0, 0 },
-	{ "detail", 0, 0, 134217728, 0 },
-	{ "structural", 0, 0, 268435456, 0 },
-	{ "portal", 1, -2147483648, 0, 0 },
-	{ "canshootclip", 0, 0, 64, 0 },
-	{ "origin", 1, 0, 0, 4 },
-	{ "sky", 0, 4, 2048, 0 },
-	{ "alphashadow", 0, 65536, 0, 0 },
-	{ "nocastshadow", 0, 262144, 0, 0 },
-	{ "slick", 0, 2, 0, 0 },
-	{ "noimpact", 0, 16, 0, 0 },
-	{ "nomarks", 0, 32, 0, 0 },
-	{ "ladder", 0, 8, 0, 0 },
-	{ "nodamage", 0, 1, 0, 0 },
-	{ "mantleOn", 0, 33554432, 16777216, 0 },
-	{ "mantleOver", 0, 67108864, 16777216, 0 },
-	{ "nosteps", 0, 8192, 0, 0 },
-	{ "nodraw", 0, 128, 0, 0 },
-	{ "pointlight", 0, 2048, 0, 0 },
-	{ "nolightmap", 0, 1024, 0, 0 },
-	{ "nodlight", 0, 131072, 0, 0 },
+	{ "opaqueglass", 0, SURF_OPAQUEGLASS, 0, 0 },
+
+	{ "clipmissile", 1, 0, CONTENTS_MISSILECLIP, 0 },
+	{ "ai_nosight", 1, 0, CONTENTS_AI_NOSIGHT, 0 },
+	{ "clipshot", 1, 0, CONTENTS_CLIPSHOT, 0 },
+	{ "playerclip", 1, 0, CONTENTS_PLAYERCLIP, 0 },
+	{ "monsterclip", 1, 0, CONTENTS_MONSTERCLIP, 0 },
+	{ "vehicleclip", 1, 0, CONTENTS_VEHICLECLIP, 0 },
+	{ "itemclip", 1, 0, CONTENTS_ITEMCLIP, 0 },
+	{ "nodrop", 1, 0, int(CONTENTS_NODROP), 0 },
+
+	{ "nonsolid", 1, SURF_NONSOLID, 0, 0 },
+	{ "detail", 0, 0, CONTENTS_DETAIL, 0 },
+	{ "structural", 0, 0, CONTENTS_STRUCTURAL, 0 },
+	{ "portal", 1, int(SURF_PORTAL), 0, 0 },
+	{ "canshootclip", 0, 0, CONTENTS_CANSHOTCLIP, 0 },
+	{ "origin", 1, 0, 0, TOOL_ORIGIN },
+	{ "sky", 0, 4, CONTENTS_SKY, 0 },
+	{ "alphashadow", 0, SURF_ALPHASHADOW, 0, 0 },
+	{ "nocastshadow", 0, SURF_NOCASTSHADOW, 0, 0 },
+	{ "slick", 0, SURF_SLICK, 0, 0 },
+	{ "noimpact", 0, SURF_NOIMPACT, 0, 0 },
+	{ "nomarks", 0, SURF_NOMARKS, 0, 0 },
+	{ "ladder", 0, SURF_LADDER, 0, 0 },
+	{ "nodamage", 0, SURF_NODAMAGE, 0, 0 },
+	{ "mantleOn", 0, SURF_MANTLEON, CONTENTS_MANTLE, 0 },
+	{ "mantleOver", 0, SURF_MANTLEOVER, CONTENTS_MANTLE, 0 },
+	{ "nosteps", 0, SURF_NOSTEPS, 0, 0 },
+	{ "nodraw", 0, SURF_NODRAW, 0, 0 },
+	{ "pointlight", 0, SURF_POINTLIGHT, 0, 0 },
+	{ "nolightmap", 0, SURF_NOLIGHTMAP, 0, 0 },
+	{ "nodlight", 0, SURF_NODLIGHT, 0, 0 },
 };
 
 const char* Com_SurfaceTypeToName(int iTypeIndex)
 {
-	if ( iTypeIndex <= 0 || iTypeIndex > 22 )
+	if ( iTypeIndex < SURF_TYPE_BARK || iTypeIndex > SURF_TYPE_ASPHALT )
 		return "default";
 	else
 		return infoParms[iTypeIndex].name;

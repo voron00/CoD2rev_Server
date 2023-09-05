@@ -64,13 +64,13 @@ void G_BounceCorpse(gentity_s *ent, corpseInfo_t *corpseInfo, trace_t *trace, fl
 
 void G_RunCorpseMove(gentity_s *ent)
 {
-	bool isBounce;
+	bool haveDelta;
 	vec3_t delta;
 	vec3_t right;
 	vec3_t forward;
 	vec3_t deltaChange;
 	corpseInfo_t *corpseInfo;
-	int index;
+	int corpseIndex;
 	vec3_t start;
 	vec3_t endpos;
 	int contentmask;
@@ -78,19 +78,19 @@ void G_RunCorpseMove(gentity_s *ent)
 	trace_t trace;
 	vec3_t endPos;
 
-	index = G_GetPlayerCorpseIndex(ent);
-	corpseInfo = &g_scr_data.playerCorpseInfo[index];
+	corpseIndex = G_GetPlayerCorpseIndex(ent);
+	corpseInfo = &g_scr_data.playerCorpseInfo[corpseIndex];
 	G_GetAnimDeltaForCorpse(ent, corpseInfo, deltaChange);
-	isBounce = 0;
+	haveDelta = 0;
 
 	if ( !corpseInfo->falling && VectorLengthSquared(deltaChange) > 1.0 )
-		isBounce = 1;
+		haveDelta = 1;
 
-	if ( corpseInfo->falling || isBounce )
+	if ( corpseInfo->falling || haveDelta )
 	{
 		BG_EvaluateTrajectory(&ent->s.pos, level.time, endPos);
 
-		if ( isBounce )
+		if ( haveDelta )
 		{
 			AngleVectors(ent->r.currentAngles, forward, right, 0);
 			VectorScale(right, -1.0, delta);
@@ -115,7 +115,7 @@ void G_RunCorpseMove(gentity_s *ent)
 		{
 			if ( trace.fraction == 1.0 )
 			{
-				if ( !corpseInfo->falling && isBounce )
+				if ( !corpseInfo->falling && haveDelta )
 				{
 					ent->s.pos.trType = TR_INTERPOLATE;
 					VectorCopy(endpos, ent->s.pos.trBase);

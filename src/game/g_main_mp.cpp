@@ -121,7 +121,7 @@ void ExitLevel()
 	int i;
 	int j;
 
-	Cbuf_ExecuteText(2, "map_rotate\n");
+	Cbuf_ExecuteText(EXEC_APPEND, "map_rotate\n");
 
 	level.teamScores[1] = 0;
 	level.teamScores[2] = 0;
@@ -353,16 +353,19 @@ void G_RunFrameForEntity(gentity_s *ent)
 		}
 
 		if ( ent->s.eFlags == 0x10000 && level.time > ent->s.time2 )
-			goto free;
+		{
+			G_FreeEntity(ent);
+			return;
+		}
 
 		if ( level.time - ent->eventTime > 300 )
 		{
 			if ( ent->freeAfterEvent )
 			{
-free:
 				G_FreeEntity(ent);
 				return;
 			}
+
 			if ( ent->unlinkAfterEvent )
 			{
 				ent->unlinkAfterEvent = 0;
@@ -385,7 +388,6 @@ free:
 					G_RunThink(ent);
 					return;
 				}
-run_item:
 				G_RunItem(ent);
 				return;
 
@@ -393,8 +395,12 @@ run_item:
 				G_RunCorpse(ent);
 				return;
 			}
+
 			if ( ent->physicsObject )
-				goto run_item;
+			{
+				G_RunItem(ent);
+				return;
+			}
 
 			if ( ent->s.eType == ET_SCRIPTMOVER )
 			{
@@ -436,7 +442,7 @@ void CheckVote()
 		if ( level.voteExecuteTime < level.time )
 		{
 			level.voteExecuteTime = 0;
-			Cbuf_ExecuteText(2, va("%s\n", level.voteString));
+			Cbuf_ExecuteText(EXEC_APPEND, va("%s\n", level.voteString));
 		}
 	}
 

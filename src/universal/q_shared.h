@@ -254,10 +254,6 @@ void CM_CalcTraceExtents(TraceExtents *extents);
 }
 #endif
 
-#define SOLID_BMODEL 0xffffff
-#define CONTENTS_SOLID          1       	// an eye is never valid in a solid
-#define CONTENTS_BODY           0x2000000   // should never be on a brush, only in game
-
 extern qboolean com_fileAccessed;
 
 short   LittleShort( short l );

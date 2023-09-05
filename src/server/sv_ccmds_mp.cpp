@@ -791,7 +791,7 @@ retry:
 	if ( token )
 	{
 		Com_Printf("Setting map: %s.\n", token);
-		Cbuf_ExecuteText(0, va("map %s\n", token));
+		Cbuf_ExecuteText(EXEC_NOW, va("map %s\n", token));
 	}
 	else
 	{

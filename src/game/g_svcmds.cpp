@@ -338,7 +338,7 @@ qboolean ConsoleCommand()
 
 	if ( Q_stricmp( cmd, "listip" ) == 0 )
 	{
-		Cbuf_ExecuteText(1, "g_banIPs\n");
+		Cbuf_ExecuteText(EXEC_INSERT, "g_banIPs\n");
 		return qtrue;
 	}
 

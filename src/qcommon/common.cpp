@@ -722,7 +722,7 @@ void Com_ErrorCleanup( void )
 
 int Com_HashKey( const char *string, int maxlen )
 {
-	int register hash, i;
+	int hash, i;
 
 	hash = 0;
 

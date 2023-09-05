@@ -3033,7 +3033,7 @@ void GScr_MapRestart()
 	if ( Scr_GetNumParam() )
 		level.savePersist = Scr_GetInt(0);
 
-	Cbuf_ExecuteText(2, "fast_restart\n");
+	Cbuf_ExecuteText(EXEC_APPEND, "fast_restart\n");
 }
 
 void GScr_ExitLevel()
@@ -3552,7 +3552,7 @@ void GScr_KickPlayer()
 	if ( Scr_GetNumParam() )
 	{
 		playernum = Scr_GetInt(0);
-		Cbuf_ExecuteText(2, va("tempBanClient %i\n", playernum));
+		Cbuf_ExecuteText(EXEC_APPEND, va("tempBanClient %i\n", playernum));
 	}
 }
 
@@ -3563,7 +3563,7 @@ void GScr_BanPlayer()
 	if ( Scr_GetNumParam() )
 	{
 		playernum = Scr_GetInt(0);
-		Cbuf_ExecuteText(2, va("banClient %i\n", playernum));
+		Cbuf_ExecuteText(EXEC_APPEND, va("banClient %i\n", playernum));
 	}
 }
 
@@ -3595,7 +3595,7 @@ void GScr_LoadMap()
 			if ( Scr_GetNumParam() > 1 )
 				level.savePersist = Scr_GetInt(1u);
 
-			Cbuf_ExecuteText(2, va("map %s\n", mapname));
+			Cbuf_ExecuteText(EXEC_APPEND, va("map %s\n", mapname));
 		}
 	}
 }

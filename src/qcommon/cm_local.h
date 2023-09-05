@@ -99,7 +99,6 @@ typedef struct cLeaf_s
 	vec3_t maxs;
 	int leafBrushNode;
 	int16_t cluster;
-	int16_t pad;
 } cLeaf_t;
 static_assert((sizeof(cLeaf_t) == 44), "ERROR: cLeaf_t size is invalid!");
 
@@ -204,11 +203,6 @@ typedef struct CollisionPartition
 } CollisionPartition_t;
 static_assert((sizeof(CollisionPartition_t) == 12), "ERROR: CollisionPartition_t size is invalid!");
 
-typedef void DynEntityDef;
-typedef void DynEntityPose;
-typedef void DynEntityClient;
-typedef void DynEntityColl;
-
 typedef struct clipMap_s
 {
 	char *name;
@@ -252,11 +246,15 @@ typedef struct clipMap_s
 	char *entityString;
 	cbrush_t *box_brush;
 	cmodel_t box_model;
-	uint16_t dynEntCount[2];
-	DynEntityDef *dynEntDefList[2];
-	DynEntityPose *dynEntPoseList[2];
-	DynEntityClient *dynEntClientList[2];
-	DynEntityColl *dynEntCollList[2];
+	int pathNodeCount;
+	void *pathNodes;
+	int chainNodeCount;
+	void *chainNodes;
+	void *chainNodesRev;
+	int visBytes;
+	int pathVis;
+	int nodeTreeCount;
+	void *nodeTree;
 	unsigned int checksum;
 } clipMap_t;
 static_assert((sizeof(clipMap_t) == 0x110), "ERROR: clipMap_t size is invalid!");

@@ -6,6 +6,7 @@
 #include "com_math.h"
 #include "com_memory.h"
 #include "com_parse.h"
+#include "surfaceflags.h"
 
 // Assertive
 void RefreshQuitOnErrorCondition();

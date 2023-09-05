@@ -372,8 +372,6 @@ typedef struct
 	int score;
 	int deaths;
 	uint16_t pers;
-	byte pad2;
-	byte pad;
 	int connected;
 	usercmd_s cmd;
 	usercmd_s oldcmd;
@@ -474,7 +472,6 @@ struct tagInfo_s
 	struct gentity_s *parent;
 	struct gentity_s *next;
 	uint16_t name;
-	uint16_t pad;
 	int index;
 	float axis[4][3];
 	float parentInvAxis[4][3];
@@ -1167,6 +1164,13 @@ struct useList_t
 #define EF_DEAD 0x00020000
 #define EF_USETURRET 0x00000300
 #define EF_AIMDOWNSIGHT 0x00040000
+
+#define DFLAGS_RADIUS				 1
+#define DFLAGS_NO_ARMOR				 2
+#define DFLAGS_NO_KNOCKBACK			 4
+#define DFLAGS_NO_TEAM_PROTECTION	 8
+#define DFLAGS_NO_PROTECTION		 16
+#define DFLAGS_PASSTHRU				 32
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);

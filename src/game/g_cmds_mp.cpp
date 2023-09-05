@@ -426,7 +426,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 	if ( level.voteExecuteTime )
 	{
 		level.voteExecuteTime = 0;
-		Cbuf_ExecuteText(2, va("%s\n", level.voteString));
+		Cbuf_ExecuteText(EXEC_APPEND, va("%s\n", level.voteString));
 	}
 
 	if ( !I_stricmp(arg1, "typemap") )

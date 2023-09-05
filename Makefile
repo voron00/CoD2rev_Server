@@ -3,7 +3,7 @@ CC = gcc
 CXX = g++
 NASM = nasm
 WINDRES=windres
-CFLAGS=-m32 -std=gnu++11
+CFLAGS=-m32
 CFLAGS_LIBS=-m32
 LFLAGS=-m32 -no-pie
 
