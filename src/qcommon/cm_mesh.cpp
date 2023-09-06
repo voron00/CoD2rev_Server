@@ -31,7 +31,7 @@ void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *coll
 	offsetZ = tw->offsetZ;
 
 	if ( collTtris->plane[2] < 0.0 )
-		HIBYTE(offsetZ) ^= 0x80u;
+		offsetZ = offsetZ * -1.0;
 
 	VectorCopy(tw->extents.start, top);
 	top[2] = top[2] - offsetZ;

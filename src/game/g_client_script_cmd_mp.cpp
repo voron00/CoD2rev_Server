@@ -2113,10 +2113,10 @@ void PlayerCmd_ClonePlayer(scr_entref_t entRef)
 	body->s.legsAnim = pSelf->client->ps.legsAnim;
 	body->s.torsoAnim = pSelf->client->ps.torsoAnim;
 	body->clipmask = 65537;
-	body->r.contents = 67117056;
+	body->r.contents = CONTENTS_CORPSE | CONTENTS_CLIPSHOT;
 	SV_LinkEntity(body);
 	body->nextthink = level.time + deathAnimDuration;
-	body->handler = 12;
+	body->handler = ENT_HANDLER_PLAYER_CLONE;
 
 	GScr_AddEntity(body);
 }

@@ -936,7 +936,6 @@ void Scr_GetWeaponModel()
 
 void GScr_GetAnimLength()
 {
-	float length;
 	scr_anim_s anim;
 	XAnim_s *xanim;
 
@@ -946,23 +945,21 @@ void GScr_GetAnimLength()
 	if ( !XAnimIsPrimitive(xanim, anim.index) )
 		Scr_ParamError(0, "non-primitive animation has no concept of length");
 
-	length = XAnimGetLength(xanim, anim.index);
-	Scr_AddFloat(length);
+	Scr_AddFloat(XAnimGetLength(xanim, anim.index));
 }
 
 void GScr_AnimHasNotetrack()
 {
 	XAnim_s *xanim;
-	bool exist;
 	scr_anim_s anim;
 	unsigned short name;
 
 	Scr_GetAnim(&anim, 0, 0);
+
 	name = Scr_GetConstString(1u);
 	xanim = Scr_GetAnims(anim.tree);
-	exist = XAnimNotetrackExists(xanim, anim.index, name);
 
-	Scr_AddBool(exist);
+	Scr_AddBool(XAnimNotetrackExists(xanim, anim.index, name));
 }
 
 void GScr_GetBrushModelCenter()
@@ -1074,11 +1071,7 @@ void Scr_Objective_Add()
 	if ( paramnum > 2 )
 	{
 		Scr_GetVector(2u, obj->origin);
-
-		obj->origin[0] = (float)(int)obj->origin[0];
-		obj->origin[1] = (float)(int)obj->origin[1];
-		obj->origin[2] = (float)(int)obj->origin[2];
-
+		SnapVector(obj->origin);
 		obj->entNum = 1023;
 
 		if ( paramnum > 3 )
@@ -1169,10 +1162,7 @@ void Scr_Objective_Position()
 	obj = &level.objectives[objNum];
 	ClearObjective_OnEntity(obj);
 	Scr_GetVector(1u, obj->origin);
-
-	obj->origin[0] = (float)(int)obj->origin[0];
-	obj->origin[1] = (float)(int)obj->origin[1];
-	obj->origin[2] = (float)(int)obj->origin[2];
+	SnapVector(obj->origin);
 }
 
 void Scr_Objective_OnEntity()
@@ -1233,12 +1223,10 @@ void Scr_Objective_Current()
 
 void Scr_BulletTrace()
 {
-	const char *surfaceName;
 	vec3_t vNorm;
-	vec3_t value;
-	int iSurfaceTypeIndex;
+	vec3_t endpos;
 	trace_t trace;
-	int contentmask;
+	int iClipMask;
 	int iIgnoreEntNum;
 	gentity_s *pIgnoreEnt;
 	vec3_t vEnd;
@@ -1246,13 +1234,13 @@ void Scr_BulletTrace()
 
 	pIgnoreEnt = 0;
 	iIgnoreEntNum = 1023;
-	contentmask = 41953329;
+	iClipMask = 41953329;
 
 	Scr_GetVector(0, vStart);
 	Scr_GetVector(1, vEnd);
 
 	if ( !Scr_GetInt(2) )
-		contentmask &= ~0x2000000u;
+		iClipMask &= ~CONTENTS_BODY;
 
 	if ( Scr_GetType(3) == VAR_OBJECT && Scr_GetPointerType(3) == VAR_ENTITY )
 	{
@@ -1260,12 +1248,12 @@ void Scr_BulletTrace()
 		iIgnoreEntNum = pIgnoreEnt->s.number;
 	}
 
-	G_LocationalTrace(&trace, vStart, vEnd, iIgnoreEntNum, contentmask, 0);
+	G_LocationalTrace(&trace, vStart, vEnd, iIgnoreEntNum, iClipMask, 0);
 	Scr_MakeArray();
 	Scr_AddFloat(trace.fraction);
 	Scr_AddArrayStringIndexed(scr_const.fraction);
-	Vec3Lerp(vStart, vEnd, trace.fraction, value);
-	Scr_AddVector(value);
+	Vec3Lerp(vStart, vEnd, trace.fraction, endpos);
+	Scr_AddVector(endpos);
 	Scr_AddArrayStringIndexed(scr_const.position);
 
 	if ( trace.entityNum == 1023 || trace.entityNum == 1022 )
@@ -1288,22 +1276,19 @@ void Scr_BulletTrace()
 	{
 		Scr_AddVector(trace.normal);
 		Scr_AddArrayStringIndexed(scr_const.normal);
-		iSurfaceTypeIndex = (trace.surfaceFlags & 0x1F00000) >> 20;
-		surfaceName = Com_SurfaceTypeToName(iSurfaceTypeIndex);
-		Scr_AddString(surfaceName);
+		Scr_AddString(Com_SurfaceTypeToName(SURF_TYPEINDEX(trace.surfaceFlags)));
 		Scr_AddArrayStringIndexed(scr_const.surfacetype);
 	}
 }
 
 void Scr_BulletTracePassed()
 {
-	bool passed;
 	int iClipMask;
-	int hitnum;
+	int iIgnoreEntNum;
 	vec3_t vEnd;
 	vec3_t vStart;
 
-	hitnum = 1023;
+	iIgnoreEntNum = 1023;
 	iClipMask = 41953329;
 
 	Scr_GetVector(0, vStart);
@@ -1313,10 +1298,9 @@ void Scr_BulletTracePassed()
 		iClipMask = 8398897;
 
 	if ( Scr_GetType(3u) == VAR_OBJECT && Scr_GetPointerType(3u) == VAR_ENTITY )
-		hitnum = Scr_GetEntity(3u)->s.number;
+		iIgnoreEntNum = Scr_GetEntity(3u)->s.number;
 
-	passed = G_LocationalTracePassed(vStart, vEnd, hitnum, iClipMask);
-	Scr_AddBool(passed);
+	Scr_AddBool(G_LocationalTracePassed(vStart, vEnd, iIgnoreEntNum, iClipMask));
 }
 
 void Scr_SightTracePassed()
@@ -1336,7 +1320,7 @@ void Scr_SightTracePassed()
 	Scr_GetVector(1u, vEnd);
 
 	if ( !Scr_GetInt(2u) )
-		iClipMask &= ~0x2000000u;
+		iClipMask &= ~CONTENTS_BODY;
 
 	if ( Scr_GetType(3u) == VAR_OBJECT && Scr_GetPointerType(3u) == VAR_ENTITY )
 	{
@@ -1636,6 +1620,7 @@ void Scr_Distance()
 
 	Scr_GetVector(0, a);
 	Scr_GetVector(1u, b);
+
 	distance = Vec3Distance(a, b);
 
 	Scr_AddFloat(distance);
@@ -1775,7 +1760,7 @@ void Scr_IsSubStr()
 
 void Scr_GetSubStr()
 {
-	int intValue;
+	int end;
 	char c;
 	int i;
 	int source;
@@ -1787,13 +1772,13 @@ void Scr_GetSubStr()
 	start = Scr_GetInt(1u);
 
 	if ( Scr_GetNumParam() <= 2 )
-		intValue = 0x7FFFFFFF;
+		end = 0x7FFFFFFF;
 	else
-		intValue = Scr_GetInt(2u);
+		end = Scr_GetInt(2u);
 
 	source = start;
 
-	for ( i = 0; source < intValue; ++i )
+	for ( i = 0; source < end; ++i )
 	{
 		if ( i > 1023 )
 			Scr_Error("string too long");

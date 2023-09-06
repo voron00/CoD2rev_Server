@@ -1131,6 +1131,9 @@ struct useList_t
 	float score;
 };
 
+#define	SVF_NOCLIENT  0x00000001
+#define	SVF_BROADCAST 0x00000008
+
 #define KEY_MASK_NONE        	0
 
 #define KEY_MASK_FORWARD        127
@@ -1171,6 +1174,12 @@ struct useList_t
 #define DFLAGS_NO_TEAM_PROTECTION	 8
 #define DFLAGS_NO_PROTECTION		 16
 #define DFLAGS_PASSTHRU				 32
+
+
+#define ENT_HANDLER_GRENADE         7
+#define ENT_HANDLER_ROCKET          8
+#define ENT_HANDLER_PLAYER_CLONE    12
+
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);

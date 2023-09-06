@@ -5,33 +5,32 @@
 extern int codecallback_fire_grenade;
 #endif
 
-gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenadeWPID, int time)
+gentity_s* fire_grenade(gentity_s *self, float *start, float *dir, int grenadeWPID, int time)
 {
-	float speed;
 	WeaponDef *weaponDef;
 	gentity_s *grenade;
 
 	grenade = G_Spawn();
 
-	if ( parent->client && parent->client->ps.grenadeTimeLeft )
+	if ( self->client && self->client->ps.grenadeTimeLeft )
 	{
-		grenade->nextthink = level.time + parent->client->ps.grenadeTimeLeft;
-		parent->client->ps.grenadeTimeLeft = 0;
+		grenade->nextthink = level.time + self->client->ps.grenadeTimeLeft;
+		self->client->ps.grenadeTimeLeft = 0;
 	}
 	else
 	{
 		grenade->nextthink = level.time + time;
 	}
 
-	if ( parent->client )
-		parent->client->ps.grenadeTimeLeft = 0;
+	if ( self->client )
+		self->client->ps.grenadeTimeLeft = 0;
 
-	grenade->handler = 7;
+	grenade->handler = ENT_HANDLER_GRENADE;
 	grenade->s.eType = ET_MISSILE;
-	grenade->r.svFlags = 8;
+	grenade->r.svFlags = SVF_BROADCAST;
 	grenade->s.weapon = grenadeWPID;
-	grenade->r.ownerNum = parent->s.number;
-	grenade->parent = parent;
+	grenade->r.ownerNum = self->s.number;
+	grenade->parent = self;
 	weaponDef = BG_GetWeaponDef(grenadeWPID);
 	Scr_SetString(&grenade->classname, scr_const.grenade);
 	grenade->dmg = weaponDef->damage;
@@ -42,14 +41,11 @@ gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenade
 	grenade->s.pos.trTime = level.time;
 	VectorCopy(start, grenade->s.pos.trBase);
 	VectorCopy(dir, grenade->s.pos.trDelta);
-	grenade->s.pos.trDelta[0] = (float)(int)grenade->s.pos.trDelta[0];
-	grenade->s.pos.trDelta[1] = (float)(int)grenade->s.pos.trDelta[1];
-	grenade->s.pos.trDelta[2] = (float)(int)grenade->s.pos.trDelta[2];
+	SnapVector(grenade->s.pos.trDelta);
 	grenade->s.apos.trType = TR_LINEAR;
 	grenade->s.apos.trTime = level.time;
 	vectoangles(dir, grenade->s.apos.trBase);
-	speed = grenade->s.apos.trBase[0] - 120.0;
-	grenade->s.apos.trBase[0] = AngleNormalize360(speed);
+	grenade->s.apos.trBase[0] = AngleNormalize360(grenade->s.apos.trBase[0] - 120.0);
 	grenade->s.apos.trDelta[0] = flrand(-45.0, 45.0) + 720.0;
 	grenade->s.apos.trDelta[1] = 0.0;
 	grenade->s.apos.trDelta[2] = flrand(-45.0, 45.0) + 360.0;
@@ -58,50 +54,45 @@ gentity_s* fire_grenade(gentity_s *parent, float *start, float *dir, int grenade
 #ifdef LIBCOD
 	if (codecallback_fire_grenade)
 	{
-		WeaponDef *def = BG_GetWeaponDef(grenadeWPID);
-		stackPushString(def->szInternalName);
+		stackPushString(weaponDef->szInternalName);
 		stackPushEntity(grenade);
-		short ret = Scr_ExecEntThread(parent, codecallback_fire_grenade, 2);
+		short ret = Scr_ExecEntThread(self, codecallback_fire_grenade, 2);
 		Scr_FreeThread(ret);
 	}
 #endif
 	return grenade;
 }
 
-gentity_s* fire_rocket(gentity_s *parent, float *start, float *dir)
+gentity_s* fire_rocket(gentity_s *self, float *start, float *dir)
 {
-	float speed;
 	WeaponDef *weaponDef;
 	gentity_s *rocket;
 
 	Vec3Normalize(dir);
-	weaponDef = BG_GetWeaponDef(parent->s.weapon);
+	weaponDef = BG_GetWeaponDef(self->s.weapon);
 	rocket = G_Spawn();
 	Scr_SetString(&rocket->classname, scr_const.rocket);
 	rocket->nextthink = level.time + 30000;
-	rocket->handler = 8;
+	rocket->handler = ENT_HANDLER_ROCKET;
 	rocket->s.eType = ET_MISSILE;
 	rocket->s.eFlags |= 0x400u;
-	rocket->r.svFlags = 8;
-	rocket->s.weapon = parent->s.weapon;
-	rocket->r.ownerNum = parent->s.number;
-	rocket->parent = parent;
+	rocket->r.svFlags = SVF_BROADCAST;
+	rocket->s.weapon = self->s.weapon;
+	rocket->r.ownerNum = self->s.number;
+	rocket->parent = self;
 	rocket->dmg = weaponDef->damage;
 	rocket->clipmask = 41953425;
 	rocket->s.time = level.time + 50;
 	rocket->s.pos.trType = TR_LINEAR;
 	rocket->s.pos.trTime = level.time - 50;
 	VectorCopy(start, rocket->s.pos.trBase);
-	speed = (float)weaponDef->projectileSpeed;
-	VectorScale(dir, speed, rocket->s.pos.trDelta);
-	rocket->s.pos.trDelta[0] = (float)(int)rocket->s.pos.trDelta[0];
-	rocket->s.pos.trDelta[1] = (float)(int)rocket->s.pos.trDelta[1];
-	rocket->s.pos.trDelta[2] = (float)(int)rocket->s.pos.trDelta[2];
+	VectorScale(dir, (float)weaponDef->projectileSpeed, rocket->s.pos.trDelta);
+	SnapVector(rocket->s.pos.trDelta);
 	VectorCopy(start, rocket->r.currentOrigin);
 	vectoangles(dir, rocket->r.currentAngles);
 	G_SetAngle(rocket, rocket->r.currentAngles);
 	rocket->missile.time = (float)weaponDef->destabilizeDistance / (float)weaponDef->projectileSpeed * 1000.0;
-	rocket->flags |= parent->flags & 0x20000;
+	rocket->flags |= self->flags & 0x20000;
 
 	return rocket;
 }
@@ -115,30 +106,26 @@ void G_ExplodeMissile(gentity_s *ent)
 
 	weaponDef = BG_GetWeaponDef(ent->s.weapon);
 
-	if ( weaponDef->offhandClass == 2 && ent->s.groundEntityNum == 1023 )
+	if ( weaponDef->offhandClass == OFFHAND_CLASS_SMOKE_GRENADE && ent->s.groundEntityNum == 1023 )
 	{
 		ent->nextthink = 50;
 	}
 	else
 	{
 		BG_EvaluateTrajectory(&ent->s.pos, level.time, vPos);
-
-		vPos[0] = (float)(int)vPos[0];
-		vPos[1] = (float)(int)vPos[1];
-		vPos[2] = (float)(int)vPos[2];
-
+		SnapVector(vPos);
 		G_SetOrigin(ent, vPos);
 
 		ent->s.eType = ET_GENERAL;
 		ent->s.eFlags |= 0x20u;
 		ent->flags |= 0x800u;
-		ent->r.svFlags |= 8u;
+		ent->r.svFlags |= SVF_BROADCAST;
 		VectorCopy(ent->r.currentOrigin, vEnd);
 		vEnd[2] = vEnd[2] - 16.0;
 
 		G_TraceCapsule(&trace, ent->r.currentOrigin, vec3_origin, vec3_origin, vEnd, ent->s.number, 2065);
 
-		if ( weaponDef->projExplosionType == 2 )
+		if ( weaponDef->projExplosionType == WEAPPROJEXP_NONE )
 		{
 			G_AddEvent(ent, EV_CUSTOM_EXPLODE, DirToByte(trace.normal));
 		}
@@ -147,19 +134,19 @@ void G_ExplodeMissile(gentity_s *ent)
 			G_AddEvent(ent, EV_GRENADE_EXPLODE, DirToByte(trace.normal));
 		}
 
-		if ( SV_PointContents(ent->r.currentOrigin, -1, 32) )
-			ent->s.surfType = 20;
+		if ( SV_PointContents(ent->r.currentOrigin, -1, CONTENTS_WATER) )
+			ent->s.surfType = SURF_TYPE_WATER;
 		else
-			ent->s.surfType = (trace.surfaceFlags & 0x1F00000) >> 20;
+			ent->s.surfType = SURF_TYPEINDEX(trace.surfaceFlags);
 
-		if ( weaponDef->projExplosionEffect && *weaponDef->projExplosionEffect )
+		if ( weaponDef->projExplosionEffect && weaponDef->projExplosionEffect[0] )
 		{
 			ent->s.eFlags |= 0x10000u;
 			//Server_SwitchToValidFxScheduler();
 			//fx = FX_RegisterEffect(weaponDef->projExplosionEffect);
 			ent->s.time = level.time;
 			//ent->s.time2 = level.time + (int)(FX_GetEffectLength(fx) + 1.0);
-			ent->s.time2 = level.time + 1.0; // VoroN: HAX
+			ent->s.time2 = level.time + 50; // VoroN: HAX
 		}
 		else
 		{
@@ -205,12 +192,12 @@ void RunMissile_CreateWaterSplash(gentity_s *missile, trace_t *trace)
 	Vec3NormalizeTo(missile->s.pos.trDelta, reflect);
 
 	if ( reflect[2] < 0.0 )
-		HIBYTE(reflect[2]) ^= 0x80u;
+		reflect[2] = reflect[2] * -1.0;
 
 	tempEnt = G_TempEntity(missile->r.currentOrigin, EV_BULLET_HIT_LARGE);
 	tempEnt->s.eventParm = DirToByte(trace->normal);
 	tempEnt->s.scale = DirToByte(reflect);
-	tempEnt->s.surfType = (trace->surfaceFlags & 0x1F00000) >> 20;
+	tempEnt->s.surfType = SURF_TYPEINDEX(trace->surfaceFlags);
 	tempEnt->s.otherEntityNum = missile->s.number;
 }
 
@@ -311,8 +298,8 @@ int BounceMissile(gentity_s *ent, trace_t *trace)
 	WeaponDef *weaponDef;
 
 	weaponDef = BG_GetWeaponDef(ent->s.weapon);
-	contents = SV_PointContents(ent->r.currentOrigin, -1, 32);
-	surfType = (trace->surfaceFlags & 0x1F00000) >> 20;
+	contents = SV_PointContents(ent->r.currentOrigin, -1, CONTENTS_WATER);
+	surfType = SURF_TYPEINDEX(trace->surfaceFlags);
 
 	BG_EvaluateTrajectoryDelta(
 	    &ent->s.pos,
@@ -393,7 +380,7 @@ void MissileImpact(gentity_s *ent, trace_t *trace, float *dir, float *endpos)
 
 	loghit = 0;
 	inflictor = &g_entities[trace->entityNum];
-	ent->s.surfType = (trace->surfaceFlags & 0x1F00000) >> 20;
+	ent->s.surfType = SURF_TYPEINDEX(trace->surfaceFlags);
 
 	if ( inflictor->takedamage || (ent->s.eFlags & 0x1000000) == 0 )
 	{
@@ -639,7 +626,7 @@ void G_RunMissile(gentity_s *ent)
 			if ( weaponDef->weaponType == 2 && (ent->flags & 0x20000) == 0 )
 				RunMissile_Destabilize(ent);
 		}
-run_think:
+
 		G_RunThink(ent);
 		return;
 	}
@@ -653,5 +640,8 @@ run_think:
 	MissileImpact(ent, &trace, vDir, endpos);
 
 	if ( ent->s.eType == ET_MISSILE )
-		goto run_think;
+	{
+		G_RunThink(ent);
+		return;
+	}
 }
