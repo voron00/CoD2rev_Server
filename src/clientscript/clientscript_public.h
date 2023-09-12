@@ -629,6 +629,12 @@ union sval_u
 	scr_block_s *block;
 };
 
+struct stype_t
+{
+  sval_u val;
+  unsigned int pos;
+};
+
 struct VariableCompileValue
 {
 	VariableValue value;
@@ -987,7 +993,7 @@ void Scr_InitOpcodeLookup();
 void Scr_CompileShutdown();
 
 void QDECL Scr_YYACError(const char* fmt, ...);
-void QDECL yyparse();
+int QDECL yyparse();
 void QDECL ScriptParse(sval_u *parseData, unsigned char user);
 
 void EmitOpcode(unsigned int op, int offset, int callType);

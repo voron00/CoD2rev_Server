@@ -1830,10 +1830,10 @@ void Scr_StrTok()
 	int i;
 	signed int len;
 	const char *tok;
-	const char *string;
+	const char *delim;
 	char tempString[1024];
 
-	string = Scr_GetString(0);
+	delim = Scr_GetString(0);
 	tok = Scr_GetString(1u);
 	len = strlen(tok);
 	dest = 0;
@@ -1842,7 +1842,7 @@ void Scr_StrTok()
 
 	for ( i = 0; ; ++i )
 	{
-		c = string[i];
+		c = delim[i];
 
 		if ( !c )
 			break;
@@ -2365,7 +2365,7 @@ void Scr_SetExponentialFog()
 void Scr_GrenadeExplosionEffect()
 {
 	trace_t trace;
-	gentity_s *ent;
+	gentity_s *tempEnt;
 	vec3_t vEnd;
 	vec3_t vPos;
 	vec3_t vDir;
@@ -2374,14 +2374,14 @@ void Scr_GrenadeExplosionEffect()
 	Scr_GetVector(0, vOrg);
 	VectorCopy(vOrg, vPos);
 	vPos[2] = vPos[2] + 1.0;
-	ent = G_TempEntity(vPos, EV_GRENADE_EXPLODE);
+	tempEnt = G_TempEntity(vPos, EV_GRENADE_EXPLODE);
 	VectorSet(vDir, 0.0, 0.0, 1.0);
-	ent->s.eventParm = DirToByte(vDir);
+	tempEnt->s.eventParm = DirToByte(vDir);
 	VectorCopy(vPos, vEnd);
 	vEnd[2] = vEnd[2] - 17.0;
 
 	G_TraceCapsule(&trace, vPos, vec3_origin, vec3_origin, vEnd, 1023, 2065);
-	ent->s.surfType = (trace.surfaceFlags & 0x1F00000) >> 20;
+	tempEnt->s.surfType = SURF_TYPEINDEX(trace.surfaceFlags);
 }
 
 void GScr_RadiusDamage()
@@ -2796,7 +2796,7 @@ int GScr_GetScriptMenuIndex(const char *pszMenu)
 
 void GScr_Obituary()
 {
-	gentity_s *ent;
+	gentity_s *tempEnt;
 	int iMODNum;
 	int iWeaponNum;
 	const char *pszMod;
@@ -2809,15 +2809,15 @@ void GScr_Obituary()
 	iMODNum = G_IndexForMeansOfDeath(pszMod);
 	pOtherEnt = Scr_GetEntity(0);
 
-	ent = G_TempEntity(vec3_origin, EV_OBITUARY);
-	ent->s.otherEntityNum = pOtherEnt->s.number;
+	tempEnt = G_TempEntity(vec3_origin, EV_OBITUARY);
+	tempEnt->s.otherEntityNum = pOtherEnt->s.number;
 
 	if ( Scr_GetType(1u) == VAR_OBJECT && Scr_GetPointerType(1u) == VAR_ENTITY )
-		ent->s.attackerEntityNum = Scr_GetEntity(1u)->s.number;
+		tempEnt->s.attackerEntityNum = Scr_GetEntity(1u)->s.number;
 	else
-		ent->s.attackerEntityNum = 1022;
+		tempEnt->s.attackerEntityNum = 1022;
 
-	ent->r.svFlags = 8;
+	tempEnt->r.svFlags = 8;
 
 	if ( iMODNum == MOD_MELEE
 	        || iMODNum == MOD_HEAD_SHOT
@@ -2825,11 +2825,11 @@ void GScr_Obituary()
 	        || iMODNum == MOD_FALLING
 	        || iMODNum == MOD_CRUSH )
 	{
-		ent->s.eventParm = iMODNum | 0x80;
+		tempEnt->s.eventParm = iMODNum | 0x80;
 	}
 	else
 	{
-		ent->s.eventParm = iWeaponNum;
+		tempEnt->s.eventParm = iWeaponNum;
 	}
 }
 
@@ -3041,7 +3041,6 @@ void CleanDvarValue(const char *dvarValue, char *outString, int size)
 
 void GScr_MakeDvarServerInfo()
 {
-	int paramNum;
 	char string[1024];
 	char outString[1024];
 	const char *dvarName;
@@ -3068,8 +3067,7 @@ void GScr_MakeDvarServerInfo()
 
 		if ( type == VAR_ISTRING )
 		{
-			paramNum = Scr_GetNumParam();
-			Scr_ConstructMessageString(1, paramNum - 1, "Dvar Value", string, 1024);
+			Scr_ConstructMessageString(1, Scr_GetNumParam() - 1, "Dvar Value", string, 1024);
 			dvarValue = string;
 		}
 		else
@@ -3084,10 +3082,7 @@ void GScr_MakeDvarServerInfo()
 
 void GScr_SetArchive()
 {
-	int enabled;
-
-	enabled = Scr_GetInt(0);
-	SV_EnableArchivedSnapshot(enabled);
+	SV_EnableArchivedSnapshot(Scr_GetInt(0));
 }
 
 void GScr_AllClientsPrint()
@@ -3266,18 +3261,18 @@ void GScr_OpenFile()
 				return;
 			}
 
-			goto error;
+			Scr_AddInt(-1);
+			return;
 		}
 
 		if ( !strcmp(mode, "write") )
 		{
 			if ( FS_FOpenFileByMode(va("%s/%s", "scriptdata", filename), f, FS_WRITE) >= 0 )
 			{
-errornum:
 				Scr_AddInt(filenum);
 				return;
 			}
-error:
+
 			Scr_AddInt(-1);
 			return;
 		}
@@ -3285,8 +3280,13 @@ error:
 		if ( !strcmp(mode, "append") )
 		{
 			if ( FS_FOpenFileByMode(va("%s/%s", "scriptdata", filename), f, FS_APPEND) >= 0 )
-				goto errornum;
-			goto error;
+			{
+				Scr_AddInt(filenum);
+				return;
+			}
+
+			Scr_AddInt(-1);
+			return;
 		}
 
 		Com_Printf("Valid openfile modes are 'write', 'read', and 'append'\n");
@@ -3335,7 +3335,6 @@ void GScr_CloseFile()
 void GScr_FPrintln()
 {
 	int len;
-	unsigned int paramNum;
 	const char *s;
 	unsigned int arg;
 	unsigned int filenum;
@@ -3356,8 +3355,7 @@ void GScr_FPrintln()
 					FS_Write(",", 1, level.openScriptIOFileHandles[filenum]);
 				}
 
-				paramNum = Scr_GetNumParam();
-				Scr_AddInt(paramNum - 1);
+				Scr_AddInt(Scr_GetNumParam() - 1);
 			}
 			else
 			{
@@ -4210,7 +4208,6 @@ void GScr_StopShellShock(scr_entref_t entref)
 
 void GScr_ViewKick(scr_entref_t entref)
 {
-	gclient_s *client;
 	float damage;
 	vec3_t origin;
 	gentity_s *ent;
@@ -4220,8 +4217,7 @@ void GScr_ViewKick(scr_entref_t entref)
 	if ( Scr_GetNumParam() != 2 )
 		Scr_Error("USAGE: <player> viewkick <force 0-127> <source position>\n");
 
-	client = ent->client;
-	client->damage_blood = (ent->maxHealth * Scr_GetInt(0) + 50) / 100;
+	ent->client->damage_blood = (ent->maxHealth * Scr_GetInt(0) + 50) / 100;
 
 	if ( ent->client->damage_blood < 0 )
 	{
@@ -4254,7 +4250,6 @@ void GScr_LocalToWorldCoords(scr_entref_t entref)
 
 void GScr_SetRightArc(scr_entref_t entref)
 {
-	float value;
 	turretInfo_s *pTurretInfo;
 
 	pTurretInfo = GetEntity(entref)->pTurretInfo;
@@ -4262,8 +4257,7 @@ void GScr_SetRightArc(scr_entref_t entref)
 	if ( !pTurretInfo )
 		Scr_Error("entity is not a turret");
 
-	value = Scr_GetFloat(0);
-	pTurretInfo->arcmin[1] = -value;
+	pTurretInfo->arcmin[1] = -Scr_GetFloat(0);
 
 	if ( pTurretInfo->arcmin[1] > 0.0 )
 		pTurretInfo->arcmin[1] = 0.0;
@@ -4286,7 +4280,6 @@ void GScr_SetLeftArc(scr_entref_t entref)
 
 void GScr_SetTopArc(scr_entref_t entref)
 {
-	float value;
 	turretInfo_s *pTurretInfo;
 
 	pTurretInfo = GetEntity(entref)->pTurretInfo;
@@ -4294,8 +4287,7 @@ void GScr_SetTopArc(scr_entref_t entref)
 	if ( !pTurretInfo )
 		Scr_Error("entity is not a turret");
 
-	value = Scr_GetFloat(0);
-	pTurretInfo->arcmin[0] = -value;
+	pTurretInfo->arcmin[0] = -Scr_GetFloat(0);
 
 	if ( pTurretInfo->arcmin[0] > 0.0 )
 		pTurretInfo->arcmin[0] = 0.0;
