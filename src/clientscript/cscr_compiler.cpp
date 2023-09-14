@@ -299,7 +299,7 @@ void EmitValue(VariableCompileValue *constValue)
 		break;
 
 	default:
-		return;
+		break;
 	}
 }
 
@@ -523,7 +523,7 @@ void LinkThread(unsigned int threadCountId, VariableValue *pos, bool allowFarCal
 			if ( pos->type == VAR_UNDEFINED )
 				CompileError2(value->u.codePosValue, "unknown function");
 
-			if ( !allowFarCall && *(uint32_t *)value->u.codePosValue == 1 )
+			if ( !allowFarCall && value->u.stackValue->pos == (const char *)1 )
 				CompileError2(value->u.codePosValue, "unknown function");
 
 			value->u.stackValue->pos = pos->u.codePosValue;
@@ -979,65 +979,50 @@ void Scr_AddContinueBlock(scr_block_s *block)
 
 bool EvalPrimitiveExpression(sval_u expr, VariableCompileValue *constValue)
 {
-	bool result;
-
 	switch ( expr.node->type )
 	{
 	case ENUM_integer:
 		EvalInteger(expr.node[1].intValue, expr.node[2], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_float:
 		EvalFloat(expr.node[1].floatValue, expr.node[2], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_minus_integer:
 		EvalInteger(-expr.node[1].intValue, expr.node[2], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_minus_float:
 		EvalFloat(-expr.node[1].floatValue, expr.node[2], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_string:
 		EvalString(expr.node[1].stringValue, expr.node[2], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_istring:
 		EvalIString(expr.node[1].stringValue, expr.node[2], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_undefined:
 		EvalUndefined(expr.node[1], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_expression_list:
-		result = EvalPrimitiveExpressionList(expr.node[1], expr.node[2], constValue);
-		break;
+		return EvalPrimitiveExpressionList(expr.node[1], expr.node[2], constValue);
 
 	case ENUM_false:
 		EvalInteger(0, expr.node[1], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	case ENUM_true:
 		EvalInteger(1, expr.node[1], constValue);
-		result = 1;
-		break;
+		return 1;
 
 	default:
-		result = 0;
-		break;
+		return 0;
 	}
-
-	return result;
 }
 
 char EvalBinaryOperatorExpression(sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue)
@@ -1976,119 +1961,91 @@ void EmitCallExpression(sval_u expr, bool bStatement, scr_block_s *block)
 
 bool EmitOrEvalPrimitiveExpression(sval_u expr, VariableCompileValue *constValue, scr_block_s *block)
 {
-	bool result;
-
 	switch ( expr.node->type )
 	{
 	case ENUM_variable:
 		EmitVariableExpression(expr.node[1], block);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_function:
 		EmitGetFunction(expr.node[1], expr.node[2]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_call_expression:
 		EmitCallExpression(expr.node[1], 0, block);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_self:
 		EmitSelf(expr.node[1]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_level:
 		EmitLevel(expr.node[1]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_game:
 		EmitGame(expr.node[1]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_anim:
 		EmitAnim(expr.node[1]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_expression_list:
-		result = EmitOrEvalPrimitiveExpressionList(expr.node[1], expr.node[2], constValue, block);
-		break;
+		return EmitOrEvalPrimitiveExpressionList(expr.node[1], expr.node[2], constValue, block);
 
 	case ENUM_size_field:
 		EmitSize(expr.node[1], expr.node[2], block);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_empty_array:
 		EmitEmptyArray(expr.node[1]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_animation:
 		EmitAnimation(expr.node[1], expr.node[2]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_animtree:
 		EmitAnimTree(expr.node[1]);
-		result = 0;
-		break;
+		return 0;
 
 	default:
-		result = EvalPrimitiveExpression(expr, constValue);
-		break;
+		return EvalPrimitiveExpression(expr, constValue);
 	}
-
-	return result;
 }
 
 bool EmitOrEvalExpression(sval_u expr, VariableCompileValue *constValue, scr_block_s *block)
 {
-	bool result;
-
 	switch ( expr.node->type )
 	{
 	case ENUM_primitive_expression:
-		result = EmitOrEvalPrimitiveExpression(expr.node[1], constValue, block);
-		break;
+		return EmitOrEvalPrimitiveExpression(expr.node[1], constValue, block);
 
 	case ENUM_bool_or:
 		EmitBoolOrExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], block);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_bool_and:
 		EmitBoolAndExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], block);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_binary:
-		result = EmitOrEvalBinaryOperatorExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], constValue, block);
-		break;
+		return EmitOrEvalBinaryOperatorExpression(expr.node[1], expr.node[2], expr.node[3], expr.node[4], constValue, block);
 
 	case ENUM_bool_not:
 		EmitExpression(expr.node[1], block);
 		EmitBoolNot(expr.node[2]);
-		result = 0;
-		break;
+		return 0;
 
 	case ENUM_bool_complement:
 		EmitExpression(expr.node[1], block);
 		EmitBoolComplement(expr.node[2]);
-		result = 0;
-		break;
+		return 0;
 
 	default:
-		result = 0;
-		break;
+		return 0;
 	}
-
-	return result;
 }
 
 void EmitPostScriptFunction(sval_u func, int param_count, bool bMethod, sval_u nameSourcePos)

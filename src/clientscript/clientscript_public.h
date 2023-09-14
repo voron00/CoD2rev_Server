@@ -560,18 +560,19 @@ enum scr_enum_t
 	ENUM_false = 0x48,
 	ENUM_true = 0x49,
 	ENUM_animtree = 0x4A,
-	ENUM_breakpoint = 0x4B,
-	ENUM_prof_begin = 0x4C,
-	ENUM_prof_end = 0x4D,
-	ENUM_vector = 0x4E,
-	ENUM_object = 0x4F,
-	ENUM_thread_object = 0x50,
-	ENUM_local = 0x51,
-	ENUM_statement = 0x52,
-	ENUM_bad_expression = 0x53,
-	ENUM_bad_statement = 0x54,
-	ENUM_include = 0x55,
-	ENUM_argument = 0x56,
+	ENUM_breakon = 0x4B,
+	ENUM_breakpoint = 0x4C,
+	ENUM_prof_begin = 0x4D,
+	ENUM_prof_end = 0x4E,
+	ENUM_vector = 0x4F,
+	ENUM_object = 0x50,
+	ENUM_thread_object = 0x51,
+	ENUM_local = 0x52,
+	ENUM_statement = 0x53,
+	ENUM_bad_expression = 0x54,
+	ENUM_bad_statement = 0x55,
+	ENUM_include = 0x56,
+	ENUM_argument = 0x57
 };
 
 enum scr_call_type_t
@@ -631,8 +632,8 @@ union sval_u
 
 struct stype_t
 {
-  sval_u val;
-  unsigned int pos;
+	sval_u val;
+	unsigned int pos;
 };
 
 struct VariableCompileValue
