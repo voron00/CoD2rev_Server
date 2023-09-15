@@ -993,7 +993,6 @@ void AddThreadStartOpcodePos(unsigned int sourcePos);
 void Scr_InitOpcodeLookup();
 void Scr_CompileShutdown();
 
-void QDECL Scr_YYACError(const char* fmt, ...);
 int QDECL yyparse();
 void QDECL ScriptParse(sval_u *parseData, unsigned char user);
 

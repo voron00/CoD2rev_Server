@@ -3607,6 +3607,14 @@ loop_dec_top:
 			++pos;
 			continue;
 
+		case OP_breakpoint:
+			if (scrVarPub.developer)
+			{
+				Com_PrintMessage(CON_CHANNEL_DONT_FILTER, "\nCode hit debug breakpoint at:\n");
+				Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, pos, 0);
+			}
+			continue;
+
 		default:
 			scrVmPub.terminal_error = 1;
 			runtimeError(CON_CHANNEL_DONT_FILTER, pos, 0, va("CODE ERROR: unknown opcode %d", gOpcode));

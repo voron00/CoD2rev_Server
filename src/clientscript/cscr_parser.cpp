@@ -589,15 +589,3 @@ int QDECL Scr_ScanFile(char *buf, int max_size)
 
 	return i;
 }
-
-void QDECL Scr_YYACError(const char* fmt, ...)
-{
-	va_list argptr;
-	char msg[MAXPRINTMSG];
-
-	va_start(argptr, fmt);
-	Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
-	va_end(argptr);
-
-	Com_Error(ERR_SCRIPT, "%s", msg);
-}

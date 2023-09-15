@@ -1786,6 +1786,11 @@ void EmitAnimTree(sval_u sourcePos)
 		CompileError(sourcePos.sourcePosValue, "#using_animtree was not specified");
 }
 
+void EmitBreakOn(sval_u expr, sval_u param, sval_u sourcePos)
+{
+	CompileError(sourcePos.sourcePosValue, "illegal function name");
+}
+
 void Scr_PushValue(VariableCompileValue *constValue)
 {
 	int index;
@@ -2008,6 +2013,10 @@ bool EmitOrEvalPrimitiveExpression(sval_u expr, VariableCompileValue *constValue
 
 	case ENUM_animtree:
 		EmitAnimTree(expr.node[1]);
+		return 0;
+
+	case ENUM_breakon:
+		EmitBreakOn(expr.node[1], expr.node[2], expr.node[3]);
 		return 0;
 
 	default:
