@@ -77,7 +77,7 @@ void QDECL XModelPartsFree(XModelParts *modelPart)
 	int i;
 	unsigned short *name;
 
-	name = *modelPart->boneNames;
+	name = *modelPart->hierarchy;
 	numBones = modelPart->numBones;
 
 	for ( i = 0; i < numBones; ++i )
@@ -93,12 +93,12 @@ void QDECL XModelFree(XModel *model)
 	{
 		for ( i = 0; i < 4; ++i )
 		{
-			if ( model->lodInfo[i].surfnames )
+			if ( model->lodInfo[i].surfNames )
 			{
 				for ( j = 0; j < model->lodInfo[i].numsurfs; ++j )
-					SL_RemoveRefToString(model->lodInfo[i].surfnames[j]);
+					SL_RemoveRefToString(model->lodInfo[i].surfNames[j]);
 
-				model->lodInfo[i].surfnames = 0;
+				model->lodInfo[i].surfNames = 0;
 			}
 		}
 	}
@@ -136,19 +136,19 @@ const char* XModelSetData(const char *modelName, XModel *model, void *(*Alloc)(i
 
 XModelParts* QDECL XModelPartsLoad(XModel *model, const char *partName, void *(*Alloc)(int))
 {
-	XModelParts *modelParts;
+	XModelParts *parts;
 
-	modelParts = XModelPartsFindData(partName);
+	parts = XModelPartsFindData(partName);
 
-	if ( modelParts )
-		return modelParts;
+	if ( parts )
+		return parts;
 
-	modelParts = XModelPartsLoadFile(model, partName, Alloc);
+	parts = XModelPartsLoadFile(model, partName, Alloc);
 
-	if ( modelParts )
+	if ( parts )
 	{
-		XModelPartsSetData(partName, modelParts, Alloc);
-		return modelParts;
+		XModelPartsSetData(partName, parts, Alloc);
+		return parts;
 	}
 	else
 	{
@@ -190,11 +190,11 @@ bool XModelSurfsLoad(XModel *model, void *(*Alloc)(int))
 {
 	int i;
 
-	for ( i = 0; i < 4 && *model->lodInfo[i].name; ++i )
+	for ( i = 0; i < 4 && *model->lodInfo[i].filename; ++i )
 	{
-		model->lodInfo[i].surface = XModelLoadSurface(model, model->lodInfo[i].name, Alloc);
+		model->lodInfo[i].surfs = XModelLoadSurface(model, model->lodInfo[i].filename, Alloc);
 
-		if ( !model->lodInfo[i].surface )
+		if ( !model->lodInfo[i].surfs )
 			return false;
 	}
 
@@ -206,7 +206,7 @@ XModelParts defaultModelPart;
 XBoneInfo defaultBoneInfo;
 XModelSurfs defaultSurface;
 
-unsigned short *pDefaultBoneNames;
+unsigned short *pDefaultHierarchy;
 unsigned short defaultBoneNames[2];
 unsigned short defaultSurfnames;
 
@@ -214,8 +214,8 @@ byte defaultpartClassification;
 
 XModelParts* setDefaultModelPart()
 {
-	pDefaultBoneNames = defaultBoneNames;
-	defaultModelPart.boneNames = &pDefaultBoneNames;
+	pDefaultHierarchy = defaultBoneNames;
+	defaultModelPart.hierarchy = &pDefaultHierarchy;
 	defaultModelPart.quats = 0;
 	defaultModelPart.trans = 0;
 	defaultModelPart.numBones = 1;
@@ -241,19 +241,19 @@ XModel* XModelLoadDefaultModel(const char *name, void *(*Alloc)(int))
 	model = (XModel *)Alloc(sizeof(XModel));
 
 	model->bad = 1;
-	model->modelParts = setDefaultModelPart();
+	model->parts = setDefaultModelPart();
 
 	for ( i = 0; i < 4; ++i )
 	{
-		model->lodInfo[i].surface = 0;
-		model->lodInfo[i].name = "";
+		model->lodInfo[i].surfs = 0;
+		model->lodInfo[i].filename = "";
 		model->lodInfo[i].dist = 0.0;
 		model->lodInfo[i].numsurfs = 1;
-		model->lodInfo[i].surfnames = &defaultSurfnames;
+		model->lodInfo[i].surfNames = &defaultSurfnames;
 		defaultSurfnames = 0;
 	}
 
-	model->lodInfo[0].surface = setDefaultSurface();
+	model->lodInfo[0].surfs = setDefaultSurface();
 	model->numLods = 1;
 	model->collLod = 0;
 	model->name = "DEFAULT";

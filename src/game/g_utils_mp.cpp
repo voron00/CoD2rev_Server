@@ -618,7 +618,7 @@ void G_DObjUpdate(gentity_s *ent)
 		{
 			model = G_GetModel(modelIndex);
 			dobjModels->model = model;
-			dobjModels->parentModelName = 0;
+			dobjModels->boneName = 0;
 			dobjModels->ignoreCollision = 0;
 			numModels = 1;
 
@@ -632,7 +632,7 @@ void G_DObjUpdate(gentity_s *ent)
 				if ( modelIndex )
 				{
 					dobjModels[numModels].model = G_GetModel(modelIndex);
-					dobjModels[numModels].parentModelName = SL_ConvertToString(ent->attachTagNames[i]);
+					dobjModels[numModels].boneName = SL_ConvertToString(ent->attachTagNames[i]);
 					dobjModels[numModels].ignoreCollision = ((int)ent->attachIgnoreCollision >> i) & 1;
 					numModels++;
 				}

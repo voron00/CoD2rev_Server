@@ -180,7 +180,7 @@ float XAnimGetTime(const XAnimTree_s *tree, unsigned int animIndex)
 {
 	uint16_t childIndex;
 
-	childIndex = tree->children[animIndex];
+	childIndex = tree->infoArray[animIndex];
 
 	if ( childIndex )
 		return g_xAnimInfo[childIndex].state.time;
@@ -240,7 +240,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 	int i;
 	int j;
 
-	treeIndex = tree->children[infoIndex];
+	treeIndex = tree->infoArray[infoIndex];
 
 	if ( treeIndex )
 	{
@@ -456,7 +456,7 @@ XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex)
 
 	g_xAnimInfo->next = g_xAnimInfo[g_xAnimInfo->next].next;
 	g_xAnimInfo[g_xAnimInfo->next].prev = 0;
-	tree->children[infoIndex] = next;
+	tree->infoArray[infoIndex] = next;
 
 	return &g_xAnimInfo[next];
 }
@@ -484,13 +484,13 @@ void XAnimCloneAnimTree(const XAnimTree_s *from, XAnimTree_s *to)
 
 	for ( infoIndex = 0; infoIndex < size; ++infoIndex )
 	{
-		index = from->children[infoIndex];
+		index = from->infoArray[infoIndex];
 
-		if ( from->children[infoIndex] )
+		if ( from->infoArray[infoIndex] )
 		{
-			if ( to->children[infoIndex] )
+			if ( to->infoArray[infoIndex] )
 			{
-				info = &g_xAnimInfo[to->children[infoIndex]];
+				info = &g_xAnimInfo[to->infoArray[infoIndex]];
 				XAnimFreeNotifyStrings(info);
 			}
 			else
@@ -500,10 +500,10 @@ void XAnimCloneAnimTree(const XAnimTree_s *from, XAnimTree_s *to)
 
 			XAnimCloneInfo(&g_xAnimInfo[index], info);
 		}
-		else if ( to->children[infoIndex] )
+		else if ( to->infoArray[infoIndex] )
 		{
-			XAnimFreeInfo(to, to->children[infoIndex]);
-			to->children[infoIndex] = 0;
+			XAnimFreeInfo(to, to->infoArray[infoIndex]);
+			to->infoArray[infoIndex] = 0;
 		}
 	}
 }
@@ -513,7 +513,7 @@ void XAnimClearGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float blend
 	XAnimInfo *info;
 	uint16_t childIndex;
 
-	childIndex = tree->children[animIndex];
+	childIndex = tree->infoArray[animIndex];
 
 	if ( childIndex )
 	{
@@ -543,7 +543,7 @@ void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
 	XAnimInfo *info;
 	uint16_t childIndex;
 
-	childIndex = tree->children[animIndex];
+	childIndex = tree->infoArray[animIndex];
 
 	if ( childIndex )
 	{
@@ -586,7 +586,7 @@ void XAnimResetTime(const XAnimTree_s *tree, unsigned int animIndex)
 	int numAnims;
 	int i;
 
-	childIndex = tree->children[animIndex];
+	childIndex = tree->infoArray[animIndex];
 
 	if ( childIndex )
 	{
@@ -612,7 +612,7 @@ void XAnimRestart(XAnimTree_s *tree, unsigned int infoIndex)
 
 		if ( entry->numAnims && (tree->anims->entries[i].u.animParent.flags & 4) != 0 )
 		{
-			if ( XAnimNeedClearState(&g_xAnimInfo[tree->children[i]]) )
+			if ( XAnimNeedClearState(&g_xAnimInfo[tree->infoArray[i]]) )
 			{
 				numAnims = entry->numAnims;
 
@@ -624,7 +624,7 @@ void XAnimRestart(XAnimTree_s *tree, unsigned int infoIndex)
 	}
 
 	if ( !tree->anims->entries[infoIndex].numAnims )
-		XAnimNeedClearState(&g_xAnimInfo[tree->children[infoIndex]]);
+		XAnimNeedClearState(&g_xAnimInfo[tree->infoArray[infoIndex]]);
 }
 
 unsigned int XAnimGetDescendantWithGreatestWeight(const XAnimTree_s *tree, unsigned int infoIndex)
@@ -646,7 +646,7 @@ unsigned int XAnimGetDescendantWithGreatestWeight(const XAnimTree_s *tree, unsig
 
 	for ( i = 0; i < entry->numAnims; ++i )
 	{
-		goalWeight = g_xAnimInfo[tree->children[i + entry->u.animParent.children]].state.goalWeight;
+		goalWeight = g_xAnimInfo[tree->infoArray[i + entry->u.animParent.children]].state.goalWeight;
 
 		if ( weight < goalWeight )
 		{
@@ -667,11 +667,11 @@ int XAnimSetGoalWeightInternal(XAnimTree_s *tree, unsigned int animIndex, float 
 {
 	XAnimInfo *info;
 
-	if ( tree->children[animIndex] )
+	if ( tree->infoArray[animIndex] )
 	{
-		info = &g_xAnimInfo[tree->children[animIndex]];
+		info = &g_xAnimInfo[tree->infoArray[animIndex]];
 		XAnimFreeNotifyStrings(info);
-LABEL_7:
+retry:
 		if ( !animIndex )
 		{
 			goalWeight = 1.0;
@@ -738,7 +738,7 @@ LABEL_7:
 	{
 		info = XAnimGetInfo(tree, animIndex);
 		XAnimResetInfo(info);
-		goto LABEL_7;
+		goto retry;
 	}
 
 	return 0;
@@ -758,7 +758,7 @@ void XAnimSetCompleteGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float
 	{
 		childIndex = tree->anims->entries[childIndex].parent;
 
-		if ( !tree->children[childIndex] || g_xAnimInfo[tree->children[childIndex]].state.goalWeight == 0.0 )
+		if ( !tree->infoArray[childIndex] || g_xAnimInfo[tree->infoArray[childIndex]].state.goalWeight == 0.0 )
 			XAnimSetGoalWeightInternal(tree, childIndex, 1.0, goalTime, 1.0, 0, 0, 0);
 	}
 
@@ -787,7 +787,7 @@ void XAnimClearGoalWeightKnobInternal(XAnimTree_s *tree, unsigned int infoIndex,
 
 		for ( i = 0; i < numAnims; ++i )
 		{
-			childIndex = tree->children[i + entry->u.animParent.children];
+			childIndex = tree->infoArray[i + entry->u.animParent.children];
 
 			if ( childIndex )
 				weight = g_xAnimInfo[childIndex].state.weight;
@@ -824,7 +824,7 @@ void XAnimInitTime(XAnimTree_s *tree, unsigned int infoIndex, float goalTime)
 	{
 		infoIndex = tree->anims->entries[infoIndex].parent;
 
-		if ( tree->children[infoIndex] )
+		if ( tree->infoArray[infoIndex] )
 			break;
 
 		XAnimSetGoalWeightInternal(tree, infoIndex, 0.0, goalTime, 1.0, 1, 0, 0);
@@ -841,7 +841,7 @@ void XAnimSetCompleteGoalWeightKnobAll(XAnimTree_s *tree, unsigned int animIndex
 	XAnimInitTime(tree, animIndex, goalTime);
 
 	if ( bRestart )
-RESTART:
+restart:
 		XAnimRestart(tree, animIndex);
 
 	while ( animIndex )
@@ -855,7 +855,7 @@ RESTART:
 		XAnimSetGoalWeightInternal(tree, animIndex, 1.0, goalTime, 1.0, 0, 0, 0);
 
 		if ( bRestart )
-			goto RESTART;
+			goto restart;
 	}
 }
 
@@ -865,7 +865,7 @@ void XAnimClearTreeGoalWeights(XAnimTree_s *tree, unsigned int animIndex, float 
 	int i;
 	int numAnims;
 
-	if ( tree->children[animIndex] )
+	if ( tree->infoArray[animIndex] )
 	{
 		XAnimClearGoalWeight(tree, animIndex, blendTime);
 		entry = &tree->anims->entries[animIndex];
@@ -933,7 +933,7 @@ float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoInd
 
 		for ( i = 0; i < numAnims; ++i )
 		{
-			index = tree->children[i + entry->u.animParent.children];
+			index = tree->infoArray[i + entry->u.animParent.children];
 
 			if ( index )
 			{
@@ -1002,7 +1002,7 @@ void XAnimFillInSyncNodes_r(XAnim_s *anims, unsigned int animIndex, bool bLoop)
 		for ( i = 0; i < numAnims; ++i )
 			XAnimFillInSyncNodes_r(anims, i + anims->entries[animIndex].u.animParent.children, bLoop);
 	}
-	else if ( anims->entries[animIndex].u.parts->looping != bLoop )
+	else if ( anims->entries[animIndex].u.parts->bLoop != bLoop )
 	{
 		if ( !XanimIsDefaultPart(anims->entries[animIndex].u.parts) )
 		{
@@ -1107,7 +1107,7 @@ void XAnimSetNotifyIndex(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEn
 void XAnimAddServerNotifyNamed(const XAnimTree_s *tree, unsigned int notifyName, unsigned int name)
 {
 	Scr_AddConstString(name);
-	Scr_NotifyNum(tree->parent - 1, 0, notifyName, 1u);
+	Scr_NotifyNum(tree->entnum - 1, 0, notifyName, 1u);
 }
 
 void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, float dtime)
@@ -1117,12 +1117,12 @@ void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XA
 	XAnimNotifyInfo *notifyIter;
 	XAnimParts *parts;
 
-	if ( tree->parent && info->notifyName )
+	if ( tree->entnum && info->notifyName )
 	{
 		if ( info->state.time == 1.0 )
 		{
 			Scr_AddConstString(g_end);
-			Scr_NotifyNum(tree->parent - 1, 0, info->notifyName, 1u);
+			Scr_NotifyNum(tree->entnum - 1, 0, info->notifyName, 1u);
 			return;
 		}
 
@@ -1191,7 +1191,7 @@ void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XA
 		else if ( info->state.time > dtime || dtime == 1.0 )
 		{
 			Scr_AddConstString(g_end);
-			Scr_NotifyNum(tree->parent - 1, 0, info->notifyName, 1u);
+			Scr_NotifyNum(tree->entnum - 1, 0, info->notifyName, 1u);
 		}
 	}
 }
@@ -1200,7 +1200,7 @@ float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex)
 {
 	uint16_t childIndex;
 
-	childIndex = tree->children[animIndex];
+	childIndex = tree->infoArray[animIndex];
 
 	if ( childIndex )
 		return g_xAnimInfo[childIndex].state.weight;
@@ -1221,7 +1221,7 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 	int i;
 
 	parentInfo.hasWeight = parentHasWeight;
-	index = tree->children[infoIndex];
+	index = tree->infoArray[infoIndex];
 
 	if ( index )
 	{
@@ -1307,14 +1307,14 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 		else
 		{
 			XAnimFreeInfo(tree, index);
-			tree->children[infoIndex] = 0;
+			tree->infoArray[infoIndex] = 0;
 		}
 	}
 }
 
 void XAnimSetAnimRate(XAnimTree_s *tree, unsigned int animIndex, float rate)
 {
-	g_xAnimInfo[tree->children[animIndex]].state.rate = rate;
+	g_xAnimInfo[tree->infoArray[animIndex]].state.rate = rate;
 }
 
 bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex)
@@ -1322,7 +1322,7 @@ bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex)
 	if ( anim->entries[animIndex].numAnims )
 		return anim->entries[animIndex].u.animParent.flags & 1;
 	else
-		return anim->entries[animIndex].u.parts->looping;
+		return anim->entries[animIndex].u.parts->bLoop;
 }
 
 bool XAnimIsPrimitive(XAnim_s *anim, unsigned int animIndex)
@@ -1499,7 +1499,7 @@ void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bo
 	int numAnims;
 	int i;
 
-	childIndex = tree->children[index];
+	childIndex = tree->infoArray[index];
 
 	if ( childIndex )
 	{
@@ -1555,7 +1555,7 @@ void QDECL XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, fl
 	int j;
 	float freq;
 
-	index = tree->children[infoIndex];
+	index = tree->infoArray[infoIndex];
 
 	if ( index )
 	{
@@ -1637,7 +1637,7 @@ void QDECL XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, fl
 
 					if ( frameTime >= 1.0 )
 					{
-						if ( parts->looping )
+						if ( parts->bLoop )
 						{
 							do
 							{
@@ -1674,7 +1674,7 @@ float XAnimGetNotifyFracServer(const XAnimTree_s *tree, XAnimInfo *info, const X
 {
 	XAnimParts *parts;
 
-	if ( tree->parent && info->notifyName )
+	if ( tree->entnum && info->notifyName )
 	{
 		if ( entry->numAnims )
 		{
@@ -1713,7 +1713,7 @@ float XAnimGetServerNotifyFracSyncTotal(const XAnimTree_s *tree, XAnimInfo *info
 	for ( i = 0; i < entry->numAnims; ++i )
 	{
 		childIndex = i + entry->u.animParent.children;
-		animIndex = tree->children[childIndex];
+		animIndex = tree->infoArray[childIndex];
 
 		if ( animIndex )
 		{
@@ -1756,7 +1756,7 @@ float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoI
 	float averageRate;
 	float frameTime;
 
-	childIndex = anim->children[infoIndex];
+	childIndex = anim->infoArray[infoIndex];
 
 	if ( childIndex )
 	{
@@ -1854,7 +1854,7 @@ float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoI
 					newAnimTime = animState->oldTime + frameRate;
 					newCycleCount = animState->oldCycleCount;
 
-					if ( animParts->looping )
+					if ( animParts->bLoop )
 					{
 						while ( newAnimTime >= 1.0 )
 						{
@@ -1953,9 +1953,9 @@ void XAnimClearTreeWeights(XAnimTree_s *info, int index)
 	int i;
 	int numAnims;
 
-	childIndex = info->children[index];
+	childIndex = info->infoArray[index];
 
-	if ( info->children[index] )
+	if ( info->infoArray[index] )
 	{
 		entry = &info->anims->entries[index];
 		numAnims = entry->numAnims;
@@ -1964,7 +1964,7 @@ void XAnimClearTreeWeights(XAnimTree_s *info, int index)
 			XAnimClearTreeWeights(info, i + entry->u.animParent.children);
 
 		XAnimFreeInfo(info, childIndex);
-		info->children[index] = 0;
+		info->infoArray[index] = 0;
 	}
 }
 
@@ -1975,7 +1975,7 @@ void XAnimClearTreeParts(XAnimTree_s *tree)
 	signed int size;
 
 	size = tree->anims->size;
-	childIndex = &tree->children[size];
+	childIndex = &tree->infoArray[size];
 
 	for ( i = 0; i < size; ++i )
 	{

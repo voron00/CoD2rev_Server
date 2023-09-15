@@ -1623,7 +1623,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 	}
 
 	models->model = level_bgs.GetXModel(ci->model);
-	models->parentModelName = 0;
+	models->boneName = 0;
 	models->ignoreCollision = 0;
 
 	numModels = 1;
@@ -1633,7 +1633,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 		if ( ci->attachModelNames[i][0] )
 		{
 			models[numModels].model = level_bgs.GetXModel(ci->attachModelNames[i]);
-			models[numModels].parentModelName = ci->attachTagNames[i];
+			models[numModels].boneName = ci->attachTagNames[i];
 			models[numModels++].ignoreCollision = (attachIgnoreCollision >> i) & 1;
 		}
 	}

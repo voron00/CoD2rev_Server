@@ -33,10 +33,10 @@ const char* DObjInfoGetBoneName(const DObj_s *dobj, int index)
 	for ( i = 0; i < dobj->numModels; ++i )
 	{
 		model = dobj->models[i];
-		numBones = model->modelParts->numBones;
+		numBones = model->parts->numBones;
 
 		if ( index - count < numBones )
-			return SL_ConvertToString((*model->modelParts->boneNames)[index - count]);
+			return SL_ConvertToString((*model->parts->hierarchy)[index - count]);
 
 		count += numBones;
 	}
@@ -64,7 +64,7 @@ void DObjDumpInfo(const DObj_s *obj)
 		{
 			model = obj->models[i];
 			Com_Printf("%d: '%s'\n", bones, model->name);
-			bones += model->modelParts->numBones;
+			bones += model->parts->numBones;
 		}
 
 		Com_Printf("\nBones:\n");
@@ -103,7 +103,7 @@ void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int cont
 	unsigned short *boneName;
 	int i;
 	DObjAnimMat *pose;
-	XModelParts_s *modelParts;
+	XModelParts_s *parts;
 	XModel *model;
 	trace_t trace;
 
@@ -120,14 +120,14 @@ void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int cont
 		for ( i = 0; i < obj->numModels; ++i )
 		{
 			model = obj->models[i];
-			modelParts = model->modelParts;
-			boneName = *model->modelParts->boneNames;
+			parts = model->parts;
+			boneName = *model->parts->hierarchy;
 			boneIndex = XModelTraceLine(model, &trace, pose, localStart, localEnd, contentmask);
 
 			if ( boneIndex >= 0 )
 				results->partName = boneName[boneIndex];
 
-			pose += modelParts->numBones;
+			pose += parts->numBones;
 		}
 	}
 
@@ -182,15 +182,15 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 	unsigned int i;
 
 	newobj = (DObj *)buf;
-	newobj->skel.skelPart = 0;
-	newobj->skel.timeStamp = 0;
+	newobj->skel = 0;
+	newobj->timeStamp = 0;
 	newobj->duplicateParts = 0;
-	newobj->flags = 0;
+	newobj->ignoreCollision = 0;
 
 	DObjSetTree(newobj, tree);
 
 	if ( tree )
-		tree->parent = entnum;
+		tree->entnum = entnum;
 
 	modelIndex = 0;
 	numBones = 0;
@@ -200,15 +200,15 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 		model = dobjModels->model;
 
 		newobj->models[modelIndex] = dobjModels->model;
-		newobj->modelIndex[modelIndex] = -1;
-		newobj->boneIndex[modelIndex] = numBones;
+		newobj->modelParents[modelIndex] = -1;
+		newobj->matOffset[modelIndex] = numBones;
 
 		if ( dobjModels->ignoreCollision )
-			newobj->flags |= 1 << i;
+			newobj->ignoreCollision |= 1 << i;
 
 		if ( i )
 		{
-			parentName = dobjModels->parentModelName;
+			parentName = dobjModels->boneName;
 
 			if ( parentName )
 			{
@@ -224,7 +224,7 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 
 							if ( boneIndex >= 0 )
 							{
-								newobj->modelIndex[modelIndex] = newobj->boneIndex[j] + boneIndex;
+								newobj->modelParents[modelIndex] = newobj->matOffset[j] + boneIndex;
 								goto setmodel;
 							}
 						}
@@ -240,10 +240,10 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 setmodel:
 		if ( model )
 		{
-			if ( numBones + model->modelParts->numBones > 127 )
+			if ( numBones + model->parts->numBones > 127 )
 				Com_Error(ERR_DROP, "dobj for xmodel %s has more than %d bones", newobj->models[0]->name, 127);
 
-			numBones += model->modelParts->numBones;
+			numBones += model->parts->numBones;
 		}
 
 		++modelIndex;
@@ -263,7 +263,7 @@ void DObjFree(DObj *obj)
 
 	if ( obj->tree )
 	{
-		obj->duplicatePartsIndexes = 0;
+		obj->animToModel = 0;
 		obj->tree = 0;
 	}
 

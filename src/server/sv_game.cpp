@@ -271,7 +271,7 @@ char* SV_AllocSkelMemory(unsigned int size)
 
 int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex)
 {
-	DSkelPart_s *skel;
+	DSkel_t *skel;
 	int size;
 	DObj_s *obj;
 
@@ -281,7 +281,7 @@ int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex)
 		return DObjSkelIsBoneUpToDate(obj, boneIndex);
 
 	size = DObjGetAllocSkelSize(obj);
-	skel = (DSkelPart_s *)SV_AllocSkelMemory(size);
+	skel = (DSkel_t *)SV_AllocSkelMemory(size);
 	DObjCreateSkel(obj, skel, sv.skelTimeStamp);
 
 	return 0;
@@ -289,7 +289,7 @@ int SV_DObjCreateSkelForBone(gentity_s *ent, int boneIndex)
 
 int SV_DObjCreateSkelForBones(gentity_s *ent, int *partBits)
 {
-	DSkelPart_s *skel;
+	DSkel_t *skel;
 	int size;
 	DObj_s *obj;
 
@@ -299,7 +299,7 @@ int SV_DObjCreateSkelForBones(gentity_s *ent, int *partBits)
 		return DObjSkelAreBonesUpToDate(obj, partBits);
 
 	size = DObjGetAllocSkelSize(obj);
-	skel = (DSkelPart_s *)SV_AllocSkelMemory(size);
+	skel = (DSkel_t *)SV_AllocSkelMemory(size);
 	DObjCreateSkel(obj, skel, sv.skelTimeStamp);
 
 	return 0;

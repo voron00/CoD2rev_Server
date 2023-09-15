@@ -42,7 +42,6 @@ enum XAssetType
 struct XAnimNotifyInfo
 {
 	unsigned short name;
-	unsigned short pad;
 	float time;
 };
 
@@ -97,16 +96,16 @@ struct XAnimDeltaPart
 typedef struct XAnimParts_s
 {
 	unsigned short numframes;
-	byte looping;
-	byte indexCount;
+	byte bLoop;
+	byte bDelta;
 	float framerate;
 	float frequency;
 	byte notifyCount;
 	char assetType;
 	short boneCount;
 	uint16_t *names;
-	char *dataByte;
-	void *indices;	 // !!! Not known !!!
+	int simpleQuatBits;
+	void *parts;	 // !!! Not known !!!
 	XAnimNotifyInfo *notify;
 	XAnimDeltaPart *deltaPart;
 	const char *name;
@@ -153,10 +152,10 @@ static_assert((sizeof(XAnim) == 0x14), "ERROR: XAnim size is invalid!");
 typedef struct XAnimTree_s
 {
 	XAnim_s *anims;
-	uint16_t parent;
-	bool bUseDelta;
+	uint16_t entnum;
+	bool bAbs;
 	bool bUseGoalWeight;
-	uint16_t children[1];
+	uint16_t infoArray[1];
 } XAnimTree;
 static_assert((sizeof(XAnimTree) == 0xC), "ERROR: XAnimTree size is invalid!");
 
@@ -174,16 +173,28 @@ struct XModelCollTri_s
 	vec4_t tvec;
 };
 
+struct DSkelPartBits_s
+{
+	int anim[4];
+	int control[4];
+	int skel[4];
+};
+
+struct DSkel_t
+{
+	DSkelPartBits_s partBits;
+	DObjAnimMat Mat;
+};
+
 typedef struct XModelParts_s
 {
 	short numBones;
 	short numRootBones;
-	unsigned short **boneNames;
+	unsigned short **hierarchy;
 	short *quats;
 	float *trans;
 	byte *partClassification;
-	XModelCollTri_s partCollTris;
-	DObjAnimMat baseMat;
+	DSkel_t skel;
 } XModelParts;
 static_assert((sizeof(XModelParts) == 100), "ERROR: XModelParts size is invalid!");
 
@@ -197,10 +208,10 @@ static_assert((sizeof(XModelSurfs) == 20), "ERROR: XModelSurfs size is invalid!"
 typedef struct XModelLodInfo_s
 {
 	float dist;
-	const char *name;
+	const char *filename;
 	short numsurfs;
-	unsigned short *surfnames;
-	XModelSurfs_s *surface;
+	unsigned short *surfNames;
+	XModelSurfs_s *surfs;
 } XModelLodInfo;
 
 typedef struct XModelCollSurf_s
@@ -216,7 +227,7 @@ typedef struct XModelCollSurf_s
 
 typedef struct
 {
-	XModelParts_s *modelParts;
+	XModelParts_s *parts;
 	XModelLodInfo_s lodInfo[4];
 	XModelCollSurf_s *collSurfs;
 	int numCollSurfs;
@@ -226,7 +237,7 @@ typedef struct
 	vec3_t maxs;
 	short numLods;
 	short collLod;
-	struct Material *skins; // !!! Not loaded in server binary
+	struct Material *xskins; // !!! Not loaded in server binary
 	int memUsage;
 	const char *name;
 	char flags;
@@ -237,42 +248,24 @@ static_assert((sizeof(XModel) == 0x90), "ERROR: XModel size is invalid!");
 struct DObjModel_s
 {
 	XModel *model;
-	const char *parentModelName;
+	const char *boneName;
 	qboolean ignoreCollision;
-};
-
-struct DSkelPartBits_s
-{
-	int anim[4];
-	int control[4];
-	int skel[4];
-};
-
-struct DSkelPart_s
-{
-	DSkelPartBits_s partBits;
-	DObjAnimMat Mat;
-};
-
-struct DSkel_t
-{
-	DSkelPart_s *skelPart;
-	int timeStamp;
 };
 
 typedef struct DObj_s
 {
 	XAnimTree_s *tree;
-	DSkel_t skel;
-	unsigned short *duplicatePartsIndexes;
+	DSkel_t *skel;
+	int timeStamp;
+	unsigned short *animToModel;
 	unsigned short duplicateParts;
-	unsigned int ignoreCollision;
+	int locked;
 	byte numModels;
 	byte numBones;
-	byte flags;
+	byte ignoreCollision;
 	XModel *models[8];
-	byte modelIndex[8];
-	byte boneIndex[8];
+	byte modelParents[8];
+	byte matOffset[8];
 	vec3_t mins;
 	vec3_t maxs;
 } DObj;
@@ -361,7 +354,7 @@ void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
 int DObjSkelExists(DObj_s *obj, int timeStamp);
 int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 int DObjGetAllocSkelSize(const DObj_s *obj);
-void DObjCreateSkel(DObj_s *obj, DSkelPart_s *skelPart, int time);
+void DObjCreateSkel(DObj_s *obj, DSkel_t *skel, int time);
 int DObjSkelAreBonesUpToDate(const DObj_s *obj, int *partBits);
 XAnimTree_s* DObjGetTree(const DObj_s *obj);
 
