@@ -176,6 +176,24 @@ void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3])
 	(*axis)[8] = 1.0 - (float)(xx + yy);
 }
 
+void MatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out)
+{
+	float axis[3][3];
+
+	ConvertQuatToMat(mat, axis);
+	out[0] = in[0] * axis[0][0] + in[1] * axis[1][0] + in[2] * axis[2][0] + mat->trans[0];
+	out[1] = in[0] * axis[0][1] + in[1] * axis[1][1] + in[2] * axis[2][1] + mat->trans[1];
+	out[2] = in[0] * axis[0][2] + in[1] * axis[1][2] + in[2] * axis[2][2] + mat->trans[2];
+}
+
+void QuatMultiply(const float *in1, const float *in2, float *out)
+{
+  out[0] = in1[0] * in2[3] + in1[3] * in2[0] + in1[2] * in2[1] - in1[1] * in2[2];
+  out[1] = in1[1] * in2[3] - in1[2] * in2[0] + in1[3] * in2[1] + in1[0] * in2[2];
+  out[2] = in1[2] * in2[3] + in1[1] * in2[0] - in1[0] * in2[1] + in1[3] * in2[2];
+  out[3] = in1[3] * in2[3] - in1[0] * in2[0] - in1[1] * in2[1] - in1[2] * in2[2];
+}
+
 void DObjClearAngles(DObjAnimMat *rotTrans)
 {
 	rotTrans->quat[0] = 0.0;

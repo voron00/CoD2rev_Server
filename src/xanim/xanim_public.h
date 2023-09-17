@@ -1,6 +1,7 @@
 #pragma once
 
-#define XANIM_VERSION 20
+#define XMODEL_VERSION 20
+#define XANIM_VERSION 14
 
 enum XAssetType
 {
@@ -39,28 +40,10 @@ enum XAssetType
 	ASSET_TYPE_COUNT = 0x20,
 };
 
-struct XAnimNotifyInfo
-{
-	unsigned short name;
-	float time;
-};
-
 union XAnimDynamicIndices
 {
 	byte _1[1];
 	uint16_t _2[1];
-};
-
-struct XAnimDeltaPartQuatDataFrames
-{
-	int16_t (*frames)[2];
-	XAnimDynamicIndices indices;
-};
-
-union XAnimDeltaPartQuatData
-{
-	XAnimDeltaPartQuatDataFrames frames;
-	int16_t frame0[2];
 };
 
 struct XAnimPartTransFrames
@@ -69,16 +52,10 @@ struct XAnimPartTransFrames
 	XAnimDynamicIndices indices;
 };
 
-struct XAnimPartTransData
+union XAnimPartTransData
 {
 	XAnimPartTransFrames frames;
 	float frame0[3];
-};
-
-struct XAnimDeltaPartQuat
-{
-	uint16_t size;
-	XAnimDeltaPartQuatData u;
 };
 
 struct XAnimPartTrans
@@ -87,10 +64,83 @@ struct XAnimPartTrans
 	XAnimPartTransData u;
 };
 
-struct XAnimDeltaPart
+union XAnimPartQuatFrames
+{
+	int16_t (*frames)[4];
+	int16_t (*frames2)[2];
+};
+
+struct XAnimPartQuatDataFrames
+{
+	XAnimPartQuatFrames u;
+	uint16_t indices[1];
+};
+
+union XAnimPartQuatData
+{
+	XAnimPartQuatDataFrames frames;
+	int16_t frame0[4];
+	int16_t frame02[2];
+};
+
+struct XAnimPartQuat
+{
+	uint16_t size;
+	XAnimPartQuatData u;
+};
+
+struct XAnimPart
 {
 	XAnimPartTrans *trans;
+	XAnimPartQuat *quat;
+};
+
+struct XAnimDeltaPartTransFrames
+{
+	float (*frames)[3];
+	uint16_t indices[1];
+};
+
+union XAnimDeltaPartTransData
+{
+	XAnimDeltaPartTransFrames frames;
+	float frame0[3];
+};
+
+struct XAnimDeltaPartTrans
+{
+	uint16_t size;
+	XAnimDeltaPartTransData u;
+};
+
+struct XAnimDeltaPartQuatDataFrames
+{
+	int16_t (*frames)[2];
+	uint16_t indices[1];
+};
+
+union XAnimDeltaPartQuatData
+{
+	XAnimDeltaPartQuatDataFrames frames;
+	int16_t frame0[2];
+};
+
+struct XAnimDeltaPartQuat
+{
+	uint16_t size;
+	XAnimDeltaPartQuatData u;
+};
+
+struct XAnimDeltaPart
+{
+	XAnimDeltaPartTrans *trans;
 	XAnimDeltaPartQuat *quat;
+};
+
+struct XAnimNotifyInfo
+{
+	unsigned short name;
+	float time;
 };
 
 typedef struct XAnimParts_s
@@ -104,8 +154,8 @@ typedef struct XAnimParts_s
 	char assetType;
 	short boneCount;
 	uint16_t *names;
-	int simpleQuatBits;
-	void *parts;	 // !!! Not known !!!
+	char* simpleQuatBits;
+	XAnimPart *parts;
 	XAnimNotifyInfo *notify;
 	XAnimDeltaPart *deltaPart;
 	const char *name;
@@ -184,6 +234,21 @@ struct DSkel_t
 {
 	DSkelPartBits_s partBits;
 	DObjAnimMat Mat;
+};
+
+struct XModelConfigEntry
+{
+	char filename[1024];
+	float dist;
+};
+
+struct XModelConfig
+{
+	XModelConfigEntry entries[4];
+	float mins[3];
+	float maxs[3];
+	int collLod;
+	byte flags;
 };
 
 typedef struct XModelParts_s
@@ -350,6 +415,8 @@ void DObjAbort();
 int DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *angles);
 void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
 void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
+void MatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out);
+void QuatMultiply(const float *in1, const float *in2, float *out);
 
 int DObjSkelExists(DObj_s *obj, int timeStamp);
 int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
@@ -470,3 +537,9 @@ bool XAnimNotetrackExists(const XAnim_s *anims, unsigned int animIndex, unsigned
 int DObjHasContents(DObj_s *obj, int contentmask);
 void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results);
 void DObjDumpInfo(const DObj_s *obj);
+
+int XAnim_ReadShort(const unsigned char **pos);
+int XAnim_ReadUnsignedShort(const unsigned char **pos);
+int XAnim_ReadInt(const unsigned char **pos);
+float XAnim_ReadFloat(const unsigned char **pos);
+void ConsumeQuat(const unsigned char **pos, short *out);

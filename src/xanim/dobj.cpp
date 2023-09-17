@@ -21,7 +21,7 @@ int DObjHasContents(DObj_s *obj, int contentmask)
 	return 0;
 }
 
-const char* DObjInfoGetBoneName(const DObj_s *dobj, int index)
+const char* DObjGetBoneName(const DObj_s *dobj, int index)
 {
 	int numBones;
 	XModel *model;
@@ -72,7 +72,7 @@ void DObjDumpInfo(const DObj_s *obj)
 
 		for ( j = 0; j < numBones; ++j )
 		{
-			Com_Printf("Bone %d: '%s'\n", j, DObjInfoGetBoneName(obj, j));
+			Com_Printf("Bone %d: '%s'\n", j, DObjGetBoneName(obj, j));
 		}
 
 		if ( obj->duplicateParts )
@@ -81,7 +81,7 @@ void DObjDumpInfo(const DObj_s *obj)
 
 			for ( partName = (byte *)(SL_ConvertToString(obj->duplicateParts) + 16); *partName; partName += 2 )
 			{
-				Com_Printf("%d ('%s') -> %d ('%s')\n", *partName - 1, DObjInfoGetBoneName(obj, *partName - 1), partName[1] - 1, DObjInfoGetBoneName(obj, partName[1] - 1));
+				Com_Printf("%d ('%s') -> %d ('%s')\n", *partName - 1, DObjGetBoneName(obj, *partName - 1), partName[1] - 1, DObjGetBoneName(obj, partName[1] - 1));
 			}
 		}
 		else
