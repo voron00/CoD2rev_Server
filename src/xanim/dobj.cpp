@@ -63,6 +63,105 @@ void DObjCalcTransWeight(DObjAnimMat *Mat)
 	}
 }
 
+int DObjGetBoneIndexInternal(const DObj_s *obj, unsigned int name)
+{
+	int bone;
+	XModel *model;
+	int index;
+	int i;
+	int numModels;
+
+	numModels = obj->numModels;
+	index = 0;
+
+	for ( i = 0; i < numModels; ++i )
+	{
+		model = obj->models[i];
+		bone = XModelGetBoneIndex(model, name);
+
+		if ( bone >= 0 )
+			return index + bone;
+
+		index += model->parts->numBones;
+	}
+
+	return -1;
+}
+
+void DObjCreateDuplicateParts(DObj_s *obj)
+{
+	static int duplicatePartBits[4]; // VoroN: let's not smash the stack?
+	int index;
+	bool bRootMeld;
+	int len;
+	byte *duplicateParts;
+	unsigned short *name;
+	int boneIter;
+	int localBoneIndex;
+	int boneIndex;
+	XModel *model;
+	int numBones;
+	int boneCount;
+
+	duplicateParts = (byte *)&duplicatePartBits[4]; // VoroN: not sure about that, it could be duplicatePartBits[3]?
+	memset(duplicatePartBits, 0, sizeof(duplicatePartBits));
+	len = 0;
+	numBones = obj->models[0]->parts->numBones;
+	boneCount = 1;
+
+	while ( boneCount < obj->numModels )
+	{
+		model = obj->models[boneCount];
+
+		if ( obj->modelParents[boneCount] == 0xFF )
+		{
+			name = model->parts->hierarchy[0];
+			boneIter = model->parts->numBones;
+			bRootMeld = 0;
+			boneIndex = -1;
+
+			for ( localBoneIndex = 0; localBoneIndex < boneIter; ++localBoneIndex )
+			{
+				boneIndex = DObjGetBoneIndexInternal(obj, name[localBoneIndex]);
+
+				if ( boneIndex != numBones + localBoneIndex )
+				{
+					if ( !localBoneIndex )
+						bRootMeld = 1;
+
+					index = numBones + localBoneIndex;
+					duplicateParts[len] = numBones + localBoneIndex + 1;
+					duplicatePartBits[index >> 5] |= 1 << (index & 0x1F);
+					duplicateParts[++len] = boneIndex + 1;
+					++len;
+				}
+			}
+
+			if ( !bRootMeld )
+			{
+				Com_Printf(
+				    "WARNING: Attempting to meld model, but root part '%s' of model '%s' not found in model '%s' or any of its descendants\n",
+				    SL_ConvertToString(name[0]),
+				    model->name,
+				    obj->models[0]->name);
+			}
+		}
+
+		++boneCount;
+		numBones += model->parts->numBones;
+	}
+
+	if ( len )
+	{
+		duplicateParts[len] = 0;
+		obj->duplicateParts = SL_GetStringOfLen((const char *)duplicatePartBits, 0, len + 17);
+	}
+	else
+	{
+		obj->duplicateParts = g_empty;
+	}
+}
+
 void DObjCalcSkel(DObj_s *obj, int *partBits)
 {
 	float *quat;
@@ -243,6 +342,110 @@ void DObjCalcSkel(DObj_s *obj, int *partBits)
 XAnimTree_s* DObjGetTree(const DObj_s *obj)
 {
 	return obj->tree;
+}
+
+void DObjSetTree(DObj_s *obj, XAnimTree_s *tree)
+{
+	byte model;
+	byte *parent;
+	unsigned int animTreeSize;
+
+	obj->tree = tree;
+
+	if ( tree )
+	{
+		animTreeSize = tree->anims->size;
+		obj->animToModel = &tree->infoArray[animTreeSize];
+		parent = (byte *)&obj->animToModel[animTreeSize];
+		model = *parent + 1;
+
+		if ( *parent == 0xFF )
+		{
+			model = 1;
+			memset(parent + 1, 0, animTreeSize);
+		}
+
+		*parent = model;
+	}
+	else
+	{
+		obj->animToModel = 0;
+	}
+}
+
+void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits)
+{
+	const int *duplicatePartBits;
+	int startIndex[8];
+	int newBoneIndex;
+	const unsigned char *pos;
+	int localBoneIndex;
+	byte *parentList;
+	const unsigned char *duplicateParts;
+	XModelParts_s *parts;
+	int i;
+	int numModels;
+
+	for ( i = 0; i < 4; ++i )
+		partBits[i] = 0;
+
+	numModels = obj->numModels;
+
+	if ( !obj->duplicateParts )
+		DObjCreateDuplicateParts(obj);
+
+	duplicatePartBits = (const int *)SL_ConvertToString(obj->duplicateParts);
+	duplicateParts = (const unsigned char *)(duplicatePartBits + 4);
+	pos = (const unsigned char *)(duplicatePartBits + 4);
+
+	startIndex[0] = 0;
+
+	for ( i = 0; ; startIndex[i] = newBoneIndex )
+	{
+		parts = obj->models[i]->parts;
+		newBoneIndex = startIndex[i] + parts->numBones;
+
+		if ( newBoneIndex > boneIndex )
+		{
+			for ( parentList = (byte *)(parts->hierarchy + 1); ; boneIndex -= parentList[newBoneIndex] )
+			{
+				localBoneIndex = boneIndex - startIndex[i];
+
+				while ( 1 )
+				{
+					partBits[boneIndex >> 5] |= 1 << (boneIndex & 0x1F);
+
+					if ( (((byte)(duplicatePartBits[boneIndex >> 5] >> (boneIndex & 0x1F)) ^ 1) & 1) == 0 )
+					{
+						for ( pos = duplicateParts; boneIndex != *pos - 1; pos += 2 )
+							;
+						boneIndex = pos[1] - 1;
+						goto out;
+					}
+
+					newBoneIndex = localBoneIndex - parts->numRootBones;
+
+					if ( newBoneIndex >= 0 )
+						break;
+
+					boneIndex = obj->modelParents[i];
+
+					if ( boneIndex == 255 )
+						return;
+					do
+out:
+						localBoneIndex = boneIndex - startIndex[--i];
+					while ( localBoneIndex < 0 );
+
+					parts = obj->models[i]->parts;
+					parentList = (byte *)(parts->hierarchy + 1);
+				}
+			}
+		}
+
+		if ( ++i == numModels )
+			break;
+	}
 }
 
 int DObjHasContents(DObj_s *obj, int contentmask)
