@@ -205,6 +205,7 @@ void XModelLoadCollData(const unsigned char **pos, XModel *model, void *(*AllocC
 			for ( j = 0; j < surf->numCollTris; ++j )
 			{
 				plane = surf->collTris[j].plane;
+
 				plane[0] = XAnim_ReadFloat(pos);
 				plane[1] = XAnim_ReadFloat(pos);
 				plane[2] = XAnim_ReadFloat(pos);
@@ -228,6 +229,7 @@ void XModelLoadCollData(const unsigned char **pos, XModel *model, void *(*AllocC
 			surf->boneIdx = XAnim_ReadInt(pos);
 			surf->contents = XAnim_ReadInt(pos) & 0xDFFFFFFB;
 			surf->surfFlags = XAnim_ReadInt(pos);
+
 			model->contents |= surf->contents;
 		}
 	}

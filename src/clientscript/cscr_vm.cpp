@@ -770,9 +770,7 @@ void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bo
 	VariableUnion tempValue;
 	unsigned int parentLocalId;
 	unsigned int localId;
-	bool bFromEndon;
 
-	bFromEndon = fromEndon;
 	size = stackValue->size;
 	localId = stackValue->localId;
 	buf = &stackValue->buf[5 * size];
@@ -793,7 +791,7 @@ void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bo
 				stackValue->size = size;
 				Scr_StopThread(localId);
 
-				if ( !bFromEndon )
+				if ( !fromEndon )
 				{
 					Scr_SetThreadNotifyName(startLocalId, 0);
 					stackValue->pos = 0;
@@ -817,7 +815,7 @@ void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bo
 		}
 	}
 
-	if ( bFromEndon )
+	if ( fromEndon )
 		RemoveVariable(startLocalId, 0x1FFFFu);
 
 	Scr_KillThread(startLocalId);

@@ -3,6 +3,243 @@
 
 unsigned int g_empty;
 
+void QuatMultiplyEquals(const float *in, float *inout)
+{
+	float temp[3];
+
+	temp[0] =  in[0] * inout[3] + in[3] * inout[0] + in[2] * inout[1] - in[1] * inout[2];
+	temp[1] =  in[1] * inout[3] - in[2] * inout[0] + in[3] * inout[1] + in[0] * inout[2];
+	temp[2] =  in[2] * inout[3] + in[1] * inout[0] - in[0] * inout[1] + in[3] * inout[2];
+
+	inout[3] = in[3] * inout[3] - in[0] * inout[0] - in[1] * inout[1] - in[2] * inout[2];
+	inout[0] = temp[0];
+	inout[1] = temp[1];
+	inout[2] = temp[2];
+}
+
+void QuatMultiplyReverseEquals(float *in, float *inout)
+{
+	float temp[3];
+
+	temp[0] = in[0] * inout[3] + in[3] * inout[0] + in[2] * inout[1] - in[1] * inout[2];
+	temp[1] = in[1] * inout[3] - in[2] * inout[0] + in[3] * inout[1] + in[0] * inout[2];
+	temp[2] = in[2] * inout[3] + in[1] * inout[0] - in[0] * inout[1] + in[3] * inout[2];
+
+	in[3] =   in[3] * inout[3] - in[0] * inout[0] - in[1] * inout[1] - in[2] * inout[2];
+	in[0] = temp[0];
+	in[1] = temp[1];
+	in[2] = temp[2];
+}
+
+void MatrixTransformVectorQuatTransEquals(float *inout, DObjAnimMat *in)
+{
+	float axis[3][3];
+	float temp[2];
+
+	ConvertQuatToMat(in, axis);
+
+	temp[0] =  inout[0] * axis[0][0] + inout[1] * axis[1][0] + inout[2] * axis[2][0] + in->trans[0];
+	temp[1] =  inout[0] * axis[0][1] + inout[1] * axis[1][1] + inout[2] * axis[2][1] + in->trans[1];
+
+	inout[2] = inout[0] * axis[0][2] + inout[1] * axis[1][2] + inout[2] * axis[2][2] + in->trans[2];
+	inout[0] = temp[0];
+	inout[1] = temp[1];
+}
+
+void DObjCalcTransWeight(DObjAnimMat *Mat)
+{
+	float vLenSq;
+
+	vLenSq = Vec4LengthSq(Mat->quat);
+
+	if ( vLenSq == 0.0 )
+	{
+		Mat->quat[3] = 1.0;
+		Mat->transWeight = 2.0;
+	}
+	else
+	{
+		Mat->transWeight = 2.0 / vLenSq;
+	}
+}
+
+void DObjCalcSkel(DObj_s *obj, int *partBits)
+{
+	float *quat;
+	const int *savedDuplicatePartBits;
+	char bFinished;
+	DSkel_t *skel;
+	DObjAnimMat *childMat;
+	const unsigned char *duplicateParts;
+	int numModels;
+	int boneBit;
+	int boneIndexHigh;
+	int boneIndex;
+	short *quats;
+	int calcPartBits[4];
+	int ignorePartBits[4];
+	int controlPartBits[4];
+	float *trans;
+	DObjAnimMat *Mat;
+	unsigned char parent;
+	byte *parentList;
+	XModelParts_s *parts;
+	int i;
+	int numRootBones;
+	DObjAnimMat *parentMat;
+
+	skel = obj->skel;
+	bFinished = 1;
+
+	for ( numRootBones = 0; numRootBones < 4; ++numRootBones )
+	{
+		ignorePartBits[numRootBones] = skel->partBits.skel[numRootBones] | ~partBits[numRootBones];
+
+		if ( ignorePartBits[numRootBones] != -1 )
+			bFinished = 0;
+	}
+
+	if ( !bFinished )
+	{
+		if ( !obj->duplicateParts )
+			DObjCreateDuplicateParts(obj);
+
+		savedDuplicatePartBits = (const int *)SL_ConvertToString(obj->duplicateParts);
+
+		for ( numRootBones = 0; numRootBones < 4; ++numRootBones )
+		{
+			skel->partBits.skel[numRootBones] |= partBits[numRootBones];
+			controlPartBits[numRootBones] = skel->partBits.control[numRootBones] & ~ignorePartBits[numRootBones];
+			calcPartBits[numRootBones] = savedDuplicatePartBits[numRootBones] | controlPartBits[numRootBones] | ignorePartBits[numRootBones];
+		}
+
+		for ( numRootBones = 0; numRootBones < 4; ++numRootBones )
+			controlPartBits[numRootBones] |= ~calcPartBits[numRootBones];
+
+		numModels = obj->numModels;
+		Mat = &skel->Mat;
+		parentMat = &skel->Mat;
+		boneIndex = 0;
+		duplicateParts = (const unsigned char *)(savedDuplicatePartBits + 4);
+
+		for ( i = 0; i < numModels; ++i )
+		{
+			parts = obj->models[i]->parts;
+			parent = obj->modelParents[i];
+
+			if ( parent == 0xFF )
+			{
+				numRootBones = parts->numRootBones;
+
+				while ( numRootBones )
+				{
+					boneBit = 1 << (boneIndex & 0x1F);
+
+					if ( (controlPartBits[boneIndex >> 5] & boneBit) != 0 )
+					{
+						DObjCalcTransWeight(parentMat);
+					}
+					else if ( boneIndex == *duplicateParts - 1 )
+					{
+						duplicateParts += 2;
+
+						if ( (ignorePartBits[boneIndex >> 5] & boneBit) == 0 )
+						{
+							quat = Mat[*(duplicateParts - 1) - 1].quat;
+
+							parentMat->quat[0] = quat[0];
+							parentMat->quat[1] = quat[1];
+							parentMat->quat[2] = quat[2];
+							parentMat->quat[3] = quat[3];
+							parentMat->trans[0] = quat[4];
+							parentMat->trans[1] = quat[5];
+							parentMat->trans[2] = quat[6];
+							parentMat->transWeight = quat[7];
+						}
+					}
+
+					--numRootBones;
+					++parentMat;
+					++boneIndex;
+				}
+			}
+			else
+			{
+				childMat = &Mat[parent];
+				numRootBones = parts->numRootBones;
+
+				while ( numRootBones )
+				{
+					boneBit = 1 << (boneIndex & 0x1F);
+
+					if ( (controlPartBits[boneIndex >> 5] & boneBit) != 0 )
+					{
+						if ( (boneBit & calcPartBits[boneIndex >> 5]) != 0 )
+							QuatMultiplyEquals(childMat->quat, parentMat->quat);
+						else
+							QuatMultiplyReverseEquals(parentMat->quat, childMat->quat);
+
+						DObjCalcTransWeight(parentMat);
+						MatrixTransformVectorQuatTransEquals(parentMat->trans, childMat);
+					}
+
+					--numRootBones;
+					++parentMat;
+					++boneIndex;
+				}
+			}
+
+			quats = parts->quats;
+			trans = parts->trans;
+			parentList = (byte *)(parts->hierarchy + 1);
+			numRootBones = parts->numBones - parts->numRootBones;
+
+			while ( numRootBones )
+			{
+				boneIndexHigh = boneIndex >> 5;
+				boneBit = 1 << (boneIndex & 0x1F);
+
+				if ( (controlPartBits[boneIndex >> 5] & boneBit) != 0 )
+				{
+					if ( (boneBit & calcPartBits[boneIndexHigh]) != 0 )
+						QuatMultiplyEquals(parentMat[-*parentList].quat, parentMat->quat);
+					else
+						QuatMultiplyReverseEquals(parentMat->quat, parentMat[-*parentList].quat);
+
+					DObjCalcTransWeight(parentMat);
+					VectorAdd(parentMat->trans, trans, parentMat->trans);
+					MatrixTransformVectorQuatTransEquals(parentMat->trans, &parentMat[-*parentList]);
+				}
+				else if ( boneIndex == *duplicateParts - 1 )
+				{
+					duplicateParts += 2;
+
+					if ( (ignorePartBits[boneIndexHigh] & boneBit) == 0 )
+					{
+						quat = Mat[*(duplicateParts - 1) - 1].quat;
+
+						parentMat->quat[0] = quat[0];
+						parentMat->quat[1] = quat[1];
+						parentMat->quat[2] = quat[2];
+						parentMat->quat[3] = quat[3];
+						parentMat->trans[0] = quat[4];
+						parentMat->trans[1] = quat[5];
+						parentMat->trans[2] = quat[6];
+						parentMat->transWeight = quat[7];
+					}
+				}
+
+				--numRootBones;
+				++parentMat;
+				quats += 4;
+				trans += 3;
+				++parentList;
+				++boneIndex;
+			}
+		}
+	}
+}
+
 XAnimTree_s* DObjGetTree(const DObj_s *obj)
 {
 	return obj->tree;

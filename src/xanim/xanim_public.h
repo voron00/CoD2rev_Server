@@ -454,7 +454,7 @@ void QDECL DObjCalcAnim(const DObj_s *obj, int *partBits);
 
 DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
 void QDECL DObjCreateDuplicateParts(DObj_s *obj);
-void QDECL DObjCalcSkel(const DObj_s *obj, int *partBits);
+void QDECL DObjCalcSkel(DObj_s *obj, int *partBits);
 void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, char *priorityMap, DObjTrace_s *trace);
 
 void QDECL XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *rot, float *trans, float startTime, float endTime);
