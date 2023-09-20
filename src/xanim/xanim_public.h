@@ -73,7 +73,7 @@ union XAnimPartQuatFrames
 struct XAnimPartQuatDataFrames
 {
 	XAnimPartQuatFrames u;
-	uint16_t indices[1];
+	XAnimDynamicIndices indices;
 };
 
 union XAnimPartQuatData
@@ -98,7 +98,7 @@ struct XAnimPart
 struct XAnimDeltaPartTransFrames
 {
 	float (*frames)[3];
-	uint16_t indices[1];
+	XAnimDynamicIndices indices;
 };
 
 union XAnimDeltaPartTransData
@@ -116,7 +116,7 @@ struct XAnimDeltaPartTrans
 struct XAnimDeltaPartQuatDataFrames
 {
 	int16_t (*frames)[2];
-	uint16_t indices[1];
+	XAnimDynamicIndices indices;
 };
 
 union XAnimDeltaPartQuatData
@@ -141,6 +141,14 @@ struct XAnimNotifyInfo
 {
 	unsigned short name;
 	float time;
+};
+
+struct XAnimTime
+{
+	float time;
+	int frameCount;
+	float frameFrac;
+	int frameIndex;
 };
 
 typedef struct XAnimParts_s

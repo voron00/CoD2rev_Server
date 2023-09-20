@@ -230,7 +230,7 @@ bool XanimIsComplete(XAnim_s *anim, int index)
 void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 {
 	float deltaTime;
-	const char *format;
+	const char *color;
 	const char *AnimDebugName;
 	float goalTime;
 	XAnimInfo *anim;
@@ -256,13 +256,13 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 		if ( anim->state.goalWeight <= anim->state.weight )
 		{
 			if ( anim->state.weight <= anim->state.goalWeight )
-				format = "";
+				color = "";
 			else
-				format = "^1";
+				color = "^1";
 		}
 		else
 		{
-			format = "^4";
+			color = "^4";
 		}
 
 		if ( numAnims )
@@ -273,7 +273,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 				{
 					Com_Printf(
 					    "%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, '%s'\n",
-					    format,
+					    color,
 					    AnimDebugName,
 					    anim->state.weight,
 					    anim->state.goalWeight,
@@ -285,7 +285,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 				{
 					Com_Printf(
 					    "%s%s: (weight) %.2f -> %.2f, '%s'\n",
-					    format,
+					    color,
 					    AnimDebugName,
 					    anim->state.weight,
 					    anim->state.goalWeight,
@@ -296,7 +296,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 			{
 				Com_Printf(
 				    "%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f\n",
-				    format,
+				    color,
 				    AnimDebugName,
 				    anim->state.weight,
 				    anim->state.goalWeight,
@@ -305,7 +305,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 			}
 			else
 			{
-				Com_Printf("%s%s: (weight) %.2f -> %.2f\n", format, AnimDebugName, anim->state.weight, anim->state.goalWeight);
+				Com_Printf("%s%s: (weight) %.2f -> %.2f\n", color, AnimDebugName, anim->state.weight, anim->state.goalWeight);
 			}
 
 			for ( j = 0; j < numAnims; ++j )
@@ -327,7 +327,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 			{
 				Com_Printf(
 				    "%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, (realtimedelta) %.2f, '%s'\n",
-				    format,
+				    color,
 				    AnimDebugName,
 				    anim->state.weight,
 				    anim->state.goalWeight,
@@ -340,7 +340,7 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 			{
 				Com_Printf(
 				    "%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, (realtimedelta) %.2f\n",
-				    format,
+				    color,
 				    AnimDebugName,
 				    anim->state.weight,
 				    anim->state.goalWeight,
