@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-char riflePriorityMap[] =
+unsigned char riflePriorityMap[] =
 {
 	1,
 	9,
@@ -24,7 +24,7 @@ char riflePriorityMap[] =
 	0,
 };
 
-char bulletPriorityMap[] =
+unsigned char bulletPriorityMap[] =
 {
 	1,
 	3,

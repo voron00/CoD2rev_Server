@@ -205,7 +205,7 @@ int G_TraceCapsuleComplete(const float *start, const float *mins, const float *m
 	return SV_TracePassed(start, mins, maxs, end, passEntityNum, 1023, contentmask, 0, 0);
 }
 
-void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap)
+void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap)
 {
 	SV_Trace(results, start, vec3_origin, vec3_origin, end, passentitynum, contentmask, 1, priorityMap, 1);
 }
@@ -220,7 +220,7 @@ void G_SightTrace(int *hitNum, const float *start, const float *end, int passEnt
 	SV_SightTrace(hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, 1023, contentmask);
 }
 
-gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap, float *forwardAngles)
+gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap, float *forwardAngles)
 {
 #ifndef DEDICATED
 	float dist;

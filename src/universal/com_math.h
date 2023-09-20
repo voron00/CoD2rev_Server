@@ -136,6 +136,30 @@ inline int I_min(int x, int y)
 
 /*
 ==============
+sub_80B9D06
+==============
+*/
+inline float sub_80B9D06(float x, float y, float z)
+{
+	if ( x < 0.0 )
+	{
+		return z;
+	}
+	return y;
+}
+
+/*
+==============
+sub_80B9A48
+==============
+*/
+inline float sub_80B9A48(float x)
+{
+	return sub_80B9D06(x, 1.0, -1.0);
+}
+
+/*
+==============
 I_rsqrt
 ==============
 */

@@ -132,23 +132,25 @@ void Hunk_AddData(unsigned char type, void *data, void *(*alloc)(int))
 	fileData->data = data;
 	fileData->type = type;
 	fileData->next = com_hunkData;
+
 	com_hunkData = fileData;
 }
 
 const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*alloc)(int))
 {
-	unsigned int length;
+	unsigned int size;
 	fileData_s *fileData;
 	int hash;
 
 	hash = FS_HashFileName(name, FILEDATA_HASH_SIZE);
-	length = I_strlen((char *)name) + sizeof(fileData_t);
-	fileData = (fileData_s *)alloc(length);
+	size = I_strlen(name) + sizeof(fileData_t);
+	fileData = (fileData_s *)alloc(size);
 	fileData->data = data;
 	fileData->type = type;
 	strcpy(fileData->name, name);
 	fileData->next = com_fileDataHashTable[hash];
 	com_fileDataHashTable[hash] = fileData;
+
 	return fileData->name;
 }
 

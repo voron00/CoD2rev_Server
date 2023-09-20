@@ -770,7 +770,7 @@ extern dvar_t *g_friendlyNameDist;
 extern dvar_t *g_friendlyfireDist;
 void Player_UpdateLookAtEntity(gentity_s *ent)
 {
-	char *priorityMap;
+	unsigned char *priorityMap;
 	vec3_t vPos;
 	vec3_t vForward;
 	vec3_t vEnd;

@@ -862,8 +862,8 @@ struct entityHandler_t
 
 extern entityHandler_t entityHandlers[];
 
-extern char riflePriorityMap[];
-extern char bulletPriorityMap[];
+extern unsigned char riflePriorityMap[];
+extern unsigned char bulletPriorityMap[];
 
 typedef enum
 {
@@ -1382,10 +1382,10 @@ void G_SetClientArchiveTime(int clindex, int time);
 
 void G_TraceCapsule(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask);
 int G_TraceCapsuleComplete(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask);
-void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap);
+void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap);
 int G_LocationalTracePassed(const float *start, const float *end, int passEntityNum, int contentmask);
 void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask);
-gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, char *priorityMap, float *forwardAngles);
+gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap, float *forwardAngles);
 void G_Trigger(gentity_s *self, gentity_s *other);
 void Player_UpdateLookAtEntity(gentity_s *ent);
 void Player_UpdateCursorHints(gentity_s *ent);

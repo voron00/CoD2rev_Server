@@ -11,7 +11,7 @@ void XModelCalcBasePose(XModelParts_s *modelParts)
 	int numRootBones;
 	float vLenSq;
 
-	parentList = (unsigned char *)(modelParts->hierarchy + 1);
+	parentList = modelParts->hierarchy->parentList;
 	numBones = modelParts->numBones;
 	quats = modelParts->quats;
 	trans = modelParts->trans;
@@ -76,7 +76,7 @@ XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *
 	short numBones;
 	byte *parentList;
 	unsigned short *boneNames;
-	unsigned short **boneHiearchy;
+	XBoneHierarchy *boneHiearchy;
 	const unsigned char *pos;
 	byte *buf;
 	char filename[64];
@@ -126,10 +126,10 @@ XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *
 		return 0;
 	}
 
-	boneHiearchy = (unsigned short **)Alloc(numChildBones + 7);
+	boneHiearchy = (XBoneHierarchy *)Alloc(numChildBones + 7);
 	model->memUsage += numChildBones + 7;
-	*boneHiearchy = boneNames;
-	parentList = (byte *)(boneHiearchy + 1);
+	boneHiearchy->names = boneNames;
+	parentList = boneHiearchy->parentList;
 	modelParts = (XModelParts_s *)Alloc(32 * numBones + 68);
 	model->memUsage += 32 * numBones + 68;
 	modelParts->hierarchy = boneHiearchy;
@@ -366,7 +366,7 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		dest += nameLen[i];
 	}
 
-	model->parts = XModelPartsLoad(model, model->lodInfo[0].filename, Alloc);
+	model->parts = XModelPartsPrecache(model, model->lodInfo[0].filename, Alloc);
 
 	if ( !model->parts )
 	{

@@ -981,12 +981,14 @@ void XAnimFillInSyncNodes_r(XAnim_s *anims, unsigned int animIndex, bool bLoop)
 		if ( (anims->entries[animIndex].u.animParent.flags & 3) != 0 )
 		{
 			count = 0;
+
 			do
 			{
 				++count;
 				entry = &anims->entries[entry->u.animParent.children];
 			}
 			while ( entry->numAnims );
+
 			Com_Error(ERR_DROP, "duplicate specification of animation sync in '%s', %d nodes above '%s'", anims->debugName, count, XAnimGetAnimDebugName(anims, animIndex));
 		}
 
@@ -1024,7 +1026,7 @@ void XAnimFillInSyncNodes_r(XAnim_s *anims, unsigned int animIndex, bool bLoop)
 
 void XAnimSetupSyncNodes_r(XAnim_s *anims, unsigned int animIndex)
 {
-	int loop;
+	int parFlags;
 	int i;
 	int j;
 	int numAnims;
@@ -1033,17 +1035,17 @@ void XAnimSetupSyncNodes_r(XAnim_s *anims, unsigned int animIndex)
 
 	if ( anims->entries[animIndex].numAnims )
 	{
-		loop = anims->entries[animIndex].u.animParent.flags & 3;
+		parFlags = anims->entries[animIndex].u.animParent.flags & 3;
 
-		if ( loop )
+		if ( parFlags )
 		{
-			if ( loop == 3 )
+			if ( parFlags == 3 )
 				Com_Error(ERR_DROP, "animation cannot be sync looping and sync nonlooping");
 
 			anims->entries[animIndex].u.animParent.flags |= 4u;
 
 			for ( i = 0; i < numAnims; ++i )
-				XAnimFillInSyncNodes_r(anims, i + anims->entries[animIndex].u.animParent.children, loop == 1);
+				XAnimFillInSyncNodes_r(anims, i + anims->entries[animIndex].u.animParent.children, parFlags == 1);
 		}
 		else
 		{

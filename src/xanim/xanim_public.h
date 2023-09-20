@@ -251,11 +251,17 @@ struct XModelConfig
 	byte flags;
 };
 
+struct XBoneHierarchy
+{
+	unsigned short *names;
+	byte parentList[1];
+};
+
 typedef struct XModelParts_s
 {
 	short numBones;
 	short numRootBones;
-	unsigned short **hierarchy;
+	XBoneHierarchy *hierarchy;
 	short *quats;
 	float *trans;
 	byte *partClassification;
@@ -412,7 +418,7 @@ void DObjShutdown();
 void DObjFree(DObj_s *obj);
 void DObjAbort();
 
-int DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *angles);
+void DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
 void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
 void MatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out);
@@ -439,8 +445,8 @@ void QDECL DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
 void QDECL XModelPartsFree(XModelParts *modelParts);
 void QDECL XModelFree(XModel *model);
 XModel* QDECL XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
-XModelParts* QDECL XModelPartsLoad(XModel *model, const char *partName, void *(*Alloc)(int));
-XModelParts* QDECL XModelPartsLoadFile(XModel *model, const char *partName, void *(*Alloc)(int));
+XModelParts* QDECL XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)(int));
+XModelParts* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int));
 XAnimParts* QDECL XAnimLoadFile(const char *name, void *(*Alloc)(int));
 void QDECL XModelGetBounds(const XModel *model, float *mins, float *maxs);
 int QDECL XModelGetBoneIndex(const XModel *model, unsigned int name);
@@ -455,7 +461,7 @@ void QDECL DObjCalcAnim(const DObj_s *obj, int *partBits);
 DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
 void QDECL DObjCreateDuplicateParts(DObj_s *obj);
 void QDECL DObjCalcSkel(DObj_s *obj, int *partBits);
-void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, char *priorityMap, DObjTrace_s *trace);
+void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorityMap, DObjTrace_s *trace);
 
 void QDECL XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *rot, float *trans, float startTime, float endTime);
 
@@ -476,7 +482,9 @@ void DObjInitServerTime(DObj_s *obj, float dtime);
 
 qboolean XModelBad(XModel *model);
 XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
-
+int XModelGetNumLods(const XModel *model);
+int XModelGetFlags(const XModel *model);
+const char* XModelGetName(const XModel *model);
 qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs);
 
 const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
@@ -543,3 +551,8 @@ int XAnim_ReadUnsignedShort(const unsigned char **pos);
 int XAnim_ReadInt(const unsigned char **pos);
 float XAnim_ReadFloat(const unsigned char **pos);
 void ConsumeQuat(const unsigned char **pos, short *out);
+void QuatMultiplyEquals(const float *in, float *inout);
+void QuatMultiplyReverseEquals(float *in, float *inout);
+void MatrixTransformVectorQuatTransEquals(float *inout, DObjAnimMat *in);
+void InvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out);
+void DObjCalcTransWeight(DObjAnimMat *Mat);

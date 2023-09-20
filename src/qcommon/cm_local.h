@@ -340,7 +340,7 @@ struct pointtrace_t
 	int ignoreEntNum;
 	int contentmask;
 	int bLocational;
-	char *priorityMap;
+	unsigned char *priorityMap;
 };
 
 struct moveclip_t

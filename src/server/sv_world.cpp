@@ -121,7 +121,6 @@ void SV_LinkEntity(gentity_s *ent)
 
 		if ( !num_leafs )
 		{
-unlink:
 			CM_UnlinkEntity(svEnt);
 			return;
 		}
@@ -148,7 +147,10 @@ unlink:
 	ent->r.linked = 1;
 
 	if ( !ent->r.contents )
-		goto unlink;
+	{
+		CM_UnlinkEntity(svEnt);
+		return;
+	}
 
 	handle = SV_ClipHandleForEntity(ent);
 	obj = Com_GetServerDObj(ent->s.number);
@@ -492,7 +494,7 @@ int SV_ClipSightToEntity(sightclip_t *clip, svEntity_t *check)
 	}
 }
 
-void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, char *priorityMap, int staticmodels)
+void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, unsigned char *priorityMap, int staticmodels)
 {
 	unsigned short entityNum;
 	moveclip_t clip;

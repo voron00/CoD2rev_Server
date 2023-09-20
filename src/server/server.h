@@ -372,7 +372,7 @@ void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace);
 void SV_PointTraceToEntity(pointtrace_t *clip, svEntity_t *check, trace_t *trace);
 int SV_PointSightTraceToEntity(sightpointtrace_t *clip, svEntity_t *check);
 int SV_ClipSightToEntity(sightclip_t *clip, svEntity_t *check);
-void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, char *priorityMap, int staticmodels);
+void SV_Trace(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask, int locational, unsigned char *priorityMap, int staticmodels);
 int SV_TracePassed(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask, int locational, int staticmodels);
 void SV_SightTrace(int *hitNum,const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum0, int passEntityNum1, int contentmask);
 int SV_PointContents(const vec3_t p, int passEntityNum, int contentmask);
