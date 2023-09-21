@@ -380,6 +380,8 @@ typedef struct
 } XAnimInfo;
 static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
 
+extern XAnimInfo g_xAnimInfo[];
+
 struct XAnimClientNotify
 {
 	const char *name;

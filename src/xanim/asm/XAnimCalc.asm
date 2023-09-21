@@ -6,12 +6,12 @@ extern SL_GetStringOfLen
 
 
 global XAnimCalc
-global XAnimGetRelDelta
-global XAnimCalcDeltaTree
-global XAnim_CalcDeltaForTime
-global XAnimCalcDelta
-global XAnimGetAbsDelta
-global XAnimCalcAbsDelta
+;global XAnimGetRelDelta
+;global XAnimCalcDeltaTree
+;global XAnim_CalcDeltaForTime
+;global XAnimCalcDelta
+;global XAnimGetAbsDelta
+;global XAnimCalcAbsDelta
 
 
 section .text
