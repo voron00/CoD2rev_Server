@@ -23,6 +23,37 @@ void TransformToQuatRefFrame(const float *rot, float *trans)
 	}
 }
 
+float ShortLerpAsVec(short from, short to, float frac)
+{
+	return (float)from + (float)(to - from) * frac;
+}
+
+float FloatLerp(float from, float to, float frac)
+{
+	return (to - from) * frac + from;
+}
+
+void Vec2MadShort2Lerp(const float *from, float scale, const short *to1, const short *to2, float frac, float *out)
+{
+	out[0] = ShortLerpAsVec(to1[0], to2[0], frac) * scale + from[0];
+	out[1] = ShortLerpAsVec(to1[1], to2[1], frac) * scale + from[1];
+}
+
+void Vec4MadShort4Lerp(const float *from, float scale, const short *to1, const short *to2, float frac, float *out)
+{
+	out[0] = ShortLerpAsVec(to1[0], to2[0], frac) * scale + from[0];
+	out[1] = ShortLerpAsVec(to1[1], to2[1], frac) * scale + from[1];
+	out[2] = ShortLerpAsVec(to1[2], to2[2], frac) * scale + from[2];
+	out[3] = ShortLerpAsVec(to1[3], to2[3], frac) * scale + from[3];
+}
+
+void Vec3MadVec3Lerp(const float *from, float scale, const float *to1, const float *to2, float frac, float *out)
+{
+	out[0] = FloatLerp(to1[0], to2[0], frac) * scale + from[0];
+	out[1] = FloatLerp(to1[1], to2[1], frac) * scale + from[1];
+	out[2] = FloatLerp(to1[2], to2[2], frac) * scale + from[2];
+}
+
 void Short2LerpAsVec2(const short *from, const short *to, float frac, float *out)
 {
 	out[0] = (float)from[0] + (float)((float)(to[0] - from[0]) * frac);
@@ -35,11 +66,18 @@ void Short2CopyAsVec2(const short *from, float *to)
 	to[1] = (float)from[1];
 }
 
-void FloatLerp(float *from, float *to, float frac, float *out)
+void Vec2MadShort2(const float *from, float frac, const short *to, float *out)
 {
-	out[0] = (to[0] - from[0]) * frac + from[0];
-	out[1] = (to[1] - from[1]) * frac + from[1];
-	out[2] = (to[2] - from[2]) * frac + from[2];
+	out[0] = (float)to[0] * frac + from[0];
+	out[1] = (float)to[1] * frac + from[1];
+}
+
+void Vec4MadShort4(const float *from, float frac, const short *to, float *out)
+{
+	out[0] = (float)to[0] * frac + from[0];
+	out[1] = (float)to[1] * frac + from[1];
+	out[2] = (float)to[2] * frac + from[2];
+	out[3] = (float)to[3] * frac + from[3];
 }
 
 void XAnim_SetTime(float time, int frameCount, XAnimTime *animTime)
@@ -221,7 +259,7 @@ void XAnim_CalcPosDeltaDuringInternal_unsigned_short_(XAnimDeltaPartTrans *trans
 		    trans->size,
 		    &keyFrameIndex,
 		    &keyFrameLerpFrac);
-		FloatLerp(
+		Vec3Lerp(
 		    trans->u.frames.frames[keyFrameIndex],
 		    trans->u.frames.frames[keyFrameIndex + 1],
 		    keyFrameLerpFrac,
@@ -371,7 +409,7 @@ void XAnim_CalcPosDeltaDuringInternal_unsigned_char_(XAnimDeltaPartTrans *trans,
 		    trans->size,
 		    &keyFrameIndex,
 		    &keyFrameLerpFrac);
-		FloatLerp(
+		Vec3Lerp(
 		    trans->u.frames.frames[keyFrameIndex],
 		    trans->u.frames.frames[keyFrameIndex + 1],
 		    keyFrameLerpFrac,
