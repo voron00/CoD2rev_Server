@@ -219,6 +219,62 @@ const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex)
 	}
 }
 
+unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels)
+{
+	XModelParts_s *childPart;
+	int i;
+	int k;
+	unsigned short *childBoneNames;
+	uint16_t *names;
+	int childNumBones;
+	int boneCount;
+	XAnimParts_s *parts;
+	int m;
+	int boneIndex;
+	int j;
+	int n;
+	XAnimToXModel animToModel;
+
+	parts = animEntry->u.parts;
+	names = parts->names;
+	boneCount = parts->boneCount;
+
+	for ( i = 0; i < 4; ++i )
+		animToModel.partBits[i] = 0;
+
+	for ( j = boneCount - 1; j >= 0; --j )
+		animToModel.boneIndex[j] = 127;
+
+	boneIndex = 0;
+
+	for ( k = 0; k < numModels; ++k )
+	{
+		childPart = model[k]->parts;
+		childBoneNames = childPart->hierarchy->names;
+		childNumBones = childPart->numBones;
+
+		for ( m = 0; m < childNumBones; ++m )
+		{
+			for ( n = boneCount - 1; n >= 0; --n )
+			{
+				if ( childBoneNames[m] == names[n] )
+				{
+					if ( animToModel.boneIndex[n] == 127 )
+					{
+						animToModel.boneIndex[n] = boneIndex;
+						animToModel.partBits[boneIndex >> 5] |= 1 << (boneIndex & 0x1F);
+					}
+					break;
+				}
+			}
+
+			++boneIndex;
+		}
+	}
+
+	return SL_GetStringOfLen((const char *)&animToModel.partBits[0], 0, boneCount + 16);
+}
+
 bool XanimIsComplete(XAnim_s *anim, int index)
 {
 	if ( !anim->entries[index].numAnims || (anim->entries[index].u.animParent.flags & 3) != 0 )

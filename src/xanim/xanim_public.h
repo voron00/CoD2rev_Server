@@ -224,6 +224,12 @@ struct XBoneInfo
 	float radiusSquared;
 };
 
+struct XAnimToXModel
+{
+	int partBits[4];
+	byte boneIndex[128];
+};
+
 struct XModelCollTri_s
 {
 	vec4_t plane;
@@ -481,6 +487,8 @@ void QDECL XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, f
 void QDECL XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
 void QDECL XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float factor);
 void QDECL XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans);
+
+unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels);
 
 #ifdef __cplusplus
 }
