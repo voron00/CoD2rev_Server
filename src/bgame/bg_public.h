@@ -1034,6 +1034,8 @@ void QDECL BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
 void QDECL BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
 
 void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
+float QDECL PM_PermuteRestrictiveClipPlanes(const float *velocity, int planeCount, const float (*planes)[3], int *permutation);
+int QDECL PM_SlideMove(pmove_t *pm, pml_t *pml, int gravity);
 
 #ifdef __cplusplus
 }

@@ -321,41 +321,6 @@ qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm)
 	return pm->xyspeed >= (float)player_footstepsThreshhold->current.decimal;
 }
 
-int QDECL PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel)
-{
-	int bProneOK;
-	playerState_s *ps;
-
-	ps = pm->ps;
-
-	if ( (pm->ps->pm_flags & 1) == 0 )
-		return 1;
-
-	bProneOK = BG_CheckProne(
-	               ps->clientNum,
-	               ps->origin,
-	               ps->maxs[0],
-	               30.0,
-	               ps->proneDirection,
-	               &ps->fTorsoHeight,
-	               &ps->fTorsoPitch,
-	               &ps->fWaistPitch,
-	               1,
-	               1,
-	               0,
-	               pm->handler,
-	               0,
-	               66.0);
-
-	if ( !bProneOK )
-	{
-		VectorCopy(vFallbackOrg, ps->origin);
-		VectorCopy(vFallbackVel, ps->velocity);
-	}
-
-	return bProneOK;
-}
-
 float PM_GetReducedFriction(playerState_s *ps)
 {
 	if ( ps->pm_time > 1800 )
