@@ -2406,3 +2406,82 @@ void BG_GetSpreadForWeapon(const playerState_s *ps, int weaponIndex, float *minS
 		*maxSpread = (weaponDef->hipSpreadMax - weaponDef->hipSpreadDuckedMax) * frac + weaponDef->hipSpreadDuckedMax;
 	}
 }
+
+void BG_CalculateWeaponPosition_Sway(const playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime)
+{
+	float yaw;
+	float timescale;
+	unsigned int weapon;
+	float time;
+	float fWeaponPosFrac;
+	float swayVertScale;
+	float newVert;
+	float swayHorizScale;
+	float newHoriz;
+	float swayYawScale;
+	float newYaw;
+	float swayPitchScale;
+	float newPitch;
+	float swayLerpSpeed;
+	float swayMaxAngle;
+	float horizScale;
+	float vertScale;
+	vec3_t vNewAng;
+	WeaponDef *WeaponDef;
+
+	fWeaponPosFrac = ps->fWeaponPosFrac;
+
+	if ( frametime )
+	{
+		weapon = BG_GetViewmodelWeaponIndex(ps);
+		WeaponDef = BG_GetWeaponDef(weapon);
+		time = (float)frametime * 0.001;
+
+		if ( !BG_IsAimDownSightWeapon(weapon) )
+		{
+			swayMaxAngle = WeaponDef->swayMaxAngle;
+			swayLerpSpeed = WeaponDef->swayLerpSpeed;
+			swayPitchScale = WeaponDef->swayPitchScale;
+			swayYawScale = WeaponDef->swayYawScale;
+			swayHorizScale = WeaponDef->swayHorizScale;
+			swayVertScale = WeaponDef->swayVertScale;
+			goto sway;
+		}
+
+		if ( fWeaponPosFrac <= 0.0 || !WeaponDef->adsOverlayReticle )
+		{
+			swayMaxAngle = (WeaponDef->adsSwayMaxAngle - WeaponDef->swayMaxAngle) * fWeaponPosFrac + WeaponDef->swayMaxAngle;
+			swayLerpSpeed = (WeaponDef->adsSwayLerpSpeed - WeaponDef->swayLerpSpeed) * fWeaponPosFrac
+			                + WeaponDef->swayLerpSpeed;
+			swayPitchScale = (WeaponDef->adsSwayPitchScale - WeaponDef->swayPitchScale) * fWeaponPosFrac
+			                 + WeaponDef->swayPitchScale;
+			swayYawScale = (WeaponDef->adsSwayYawScale - WeaponDef->swayYawScale) * fWeaponPosFrac + WeaponDef->swayYawScale;
+			swayHorizScale = (WeaponDef->adsSwayHorizScale - WeaponDef->swayHorizScale) * fWeaponPosFrac
+			                 + WeaponDef->swayHorizScale;
+			swayVertScale = (WeaponDef->adsSwayVertScale - WeaponDef->swayVertScale) * fWeaponPosFrac
+			                + WeaponDef->swayVertScale;
+sway:
+			newPitch = swayPitchScale * ssSwayScale;
+			newYaw = swayYawScale * ssSwayScale;
+			newHoriz = swayHorizScale * ssSwayScale;
+			newVert = swayVertScale * ssSwayScale;
+			AnglesSubtract(ps->viewangles, swayViewAngles, vNewAng);
+			timescale = 1.0 / (time * 60.0);
+			VectorScale(vNewAng, timescale, vNewAng);
+			vNewAng[0] = I_fclamp(vNewAng[0], -swayMaxAngle, swayMaxAngle);
+			vNewAng[1] = I_fclamp(vNewAng[1], -swayMaxAngle, swayMaxAngle);
+			horizScale = vNewAng[1] * newHoriz;
+			vertScale = vNewAng[0] * newVert;
+			swayOffset[1] = DiffTrack(horizScale, swayOffset[1], swayLerpSpeed, time);
+			swayOffset[2] = DiffTrack(vertScale, swayOffset[2], swayLerpSpeed, time);
+			vNewAng[0] = vNewAng[0] * newPitch;
+			yaw = vNewAng[1] * newYaw;
+			vNewAng[1] = yaw;
+			DiffTrackAngle(vNewAng[0], *swayAngles, swayLerpSpeed, time);
+			*swayAngles = yaw;
+			DiffTrackAngle(vNewAng[1], swayAngles[1], swayLerpSpeed, time);
+			swayAngles[1] = yaw;
+			VectorCopy(ps->viewangles, swayViewAngles);
+		}
+	}
+}

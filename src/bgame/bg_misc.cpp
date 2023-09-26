@@ -837,6 +837,37 @@ int QDECL BG_CheckProne(int passEntityNum, const float *const vPos, float fSize,
 	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
 }
 
+int QDECL BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler)
+{
+	float fraction;
+	float dist;
+	float abs;
+	float testYaw;
+	float delta;
+
+	delta = AngleDelta(newProneYaw, ps->viewangles[1]);
+	abs = fabs(delta) / 240.0;
+	fraction = newProneYaw - (1.0 - abs) * delta;
+	testYaw = AngleNormalize360Accurate(fraction);
+	dist = abs * 45.0 + (1.0 - abs) * 66.0;
+
+	return BG_CheckProne(
+	           ps->clientNum,
+	           ps->origin,
+	           ps->maxs[0],
+	           30.0,
+	           testYaw,
+	           &ps->fTorsoHeight,
+	           &ps->fTorsoPitch,
+	           &ps->fWaistPitch,
+	           1,
+	           ps->groundEntityNum != 1023,
+	           0,
+	           handler,
+	           0,
+	           dist);
+}
+
 void BG_RegisterDvars()
 {
 	player_view_pitch_up = Dvar_RegisterFloat("player_view_pitch_up", 85.0, 0.0, 90.0, 0x1180u);

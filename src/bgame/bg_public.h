@@ -1036,6 +1036,9 @@ void QDECL BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
 void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
 float QDECL PM_PermuteRestrictiveClipPlanes(const float *velocity, int planeCount, const float (*planes)[3], int *permutation);
 int QDECL PM_SlideMove(pmove_t *pm, pml_t *pml, int gravity);
+void QDECL PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int));
+void QDECL Mantle_CapView(playerState_s *ps);
+int QDECL BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler);
 
 #ifdef __cplusplus
 }

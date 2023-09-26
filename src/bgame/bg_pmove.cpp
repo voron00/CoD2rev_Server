@@ -3173,3 +3173,425 @@ void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
 		}
 	}
 }
+
+void QDECL PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
+{
+	float fLeanFrac;
+	float fLean;
+	float fLeanMax;
+	trace_t trace;
+	float leanofs;
+	int leaning;
+	vec3_t tmaxs;
+	vec3_t tmins;
+	vec3_t end;
+	vec3_t start;
+
+	leaning = 0;
+	leanofs = 0.0;
+
+	if ( (cmd->buttons & 0xC0) != 0
+	        && SLOWORD(ps->pm_flags) >= 0
+	        && ps->pm_type <= PM_INTERMISSION
+	        && (ps->groundEntityNum != 1023 || ps->pm_type == PM_NORMAL_LINKED) )
+	{
+		if ( (cmd->buttons & 0x40) != 0 )
+			--leaning;
+
+		if ( SLOBYTE(cmd->buttons) < 0 )
+			++leaning;
+	}
+
+	if ( (ps->eFlags & 0x300) != 0 )
+		leaning = 0;
+
+	if ( PM_GetEffectiveStance(ps) == 1 )
+		fLeanMax = 0.25;
+	else
+		fLeanMax = 0.5;
+
+	leanofs = ps->leanf;
+
+	if ( leaning )
+	{
+		if ( leaning <= 0 )
+		{
+			if ( leanofs > -fLeanMax )
+				leanofs = leanofs - msec / 350.0 * fLeanMax;
+
+			if ( -fLeanMax > (float)leanofs )
+				leanofs = -fLeanMax;
+		}
+		else
+		{
+			if ( fLeanMax > (float)leanofs )
+				leanofs = msec / 350.0 * fLeanMax + leanofs;
+
+			if ( leanofs > (float)fLeanMax )
+				leanofs = fLeanMax;
+		}
+	}
+	else if ( leanofs <= 0.0 )
+	{
+		if ( leanofs < 0.0 )
+		{
+			leanofs = msec / 280.0 * fLeanMax + leanofs;
+
+			if ( leanofs > 0.0 )
+				leanofs = 0.0;
+		}
+	}
+	else
+	{
+		leanofs = leanofs - msec / 280.0 * fLeanMax;
+
+		if ( leanofs < 0.0 )
+			leanofs = 0.0;
+	}
+
+	ps->leanf = leanofs;
+
+	if ( ps->leanf != 0.0 )
+	{
+		fLeanFrac = ps->leanf < 0.0 ? -1.0 : 1.0;
+		VectorCopy(ps->origin, start);
+		start[2] = start[2] + ps->viewHeightCurrent;
+		VectorCopy(start, end);
+		AddLeanToPosition(end, ps->viewangles[1], fLeanFrac, 16.0, 20.0);
+		VectorSet(tmins, -8.0, -8.0, -8.0);
+		VectorSet(tmaxs, 8.0, 8.0, 8.0);
+		capsuleTrace(&trace, start, tmins, tmaxs, end, ps->clientNum, 42008593);
+		fLean = UnGetLeanFraction(trace.fraction);
+
+		if ( fabs(ps->leanf) > fLean )
+		{
+			if ( ps->leanf < 0.0 )
+				ps->leanf = fLean * -1.0;
+			else
+				ps->leanf = fLean * 1.0;
+		}
+	}
+}
+
+void PM_UpdateViewAngles(playerState_s *ps, float msec, usercmd_s *cmd, unsigned char handler)
+{
+	float deltaAbs;
+	int proneGood;
+	float v6;
+	float clampBase;
+	float cap;
+	float deltaNorm;
+	float v10;
+	float v11;
+	float v12;
+	float v13;
+	float v14;
+	int pitch_down;
+	int pitch_up;
+	float yaw;
+	float v18;
+	float v19;
+	float v20;
+	int proneBlocked;
+	float newViewYaw;
+	float oldViewYaw;
+	int valid;
+	int bRetry;
+	int bProneOK;
+	int proneOk;
+	vec_t proneDir;
+	float newProneYaw;
+	float delta2;
+	float newDelta;
+	float deltaYaw;
+	float delta;
+	float deltaa;
+	float deltab;
+	float deltac;
+	float deltad;
+	float deltae;
+	float deltaf;
+	int i;
+	int j;
+	short angle;
+
+	if ( ps->pm_type != PM_INTERMISSION )
+	{
+		if ( ps->pm_type > PM_INTERMISSION )
+		{
+			if ( ps->stats[1] == 999 )
+				ps->stats[1] = (int)((float)(short)(LOWORD(ps->delta_angles[1]) + LOWORD(cmd->angles[1])) * 0.0054931641);
+LABEL_105:
+			PM_UpdateLean(ps, msec, cmd, pmoveHandlers[handler].trace);
+			return;
+		}
+		oldViewYaw = ps->viewangles[1];
+		pitch_up = (unsigned short)(int)(player_view_pitch_up->current.decimal * 182.04445);
+		pitch_down = (unsigned short)(int)(player_view_pitch_down->current.decimal * 182.04445);
+		for ( i = 0; i <= 2; ++i )
+		{
+			angle = LOWORD(ps->delta_angles[i]) + LOWORD(cmd->angles[i]);
+			if ( !i )
+			{
+				if ( angle <= pitch_down )
+				{
+					if ( angle < -pitch_up )
+					{
+						ps->delta_angles[0] = -pitch_up - cmd->angles[0];
+						angle = -(short)pitch_up;
+					}
+				}
+				else
+				{
+					ps->delta_angles[0] = pitch_down - cmd->angles[0];
+					angle = pitch_down;
+				}
+			}
+			ps->viewangles[i] = (float)angle * 0.0054931641;
+		}
+		newViewYaw = ps->viewangles[1];
+		if ( (ps->eFlags & 0x300) != 0 )
+		{
+			for ( j = 0; j <= 1; ++j )
+			{
+				delta2 = AngleDelta(ps->viewAngleClampBase[j], ps->viewangles[j]);
+				if ( delta2 > (float)ps->viewAngleClampRange[j] || -ps->viewAngleClampRange[j] > (float)delta2 )
+				{
+					if ( delta2 <= (float)ps->viewAngleClampRange[j] )
+						newDelta = delta2 + ps->viewAngleClampRange[j];
+					else
+						newDelta = delta2 - ps->viewAngleClampRange[j];
+					ps->delta_angles[j] += (unsigned short)(int)(newDelta * 182.04445);
+					if ( newDelta <= 0.0 )
+						clampBase = ps->viewAngleClampBase[j] + ps->viewAngleClampRange[j];
+					else
+						clampBase = ps->viewAngleClampBase[j] - ps->viewAngleClampRange[j];
+					ps->viewangles[j] = AngleNormalize360Accurate(clampBase);
+				}
+			}
+		}
+		else
+		{
+			if ( (ps->pm_flags & 4) != 0 )
+			{
+				Mantle_CapView(ps);
+				return;
+			}
+			if ( (ps->pm_flags & 0x20) != 0 && ps->groundEntityNum == 1023 && bg_ladder_yawcap->current.decimal != 0.0 )
+			{
+				yaw = vectoyaw(ps->vLadderVec) + 180.0;
+				deltaYaw = AngleDelta(yaw, ps->viewangles[1]);
+				if ( deltaYaw > (float)bg_ladder_yawcap->current.decimal
+				        || -bg_ladder_yawcap->current.decimal > (float)deltaYaw )
+				{
+					if ( deltaYaw <= (float)bg_ladder_yawcap->current.decimal )
+						delta = deltaYaw + bg_ladder_yawcap->current.decimal;
+					else
+						delta = deltaYaw - bg_ladder_yawcap->current.decimal;
+					ps->delta_angles[1] += (unsigned short)(int)(delta * 182.04445);
+					if ( delta <= 0.0 )
+						cap = yaw + bg_ladder_yawcap->current.decimal;
+					else
+						cap = yaw - bg_ladder_yawcap->current.decimal;
+					ps->viewangles[1] = AngleNormalize360Accurate(cap);
+				}
+			}
+			if ( (ps->pm_flags & 1) != 0 && (ps->eFlags & 0x300) == 0 )
+			{
+				proneBlocked = 0;
+				deltaa = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+				if ( deltaa > bg_prone_yawcap->current.decimal - 5.0
+				        || -(bg_prone_yawcap->current.decimal - 5.0) > deltaa
+				        || (cmd->forwardmove || cmd->rightmove) && deltaa != 0.0 )
+				{
+					if ( msec * 55.0 * 0.001 <= fabs(deltaa) )
+					{
+						if ( deltaa <= 0.0 )
+							proneDir = msec * 55.0 * 0.001 + ps->proneDirection;
+						else
+							proneDir = ps->proneDirection - msec * 55.0 * 0.001;
+					}
+					else
+					{
+						proneDir = ps->viewangles[1];
+					}
+					valid = 1;
+					while ( !BG_CheckProneTurned(ps, proneDir, handler) )
+					{
+						if ( !valid )
+							goto LABEL_67;
+						deltab = AngleDelta(ps->proneDirection, proneDir);
+						deltaAbs = fabs(deltab);
+						valid = deltaAbs > 1.0;
+						if ( deltaAbs <= 1.0 )
+						{
+							proneBlocked = 1;
+						}
+						else if ( deltab <= 0.0 )
+						{
+							deltab = -1.0;
+						}
+						else
+						{
+							deltab = 1.0;
+						}
+						deltaNorm = proneDir + deltab;
+						proneDir = AngleNormalize360Accurate(deltaNorm);
+					}
+					bProneOK = BG_CheckProne(
+					               ps->clientNum,
+					               ps->origin,
+					               ps->maxs[0],
+					               30.0,
+					               ps->viewangles[1],
+					               0,
+					               0,
+					               0,
+					               1,
+					               ps->groundEntityNum != 1023,
+					               0,
+					               handler,
+					               0,
+					               45.0);
+					if ( bProneOK )
+					{
+						bProneOK = BG_CheckProne(
+						               ps->clientNum,
+						               ps->origin,
+						               ps->maxs[0],
+						               30.0,
+						               proneDir,
+						               0,
+						               0,
+						               0,
+						               1,
+						               ps->groundEntityNum != 1023,
+						               0,
+						               handler,
+						               0,
+						               45.0);
+						if ( bProneOK )
+							ps->proneDirection = proneDir;
+					}
+					if ( !bProneOK )
+						proneBlocked = 1;
+				}
+LABEL_67:
+				deltac = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+				if ( deltac != 0.0 )
+				{
+					newProneYaw = ps->proneDirection;
+					bRetry = 1;
+LABEL_69:
+					for ( proneGood = BG_CheckProne(
+					                      ps->clientNum,
+					                      ps->origin,
+					                      ps->maxs[0],
+					                      30.0,
+					                      newProneYaw,
+					                      0,
+					                      0,
+					                      0,
+					                      1,
+					                      ps->groundEntityNum != 1023,
+					                      0,
+					                      handler,
+					                      0,
+					                      45.0);
+					        ;
+					        proneGood = BG_CheckProne(
+					                        ps->clientNum,
+					                        ps->origin,
+					                        ps->maxs[0],
+					                        30.0,
+					                        newProneYaw,
+					                        0,
+					                        0,
+					                        0,
+					                        1,
+					                        ps->groundEntityNum != 1023,
+					                        0,
+					                        handler,
+					                        0,
+					                        45.0) )
+					{
+						proneOk = proneGood;
+						if ( proneGood )
+						{
+							if ( BG_CheckProneTurned(ps, newProneYaw, handler) )
+								break;
+						}
+						if ( !bRetry )
+							goto LABEL_80;
+						v6 = fabs(deltac);
+						bRetry = v6 > 1.0;
+						if ( v6 > 1.0 )
+						{
+							if ( deltac <= 0.0 )
+								deltac = -1.0;
+							else
+								deltac = 1.0;
+						}
+						proneBlocked = 1;
+						ps->delta_angles[1] += (unsigned short)(int)(deltac * 182.04445);
+						v10 = ps->viewangles[1] + deltac;
+						ps->viewangles[1] = AngleNormalize360Accurate(v10);
+						deltac = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+						if ( proneOk )
+							goto LABEL_69;
+						v11 = newProneYaw + deltac;
+						newProneYaw = AngleNormalize360Accurate(v11);
+					}
+					ps->proneDirection = newProneYaw;
+				}
+LABEL_80:
+				if ( deltac > (float)bg_prone_yawcap->current.decimal
+				        || -bg_prone_yawcap->current.decimal > (float)deltac )
+				{
+					if ( deltac <= (float)bg_prone_yawcap->current.decimal )
+						deltad = deltac + bg_prone_yawcap->current.decimal;
+					else
+						deltad = deltac - bg_prone_yawcap->current.decimal;
+					ps->delta_angles[1] += (unsigned short)(int)(deltad * 182.04445);
+					if ( deltad <= 0.0 )
+						v12 = ps->proneDirection + bg_prone_yawcap->current.decimal;
+					else
+						v12 = ps->proneDirection - bg_prone_yawcap->current.decimal;
+					ps->viewangles[1] = AngleNormalize360Accurate(v12);
+				}
+				if ( proneBlocked )
+				{
+					ps->pm_flags |= 0x10000u;
+					v19 = AngleDelta(oldViewYaw, ps->viewangles[1]);
+					if ( fabs(v19) <= 1.0 )
+					{
+						v18 = AngleDelta(newViewYaw, ps->viewangles[1]);
+						if ( v19 * v18 > 0.0 )
+						{
+							v20 = v19 * 0.98000002;
+							v13 = ps->viewangles[1] + v20;
+							ps->viewangles[1] = AngleNormalize360Accurate(v13);
+							ps->delta_angles[1] += (unsigned short)(int)(v20 * 182.04445);
+						}
+					}
+				}
+				deltae = AngleDelta(ps->proneTorsoPitch, ps->viewangles[0]);
+				if ( deltae > 45.0 || deltae < -45.0 )
+				{
+					if ( deltae <= 45.0 )
+						deltaf = deltae + 45.0;
+					else
+						deltaf = deltae - 45.0;
+					ps->delta_angles[0] += (unsigned short)(int)(deltaf * 182.04445);
+					if ( deltaf <= 0.0 )
+						v14 = ps->proneTorsoPitch + 45.0;
+					else
+						v14 = ps->proneTorsoPitch - 45.0;
+					ps->viewangles[0] = AngleNormalize180Accurate(v14);
+				}
+			}
+			if ( ps->pm_type != PM_UFO && ps->pm_type != PM_NOCLIP && ps->pm_type != PM_SPECTATOR )
+				goto LABEL_105;
+		}
+	}
+}

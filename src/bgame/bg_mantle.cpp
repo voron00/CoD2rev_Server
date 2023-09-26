@@ -109,6 +109,34 @@ int Mantle_GetAnim(MantleState *mstate)
 		return s_mantleTrans[mstate->transIndex].upAnimIndex;
 }
 
+void QDECL Mantle_CapView(playerState_s *ps)
+{
+	float value;
+	float delta;
+
+	if ( mantle_enable->current.boolean )
+	{
+		delta = AngleDelta(ps->mantleState.yaw, ps->viewangles[1]);
+
+		if ( delta < -mantle_view_yawcap->current.decimal || mantle_view_yawcap->current.decimal < (float)delta )
+		{
+			while ( -mantle_view_yawcap->current.decimal > (float)delta )
+				delta = delta + mantle_view_yawcap->current.decimal;
+
+			while ( delta > (float)mantle_view_yawcap->current.decimal )
+				delta = delta - mantle_view_yawcap->current.decimal;
+
+			value = mantle_view_yawcap->current.decimal;
+
+			if ( delta > 0.0 )
+				value = value * -1.0;
+
+			ps->delta_angles[1] += ANGLE2SHORT(delta);
+			ps->viewangles[1] = AngleNormalize360Accurate(ps->mantleState.yaw + value);
+		}
+	}
+}
+
 void Mantle_CalcEndPos(pmove_t *pm, MantleResults *mresults)
 {
 	playerState_s *ps;
