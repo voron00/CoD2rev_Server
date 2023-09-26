@@ -18,6 +18,10 @@
 
 #define FILEDATA_HASH_SIZE 1024
 
+#define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
+#define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
+#define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
+
 typedef struct
 {
 	int permanent;

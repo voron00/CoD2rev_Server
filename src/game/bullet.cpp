@@ -111,9 +111,9 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 		dflags |= DFLAGS_NO_ARMOR;
 
 	if ( wp->weapDef->rifleBullet )
-		G_LocationalTrace(&trace, start, end, inflictor->s.number, MASK_SHOT, riflePriorityMap);
+		G_LocationalTrace(&trace, start, end, inflictor->s.number, 41953329, riflePriorityMap);
 	else
-		G_LocationalTrace(&trace, start, end, inflictor->s.number, MASK_SHOT, bulletPriorityMap);
+		G_LocationalTrace(&trace, start, end, inflictor->s.number, 41953329, bulletPriorityMap);
 
 	Vec3Lerp(start, end, trace.fraction, origin);
 	G_CheckHitTriggerDamage(attacker, start, origin, wp->weapDef->damage, meansOfDeath);

@@ -103,7 +103,7 @@ void PlayerCmd_giveWeapon(scr_entref_t entRef)
 	if ( BG_DoesWeaponNeedSlot(iWeaponIndex) && !BG_GetEmptySlotForWeapon(&pSelf->client->ps, iWeaponIndex) )
 	{
 		Scr_ParamError(0, va("Cannot give %s weapon %s without having an empty weapon slot - player currently has a %s and a %s\n",
-		                     pSelf->client->sess.state.name, weaponDef->szDisplayName, BG_GetWeaponDef(pSelf->client->ps.weaponslots[1])->szDisplayName, BG_GetWeaponDef(pSelf->client->ps.weaponslots[2])->szDisplayName));
+		                     pSelf->client->sess.state.name, weaponDef->displayName, BG_GetWeaponDef(pSelf->client->ps.weaponslots[1])->displayName, BG_GetWeaponDef(pSelf->client->ps.weaponslots[2])->displayName));
 	}
 
 	if ( G_GivePlayerWeapon(&pSelf->client->ps, iWeaponIndex) )

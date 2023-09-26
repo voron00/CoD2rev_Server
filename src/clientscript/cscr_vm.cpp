@@ -1529,7 +1529,6 @@ unsigned int Scr_GetLocalVar(const char *pos)
 	return scrVmPub.localVars[-*(pos)];
 }
 
-extern dvar_t *sv_fps;
 unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned int localVarCount, VariableValue *top, VariableValue *startTop)
 {
 	int gOpcode;
@@ -2829,20 +2828,20 @@ unsigned int VM_ExecuteInternal(const char *pos, unsigned int localId, unsigned 
 			scrVarPub.error_index = -1;
 			Scr_Error(va("%s is not an entity", var_typename[Scr_GetObjectType(objectId)]));
 
-		case OP_wait: // VoroN: use sv_fps here because why not??
+		case OP_wait: // VoroN: use sv_fps here??
 			if ( top->type == VAR_FLOAT )
 			{
 				if ( top->u.floatValue < 0.0 )
 					Scr_Error("negative wait is not allowed");
-				//waitTime = Q_rint(top->u.floatValue * 20.0);
-				waitTime = Q_rint(top->u.floatValue * float(sv_fps->current.integer));
+				waitTime = Q_rint(top->u.floatValue * 20.0);
+				//waitTime = Q_rint(top->u.floatValue * float(sv_fps->current.integer));
 				if ( !waitTime )
 					waitTime = top->u.floatValue != 0.0;
 			}
 			else if ( top->type == VAR_INTEGER )
 			{
-				//waitTime = 20 * top->u.intValue;
-				waitTime = sv_fps->current.integer * top->u.intValue;
+				waitTime = 20 * top->u.intValue;
+				//waitTime = sv_fps->current.integer * top->u.intValue;
 			}
 			else
 			{

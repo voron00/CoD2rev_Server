@@ -293,7 +293,7 @@ void BG_FillInWeaponItems(int weapIndex)
 	item->world_model = weaponDef->worldModel;
 	item->view_model = 0;
 	item->icon = weaponDef->hudIcon;
-	item->pickup_name = weaponDef->szDisplayName;
+	item->pickup_name = weaponDef->displayName;
 	item->quantity = weaponDef->startAmmo;
 	item->giType = IT_WEAPON;
 	item->giTag = weapIndex;

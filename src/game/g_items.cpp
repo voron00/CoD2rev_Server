@@ -674,12 +674,12 @@ qboolean Pickup_Ammo(gentity_s *ent, gentity_s *other)
 	if ( BG_WeaponIsClipOnly(item->giTag) )
 	{
 		weaponDef = BG_GetWeaponDef(item->giTag);
-		pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
+		pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->displayName);
 	}
 	else
 	{
 		weaponDef = BG_GetWeaponDef(item->giTag);
-		pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
+		pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->displayName);
 	}
 
 	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupMsg);
@@ -961,9 +961,9 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 		if ( newAmmoCount )
 		{
 			if ( BG_WeaponIsClipOnly(weaponIndex) )
-				pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
+				pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->displayName);
 			else
-				pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->szDisplayName);
+				pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->displayName);
 			SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupMsg);
 		}
 		if ( newAmmoCount != oldAmmoCount )
@@ -1086,7 +1086,7 @@ void Touch_Item(gentity_s *ent, gentity_s *other, int touched)
 					if ( COM_BitTest(other->client->ps.weapons, item->giTag) )
 					{
 						weaponDef = BG_GetWeaponDef(item->giTag);
-						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weaponDef->szDisplayName));
+						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weaponDef->displayName));
 					}
 					else if ( (unsigned int)(BG_GetWeaponDef(item->giTag)->weaponSlot - 1) <= 1 )
 					{
