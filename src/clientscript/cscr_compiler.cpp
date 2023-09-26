@@ -61,7 +61,7 @@ typedef struct scrCompileGlob_s
 	PrecacheEntry *precachescriptListHead;
 	VariableCompileValue value_start[32];
 } scrCompileGlob_t;
-static_assert((sizeof(scrCompileGlob_t) == 0x1DC), "ERROR: scrCompileGlob_t size is invalid!");
+// static_assert((sizeof(scrCompileGlob_t) == 0x1DC), "ERROR: scrCompileGlob_t size is invalid!");
 
 scrCompileGlob_t scrCompileGlob;
 
@@ -122,7 +122,7 @@ void CompileTransferRefToString(unsigned int stringValue, unsigned char user)
 void EmitCodepos(const char *pos)
 {
 	scrCompileGlob.codePos = TempMallocAlign(4);
-	*(uint32_t *)scrCompileGlob.codePos = (uint32_t)pos;
+	*(uint32_t *)scrCompileGlob.codePos = (intptr_t)pos;
 }
 
 void EmitShort(short value)
@@ -2195,7 +2195,7 @@ void EmitObject(sval_u expr, sval_u sourcePos)
 
 	classnum = (const char *)Scr_GetClassnumForCharId(*s);
 
-	if ( (int)classnum < 0 || (entnum = (const char *)atoi(s + 1)) == 0 && s[1] != 48 )
+	if ( (intptr_t)classnum < 0 || (entnum = (const char *)atoi(s + 1)) == 0 && s[1] != 48 )
 	{
 error:
 		CompileError(sourcePos.sourcePosValue, "bad expression");
@@ -2537,7 +2537,7 @@ void EmitCaseStatementInfo(unsigned int name, sval_u sourcePos)
 	{
 		statement = (sval_u *)Hunk_AllocateTempMemoryHighInternal(16);
 		statement->idValue = name;
-		statement[1].idValue = (unsigned int)TempMalloc(0);
+		statement[1].idValue = (intptr_t)TempMalloc(0);
 		statement[2].sourcePosValue = sourcePos.sourcePosValue;
 		statement[3].codePosValue = (const char *)scrCompileGlob.currentCaseStatement;
 		scrCompileGlob.currentCaseStatement = (CaseStatementInfo *)statement;
@@ -3729,7 +3729,7 @@ void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *blo
 		func = Scr_GetFunction(&pName, &type);
 		funcId = GetNewVariable(scrCompilePub.builtinFunc, index);
 		value.type = Scr_GetCacheType(type);
-		value.u.intValue = (int)func;
+		value.u.intValue = (intptr_t)func;
 		SetVariableValue(funcId, &value);
 	}
 
@@ -3749,7 +3749,7 @@ void EmitCall(sval_u func_name, sval_u params, bool bStatement, scr_block_s *blo
 			{
 				Scr_CompileRemoveRefToString(index);
 				EmitCallBuiltinOpcode(param_count, sourcePos);
-				newFuncIndex = AddFunction((int)func);
+				newFuncIndex = AddFunction((intptr_t)func);
 				EmitShort(newFuncIndex);
 				AddExpressionListOpcodePos(params);
 
@@ -3923,7 +3923,7 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 		meth = Scr_GetMethod(&pName, &type);
 		methId = GetNewVariable(scrCompilePub.builtinMeth, index);
 		value.type = Scr_GetCacheType(type);
-		value.u.intValue = (int)meth;
+		value.u.intValue = (intptr_t)meth;
 		SetVariableValue(methId, &value);
 	}
 
@@ -3944,7 +3944,7 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 			{
 				Scr_CompileRemoveRefToString(index);
 				EmitCallBuiltinMethodOpcode(param_count, sourcePos);
-				newMethIndex = AddFunction((int)meth);
+				newMethIndex = AddFunction((intptr_t)meth);
 				EmitShort(newMethIndex);
 				AddOpcodePos(methodSourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 				AddExpressionListOpcodePos(params);

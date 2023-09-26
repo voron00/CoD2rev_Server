@@ -846,7 +846,7 @@ void gsc_sqlite_open()
 	else
 		first_sqlite_db_store = newstore;
 
-	stackPushInt((int)db);
+	stackPushInt((intptr_t)db);
 }
 
 void gsc_sqlite_query()

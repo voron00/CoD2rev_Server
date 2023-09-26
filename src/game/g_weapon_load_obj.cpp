@@ -65,10 +65,10 @@ bool G_ParseWeaponAccurayGraphInternal(WeaponDef *weaponDef, const char *dirName
 	s = "WEAPONACCUFILE";
 	n = strlen("WEAPONACCUFILE");
 
-	if ( weaponDef->weaponType && weaponDef->weaponType != 2 )
+	if ( weaponDef->weaponType && weaponDef->weaponType != WEAPTYPE_PROJECTILE )
 		return 1;
 
-	if ( !*graphName )
+	if ( !graphName[0] )
 		return 1;
 
 	sprintf(src, "accuracy/%s/%s", dirName, graphName);
@@ -144,7 +144,7 @@ bool G_ParseWeaponAccurayGraphs(WeaponDef *weaponDef)
 		if ( accuracyGraphKnotCount > 0 )
 		{
 			size = 8 * accuracyGraphKnotCount;
-			weaponDef->accuracyGraphKnotCount[weaponType] = (int)Hunk_AllocLowAlignInternal(8 * accuracyGraphKnotCount, 4);
+			weaponDef->accuracyGraphKnotCount[weaponType] = (intptr_t)Hunk_AllocLowAlignInternal(8 * accuracyGraphKnotCount, 4);
 			memcpy((void *)weaponDef->accuracyGraphKnotCount[weaponType], accuracyGraphKnots, size);
 			weaponDef->originalAccuracyGraphKnotCount[weaponType] = accuracyGraphKnotCount;
 		}

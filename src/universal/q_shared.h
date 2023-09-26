@@ -214,7 +214,7 @@ typedef struct cplane_s
 	byte signbits;
 	byte pad[2];
 } cplane_t;
-static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
+// static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
 
 typedef struct dmaterial_s
 {
@@ -222,7 +222,7 @@ typedef struct dmaterial_s
 	int surfaceFlags;
 	int contentFlags;
 } dmaterial_t;
-static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
+// static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
 
 typedef struct
 {
@@ -237,7 +237,7 @@ typedef struct
 	byte allsolid;
 	byte startsolid;
 } trace_t;
-static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
+// static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
 
 struct TraceExtents
 {

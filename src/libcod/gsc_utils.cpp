@@ -550,7 +550,7 @@ void gsc_utils_fopen()
 		return;
 	}
 
-	stackPushInt((int)file);
+	stackPushInt((intptr_t)file);
 }
 
 void gsc_utils_fread()

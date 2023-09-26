@@ -43,7 +43,7 @@ typedef struct netProfileInfo_s
 	netProfileStream_t send;
 	netProfileStream_t recieve;
 } netProfileInfo_t;
-static_assert((sizeof(netProfileInfo_t) == 0x5E0), "ERROR: netProfileInfo_t size is invalid!");
+// static_assert((sizeof(netProfileInfo_t) == 0x5E0), "ERROR: netProfileInfo_t size is invalid!");
 
 typedef struct
 {

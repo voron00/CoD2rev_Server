@@ -220,7 +220,7 @@ typedef struct svEntity_s
 	float linkmin[2];
 	float linkmax[2];
 } svEntity_t;
-static_assert((sizeof(svEntity_t) == 0x174), "ERROR: svEntity_t size is invalid!");
+// static_assert((sizeof(svEntity_t) == 0x174), "ERROR: svEntity_t size is invalid!");
 
 typedef struct
 {
@@ -252,7 +252,7 @@ typedef struct
 	int	ucompNum;
 	char gametype[MAX_QPATH];
 } server_t;
-static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
+// static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
 
 extern server_t sv;
 

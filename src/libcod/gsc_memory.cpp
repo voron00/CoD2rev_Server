@@ -13,7 +13,7 @@ void gsc_memory_malloc()
 		return;
 	}
 
-	stackPushInt((int) malloc(bytes));
+	stackPushInt((intptr_t)malloc(bytes));
 }
 
 void gsc_memory_free()
@@ -96,7 +96,7 @@ void gsc_binarybuffer_new()
 	bb->address = address;
 	bb->pos = 0;
 	bb->strings = new std::vector<char *>();
-	stackPushInt((int)bb);
+	stackPushInt((intptr_t)bb);
 }
 
 void gsc_binarybuffer_free()

@@ -85,7 +85,7 @@ XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int))
 	char *dest;
 	XAnim_s *newAnim;
 
-	newAnim = (XAnim_s *)Alloc(8 * size + 12);
+	newAnim = (XAnim_s *)Alloc(sizeof(XAnimEntry) * size + sizeof(XAnimTree_s));
 	newAnim->size = size;
 
 	if ( g_anim_developer )
@@ -94,7 +94,7 @@ XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int))
 		dest = (char *)Z_MallocInternal(len + 1);
 		strcpy(dest, debugName);
 		newAnim->debugName = dest;
-		newAnim->debugAnimNames = (const char **)Z_MallocInternal(4 * size);
+		newAnim->debugAnimNames = (const char **)Z_MallocInternal(sizeof(intptr_t) * size);
 	}
 
 	if ( Hunk_DataOnHunk(newAnim) )

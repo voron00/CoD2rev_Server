@@ -131,7 +131,7 @@ typedef struct scrVarPub_s
 	const char *programBuffer;
 	const char *endScriptBuffer;
 } scrVarPub_t;
-static_assert((sizeof(scrVarPub_t) == 0x50), "ERROR: scrVarPub_t size is invalid!");
+// static_assert((sizeof(scrVarPub_t) == 0x50), "ERROR: scrVarPub_t size is invalid!");
 
 extern scrVarPub_t scrVarPub;
 
@@ -236,7 +236,7 @@ typedef struct __attribute__((aligned(128))) scrVmPub_s
 	function_frame_t function_frame_start[32];
 	VariableValue stack[2048];
 } scrVmPub_t;
-static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
+// static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
 
 extern scrVmPub_t scrVmPub;
 
@@ -248,7 +248,7 @@ typedef struct scrVmGlob_s
 	int starttime;
 	unsigned int localVarsStack[2048];
 } scrVmGlob_t;
-static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
+// static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
 
 extern scrVmGlob_t scrVmGlob;
 
@@ -267,7 +267,7 @@ typedef struct scrAnimPub_s
 	unsigned int animTreeIndex;
 	bool animtree_loading;
 } scrAnimPub_t;
-static_assert((sizeof(scrAnimPub_t) == 0x41C), "ERROR: scrAnimPub_t size is invalid!");
+// static_assert((sizeof(scrAnimPub_t) == 0x41C), "ERROR: scrAnimPub_t size is invalid!");
 
 extern scrAnimPub_t scrAnimPub;
 
@@ -290,7 +290,7 @@ typedef struct scrCompilePub_s
 	int func_table_size;
 	int func_table[1024];
 } scrCompilePub_t;
-static_assert((sizeof(scrCompilePub_t) == 0x1038), "ERROR: scrCompilePub_t size is invalid!");
+// static_assert((sizeof(scrCompilePub_t) == 0x1038), "ERROR: scrCompilePub_t size is invalid!");
 
 extern scrCompilePub_t scrCompilePub;
 extern char g_EndPos;
@@ -300,7 +300,7 @@ struct SourceLookup
 	unsigned int sourcePos;
 	int type;
 };
-static_assert((sizeof(SourceLookup) == 8), "ERROR: SourceLookup size is invalid!");
+// static_assert((sizeof(SourceLookup) == 8), "ERROR: SourceLookup size is invalid!");
 
 struct OpcodeLookup
 {
@@ -310,7 +310,7 @@ struct OpcodeLookup
 	int profileTime;
 	int profileUsage;
 };
-static_assert((sizeof(OpcodeLookup) == 20), "ERROR: OpcodeLookup size is invalid!");
+// static_assert((sizeof(OpcodeLookup) == 20), "ERROR: OpcodeLookup size is invalid!");
 
 struct SourceBufferInfo
 {
@@ -321,7 +321,7 @@ struct SourceBufferInfo
 	int sortedIndex;
 	bool archive;
 };
-static_assert((sizeof(SourceBufferInfo) == 24), "ERROR: SourceBufferInfo size is invalid!");
+// static_assert((sizeof(SourceBufferInfo) == 24), "ERROR: SourceBufferInfo size is invalid!");
 
 struct SaveSourceBufferInfo
 {
@@ -336,7 +336,7 @@ typedef struct scrParserPub_s
 	const char *scriptfilename;
 	const char *sourceBuf;
 } scrParserPub_t;
-static_assert((sizeof(scrParserPub_t) == 0x10), "ERROR: scrParserPub_t size is invalid!");
+// static_assert((sizeof(scrParserPub_t) == 0x10), "ERROR: scrParserPub_t size is invalid!");
 
 extern scrParserPub_t scrParserPub;
 
@@ -614,7 +614,7 @@ struct scr_block_s
 	int localVarsInitBits[2];
 	unsigned int localVars[64];
 };
-static_assert((sizeof(scr_block_s) == 280), "ERROR: scr_block_s size is invalid!");
+// static_assert((sizeof(scr_block_s) == 280), "ERROR: scr_block_s size is invalid!");
 
 union sval_u
 {

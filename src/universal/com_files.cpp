@@ -776,7 +776,7 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 		}
 	}
 
-	qsort(sorted, numfiles, 4, iwdsort);
+	qsort(sorted, numfiles, sizeof(intptr_t), iwdsort);
 
 	languagesListed = 0;
 

@@ -17,7 +17,7 @@ typedef struct scrParserGlob_s
 	int delayedSourceIndex;
 	int threadStartSourceIndex;
 } scrParserGlob_t;
-static_assert((sizeof(scrParserGlob_t) == 0x34), "ERROR: scrParserGlob_t size is invalid!");
+// static_assert((sizeof(scrParserGlob_t) == 0x34), "ERROR: scrParserGlob_t size is invalid!");
 
 scrParserGlob_t scrParserGlob;
 scrParserPub_t scrParserPub;

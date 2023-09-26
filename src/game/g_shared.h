@@ -442,7 +442,7 @@ struct gclient_s
 	int lastServerTime;
 	int lastSpawnTime;
 };
-static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
+// static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
 
 extern gclient_t g_clients[];
 
@@ -465,7 +465,7 @@ struct turretInfo_s
 	char stopSnd;
 	char stopSndPlayer;
 };
-static_assert((sizeof(turretInfo_s) == 0x44), "ERROR: turretInfo_s size is invalid!");
+// static_assert((sizeof(turretInfo_s) == 0x44), "ERROR: turretInfo_s size is invalid!");
 
 struct tagInfo_s
 {
@@ -476,7 +476,7 @@ struct tagInfo_s
 	float axis[4][3];
 	float parentInvAxis[4][3];
 };
-static_assert((sizeof(tagInfo_s) == 112), "ERROR: tagInfo_s size is invalid!");
+// static_assert((sizeof(tagInfo_s) == 112), "ERROR: tagInfo_s size is invalid!");
 
 struct trigger_ent_t
 {
@@ -588,7 +588,7 @@ struct gentity_s
 	int useCount;
 	gentity_s *nextFree;
 };
-static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
+// static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
 
 extern gentity_t g_entities[];
 
@@ -645,7 +645,7 @@ typedef struct
 	char *openScriptIOFileBuffers[1];
 	com_parse_mark_t currentScriptIOLineMark[1];
 } level_locals_t;
-static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
+// static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
 
 extern level_locals_t level;
 

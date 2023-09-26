@@ -7,7 +7,7 @@ typedef struct __attribute__((aligned(64))) scrVarGlob_s
 {
 	VariableValueInternal variableList[MAX_SCRIPT_VARIABLES];
 } scrVarGlob_t;
-static_assert((sizeof(scrVarGlob_t) == 0x100000), "ERROR: scrVarGlob_t size is invalid!");
+// static_assert((sizeof(scrVarGlob_t) == 0x100000), "ERROR: scrVarGlob_t size is invalid!");
 
 scrVarGlob_t scrVarGlob;
 scrVarPub_t scrVarPub;

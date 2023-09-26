@@ -22,7 +22,7 @@ typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
 	int totalAlloc;
 	int totalAllocBuckets;
 } scrMemTreeGlob_t;
-static_assert((sizeof(scrMemTreeGlob_t) == 0x80380), "ERROR: scrMemTreeGlob_t size is invalid!");
+// static_assert((sizeof(scrMemTreeGlob_t) == 0x80380), "ERROR: scrMemTreeGlob_t size is invalid!");
 
 scrMemTreeGlob_t scrMemTreeGlob;
 

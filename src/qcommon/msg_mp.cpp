@@ -874,7 +874,7 @@ void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *ucmd)
 	}
 }
 
-int kbitmask[33] =
+uint32_t kbitmask[33] =
 {
 	0,
 	1,
@@ -908,7 +908,7 @@ int kbitmask[33] =
 	536870911,
 	1073741823,
 	2147483647,
-	-1,
+	4294967294,
 };
 
 unsigned int MSG_ReadKey(msg_t *msg, int key, int bits)
@@ -1186,7 +1186,7 @@ void MSG_WriteDeltaStruct(msg_t *msg, const byte *from, const byte *to, qboolean
 	}
 }
 
-#define OBJF( x ) # x,(int)&( (objective_t*)0 )->x
+#define OBJF( x ) # x,(intptr_t)&( (objective_t*)0 )->x
 netField_t objectiveFields[] =
 {
 	{ OBJF( origin[0] ), 0},
@@ -1225,7 +1225,7 @@ WRITE:
 	}
 }
 
-#define NETF( x ) # x,(int)&( (entityState_t*)0 )->x
+#define NETF( x ) # x,(intptr_t)&( (entityState_t*)0 )->x
 netField_t entityStateFields[] =
 {
 	{ NETF( pos.trTime ), 32},
@@ -1294,7 +1294,7 @@ void MSG_WriteDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, qb
 	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, 59, 10, entityStateFields, 0);
 }
 
-#define AEF( x ) # x,(int)&( (archivedEntity_t*)0 )->x
+#define AEF( x ) # x,(intptr_t)&( (archivedEntity_t*)0 )->x
 netField_t archivedEntityFields[] =
 {
 	{ AEF( r.absmin[1] ), 0},
@@ -1372,7 +1372,7 @@ void MSG_WriteDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEn
 	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, flags, 68, 10, archivedEntityFields, 0);
 }
 
-#define CSF( x ) # x,(int)&( (clientState_t*)0 )->x
+#define CSF( x ) # x,(intptr_t)&( (clientState_t*)0 )->x
 netField_t clientStateFields[] =
 {
 	{ CSF( team ), 2},
@@ -1600,7 +1600,7 @@ void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int
 	MSG_ReadDeltaStruct(msg, from, to, number, numFields, 6, clientStateFields);
 }
 
-#define HEF( x ) # x,(int)&( (hudelem_t*)0 )->x
+#define HEF( x ) # x,(intptr_t)&( (hudelem_t*)0 )->x
 netField_t hudElemFields[] =
 {
 	{ HEF( y ), -99},
@@ -1696,7 +1696,7 @@ void MSG_ReadDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count
 	Com_Memset(&to[inuse], 0, (count - inuse) << 7);
 }
 
-#define PSF( x ) # x,(int)&( (playerState_t*)0 )->x
+#define PSF( x ) # x,(intptr_t)&( (playerState_t*)0 )->x
 netField_t playerStateFields[] =
 {
 	{ PSF( commandTime ), 32},

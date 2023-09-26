@@ -67,6 +67,7 @@ const char *offhandClassNames[] =
 	"Smoke Grenade"
 };
 
+#define WEF( x ) # x,(intptr_t)&( (WeaponDef*)0 )->x
 cspField_t weaponDefFields[] =
 {
 	{ "displayName", 4, 0, },

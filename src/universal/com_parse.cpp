@@ -254,7 +254,7 @@ Com_ScriptErrorDrop
 void Com_ScriptErrorDrop(const char *msg, ...)
 {
 	char string[4096];
-	char* argptr;
+	// va_list argptr;
 	parseInfo_t* pi;
 	ParseThreadInfo* parse;
 	va_list va;
@@ -262,9 +262,9 @@ void Com_ScriptErrorDrop(const char *msg, ...)
 	va_start(va, msg);
 	parse = Com_GetParseThreadInfo();
 	pi = &parse->parseInfo[parse->parseInfoNum];
-	va_copy(argptr, va);
+	// va_copy(argptr, va);
 	Q_vsnprintf(string, 0x1000, msg, va);
-	argptr = NULL;
+	// argptr = NULL;
 
 	if (parse->parseInfoNum)
 	{
@@ -284,7 +284,7 @@ Com_ScriptError
 void Com_ScriptError(const char *msg, ...)
 {
 	char string[4096];
-	char* argptr;
+	// va_list argptr;
 	parseInfo_t* pi;
 	ParseThreadInfo* parse;
 	va_list va;
@@ -292,9 +292,9 @@ void Com_ScriptError(const char *msg, ...)
 	va_start(va, msg);
 	parse = Com_GetParseThreadInfo();
 	pi = &parse->parseInfo[parse->parseInfoNum];
-	va_copy(argptr, va);
+	// va_copy(argptr, va);
 	Q_vsnprintf(string, 0x1000u, msg, va);
-	argptr = NULL;
+	// argptr = NULL;
 	if (parse->parseInfoNum)
 	{
 		Com_Printf("%sFile %s, line %i: %s", pi->warningPrefix, pi->parseFile, pi->lines, string);
@@ -313,7 +313,7 @@ Com_ScriptWarning
 void Com_ScriptWarning(const char *msg, ...)
 {
 	char string[4096];
-	char* argptr;
+	// va_list argptr;
 	parseInfo_t* pi;
 	ParseThreadInfo* parse;
 	va_list va;
@@ -321,9 +321,9 @@ void Com_ScriptWarning(const char *msg, ...)
 	va_start(va, msg);
 	parse = Com_GetParseThreadInfo();
 	pi = &parse->parseInfo[parse->parseInfoNum];
-	va_copy(argptr, va);
+	// va_copy(argptr, va);
 	Q_vsnprintf(string, 0x1000u, msg, va);
-	argptr = NULL;
+	// argptr = NULL;
 
 	if (parse->parseInfoNum)
 	{

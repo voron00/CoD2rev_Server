@@ -315,7 +315,7 @@ void CalculateRanks()
 		}
 	}
 
-	qsort(level.sortedClients, level.numConnectedClients, 4, SortRanks);
+	qsort(level.sortedClients, level.numConnectedClients, sizeof(intptr_t), SortRanks);
 	level.bUpdateScoresForIntermission = 1;
 }
 

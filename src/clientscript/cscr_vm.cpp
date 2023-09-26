@@ -677,13 +677,13 @@ VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValu
 		{
 			--scrVmPub.function_count;
 			--scrVmPub.function_frame;
-			*(uint32_t *)pos = (uint32_t)scrVmPub.function_frame->fs.pos;
+			*(uint32_t *)pos = (intptr_t)scrVmPub.function_frame->fs.pos;
 			scrVmPub.localVars -= scrVmPub.function_frame->fs.localVarCount;
 			id = GetParentLocalId(id);
 		}
 		else
 		{
-			*(uint32_t *)pos = (uint32_t)top->u.codePosValue;
+			*(uint32_t *)pos = (intptr_t)top->u.codePosValue;
 		}
 
 		buf = pos - 1;

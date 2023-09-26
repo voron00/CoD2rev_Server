@@ -19,7 +19,7 @@ typedef struct __attribute__((aligned(128))) scrStringGlob_s
 	bool inited;
 	HashEntry *nextFreeEntry;
 } scrStringGlob_t;
-static_assert((sizeof(scrStringGlob_t) == 0x10080), "ERROR: scrStringGlob_t size is invalid!");
+// static_assert((sizeof(scrStringGlob_t) == 0x10080), "ERROR: scrStringGlob_t size is invalid!");
 
 #define HASH_NEXT_MASK 0x3FFF
 

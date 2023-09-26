@@ -169,7 +169,7 @@ typedef struct XAnimParts_s
 	const char *name;
 	bool isDefault;
 } XAnimParts;
-static_assert((sizeof(XAnimParts) == 44), "ERROR: XAnimParts size is invalid!");
+// static_assert((sizeof(XAnimParts) == 44), "ERROR: XAnimParts size is invalid!");
 
 struct DObjAnimMat
 {
@@ -177,7 +177,7 @@ struct DObjAnimMat
 	vec3_t trans;
 	float transWeight;
 };
-static_assert((sizeof(DObjAnimMat) == 32), "ERROR: DObjAnimMat size is invalid!");
+// static_assert((sizeof(DObjAnimMat) == 32), "ERROR: DObjAnimMat size is invalid!");
 
 struct XAnimParent
 {
@@ -205,7 +205,7 @@ typedef struct XAnim_s
 	const char **debugAnimNames;
 	XAnimEntry entries[1];
 } XAnim;
-static_assert((sizeof(XAnim) == 0x14), "ERROR: XAnim size is invalid!");
+// static_assert((sizeof(XAnim) == 0x14), "ERROR: XAnim size is invalid!");
 
 typedef struct XAnimTree_s
 {
@@ -215,7 +215,7 @@ typedef struct XAnimTree_s
 	bool bUseGoalWeight;
 	uint16_t infoArray[1];
 } XAnimTree;
-static_assert((sizeof(XAnimTree) == 0xC), "ERROR: XAnimTree size is invalid!");
+// static_assert((sizeof(XAnimTree) == 0xC), "ERROR: XAnimTree size is invalid!");
 
 struct XBoneInfo
 {
@@ -281,14 +281,14 @@ typedef struct XModelParts_s
 	byte *partClassification;
 	DSkel_t skel;
 } XModelParts;
-static_assert((sizeof(XModelParts) == 100), "ERROR: XModelParts size is invalid!");
+// static_assert((sizeof(XModelParts) == 100), "ERROR: XModelParts size is invalid!");
 
 typedef struct XModelSurfs_s
 {
 	struct XSurface *surf; // !!! Not loaded in server binary
 	int partBits[4];
 } XModelSurfs;
-static_assert((sizeof(XModelSurfs) == 20), "ERROR: XModelSurfs size is invalid!");
+// static_assert((sizeof(XModelSurfs) == 20), "ERROR: XModelSurfs size is invalid!");
 
 typedef struct XModelLodInfo_s
 {
@@ -328,7 +328,7 @@ typedef struct
 	char flags;
 	bool bad;
 } XModel;
-static_assert((sizeof(XModel) == 0x90), "ERROR: XModel size is invalid!");
+// static_assert((sizeof(XModel) == 0x90), "ERROR: XModel size is invalid!");
 
 struct DObjModel_s
 {
@@ -354,7 +354,7 @@ typedef struct DObj_s
 	vec3_t mins;
 	vec3_t maxs;
 } DObj;
-static_assert((sizeof(DObj) == 100), "ERROR: DObj size is invalid!");
+// static_assert((sizeof(DObj) == 100), "ERROR: DObj size is invalid!");
 
 struct XAnimState
 {
@@ -384,7 +384,7 @@ typedef struct
 	uint16_t next;
 	XAnimState state;
 } XAnimInfo;
-static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
+// static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
 
 extern XAnimInfo g_xAnimInfo[];
 

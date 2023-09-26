@@ -116,8 +116,8 @@ XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *
 	numChildBones = XAnim_ReadShort(&pos);
 	numRootBones = XAnim_ReadShort(&pos);
 	numBones = numRootBones + numChildBones;
-	boneNames = (unsigned short *)Alloc(2 * (short)(numRootBones + numChildBones));
-	model->memUsage += 2 * (short)(numRootBones + numChildBones);
+	boneNames = (unsigned short *)Alloc(sizeof(short) * (short)(numRootBones + numChildBones));
+	model->memUsage += sizeof(short) * (short)(numRootBones + numChildBones);
 
 	if ( (short)(numRootBones + numChildBones) >= 127 )
 	{
@@ -130,8 +130,8 @@ XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *
 	model->memUsage += numChildBones + 7;
 	boneHiearchy->names = boneNames;
 	parentList = boneHiearchy->parentList;
-	modelParts = (XModelParts_s *)Alloc(32 * numBones + 68);
-	model->memUsage += 32 * numBones + 68;
+	modelParts = (XModelParts_s *)Alloc(sizeof(DSkel_t) * numBones + (sizeof(XModelParts_s) - sizeof(DSkel_t)));
+	model->memUsage += sizeof(DSkel_t) * numBones + sizeof(XModelParts_s) - sizeof(DSkel_t);
 	modelParts->hierarchy = boneHiearchy;
 
 	if ( numChildBones )
@@ -194,13 +194,13 @@ void XModelLoadCollData(const unsigned char **pos, XModel *model, void *(*AllocC
 
 	if ( model->numCollSurfs )
 	{
-		model->collSurfs = (XModelCollSurf_s *)AllocColl(44 * model->numCollSurfs);
+		model->collSurfs = (XModelCollSurf_s *)AllocColl(sizeof(XModelCollSurf_s) * model->numCollSurfs);
 
 		for ( i = 0; i < model->numCollSurfs; ++i )
 		{
 			surf = &model->collSurfs[i];
 			surf->numCollTris = XAnim_ReadInt(pos);
-			surf->collTris = (XModelCollTri_s *)AllocColl(48 * surf->numCollTris);
+			surf->collTris = (XModelCollTri_s *)AllocColl(sizeof(XModelCollTri_s) * surf->numCollTris);
 
 			for ( j = 0; j < surf->numCollTris; ++j )
 			{
@@ -328,7 +328,7 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		nameLenTotal += nameLen[i];
 	}
 
-	usage = nameLenTotal + 144;
+	usage = nameLenTotal + sizeof(XModel);
 	model = (XModel *)Alloc(usage);
 	model->memUsage = usage;
 
@@ -376,8 +376,8 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	}
 
 	numBones = model->parts->numBones;
-	bones = (XBoneInfo *)Alloc(40 * numBones);
-	model->memUsage += 40 * numBones;
+	bones = (XBoneInfo *)Alloc(sizeof(XBoneInfo) * numBones);
+	model->memUsage += sizeof(XBoneInfo) * numBones;
 
 	for ( i = 0; i < numBones; ++i )
 	{

@@ -8,7 +8,7 @@ typedef struct scrAnimGlob_s
 	unsigned short using_xanim_lookup[2][128];
 	int bAnimCheck;
 } scrAnimGlob_t;
-static_assert((sizeof(scrAnimGlob_t) == 0x20C), "ERROR: scrAnimGlob_t size is invalid!");
+// static_assert((sizeof(scrAnimGlob_t) == 0x20C), "ERROR: scrAnimGlob_t size is invalid!");
 
 scrAnimGlob_t scrAnimGlob;
 scrAnimPub_t scrAnimPub;
