@@ -1064,7 +1064,7 @@ void Scr_FreeObjects()
 
 		if ( entryValue->w.status & VAR_STAT_MASK )
 		{
-			if ( VAR_TYPE(entryValue) == VAR_OBJECT || VAR_TYPE(entryValue) == VAR_REMOVED_ENTITY )
+			if ( VAR_TYPE(entryValue) == VAR_STRUCT || VAR_TYPE(entryValue) == VAR_REMOVED_ENTITY )
 			{
 				Scr_CancelNotifyList(id);
 				ClearObject(id);
