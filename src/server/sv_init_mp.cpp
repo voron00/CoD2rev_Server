@@ -56,6 +56,7 @@ dvar_t *sv_master[MAX_MASTER_SERVERS];     // master server ip address
 dvar_t *sv_allowRcon;
 dvar_t *sv_downloadMessage;
 dvar_t *sv_cracked;
+dvar_t *sv_kickbots;
 #endif
 
 bool SV_Loaded()
@@ -125,6 +126,7 @@ void SV_Init()
 	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", qtrue, DVAR_ARCHIVE);
 	sv_downloadMessage = Dvar_RegisterString("sv_downloadMessage", "", DVAR_ARCHIVE);
 	sv_cracked = Dvar_RegisterBool("sv_cracked", qfalse, DVAR_ARCHIVE);
+	sv_kickbots = Dvar_RegisterBool("sv_kickbots", qfalse, DVAR_ARCHIVE);
 #endif
 }
 
@@ -636,6 +638,9 @@ void SV_SaveSystemInfo()
 }
 
 extern dvar_t *cl_paused;
+#ifdef LIBCOD
+extern dvar_t *sv_kickbots;
+#endif
 void SV_SpawnServer(char *server)
 {
 	char mapname[64];
@@ -764,13 +769,13 @@ void SV_SpawnServer(char *server)
 		{
 			continue;
 		}
-
-		if (cl->bot)
+#ifdef LIBCOD
+		if (sv_kickbots->current.boolean && cl->bot)
 		{
 			SV_DropClient(cl, "EXE_DISCONNECTED");
 			continue;
 		}
-
+#endif
 		dropreason = ClientConnect(i, cl->clscriptid);
 
 		if ( dropreason )

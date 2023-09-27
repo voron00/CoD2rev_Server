@@ -425,7 +425,9 @@ void SV_DumpUser_f(void)
 
 extern dvar_t *sv_gametype;
 extern dvar_t *sv_serverid;
-
+#ifdef LIBCOD
+extern dvar_t *sv_kickbots;
+#endif
 void SV_MapRestart(int fast_restart)
 {
 	const char *dropreason;
@@ -475,13 +477,13 @@ void SV_MapRestart(int fast_restart)
 				{
 					continue;
 				}
-
-				if (cl->bot)
+#ifdef LIBCOD
+				if (sv_kickbots->current.boolean && cl->bot)
 				{
 					SV_DropClient(cl, "EXE_DISCONNECTED");
 					continue;
 				}
-
+#endif
 				if ( savepersist )
 					cmd = va("%c", 110);
 				else
