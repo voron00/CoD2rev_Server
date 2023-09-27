@@ -670,8 +670,8 @@ typedef struct
 	float fightDist;
 	float maxDist;
 	const char *accuracyGraphName[2];
-	int accuracyGraphKnotCount[2];
-	int originalAccuracyGraphKnotCount[2];
+	intptr_t accuracyGraphKnotCount[2];
+	intptr_t originalAccuracyGraphKnotCount[2];
 	int adsReloadTransTime;
 	float leftArc;
 	float rightArc;
@@ -1039,8 +1039,8 @@ typedef struct
 	float maxDist;
 	const char *aiVsAiAccuracyGraph;
 	const char *aiVsPlayerAccuracyGraph;
-	int accuracyGraphKnotCount[2];
-	int originalAccuracyGraphKnotCount[2];
+	intptr_t accuracyGraphKnotCount[2];
+	intptr_t originalAccuracyGraphKnotCount[2];
 	int adsReloadTransTime;
 	float leftArc;
 	float rightArc;

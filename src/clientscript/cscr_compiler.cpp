@@ -6,22 +6,22 @@ scrCompilePub_t scrCompilePub;
 struct CaseStatementInfo
 {
 	unsigned int name;
-	char *codePos;
+	const char *codePos;
 	unsigned int sourcePos;
 	CaseStatementInfo *next;
 };
 
 struct BreakStatementInfo
 {
-	char *codePos;
-	char *nextCodePos;
+	const char *codePos;
+	const char *nextCodePos;
 	BreakStatementInfo *next;
 };
 
 struct ContinueStatementInfo
 {
-	char *codePos;
-	char *nextCodePos;
+	const char *codePos;
+	const char *nextCodePos;
 	ContinueStatementInfo *next;
 };
 
@@ -86,9 +86,9 @@ void Scr_CompileRemoveRefToString(unsigned int stringValue)
 
 void EmitCanonicalString(unsigned int stringValue)
 {
-	char *pos;
+	const char *pos;
 
-	scrCompileGlob.codePos = TempMallocAlign(2);
+	scrCompileGlob.codePos = TempMallocAlign(sizeof(uint16_t));
 
 	if ( scrCompilePub.developer_statement == 2 )
 	{
@@ -121,25 +121,25 @@ void CompileTransferRefToString(unsigned int stringValue, unsigned char user)
 
 void EmitCodepos(const char *pos)
 {
-	scrCompileGlob.codePos = TempMallocAlign(4);
-	*(uint32_t *)scrCompileGlob.codePos = (intptr_t)pos;
+	scrCompileGlob.codePos = TempMallocAlign(sizeof(intptr_t));
+	*(intptr_t *)scrCompileGlob.codePos = (intptr_t)pos;
 }
 
 void EmitShort(short value)
 {
-	scrCompileGlob.codePos = TempMallocAlign(2);
-	*(uint16_t *)scrCompileGlob.codePos = value;
+	scrCompileGlob.codePos = TempMallocAlign(sizeof(short));
+	*(short *)scrCompileGlob.codePos = value;
 }
 
 void EmitByte(byte value)
 {
-	scrCompileGlob.codePos = (char *)TempMalloc(1);
+	scrCompileGlob.codePos = (char *)TempMalloc(sizeof(byte));
 	*scrCompileGlob.codePos = value;
 }
 
 void EmitFloat(float value)
 {
-	scrCompileGlob.codePos = TempMallocAlignStrict(4);
+	scrCompileGlob.codePos = TempMallocAlignStrict(sizeof(float));
 	*(float *)scrCompileGlob.codePos = value;
 }
 
@@ -490,7 +490,7 @@ void EmitOpcode(unsigned int op, int offset, int callType)
 	{
 setopcodepos:
 		scrCompileGlob.prevOpcodePos = scrCompilePub.opcodePos;
-		scrCompilePub.opcodePos = (char *)TempMalloc(1);
+		scrCompilePub.opcodePos = (char *)TempMalloc(sizeof(byte));
 		scrCompileGlob.codePos = scrCompilePub.opcodePos;
 		*scrCompilePub.opcodePos = op;
 	}
@@ -1118,13 +1118,13 @@ void Scr_CalcLocalVarsSwitchStatement(sval_u stmtlist, scr_block_s *block)
 	breakChildBlocks = scrCompileGlob.breakChildBlocks;
 	breakChildCount = scrCompileGlob.breakChildCount;
 	newChildCount = 0;
-	newBreakChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+	newBreakChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 	scrCompileGlob.breakChildBlocks = newBreakChildBlocks;
 	scrCompileGlob.breakChildCount = &newChildCount;
 	count = 0;
 	currentBlock = 0;
 	hasDefault = 0;
-	childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+	childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 
 	for ( node = stmtlist.node->node[1].node; node; node = node[1].node )
 	{
@@ -1230,13 +1230,13 @@ void Scr_CalcLocalVarsForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval
 	continueChildCount = scrCompileGlob.continueChildCount;
 	newBreakChildCount = 0;
 	newContinueChildCount = 0;
-	newContinueChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+	newContinueChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 	scrCompileGlob.continueChildBlocks = newContinueChildBlocks;
 	scrCompileGlob.continueChildCount = &newContinueChildCount;
 
 	if ( constConditional )
 	{
-		newBreakChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+		newBreakChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 		scrCompileGlob.breakChildCount = &newBreakChildCount;
 	}
 	else
@@ -1302,13 +1302,13 @@ void Scr_CalcLocalVarsWhileStatement(sval_u expr, sval_u stmt, scr_block_s *bloc
 	continueChildCount = scrCompileGlob.continueChildCount;
 	childCount = 0;
 	initial_count = 0;
-	newBlock = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+	newBlock = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 	scrCompileGlob.continueChildBlocks = newBlock;
 	scrCompileGlob.continueChildCount = &initial_count;
 
 	if ( hasChildren )
 	{
-		newChildBlock = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+		newChildBlock = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 		scrCompileGlob.breakChildCount = &childCount;
 	}
 	else
@@ -2535,7 +2535,7 @@ void EmitCaseStatementInfo(unsigned int name, sval_u sourcePos)
 
 	if ( scrCompilePub.developer_statement != 2 )
 	{
-		statement = (sval_u *)Hunk_AllocateTempMemoryHighInternal(16);
+		statement = (sval_u *)Hunk_AllocateTempMemoryHighInternal(sizeof(CaseStatementInfo));
 		statement->idValue = name;
 		statement[1].idValue = (intptr_t)TempMalloc(0);
 		statement[2].sourcePosValue = sourcePos.sourcePosValue;
@@ -2634,7 +2634,7 @@ void ConnectContinueStatements()
 	codePos = (char *)TempMalloc(0);
 
 	for ( statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
-		*(uint32_t *)statement->codePos = codePos - statement->nextCodePos;
+		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
 }
 
 void ConnectBreakStatements()
@@ -2645,7 +2645,7 @@ void ConnectBreakStatements()
 	codePos = (char *)TempMalloc(0);
 
 	for ( statement = scrCompileGlob.currentBreakStatement; statement; statement = statement->next )
-		*(uint32_t *)statement->codePos = codePos - statement->nextCodePos;
+		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
 }
 
 void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval_u sourcePos, sval_u forSourcePos, scr_block_s *block, sval_u *forStatBlock, sval_u *forStatPostBlock)
@@ -2721,7 +2721,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	continueChildCount = scrCompileGlob.continueChildCount;
 	newBreakChildCount = 0;
 	newContinueChildCount = 0;
-	childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+	childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 	scrCompileGlob.continueChildBlocks = childBlocks;
 	scrCompileGlob.continueChildCount = &newContinueChildCount;
 	scrCompileGlob.breakBlock = forStatBlock->block;
@@ -2730,7 +2730,7 @@ void EmitForStatement(sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval
 	{
 		codePos = 0;
 		nextPos2 = 0;
-		oldContinueChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+		oldContinueChildBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 		scrCompileGlob.breakChildCount = &newBreakChildCount;
 	}
 	else
@@ -2857,7 +2857,7 @@ void EmitWhileStatement(sval_u expr, sval_u stmt, sval_u sourcePos, sval_u while
 	{
 		codePos = 0;
 		nextPos2 = 0;
-		childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+		childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 		scrCompileGlob.breakChildCount = &childCount;
 	}
 	else
@@ -2978,7 +2978,7 @@ void EmitIfElseStatement(sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourceP
 	if ( !last )
 	{
 		pos = pos2;
-		*(uint32_t *)pos = (char *)TempMalloc(0) - nextPos;
+		*(intptr_t *)pos = (char *)TempMalloc(0) - nextPos;
 	}
 
 	Scr_InitFromChildBlocks(childBlocks, childCount, block);
@@ -3002,7 +3002,7 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 	breakChildCount = scrCompileGlob.breakChildCount;
 	breakBlock = scrCompileGlob.breakBlock;
 	childCount = 0;
-	childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(4096);
+	childBlocks = (scr_block_s **)Hunk_AllocateTempMemoryHighInternal(sizeof(scr_block_s) * 16);
 	scrCompileGlob.breakChildBlocks = childBlocks;
 	scrCompileGlob.breakChildCount = &childCount;
 	scrCompileGlob.breakBlock = 0;
@@ -3079,8 +3079,8 @@ void EmitSwitchStatementList(sval_u val, bool lastStatement, unsigned int endSou
 
 int CompareCaseInfo(const void *elem1, const void *elem2)
 {
-	if ( *(uint32_t *)elem1 <= *(uint32_t *)elem2 )
-		return *(uint32_t *)elem1 < *(uint32_t *)elem2;
+	if ( *(intptr_t *)elem1 <= *(intptr_t *)elem2 )
+		return *(intptr_t *)elem1 < *(intptr_t *)elem2;
 	else
 		return -1;
 }
@@ -3124,7 +3124,7 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_NONE);
 	EmitShort(0);
 	pos2 = scrCompileGlob.codePos;
-	*(uint32_t *)pos1 = scrCompileGlob.codePos - nextPos;
+	*(intptr_t *)pos1 = scrCompileGlob.codePos - nextPos;
 	pos3 = TempMallocAlignStrict(0);
 	num = 0;
 	currentStatement = scrCompileGlob.currentCaseStatement;
@@ -3142,11 +3142,11 @@ void EmitSwitchStatement(sval_u expr, sval_u stmtlist, sval_u sourcePos, bool la
 
 	while ( num > 1 )
 	{
-		if ( *(uint32_t *)pos3 == *((uint32_t *)pos3 + 2) )
+		if ( *(intptr_t *)pos3 == *((intptr_t *)pos3 + 2) )
 		{
 			for ( nextStatement = scrCompileGlob.currentCaseStatement; nextStatement; nextStatement = nextStatement->next )
 			{
-				if ( nextStatement->name == *(uint32_t *)pos3 )
+				if ( nextStatement->name == *(intptr_t *)pos3 )
 				{
 					CompileError(nextStatement->sourcePos, "duplicate case expression");
 					return;

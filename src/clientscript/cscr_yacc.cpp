@@ -773,7 +773,7 @@ FILE* yy_stdout()
 // Restored function
 sval_u* Scr_AllocNode(int size)
 {
-	return (sval_u *)Hunk_AllocateTempMemoryHighInternal(sizeof(int) * size);
+	return (sval_u *)Hunk_AllocateTempMemoryHighInternal(sizeof(intptr_t) * size);
 }
 
 // Decomp Status: Tested, Completed
