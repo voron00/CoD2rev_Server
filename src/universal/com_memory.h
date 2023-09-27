@@ -34,10 +34,6 @@ typedef struct
 	int size;
 } hunkHeader_t;
 
-extern byte *s_hunkData;
-extern hunkUsed_t hunk_low, hunk_high;
-extern int s_hunkTotal;
-
 #pragma pack(push)
 #pragma pack(1)
 typedef struct fileData_s
