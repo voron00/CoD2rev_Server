@@ -459,7 +459,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	int i, len;
 	long hash;
 	int fs_numHeaderLongs;
-	int             *fs_headerLongs;
+	intptr_t        *fs_headerLongs;
 	char            *namePtr;
 
 	fs_numHeaderLongs = 0;
@@ -489,7 +489,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 
 	buildBuffer = (fileInIwd_t *)Z_Malloc( ( gi.number_entry * sizeof( fileInIwd_t ) ) + len );
 	namePtr = ( (char *) buildBuffer ) + gi.number_entry * sizeof( fileInIwd_t );
-	fs_headerLongs = (int *)Z_Malloc( gi.number_entry * sizeof( int ) );
+	fs_headerLongs = (intptr_t *)Z_Malloc( gi.number_entry * sizeof( intptr_t ) );
 
 	// get the hash table size from the number of files in the zip
 	// because lots of custom iwd files have less than 32 or 64 files

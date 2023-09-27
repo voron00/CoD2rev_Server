@@ -3,16 +3,16 @@
 
 typedef struct scrParserGlob_s
 {
-	struct OpcodeLookup *opcodeLookup;
+	OpcodeLookup *opcodeLookup;
 	unsigned int opcodeLookupMaxLen;
 	unsigned int opcodeLookupLen;
-	struct SourceLookup *sourcePosLookup;
+	SourceLookup *sourcePosLookup;
 	unsigned int sourcePosLookupMaxLen;
 	unsigned int sourcePosLookupLen;
 	unsigned int sourceBufferLookupMaxLen;
 	const char *currentCodePos;
 	unsigned int currentSourcePosCount;
-	struct SaveSourceBufferInfo *saveSourceBufferLookup;
+	SaveSourceBufferInfo *saveSourceBufferLookup;
 	unsigned int saveSourceBufferLookupLen;
 	int delayedSourceIndex;
 	int threadStartSourceIndex;
@@ -299,7 +299,6 @@ void Scr_InitOpcodeLookup()
 		scrParserGlob.opcodeLookupMaxLen = 0x10000;
 		scrParserGlob.opcodeLookupLen = 0;
 		scrParserGlob.opcodeLookup = (OpcodeLookup *)Z_MallocInternal(sizeof(OpcodeLookup) * USHRT_MAX);
-		memset(scrParserGlob.opcodeLookup, 0, sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupMaxLen);
 		scrParserGlob.sourcePosLookupMaxLen = 0x10000;
 		scrParserGlob.sourcePosLookupLen = 0;
 		scrParserGlob.sourcePosLookup = (SourceLookup *)Z_MallocInternal(sizeof(SourceLookup) * USHRT_MAX);
