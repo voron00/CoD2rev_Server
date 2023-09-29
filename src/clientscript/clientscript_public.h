@@ -801,7 +801,7 @@ void SL_ChangeUser(unsigned char from, unsigned char to);
 void SL_AddRefToString(unsigned int stringValue);
 void SL_ShutdownSystem(unsigned char user);
 void SL_Shutdown();
-void SL_CheckInit();
+void SL_Init();
 
 unsigned int Scr_CreateCanonicalFilename(const char *name);
 

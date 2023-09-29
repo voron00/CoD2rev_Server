@@ -3877,7 +3877,7 @@ void Scr_Init()
 {
 	if ( !scrVarPub.bInited )
 	{
-		SL_CheckInit();
+		SL_Init();
 		Var_Init();
 		Scr_VM_Init();
 		scrCompilePub.script_loading = 0;

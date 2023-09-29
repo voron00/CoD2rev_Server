@@ -610,44 +610,6 @@ unsigned int Scr_CreateCanonicalFilename(const char *name)
 	return SL_GetString_(newFilename, 0);
 }
 
-void SL_RelocateSystem()
-{
-	size_t length;
-	const char *string;
-	byte *ptr;
-	HashEntry *entry;
-	unsigned int i;
-
-	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
-	{
-		do
-		{
-			if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) == HASH_STAT_FREE )
-				break;
-
-			scrStringGlob.nextFreeEntry = 0;
-			SL_FreeEntry(scrStringGlob.hashTable[i].prev);
-		}
-		while ( scrStringGlob.nextFreeEntry );
-	}
-
-	ptr = (byte *)MT_BeginRelocate();
-
-	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
-	{
-		entry = &scrStringGlob.hashTable[i];
-
-		if ( (entry->status_next & HASH_STAT_MASK) != HASH_STAT_FREE && (GetRefString(entry->prev)->user & 4) != HASH_STAT_FREE )
-		{
-			string = SL_ConvertToString(entry->prev);
-			length = I_strlen(string);
-			MT_FreeForLength(ptr, entry->prev, length + 5);
-		}
-	}
-
-	MT_EndRelocate(ptr);
-}
-
 void SL_ShutdownSystem(unsigned char user)
 {
 	RefString *refStr;
@@ -678,14 +640,16 @@ void SL_ShutdownSystem(unsigned char user)
 
 void SL_Shutdown()
 {
-	if ( scrStringGlob.inited )
-		scrStringGlob.inited = 0;
+	assert ( scrStringGlob.inited );
+	scrStringGlob.inited = 0;
 }
 
 void SL_Init()
 {
 	unsigned int prev;
 	unsigned int hash;
+
+	assert( !scrStringGlob.inited );
 
 	MT_Init();
 	scrStringGlob.hashTable->status_next = HASH_STAT_FREE;
@@ -701,12 +665,4 @@ void SL_Init()
 
 	scrStringGlob.hashTable->prev = prev;
 	scrStringGlob.inited = 1;
-}
-
-void SL_CheckInit()
-{
-	if ( scrStringGlob.inited )
-		SL_RelocateSystem();
-	else
-		SL_Init();
 }
