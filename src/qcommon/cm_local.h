@@ -255,17 +255,12 @@ typedef struct clipMap_s
 	int pathVis;
 	int nodeTreeCount;
 	void *nodeTree;
-	unsigned int checksum;
-} clipMap_t;
-// static_assert((sizeof(clipMap_t) == 0x110), "ERROR: clipMap_t size is invalid!");
-
-typedef struct clipMapExtra_s
-{
 	int planeCount;
 	cplane_t *planes;
 	struct BspHeader *header;
-} clipMapExtra_t;
-// static_assert((sizeof(clipMapExtra_t) == 0xC), "ERROR: clipMapExtra_t size is invalid!");
+	unsigned int checksum;
+} clipMap_t;
+// static_assert((sizeof(clipMap_t) == 0x110), "ERROR: clipMap_t size is invalid!");
 
 typedef struct TraceThreadInfo
 {

@@ -94,7 +94,7 @@ void CMod_LoadBrushes()
 
 		for (sideIter = 0; sideIter < outBrush->numsides; ++sideIter)
 		{
-			sides->plane = &cme.planes[inSides->planeNum];
+			sides->plane = &cm.planes[inSides->planeNum];
 			sides->materialNum = inSides->materialNum;
 
 			if ( (sides->materialNum & 0x80000000) != 0 || sides->materialNum >= cm.numMaterials )
@@ -826,10 +826,10 @@ void CMod_LoadPlanes()
 		Com_Error(ERR_DROP, "Map with no planes");
 	}
 
-	cme.planes = (cplane_s *)CM_Hunk_Alloc(sizeof(cplane_s) * count);
-	cme.planeCount = count;
+	cm.planes = (cplane_s *)CM_Hunk_Alloc(sizeof(cplane_s) * count);
+	cm.planeCount = count;
 
-	for (planeIter = 0, out = cme.planes ; planeIter < count; ++in, ++out, ++planeIter )
+	for (planeIter = 0, out = cm.planes ; planeIter < count; ++in, ++out, ++planeIter )
 	{
 		bits = 0;
 
@@ -897,7 +897,7 @@ void CMod_LoadNodes()
 
 	while ( nodeIter < count )
 	{
-		out->plane = &cme.planes[in->planeNum];
+		out->plane = &cm.planes[in->planeNum];
 
 		for ( j = 0; j < 2; ++j )
 		{
@@ -1125,12 +1125,11 @@ void CM_LoadMapFromBsp(const char *name, bool usePvs)
 {
 	BspHeader *header;
 
-	Com_Memset(&cm, 0, sizeof(cm)); // 0x110
-	Com_Memset(&cm, 0, sizeof(cme)); // 0xC VoroN: In CoD2 there is another struct right after cm that contatins planes and a bsp header.
+	Com_Memset(&cm, 0, sizeof(clipMap_t));
 	cm.name = (char *)CM_Hunk_Alloc(strlen(name) + 1);
 	strcpy(cm.name, name);
 	header = Com_GetBspHeader(0, &cm.checksum);
-	cme.header = header;
+	cm.header = header;
 	CMod_LoadMaterials();
 	CMod_LoadPlanes();
 	CMod_LoadBrushRelated(usePvs);
@@ -1153,5 +1152,5 @@ void CM_LoadMapFromBsp(const char *name, bool usePvs)
 
 	CMod_LoadEntityString();
 
-	cme.header = 0;
+	cm.header = 0;
 }

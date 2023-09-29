@@ -2,7 +2,6 @@
 #include "cm_local.h"
 
 extern clipMap_t cm;
-extern clipMapExtra_t cme;
 
 void CMod_LoadBrushes();
 void CMod_LoadLeafBrushes();

@@ -3,7 +3,6 @@
 #include "sys_thread.h"
 
 clipMap_t cm;
-clipMapExtra_t cme;
 
 void CM_InitThreadData(int threadContext)
 {
@@ -105,5 +104,5 @@ void CM_Shutdown()
 
 void CM_Cleanup(void)
 {
-	cme.header = 0;
+	cm.header = 0;
 }
