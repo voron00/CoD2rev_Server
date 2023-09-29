@@ -17,6 +17,8 @@ typedef struct scr_method_s
 	qboolean       developer;
 } scr_method_t;
 
+#pragma pack(push)
+#pragma pack(1)
 struct VariableStackBuffer
 {
 	const char *pos;
@@ -26,6 +28,7 @@ struct VariableStackBuffer
 	unsigned char time;
 	char buf[1];
 };
+#pragma pack(pop)
 
 union VariableUnion
 {

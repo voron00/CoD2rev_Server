@@ -471,7 +471,10 @@ unsigned int Scr_GetConstLowercaseString(unsigned int index)
 	char tempString[8192];
 
 	if ( index >= scrVmPub.outparamcount )
-		goto error;
+	{
+		Scr_Error(va("parameter %d does not exist", index + 1));
+		return 0;
+	}
 
 	value = &scrVmPub.top[-index];
 
@@ -479,7 +482,6 @@ unsigned int Scr_GetConstLowercaseString(unsigned int index)
 	{
 		scrVarPub.error_index = index + 1;
 		Scr_ErrorInternal();
-error:
 		Scr_Error(va("parameter %d does not exist", index + 1));
 		return 0;
 	}
@@ -659,11 +661,11 @@ VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValu
 	char *pos;
 	VariableStackBuffer *stackBuf;
 
-	stackBuf = (VariableStackBuffer *)MT_Alloc(5 * size + 11);
+	stackBuf = (VariableStackBuffer *)MT_Alloc(5 * size + sizeof(VariableStackBuffer));
 	id = *localId;
 	stackBuf->localId = *localId;
 	stackBuf->size = size;
-	stackBuf->bufLen = 5 * size + 11;
+	stackBuf->bufLen = 5 * size + sizeof(VariableStackBuffer);
 	stackBuf->pos = codePos;
 	stackBuf->time = scrVarPub.time;
 	scrVmPub.localVars -= localVarCount;
@@ -677,13 +679,13 @@ VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValu
 		{
 			--scrVmPub.function_count;
 			--scrVmPub.function_frame;
-			*(uint32_t *)pos = (intptr_t)scrVmPub.function_frame->fs.pos;
+			*(intptr_t *)pos = (intptr_t)scrVmPub.function_frame->fs.pos;
 			scrVmPub.localVars -= scrVmPub.function_frame->fs.localVarCount;
 			id = GetParentLocalId(id);
 		}
 		else
 		{
-			*(uint32_t *)pos = (intptr_t)top->u.codePosValue;
+			*(intptr_t *)pos = (intptr_t)top->u.codePosValue;
 		}
 
 		buf = pos - 1;
@@ -702,14 +704,11 @@ VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValu
 
 void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, VariableStackBuffer *stackValue)
 {
-	unsigned int variable;
-	unsigned int array;
-	VariableValue entryValue;
-	unsigned int id;
+	VariableValue tempValue;
 	unsigned char type;
 	int size;
 	char *buf;
-	VariableUnion tempValue;
+	VariableUnion u;
 	unsigned int parentLocalId;
 	unsigned int localId;
 
@@ -720,7 +719,7 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 	while ( size )
 	{
 		buf -= 4;
-		tempValue.intValue = *(int *)buf--;
+		u.codePosValue = *(const char **)buf--;
 		type = *buf;
 		--size;
 
@@ -735,15 +734,12 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 				++size;
 				*buf = 0;
 				Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
-				stackValue->pos = tempValue.codePosValue;
+				stackValue->pos = u.codePosValue;
 				stackValue->localId = parentLocalId;
 				stackValue->size = size;
-				entryValue.type = VAR_STACK;
-				entryValue.u.stackValue = stackValue;
-				variable = GetVariable(scrVarPub.timeArrayId, scrVarPub.time);
-				array = GetArray(variable);
-				id = GetNewObjectVariable(array, startLocalId);
-				SetNewVariableValue(id, &entryValue);
+				tempValue.type = VAR_STACK;
+				tempValue.u.stackValue = stackValue;
+				SetNewVariableValue(GetNewObjectVariable(GetArray(GetVariable(scrVarPub.timeArrayId, scrVarPub.time)), startLocalId), &tempValue);
 				return;
 			}
 
@@ -751,7 +747,7 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 		}
 		else
 		{
-			RemoveRefToValueInternal(type, tempValue);
+			RemoveRefToValueInternal(type, u);
 		}
 	}
 
@@ -762,12 +758,11 @@ void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, Varia
 
 void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bool fromEndon)
 {
-	unsigned int NewVariable;
-	VariableValue localVariable;
+	VariableValue tempValue;
 	unsigned char type;
 	int size;
 	char *buf;
-	VariableUnion tempValue;
+	VariableUnion u;
 	unsigned int parentLocalId;
 	unsigned int localId;
 
@@ -778,7 +773,7 @@ void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bo
 	while ( size )
 	{
 		buf -= 4;
-		tempValue.intValue = *(int *)buf--;
+		u.codePosValue = *(const char **)buf--;
 		type = *buf;
 		--size;
 
@@ -795,10 +790,9 @@ void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bo
 				{
 					Scr_SetThreadNotifyName(startLocalId, 0);
 					stackValue->pos = 0;
-					localVariable.type = VAR_STACK;
-					localVariable.u.stackValue = stackValue;
-					NewVariable = GetNewVariable(startLocalId, 0x1FFFFu);
-					SetNewVariableValue(NewVariable, &localVariable);
+					tempValue.type = VAR_STACK;
+					tempValue.u.stackValue = stackValue;
+					SetNewVariableValue(GetNewVariable(startLocalId, 0x1FFFFu), &tempValue);
 				}
 
 				return;
@@ -811,7 +805,7 @@ void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bo
 		}
 		else
 		{
-			RemoveRefToValueInternal(type, tempValue);
+			RemoveRefToValueInternal(type, u);
 		}
 	}
 
@@ -1313,7 +1307,7 @@ next:
 						while ( vars->type != VAR_PRECODEPOS );
 
 						len = 5 * size;
-						bufLen = 5 * newSize + 11;
+						bufLen = 5 * newSize + sizeof(VariableStackBuffer);
 
 						if ( !MT_Realloc(newStackBuf->bufLen, bufLen) )
 						{
@@ -1503,11 +1497,11 @@ unsigned short Scr_ReadUnsignedShort(const char **pos)
 
 const unsigned int* Scr_ReadIntArray(const char **pos, int count)
 {
-	const unsigned int *val;
+	const unsigned int *value;
 
-	val = reinterpret_cast<const unsigned int *>(*pos);
+	value = reinterpret_cast<const unsigned int *>(*pos);
 	*pos += sizeof(unsigned int) * count;
-	return val;
+	return value;
 }
 
 float Scr_ReadFloat(const char **pos)
