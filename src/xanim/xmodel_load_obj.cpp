@@ -62,15 +62,15 @@ void XModelCalcBasePose(XModelParts_s *modelParts)
 	memset(modelParts->skel.partBits.skel, 255, sizeof(modelParts->skel.partBits.skel));
 }
 
-XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int))
+XModelParts_s *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int))
 {
 	int fileSize;
 	short *quats;
 	short version;
-	char index;
 	unsigned int len;
 	float *trans;
-	int i;
+	int boneIter;
+	int num;
 	short numChildBones;
 	short numRootBones;
 	short numBones;
@@ -126,8 +126,8 @@ XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *
 		return 0;
 	}
 
-	boneHiearchy = (XBoneHierarchy *)Alloc(numChildBones + 7);
-	model->memUsage += numChildBones + 7;
+	boneHiearchy = (XBoneHierarchy *)Alloc(numChildBones + sizeof(XBoneHierarchy) - 1);
+	model->memUsage += numChildBones + sizeof(XBoneHierarchy) - 1;
 	boneHiearchy->names = boneNames;
 	parentList = boneHiearchy->parentList;
 	modelParts = (XModelParts_s *)Alloc(sizeof(DSkel_t) * numBones + (sizeof(XModelParts_s) - sizeof(DSkel_t)));
@@ -153,25 +153,25 @@ XModelParts_s* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *
 	modelParts->numRootBones = numRootBones;
 	quats = modelParts->quats;
 	trans = modelParts->trans;
+	boneIter = numRootBones;
 
-	while ( numRootBones < numBones )
+	while ( boneIter < numBones )
 	{
-		index = *pos++;
-		*parentList = numRootBones - index;
+		*parentList = boneIter - *pos++;
 		trans[0] = XAnim_ReadFloat(&pos);
 		trans[1] = XAnim_ReadFloat(&pos);
 		trans[2] = XAnim_ReadFloat(&pos);
 		ConsumeQuat(&pos, quats);
-		++numRootBones;
+		++boneIter;
 		quats += 4;
 		trans += 3;
-		parentList++;
+		++parentList;
 	}
 
-	for ( i = 0; i < numBones; ++i )
+	for ( num = 0; num < numBones; ++num )
 	{
 		len = I_strlen((char *)pos) + 1;
-		boneNames[i] = SL_GetStringOfLen((const char *)pos, 0, len);
+		boneNames[num] = SL_GetStringOfLen((const char *)pos, 0, len);
 		pos += len;
 	}
 
@@ -268,9 +268,11 @@ bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelCon
 	return 1;
 }
 
-XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
+XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
 {
 	unsigned short **surfNames;
+	size_t len;
+	unsigned short *surfName;
 	int fileSize;
 	int usage;
 	XBoneInfo *bones;
@@ -279,6 +281,7 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	float *maxs;
 	float *mins;
 	int numBones;
+	const char *s;
 	byte *buf;
 	char filename[64];
 	int j;
@@ -328,11 +331,10 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		nameLenTotal += nameLen[i];
 	}
 
-	usage = nameLenTotal + sizeof(XModel);
-	model = (XModel *)Alloc(usage);
-	model->memUsage = usage;
+	model = (XModel *)Alloc(nameLenTotal + sizeof(XModel));
+	model->memUsage = nameLenTotal + sizeof(XModel);
 
-	XModelLoadCollData(&pos, model, AllocColl, name);
+	XModelLoadCollData(&pos, model, (void *(*)(int))AllocColl, name);
 
 	dest = (char *)&model[1];
 	model->numLods = 0;
@@ -342,19 +344,22 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		strcpy(dest, config.entries[i].filename);
 		model->lodInfo[i].filename = dest;
 
-		if ( *dest )
+		if ( dest[0] )
 		{
 			++model->numLods;
 			model->lodInfo[i].numsurfs = XAnim_ReadShort(&pos);
-			usage = 2 * model->lodInfo[i].numsurfs;
+			usage = sizeof(short) * model->lodInfo[i].numsurfs;
 			surfNames = &model->lodInfo[i].surfNames;
-			*surfNames = (unsigned short *)Alloc(usage);
+			surfNames[0] = (unsigned short *)Alloc(usage);
 			model->memUsage += usage;
 
 			for ( j = 0; j < model->lodInfo[i].numsurfs; ++j )
 			{
-				pos += strlen((const char *)pos) + 1;
-				model->lodInfo[i].surfNames[j] = SL_GetString_((const char *)pos, 0);
+				s = (const char *)pos;
+				len = strlen((const char *)pos);
+				pos += len + 1;
+				surfName = model->lodInfo[i].surfNames;
+				surfName[j] = SL_GetString_(s, 0);
 			}
 		}
 		else
@@ -366,7 +371,7 @@ XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		dest += nameLen[i];
 	}
 
-	model->parts = XModelPartsPrecache(model, model->lodInfo[0].filename, Alloc);
+	model->parts = XModelPartsLoadFile(model, model->lodInfo[0].filename, Alloc);
 
 	if ( !model->parts )
 	{
