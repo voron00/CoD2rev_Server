@@ -2,18 +2,22 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
+#define GEF( x ) # x,(intptr_t)&( (gentity_t*)0 )->x
+#define GEF_ORIGIN( x ) # x,(intptr_t)&( (gentity_t*)0 )->r.currentOrigin
+#define GEF_ANGLES( x ) # x,(intptr_t)&( (gentity_t*)0 )->r.currentAngles
+
 game_entity_field_t g_entity_fields[] =
 {
-	{ "classname", 360, 3, Scr_ReadOnlyField },
-	{ "origin", 312, 4, Scr_SetOrigin },
-	{ "model", 356, 8, Scr_ReadOnlyField },
-	{ "spawnflags", 368, 0, Scr_ReadOnlyField },
-	{ "target", 362, 3, NULL },
-	{ "targetname", 364, 3, NULL },
-	{ "count", 416, 0, NULL },
-	{ "health", 404, 0, Scr_SetHealth },
-	{ "dmg", 412, 0, NULL },
-	{ "angles", 324, 4, Scr_SetAngles }
+	{ GEF( classname ), F_STRING, Scr_ReadOnlyField },
+	{ GEF_ORIGIN( origin ), F_VECTOR, Scr_SetOrigin },
+	{ GEF( model ), F_MODEL, Scr_ReadOnlyField },
+	{ GEF( spawnflags ), F_INT, Scr_ReadOnlyField },
+	{ GEF( target ), F_STRING, NULL },
+	{ GEF( targetname ), F_STRING, NULL },
+	{ GEF( count ), F_INT, NULL },
+	{ GEF( health ), F_INT, Scr_SetHealth },
+	{ GEF( dmg ), F_INT, NULL },
+	{ GEF_ANGLES( angles ), F_VECTOR, Scr_SetAngles }
 };
 
 spawn_t spawns[] =
@@ -368,8 +372,7 @@ void G_SetEntityScriptVariable(const char *key, const char *value, gentity_s *en
 void G_ParseEntityField(const char *key, const char *value, gentity_s *ent)
 {
 	uint16_t *string;
-	vec3_t vector;
-	gentity_s *entity;
+	vec3_t vec;
 	game_entity_field_t *f;
 
 	for ( f = g_entity_fields; ; ++f )
@@ -384,34 +387,32 @@ void G_ParseEntityField(const char *key, const char *value, gentity_s *ent)
 			break;
 	}
 
-	entity = ent;
-
 	switch ( f->type )
 	{
 	case F_INT:
-		*(int *)((char *)&entity->s.number + f->ofs) = atoi(value);
+		*(int *)((char *)&ent->s.number + f->ofs) = atoi(value);
 		break;
 
 	case F_FLOAT:
-		*(float *)((char *)&entity->s.number + f->ofs) = atof(value);
+		*(float *)((char *)&ent->s.number + f->ofs) = atof(value);
 		break;
 
 	case F_STRING:
-		Scr_SetString((uint16_t *)((char *)entity + f->ofs), 0);
-		string = (uint16_t *)((char *)entity + f->ofs);
+		Scr_SetString((uint16_t *)((char *)ent + f->ofs), 0);
+		string = (uint16_t *)((char *)ent + f->ofs);
 		*string = G_NewString(value);
 		break;
 
 	case F_VECTOR:
-		VectorClear(vector);
-		sscanf(value, "%f %f %f", vector, &vector[1], &vector[2]);
-		*(float *)((char *)&entity->s.number + f->ofs) = vector[0];
-		*(float *)((char *)&entity->s.eType + f->ofs) = vector[1];
-		*(float *)((char *)&entity->s.eFlags + f->ofs) = vector[2];
+		VectorClear(vec);
+		sscanf(value, "%f %f %f", &vec[0], &vec[1], &vec[2]);
+		*(float *)((char *)&ent->s.number + f->ofs) = vec[0];
+		*(float *)((char *)&ent->s.eType + f->ofs) = vec[1];
+		*(float *)((char *)&ent->s.eFlags + f->ofs) = vec[2];
 		break;
 
 	case F_MODEL:
-		if ( *value == 42 )
+		if ( value[0] == '*' )
 			ent->s.index = (unsigned short)atoi(value + 1);
 		else
 			G_SetModel(ent, value);

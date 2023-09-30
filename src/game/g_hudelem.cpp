@@ -2,25 +2,41 @@
 #include "g_shared.h"
 #include "../clientscript/clientscript_public.h"
 
+#define HEF_X( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.x
+#define HEF_Y( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.y
+#define HEF_Z( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.z
+#define HEF_FONTSCALE( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.fontScale
+#define HEF_FONT( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.font
+#define HEF_ALIGNX( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.alignOrg
+#define HEF_ALIGNY( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.alignOrg
+#define HEF_HORZALIGN( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.alignScreen
+#define HEF_VERTALIGN( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.alignScreen
+#define HEF_COLOR( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.color
+#define HEF_ALPHA( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.color
+#define HEF_LABEL( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.label
+#define HEF_SORT( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.sort
+#define HEF_FOREGROUND( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.foreground
+#define HEF_ARCHIVED( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->archived
+
 game_hudelem_t g_hudelems[1024];
 
 game_hudelem_field_t g_hudelem_fields[] =
 {
-	{ "x", 4, 1, 0, 0, NULL, NULL },
-	{ "y", 8, 1, 0, 0, NULL, NULL },
-	{ "z", 12, 1, 0, 0, NULL, NULL },
-	{ "fontscale", 16, 1, -1, 0, HudElem_SetFontScale, NULL },
-	{ "font", 20, 0, -1, 0, HudElem_SetFont, HudElem_GetFont },
-	{ "alignx", 24, 0, 3, 2, HudElem_SetAlignX, HudElem_GetAlignX },
-	{ "aligny", 24, 0, 3, 0, HudElem_SetAlignY, HudElem_GetAlignY },
-	{ "horzalign", 28, 0, 7, 3, HudElem_SetHorzAlign, HudElem_GetHorzAlign },
-	{ "vertalign", 28, 0, 7, 0, HudElem_SetVertAlign, HudElem_GetVertAlign },
-	{ "color", 32, 0, -1, 0, HudElem_SetColor, HudElem_GetColor },
-	{ "alpha", 32, 0, -1, 0, HudElem_SetAlpha, HudElem_GetAlpha },
-	{ "label", 48, 0, -1, 0, HudElem_SetLocalizedString, NULL },
-	{ "sort", 120, 1, 0, 0, NULL, NULL },
-	{ "foreground", 124, 0, -1, 0, HudElem_SetBoolean, NULL },
-	{ "archived", 136, 0, -1, 0, HudElem_SetBoolean, NULL }
+	{ HEF_X( x ), 1, 0, 0, NULL, NULL },
+	{ HEF_Y( y ), 1, 0, 0, NULL, NULL },
+	{ HEF_Z( z ), 1, 0, 0, NULL, NULL },
+	{ HEF_FONTSCALE( fontscale ), 1, -1, 0, HudElem_SetFontScale, NULL },
+	{ HEF_FONT( font ), 0, -1, 0, HudElem_SetFont, HudElem_GetFont },
+	{ HEF_ALIGNX( alignx ), 0, 3, 2, HudElem_SetAlignX, HudElem_GetAlignX },
+	{ HEF_ALIGNY( aligny ), 0, 3, 0, HudElem_SetAlignY, HudElem_GetAlignY },
+	{ HEF_HORZALIGN( horzalign ), 0, 7, 3, HudElem_SetHorzAlign, HudElem_GetHorzAlign },
+	{ HEF_VERTALIGN( vertalign ), 0, 7, 0, HudElem_SetVertAlign, HudElem_GetVertAlign },
+	{ HEF_COLOR( color ), 0, -1, 0, HudElem_SetColor, HudElem_GetColor },
+	{ HEF_ALPHA( alpha ), 0, -1, 0, HudElem_SetAlpha, HudElem_GetAlpha },
+	{ HEF_LABEL( label ), 0, -1, 0, HudElem_SetLocalizedString, NULL },
+	{ HEF_SORT( sort ), 1, 0, 0, NULL, NULL },
+	{ HEF_FOREGROUND( foreground ), 0, -1, 0, HudElem_SetBoolean, NULL },
+	{ HEF_ARCHIVED( archived ), 0, -1, 0, HudElem_SetBoolean, NULL }
 };
 
 scr_method_t g_he_methods[] =

@@ -558,7 +558,6 @@ struct gentity_s
 	uint16_t classname;
 	uint16_t target;
 	uint16_t targetname;
-	uint16_t padding;
 	int spawnflags;
 	int flags;
 	int eventTime;
@@ -651,15 +650,15 @@ extern level_locals_t level;
 
 enum fieldtype_t
 {
-	F_INT,
-	F_FLOAT,
-	F_LSTRING,
-	F_STRING,
-	F_VECTOR,
-	F_ENTITY,
-	F_VECTORHACK,
-	F_OBJECT,
-	F_MODEL
+	F_INT, // 0
+	F_FLOAT, // 1
+	F_LSTRING, // 2
+	F_STRING, // 3
+	F_VECTOR, // 4
+	F_ENTITY, // 5
+	F_VECTORHACK, // 6
+	F_OBJECT, // 7
+	F_MODEL // 8
 };
 
 typedef struct game_hudelem_s

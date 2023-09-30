@@ -2,22 +2,31 @@
 #include "../server/server.h"
 #include "g_shared.h"
 
+#define GCF_NONE 0
+#define GCF_NAME( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.state.name
+#define GCF_MAXHEALTH( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.maxHealth
+#define GCF_SCORE( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.score
+#define GCF_DEATHS( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.deaths
+#define GCF_SPECTATORCLIENT( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.forceSpectatorClient
+#define GCF_ARCHIVETIME( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.archiveTime
+#define GCF_PSOFFSETTIME( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.psOffsetTime
+#define GCF_PERS( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.pers
+
 game_client_field_t g_client_fields[] =
 {
-	{ "name", 10116, 2, ClientScr_ReadOnly, NULL },
-	{ "sessionteam", 0, 3, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },
-	{ "sessionstate", 0, 3, ClientScr_SetSessionState, ClientScr_GetSessionState },
-	{ "maxhealth", 10024, 0, ClientScr_SetMaxHealth, NULL },
-	{ "score", 9912, 0, ClientScr_SetScore, NULL },
-	{ "deaths", 9916, 0, NULL, NULL },
-	{ "statusicon", 0, 3, ClientScr_SetStatusIcon, ClientScr_GetStatusIcon },
-	{ "headicon", 0, 3, ClientScr_SetHeadIcon, ClientScr_GetHeadIcon },
-	{ "headiconteam", 0, 3, ClientScr_SetHeadIconTeam, ClientScr_GetHeadIconTeam },
-	{ "spectatorclient", 9900, 0, ClientScr_SetSpectatorClient, NULL },
-	{ "archivetime", 9908, 1, ClientScr_SetArchiveTime, ClientScr_GetArchiveTime },
-	{ "psoffsettime", 10148, 0, ClientScr_SetPSOffsetTime, ClientScr_GetPSOffsetTime },
-	{ "pers", 9920, 7, ClientScr_ReadOnly, NULL }
-
+	{ GCF_NAME( name ), F_LSTRING, ClientScr_ReadOnly, NULL },
+	{ "sessionteam", GCF_NONE, F_STRING, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },
+	{ "sessionstate", GCF_NONE, F_STRING, ClientScr_SetSessionState, ClientScr_GetSessionState },
+	{ GCF_MAXHEALTH( maxhealth ), F_INT, ClientScr_SetMaxHealth, NULL },
+	{ GCF_SCORE( score ), F_INT, ClientScr_SetScore, NULL },
+	{ GCF_DEATHS( deaths ), F_INT, NULL, NULL },
+	{ "statusicon", GCF_NONE, F_STRING, ClientScr_SetStatusIcon, ClientScr_GetStatusIcon },
+	{ "headicon", GCF_NONE, F_STRING, ClientScr_SetHeadIcon, ClientScr_GetHeadIcon },
+	{ "headiconteam", GCF_NONE, F_STRING, ClientScr_SetHeadIconTeam, ClientScr_GetHeadIconTeam },
+	{ GCF_SPECTATORCLIENT( spectatorclient ), F_INT, ClientScr_SetSpectatorClient, NULL },
+	{ GCF_ARCHIVETIME( archivetime ), F_FLOAT, ClientScr_SetArchiveTime, ClientScr_GetArchiveTime },
+	{ GCF_PSOFFSETTIME( psoffsettime ), F_INT, ClientScr_SetPSOffsetTime, ClientScr_GetPSOffsetTime },
+	{ GCF_PERS( pers ), F_OBJECT, ClientScr_ReadOnly, NULL }
 };
 
 void ClientScr_ReadOnly(gclient_s *pSelf, const game_client_field_t *pField)
