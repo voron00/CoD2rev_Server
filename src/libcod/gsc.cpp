@@ -6,7 +6,7 @@ const char *stackGetParamTypeAsString(int param)
 		return "UNDEFINED";
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	switch (var->type)
 	{
@@ -358,7 +358,7 @@ int stackGetParamType(int param)
 		return STACK_UNDEFINED;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	return var->type;
 }
@@ -463,7 +463,7 @@ int stackGetParamInt(int param, int *value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type == STACK_FLOAT)
 	{
@@ -485,7 +485,7 @@ int stackGetParamFunction(int param, int *value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type != STACK_FUNCTION)
 		return 0;
@@ -501,7 +501,7 @@ int stackGetParamString(int param, const char **value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type != STACK_STRING)
 		return 0;
@@ -517,7 +517,7 @@ int stackGetParamConstString(int param, unsigned int *value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type != STACK_STRING)
 		return 0;
@@ -533,7 +533,7 @@ int stackGetParamVector(int param, vec3_t value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type != STACK_VECTOR)
 		return 0;
@@ -549,7 +549,7 @@ int stackGetParamFloat(int param, float *value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type == STACK_INT)
 	{
@@ -571,7 +571,7 @@ int stackGetParamObject(int param, unsigned int *value)
 		return 0;
 
 	VariableValue *var;
-	var = &scrVmPub.top[-param];
+	var = Scr_GetValue(param);
 
 	if (var->type != STACK_OBJECT)
 		return 0;

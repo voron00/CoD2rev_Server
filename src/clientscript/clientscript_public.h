@@ -812,6 +812,7 @@ unsigned int Scr_CreateCanonicalFilename(const char *name);
 }
 #endif
 
+VariableValue* Scr_GetValue(unsigned int param);
 unsigned int FindNextSibling(unsigned int id);
 unsigned int FindLastSibling(unsigned int id);
 unsigned int FindVariable(unsigned int parentId, unsigned int name);

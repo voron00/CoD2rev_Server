@@ -24,6 +24,11 @@ qboolean Scr_IsSystemActive()
 	return scrVarPub.timeArrayId != 0;
 }
 
+VariableValue* Scr_GetValue(unsigned int param)
+{
+	return &scrVmPub.top[int(-param)];
+}
+
 void Scr_ErrorInternal()
 {
 	if ( !scrVarPub.evaluate && !scrCompilePub.script_loading )
@@ -64,7 +69,7 @@ void Scr_ParamError(int paramNum, const char *error)
 int Scr_GetType(unsigned int param)
 {
 	if ( param < scrVmPub.outparamcount )
-		return scrVmPub.top[-param].type;
+		return Scr_GetValue(param)->type;
 
 	Scr_Error(va("parameter %d does not exist", param + 1));
 	return 0;
@@ -214,12 +219,12 @@ int Scr_GetPointerType(unsigned int index)
 		return 0;
 	}
 
-	if ( scrVmPub.top[-index].type != VAR_OBJECT )
+	if ( Scr_GetValue(index)->type != VAR_OBJECT )
 	{
-		Scr_Error(va("type %s is not a pointer", var_typename[scrVmPub.top[-index].type]));
+		Scr_Error(va("type %s is not a pointer", var_typename[Scr_GetValue(index)->type]));
 	}
 
-	return Scr_GetObjectType(scrVmPub.top[-index].u.pointerValue);
+	return Scr_GetObjectType(Scr_GetValue(index)->u.pointerValue);
 }
 
 void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index)
@@ -229,7 +234,7 @@ void Scr_GetEntityRef(scr_entref_t *entRef, unsigned int index)
 
 	if ( index < scrVmPub.outparamcount )
 	{
-		entryValue = &scrVmPub.top[-index];
+		entryValue = Scr_GetValue(index);
 
 		if ( entryValue->type == VAR_OBJECT )
 		{
@@ -263,7 +268,7 @@ int Scr_GetInt(unsigned int index)
 		return 0;
 	}
 
-	entryValue = &scrVmPub.top[-index];
+	entryValue = Scr_GetValue(index);
 
 	if ( entryValue->type != VAR_INTEGER )
 	{
@@ -284,7 +289,7 @@ float Scr_GetFloat(unsigned int index)
 		return 0;
 	}
 
-	entryValue = &scrVmPub.top[-index];
+	entryValue = Scr_GetValue(index);
 
 	if ( entryValue->type != VAR_FLOAT )
 	{
@@ -308,7 +313,7 @@ unsigned int Scr_GetConstString(unsigned int index)
 		return 0;
 	}
 
-	entryValue = &scrVmPub.top[-index];
+	entryValue = Scr_GetValue(index);
 
 	if ( !Scr_CastString(entryValue) )
 	{
@@ -321,7 +326,7 @@ unsigned int Scr_GetConstString(unsigned int index)
 
 unsigned int Scr_GetConstStringIncludeNull(unsigned int index)
 {
-	if ( index >= scrVmPub.outparamcount || scrVmPub.top[-index].type )
+	if ( index >= scrVmPub.outparamcount || Scr_GetValue(index)->type )
 		return Scr_GetConstString(index);
 	else
 		return 0;
@@ -345,7 +350,7 @@ unsigned int Scr_GetConstIString(unsigned int index)
 		return 0;
 	}
 
-	entryValue = &scrVmPub.top[-index];
+	entryValue = Scr_GetValue(index);
 
 	if ( entryValue->type != VAR_ISTRING )
 	{
@@ -370,7 +375,7 @@ void Scr_GetVector(unsigned int index, float *vector)
 
 	if ( index < scrVmPub.outparamcount )
 	{
-		entryValue = &scrVmPub.top[-index];
+		entryValue = Scr_GetValue(index);
 
 		if ( entryValue->type == VAR_VECTOR )
 		{
@@ -396,7 +401,7 @@ const char* Scr_GetDebugString(unsigned int index)
 	}
 	else
 	{
-		value = &scrVmPub.top[-index];
+		value = Scr_GetValue(index);
 		Scr_CastDebugString(value);
 		return SL_ConvertToString(value->u.stringValue);
 	}
@@ -413,7 +418,7 @@ void Scr_GetAnim(scr_anim_s *pAnim, unsigned int index, XAnimTree_s *tree)
 	if ( index >= scrVmPub.outparamcount )
 		goto paramerror;
 
-	pValue = &scrVmPub.top[-index];
+	pValue = Scr_GetValue(index);
 
 	if ( pValue->type != VAR_ANIMATION )
 	{
@@ -456,7 +461,7 @@ paramerror:
 const char* Scr_GetTypeName(unsigned int index)
 {
 	if ( index < scrVmPub.outparamcount )
-		return var_typename[scrVmPub.top[-index].type];
+		return var_typename[Scr_GetValue(index)->type];
 
 	Scr_Error(va("parameter %d does not exist", index + 1));
 	return 0;
@@ -476,7 +481,7 @@ unsigned int Scr_GetConstLowercaseString(unsigned int index)
 		return 0;
 	}
 
-	value = &scrVmPub.top[-index];
+	value = Scr_GetValue(index);
 
 	if ( !Scr_CastString(value) )
 	{
@@ -513,7 +518,7 @@ unsigned int Scr_GetObject(unsigned int paramnum)
 		return 0;
 	}
 
-	var = &scrVmPub.top[-paramnum];
+	var = Scr_GetValue(paramnum);
 
 	if (var->type == VAR_OBJECT)
 	{
@@ -1366,7 +1371,7 @@ void Scr_NotifyNum(int entnum, unsigned int classnum, unsigned int stringValue, 
 	unsigned int params;
 
 	Scr_ClearOutParams();
-	entryValue = &scrVmPub.top[-paramcount];
+	entryValue = Scr_GetValue(paramcount);
 	params = scrVmPub.inparamcount - paramcount;
 	id = FindEntityId(entnum, classnum);
 
@@ -3622,7 +3627,7 @@ unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int para
 	unsigned int numparams;
 
 	Scr_ClearOutParams();
-	startTop = &scrVmPub.top[-paramcount];
+	startTop = Scr_GetValue(paramcount);
 	numparams = scrVmPub.inparamcount - paramcount;
 
 	if ( scrVmPub.function_count > 29 )
