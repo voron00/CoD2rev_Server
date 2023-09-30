@@ -1481,10 +1481,10 @@ const char* Scr_ReadCodePos(const char **pos)
 	return value;
 }
 
-unsigned int Scr_ReadUnsigned(const char **pos)
+uintptr_t Scr_ReadUnsigned(const char **pos)
 {
-	unsigned int value = *(reinterpret_cast<const unsigned int*>(*pos));
-	*pos += sizeof(unsigned int);
+	uintptr_t value = *(reinterpret_cast<const uintptr_t*>(*pos));
+	*pos += sizeof(uintptr_t);
 	return value;
 }
 
