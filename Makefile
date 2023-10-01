@@ -2,9 +2,9 @@
 CC = gcc
 CXX = g++
 WINDRES=windres
+
 CFLAGS=-m32
-CFLAGS_LIBS=-m32
-LFLAGS=-m32 -no-pie
+LFLAGS=-m32 -no-pie -ldl
 
 ifeq ($(OS),Windows_NT)
 LLIBS=-static -mwindows -lws2_32 -lwinmm
@@ -185,7 +185,7 @@ $(OBJ_DIR)/%.res: $(WIN32_DIR)/%.rc
 # A rule to build zlib source code.
 $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS_LIBS) -o $@ $<
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 # A rule to build libcod source code.
 $(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
@@ -195,7 +195,7 @@ $(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
 # A rule to build sqlite source code.
 $(OBJ_DIR)/%.o: $(SQLITE_DIR)/%.c
 	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS_LIBS) -o $@ $<
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 
 # Cleanup
