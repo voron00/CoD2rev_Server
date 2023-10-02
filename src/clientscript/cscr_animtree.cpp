@@ -27,7 +27,7 @@ void SetAnimCheck(int bAnimCheck)
 
 XAnim* Scr_GetAnims(unsigned int index)
 {
-	return (XAnim_s *)scrAnimPub.xanim_num[index - 128];
+	return scrAnimPub.xanim_lookup[1][index].anims;
 }
 
 unsigned int Scr_UsingTreeInternal(const char *filename, unsigned int *index, int user)
