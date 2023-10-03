@@ -261,7 +261,7 @@ void* Hunk_AllocAlignInternal(int size, int aligment)
 
 void *Hunk_AllocInternal(int size)
 {
-	return Hunk_AllocAlignInternal(size, 32); // sizeof( hunkHeader_t ) * 2 ???
+	return Hunk_AllocAlignInternal(size, 32);
 }
 
 void* Hunk_AllocateTempMemoryInternal(int size)
@@ -275,9 +275,9 @@ void* Hunk_AllocateTempMemoryInternal(int size)
 		return Z_MallocInternal(size);
 	}
 
-	size += sizeof( hunkHeader_t );
+	size += 16;
 	prev_temp = hunk_low.temp;
-	hunk_low.temp = PAD(hunk_low.temp, sizeof( hunkHeader_t ));
+	hunk_low.temp = PAD(hunk_low.temp, 16);
 	buf = &s_hunkData[hunk_low.temp];
 	hunk_low.temp += size;
 
@@ -305,7 +305,7 @@ void* Hunk_AllocateTempMemoryInternal(int size)
 void* Hunk_AllocateTempMemoryHighInternal(int size)
 {
 	hunk_high.temp += size;
-	hunk_high.temp = PAD(hunk_high.temp, sizeof( hunkHeader_t ));
+	hunk_high.temp = PAD(hunk_high.temp, 16);
 
 	if (hunk_low.temp + hunk_high.temp > s_hunkTotal)
 	{
@@ -353,12 +353,12 @@ void Hunk_ConvertTempToPermLowInternal()
 
 void* Hunk_AllocLowInternal(int size)
 {
-	return Hunk_AllocLowAlignInternal(size, 32); // sizeof( hunkHeader_t ) * 2 ???
+	return Hunk_AllocLowAlignInternal(size, 32);
 }
 
 void* Hunk_ReallocateTempMemoryInternal(int size)
 {
-	hunk_low.temp = PAD(hunk_low.permanent, 32); // sizeof( hunkHeader_t ) * 2 ???
+	hunk_low.temp = PAD(hunk_low.permanent, 32);
 	hunk_low.temp += size;
 
 	if ( hunk_low.temp + hunk_high.temp > s_hunkTotal )
@@ -372,7 +372,7 @@ void* Hunk_ReallocateTempMemoryInternal(int size)
 		    hunk_high.temp / (1024*1024));
 	}
 
-	return &s_hunkData[PAD(hunk_low.permanent, 32)]; // sizeof( hunkHeader_t ) * 2 ???
+	return &s_hunkData[PAD(hunk_low.permanent, 32)];
 }
 
 int Hunk_SetMark()
