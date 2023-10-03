@@ -1276,7 +1276,7 @@ int yylex()
 		{
 			yy_start = 1; /* first start state */
 		}
-#if 0
+
 		if ( !yyin )
 		{
 			yyin = yy_stdin();
@@ -1284,9 +1284,9 @@ int yylex()
 
 		if ( !yyout )
 		{
-			yyout = yy_stdout() + 1;
+			yyout = yy_stdout();
 		}
-#endif
+
 		if ( !yy_current_buffer )
 		{
 			yy_current_buffer = yy_create_buffer(); // optimized args

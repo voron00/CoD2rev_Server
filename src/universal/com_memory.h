@@ -3,24 +3,16 @@
 #include "../qcommon/qcommon.h"
 #include "../xanim/xanim_public.h"
 
+#define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
+
 #define Com_Memset memset
 #define Com_Memcpy memcpy
 #define Com_Memcmp memcmp
-
-#define MIN_DEDICATED_COMHUNKMEGS 1
-
-#define MIN_COMHUNKMEGS 80
-#define DEF_COMHUNKMEGS 160
-#define MAX_COMHUNKMEGS 512
 
 #define HUNK_MAGIC  0x89537892
 #define HUNK_FREE_MAGIC 0x89537893
 
 #define FILEDATA_HASH_SIZE 1024
-
-#define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
-#define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
-#define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
 
 typedef struct
 {
@@ -28,11 +20,13 @@ typedef struct
 	int temp;
 } hunkUsed_t;
 
-typedef struct
+struct hunkHeader_t
 {
-	int magic;
+	unsigned int magic;
 	int size;
-} hunkHeader_t;
+	const char *name;
+	int dummy;
+};
 
 #pragma pack(push)
 #pragma pack(1)
