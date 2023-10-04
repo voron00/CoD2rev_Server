@@ -415,7 +415,7 @@ LABEL_32:
 				}
 
 				Vec3Lerp(ps->origin, down, trace.fraction, ps->origin);
-				PM_ClipVelocity(ps->velocity, trace.normal, ps->velocity);
+				PM_ProjectVelocity(ps->velocity, trace.normal, ps->velocity);
 			}
 		}
 
