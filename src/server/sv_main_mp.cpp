@@ -1160,11 +1160,12 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg )
 {
 	char    *s;
 	const char    *c;
+	char strBuf[MAX_STRING_CHARS];
 
 	MSG_BeginReading(msg);
 	MSG_ReadLong(msg);
 	SV_Netchan_AddOOBProfilePacket(msg->cursize);
-	s = MSG_ReadStringLine( msg );
+	s = MSG_ReadStringLine( msg, strBuf, sizeof(strBuf) );
 	Cmd_TokenizeString( s );
 	c = Cmd_Argv( 0 );
 

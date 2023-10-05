@@ -1932,9 +1932,10 @@ qboolean SV_ClientCommand( client_t *cl, msg_t *msg )
 	const char  *s;
 	qboolean clientOk = qtrue;
 	qboolean floodprotect = qtrue;
+	char strBuf[MAX_STRING_CHARS];
 
 	seq = MSG_ReadLong( msg );
-	s = MSG_ReadCommandString( msg );
+	s = MSG_ReadString( msg, strBuf, sizeof(strBuf) );
 
 	// see if we have already executed it
 	if ( cl->lastClientCommand >= seq )

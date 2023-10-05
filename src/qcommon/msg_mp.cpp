@@ -264,11 +264,10 @@ static const int msg_hData[256] =
 	13504,			// 255
 };
 
-void MSG_initHuffman()
+void MSG_InitHuffmanInternal() // good
 {
 	int i,j;
 
-	msgInit = qtrue;
 	Huff_Init(&msgHuff);
 
 	for(i=0; i<256; i++)
@@ -281,31 +280,34 @@ void MSG_initHuffman()
 	}
 }
 
-void MSG_Init( msg_t *buf, byte *data, int length )
+void MSG_InitHuffman() // good
 {
-	if (!msgInit)
-	{
-		MSG_initHuffman();
-	}
-
-	buf->data = data;
-	buf->maxsize = length;
-	buf->overflowed = qfalse;
-	buf->cursize = 0;
-	buf->readcount = 0;
-	buf->bit = 0;
+	msgInit = qtrue;
+	MSG_InitHuffmanInternal();
 }
 
-void MSG_BeginReading( msg_t *msg )
+void MSG_Init(msg_t *buf, byte *data, int length) // good
+{
+	if ( !msgInit )
+	{
+		MSG_InitHuffman();
+	}
+
+	Com_Memset(buf, 0, sizeof(msg_t));
+	buf->data = data;
+	buf->maxsize = length;
+}
+
+void MSG_BeginReading(msg_t *msg) // good
 {
 	msg->overflowed = qfalse;
 	msg->readcount = 0;
 	msg->bit = 0;
 }
 
-void MSG_WriteBits(msg_t *msg, int bits, int bitcount)
+void MSG_WriteBits(msg_t *msg, int value, unsigned int bits) // good
 {
-	int i;
+	int bit;
 
 	if ( msg->maxsize - msg->cursize < 4 )
 	{
@@ -313,111 +315,114 @@ void MSG_WriteBits(msg_t *msg, int bits, int bitcount)
 		return;
 	}
 
-	if ( bitcount )
+	while ( bits )
 	{
-		for (i = 0 ; bitcount != i; i++)
+		--bits;
+		bit = msg->bit & 7;
+
+		if ( !bit )
 		{
-
-			if ( !(msg->bit & 7) )
-			{
-				msg->bit = 8 * msg->cursize;
-				msg->data[msg->cursize] = 0;
-				msg->cursize++;
-			}
-
-			if ( bits & 1 )
-				msg->data[msg->bit >> 3] |= 1 << (msg->bit & 7);
-
-			msg->bit++;
-			bits >>= 1;
+			msg->bit = 8 * msg->cursize;
+			msg->data[msg->cursize++] = 0;
 		}
+
+		if ( (value & 1) != 0 )
+			msg->data[msg->bit >> 3] |= 1 << bit;
+
+		++msg->bit;
+		value >>= 1;
 	}
 }
 
-void MSG_WriteBit0( msg_t* msg )
+void MSG_WriteBit0(msg_t* msg) // good
 {
-	if(!(msg->bit & 7))
+	if (msg->maxsize <= msg->cursize)
 	{
-		if(msg->maxsize <= msg->cursize)
-		{
-			msg->overflowed = qtrue;
-			return;
-		}
-		msg->bit = msg->cursize*8;
+		msg->overflowed = qtrue;
+		return;
+	}
+
+	if (!(msg->bit & 7))
+	{
+		msg->bit = msg->cursize * 8;
 		msg->data[msg->cursize] = 0;
 		msg->cursize ++;
 	}
+
 	msg->bit++;
 }
 
-void MSG_WriteBit1(msg_t *msg)
+void MSG_WriteBit1(msg_t *msg) // good
 {
-	if ( !(msg->bit & 7) )
+	int bit;
+
+	if (msg->maxsize <= msg->cursize)
 	{
-		if ( msg->cursize >= msg->maxsize )
-		{
-			msg->overflowed = qtrue;
-			return;
-		}
-		msg->bit = 8 * msg->cursize;
-		msg->data[msg->cursize] = 0;
-		msg->cursize++;
+		msg->overflowed = qtrue;
+		return;
 	}
-	msg->data[msg->bit >> 3] |= 1 << (msg->bit & 7);
-	msg->bit++;
+
+	bit = msg->bit & 7;
+
+	if ( !bit )
+	{
+		msg->bit = 8 * msg->cursize;
+		msg->data[msg->cursize++] = 0;
+	}
+
+	msg->data[msg->bit++ >> 3] |= 1 << bit;
 }
 
-int MSG_ReadBits(msg_t *msg, int bits)
+int MSG_ReadBits(msg_t *msg, int bits) // good
 {
 	int i;
-	signed int var;
-	int retval;
+	int bit;
+	int value;
 
-	retval = 0;
+	value = 0;
 
-	if ( bits > 0 )
+	for ( i = 0; i < bits; ++i )
 	{
-		for(i = 0 ; bits != i; i++)
+		bit = msg->bit & 7;
+
+		if ( !bit )
 		{
-			if ( !(msg->bit & 7) )
+			if ( msg->readcount >= msg->cursize )
 			{
-				if ( msg->readcount >= msg->cursize )
-				{
-					msg->overflowed = qtrue;
-					return -1;
-				}
-				msg->bit = 8 * msg->readcount;
-				msg->readcount++;
+				msg->overflowed = qtrue;
+				return -1;
 			}
-			var = msg->data[msg->bit / 8];
-			retval |= ((var >> (msg->bit & 7)) & 1) << i;
-			msg->bit++;
+
+			msg->bit = 8 * msg->readcount++;
 		}
+
+		value |= ((msg->data[msg->bit++ >> 3] >> bit) & 1) << i;
 	}
 
-	return retval;
+	return value;
 }
 
-int MSG_ReadBit(msg_t *msg)
+int MSG_ReadBit(msg_t *msg) // good
 {
-	int oldbit;
+	int bit;
 
-	oldbit = msg->bit & 7;
+	bit = msg->bit & 7;
 
-	if ( oldbit )
-		return (msg->data[msg->bit++ >> 3] >> oldbit) & 1;
-
-	if ( msg->readcount < msg->cursize )
+	if ( !bit )
 	{
+		if ( msg->readcount >= msg->cursize )
+		{
+			msg->overflowed = qtrue;
+			return -1;
+		}
+
 		msg->bit = 8 * msg->readcount++;
-		return (msg->data[msg->bit++ >> 3] >> oldbit) & 1;
 	}
 
-	msg->overflowed = qtrue;
-	return -1;
+	return (msg->data[msg->bit++ >> 3] >> bit) & 1;
 }
 
-int MSG_WriteBitsCompress( const byte *datasrc, byte *buffdest, int bytecount)
+int MSG_WriteBitsCompress(const byte *datasrc, byte *buffdest, int bytecount) // good
 {
 	int offset;
 	int i;
@@ -435,7 +440,7 @@ int MSG_WriteBitsCompress( const byte *datasrc, byte *buffdest, int bytecount)
 	return (offset + 7) / 8;
 }
 
-int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize)
+int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize) // good
 {
 	readsize = readsize * 8;
 	byte *outptr = outputBuf;
@@ -459,256 +464,166 @@ int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize)
 	return i;
 }
 
-void MSG_WriteData(msg_t *buf, const void *data, int length)
+void MSG_WriteData(msg_t *buf, const void *data, int length) // good
 {
-	int size;
+	int newsize = buf->cursize + length;
 
-	size = buf->cursize + length;
-
-	if ( size > buf->maxsize )
+	if ( newsize > buf->maxsize )
 	{
 		buf->overflowed = qtrue;
 	}
 	else
 	{
 		Com_Memcpy(&buf->data[buf->cursize], data, length);
-		buf->cursize = size;
+		buf->cursize = newsize;
 	}
 }
 
-void MSG_WriteByte( msg_t *msg, int c )
+void MSG_WriteByte(msg_t *msg, int c) // good
 {
-	int8_t* dst;
+	int newsize = msg->cursize + sizeof(uint8_t);
 
-	if ( msg->maxsize - msg->cursize < sizeof(int8_t) )
+	if ( newsize > msg->maxsize )
 	{
 		msg->overflowed = qtrue;
-		return;
-	}
-
-	dst = (int8_t*)&msg->data[msg->cursize];
-	*dst = c;
-	msg->cursize += sizeof(int8_t);
-}
-
-void MSG_WriteShort( msg_t *msg, int c )
-{
-	int16_t* dst;
-
-	if ( msg->maxsize - msg->cursize < sizeof(int16_t) )
-	{
-		msg->overflowed = qtrue;
-		return;
-	}
-
-	dst = (int16_t*)&msg->data[msg->cursize];
-	*dst = c;
-	msg->cursize += sizeof(int16_t);
-}
-
-void MSG_WriteLong( msg_t *msg, int c )
-{
-	int32_t *dst;
-
-	if ( msg->maxsize - msg->cursize < sizeof(int32_t) )
-	{
-		msg->overflowed = qtrue;
-		return;
-	}
-
-	dst = (int32_t*)&msg->data[msg->cursize];
-	*dst = c;
-	msg->cursize += sizeof(int32_t);
-}
-
-void MSG_WriteLong64( msg_t *msg, int c )
-{
-	int64_t *dst;
-
-	if ( msg->maxsize - msg->cursize < sizeof(int64_t) )
-	{
-		msg->overflowed = qtrue;
-		return;
-	}
-
-	dst = (int64_t*)&msg->data[msg->cursize];
-	*dst = c;
-	msg->cursize += sizeof(int64_t);
-}
-
-char *MSG_ReadString( msg_t *msg )
-{
-	static char string[MAX_STRING_CHARS];
-	int l,c;
-
-	l = 0;
-	do
-	{
-		c = MSG_ReadByte( msg );      // use ReadByte so -1 is out of bounds
-		if ( c == -1 || c == 0 )
-		{
-			break;
-		}
-		// translate all fmt spec to avoid crash bugs
-		if ( c == '%' )
-		{
-			c = '.';
-		}
-		// don't allow higher ascii values
-		if ( c > 127 )
-		{
-			c = '.';
-		}
-
-		string[l] = c;
-		l++;
-	}
-	while ( l < (int)sizeof( string ) - 1 );
-
-	string[l] = 0;
-
-	return string;
-}
-
-void MSG_WriteString( msg_t *sb, const char *s )
-{
-	if ( !s )
-	{
-		MSG_WriteData( sb, "", 1 );
 	}
 	else
 	{
-		int l;
-		char string[MAX_STRING_CHARS];
-
-		l = strlen( s );
-
-		if ( l >= MAX_STRING_CHARS )
-		{
-			Com_Printf("MSG_WriteString: MAX_STRING_CHARS" );
-			MSG_WriteData( sb, "", 1 );
-			return;
-		}
-
-		I_strncpyz( string, s, sizeof( string ) );
-		MSG_WriteData( sb, string, l + 1 );
+		*(uint8_t *)&msg->data[msg->cursize] = c;
+		msg->cursize = newsize;
 	}
 }
 
-void MSG_WriteBigString( msg_t *sb, const char *s )
+void MSG_WriteShort(msg_t *msg, int c) // good
 {
-	if ( !s )
+	int newsize = msg->cursize + sizeof(int16_t);
+
+	if ( newsize > msg->maxsize )
 	{
-		MSG_WriteData( sb, "", 1 );
+		msg->overflowed = qtrue;
 	}
 	else
 	{
-		int l;
-		char string[BIG_INFO_STRING];
-
-		l = strlen( s );
-
-		if ( l >= BIG_INFO_STRING )
-		{
-			Com_Printf("MSG_WriteString: BIG_INFO_STRING" );
-			MSG_WriteData( sb, "", 1 );
-			return;
-		}
-
-		I_strncpyz( string, s, sizeof( string ) );
-		MSG_WriteData( sb, string, l + 1 );
+		*(int16_t *)&msg->data[msg->cursize] = c;
+		msg->cursize = newsize;
 	}
 }
 
-int MSG_GetByte(msg_t *msg, int where)
+void MSG_WriteLong(msg_t *msg, int c) // good
 {
-	return msg->data[where];
+	int newsize = msg->cursize + sizeof(int32_t);
+
+	if ( newsize > msg->maxsize )
+	{
+		msg->overflowed = qtrue;
+	}
+	else
+	{
+		*(int32_t *)&msg->data[msg->cursize] = c;
+		msg->cursize = newsize;
+	}
 }
 
-int MSG_GetShort(msg_t *msg, int where)
+void MSG_WriteString(msg_t *sb, const char *s) // good
 {
-	return *(int16_t*)&msg->data[where];
+	int i;
+	int l;
+	char string[MAX_STRING_CHARS];
+
+	l = strlen( s );
+
+	if ( l >= MAX_STRING_CHARS )
+	{
+		Com_Printf("MSG_WriteString: MAX_STRING_CHARS" );
+		MSG_WriteData( sb, "", 1 );
+		return;
+	}
+
+	for ( i = 0; i < l; ++i )
+	{
+		string[i] = I_CleanChar(s[i]);
+	}
+
+	string[i] = 0;
+	MSG_WriteData(sb, string, l + 1);
 }
 
-int MSG_GetLong(msg_t *msg, int where)
+void MSG_WriteBigString(msg_t *sb, const char *s) // good
 {
-	return *(int32_t*)&msg->data[where];
+	int i;
+	int l;
+	char string[BIG_INFO_STRING];
+
+	l = strlen( s );
+
+	if ( l >= BIG_INFO_STRING )
+	{
+		Com_Printf("MSG_WriteString: BIG_INFO_STRING" );
+		MSG_WriteData( sb, "", 1 );
+		return;
+	}
+
+	I_strncpyz( string, s, sizeof( string ) );
+
+	for ( i = 0; i < l; ++i )
+	{
+		string[i] = I_CleanChar(s[i]);
+	}
+
+	MSG_WriteData(sb, string, l + 1);
 }
 
-int MSG_GetLong64(msg_t *msg, int where)
+int MSG_ReadByte(msg_t *msg) // good
 {
-	return *(int64_t*)&msg->data[where];
-}
+	int newcount = msg->readcount + sizeof(uint8_t);
 
-int MSG_ReadByte( msg_t *msg )
-{
-	byte	c;
-
-	if ( msg->readcount+(int)sizeof(byte) > msg->cursize )
+	if ( newcount > msg->cursize )
 	{
 		msg->overflowed = qtrue;
 		return -1;
 	}
 
-	c = MSG_GetByte(msg, msg->readcount);
-	msg->readcount += sizeof(byte);
+	uint8_t c = *(uint8_t *)&msg->data[msg->readcount];
+	msg->readcount = newcount;
 
 	return c;
 }
 
-int MSG_ReadShort( msg_t *msg )
+int MSG_ReadShort(msg_t *msg) // good
 {
-	int16_t	c;
+	int newcount = msg->readcount + sizeof(int16_t);
 
-	if ( msg->readcount+(int)sizeof(short) > msg->cursize )
+	if ( newcount > msg->cursize )
 	{
 		msg->overflowed = qtrue;
 		return -1;
 	}
 
-	c = MSG_GetShort(msg, msg->readcount);
-	msg->readcount += sizeof(short);
+	int16_t c = *(int16_t *)&msg->data[msg->readcount];
+	msg->readcount = newcount;
 
 	return c;
 }
 
-int MSG_ReadLong( msg_t *msg )
+int MSG_ReadLong(msg_t *msg) // good
 {
-	int32_t	c;
+	int newcount = msg->readcount + sizeof(int32_t);
 
-	if ( msg->readcount+(int)sizeof(int32_t) > msg->cursize )
+	if ( newcount > msg->cursize )
 	{
 		msg->overflowed = qtrue;
 		return -1;
 	}
 
-	c = MSG_GetLong(msg, msg->readcount);
-	msg->readcount += sizeof(int32_t);
+	int32_t c = *(int32_t *)&msg->data[msg->readcount];
+	msg->readcount = newcount;
 
 	return c;
 }
 
-int MSG_ReadLong64( msg_t *msg )
+void MSG_ReadData(msg_t *msg, void *data, int len) // good
 {
-	int64_t	c;
-
-	if ( msg->readcount+(int)sizeof(int64_t) > msg->cursize )
-	{
-		msg->overflowed = qtrue;
-		return -1;
-	}
-
-	c = MSG_GetLong(msg, msg->readcount);
-	msg->readcount += sizeof(int64_t);
-
-	return c;
-}
-
-void MSG_ReadData(msg_t *msg, void *data, int len)
-{
-	int size;
-
-	size = msg->readcount + len;
+	int size = msg->readcount + len;
 
 	if ( size > msg->cursize )
 	{
@@ -722,85 +637,55 @@ void MSG_ReadData(msg_t *msg, void *data, int len)
 	}
 }
 
-char *MSG_ReadCommandString( msg_t *msg )
+char *MSG_ReadString(msg_t *msg, char *string, unsigned int maxChars) // good
 {
-	static char string[MAX_STRING_CHARS];
-	int l,c;
+	int c;
+	unsigned int l;
 
-	l = 0;
-	do
+	for ( l = 0; ; ++l )
 	{
-		c = MSG_ReadByte( msg );      // use ReadByte so -1 is out of bounds
-		if ( c == -1 || c == 0 )
-		{
+		c = MSG_ReadByte(msg);
+
+		if ( c == -1 )
+			c = 0;
+
+		if ( l < maxChars )
+			string[l] = I_CleanChar(c);
+
+		if ( !c )
 			break;
-		}
-
-		string[l] = I_CleanChar(c);
-		l++;
 	}
-	while ( l < sizeof( string ) - 1 );
 
-	string[l] = 0;
-
+	string[maxChars - 1] = 0;
 	return string;
 }
 
-char *MSG_ReadBigString( msg_t *msg )
+char *MSG_ReadStringLine(msg_t *msg, char *string, unsigned int maxChars) // good
 {
-	static char string[BIG_INFO_STRING];
-	int l,c;
+	int c;
+	unsigned int l;
 
-	l = 0;
-	do
+	for ( l = 0; ; ++l )
 	{
-		c = MSG_ReadByte( msg );      // use ReadByte so -1 is out of bounds
-		if ( c == -1 || c == 0 )
+		c = MSG_ReadByte(msg);
+
+		if ( c == 37 )
 		{
+			c = 46;
+		}
+		else if ( c == 10 || c == -1 )
+		{
+			c = 0;
+		}
+
+		if ( l < maxChars )
+			string[l] = I_CleanChar(c);
+
+		if ( !c )
 			break;
-		}
-		// translate all fmt spec to avoid crash bugs
-		if ( c == '%' )
-		{
-			c = '.';
-		}
-
-		string[l] = I_CleanChar(c);
-		l++;
 	}
-	while ( l < sizeof( string ) - 1 );
 
-	string[l] = 0;
-
-	return string;
-}
-
-char *MSG_ReadStringLine( msg_t *msg )
-{
-	static char string[MAX_STRING_CHARS];
-	int l,c;
-
-	l = 0;
-	do
-	{
-		c = MSG_ReadByte( msg );      // use ReadByte so -1 is out of bounds
-		if ( c == 10 || c == -1 || c == 0 )
-		{
-			break;
-		}
-		// translate all fmt spec to avoid crash bugs
-		if ( c == '%' )
-		{
-			c = '.';
-		}
-
-		string[l] = I_CleanChar(c);
-		l++;
-	}
-	while ( l < sizeof( string ) - 1 );
-
-	string[l] = 0;
-
+	string[maxChars - 1] = 0;
 	return string;
 }
 
