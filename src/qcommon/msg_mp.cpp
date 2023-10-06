@@ -689,38 +689,38 @@ char *MSG_ReadStringLine(msg_t *msg, char *string, unsigned int maxChars) // goo
 	return string;
 }
 
-void MSG_WriteReliableCommandToBuffer(const char *source, char *destination, int length)
+void MSG_WriteReliableCommandToBuffer(const char *pszCommand, char *pszBuffer, int iBufferSize) // good
 {
+	int iCommandLength;
 	int i;
-	int requiredlen;
 
-	if ( *source == '\0' )
+	iCommandLength = strlen(pszCommand);
+
+	if ( iCommandLength >= iBufferSize )
+		Com_Printf(
+		    "WARNING: Reliable command is too long (%i/%i) and will be truncated: '%s'\n",
+		    iCommandLength,
+		    iBufferSize,
+		    pszCommand);
+
+	if ( !iCommandLength )
 		Com_Printf("WARNING: Empty reliable command\n");
 
-	for (i = 0 ; i < (length -1) && source[i] != '\0'; i++)
+	for ( i = 0; i < iBufferSize && pszCommand[i]; ++i )
 	{
-		destination[i] = I_CleanChar(source[i]);
+		pszBuffer[i] = I_CleanChar(pszCommand[i]);
 
-		if ( destination[i] == '%' )
-		{
-			destination[i] = '.';
-		}
+		if ( pszBuffer[i] == 37 )
+			pszBuffer[i] = 46;
 	}
 
-	destination[i] = '\0';
-
-	if ( i == length -1)
-	{
-		requiredlen = strlen(source) + 1;
-
-		if (requiredlen > length)
-		{
-			Com_Printf("WARNING: Reliable command is too long (%i/%i) and will be truncated: '%s'\n", requiredlen, length, source);
-		}
-	}
+	if ( i >= iBufferSize )
+		pszBuffer[iBufferSize - 1] = 0;
+	else
+		pszBuffer[i] = 0;
 }
 
-void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *ucmd)
+void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *ucmd) // good
 {
 	int i;
 
@@ -797,12 +797,12 @@ uint32_t kbitmask[] =
 	4294967295
 };
 
-unsigned int MSG_ReadKey(msg_t *msg, int key, int bits)
+unsigned int MSG_ReadKey(msg_t *msg, int key, int bits) // good
 {
 	return kbitmask[bits] & (key ^ MSG_ReadBits(msg, bits));
 }
 
-int MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits)
+int MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits) // good
 {
 	if ( MSG_ReadBit(msg) )
 	{
@@ -812,7 +812,7 @@ int MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits)
 	return oldV;
 }
 
-int MSG_ReadDeltaKeyShort(msg_t *msg, int key, int oldV)
+int MSG_ReadDeltaKeyShort(msg_t *msg, int key, int oldV) // good
 {
 	if ( MSG_ReadBit(msg) )
 	{
@@ -822,7 +822,7 @@ int MSG_ReadDeltaKeyShort(msg_t *msg, int key, int oldV)
 	return oldV;
 }
 
-int MSG_ReadForwardRightMoveMask(char forwardmove, char rightmove)
+int MSG_GetForwardRightMoveMask(char forwardmove, char rightmove) // good
 {
 	int mask = 0;
 
@@ -845,7 +845,7 @@ int MSG_ReadForwardRightMoveMask(char forwardmove, char rightmove)
 	return mask;
 }
 
-void MSG_ClampForwardRightmove(char key, char *forwardmove, char *rightmove)
+void MSG_ReadForwardRightMove(char key, char *forwardmove, char *rightmove) // good
 {
 	if ( (key & 1) != 0 )
 	{
@@ -874,7 +874,7 @@ void MSG_ClampForwardRightmove(char key, char *forwardmove, char *rightmove)
 	}
 }
 
-void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to)
+void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to) // good
 {
 	int mask;
 	int newkey;
@@ -896,9 +896,9 @@ void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to
 			to->buttons |= MSG_ReadKey(msg, key, 1);
 			to->angles[0] = MSG_ReadDeltaKeyShort(msg, key, from->angles[0]);
 			to->angles[1] = MSG_ReadDeltaKeyShort(msg, key, from->angles[1]);
-			mask = MSG_ReadForwardRightMoveMask(from->forwardmove, from->rightmove);
+			mask = MSG_GetForwardRightMoveMask(from->forwardmove, from->rightmove);
 			deltakey = MSG_ReadDeltaKey(msg, key, mask, 4);
-			MSG_ClampForwardRightmove(deltakey, &to->forwardmove, &to->rightmove);
+			MSG_ReadForwardRightMove(deltakey, &to->forwardmove, &to->rightmove);
 			newkey = to->serverTime ^ key;
 			to->angles[2] = MSG_ReadDeltaKeyShort(msg, newkey, from->angles[2]);
 			to->buttons &= 1u;
@@ -912,28 +912,28 @@ void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to
 			to->buttons |= MSG_ReadKey(msg, newkey, 1);
 			to->angles[0] = MSG_ReadDeltaKeyShort(msg, newkey, from->angles[0]);
 			to->angles[1] = MSG_ReadDeltaKeyShort(msg, newkey, from->angles[1]);
-			mask = MSG_ReadForwardRightMoveMask(from->forwardmove, from->rightmove);
+			mask = MSG_GetForwardRightMoveMask(from->forwardmove, from->rightmove);
 			deltakey = MSG_ReadDeltaKey(msg, newkey, mask, 4);
-			MSG_ClampForwardRightmove(deltakey, &to->forwardmove, &to->rightmove);
+			MSG_ReadForwardRightMove(deltakey, &to->forwardmove, &to->rightmove);
 		}
 	}
 }
 
-void MSG_WriteAngle16( msg_t *sb, float f )
+void MSG_WriteAngle16( msg_t *sb, float f ) // good
 {
 	MSG_WriteShort( sb, ANGLE2SHORT( f ) );
 }
 
-void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const netField_t *field)
+void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const netField_t *field) // good
 {
 	int32_t absbits;
-	uint8_t abs3bits;
+	int32_t abs3bits;
 	int32_t bitmask;
 	float floatbits;
 	int32_t signedbits;
 	uint32_t unsignedbits;
 
-	if ( *(uint32_t *)&from[field->offset] == *(uint32_t *)(float *)&to[field->offset] )
+	if ( *(uint32_t *)&from[field->offset] == *(uint32_t *)&to[field->offset] )
 	{
 		MSG_WriteBit0(msg);
 		return;
@@ -947,7 +947,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 
 	switch (field->bits)
 	{
-	case 0:
+	case 0: // good
 		if ( floatbits == 0.0 )
 		{
 			MSG_WriteBit0(msg);
@@ -957,7 +957,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		if ( (float)signedbits == floatbits && (unsigned int)(signedbits + 4096) <= 0x1FFF )
 		{
 			MSG_WriteBit0(msg);
-			MSG_WriteBits(msg, signedbits + 4096, 5);
+			MSG_WriteBits(msg, (signedbits + 4096), 5);
 			MSG_WriteByte(msg, (signedbits + 4096) >> 5);
 			return;
 		}
@@ -965,7 +965,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		MSG_WriteLong(msg, unsignedbits);
 		return;
 
-	case -99:
+	case -99: // good
 		if ( floatbits == 0.0 )
 		{
 			MSG_WriteBit0(msg);
@@ -975,15 +975,15 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		if ( (float)signedbits == floatbits && (unsigned int)(signedbits + 512) <= 0x3FF )
 		{
 			MSG_WriteBit0(msg);
-			MSG_WriteBits(msg, signedbits + 512, 4);
-			MSG_WriteByte(msg, (signedbits + 512) >> 4);
+			MSG_WriteBits(msg, (signedbits + 512), 2);
+			MSG_WriteByte(msg, (signedbits + 512) >> 2);
 			return;
 		}
 		MSG_WriteBit1(msg);
 		MSG_WriteLong(msg, unsignedbits);
 		return;
 
-	case -100:
+	case -100: // good
 		if ( unsignedbits )
 		{
 			MSG_WriteBit1(msg);
@@ -993,7 +993,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		MSG_WriteBit0(msg);
 		return;
 
-	default:
+	default: // good
 		if ( unsignedbits )
 		{
 			MSG_WriteBit1(msg);
@@ -1002,7 +1002,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 			abs3bits = absbits & 7;
 			if ( abs3bits )
 			{
-				MSG_WriteBits(msg, bitmask, absbits & 7);
+				MSG_WriteBits(msg, bitmask, abs3bits);
 				absbits -= abs3bits;
 				bitmask >>= abs3bits;
 			}
@@ -1019,7 +1019,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 	}
 }
 
-void MSG_WriteDeltaStruct(msg_t *msg, const byte *from, const byte *to, qboolean force, int numFields, int indexBits, netField_t *stateFields, qboolean bChangeBit)
+void MSG_WriteDeltaStruct(msg_t *msg, const byte *from, const byte *to, qboolean force, int numFields, int indexBits, netField_t *stateFields, qboolean bChangeBit) // good
 {
 	netField_t* field;
 	int lc;
@@ -1083,7 +1083,7 @@ netField_t objectiveFields[] =
 	{ OBJF( teamNum ), 4},
 };
 
-void MSG_WriteDeltaObjective(msg_t *msg,objective_t *from,objective_t *to, int lc, int numFields, netField_t *objFields)
+void MSG_WriteDeltaObjective(msg_t *msg,objective_t *from,objective_t *to, int lc, int numFields, netField_t *objFields) // good
 {
 	int i;
 
@@ -1177,7 +1177,7 @@ netField_t entityStateFields[] =
 
 void MSG_WriteDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, qboolean force)
 {
-	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, 59, 10, entityStateFields, 0);
+	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, COUNT_OF(entityStateFields), 10, entityStateFields, 0);
 }
 
 #define AEF( x ) # x,(intptr_t)&( (archivedEntity_t*)0 )->x
@@ -1255,7 +1255,7 @@ netField_t archivedEntityFields[] =
 
 void MSG_WriteDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int flags)
 {
-	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, flags, 68, 10, archivedEntityFields, 0);
+	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, flags, COUNT_OF(archivedEntityFields), 10, archivedEntityFields, 0);
 }
 
 #define CSF( x ) # x,(intptr_t)&( (clientState_t*)0 )->x
@@ -1295,7 +1295,7 @@ void MSG_WriteDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, qb
 		Com_Memset(&nullstate, 0, sizeof(nullstate));
 	}
 
-	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, 22, 6, clientStateFields, 1);
+	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, COUNT_OF(clientStateFields), 6, clientStateFields, 1);
 }
 
 float MSG_ReadAngle16(msg_t *msg)
@@ -1308,7 +1308,6 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 	int *fromF, *toF;
 	int readbits;
 	int readbyte;
-	int bitstemp;
 	uint32_t unsignedbits;
 	int bitcount;
 
@@ -1380,10 +1379,9 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 			unsignedbits = (unsigned int)field->bits >> 31;
 			readbits = abs(field->bits);
 			if ( (readbits & 7) != 0 )
-				bitstemp = MSG_ReadBits(msg, readbits & 7);
+				readbyte = MSG_ReadBits(msg, readbits & 7);
 			else
-				bitstemp = 0;
-			readbyte = bitstemp;
+				readbyte = 0;
 			for ( bitcount = readbits & 7; bitcount < readbits; bitcount += 8 )
 				readbyte |= MSG_ReadByte(msg) << bitcount;
 			if ( unsignedbits && ((readbyte >> (readbits - 1)) & 1) != 0 )
