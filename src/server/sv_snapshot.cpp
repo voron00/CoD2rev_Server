@@ -630,17 +630,16 @@ void SV_BuildClientSnapshot( client_t *client )
 			*entState = aent->s;
 
 			if ( entState->pos.trTime )
-			{
 				entState->pos.trTime += snapTime;
-			}
+
 			if ( entState->apos.trTime )
-			{
 				entState->apos.trTime += snapTime;
-			}
+
+			if ( entState->time )
+				entState->time += snapTime;
+
 			if ( entState->time2 )
-			{
 				entState->time2 += snapTime;
-			}
 
 			svs.nextSnapshotEntities++;
 			// this should never hit, map should always be restarted first in SV_Frame
