@@ -831,7 +831,7 @@ SV_ConSay_f
 void SV_ConSay_f( void )
 {
 	char    *p;
-	char text[1024];
+	char text[MAX_STRING_CHARS];
 
 	// make sure server is running
 	if ( !com_sv_running->current.boolean )
@@ -846,7 +846,7 @@ void SV_ConSay_f( void )
 	}
 
 	strcpy( text, "console: " );
-	p = Cmd_Args();
+	p = Cmd_Args(1);
 
 	if ( *p == '"' )
 	{
@@ -854,8 +854,7 @@ void SV_ConSay_f( void )
 		p[strlen( p ) - 1] = 0;
 	}
 
-	strcat( text, p );
-
+	I_strncat(text, sizeof(text), p);
 	SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"\x15%s\"", 104, text);
 }
 
@@ -867,7 +866,7 @@ SV_ConTell_f
 void SV_ConTell_f( void )
 {
 	char    *p;
-	char text[1024];
+	char text[MAX_STRING_CHARS];
 	client_t *cl;
 	int num;
 
@@ -896,12 +895,7 @@ void SV_ConTell_f( void )
 	}
 
 	strcpy( text, "console: " );
-	p = Cmd_Args();
-
-	if (num < 10)
-		p+=2;
-	else
-		p+=3;
+	p = Cmd_Args(2);
 
 	if ( *p == '"' )
 	{
@@ -909,8 +903,7 @@ void SV_ConTell_f( void )
 		p[strlen( p ) - 1] = 0;
 	}
 
-	strcat( text, p );
-
+	I_strncat(text, sizeof(text), p);
 	SV_SendServerCommand(cl, SV_CMD_CAN_IGNORE, "%c \"\x15%s\"", 104, text);
 }
 

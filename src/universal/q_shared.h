@@ -153,7 +153,7 @@ typedef int	clipHandle_t;
 // the game guarantees that no string from the network will ever
 // exceed MAX_STRING_CHARS
 #define	MAX_STRING_CHARS	1024	// max length of a string passed to Cmd_TokenizeString
-#define	MAX_STRING_TOKENS	1024	// max tokens resulting from Cmd_TokenizeString
+#define	MAX_STRING_TOKENS	512		// max tokens resulting from Cmd_TokenizeString
 #define	MAX_TOKEN_CHARS		1024	// max length of an individual token
 
 #define	MAX_INFO_STRING		1024
@@ -390,4 +390,4 @@ qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFi
 void SetConfigString(char **ppszConfigString, const char *pszKeyValue);
 void SetConfigString2(unsigned char *pMember, const char *pszKeyValue);
 int I_DrawStrlen(const char *str);
-
+int Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQuotes);

@@ -519,7 +519,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 #define SV_OUTPUTBUF_LENGTH ( 256 * MAX_CLIENTS - 16 )
 	char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 	static unsigned int lasttime = 0;
-	char *cmd_aux;
 
 #ifdef LIBCOD
 	if (!sv_allowRcon->current.boolean)
@@ -583,25 +582,24 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	}
 	else
 	{
-		remaining[0] = 0;
-
 		// ATVI Wolfenstein Misc #284
 		// get the command directly, "rcon <pass> <command>" to avoid quoting issues
 		// extract the command by walking
 		// since the cmd formatting can fuckup (amount of spaces), using a dumb step by step parsing
-		cmd_aux = Cmd_Cmd();
-		cmd_aux += 4;
-		while ( cmd_aux[0] == ' ' )
-			cmd_aux++;
-		while ( cmd_aux[0] && cmd_aux[0] != ' ' ) // password
-			cmd_aux++;
-		while ( cmd_aux[0] == ' ' )
-			cmd_aux++;
+		int len = 0;
+		int maxlen = 1024;
 
-		Q_strcat( remaining, sizeof( remaining ), cmd_aux );
+		for ( int i = 2; i < SV_Cmd_Argc(); ++i )
+		{
+			len = Com_AddToString(SV_Cmd_Argv(i), remaining, len, maxlen, 1);
+			len = Com_AddToString(" ", remaining, len, maxlen, 0);
+		}
 
-		Cmd_ExecuteString( remaining );
-
+		if ( len < maxlen )
+		{
+			remaining[len] = 0;
+			SV_Cmd_ExecuteString(remaining);
+		}
 	}
 
 	Com_EndRedirect();

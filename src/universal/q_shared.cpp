@@ -1349,3 +1349,47 @@ int I_DrawStrlen(const char *str)
 
 	return count;
 }
+
+/*
+==============
+Com_AddToString
+==============
+*/
+int Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQuotes)
+{
+	int addQuotes;
+	int i;
+
+	addQuotes = 0;
+	if (mayAddQuotes)
+	{
+		if (*add)
+		{
+			for (i = 0; i < maxlen - len && add[i]; ++i)
+			{
+				if (add[i] <= 32)
+				{
+					addQuotes = 1;
+					break;
+				}
+			}
+		}
+		else
+		{
+			addQuotes = 1;
+		}
+	}
+	if (addQuotes && len < maxlen)
+	{
+		msg[len++] = 34;
+	}
+	for (i = 0; len < maxlen && add[i]; ++i)
+	{
+		msg[len++] = add[i];
+	}
+	if (addQuotes && len < maxlen)
+	{
+		msg[len++] = 34;
+	}
+	return len;
+}

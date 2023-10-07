@@ -26,7 +26,6 @@ typedef struct cmd_function_s
 static int cmd_argc;
 static char *cmd_argv[MAX_STRING_TOKENS];        // points into cmd_tokenized
 static char cmd_tokenized[BIG_INFO_STRING + MAX_STRING_TOKENS];         // will have 0 bytes inserted
-static char cmd_cmd[BIG_INFO_STRING];         // the original command we received (no token processing)
 static cmd_function_t *cmd_functions;      // possible commands to execute
 
 /*
@@ -50,6 +49,7 @@ const char *Cmd_Argv( int arg )
 	{
 		return "";
 	}
+
 	return cmd_argv[arg];
 }
 
@@ -59,34 +59,23 @@ Cmd_Args
 Returns a single string containing argv(1) to argv(argc()-1)
 ============
 */
-char *Cmd_Args( void )
+char *Cmd_Args( int start )
 {
 	static char cmd_args[MAX_STRING_CHARS];
-	int i;
 
 	cmd_args[0] = 0;
-	for ( i = 1 ; i < cmd_argc ; i++ )
+
+	while ( start < cmd_argc )
 	{
-		strcat( cmd_args, cmd_argv[i] );
-		if ( i != cmd_argc - 1 )
-		{
-			strcat( cmd_args, " " );
-		}
+		I_strncat(cmd_args, sizeof(cmd_args), cmd_argv[start]);
+
+		if ( start != cmd_argc - 1 )
+			I_strncat(cmd_args, sizeof(cmd_args), " ");
+
+		++start;
 	}
 
 	return cmd_args;
-}
-
-/*
-============
-Cmd_ArgsBuffer
-The interpreted versions use this because
-they can't have pointers returned to them
-============
-*/
-void Cmd_ArgsBuffer( char *buffer, int bufferLength )
-{
-	Q_strncpyz( buffer, Cmd_Args(), bufferLength );
 }
 
 /*
@@ -129,6 +118,7 @@ void Cbuf_InsertText( const char *text )
 	int i;
 
 	len = strlen( text ) + 1;
+
 	if ( len + cmd_text.cursize > cmd_text.maxsize )
 	{
 		Com_Printf( "Cbuf_InsertText overflowed\n" );
@@ -146,7 +136,6 @@ void Cbuf_InsertText( const char *text )
 
 	// add a \n
 	cmd_text.data[ len - 1 ] = '\n';
-
 	cmd_text.cursize += len;
 }
 
@@ -172,6 +161,7 @@ void Cmd_ExecuteString( const char *text )
 	for ( prev = &cmd_functions ; *prev ; prev = &cmd->next )
 	{
 		cmd = *prev;
+
 		if ( !I_stricmp( cmd_argv[0],cmd->name ) )
 		{
 			// rearrange the links so that the command will be
@@ -310,7 +300,6 @@ void Cbuf_Execute( void )
 		}
 
 // execute the command line
-
 		Cmd_ExecuteString( line );
 	}
 }
@@ -347,19 +336,6 @@ void Cbuf_ExecuteText( int exec_when, const char *text )
 
 /*
 ============
-Cmd_Cmd
-Retrieve the unmodified command string
-For rcon use when you want to transmit without altering quoting
-ATVI Wolfenstein Misc #284
-============
-*/
-char *Cmd_Cmd()
-{
-	return cmd_cmd;
-}
-
-/*
-============
 Cmd_TokenizeString
 Parses the given string into command line tokens.
 The text is copied to a seperate buffer and 0 characters
@@ -367,129 +343,152 @@ are inserted in the apropriate place, The argv array
 will point into this temporary buffer.
 ============
 */
-void Cmd_TokenizeString( const char *text_in )
+int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char **argv, char *textOut)
 {
-	const char  *text;
-	char    *textOut;
+	const char *str;
+#ifdef TKN_DBG
+	// FIXME TTimo blunt hook to try to find the tokenization of userinfo
+	Com_DPrintf("Cmd_TokenizeString: %s\n", text_in);
+#endif
 
 	// clear previous args
-	cmd_argc = 0;
-
-	if ( !text_in )
-	{
-		return;
-	}
-
-	I_strncpyz( cmd_cmd, text_in, sizeof( cmd_cmd ) );
-
-	text = text_in;
-	textOut = cmd_tokenized;
+	int argc = 0;
 
 	while ( 1 )
 	{
-		if ( cmd_argc == MAX_STRING_TOKENS )
+		if ( argc == MAX_STRING_TOKENS )
 		{
-			return;         // this is usually something malicious
+			return 0;			// this is usually something malicious
 		}
+
+		if ( !--max_tokens )
+			break;
 
 		while ( 1 )
 		{
 			// skip whitespace
-			while ( *text && *text <= ' ' )
+			while ( *text_in && *text_in <= ' ' )
 			{
-				text++;
+				text_in++;
 			}
-			if ( !*text )
+			if ( !*text_in )
 			{
-				return;         // all tokens parsed
+				return argc;			// all tokens parsed
 			}
 
 			// skip // comments
-			if ( text[0] == '/' && text[1] == '/' )
+			if ( text_in[0] == '/' && text_in[1] == '/' )
 			{
-				//bani - lets us put 'http://' in commandlines
-				if ( text == text_in || ( text > text_in && text[-1] != ':' ) )
-				{
-					return;         // all tokens parsed
-				}
+				return argc;			// all tokens parsed
 			}
 
 			// skip /* */ comments
-			if ( text[0] == '/' && text[1] == '*' )
+			if ( text_in[0] == '/' && text_in[1] =='*' )
 			{
-				while ( *text && ( text[0] != '*' || text[1] != '/' ) )
+				while ( *text_in && ( text_in[0] != '*' || text_in[1] != '/' ) )
 				{
-					text++;
+					text_in++;
 				}
-				if ( !*text )
+				if ( !*text_in )
 				{
-					return;     // all tokens parsed
+					return argc;		// all tokens parsed
 				}
-				text += 2;
+				text_in += 2;
 			}
 			else
 			{
-				break;          // we are ready to parse a token
+				break;			// we are ready to parse a token
 			}
 		}
 
 		// handle quoted strings
-		if ( *text == '"' )
+		// NOTE TTimo this doesn't handle \" escaping
+		if ( *text_in == '"' )
 		{
-			cmd_argv[cmd_argc] = textOut;
-			cmd_argc++;
-			text++;
-			while ( *text && *text != '"' )
+			argv[argc++] = textOut;
+
+			for ( str = text_in + 1; *str && *str != '"'; ++str )
 			{
-				*textOut++ = *text++;
+				if ( *str == '\\' && str[1] == '"' )
+					++str;
+
+				*textOut++ = *str;
 			}
+
 			*textOut++ = 0;
-			if ( !*text )
-			{
-				return;     // all tokens parsed
-			}
-			text++;
-			continue;
+
+			if ( !*str )
+				return argc;
+
+			text_in = str + 1;
+
+			if ( !*text_in )
+				return argc;
+
+			if ( *text_in <= ' ' )
+				++text_in;
 		}
-
-		// regular token
-		cmd_argv[cmd_argc] = textOut;
-		cmd_argc++;
-
-		// skip until whitespace, quote, or command
-		while ( *text > ' ' )
+		else
 		{
-			if ( text[0] == '"' )
-			{
-				break;
-			}
+			// regular token
+			argv[argc] = textOut;
+			argc++;
 
-			if ( text[0] == '/' && text[1] == '/' )
+			// skip until whitespace, quote, or command
+			while ( *text_in > ' ' )
 			{
-				//bani - lets us put 'http://' in commandlines
-				if ( text == text_in || ( text > text_in && text[-1] != ':' ) )
+				if ( text_in[0] == '"' )
 				{
 					break;
 				}
+
+				if ( text_in[0] == '/' && text_in[1] == '/' )
+				{
+					break;
+				}
+
+				// skip /* */ comments
+				if ( text_in[0] == '/' && text_in[1] =='*' )
+				{
+					break;
+				}
+
+				*textOut++ = *text_in++;
 			}
 
-			// skip /* */ comments
-			if ( text[0] == '/' && text[1] == '*' )
-			{
-				break;
-			}
+			*textOut++ = 0;
 
-			*textOut++ = *text++;
-		}
+			if ( !*text_in )
+				return argc;
 
-		*textOut++ = 0;
-
-		if ( !*text )
-		{
-			return;     // all tokens parsed
+			if ( *text_in <= ' ' )
+				++text_in;
 		}
 	}
 
+	if ( !*text_in )
+		return argc;
+
+	argv[argc] = textOut;
+
+	while ( *text_in )
+	{
+		*textOut++ = *text_in++;
+	}
+
+	*textOut = 0;
+
+	return argc + 1;
+}
+
+void Cmd_TokenizeStringWithLimit(const char *text_in, int max_tokens)
+{
+	cmd_argc = Cmd_TokenizeStringInternal(text_in, max_tokens, cmd_argv, cmd_tokenized);
+}
+
+void Cmd_TokenizeString(const char *text_in)
+{
+	Cmd_TokenizeStringWithLimit(text_in, 0);
 }
 
 /*
@@ -612,30 +611,40 @@ void Cmd_List_f( void )
 Cmd_Exec_f
 ===============
 */
-void Cmd_Exec_f( void )
+bool Cmd_ExecFromDisk(const char *filename)
 {
-	char    *f;
+	char *text;
+
+	FS_ReadFile(filename, (void **)&text);
+
+	if ( !text )
+		return false;
+
+	Com_Printf("execing %s\n", filename);
+	Cbuf_InsertText(text);
+	FS_FreeFile(text);
+
+	return true;
+}
+
+void Cmd_Exec_f(void)
+{
 	char filename[MAX_QPATH];
 
-	if ( Cmd_Argc() != 2 )
+	if ( Cmd_Argc() == 2 )
 	{
-		Com_Printf( "exec <filename> : execute a script file\n" );
-		return;
+		I_strncpyz(filename, Cmd_Argv(1), sizeof(filename));
+		Com_DefaultExtension(filename, sizeof(filename), ".cfg");
+
+		if ( !Cmd_ExecFromDisk(filename) )
+		{
+			Com_Printf("couldn't exec %s\n", Cmd_Argv(1));
+		}
 	}
-
-	I_strncpyz( filename, Cmd_Argv( 1 ), sizeof( filename ) );
-	Com_DefaultExtension( filename, sizeof( filename ), ".cfg" );
-	FS_ReadFile( filename, (void **)&f );
-
-	if ( !f )
+	else
 	{
-		Com_Printf( "couldn't exec %s\n",Cmd_Argv( 1 ) );
-		return;
+		Com_Printf("exec <filename> : execute a script file\n");
 	}
-
-	Com_Printf( "execing %s\n",Cmd_Argv( 1 ) );
-	Cbuf_InsertText( f );
-	FS_FreeFile( f );
 }
 
 /*
@@ -656,7 +665,7 @@ void Cmd_Vstr_f( void )
 
 		if ( dvar )
 		{
-			if ( dvar->type == DVAR_TYPE_STRING )
+			if ( dvar->type == DVAR_TYPE_STRING || dvar->type == DVAR_TYPE_ENUM )
 			{
 				Cbuf_InsertText( va( "%s\n", Dvar_GetString(cmd) ) );
 			}
@@ -729,7 +738,15 @@ Cmd_Shutdown
 */
 void Cmd_Shutdown()
 {
-	cmd_functions = NULL;
+	cmd_function_t *func;
+
+	while ( cmd_functions )
+	{
+		func = cmd_functions;
+		cmd_functions = cmd_functions->next;
+		Z_FreeInternal(func->name);
+		Z_FreeInternal(func);
+	}
 }
 
 /*
