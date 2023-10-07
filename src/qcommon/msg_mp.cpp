@@ -264,7 +264,7 @@ static const int msg_hData[256] =
 	13504,			// 255
 };
 
-void MSG_InitHuffmanInternal() // good
+void MSG_InitHuffmanInternal()
 {
 	int i,j;
 
@@ -280,13 +280,13 @@ void MSG_InitHuffmanInternal() // good
 	}
 }
 
-void MSG_InitHuffman() // good
+void MSG_InitHuffman()
 {
 	msgInit = qtrue;
 	MSG_InitHuffmanInternal();
 }
 
-void MSG_Init(msg_t *buf, byte *data, int length) // good
+void MSG_Init(msg_t *buf, byte *data, int length)
 {
 	if ( !msgInit )
 	{
@@ -298,14 +298,14 @@ void MSG_Init(msg_t *buf, byte *data, int length) // good
 	buf->maxsize = length;
 }
 
-void MSG_BeginReading(msg_t *msg) // good
+void MSG_BeginReading(msg_t *msg)
 {
 	msg->overflowed = qfalse;
 	msg->readcount = 0;
 	msg->bit = 0;
 }
 
-void MSG_WriteBits(msg_t *msg, int value, unsigned int bits) // good
+void MSG_WriteBits(msg_t *msg, int value, unsigned int bits)
 {
 	int bit;
 
@@ -334,7 +334,7 @@ void MSG_WriteBits(msg_t *msg, int value, unsigned int bits) // good
 	}
 }
 
-void MSG_WriteBit0(msg_t* msg) // good
+void MSG_WriteBit0(msg_t* msg)
 {
 	if (msg->maxsize <= msg->cursize)
 	{
@@ -352,7 +352,7 @@ void MSG_WriteBit0(msg_t* msg) // good
 	msg->bit++;
 }
 
-void MSG_WriteBit1(msg_t *msg) // good
+void MSG_WriteBit1(msg_t *msg)
 {
 	int bit;
 
@@ -373,7 +373,7 @@ void MSG_WriteBit1(msg_t *msg) // good
 	msg->data[msg->bit++ >> 3] |= 1 << bit;
 }
 
-int MSG_ReadBits(msg_t *msg, int bits) // good
+int MSG_ReadBits(msg_t *msg, int bits)
 {
 	int i;
 	int bit;
@@ -402,7 +402,7 @@ int MSG_ReadBits(msg_t *msg, int bits) // good
 	return value;
 }
 
-int MSG_ReadBit(msg_t *msg) // good
+int MSG_ReadBit(msg_t *msg)
 {
 	int bit;
 
@@ -422,7 +422,7 @@ int MSG_ReadBit(msg_t *msg) // good
 	return (msg->data[msg->bit++ >> 3] >> bit) & 1;
 }
 
-int MSG_WriteBitsCompress(const byte *datasrc, byte *buffdest, int bytecount) // good
+int MSG_WriteBitsCompress(const byte *datasrc, byte *buffdest, int bytecount)
 {
 	int offset;
 	int i;
@@ -440,7 +440,7 @@ int MSG_WriteBitsCompress(const byte *datasrc, byte *buffdest, int bytecount) //
 	return (offset + 7) / 8;
 }
 
-int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize) // good
+int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize)
 {
 	readsize = readsize * 8;
 	byte *outptr = outputBuf;
@@ -464,7 +464,7 @@ int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize) // go
 	return i;
 }
 
-void MSG_WriteData(msg_t *buf, const void *data, int length) // good
+void MSG_WriteData(msg_t *buf, const void *data, int length)
 {
 	int newsize = buf->cursize + length;
 
@@ -479,7 +479,7 @@ void MSG_WriteData(msg_t *buf, const void *data, int length) // good
 	}
 }
 
-void MSG_WriteByte(msg_t *msg, int c) // good
+void MSG_WriteByte(msg_t *msg, int c)
 {
 	int newsize = msg->cursize + sizeof(uint8_t);
 
@@ -494,7 +494,7 @@ void MSG_WriteByte(msg_t *msg, int c) // good
 	}
 }
 
-void MSG_WriteShort(msg_t *msg, int c) // good
+void MSG_WriteShort(msg_t *msg, int c)
 {
 	int newsize = msg->cursize + sizeof(int16_t);
 
@@ -509,7 +509,7 @@ void MSG_WriteShort(msg_t *msg, int c) // good
 	}
 }
 
-void MSG_WriteLong(msg_t *msg, int c) // good
+void MSG_WriteLong(msg_t *msg, int c)
 {
 	int newsize = msg->cursize + sizeof(int32_t);
 
@@ -524,7 +524,7 @@ void MSG_WriteLong(msg_t *msg, int c) // good
 	}
 }
 
-void MSG_WriteString(msg_t *sb, const char *s) // good
+void MSG_WriteString(msg_t *sb, const char *s)
 {
 	int i;
 	int l;
@@ -548,7 +548,7 @@ void MSG_WriteString(msg_t *sb, const char *s) // good
 	MSG_WriteData(sb, string, l + 1);
 }
 
-void MSG_WriteBigString(msg_t *sb, const char *s) // good
+void MSG_WriteBigString(msg_t *sb, const char *s)
 {
 	int i;
 	int l;
@@ -573,7 +573,7 @@ void MSG_WriteBigString(msg_t *sb, const char *s) // good
 	MSG_WriteData(sb, string, l + 1);
 }
 
-int MSG_ReadByte(msg_t *msg) // good
+int MSG_ReadByte(msg_t *msg)
 {
 	int newcount = msg->readcount + sizeof(uint8_t);
 
@@ -589,7 +589,7 @@ int MSG_ReadByte(msg_t *msg) // good
 	return c;
 }
 
-int MSG_ReadShort(msg_t *msg) // good
+int MSG_ReadShort(msg_t *msg)
 {
 	int newcount = msg->readcount + sizeof(int16_t);
 
@@ -605,7 +605,7 @@ int MSG_ReadShort(msg_t *msg) // good
 	return c;
 }
 
-int MSG_ReadLong(msg_t *msg) // good
+int MSG_ReadLong(msg_t *msg)
 {
 	int newcount = msg->readcount + sizeof(int32_t);
 
@@ -621,7 +621,7 @@ int MSG_ReadLong(msg_t *msg) // good
 	return c;
 }
 
-void MSG_ReadData(msg_t *msg, void *data, int len) // good
+void MSG_ReadData(msg_t *msg, void *data, int len)
 {
 	int size = msg->readcount + len;
 
@@ -637,7 +637,7 @@ void MSG_ReadData(msg_t *msg, void *data, int len) // good
 	}
 }
 
-char *MSG_ReadString(msg_t *msg, char *string, unsigned int maxChars) // good
+char *MSG_ReadString(msg_t *msg, char *string, unsigned int maxChars)
 {
 	int c;
 	unsigned int l;
@@ -660,7 +660,7 @@ char *MSG_ReadString(msg_t *msg, char *string, unsigned int maxChars) // good
 	return string;
 }
 
-char *MSG_ReadStringLine(msg_t *msg, char *string, unsigned int maxChars) // good
+char *MSG_ReadStringLine(msg_t *msg, char *string, unsigned int maxChars)
 {
 	int c;
 	unsigned int l;
@@ -689,7 +689,7 @@ char *MSG_ReadStringLine(msg_t *msg, char *string, unsigned int maxChars) // goo
 	return string;
 }
 
-void MSG_WriteReliableCommandToBuffer(const char *pszCommand, char *pszBuffer, int iBufferSize) // good
+void MSG_WriteReliableCommandToBuffer(const char *pszCommand, char *pszBuffer, int iBufferSize)
 {
 	int iCommandLength;
 	int i;
@@ -720,7 +720,7 @@ void MSG_WriteReliableCommandToBuffer(const char *pszCommand, char *pszBuffer, i
 		pszBuffer[i] = 0;
 }
 
-void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *ucmd) // good
+void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *ucmd)
 {
 	int i;
 
@@ -797,12 +797,12 @@ uint32_t kbitmask[] =
 	4294967295
 };
 
-unsigned int MSG_ReadKey(msg_t *msg, int key, int bits) // good
+unsigned int MSG_ReadKey(msg_t *msg, int key, int bits)
 {
 	return kbitmask[bits] & (key ^ MSG_ReadBits(msg, bits));
 }
 
-int MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits) // good
+int MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits)
 {
 	if ( MSG_ReadBit(msg) )
 	{
@@ -812,7 +812,7 @@ int MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits) // good
 	return oldV;
 }
 
-int MSG_ReadDeltaKeyShort(msg_t *msg, int key, int oldV) // good
+int MSG_ReadDeltaKeyShort(msg_t *msg, int key, int oldV)
 {
 	if ( MSG_ReadBit(msg) )
 	{
@@ -822,7 +822,7 @@ int MSG_ReadDeltaKeyShort(msg_t *msg, int key, int oldV) // good
 	return oldV;
 }
 
-int MSG_GetForwardRightMoveMask(char forwardmove, char rightmove) // good
+int MSG_GetForwardRightMoveMask(char forwardmove, char rightmove)
 {
 	int mask = 0;
 
@@ -845,7 +845,7 @@ int MSG_GetForwardRightMoveMask(char forwardmove, char rightmove) // good
 	return mask;
 }
 
-void MSG_ReadForwardRightMove(char key, char *forwardmove, char *rightmove) // good
+void MSG_ReadForwardRightMove(char key, char *forwardmove, char *rightmove)
 {
 	if ( (key & 1) != 0 )
 	{
@@ -874,7 +874,7 @@ void MSG_ReadForwardRightMove(char key, char *forwardmove, char *rightmove) // g
 	}
 }
 
-void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to) // good
+void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to)
 {
 	int mask;
 	int newkey;
@@ -919,12 +919,12 @@ void MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to
 	}
 }
 
-void MSG_WriteAngle16( msg_t *sb, float f ) // good
+void MSG_WriteAngle16( msg_t *sb, float f )
 {
 	MSG_WriteShort( sb, ANGLE2SHORT( f ) );
 }
 
-void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const netField_t *field) // good
+void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const netField_t *field)
 {
 	int32_t absbits;
 	int32_t abs3bits;
@@ -947,7 +947,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 
 	switch (field->bits)
 	{
-	case 0: // good
+	case 0:
 		if ( floatbits == 0.0 )
 		{
 			MSG_WriteBit0(msg);
@@ -965,7 +965,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		MSG_WriteLong(msg, unsignedbits);
 		return;
 
-	case -99: // good
+	case -99:
 		if ( floatbits == 0.0 )
 		{
 			MSG_WriteBit0(msg);
@@ -983,7 +983,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		MSG_WriteLong(msg, unsignedbits);
 		return;
 
-	case -100: // good
+	case -100:
 		if ( unsignedbits )
 		{
 			MSG_WriteBit1(msg);
@@ -993,7 +993,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 		MSG_WriteBit0(msg);
 		return;
 
-	default: // good
+	default:
 		if ( unsignedbits )
 		{
 			MSG_WriteBit1(msg);
@@ -1019,7 +1019,7 @@ void MSG_WriteDeltaField(msg_t *msg, const byte *from, const byte *to, const net
 	}
 }
 
-void MSG_WriteDeltaStruct(msg_t *msg, const byte *from, const byte *to, qboolean force, int numFields, int indexBits, netField_t *stateFields, qboolean bChangeBit) // good
+void MSG_WriteDeltaStruct(msg_t *msg, const byte *from, const byte *to, qboolean force, int numFields, int indexBits, netField_t *stateFields, qboolean bChangeBit)
 {
 	netField_t* field;
 	int lc;
@@ -1083,7 +1083,7 @@ netField_t objectiveFields[] =
 	{ OBJF( teamNum ), 4},
 };
 
-void MSG_WriteDeltaObjective(msg_t *msg,objective_t *from,objective_t *to, int lc, int numFields, netField_t *objFields) // good
+void MSG_WriteDeltaObjective(msg_t *msg,objective_t *from,objective_t *to, int lc, int numFields, netField_t *objFields)
 {
 	int i;
 
@@ -1306,13 +1306,13 @@ float MSG_ReadAngle16(msg_t *msg)
 void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t *field, qboolean print)
 {
 	int *fromF, *toF;
-	int readbits;
-	int readbyte;
+	int32_t readbits;
+	int32_t readbyte;
 	uint32_t unsignedbits;
-	int bitcount;
+	int i;
 
-	fromF = (int *)((byte *)from + field->offset);
-	toF = (int *)((byte *)to + field->offset);
+	fromF = (int32_t *)((byte *)from + field->offset);
+	toF = (int32_t *)((byte *)to + field->offset);
 
 	if ( !MSG_ReadBit(msg) )
 	{
@@ -1327,7 +1327,7 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 		{
 			if ( MSG_ReadBit(msg) )
 			{
-				*(uint32_t *)toF = MSG_ReadLong(msg);
+				*toF = MSG_ReadLong(msg);
 				if ( print )
 					Com_Printf("%s:%f ", field->name, *(float *)toF);
 			}
@@ -1335,7 +1335,7 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 			{
 				readbits = MSG_ReadBits(msg, 5);
 				readbyte = 32 * MSG_ReadByte(msg) + readbits - 4096;
-				*toF = readbyte;
+				*(float *)toF = (float)readbyte;
 				if ( print )
 					Com_Printf("%s:%i ", field->name, readbyte);
 			}
@@ -1349,7 +1349,7 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 		{
 			if ( MSG_ReadBit(msg) )
 			{
-				*(uint32_t *)toF = MSG_ReadLong(msg);
+				*toF = MSG_ReadLong(msg);
 				if ( print )
 					Com_Printf("%s:%f ", field->name, *(float *)toF);
 			}
@@ -1357,7 +1357,7 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 			{
 				readbits = MSG_ReadBits(msg, 2);
 				readbyte = 4 * MSG_ReadByte(msg) + readbits - 512;
-				*toF = readbyte;
+				*(float *)toF = (float)readbyte;
 				if ( print )
 					Com_Printf("%s:%i ", field->name, readbyte);
 			}
@@ -1382,13 +1382,13 @@ void MSG_ReadDeltaField(msg_t *msg, const void *from, const void *to, netField_t
 				readbyte = MSG_ReadBits(msg, readbits & 7);
 			else
 				readbyte = 0;
-			for ( bitcount = readbits & 7; bitcount < readbits; bitcount += 8 )
-				readbyte |= MSG_ReadByte(msg) << bitcount;
+			for ( i = readbits & 7; i < readbits; i += 8 )
+				readbyte |= MSG_ReadByte(msg) << i;
 			if ( unsignedbits && ((readbyte >> (readbits - 1)) & 1) != 0 )
 				readbyte |= ~((1 << readbits) - 1);
-			*(uint32_t *)toF = readbyte;
+			*toF = readbyte;
 			if ( print )
-				Com_Printf("%s:%i ", field->name, *(uint32_t *)toF);
+				Com_Printf("%s:%i ", field->name, *toF);
 		}
 		else
 			*toF = 0;
@@ -1420,54 +1420,44 @@ void MSG_ReadDeltaStruct(msg_t *msg, const void *from, void *to, unsigned int nu
 	int lc;
 	int i;
 
-	if ( MSG_ReadBit(msg) != 1 )
-	{
-		if ( MSG_ReadBit(msg) )
-		{
-			lc = MSG_ReadByte(msg);
+	if ( MSG_ReadBit(msg) == 1 )
+		return;
 
-			if ( lc <= numFields )
-			{
-				*(uint32_t *)to = number;
-				i = 0;
-				field = stateFields;
-				while ( i < lc )
-				{
-					MSG_ReadDeltaField(msg, from, to, field, 0);
-					++i;
-					++field;
-				}
-				i = lc;
-				field = &stateFields[lc];
-				while ( i < numFields )
-				{
-					*(uint32_t *)((byte *)to + field->offset) = *(uint32_t *)((byte *)from + field->offset);
-					++i;
-					++field;
-				}
-			}
-			else
-			{
-				msg->overflowed = qtrue;
-			}
-		}
-		else
-		{
-			Com_Memcpy(to, from, 4 * numFields + 4);
-		}
+	if ( !MSG_ReadBit(msg) )
+	{
+		Com_Memcpy(to, from, 4 * numFields + 4);
+		return;
+	}
+
+	lc = MSG_ReadByte(msg);
+
+	if ( lc > numFields )
+	{
+		msg->overflowed = qtrue;
+		return;
+	}
+
+	*(uint32_t *)to = number;
+
+	for (i = 0, field = stateFields; i < lc; i++, field++)
+	{
+		MSG_ReadDeltaField(msg, from, to, field, 0);
+	}
+
+	for (i = lc, field = &stateFields[lc]; i < numFields; i++, field++)
+	{
+		*(uint32_t *)((byte *)to + field->offset) = *(uint32_t *)((byte *)from + field->offset);
 	}
 }
 
 void MSG_ReadDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, int number)
 {
-	int numFields = sizeof( entityStateFields ) / sizeof( entityStateFields[0] );
-	MSG_ReadDeltaStruct(msg, from, to, number, numFields, 10, entityStateFields);
+	MSG_ReadDeltaStruct(msg, from, to, number, COUNT_OF(entityStateFields), 10, entityStateFields);
 }
 
 void MSG_ReadDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int number)
 {
-	int numFields = sizeof( archivedEntityFields ) / sizeof( archivedEntityFields[0] );
-	MSG_ReadDeltaStruct(msg, from, to, number, numFields, 10, archivedEntityFields);
+	MSG_ReadDeltaStruct(msg, from, to, number, COUNT_OF(archivedEntityFields), 10, archivedEntityFields);
 }
 
 void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int number)
@@ -1480,8 +1470,7 @@ void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int
 		Com_Memset(&nullstate, 0, sizeof(nullstate));
 	}
 
-	int numFields = sizeof( clientStateFields ) / sizeof( clientStateFields[0] );
-	MSG_ReadDeltaStruct(msg, from, to, number, numFields, 6, clientStateFields);
+	MSG_ReadDeltaStruct(msg, from, to, number, COUNT_OF(clientStateFields), 6, clientStateFields);
 }
 
 #define HEF( x ) # x,(intptr_t)&( (hudelem_t*)0 )->x
@@ -1521,46 +1510,47 @@ netField_t hudElemFields[] =
 	{ HEF( foreground ), 1},
 };
 
-void MSG_WriteDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count)
+void MSG_WriteDeltaHudElems(msg_t *msg, hudelem_s *from, hudelem_s *to, int count)
 {
-	int i, j, lc, k, l;
+	int i, inuse, lc, j;
 	netField_t* field;
 
-	for (i = 0; i < MAX_HUDELEMENTS; ++i);
+	for(inuse = 0; inuse < MAX_HUDELEMENTS; ++inuse)
+	{
+		if(to[inuse].type == HE_TYPE_FREE)
+		{
+			break;
+		}
+	}
 
-	MSG_WriteBits(msg, i, 5);
+	MSG_WriteBits(msg, inuse, 5); //31 HE MAX for 5 Bits
 
-	int numFields = sizeof( hudElemFields ) / sizeof( hudElemFields[0] );
-
-	for (j = 0; j < i; ++j)
+	for ( i = 0; i < inuse; ++i )
 	{
 		lc = 0;
 
-		for (k = 0, field = hudElemFields; k < numFields; k++, field++)
+		for (j = 0, field = hudElemFields; j < COUNT_OF(hudElemFields); j++, field++)
 		{
-			if (*(int32_t *)((byte *)(from + j) + field->offset) != *(int32_t *)((byte *)(to + j) + field->offset))
+			if (*(int32_t *)((byte *)(from + i) + field->offset) != *(int32_t *)((byte *)(to + i) + field->offset))
 			{
-				lc = k;
+				lc = j;
 			}
 		}
 
 		MSG_WriteBits(msg, lc, 5);
 
-		for (l = 0, field = hudElemFields; l <= lc; l++, field++)
+		for (j = 0, field = hudElemFields; j <= lc; j++, field++)
 		{
-			MSG_WriteDeltaField(msg, (byte *)(from + j), (byte *)(to + j), field);
+			MSG_WriteDeltaField(msg, (byte *)(from + i), (byte *)(to + i), field);
 		}
 	}
 }
 
 void MSG_ReadDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count)
 {
-	int inuse, lc;
-	int i, j, k;
+	int inuse, lc, i, j, k;
 
 	inuse = MSG_ReadBits(msg, 5);
-
-	int numFields = sizeof( hudElemFields ) / sizeof( hudElemFields[0] );
 
 	for ( i = 0; i < inuse; ++i )
 	{
@@ -1571,13 +1561,18 @@ void MSG_ReadDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count
 			MSG_ReadDeltaField(msg, &from[i], &to[i], &hudElemFields[j], 0);
 		}
 
-		for ( k = j; j < numFields; ++j, ++k )
+		for ( k = j; j < COUNT_OF(hudElemFields); ++j, ++k )
 		{
 			*(int32_t *)((byte *)(from + i) + hudElemFields[k].offset) = *(int32_t *)((byte *)(to + i) + hudElemFields[k].offset);
 		}
 	}
 
-	Com_Memset(&to[inuse], 0, (count - inuse) << 7);
+	while ( inuse < count && to[inuse].type )
+	{
+		memset(&to[inuse], 0, sizeof(hudelem_t));
+		assert(to[inuse].type == HE_TYPE_FREE);
+		++inuse;
+	}
 }
 
 #define PSF( x ) # x,(intptr_t)&( (playerState_t*)0 )->x
@@ -1695,9 +1690,9 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 	int *fromF, *toF;
 	netField_t *field;
 	playerState_t nullstate;
-	int i, j;
+	int i, j, lc;
 	int32_t absbits;
-	uint8_t abs3bits;
+	int32_t abs3bits;
 	int32_t bitmask;
 	float floatbits;
 	int32_t signedbits;
@@ -1709,13 +1704,12 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 		Com_Memset(&nullstate, 0, sizeof(nullstate));
 	}
 
-	int numFields = sizeof( playerStateFields ) / sizeof( playerStateFields[0] );
-	int lc = 0;
+	lc = 0;
 
-	for ( i = 0, field = playerStateFields ; i < numFields ; i++, field++ )
+	for ( i = 0, field = playerStateFields; i < COUNT_OF(playerStateFields); i++, field++ )
 	{
-		fromF = ( int * )( (byte *)from + field->offset );
-		toF = ( int * )( (byte *)to + field->offset );
+		fromF = ( int32_t * )( (byte *)from + field->offset );
+		toF = ( int32_t * )( (byte *)to + field->offset );
 
 		if ( *fromF != *toF )
 		{
@@ -1725,10 +1719,10 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 
 	MSG_WriteByte( msg, lc );
 
-	for ( i = 0, field = playerStateFields ; i < lc ; i++, field++ )
+	for ( i = 0, field = playerStateFields; i < lc; i++, field++ )
 	{
-		fromF = ( int * )( (byte *)from + field->offset );
-		toF = ( int * )( (byte *)to + field->offset );
+		fromF = ( int32_t * )( (byte *)from + field->offset );
+		toF = ( int32_t * )( (byte *)to + field->offset );
 
 		floatbits = *(float *)toF;
 		signedbits = *(int32_t *)toF;
@@ -1748,7 +1742,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 			if ( (float)signedbits == floatbits && (unsigned int)(signedbits + 4096) <= 0x1FFF )
 			{
 				MSG_WriteBit0(msg);
-				MSG_WriteBits(msg, signedbits + 4096, 5);
+				MSG_WriteBits(msg, (signedbits + 4096), 5);
 				MSG_WriteByte(msg, (signedbits + 4096) >> 5);
 			}
 			else
@@ -1776,7 +1770,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 			abs3bits = absbits & 7;
 			if ( abs3bits )
 			{
-				MSG_WriteBits(msg, bitmask, absbits & 7);
+				MSG_WriteBits(msg, bitmask, abs3bits);
 				absbits -= abs3bits;
 				bitmask >>= abs3bits;
 			}
@@ -1805,17 +1799,22 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 		MSG_WriteBits(msg, statsbits, 6);
 
 		if ( (statsbits & 1) != 0 )
-			MSG_WriteShort(msg, to->stats[0]);
+			MSG_WriteShort(msg, to->stats[STAT_HEALTH]);
+
 		if ( (statsbits & 2) != 0 )
-			MSG_WriteShort(msg, to->stats[1]);
+			MSG_WriteShort(msg, to->stats[STAT_DEAD_YAW]);
+
 		if ( (statsbits & 4) != 0 )
-			MSG_WriteShort(msg, to->stats[2]);
+			MSG_WriteShort(msg, to->stats[STAT_MAX_HEALTH]);
+
 		if ( (statsbits & 8) != 0 )
-			MSG_WriteBits(msg, to->stats[3], 6);
+			MSG_WriteBits(msg, to->stats[STAT_IDENT_CLIENT_NUM], 6);
+
 		if ( (statsbits & 0x10) != 0 )
-			MSG_WriteShort(msg, to->stats[4]);
+			MSG_WriteShort(msg, to->stats[STAT_IDENT_CLIENT_HEALTH]);
+
 		if ( (statsbits & 0x20) != 0 )
-			MSG_WriteByte(msg, to->stats[5]);
+			MSG_WriteByte(msg, to->stats[STAT_SPAWN_COUNT]);
 	}
 	else
 	{
@@ -1848,6 +1847,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 			{
 				MSG_WriteBit1( msg );
 				MSG_WriteShort( msg, ammobits[j] );
+
 				for ( i = 0 ; i < 16 ; i++ )
 				{
 					if ( ammobits[j] & ( 1 << i ) )
@@ -1902,8 +1902,6 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 	}
 
 	// Objectives
-	int numObjectiveFields = sizeof( objectiveFields ) / sizeof( objectiveFields[0] );
-
 	if ( !Com_Memcmp(from->objective, to->objective, sizeof(from->objective)) )
 	{
 		MSG_WriteBit0(msg);
@@ -1915,7 +1913,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 		for ( i = 0; i < MAX_OBJECTIVES; ++i )
 		{
 			MSG_WriteBits(msg, to->objective[i].state, 3);
-			MSG_WriteDeltaObjective(msg, &from->objective[i], &to->objective[i], 0, numObjectiveFields, objectiveFields);
+			MSG_WriteDeltaObjective(msg, &from->objective[i], &to->objective[i], 0, COUNT_OF(objectiveFields), objectiveFields);
 		}
 	}
 
@@ -1941,8 +1939,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 	int readbyte;
 	int bitstemp;
 	uint32_t unsignedbits;
-	int bitcount;
-	int i, j;
+	int i, j, k, lc;
 
 	if ( !from )
 	{
@@ -1952,8 +1949,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 
 	Com_Memcpy(to, from, sizeof(playerState_t));
 
-	int numFields = sizeof( playerStateFields ) / sizeof( playerStateFields[0] );
-	int lc = 0;
+	lc = 0;
 
 	qboolean print = qfalse; // only present in client aka cl_shownet
 
@@ -1961,8 +1957,8 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 
 	for ( i = 0, field = playerStateFields ; i < lc ; i++, field++ )
 	{
-		fromF = ( int * )( (byte *)from + field->offset );
-		toF = ( int * )( (byte *)to + field->offset );
+		fromF = ( int32_t * )( (byte *)from + field->offset );
+		toF = ( int32_t * )( (byte *)to + field->offset );
 
 		if ( !MSG_ReadBit(msg) )
 		{
@@ -1975,7 +1971,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 		case 0:
 			if ( MSG_ReadBit(msg) )
 			{
-				*(uint32_t *)toF = MSG_ReadLong(msg);
+				*toF = MSG_ReadLong(msg);
 				if ( print )
 					Com_Printf("%s:%f ", field->name, *(float *)toF);
 			}
@@ -1983,7 +1979,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 			{
 				readbits = MSG_ReadBits(msg, 5);
 				readbyte = 32 * MSG_ReadByte(msg) + readbits - 4096;
-				*toF = readbyte;
+				*(float *)toF = (float)readbyte;
 				if ( print )
 					Com_Printf("%s:%i ", field->name, readbyte);
 			}
@@ -2000,25 +1996,25 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 			unsignedbits = (unsigned int)field->bits >> 31;
 			readbits = abs(field->bits);
 			if ( (readbits & 7) != 0 )
-				bitstemp = MSG_ReadBits(msg, readbits & 7);
+				readbyte = MSG_ReadBits(msg, readbits & 7);
 			else
-				bitstemp = 0;
-			readbyte = bitstemp;
-			for ( bitcount = readbits & 7; bitcount < readbits; bitcount += 8 )
-				readbyte |= MSG_ReadByte(msg) << bitcount;
+				readbyte = 0;
+			for ( k = readbits & 7; k < readbits; k += 8 )
+				readbyte |= MSG_ReadByte(msg) << k;
 			if ( unsignedbits && ((readbyte >> (readbits - 1)) & 1) != 0 )
 				readbyte |= ~((1 << readbits) - 1);
-			*(uint32_t *)toF = readbyte;
+			*toF = readbyte;
 			if ( print )
-				Com_Printf("%s:%i ", field->name, *(uint32_t *)toF);
+				Com_Printf("%s:%i ", field->name, *toF);
 			break;
 		}
 	}
 
-	for ( i = lc, field = &playerStateFields[lc]; i < numFields; i++, field++ )
+	for ( i = lc, field = &playerStateFields[lc]; i < COUNT_OF(playerStateFields); i++, field++ )
 	{
-		fromF = ( int * )( (byte *)from + field->offset );
-		toF = ( int * )( (byte *)to + field->offset );
+		fromF = ( int32_t * )( (byte *)from + field->offset );
+		toF = ( int32_t * )( (byte *)to + field->offset );
+
 		*toF = *fromF;
 	}
 
@@ -2028,23 +2024,28 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 	if ( MSG_ReadBit(msg) )
 	{
 		statsbits = MSG_ReadBits(msg, 6);
+
 		if ( (statsbits & 1) != 0 )
-			to->stats[0] = MSG_ReadShort(msg);
+			to->stats[STAT_HEALTH] = MSG_ReadShort(msg);
+
 		if ( (statsbits & 2) != 0 )
-			to->stats[1] = MSG_ReadShort(msg);
+			to->stats[STAT_DEAD_YAW] = MSG_ReadShort(msg);
+
 		if ( (statsbits & 4) != 0 )
-			to->stats[2] = MSG_ReadShort(msg);
+			to->stats[STAT_MAX_HEALTH] = MSG_ReadShort(msg);
+
 		if ( (statsbits & 8) != 0 )
-			to->stats[3] = MSG_ReadBits(msg, 6);
+			to->stats[STAT_IDENT_CLIENT_NUM] = MSG_ReadBits(msg, 6);
+
 		if ( (statsbits & 0x10) != 0 )
-			to->stats[4] = MSG_ReadShort(msg);
+			to->stats[STAT_IDENT_CLIENT_HEALTH] = MSG_ReadShort(msg);
+
 		if ( (statsbits & 0x20) != 0 )
-			to->stats[5] = MSG_ReadByte(msg);
+			to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
 	}
 
 	//ammo
 	int ammobits = 0;
-	int ammocount = 0;
 
 	if ( MSG_ReadBit(msg) )
 	{
@@ -2058,8 +2059,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 				{
 					if ( ((ammobits >> j) & 1) != 0 )
 					{
-						ammocount = j + 16 * i;
-						to->ammo[ammocount] = MSG_ReadShort(msg);
+						to->ammo[j + 16 * i] = MSG_ReadShort(msg);
 					}
 				}
 			}
@@ -2068,7 +2068,6 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 
 	// ammo in clip
 	int clipbits = 0;
-	int clipcount = 0;
 
 	for ( i = 0; i < 4; ++i )
 	{
@@ -2080,22 +2079,19 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 			{
 				if ( ((clipbits >> j) & 1) != 0 )
 				{
-					clipcount = j + 16 * i;
-					to->ammoclip[clipcount] = MSG_ReadShort(msg);
+					to->ammoclip[j + 16 * i] = MSG_ReadShort(msg);
 				}
 			}
 		}
 	}
 
 	// Objectives
-	int numObjectiveFields = sizeof( objectiveFields ) / sizeof( objectiveFields[0] );
-
 	if ( MSG_ReadBit(msg) )
 	{
 		for ( i = 0; i < MAX_OBJECTIVES; ++i )
 		{
 			to->objective[i].state = MSG_ReadBits(msg, 3);
-			MSG_ReadDeltaObjective(msg, &from->objective[i], &to->objective[i], numObjectiveFields, objectiveFields);
+			MSG_ReadDeltaObjective(msg, &from->objective[i], &to->objective[i], COUNT_OF(objectiveFields), objectiveFields);
 		}
 	}
 
