@@ -21,8 +21,6 @@
 #include <sys/time.h> // milliseconds
 #include <ctype.h> // isdigit
 
-#include "config.hpp"
-
 #if COMPILE_BOTS == 1
 #include "gsc_bots.hpp"
 #endif

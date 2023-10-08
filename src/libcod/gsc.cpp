@@ -1,5 +1,7 @@
 #include "gsc.hpp"
 
+#ifdef LIBCOD
+
 const char *stackGetParamTypeAsString(int param)
 {
 	if (param >= Scr_GetNumParam())
@@ -603,3 +605,5 @@ uint64_t Sys_Milliseconds64(void)
 
 	return (tp.tv_sec - sys_timeBase64) * 1000 + tp.tv_usec / 1000;
 }
+
+#endif

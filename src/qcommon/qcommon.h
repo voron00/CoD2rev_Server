@@ -416,5 +416,4 @@ int CM_PointLeafnum( const vec3_t p );
 XModel* CM_XModelPrecache(const char *name);
 
 // Libcod
-#include "../libcod/config.hpp"
 #include "../libcod/gsc.hpp"

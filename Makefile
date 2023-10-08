@@ -46,8 +46,38 @@ STRINGED_DIR=$(SRC_DIR)/stringed
 UNIVERSAL_DIR=$(SRC_DIR)/universal
 XANIM_DIR=$(SRC_DIR)/xanim
 
+# Libcod stuff
+WITH_LIBCOD=true
+
+ifeq ($(WITH_LIBCOD),true)
+LIBCOD_SETTINGS=-D LIBCOD
+LIBCOD_SETTINGS+=-D COMPILE_BOTS=1
+LIBCOD_SETTINGS+=-D COMPILE_ENTITY=1
+LIBCOD_SETTINGS+=-D COMPILE_EXEC=1
+LIBCOD_SETTINGS+=-D COMPILE_LEVEL=1
+LIBCOD_SETTINGS+=-D COMPILE_MEMORY=1
+LIBCOD_SETTINGS+=-D COMPILE_MYSQL=1
+LIBCOD_SETTINGS+=-D COMPILE_PLAYER=1
+LIBCOD_SETTINGS+=-D COMPILE_RATELIMITER=1
+LIBCOD_SETTINGS+=-D COMPILE_SQLITE=1
+LIBCOD_SETTINGS+=-D COMPILE_UTILS=1
+LIBCOD_SETTINGS+=-D COMPILE_WEAPONS=1
+endif
+
+ifeq ($(WITH_LIBCOD),true)
+ifeq ($(OS),Windows_NT)
+MYSQL_COPY_CMD=xcopy $(SRC_DIR)\libcod\mysql\windows\lib\libmysql.dll $(BIN_DIR)
+LLIBS+=$(SRC_DIR)/libcod/mysql/windows/lib/libmysql.lib
+else
+LLIBS+=-lmysqlclient -L$(SRC_DIR)/libcod/mysql/unix/lib
+endif
 LIBCOD_DIR=$(SRC_DIR)/libcod
 SQLITE_DIR=$(SRC_DIR)/libcod/sqlite
+LIBCOD_SOURCES=$(wildcard $(LIBCOD_DIR)/*.cpp)
+SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
+LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LIBCOD_SOURCES))
+SQLITE_OBJ=$(patsubst $(SQLITE_DIR)/%.c,$(OBJ_DIR)/%.o,$(SQLITE_SOURCES))
+endif
 
 # Target files
 TARGET=$(addprefix $(BIN_DIR)/,$(BIN_NAME)$(BIN_EXT))
@@ -68,9 +98,6 @@ WIN32_SOURCES=$(wildcard $(WIN32_DIR)/*.cpp)
 WIN32_RESOURCES=$(wildcard $(WIN32_DIR)/*.rc)
 ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 
-LIBCOD_SOURCES=$(wildcard $(LIBCOD_DIR)/*.cpp)
-SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
-
 # Object files.
 BOTLIB_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
 CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
@@ -82,9 +109,6 @@ SERVER_OBJ=$(patsubst $(SERVER_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SERVER_SOURCES))
 STRINGED_OBJ=$(patsubst $(STRINGED_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(STRINGED_SOURCES))
 UNIVERSAL_OBJ=$(patsubst $(UNIVERSAL_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(UNIVERSAL_SOURCES))
 XANIM_OBJ=$(patsubst $(XANIM_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(XANIM_SOURCES))
-
-LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LIBCOD_SOURCES))
-SQLITE_OBJ=$(patsubst $(SQLITE_DIR)/%.c,$(OBJ_DIR)/%.o,$(SQLITE_SOURCES))
 
 # Platform specific lists
 ifeq ($(OS),Windows_NT)
@@ -107,6 +131,7 @@ ifeq ($(OS),Windows_NT)
 mkdir:
 	if not exist $(BIN_DIR) md $(BIN_DIR)
 	if not exist $(OBJ_DIR) md $(OBJ_DIR)
+	$(MYSQL_COPY_CMD)
 else
 mkdir:
 	mkdir -p $(BIN_DIR)
@@ -125,47 +150,47 @@ $(OBJ_DIR)/%.o: $(BOTLIB_DIR)/%.cpp
 # A rule to build clientscript source code.
 $(OBJ_DIR)/%.o: $(CLIENTSCR_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build game source code.
 $(OBJ_DIR)/%.o: $(GAME_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build bgame source code.
 $(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build cgame source code.
 $(OBJ_DIR)/%.o: $(CGAME_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build qcommon source code.
 $(OBJ_DIR)/%.o: $(QCOMMON_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build server source code.
 $(OBJ_DIR)/%.o: $(SERVER_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build stringed source code.
 $(OBJ_DIR)/%.o: $(STRINGED_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build universal source code.
 $(OBJ_DIR)/%.o: $(UNIVERSAL_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build xanim source code.
 $(OBJ_DIR)/%.o: $(XANIM_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build linux source code.
 $(OBJ_DIR)/%.o: $(LINUX_DIR)/%.cpp
@@ -190,7 +215,7 @@ $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 # A rule to build libcod source code.
 $(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
 	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build sqlite source code.
 $(OBJ_DIR)/%.o: $(SQLITE_DIR)/%.c
@@ -205,6 +230,7 @@ ifeq ($(OS),Windows_NT)
 clean:
 	del /Q /S "$(BIN_DIR)\$(BIN_NAME)$(BIN_EXT)"
 	del /Q /S "$(BIN_DIR)\$(LIB_NAME)$(LIB_EXT)"
+	del /Q /S "$(BIN_DIR)\libmysql.dll"
 	del /Q /S "$(OBJ_DIR)\*.o"
 	del /Q /S "$(OBJ_DIR)\*.res"
 else
