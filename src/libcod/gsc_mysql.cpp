@@ -101,7 +101,8 @@ int mysql_async_query_initializer(const char *sql, bool save) //cannot be called
 		current = current->next;
 	mysql_async_task *newtask = new mysql_async_task;
 	newtask->id = id;
-	strncpy(newtask->query, sql, COD2_MAX_STRINGLENGTH);
+	strncpy(newtask->query, sql, COD2_MAX_STRINGLENGTH - 1);
+	newtask->query[COD2_MAX_STRINGLENGTH - 1] = '\0';
 	newtask->prev = current;
 	newtask->result = NULL;
 	newtask->save = save;

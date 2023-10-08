@@ -789,7 +789,7 @@ void gsc_kick_slot()
 	}
 
 	strncpy(tmp, msg, sizeof(tmp));
-	tmp[sizeof(tmp)] = '\0';
+	tmp[sizeof(tmp) - 1] = '\0';
 
 	SV_DropClient(client, tmp);
 	stackPushBool(qtrue);
