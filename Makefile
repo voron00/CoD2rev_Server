@@ -1,15 +1,14 @@
 # Compiler options.
 CC = gcc
-CXX = g++
 WINDRES=windres
 
 CFLAGS=-m32
 LFLAGS=-m32 -no-pie -ldl
 
 ifeq ($(OS),Windows_NT)
-LLIBS=-static -mwindows -lws2_32 -lwinmm
+LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
 else
-LLIBS=-lpthread -lstdc++
+LLIBS=-lm -lpthread -lstdc++
 endif
 
 # Setup binary names.
@@ -66,7 +65,7 @@ endif
 
 ifeq ($(WITH_LIBCOD),true)
 ifeq ($(OS),Windows_NT)
-MYSQL_COPY_CMD=xcopy $(SRC_DIR)\libcod\mysql\windows\lib\libmysql.dll $(BIN_DIR)
+MYSQL_COPY_CMD=xcopy $(SRC_DIR)\libcod\mysql\windows\lib\libmysql.dll $(BIN_DIR) /Y
 LLIBS+=$(SRC_DIR)/libcod/mysql/windows/lib/libmysql.lib
 else
 LLIBS+=-lmysqlclient -L$(SRC_DIR)/libcod/mysql/unix/lib
@@ -125,7 +124,7 @@ cod2rev: mkdir $(TARGET)
     $(TARGET): \
 	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(BGAME_OBJ) $(CGAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
 	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ)
-	$(CXX) $(LFLAGS) -o $@ $^ $(LLIBS)
+	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
 
 ifeq ($(OS),Windows_NT)
 mkdir:
@@ -144,63 +143,63 @@ endif
 
 # A rule to build botlib source code.
 $(OBJ_DIR)/%.o: $(BOTLIB_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 # A rule to build clientscript source code.
 $(OBJ_DIR)/%.o: $(CLIENTSCR_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build game source code.
 $(OBJ_DIR)/%.o: $(GAME_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build bgame source code.
 $(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build cgame source code.
 $(OBJ_DIR)/%.o: $(CGAME_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build qcommon source code.
 $(OBJ_DIR)/%.o: $(QCOMMON_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build server source code.
 $(OBJ_DIR)/%.o: $(SERVER_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build stringed source code.
 $(OBJ_DIR)/%.o: $(STRINGED_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build universal source code.
 $(OBJ_DIR)/%.o: $(UNIVERSAL_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build xanim source code.
 $(OBJ_DIR)/%.o: $(XANIM_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build linux source code.
 $(OBJ_DIR)/%.o: $(LINUX_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 # A rule to build win32 source code.
 $(OBJ_DIR)/%.o: $(WIN32_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 # A rule to build win32 resource files.
 $(OBJ_DIR)/%.res: $(WIN32_DIR)/%.rc
@@ -214,8 +213,8 @@ $(OBJ_DIR)/%.o: $(ZLIB_DIR)/%.c
 
 # A rule to build libcod source code.
 $(OBJ_DIR)/%.o: $(LIBCOD_DIR)/%.cpp
-	@echo $(CXX)  $@
-	@$(CXX) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 
 # A rule to build sqlite source code.
 $(OBJ_DIR)/%.o: $(SQLITE_DIR)/%.c
