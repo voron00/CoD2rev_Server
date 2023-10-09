@@ -48,11 +48,11 @@ typedef struct scrCompileGlob_s
 	bool bConstRefCount;
 	bool in_developer_thread;
 	unsigned int developer_thread_sourcePos;
-	bool firstThread[2];
+	bool firstThread[3];
 	CaseStatementInfo *currentCaseStatement;
-	bool bCanBreak[1];
+	bool bCanBreak[2];
 	BreakStatementInfo *currentBreakStatement;
-	bool bCanContinue[1];
+	bool bCanContinue[2];
 	ContinueStatementInfo *currentContinueStatement;
 	scr_block_s **breakChildBlocks;
 	int *breakChildCount;

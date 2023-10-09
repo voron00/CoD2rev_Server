@@ -35,10 +35,9 @@ ZLIB_DIR=$(SRC_DIR)/zlib
 
 # Source dirs
 BOTLIB_DIR=$(SRC_DIR)/botlib
+BGAME_DIR=$(SRC_DIR)/bgame
 CLIENTSCR_DIR=$(SRC_DIR)/clientscript
 GAME_DIR=$(SRC_DIR)/game
-BGAME_DIR=$(SRC_DIR)/bgame
-CGAME_DIR=$(SRC_DIR)/cgame
 QCOMMON_DIR=$(SRC_DIR)/qcommon
 SERVER_DIR=$(SRC_DIR)/server
 STRINGED_DIR=$(SRC_DIR)/stringed
@@ -83,10 +82,9 @@ TARGET=$(addprefix $(BIN_DIR)/,$(BIN_NAME)$(BIN_EXT))
 
 # C files
 BOTLIB_SOURCES=$(wildcard $(BOTLIB_DIR)/*.cpp)
+BGAME_SOURCES=$(wildcard $(BGAME_DIR)/*.cpp)
 CLIENTSCR_SOURCES=$(wildcard $(CLIENTSCR_DIR)/*.cpp)
 GAME_SOURCES=$(wildcard $(GAME_DIR)/*.cpp)
-BGAME_SOURCES=$(wildcard $(BGAME_DIR)/*.cpp)
-CGAME_SOURCES=$(wildcard $(CGAME_DIR)/*.cpp)
 QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/*.cpp)
 SERVER_SOURCES=$(wildcard $(SERVER_DIR)/*.cpp)
 STRINGED_SOURCES=$(wildcard $(STRINGED_DIR)/*.cpp)
@@ -99,10 +97,9 @@ ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 
 # Object files.
 BOTLIB_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
+BGAME_OBJ=$(patsubst $(BGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BGAME_SOURCES))
 CLIENTSCR_OBJ=$(patsubst $(CLIENTSCR_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CLIENTSCR_SOURCES))
 GAME_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(GAME_SOURCES))
-BGAME_OBJ=$(patsubst $(BGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BGAME_SOURCES))
-CGAME_OBJ=$(patsubst $(CGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CGAME_SOURCES))
 QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
 SERVER_OBJ=$(patsubst $(SERVER_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SERVER_SOURCES))
 STRINGED_OBJ=$(patsubst $(STRINGED_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(STRINGED_SOURCES))
@@ -122,7 +119,7 @@ ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 # Default rule.
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
-	$(BOTLIB_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(BGAME_OBJ) $(CGAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
+	$(BOTLIB_OBJ) $(BGAME_OBJ) $(CLIENTSCR_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
 	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ)
 	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
 
@@ -146,6 +143,11 @@ $(OBJ_DIR)/%.o: $(BOTLIB_DIR)/%.cpp
 	@echo $(CC)  $@
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
+# A rule to build bgame source code.
+$(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
+	@echo $(CC)  $@
+	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
+
 # A rule to build clientscript source code.
 $(OBJ_DIR)/%.o: $(CLIENTSCR_DIR)/%.cpp
 	@echo $(CC)  $@
@@ -153,16 +155,6 @@ $(OBJ_DIR)/%.o: $(CLIENTSCR_DIR)/%.cpp
 
 # A rule to build game source code.
 $(OBJ_DIR)/%.o: $(GAME_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build bgame source code.
-$(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
-
-# A rule to build cgame source code.
-$(OBJ_DIR)/%.o: $(CGAME_DIR)/%.cpp
 	@echo $(CC)  $@
 	@$(CC) -c $(CFLAGS) $(LIBCOD_SETTINGS) -o $@ $<
 

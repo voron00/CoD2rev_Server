@@ -819,7 +819,7 @@ char *Com_ParseExt(const char **data_p, int allowLineBreaks)
 		pi->tokenType = PARSE_TOKEN_PUNCTUATION;
 		for (punc = punctuation; *punc; ++punc)
 		{
-			*punc;
+			//*punc;
 			l = strlen(*punc);
 			for (j = 0; j < l && data[j] == (*punc)[j]; ++j)
 			{

@@ -1275,7 +1275,7 @@ void G_CallSpawn(void);
 
 void ClientEvents(gentity_s *ent, int oldEventSequence);
 void G_AddPlayerMantleBlockage(float *endPos, int duration, pmove_t *pm);
-int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float (*tagMat)[3]);
+int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float tagMat[4][3]);
 gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag);
 gitem_s* G_GetItemForClassname(const char *name);
 gitem_s* G_FindItem(const char *pickupName);

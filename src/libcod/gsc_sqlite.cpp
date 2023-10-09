@@ -758,7 +758,7 @@ void gsc_async_sqlite_checkdone()
 						}
 					}
 				}
-				else if (task->query && task->errorMessage)
+				else if (task->query[0] && task->errorMessage[0])
 					stackError("gsc_async_sqlite_checkdone() query error in '%s' - '%s'", task->query, task->errorMessage);
 
 				task->remove = true;

@@ -227,7 +227,7 @@ void G_DObjCalcBone(gentity_s *ent, int boneIndex)
 	}
 }
 
-int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float (*tagMat)[3])
+int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float tagMat[4][3])
 {
 	float ent_axis[4][3];
 	DObjAnimMat *mat;
@@ -244,7 +244,7 @@ int G_DObjGetWorldTagMatrix(gentity_s *ent, unsigned int tagName, float (*tagMat
 	ent_axis[3][2] = ent->r.currentOrigin[2];
 	ConvertQuatToMat(mat, axis);
 	MatrixMultiply(axis, ent_axis, tagMat);
-	MatrixTransformVector43(mat->trans, ent_axis, &(*tagMat)[9]);
+	MatrixTransformVector43(mat->trans, ent_axis, tagMat[3]);
 
 	return 1;
 }
@@ -259,7 +259,7 @@ int G_DObjUpdateServerTime(gentity_s *ent, int bNotify)
 
 float G_random()
 {
-	return (float)(int)rand() / RAND_MAX;
+	return (float)(int)rand() / (float)RAND_MAX;
 }
 
 float G_crandom()
@@ -837,7 +837,7 @@ int G_EntLinkToWithOffset(gentity_s *ent, gentity_s *parent, unsigned int tagNam
 	return 1;
 }
 
-void G_CalcTagParentAxis(gentity_s *ent, float (*parentAxis)[3])
+void G_CalcTagParentAxis(gentity_s *ent, float parentAxis[4][3])
 {
 	float *currentOrigin;
 	tagInfo_s *tagInfo;
@@ -861,15 +861,15 @@ void G_CalcTagParentAxis(gentity_s *ent, float (*parentAxis)[3])
 		mat = &SV_DObjGetMatrixArray(parent)[tagInfo->index];
 		ConvertQuatToMat(mat, axis);
 		MatrixMultiply(axis, tempAxis, parentAxis);
-		MatrixTransformVector43(mat->trans, tempAxis, &(*parentAxis)[9]);
+		MatrixTransformVector43(mat->trans, tempAxis, parentAxis[3]);
 	}
 	else
 	{
 		AnglesToAxis(parent->r.currentAngles, parentAxis);
 		currentOrigin = parent->r.currentOrigin;
-		(*parentAxis)[9] = parent->r.currentOrigin[0];
-		(*parentAxis)[10] = currentOrigin[1];
-		(*parentAxis)[11] = currentOrigin[2];
+		parentAxis[3][0] = parent->r.currentOrigin[0];
+		parentAxis[3][1] = currentOrigin[1];
+		parentAxis[3][2] = currentOrigin[2];
 	}
 }
 

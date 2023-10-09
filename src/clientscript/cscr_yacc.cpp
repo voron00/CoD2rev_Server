@@ -43,6 +43,9 @@ stype_t yylval;
 unsigned int yyleng;
 int yychar;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnarrowing"
+
 /* YYTRANSLATE[YYLEX] -- Bison token number corresponding to YYLEX. */
 static const char yytranslate[] =
 {
@@ -91,15 +94,12 @@ static const short yydefgoto[] =
 	223,    213,     215,    217,    134,      54,     55,      3,
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnarrowing"
 /* YYPGOTO[NTERM-NUM].  */
 static const short yypgoto[] =
 {
 	32768,     33,     32768,         9,     32768,     32768,     204,       -38,        2,     -2,
 	14,       222,        -6,     32768,         7,       147,     -32,     32768,     -102,
 };
-#pragma GCC diagnostic pop
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const short yyr1[] =
@@ -453,8 +453,6 @@ static const short yycheck[] =
 	23,    24,    25,    26,    27,    28,    29,    30,
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnarrowing"
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
 static const short yypact[] =
@@ -487,7 +485,6 @@ static const short yypact[] =
 	32768,  32768,    32768,    32768,      787,    32768,      532,    32768,    32768,      220,
 	221,    32768,
 };
-#pragma GCC diagnostic pop
 
 static const short yy_nxt[] =
 {
@@ -699,8 +696,6 @@ static const short yy_accept[] =
 	91,    73,     0,    91,    68,    91,    74,
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnarrowing"
 static const int32_t yy_ec[] =
 {
 	0,                1,          1,          1,          1,          1,          1,          1,          1,          2,
@@ -761,6 +756,7 @@ static const int32_t yy_ec[] =
 	1628480,    1628480,    1628480,    1628480,    1628480,    1628480,    1628946,    1628946,    1628946,    1628946,
 	1628480,    1628946,    1628480,    1629073,
 };
+
 #pragma GCC diagnostic pop
 
 FILE* yy_stdin()

@@ -62,46 +62,42 @@ void MatrixTransformVectorQuatTransEquals(float *inout, DObjAnimMat *in)
 	inout[1] = temp[1];
 }
 
-void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3])
+void ConvertQuatToMat(const DObjAnimMat *mat, float axis[3][3])
 {
-	float transWeight;
 	float yy;
 	float xy;
 	float zz;
 	float zw;
-	float scaledQuat;
-	float scaledQuat_4;
-	float scaledQuat_8;
+	float scaledQuat[3];
 	float yw;
 	float xz;
 	float yz;
 	float xx;
 	float xw;
 
-	transWeight = mat->transWeight;
-	scaledQuat = transWeight * mat->quat[0];
-	scaledQuat_4 = transWeight * mat->quat[1];
-	scaledQuat_8 = transWeight * mat->quat[2];
+	scaledQuat[0] = mat->transWeight * mat->quat[0];
+	scaledQuat[1] = mat->transWeight * mat->quat[1];
+	scaledQuat[2] = mat->transWeight * mat->quat[2];
 
-	xx = scaledQuat * mat->quat[0];
-	xy = scaledQuat * mat->quat[1];
-	xz = scaledQuat * mat->quat[2];
-	xw = scaledQuat * mat->quat[3];
-	yy = scaledQuat_4 * mat->quat[1];
-	yz = scaledQuat_4 * mat->quat[2];
-	yw = scaledQuat_4 * mat->quat[3];
-	zz = scaledQuat_8 * mat->quat[2];
-	zw = scaledQuat_8 * mat->quat[3];
+	xx = scaledQuat[0] * mat->quat[0];
+	xy = scaledQuat[0] * mat->quat[1];
+	xz = scaledQuat[0] * mat->quat[2];
+	xw = scaledQuat[0] * mat->quat[3];
+	yy = scaledQuat[1] * mat->quat[1];
+	yz = scaledQuat[1] * mat->quat[2];
+	yw = scaledQuat[1] * mat->quat[3];
+	zz = scaledQuat[2] * mat->quat[2];
+	zw = scaledQuat[2] * mat->quat[3];
 
-	(*axis)[0] = 1.0 - (float)(yy + zz);
-	(*axis)[1] = xy + zw;
-	(*axis)[2] = xz - yw;
-	(*axis)[3] = xy - zw;
-	(*axis)[4] = 1.0 - (float)(xx + zz);
-	(*axis)[5] = yz + xw;
-	(*axis)[6] = xz + yw;
-	(*axis)[7] = yz - xw;
-	(*axis)[8] = 1.0 - (float)(xx + yy);
+	axis[0][0] = 1.0 - (float)(yy + zz);
+	axis[0][1] = xy + zw;
+	axis[0][2] = xz - yw;
+	axis[1][0] = xy - zw;
+	axis[1][1] = 1.0 - (float)(xx + zz);
+	axis[1][2] = yz + xw;
+	axis[2][0] = xz + yw;
+	axis[2][1] = yz - xw;
+	axis[2][2] = 1.0 - (float)(xx + yy);
 }
 
 void InvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out)

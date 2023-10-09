@@ -2310,7 +2310,7 @@ void BG_Player_DoControllersInternal(DObj_s *obj, const entityState_s *es, int *
 	vec3_t vHeadAngles;
 	vec3_t vTorsoAngles;
 	float fLeanFrac;
-	vec2_t tag_origin_offset;
+	vec3_t tag_origin_offset;
 	vec3_t tag_origin_angles;
 	float angles[6][3];
 

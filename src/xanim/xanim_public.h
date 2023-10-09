@@ -436,7 +436,7 @@ void DObjAbort();
 
 void DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 void DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
-void ConvertQuatToMat(const DObjAnimMat *mat, float (*axis)[3]);
+void ConvertQuatToMat(const DObjAnimMat *mat, float axis[3][3]);
 void MatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out);
 void QuatMultiply(const float *in1, const float *in2, float *out);
 
