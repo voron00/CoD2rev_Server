@@ -708,7 +708,7 @@ qboolean FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames)
 	if ( numPakSums )
 	{
 		Com_DPrintf("Connected to a pure server.\n");
-		Com_Memcpy(fs_serverIwds, lpakSums, sizeof(int) * fs_numServerIwds);
+		Com_Memcpy(fs_serverIwds, lpakSums, sizeof(char*) * fs_numServerIwds);
 		Com_Memcpy(fs_serverIwdNames, lpakNames, sizeof(char*) * fs_numServerIwds);
 		fs_fakeChkSum = 0;
 	}
@@ -857,7 +857,7 @@ void FS_BuildOSPath_Internal(const char *base, const char *game, const char *qpa
 	lenGame = strlen(game);
 	lenQpath = strlen(qpath);
 
-	if ((int)(lenBase + lenGame + 1 + lenQpath + 1) >= 256)
+	if ((int)(lenBase + lenGame + 1 + lenQpath + 1) >= MAX_OSPATH)
 	{
 		if (thread)
 		{
@@ -1742,31 +1742,6 @@ int QDECL FS_ReadFile(const char* qpath, void** buffer)
 	return len;
 }
 
-void FS_RegisterDvars()
-{
-	char *homePath;
-
-	if ( fs_debug )
-		return;
-
-	fs_debug = Dvar_RegisterInt("fs_debug", 0, 0, 2, 0x1000u);
-	fs_copyfiles = Dvar_RegisterBool("fs_copyfiles", 0, 0x1010u);
-	fs_cdpath = Dvar_RegisterString("fs_cdpath", Sys_DefaultCDPath(), 0x1010u);
-	fs_basepath = Dvar_RegisterString("fs_basepath", Sys_DefaultInstallPath(), 0x1010u);
-	fs_basegame = Dvar_RegisterString("fs_basegame", "", 0x1010u);
-	fs_useOldAssets = Dvar_RegisterBool("fs_useOldAssets", 0, 0x1000u);
-	homePath = (char *)Sys_DefaultHomePath();
-	if (!homePath || !homePath[0])
-		homePath = Sys_Cwd();
-	fs_homepath = Dvar_RegisterString("fs_homepath", homePath, 0x1010u);
-	fs_gameDirVar = Dvar_RegisterString("fs_game", "", 0x101Cu);
-	fs_restrict = Dvar_RegisterBool("fs_restrict", 0, 0x1010u);
-	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x1010u);
-#ifdef LIBCOD
-	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE);
-#endif
-}
-
 void FS_ClearIwdReferences()
 {
 	searchpath_t *search;
@@ -1881,7 +1856,7 @@ void FS_SortFileList( char **filelist, int numfiles )
 	int i, j, k, numsortedfiles;
 	char **sortedlist;
 
-	sortedlist = (char **)Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ) );
+	sortedlist = (char **)Z_Malloc( ( numfiles + sizeof(intptr_t) ) * sizeof( *sortedlist ) );
 	sortedlist[0] = NULL;
 	numsortedfiles = 0;
 	for ( i = 0; i < numfiles; i++ )
@@ -1948,195 +1923,377 @@ static int FS_ReturnPath( const char *zname, char *zpath, int *depth )
 	return len;
 }
 
-#pragma GCC push_options
-#pragma GCC optimize ("O2")
 char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles)
 {
-	char netpath[MAX_QPATH];
+	int nameLen;
+	char netpath[MAX_OSPATH];
+	char szTrimmedName[MAX_QPATH];
 	int numSysFiles;
-	char** sysFiles;
-	char **listCopy;
-	char szTrimmedName[64];
-	int depth;
-	char* name;
-	int zpathLen;
-	int pathDepth;
-	iwd_t* iwd;
-	char zpath[MAX_ZPATH];
+	char **sysFiles;
+	char *name;
 	bool isDirSearch;
-	char *list[MAX_FOUND_FILES];
-	int extensionLength;
-	int nfiles;
-	int pathLength;
-	fileInIwd_t* buildBuffer;
+	char sanitizedPath[MAX_OSPATH];
+	char zpath[MAX_ZPATH];
+	int zpathLen;
+	fileInIwd_t *buildBuffer;
+	iwd_t *iwd;
 	int temp;
-	char sanitizedPath[MAX_QPATH];
-	searchpath_t* search;
+	int depth;
+	int extLen;
+	int pathLength;
 	int i;
-	int length;
+	searchpath_t *pSearch;
+	char *list[MAX_FOUND_FILES];
+	char **listCopy;
+	int nfiles;
 
 	FS_CheckFileSystemStarted();
 
-	if (!path)
+	if ( !path )
 	{
 		*numfiles = 0;
 		return 0;
 	}
 
-	if (!extension)
-	{
+	if ( !extension )
 		extension = "";
-	}
 
-	if (!FS_SanitizeFilename(path, sanitizedPath))
+	if ( !FS_SanitizeFilename(path, sanitizedPath) )
 	{
 		*numfiles = 0;
 		return 0;
 	}
 
 	isDirSearch = I_stricmp(extension, "/") == 0;
-	pathLength = strlen(sanitizedPath);
-	if ((pathLength && path[pathLength - 1] == '\\') || path[pathLength - 1] == '/')
-	{
+	pathLength = I_strlen(sanitizedPath);
+
+	if ( pathLength && (sanitizedPath[pathLength - 1] == 92 || sanitizedPath[pathLength - 1] == 47) )
 		--pathLength;
-	}
 
-	extensionLength = strlen(extension);
+	extLen = I_strlen(extension);
 	nfiles = 0;
-	FS_ReturnPath(sanitizedPath, zpath, &pathDepth);
-	if (sanitizedPath[0])
-	{
-		++pathDepth;
-	}
+	FS_ReturnPath(sanitizedPath, zpath, &depth);
 
-	//
-	// search through the path, one element at a time, adding to list
-	//
-	for (search = searchPath; search; search = search->next)
+	if ( sanitizedPath[0] )
+		++depth;
+
+	for ( pSearch = searchPath; pSearch; pSearch = pSearch->next )
 	{
-		if (FS_UseSearchPath(search))
+		if ( FS_UseSearchPath(pSearch) )
 		{
-			// is the element a iwd file?
-			if (search->iwd)
+			if ( pSearch->iwd )
 			{
-				if ((!search->localized || !fs_ignoreLocalized->current.boolean) && !FS_IwdIsPure(search->iwd))
+				if ( pSearch->localized || FS_IwdIsPure(pSearch->iwd) )
 				{
-					continue;
-				}
+					iwd = pSearch->iwd;
+					buildBuffer = iwd->buildBuffer;
 
-				// look through all the pak file elements
-				iwd = search->iwd;
-				buildBuffer = iwd->buildBuffer;
-				for (i = 0; i < iwd->numFiles; ++i)
-				{
-					// check for directory match
-					name = buildBuffer[i].name;
-					//
-					if (filter)
+					for ( i = 0; i < iwd->numFiles; ++i )
 					{
-						if (Com_FilterPath(filter, name, 0))
+						name = buildBuffer[i].name;
+
+						if ( filter )
 						{
-							// unique the match
-							nfiles = FS_AddFileToList(name, list, nfiles);
+							if ( Com_FilterPath(filter, name, 0) )
+								nfiles = FS_AddFileToList(name, list, nfiles);
 						}
-						continue;
-					}
-
-					zpathLen = FS_ReturnPath(name, zpath, &depth);
-					if (depth == pathDepth
-					        && pathLength <= zpathLen
-					        && (pathLength <= 0 || name[pathLength] == 47)
-					        && !I_strnicmp(name, sanitizedPath, pathLength))
-					{
-						if (!isDirSearch)
+						else
 						{
-							if (extensionLength)
+							zpathLen = FS_ReturnPath(name, zpath, &numSysFiles);
+							if ( numSysFiles == depth
+							        && pathLength <= zpathLen
+							        && (pathLength <= 0 || name[pathLength] == 47)
+							        && !I_strnicmp(name, sanitizedPath, pathLength) )
 							{
-								length = strlen(name);
-								if (length <= extensionLength
-								        || name[length - extensionLength - 1] != 46
-								        || I_stricmp(&name[length - extensionLength], extension))
+								if ( isDirSearch )
 								{
-									continue;
+									nameLen = strlen(name);
+									if ( name[nameLen - 1] != 47 )
+										continue;
+								}
+								else if ( extLen )
+								{
+									nameLen = I_strlen(name);
+									if ( nameLen <= extLen
+									        || name[nameLen - extLen - 1] != 46
+									        || I_stricmp(&name[nameLen - extLen], extension) )
+									{
+										continue;
+									}
+								}
+
+								temp = pathLength;
+								if ( pathLength )
+									++temp;
+								if ( isDirSearch )
+								{
+									strcpy(szTrimmedName, name + temp);
+									szTrimmedName[strlen(szTrimmedName) - 1] = 0;
+									nfiles = FS_AddFileToList(szTrimmedName, list, nfiles);
+								}
+								else
+								{
+									nfiles = FS_AddFileToList(&name[temp], list, nfiles);
 								}
 							}
-							temp = pathLength;
-							if (pathLength)
-							{
-								++temp;
-							}
-
-							if (isDirSearch)
-							{
-								strcpy(szTrimmedName, name + temp);
-								szTrimmedName[strlen(szTrimmedName) - 1] = 0;
-								nfiles = FS_AddFileToList(szTrimmedName, list, nfiles);
-							}
-							else
-							{
-								nfiles = FS_AddFileToList(name + temp, list, nfiles);
-							}
-							continue;
-						}
-
-						if (name[strlen(name) - 1] == 47)
-						{
-							temp = pathLength;
-							if (pathLength)
-							{
-								++temp;
-							}
-
-							if (isDirSearch)
-							{
-								strcpy(szTrimmedName, name + temp);
-								szTrimmedName[strlen(szTrimmedName) - 1] = 0;
-								nfiles = FS_AddFileToList(szTrimmedName, list, nfiles);
-							}
-							else
-							{
-								nfiles = FS_AddFileToList(name + temp, list, nfiles);
-							}
-							continue;
 						}
 					}
 				}
 			}
-			else if (search->dir && ((!fs_restrict->current.boolean && !fs_numServerIwds) || behavior))
+			else if ( pSearch->dir && (!fs_restrict->current.boolean && !fs_numServerIwds || behavior) )
 			{
-				FS_BuildOSPath(search->dir->path, search->dir->gamedir, sanitizedPath, netpath);
+				FS_BuildOSPath(pSearch->dir->path, pSearch->dir->gamedir, sanitizedPath, netpath);
 				sysFiles = Sys_ListFiles(netpath, extension, filter, &numSysFiles, isDirSearch);
-				for (i = 0; i < numSysFiles; ++i)
+
+				for ( i = 0; i < numSysFiles; ++i )
 				{
-					nfiles = FS_AddFileToList(sysFiles[i], list, nfiles);
+					name = sysFiles[i];
+					nfiles = FS_AddFileToList(name, list, nfiles);
 				}
-				FS_FreeFileList(sysFiles);
+
+				Sys_FreeFileList(sysFiles);
 			}
 		}
 	}
 
-	// return a copy of the list
 	*numfiles = nfiles;
 
 	if ( !nfiles )
-	{
-		return NULL;
-	}
+		return 0;
 
-	listCopy = (char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ) );
-	for ( i = 0 ; i < nfiles ; i++ )
-	{
+	listCopy = (char **)Z_Malloc( ( nfiles + sizeof(intptr_t) ) * sizeof( *listCopy ) );
+
+	for ( i = 0; i < nfiles; ++i )
 		listCopy[i] = list[i];
-	}
-	listCopy[i] = NULL;
+
+	listCopy[i] = 0;
 
 	return listCopy;
 }
 
-int FS_GetModList(char *listbuf, int bufsize)
+/*
+=======================
+Sys_ConcatenateFileLists
+
+mkv: Naive implementation. Concatenates three lists into a
+	 new list, and frees the old lists from the heap.
+bk001129 - from cvs1.17 (mkv)
+
+FIXME TTimo those two should move to common.c next to Sys_ListFiles
+=======================
+ */
+static unsigned int Sys_CountFileList( char **list )
 {
-	UNIMPLEMENTED(__FUNCTION__);
-	return 0;
+	int i = 0;
+
+	if ( list )
+	{
+		while ( *list )
+		{
+			list++;
+			i++;
+		}
+	}
+	return i;
+}
+
+static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2 )
+{
+	int totalLength = 0;
+	char** cat = NULL, **dst, **src;
+
+	totalLength += Sys_CountFileList( list0 );
+	totalLength += Sys_CountFileList( list1 );
+	totalLength += Sys_CountFileList( list2 );
+
+	/* Create new list. */
+	dst = cat = (char **)Z_Malloc( ( totalLength + sizeof(intptr_t) ) * sizeof( char* ) );
+
+	/* Copy over lists. */
+	if ( list0 )
+	{
+		for ( src = list0; *src; src++, dst++ )
+			*dst = *src;
+	}
+	if ( list1 )
+	{
+		for ( src = list1; *src; src++, dst++ )
+			*dst = *src;
+	}
+	if ( list2 )
+	{
+		for ( src = list2; *src; src++, dst++ )
+			*dst = *src;
+	}
+
+	// Terminate the list
+	*dst = NULL;
+
+	// Free our old lists.
+	// NOTE: not freeing their content, it's been merged in dst and still being used
+	if ( list0 )
+	{
+		Z_Free( list0 );
+	}
+	if ( list1 )
+	{
+		Z_Free( list1 );
+	}
+	if ( list2 )
+	{
+		Z_Free( list2 );
+	}
+
+	return cat;
+}
+
+/*
+================
+FS_GetModList
+
+Returns a list of mod directory names
+A mod directory is a peer to baseq3 with a pk3 in it
+The directories are searched in base path, cd path and home path
+================
+*/
+int FS_GetModList( char *listbuf, int bufsize )
+{
+	int nMods, i, j, nTotal, nLen, nPaks, nPotential, nDescLen;
+	char **pFiles = NULL;
+	char **pPaks = NULL;
+	char *name;
+	char path[MAX_OSPATH];
+	char descPath[MAX_OSPATH];
+	fileHandle_t descHandle;
+
+	int dummy;
+	char **pFiles0 = NULL;
+	char **pFiles1 = NULL;
+	char **pFiles2 = NULL;
+	qboolean bDrop = qfalse;
+
+	*listbuf = 0;
+	nMods = nPotential = nTotal = 0;
+
+	pFiles0 = Sys_ListFiles( fs_homepath->current.string, NULL, NULL, &dummy, qtrue );
+	pFiles1 = Sys_ListFiles( fs_basepath->current.string, NULL, NULL, &dummy, qtrue );
+
+	// DHM - Nerve :: Don't add blank paths (root)
+	if ( fs_cdpath->current.string[0] )
+	{
+		pFiles2 = Sys_ListFiles( fs_cdpath->current.string, NULL, NULL, &dummy, qtrue );
+	}
+
+	// we searched for mods in the three paths
+	// it is likely that we have duplicate names now, which we will cleanup below
+	pFiles = Sys_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
+	nPotential = Sys_CountFileList( pFiles );
+
+	for ( i = 0 ; i < nPotential ; i++ )
+	{
+		name = pFiles[i];
+		// NOTE: cleaner would involve more changes
+		// ignore duplicate mod directories
+		if ( i != 0 )
+		{
+			bDrop = qfalse;
+			for ( j = 0; j < i; j++ )
+			{
+				if ( Q_stricmp( pFiles[j],name ) == 0 )
+				{
+					// this one can be dropped
+					bDrop = qtrue;
+					break;
+				}
+			}
+		}
+		if ( bDrop )
+		{
+			continue;
+		}
+
+		// we drop "baseq3" "." and ".."
+		if ( Q_stricmp( name, BASEGAME ) && Q_stricmpn( name, ".", 1 ) )
+		{
+			// now we need to find some .pk3 files to validate the mod
+			// NOTE TTimo: (actually I'm not sure why .. what if it's a mod under developement with no .pk3?)
+			// we didn't keep the information when we merged the directory names, as to what OS Path it was found under
+			//   so it could be in base path, cd path or home path
+			//   we will try each three of them here (yes, it's a bit messy)
+			// NOTE Arnout: what about dropping the current loaded mod as well?
+			FS_BuildOSPath( fs_basepath->current.string, name, "", path );
+			nPaks = 0;
+			pPaks = Sys_ListFiles( path, "iwd", NULL, &nPaks, qfalse );
+			Sys_FreeFileList( pPaks ); // we only use Sys_ListFiles to check wether .pk3 files are present
+
+			/* Try on cd path */
+			if ( nPaks <= 0 )
+			{
+				FS_BuildOSPath( fs_cdpath->current.string, name, "", path );
+				nPaks = 0;
+				pPaks = Sys_ListFiles( path, "iwd", NULL, &nPaks, qfalse );
+				Sys_FreeFileList( pPaks );
+			}
+
+			/* try on home path */
+			if ( nPaks <= 0 )
+			{
+				FS_BuildOSPath( fs_homepath->current.string, name, "", path );
+				nPaks = 0;
+				pPaks = Sys_ListFiles( path, "iwd", NULL, &nPaks, qfalse );
+				Sys_FreeFileList( pPaks );
+			}
+
+			if ( nPaks > 0 )
+			{
+				nLen = strlen( name ) + 1;
+				// nLen is the length of the mod path
+				// we need to see if there is a description available
+				descPath[0] = '\0';
+				strcpy( descPath, name );
+				strcat( descPath, "/description.txt" );
+				nDescLen = FS_SV_FOpenFileRead( descPath, &descHandle );
+				if ( nDescLen > 0 && descHandle )
+				{
+					FILE *file;
+					file = FS_FileForHandle( descHandle );
+					Com_Memset( descPath, 0, sizeof( descPath ) );
+					nDescLen = fread( descPath, 1, 48, file );
+					if ( nDescLen >= 0 )
+					{
+						descPath[nDescLen] = '\0';
+					}
+					FS_FCloseFile( descHandle );
+				}
+				else if ( I_stricmp(name, "main") )
+				{
+					strcpy(descPath, name);
+				}
+				else
+				{
+					strcpy(descPath, "Call of Duty 2 Multiplayer");
+				}
+				nDescLen = strlen( descPath ) + 1;
+
+				if ( nTotal + nLen + 1 + nDescLen + 1 < bufsize )
+				{
+					strcpy( listbuf, name );
+					listbuf += nLen;
+					strcpy( listbuf, descPath );
+					listbuf += nDescLen;
+					nTotal += nLen + nDescLen;
+					nMods++;
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+	}
+	Sys_FreeFileList( pFiles );
+
+	return nMods;
 }
 
 int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listbuf, int bufsize)
@@ -2155,7 +2312,7 @@ int FS_GetFileList(const char *path, const char *extension, FsListBehavior behav
 		return FS_GetModList(listbuf, bufsize);
 	}
 
-	fileNames = FS_ListFilteredFiles(fs_searchpaths, path, extension, 0, behavior, &fileCount);
+	fileNames = FS_ListFiles(path, extension, behavior, &fileCount);
 	for (i = 0; i < fileCount; ++i)
 	{
 		nLen = strlen(fileNames[i]) + 1;
@@ -2173,7 +2330,6 @@ int FS_GetFileList(const char *path, const char *extension, FsListBehavior behav
 	FS_FreeFileList(fileNames);
 	return fileCount;
 }
-#pragma GCC pop_options
 
 int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp )
 {
@@ -2784,6 +2940,31 @@ void FS_Restart(int checksumFeed)
 
 	I_strncpyz(lastValidBase, fs_basepath->current.string, sizeof(lastValidBase));
 	I_strncpyz(lastValidGame, fs_gameDirVar->current.string, sizeof(lastValidGame));
+}
+
+void FS_RegisterDvars()
+{
+	char *homePath;
+
+	if ( fs_debug )
+		return;
+
+	fs_debug = Dvar_RegisterInt("fs_debug", 0, 0, 2, 0x1000u);
+	fs_copyfiles = Dvar_RegisterBool("fs_copyfiles", 0, 0x1010u);
+	fs_cdpath = Dvar_RegisterString("fs_cdpath", Sys_DefaultCDPath(), 0x1010u);
+	fs_basepath = Dvar_RegisterString("fs_basepath", Sys_DefaultInstallPath(), 0x1010u);
+	fs_basegame = Dvar_RegisterString("fs_basegame", "", 0x1010u);
+	fs_useOldAssets = Dvar_RegisterBool("fs_useOldAssets", 0, 0x1000u);
+	homePath = (char *)Sys_DefaultHomePath();
+	if (!homePath || !homePath[0])
+		homePath = Sys_Cwd();
+	fs_homepath = Dvar_RegisterString("fs_homepath", homePath, 0x1010u);
+	fs_gameDirVar = Dvar_RegisterString("fs_game", "", 0x101Cu);
+	fs_restrict = Dvar_RegisterBool("fs_restrict", 0, 0x1010u);
+	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x1010u);
+#ifdef LIBCOD
+	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE);
+#endif
 }
 
 void FS_InitFilesystem()

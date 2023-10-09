@@ -158,3 +158,4 @@ void FS_Startup(const char *gameName);
 void FS_ClearIwdReferences();
 void FS_Restart(int checksumFeed);
 void FS_ResetFiles();
+void FS_RegisterDvars();
