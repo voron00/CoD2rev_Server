@@ -2207,13 +2207,9 @@ int FS_GetModList( char *listbuf, int bufsize )
 				}
 			}
 		}
-		if ( bDrop )
-		{
-			continue;
-		}
 
 		// we drop "baseq3" "." and ".."
-		if ( Q_stricmp( name, BASEGAME ) && Q_stricmpn( name, ".", 1 ) )
+		if ( !bDrop && Q_stricmpn( name, ".", 1 ) )
 		{
 			// now we need to find some .pk3 files to validate the mod
 			// NOTE TTimo: (actually I'm not sure why .. what if it's a mod under developement with no .pk3?)
