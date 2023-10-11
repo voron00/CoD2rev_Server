@@ -2945,21 +2945,21 @@ void FS_RegisterDvars()
 	if ( fs_debug )
 		return;
 
-	fs_debug = Dvar_RegisterInt("fs_debug", 0, 0, 2, 0x1000u);
-	fs_copyfiles = Dvar_RegisterBool("fs_copyfiles", 0, 0x1010u);
-	fs_cdpath = Dvar_RegisterString("fs_cdpath", Sys_DefaultCDPath(), 0x1010u);
-	fs_basepath = Dvar_RegisterString("fs_basepath", Sys_DefaultInstallPath(), 0x1010u);
-	fs_basegame = Dvar_RegisterString("fs_basegame", "", 0x1010u);
-	fs_useOldAssets = Dvar_RegisterBool("fs_useOldAssets", 0, 0x1000u);
+	fs_debug = Dvar_RegisterInt("fs_debug", 0, 0, 2, DVAR_CHANGEABLE_RESET);
+	fs_copyfiles = Dvar_RegisterBool("fs_copyfiles", 0, DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_cdpath = Dvar_RegisterString("fs_cdpath", Sys_DefaultCDPath(), DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_basepath = Dvar_RegisterString("fs_basepath", Sys_DefaultInstallPath(), DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_basegame = Dvar_RegisterString("fs_basegame", "", DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_useOldAssets = Dvar_RegisterBool("fs_useOldAssets", 0, DVAR_CHANGEABLE_RESET);
 	homePath = (char *)Sys_DefaultHomePath();
 	if (!homePath || !homePath[0])
 		homePath = Sys_Cwd();
-	fs_homepath = Dvar_RegisterString("fs_homepath", homePath, 0x1010u);
-	fs_gameDirVar = Dvar_RegisterString("fs_game", "", 0x101Cu);
-	fs_restrict = Dvar_RegisterBool("fs_restrict", 0, 0x1010u);
-	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, 0x1010u);
+	fs_homepath = Dvar_RegisterString("fs_homepath", homePath, DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_gameDirVar = Dvar_RegisterString("fs_game", "", DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_restrict = Dvar_RegisterBool("fs_restrict", 0, DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", 0, DVAR_INIT | DVAR_CHANGEABLE_RESET);
 #ifdef LIBCOD
-	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE);
+	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 #endif
 }
 

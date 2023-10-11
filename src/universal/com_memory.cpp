@@ -535,7 +535,7 @@ void Com_InitHunkMemory( void )
 	}
 
 	// allocate the stack based hunk allocator
-	com_hunkMegs = Dvar_RegisterInt( "com_hunkMegs", 160, 1, 512, 0x1021u );
+	com_hunkMegs = Dvar_RegisterInt( "com_hunkMegs", 160, 1, 512, DVAR_ARCHIVE | DVAR_LATCH | DVAR_CHANGEABLE_RESET );
 
 	if ( com_hunkMegs->current.integer < 80 )
 	{

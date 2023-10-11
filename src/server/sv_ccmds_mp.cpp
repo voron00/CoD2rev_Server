@@ -386,13 +386,13 @@ void SV_Status_f()
 void SV_Serverinfo_f(void)
 {
 	Com_Printf("Server info settings:\n");
-	Info_Print(Dvar_InfoString(0x404u));
+	Info_Print(Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
 }
 
 void SV_Systeminfo_f(void)
 {
 	Com_Printf("System info settings:\n");
-	Info_Print(Dvar_InfoString(8u));
+	Info_Print(Dvar_InfoString(DVAR_SYSTEMINFO));
 }
 
 void SV_DumpUser_f(void)

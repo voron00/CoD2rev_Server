@@ -1754,7 +1754,7 @@ void Dvar_ResetScriptInfo()
 	int dvarIter;
 
 	for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
-		dvarPool[dvarIter].flags &= ~0x400u;
+		dvarPool[dvarIter].flags &= ~DVAR_SCRIPTINFO;
 }
 
 void Dvar_Init()

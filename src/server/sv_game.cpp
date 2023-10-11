@@ -457,7 +457,7 @@ void SV_GetServerinfo(char *buffer, int bufferSize)
 	if ( bufferSize <= 0 )
 		Com_Error(ERR_DROP, "SV_GetServerinfo: bufferSize == %i", bufferSize);
 
-	I_strncpyz(buffer, Dvar_InfoString(0x404u), bufferSize);
+	I_strncpyz(buffer, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO), bufferSize);
 }
 
 void SV_LocateGameData(gentity_s *gEnts, int numGEntities, int sizeofGEntity_t, playerState_s *clients, int sizeofGameClient)
@@ -499,7 +499,7 @@ void SV_SetGametype()
 	char gametype[64];
 	char *s;
 
-	Dvar_RegisterString("g_gametype", "dm", 0x1024u);
+	Dvar_RegisterString("g_gametype", "dm", DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
 
 	if ( com_sv_running->current.boolean && G_GetSavePersist() )
 		I_strncpyz(gametype, sv.gametype, sizeof(gametype));

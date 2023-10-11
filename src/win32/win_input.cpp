@@ -53,7 +53,7 @@ IN_Init
 */
 void IN_Init( void )
 {
-	in_mouse = Dvar_RegisterBool("in_mouse", 1, 4129);
+	in_mouse = Dvar_RegisterBool("in_mouse", 1, DVAR_ARCHIVE | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
 
 	if ( !in_mouse->current.boolean )
 	{

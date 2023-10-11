@@ -828,7 +828,7 @@ void SVC_Status( netadr_t from )
 	}
 #endif
 
-	strcpy( infostring, Dvar_InfoString(0x404u) );
+	strcpy( infostring, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO) );
 
 	// echo back the parameter to status. so master servers can use it as a challenge
 	// to prevent timed spoofed reply packets that add ghost servers
@@ -1041,7 +1041,7 @@ void SVC_GameCompleteStatus( netadr_t from )
 	int playerLength;
 	char infostring[MAX_INFO_STRING];
 
-	strcpy( infostring, Dvar_InfoString(0x404u) );
+	strcpy( infostring, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO) );
 
 	// echo back the parameter to status. so master servers can use it as a challenge
 	// to prevent timed spoofed reply packets that add ghost servers
@@ -1539,22 +1539,22 @@ void SV_Frame(int msec)
 		return;
 	}
 
-	if ( (dvar_modifiedFlags & 0x404) != 0 )
+	if ( (dvar_modifiedFlags & (DVAR_SERVERINFO | DVAR_SCRIPTINFO)) != 0 )
 	{
-		SV_SetConfigstring(0, Dvar_InfoString(0x404u));
-		dvar_modifiedFlags &= 0xFFFFFBFB;
+		SV_SetConfigstring(0, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
+		dvar_modifiedFlags &= ~(DVAR_SERVERINFO | DVAR_SCRIPTINFO);
 	}
 
-	if ( (dvar_modifiedFlags & 8) != 0 )
+	if ( (dvar_modifiedFlags & DVAR_SYSTEMINFO) != 0 )
 	{
-		SV_SetConfigstring(1u, Dvar_InfoString_Big(8u));
-		dvar_modifiedFlags &= ~8u;
+		SV_SetConfigstring(1u, Dvar_InfoString_Big(DVAR_SYSTEMINFO));
+		dvar_modifiedFlags &= ~DVAR_SYSTEMINFO;
 	}
 
-	if ( (dvar_modifiedFlags & 0x100) != 0 )
+	if ( (dvar_modifiedFlags & DVAR_DEVELOPER) != 0 )
 	{
-		SV_SetConfig(142, 96, 0x100u);
-		dvar_modifiedFlags &= ~0x100u;
+		SV_SetConfig(142, 96, DVAR_DEVELOPER);
+		dvar_modifiedFlags &= ~DVAR_DEVELOPER;
 	}
 
 	SV_BotFrame();

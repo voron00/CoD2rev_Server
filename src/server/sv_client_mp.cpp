@@ -1409,7 +1409,7 @@ void SV_AuthorizeRequest(netadr_t adr, int challenge)
 	if ( svs.authorizeAddress.type != NA_BAD )
 	{
 		game[0] = 0;
-		fs = Dvar_RegisterString("fs_game", "", 0x101Cu);
+		fs = Dvar_RegisterString("fs_game", "", DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
 
 		if ( fs )
 		{

@@ -447,7 +447,7 @@ void Dvar_List_f(void)
 		if (match && !Com_Filter(match, var->name, qfalse))
 			continue;
 
-		if (var->flags & DVAR_SERVERINFO)
+		if (var->flags & (DVAR_SERVERINFO | DVAR_SCRIPTINFO))
 			Com_Printf("S");
 		else
 			Com_Printf(" ");

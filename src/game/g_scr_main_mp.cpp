@@ -827,59 +827,58 @@ void GScr_GetDvarFloat()
 	Scr_AddFloat(value);
 }
 
+void CleanDvarValue(const char *dvarValue, char *outString, int size)
+{
+	int i;
+
+	for ( i = 0; i < size - 1 && dvarValue[i]; ++i )
+	{
+		*outString = I_CleanChar(dvarValue[i]);
+
+		if ( *outString == 34 )
+			*outString = 39;
+
+		++outString;
+	}
+
+	*outString = 0;
+}
+
 void GScr_SetDvar()
 {
-	char chr;
-	int norestart;
-	dvar_s *var;
-	const char *pName;
+	dvar_s *dvar;
 	const char *dvarName;
+	const char *dvarValue;
 	char outString[MAX_STRING_CHARS];
 	char string[MAX_STRING_CHARS];
-	char *pString;
-	int count;
 
 	dvarName = Scr_GetString(0);
 
 	if ( Scr_GetType(1u) == VAR_ISTRING )
 	{
 		Scr_ConstructMessageString(1, Scr_GetNumParam() - 1, "Dvar Value", string, sizeof(string));
-		pName = string;
+		dvarValue = string;
 	}
 	else
 	{
-		pName = Scr_GetString(1u);
+		dvarValue = Scr_GetString(1u);
 	}
 
-	pString = outString;
-	memset(outString, 0, sizeof(outString));
-	count = 0;
-
-	while ( count <= 0x1FFF && pName[count] )
-	{
-		chr = I_CleanChar(pName[count]);
-		*pString = chr;
-
-		if ( *pString == 34 )
-			*pString = 39;
-
-		++count;
-		++pString;
-	}
+	CleanDvarValue(dvarValue, outString, sizeof(outString));
 
 	if ( Dvar_IsValidName(dvarName) )
 	{
-		norestart = 0;
+		int info = 0;
 
 		if ( Scr_GetNumParam() > 2 && Scr_GetInt(2u) )
-			norestart = 1;
+			info = 1;
 
-		Dvar_SetFromStringByName(dvarName, pName);
+		Dvar_SetFromStringByName(dvarName, dvarValue);
 
-		if ( norestart )
+		if ( info )
 		{
-			var = Dvar_FindVar(dvarName);
-			Dvar_AddFlags(var, 0x400u);
+			dvar = Dvar_FindVar(dvarName);
+			Dvar_AddFlags(dvar, DVAR_SCRIPTINFO);
 		}
 	}
 	else
@@ -3022,31 +3021,13 @@ void GScr_AddTestClient()
 		Scr_AddEntity(ent);
 }
 
-void CleanDvarValue(const char *dvarValue, char *outString, int size)
-{
-	int i;
-
-	for ( i = 0; i < size - 1 && dvarValue[i]; ++i )
-	{
-		*outString = I_CleanChar(dvarValue[i]);
-
-		if ( *outString == 34 )
-			*outString = 39;
-
-		++outString;
-	}
-
-	*outString = 0;
-}
-
 void GScr_MakeDvarServerInfo()
 {
-	char string[1024];
-	char outString[1024];
-	const char *dvarName;
-	int type;
 	dvar_s *dvar;
+	const char *dvarName;
 	const char *dvarValue;
+	char string[MAX_STRING_CHARS];
+	char outString[MAX_STRING_CHARS];
 
 	dvarName = Scr_GetString(0);
 
@@ -3059,15 +3040,13 @@ void GScr_MakeDvarServerInfo()
 
 	if ( dvar )
 	{
-		Dvar_AddFlags(dvar, 0x100u);
+		Dvar_AddFlags(dvar, DVAR_DEVELOPER);
 	}
 	else
 	{
-		type = Scr_GetType(1u);
-
-		if ( type == VAR_ISTRING )
+		if ( Scr_GetType(1u) == VAR_ISTRING )
 		{
-			Scr_ConstructMessageString(1, Scr_GetNumParam() - 1, "Dvar Value", string, 1024);
+			Scr_ConstructMessageString(1, Scr_GetNumParam() - 1, "Dvar Value", string, sizeof(string));
 			dvarValue = string;
 		}
 		else
@@ -3075,8 +3054,8 @@ void GScr_MakeDvarServerInfo()
 			dvarValue = Scr_GetString(1u);
 		}
 
-		CleanDvarValue(dvarValue, outString, 1024);
-		Dvar_RegisterString(dvarName, dvarValue, 0x4100u);
+		CleanDvarValue(dvarValue, outString, sizeof(outString));
+		Dvar_RegisterString(dvarName, dvarValue, DVAR_DEVELOPER | DVAR_EXTERNAL);
 	}
 }
 
@@ -4758,7 +4737,7 @@ void GScr_LoadLevelScript()
 	dvar_t *mapname;
 	char s[64];
 
-	mapname = Dvar_RegisterString("mapname", "", 0x1044u);
+	mapname = Dvar_RegisterString("mapname", "", DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	Com_sprintf(s, sizeof(s), "maps/mp/%s", mapname->current.string);
 	g_scr_data.levelscript = Scr_GetFunctionHandle(s, "main", 0);
 }

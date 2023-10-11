@@ -612,10 +612,10 @@ void Mantle_ShutdownAnims()
 
 void Mantle_RegisterDvars()
 {
-	mantle_enable = Dvar_RegisterBool("mantle_enable", 1, 0x1180u);
-	mantle_debug = Dvar_RegisterBool("mantle_debug", 0, 0x1180u);
-	mantle_check_range = Dvar_RegisterFloat("mantle_check_range", 20.0, 0.0, 128.0, 0x1180u);
-	mantle_check_radius = Dvar_RegisterFloat("mantle_check_radius", 0.1, 0.0, 15.0, 0x1180u);
-	mantle_check_angle = Dvar_RegisterFloat("mantle_check_angle", 60.0, 0.0, 180.0, 0x1180u);
-	mantle_view_yawcap = Dvar_RegisterFloat("mantle_view_yawcap", 60.0, 0.0, 180.0, 0x1180u);
+	mantle_enable = Dvar_RegisterBool("mantle_enable", 1, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
+	mantle_debug = Dvar_RegisterBool("mantle_debug", 0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
+	mantle_check_range = Dvar_RegisterFloat("mantle_check_range", 20.0, 0.0, 128.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
+	mantle_check_radius = Dvar_RegisterFloat("mantle_check_radius", 0.1, 0.0, 15.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
+	mantle_check_angle = Dvar_RegisterFloat("mantle_check_angle", 60.0, 0.0, 180.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
+	mantle_view_yawcap = Dvar_RegisterFloat("mantle_view_yawcap", 60.0, 0.0, 180.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
 }

@@ -454,7 +454,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 			return;
 		}
 
-		mapname = Dvar_RegisterString("mapname", "", 0x1044u);
+		mapname = Dvar_RegisterString("mapname", "", DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
 
 		if ( !I_stricmp(arg3, mapname->current.string) )
 			arg3[0] = 0;

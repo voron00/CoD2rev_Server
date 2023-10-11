@@ -68,65 +68,65 @@ void SV_Init()
 {
 	SV_AddOperatorCommands();
 
-	sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024u);
-	Dvar_RegisterString("sv_keywords", "", 0x1004u);
-	Dvar_RegisterInt("protocol", PROTOCOL_VERSION, PROTOCOL_VERSION, PROTOCOL_VERSION, 0x1044u);
-	sv_mapname = Dvar_RegisterString("mapname", "", 0x1044u);
-	sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, 64, 0x1004u);
-	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 64, 0x1025u);
-	sv_hostname = Dvar_RegisterString("sv_hostname", "CoD2Host", 0x1005u);
-	sv_maxRate = Dvar_RegisterInt("sv_maxRate", 0, 0, 25000, 0x1005u);
-	sv_minPing = Dvar_RegisterInt("sv_minPing", 0, 0, 999, 0x1005u);
-	sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, 0, 999, 0x1005u);
-	sv_floodProtect = Dvar_RegisterBool("sv_floodProtect", 1, 4101);
-	sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, 4100);
-	sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, 4096);
-	sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, 4104);
-	sv_voice = Dvar_RegisterBool("sv_voice", 0, 4109);
-	sv_voiceQuality = Dvar_RegisterInt("sv_voiceQuality", 1, 0, 9, 0x1008u);
-	sv_cheats = Dvar_RegisterBool("sv_cheats", 0, 4120);
-	sv_serverid = Dvar_RegisterInt("sv_serverid", 0, 0x80000000, 0x7FFFFFFF, 0x1048u);
-	sv_pure = Dvar_RegisterBool("sv_pure", 1, 4108);
-	sv_iwds = Dvar_RegisterString("sv_iwds", "", 0x1048u);
-	sv_iwdNames = Dvar_RegisterString("sv_iwdNames", "", 0x1048u);
-	sv_referencedIwds = Dvar_RegisterString("sv_referencedIwds", "", 0x1048u);
-	sv_referencedIwdNames = Dvar_RegisterString("sv_referencedIwdNames", "", 0x1048u);
-	rcon_password = Dvar_RegisterString("rcon_password", "", 0x1000u);
-	sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", 0x1000u);
-	sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, 0x1000u);
-	sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, 0x1000u);
-	sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, 0x1000u);
-	sv_allowDownload = Dvar_RegisterBool("sv_allowDownload", 1, 4097);
-	sv_reconnectlimit = Dvar_RegisterInt("sv_reconnectlimit", 3, 0, 1800, 0x1001u);
-	sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7FFFFFFF, 0x1000u);
+	sv_gametype = Dvar_RegisterString("g_gametype", "dm", DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	Dvar_RegisterString("sv_keywords", "", DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	Dvar_RegisterInt("protocol", PROTOCOL_VERSION, PROTOCOL_VERSION, PROTOCOL_VERSION, DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	sv_mapname = Dvar_RegisterString("mapname", "", DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, MAX_CLIENTS, DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, MAX_CLIENTS, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	sv_hostname = Dvar_RegisterString("sv_hostname", "CoD2Host", DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_maxRate = Dvar_RegisterInt("sv_maxRate", 0, 0, 25000, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_minPing = Dvar_RegisterInt("sv_minPing", 0, 0, 999, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, 0, 999, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_floodProtect = Dvar_RegisterBool("sv_floodProtect", 1, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, DVAR_CHANGEABLE_RESET);
+	sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
+	sv_voice = Dvar_RegisterBool("sv_voice", 0, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
+	sv_voiceQuality = Dvar_RegisterInt("sv_voiceQuality", 1, 0, 9, DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
+	sv_cheats = Dvar_RegisterBool("sv_cheats", 0, DVAR_SYSTEMINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	sv_serverid = Dvar_RegisterInt("sv_serverid", 0, 0x80000000, 0x7FFFFFFF, DVAR_SYSTEMINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	sv_pure = Dvar_RegisterBool("sv_pure", 1, DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
+	sv_iwds = Dvar_RegisterString("sv_iwds", "", DVAR_SYSTEMINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	sv_iwdNames = Dvar_RegisterString("sv_iwdNames", "", DVAR_SYSTEMINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	sv_referencedIwds = Dvar_RegisterString("sv_referencedIwds", "", DVAR_SYSTEMINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	sv_referencedIwdNames = Dvar_RegisterString("sv_referencedIwdNames", "", DVAR_SYSTEMINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	rcon_password = Dvar_RegisterString("rcon_password", "", DVAR_CHANGEABLE_RESET);
+	sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", DVAR_CHANGEABLE_RESET);
+	sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, DVAR_CHANGEABLE_RESET);
+	sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, DVAR_CHANGEABLE_RESET);
+	sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, DVAR_CHANGEABLE_RESET);
+	sv_allowDownload = Dvar_RegisterBool("sv_allowDownload", 1, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_reconnectlimit = Dvar_RegisterInt("sv_reconnectlimit", 3, 0, 1800, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7FFFFFFF, DVAR_CHANGEABLE_RESET);
 	//*(_BYTE *)(legacyHacks + 221) = 0;
-	sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", 0x1000u);
-	sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", 0x1000u);
-	sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, 4096);
-	sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, 4096);
-	sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0, 0.0, 3600.0, 0x1000u);
-	sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", 0x1000u);
-	sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", 0x1000u);
-	sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, 4096);
-	sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, 4096);
-	nextmap = Dvar_RegisterString("nextmap", "", 0x1000u);
-	com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7FFFFFFF, 0x1040u);
+	sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", DVAR_CHANGEABLE_RESET);
+	sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", DVAR_CHANGEABLE_RESET);
+	sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, DVAR_CHANGEABLE_RESET);
+	sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, DVAR_CHANGEABLE_RESET);
+	sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0, 0.0, 3600.0, DVAR_CHANGEABLE_RESET);
+	sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", DVAR_CHANGEABLE_RESET);
+	sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", DVAR_CHANGEABLE_RESET);
+	sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, DVAR_CHANGEABLE_RESET);
+	sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, DVAR_CHANGEABLE_RESET);
+	nextmap = Dvar_RegisterString("nextmap", "", DVAR_CHANGEABLE_RESET);
+	com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7FFFFFFF, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 
-	sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 4097);
-	sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 4097);
-	sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 4097);
+	sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
-	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE);
-	sv_master[1] = Dvar_RegisterString("sv_master2", "", DVAR_ARCHIVE);
-	sv_master[2] = Dvar_RegisterString("sv_master3", "", DVAR_ARCHIVE);
-	sv_master[3] = Dvar_RegisterString("sv_master4", "", DVAR_ARCHIVE);
-	sv_master[4] = Dvar_RegisterString("sv_master5", "", DVAR_ARCHIVE);
+	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_master[1] = Dvar_RegisterString("sv_master2", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_master[2] = Dvar_RegisterString("sv_master3", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_master[3] = Dvar_RegisterString("sv_master4", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_master[4] = Dvar_RegisterString("sv_master5", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
 #ifdef LIBCOD
-	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", qtrue, DVAR_ARCHIVE);
-	sv_downloadMessage = Dvar_RegisterString("sv_downloadMessage", "", DVAR_ARCHIVE);
-	sv_cracked = Dvar_RegisterBool("sv_cracked", qfalse, DVAR_ARCHIVE);
-	sv_kickbots = Dvar_RegisterBool("sv_kickbots", qfalse, DVAR_ARCHIVE);
+	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", qtrue, DVAR_CHANGEABLE_RESET);
+	sv_downloadMessage = Dvar_RegisterString("sv_downloadMessage", "", DVAR_CHANGEABLE_RESET);
+	sv_cracked = Dvar_RegisterBool("sv_cracked", qfalse, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_kickbots = Dvar_RegisterBool("sv_kickbots", qfalse, DVAR_CHANGEABLE_RESET);
 #endif
 }
 
@@ -304,7 +304,7 @@ void SV_SetUserinfo( int index, const char *val )
 
 void SV_BoundMaxClients(int minimum)
 {
-	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 64, 0x1025u);
+	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, MAX_CLIENTS, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
 	Dvar_ClearModified(sv_maxclients);
 
 	if ( sv_maxclients->current.integer < minimum )
@@ -626,15 +626,15 @@ void SV_Shutdown(const char *finalmsg)
 
 void SV_SaveSystemInfo()
 {
-	char info[8192];
+	char info[BIG_INFO_STRING];
 
-	I_strncpyz(info, Dvar_InfoString_Big(8u), 0x2000);
-	dvar_modifiedFlags &= ~8u;
+	I_strncpyz(info, Dvar_InfoString_Big(DVAR_SYSTEMINFO), sizeof(info));
+	dvar_modifiedFlags &= ~DVAR_SYSTEMINFO;
 	SV_SetConfigstring(1u, info);
-	SV_SetConfigstring(0, Dvar_InfoString(0x404u));
-	dvar_modifiedFlags &= 0xFFFFFBFB;
-	SV_SetConfig(142, 96, 0x100u);
-	dvar_modifiedFlags &= ~0x100u;
+	SV_SetConfigstring(0, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
+	dvar_modifiedFlags &= ~(DVAR_SERVERINFO | DVAR_SCRIPTINFO);
+	SV_SetConfig(142, 96, DVAR_DEVELOPER);
+	dvar_modifiedFlags &= ~DVAR_DEVELOPER;
 }
 
 extern dvar_t *cl_paused;

@@ -816,11 +816,11 @@ qboolean NET_IsLocalAddress( netadr_t adr )
 
 void Netchan_Init(uint16_t port)
 {
-	showpackets = Dvar_RegisterBool("showpackets", 0, 4096);
-	showdrop = Dvar_RegisterBool("showdrop", 0, 4096);
-	packetDebug = Dvar_RegisterBool("packetDebug", 0, 4096);
+	showpackets = Dvar_RegisterBool("showpackets", 0, DVAR_CHANGEABLE_RESET);
+	showdrop = Dvar_RegisterBool("showdrop", 0, DVAR_CHANGEABLE_RESET);
+	packetDebug = Dvar_RegisterBool("packetDebug", 0, DVAR_CHANGEABLE_RESET);
 	g_qport = port;
-	net_profile = Dvar_RegisterInt("net_profile", 0, 0, 2, 4096);
-	net_showprofile = Dvar_RegisterInt("net_showprofile", 0, 0, 3, 4096);
-	net_lanauthorize = Dvar_RegisterBool("net_lanauthorize", 0, 4096);
+	net_profile = Dvar_RegisterInt("net_profile", 0, 0, 2, DVAR_CHANGEABLE_RESET);
+	net_showprofile = Dvar_RegisterInt("net_showprofile", 0, 0, 3, DVAR_CHANGEABLE_RESET);
+	net_lanauthorize = Dvar_RegisterBool("net_lanauthorize", 0, DVAR_CHANGEABLE_RESET);
 }

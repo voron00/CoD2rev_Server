@@ -565,8 +565,8 @@ void Com_Error(errorParm_t code, const char *format, ...)
 
 void Com_SetErrorMessage(const char *errorMessage)
 {
-	ui_errorMessage = Dvar_RegisterString("com_errorMessage", "", 4160);
-	ui_errorTitle = Dvar_RegisterString("com_errorTitle", "", 4160);
+	ui_errorMessage = Dvar_RegisterString("com_errorMessage", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	ui_errorTitle = Dvar_RegisterString("com_errorTitle", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	Dvar_SetString(ui_errorMessage, errorMessage);
 }
 
@@ -737,20 +737,20 @@ int Com_HashKey( const char *string, int maxlen )
 
 void Com_InitDvars()
 {
-	com_dedicated = Dvar_RegisterInt("dedicated", 2, 1, 2, 0x1020u);
-	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001u);
-	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000u);
-	com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000u);
-	com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, 0x1000u);
-	com_timescale = Dvar_RegisterFloat("timescale", 1.0, 0.001, 1000.0, 0x1088u);
-	com_fixedtime = Dvar_RegisterInt("fixedtime", 0, 0, 1000, 0x1080u);
-	com_viewlog = Dvar_RegisterInt("viewlog", 0, 0, 2, 0x1080u);
-	sv_paused = Dvar_RegisterInt("sv_paused", 0, 0, 2, 0x1040u);
-	cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 2, 0x1040u);
-	com_sv_running = Dvar_RegisterBool("sv_running", 0, 0x1040u);
+	com_dedicated = Dvar_RegisterInt("dedicated", 2, 1, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, DVAR_CHANGEABLE_RESET);
+	com_developer_script = Dvar_RegisterBool("developer_script", 0, DVAR_CHANGEABLE_RESET);
+	com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, DVAR_CHANGEABLE_RESET);
+	com_timescale = Dvar_RegisterFloat("timescale", 1.0, 0.001, 1000.0, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	com_fixedtime = Dvar_RegisterInt("fixedtime", 0, 0, 1000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	com_viewlog = Dvar_RegisterInt("viewlog", 0, 0, 2, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	sv_paused = Dvar_RegisterInt("sv_paused", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	com_sv_running = Dvar_RegisterBool("sv_running", 0, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	//*((_DWORD *)legacyHacks + 1) = 0;
-	com_introPlayed = Dvar_RegisterBool("com_introPlayed", 0, 0x1001u);
-	com_animCheck = Dvar_RegisterBool("com_animCheck", 0, 0x1000u);
+	com_introPlayed = Dvar_RegisterBool("com_introPlayed", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	com_animCheck = Dvar_RegisterBool("com_animCheck", 0, DVAR_CHANGEABLE_RESET);
 
 	if ( com_dedicated->current.integer )
 	{
@@ -1260,7 +1260,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	Com_StartupVariable(0);
 	Com_InitHunkMemory();
 	Com_InitParse();
-	dvar_modifiedFlags &= 0xFFFFFFFE;
+	dvar_modifiedFlags &= ~DVAR_ARCHIVE;
 	// com_codeTimeScale = 1.0;
 	if ( com_developer->current.integer )
 	{
@@ -1271,8 +1271,8 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	Cmd_AddCommand("quit", Com_Quit_f);
 	Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
 	Cmd_AddCommand("writedefaults", Com_WriteDefaults_f);
-	Dvar_RegisterString("version", va("%s %s build %s %s", GAME_STRING,PRODUCT_VERSION,CPUSTRING, __DATE__), 4160);
-	Dvar_RegisterString("shortversion", PRODUCT_VERSION, 4164);
+	Dvar_RegisterString("version", va("%s %s build %s %s", GAME_STRING,PRODUCT_VERSION,CPUSTRING, __DATE__), DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	Dvar_RegisterString("shortversion", PRODUCT_VERSION, DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
 #ifndef DEDICATED
 	FxMem_Init();
 #endif

@@ -62,9 +62,9 @@ void SEH_UpdateCurrentLanguage(int langindex)
 
 void SEH_InitLanguage()
 {
-	loc_language = Dvar_RegisterInt("loc_language", 0, 0, MAX_LANGUAGES - 1, 0x1021u);
-	loc_forceEnglish = Dvar_RegisterBool("loc_forceEnglish", 0, 0x1021u);
-	loc_translate = Dvar_RegisterBool("loc_translate", 1, 0x1020u);
-	loc_warnings = Dvar_RegisterBool("loc_warnings", 0, 0x1000u);
-	loc_warningsAsErrors = Dvar_RegisterBool("loc_warningsAsErrors", 0, 0x1000u);
+	loc_language = Dvar_RegisterInt("loc_language", 0, 0, MAX_LANGUAGES - 1, DVAR_ARCHIVE | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	loc_forceEnglish = Dvar_RegisterBool("loc_forceEnglish", 0, DVAR_ARCHIVE | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	loc_translate = Dvar_RegisterBool("loc_translate", 1, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	loc_warnings = Dvar_RegisterBool("loc_warnings", 0, DVAR_CHANGEABLE_RESET);
+	loc_warningsAsErrors = Dvar_RegisterBool("loc_warningsAsErrors", 0, DVAR_CHANGEABLE_RESET);
 }
