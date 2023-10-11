@@ -87,7 +87,7 @@ void SaveRegisteredItems()
 	}
 
 	string[n] = 0;
-	SV_SetConfigstring(8u, string);
+	SV_SetConfigstring(CS_ITEMS, string);
 }
 
 void SaveRegisteredWeapons()
@@ -109,7 +109,7 @@ void SaveRegisteredWeapons()
 		I_strncat(string, 8192, weaponDef->szInternalName);
 	}
 
-	SV_SetConfigstring(7u, string);
+	SV_SetConfigstring(CS_WEAPONS, string);
 }
 
 extern dvar_t *g_maxDroppedWeapons;

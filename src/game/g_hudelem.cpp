@@ -338,7 +338,7 @@ void HECmd_SetGameTypeString(scr_entref_t entRef)
 	{
 		if ( Scr_GetGameTypeNameForScript(string) )
 		{
-			SV_SetConfigstring(0x14, string);
+			SV_SetConfigstring(CS_VOTE_GAMETYPE, string);
 			HudElem_ClearTypeSettings(hud);
 			hud->elem.type = HE_TYPE_GAMETYPE;
 			hud->elem.value = 20.0;
@@ -366,7 +366,7 @@ void HECmd_SetMapNameString(scr_entref_t entRef)
 	{
 		if ( SV_MapExists(string) )
 		{
-			SV_SetConfigstring(0x13, string);
+			SV_SetConfigstring(CS_VOTE_MAPNAME, string);
 			HudElem_ClearTypeSettings(hud);
 			hud->elem.type = HE_TYPE_MAPNAME;
 		}

@@ -921,8 +921,8 @@ void IntermissionClientEndFrame(gentity_s *ent)
 	client->ps.viewmodelIndex = 0;
 	ent->s.eType = ET_INVISIBLE;
 
-	SV_SetConfigstring(5u, va("%i", level.teamScores[1]));
-	SV_SetConfigstring(6u, va("%i", level.teamScores[2]));
+	SV_SetConfigstring(CS_SCORES1, va("%i", level.teamScores[1]));
+	SV_SetConfigstring(CS_SCORES2, va("%i", level.teamScores[2]));
 }
 
 void SpectatorClientEndFrame(gentity_s *ent)

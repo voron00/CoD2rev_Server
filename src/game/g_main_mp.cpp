@@ -470,7 +470,7 @@ pass:
 				level.voteExecuteTime = level.time + 3000;
 fail:
 				level.voteTime = 0;
-				SV_SetConfigstring(0xFu, "");
+				SV_SetConfigstring(CS_VOTE_TIME, "");
 				return;
 			}
 		}
@@ -774,9 +774,9 @@ void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars)
 
 	GScr_LoadConsts();
 
-	SV_GetConfigstring(22, configstring, 1024);
+	SV_GetConfigstring(CS_MULTI_MAPWINNER, configstring, 1024);
 	Info_SetValueForKey(configstring, "winner", "0");
-	SV_SetConfigstring(0x16u, configstring);
+	SV_SetConfigstring(CS_MULTI_MAPWINNER, configstring);
 
 	memset(g_entities, 0, sizeof(g_entities));
 	level.gentities = g_entities;

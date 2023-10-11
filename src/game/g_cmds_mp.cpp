@@ -53,7 +53,7 @@ void G_setfog(const char *fogstring)
 	float fFar;
 	float fNear;
 
-	SV_SetConfigstring(0xCu, fogstring);
+	SV_SetConfigstring(CS_FOGVARS, fogstring);
 
 	level.fFogOpaqueDist = 3.4028235e38;
 	level.fFogOpaqueDistSqrd = 3.4028235e38;
@@ -333,7 +333,7 @@ void Cmd_Vote_f(gentity_s *ent)
 	{
 		if ( g_oldVoting->current.boolean )
 		{
-			SV_SetConfigstring(0x11u, va("%i", ++level.voteYes));
+			SV_SetConfigstring(CS_VOTE_YES, va("%i", ++level.voteYes));
 		}
 		else
 		{
@@ -342,7 +342,7 @@ void Cmd_Vote_f(gentity_s *ent)
 	}
 	else if ( g_oldVoting->current.boolean )
 	{
-		SV_SetConfigstring(0x12u, va("%i", ++level.voteNo));
+		SV_SetConfigstring(CS_VOTE_NO, va("%i", ++level.voteNo));
 	}
 	else
 	{
@@ -607,10 +607,10 @@ start_vote:
 
 	ent->client->ps.eFlags |= 0x100000u;
 
-	SV_SetConfigstring(0xFu, va("%i", level.voteTime));
-	SV_SetConfigstring(0x10u, level.voteDisplayString);
-	SV_SetConfigstring(0x11u, va("%i", level.voteYes));
-	SV_SetConfigstring(0x12u, va("%i", level.voteNo));
+	SV_SetConfigstring(CS_VOTE_TIME, va("%i", level.voteTime));
+	SV_SetConfigstring(CS_VOTE_STRING, level.voteDisplayString);
+	SV_SetConfigstring(CS_VOTE_YES, va("%i", level.voteYes));
+	SV_SetConfigstring(CS_VOTE_NO, va("%i", level.voteNo));
 }
 
 void Cmd_Where_f(gentity_s *ent)

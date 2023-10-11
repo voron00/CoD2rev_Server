@@ -1655,7 +1655,7 @@ void Dvar_SetStringByName(const char *dvarName, const char *value)
 	if ( var )
 		Dvar_SetString(var, value);
 	else
-		Dvar_RegisterString(dvarName, value, 0x4000u);
+		Dvar_RegisterString(dvarName, value, DVAR_EXTERNAL);
 }
 
 void Dvar_SetInAutoExec(qboolean inAutoExec)

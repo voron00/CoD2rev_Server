@@ -1960,7 +1960,7 @@ void Scr_AmbientPlay()
 		Scr_Error(va("ambientPlay: fade time must be >= 0\n"));
 	}
 
-	SV_SetConfigstring(3u, va("n\\%s\\t\\%i", name, level.time + iFadeTime));
+	SV_SetConfigstring(CS_AMBIENT, va("n\\%s\\t\\%i", name, level.time + iFadeTime));
 }
 
 void Scr_AmbientStop()
@@ -1990,7 +1990,7 @@ void Scr_AmbientStop()
 		Scr_Error(va("ambientStop: fade time must be >= 0\n"));
 	}
 
-	SV_SetConfigstring(3u, va("t\\%i", level.time + iFadeTime));
+	SV_SetConfigstring(CS_AMBIENT, va("t\\%i", level.time + iFadeTime));
 }
 
 void Scr_PrecacheModel()
@@ -2497,13 +2497,13 @@ void GScr_SetWinningPlayer()
 	int iWinner;
 
 	iWinner = Scr_GetEntity(0)->s.number + 1;
-	SV_GetConfigstring(22, buffer, 1024);
+	SV_GetConfigstring(CS_MULTI_MAPWINNER, buffer, 1024);
 	pszWinner = va("%i", iWinner);
 
 	if ( I_stricmp(Info_ValueForKey(buffer, "winner"), pszWinner) )
 	{
 		Info_SetValueForKey(buffer, "winner", pszWinner);
-		SV_SetConfigstring(0x16u, buffer);
+		SV_SetConfigstring(CS_MULTI_MAPWINNER, buffer);
 	}
 }
 
@@ -2535,13 +2535,13 @@ void GScr_SetWinningTeam()
 		iWinner = 0;
 	}
 
-	SV_GetConfigstring(22, buffer, 1024);
+	SV_GetConfigstring(CS_MULTI_MAPWINNER, buffer, 1024);
 	pszWinner = va("%i", iWinner);
 
 	if ( I_stricmp(Info_ValueForKey(buffer, "winner"), pszWinner) )
 	{
 		Info_SetValueForKey(buffer, "winner", pszWinner);
-		SV_SetConfigstring(0x16u, buffer);
+		SV_SetConfigstring(CS_MULTI_MAPWINNER, buffer);
 	}
 }
 

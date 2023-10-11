@@ -1130,6 +1130,23 @@ struct useList_t
 	float score;
 };
 
+enum cs_index_t
+{
+	CS_AMBIENT = 3,
+	CS_SCORES1 = 5,
+	CS_SCORES2 = 6,
+	CS_WEAPONS = 7,
+	CS_ITEMS = 8,
+	CS_FOGVARS = 12,
+	CS_VOTE_TIME = 15,
+	CS_VOTE_STRING = 16,
+	CS_VOTE_YES = 17,
+	CS_VOTE_NO = 18,
+	CS_VOTE_MAPNAME = 19,
+	CS_VOTE_GAMETYPE = 20,
+	CS_MULTI_MAPWINNER = 22,
+};
+
 #define	SVF_NOCLIENT  0x00000001
 #define	SVF_BROADCAST 0x00000008
 
