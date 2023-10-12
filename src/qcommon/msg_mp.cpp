@@ -1425,7 +1425,8 @@ void MSG_ReadDeltaStruct(msg_t *msg, const void *from, void *to, unsigned int nu
 
 	if ( !MSG_ReadBit(msg) )
 	{
-		Com_Memcpy(to, from, 4 * numFields + 4);
+		//Com_Memcpy(to, from, 4 * numFields + 4);
+		Com_Memcpy(to, from, ( numFields + sizeof( intptr_t ) ) * sizeof( from ));
 		return;
 	}
 

@@ -194,7 +194,7 @@ void gsc_mysql_async_getresult_and_free() //same as above, but takes the id of a
 			first_async_task = c->next;
 		if(c->save)
 		{
-			int ret = (int)c->result;
+			intptr_t ret = (intptr_t)c->result;
 			stackPushInt(ret);
 		}
 		else
@@ -261,7 +261,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 			newconnection->prev = current;
 		}
 		current = newconnection;
-		stackPushInt((int)newconnection->connection);
+		stackPushInt((intptr_t)newconnection->connection);
 		stackPushArrayLast();
 	}
 	threadid_t async_handler;
@@ -271,7 +271,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 void gsc_mysql_init()
 {
 	MYSQL *my = mysql_init(NULL);
-	stackPushInt((int) my);
+	stackPushInt((intptr_t)my);
 }
 
 void gsc_mysql_reuse_connection()
@@ -283,14 +283,14 @@ void gsc_mysql_reuse_connection()
 	}
 	else
 	{
-		stackPushInt((int) cod_mysql_connection);
+		stackPushInt((intptr_t)cod_mysql_connection);
 		return;
 	}
 }
 
 void gsc_mysql_real_connect()
 {
-	int mysql, port;
+	intptr_t mysql, port;
 	const char *host, *user, *pass, *db;
 
 	if ( ! stackGetParams("issssi", &mysql, &host, &user, &pass, &db, &port))
@@ -300,7 +300,7 @@ void gsc_mysql_real_connect()
 		return;
 	}
 
-	mysql = (int) mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0);
+	mysql = (intptr_t)mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0);
 	bool reconnect = true;
 	mysql_options((MYSQL*)mysql, MYSQL_OPT_RECONNECT, &reconnect);
 	if(cod_mysql_connection == NULL)
@@ -396,7 +396,7 @@ void gsc_mysql_store_result()
 	}
 
 	MYSQL_RES *result = mysql_store_result((MYSQL *)mysql);
-	stackPushInt((int) result);
+	stackPushInt((intptr_t)result);
 }
 
 void gsc_mysql_num_rows()

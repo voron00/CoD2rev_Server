@@ -209,7 +209,7 @@ void AddOpcodePos(unsigned int sourcePos, int type)
 		{
 			scrParserGlob.opcodeLookupMaxLen *= 2;
 			newOpcodeLookup = (OpcodeLookup *)Z_MallocInternal(sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupMaxLen);
-			memcpy(newOpcodeLookup, scrParserGlob.opcodeLookup, sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupLen);
+			Com_Memcpy(newOpcodeLookup, scrParserGlob.opcodeLookup, sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupLen);
 			Z_FreeInternal(scrParserGlob.opcodeLookup);
 			scrParserGlob.opcodeLookup = newOpcodeLookup;
 		}
@@ -218,7 +218,7 @@ void AddOpcodePos(unsigned int sourcePos, int type)
 		{
 			scrParserGlob.sourcePosLookupMaxLen *= 2;
 			newSourcePosLookup = (SourceLookup *)Z_MallocInternal(sizeof(SourceLookup) * scrParserGlob.sourcePosLookupMaxLen);
-			memcpy(newSourcePosLookup, scrParserGlob.sourcePosLookup, sizeof(SourceLookup) * scrParserGlob.sourcePosLookupLen);
+			Com_Memcpy(newSourcePosLookup, scrParserGlob.sourcePosLookup, sizeof(SourceLookup) * scrParserGlob.sourcePosLookupLen);
 			Z_FreeInternal(scrParserGlob.sourcePosLookup);
 			scrParserGlob.sourcePosLookup = newSourcePosLookup;
 		}
@@ -298,10 +298,11 @@ void Scr_InitOpcodeLookup()
 		scrParserGlob.delayedSourceIndex = -1;
 		scrParserGlob.opcodeLookupMaxLen = 0x10000;
 		scrParserGlob.opcodeLookupLen = 0;
-		scrParserGlob.opcodeLookup = (OpcodeLookup *)Z_MallocInternal(sizeof(OpcodeLookup) * USHRT_MAX);
+		scrParserGlob.opcodeLookup = (OpcodeLookup *)Z_MallocInternal(sizeof(OpcodeLookup) * 65536);
+		Com_Memset(scrParserGlob.opcodeLookup, 0, sizeof(OpcodeLookup) * scrParserGlob.opcodeLookupMaxLen);
 		scrParserGlob.sourcePosLookupMaxLen = 0x10000;
 		scrParserGlob.sourcePosLookupLen = 0;
-		scrParserGlob.sourcePosLookup = (SourceLookup *)Z_MallocInternal(sizeof(SourceLookup) * USHRT_MAX);
+		scrParserGlob.sourcePosLookup = (SourceLookup *)Z_MallocInternal(sizeof(SourceLookup) * 65536);
 		scrParserGlob.currentCodePos = 0;
 		scrParserGlob.currentSourcePosCount = 0;
 		scrParserGlob.sourceBufferLookupMaxLen = 16;
