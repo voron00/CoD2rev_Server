@@ -233,7 +233,7 @@ void SV_ResetSkeletonCache()
 	if ( !++sv.skelTimeStamp )
 		++sv.skelTimeStamp;
 
-	g_sv_skel_memory_start = (char *)((intptr_t)g_sv_skel_memory & ~15);
+	g_sv_skel_memory_start = (char *)PADP(g_sv_skel_memory, 16);
 	sv.skelMemPos = 0;
 }
 
@@ -245,16 +245,13 @@ void SV_ResetEntityParsePoint()
 char* SV_AllocSkelMemory(unsigned int size)
 {
 	char *pos;
-	unsigned int aligment;
-
-	aligment = (size + 15) & ~15;
 
 	while ( 1 )
 	{
 		pos = &g_sv_skel_memory_start[sv.skelMemPos];
-		sv.skelMemPos += aligment;
+		sv.skelMemPos += PAD(size, 16);
 
-		if ( sv.skelMemPos <= 262128 )
+		if ( sv.skelMemPos <= sizeof(g_sv_skel_memory) - 16 )
 			break;
 
 		if ( g_sv_skel_warn_count != sv.skelTimeStamp )

@@ -4,6 +4,7 @@
 #include "../xanim/xanim_public.h"
 
 #define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
+#define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
 
 #define Com_Memset memset
 #define Com_Memcpy memcpy
