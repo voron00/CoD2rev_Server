@@ -151,9 +151,6 @@ typedef struct
 	char	buffer[MAX_EDIT_LINE];
 } field_t;
 
-void Field_Clear( field_t *edit );
-void Field_CompleteCommand( field_t *edit );
-
 typedef struct
 {
 	qboolean overflowed;

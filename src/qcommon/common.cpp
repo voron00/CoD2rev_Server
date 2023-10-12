@@ -40,12 +40,6 @@ errorParm_t com_errorType;
 char com_errorMessage[MAXPRINTMSG];
 
 int com_fixedConsolePosition;
-
-static const char *completionString;
-static char shortestMatch[MAX_TOKEN_CHARS];
-static int	matchCount;
-static field_t *completionField;
-
 int iWeaponInfoSource;
 
 void Com_SetWeaponInfoMemory(int source)
@@ -62,139 +56,6 @@ void Com_FreeWeaponInfoMemory(int source)
 	}
 }
 
-static void FindMatches( const char *s )
-{
-	int		i;
-
-	if ( Q_stricmpn( s, completionString, strlen( completionString ) ) )
-	{
-		return;
-	}
-	matchCount++;
-	if ( matchCount == 1 )
-	{
-		Q_strncpyz( shortestMatch, s, sizeof( shortestMatch ) );
-		return;
-	}
-
-	// cut shortestMatch to the amount common with s
-	for ( i = 0 ; s[i] ; i++ )
-	{
-		if ( tolower(shortestMatch[i]) != tolower(s[i]) )
-		{
-			shortestMatch[i] = 0;
-		}
-	}
-}
-
-static void PrintMatches( const char *s )
-{
-	if ( !Q_stricmpn( s, shortestMatch, strlen( shortestMatch ) ) )
-	{
-		Com_Printf( "    %s\n", s );
-	}
-}
-
-static void keyConcatArgs( void )
-{
-	int		i;
-	const char	*arg;
-
-	for ( i = 1 ; i < Cmd_Argc() ; i++ )
-	{
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
-		arg = Cmd_Argv( i );
-		while (*arg)
-		{
-			if (*arg == ' ')
-			{
-				Q_strcat( completionField->buffer, sizeof( completionField->buffer ),  "\"");
-				break;
-			}
-			arg++;
-		}
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ),  Cmd_Argv( i ) );
-		if (*arg == ' ')
-		{
-			Q_strcat( completionField->buffer, sizeof( completionField->buffer ),  "\"");
-		}
-	}
-}
-
-static void ConcatRemaining( char *src, const char *start )
-{
-	char *str;
-
-	str = strstr(src, start);
-	if (!str)
-	{
-		keyConcatArgs();
-		return;
-	}
-
-	str += strlen(start);
-	Q_strcat( completionField->buffer, sizeof( completionField->buffer ), str);
-}
-
-void Field_CompleteCommand( field_t *field )
-{
-	field_t		temp;
-
-	completionField = field;
-
-	// only look at the first token for completion purposes
-	Cmd_TokenizeString( completionField->buffer );
-
-	completionString = Cmd_Argv(0);
-	if ( completionString[0] == '\\' || completionString[0] == '/' )
-	{
-		completionString++;
-	}
-	matchCount = 0;
-	shortestMatch[0] = 0;
-
-	if ( strlen( completionString ) == 0 )
-	{
-		return;
-	}
-
-	Cmd_ForEach( FindMatches );
-	Dvar_ForEach( FindMatches );
-
-	if ( matchCount == 0 )
-	{
-		return;	// no matches
-	}
-
-	Com_Memcpy(&temp, completionField, sizeof(field_t));
-
-	if ( matchCount == 1 )
-	{
-		Com_sprintf( completionField->buffer, sizeof( completionField->buffer ), "\\%s", shortestMatch );
-		if ( Cmd_Argc() == 1 )
-		{
-			Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
-		}
-		else
-		{
-			ConcatRemaining( temp.buffer, completionString );
-		}
-		completionField->cursor = strlen( completionField->buffer );
-		return;
-	}
-
-	// multiple matches, complete to shortest
-	Com_sprintf( completionField->buffer, sizeof( completionField->buffer ), "\\%s", shortestMatch );
-	completionField->cursor = strlen( completionField->buffer );
-	ConcatRemaining( temp.buffer, completionString );
-
-	Com_Printf( "]%s\n", completionField->buffer );
-
-	// run through again, printing matches
-	Cmd_ForEach( PrintMatches );
-	Dvar_ForEach( PrintMatches );
-}
-
 void Com_StartupVariable( const char *match )
 {
 	int		i;
@@ -204,12 +65,12 @@ void Com_StartupVariable( const char *match )
 
 		if(!match || !strcmp(Cmd_Argv(1), match))
 		{
-			if ( !strcmp( Cmd_Argv(0), "set" ))
+			if ( !strcasecmp( Cmd_Argv(0), "set" ))
 			{
 				Dvar_Set_f();
 				continue;
 			}
-			else if( !strcmp( Cmd_Argv(0), "seta" ) )
+			else if( !strcasecmp( Cmd_Argv(0), "seta" ) )
 			{
 				Dvar_SetA_f();
 			}
@@ -219,27 +80,25 @@ void Com_StartupVariable( const char *match )
 
 qboolean Com_AddStartupCommands( void )
 {
-	int		i;
-	qboolean	added;
-	char		buf[1024];
+	int i;
+	qboolean added;
+
 	added = qfalse;
 	// quote every token, so args with semicolons can work
-	for (i=0 ; i < com_numConsoleLines ; i++)
+	for ( i = 0 ; i < com_numConsoleLines ; i++ )
 	{
 		if ( !com_consoleLines[i] || !com_consoleLines[i][0] )
 		{
 			continue;
 		}
 
-		// set commands already added with Com_StartupVariable
-		if ( !I_stricmpn( com_consoleLines[i], "set", 3 ))
+		// set commands won't override menu startup
+		if ( I_strnicmp( com_consoleLines[i], "set", 3 ) )
 		{
-			continue;
+			added = qtrue;
 		}
-
-		added = qtrue;
-		Com_sprintf(buf,sizeof(buf),"%s\n",com_consoleLines[i]);
-		Cbuf_ExecuteText( EXEC_APPEND, buf);
+		Cbuf_AddText( com_consoleLines[i] );
+		Cbuf_AddText( "\n" );
 	}
 
 	return added;
@@ -247,95 +106,29 @@ qboolean Com_AddStartupCommands( void )
 
 void Com_ParseCommandLine( char *commandLine )
 {
+	int inq = 0;
 	com_consoleLines[0] = commandLine;
 	com_numConsoleLines = 1;
-	char* line;
-	int numQuotes, i;
 
 	while ( *commandLine )
 	{
-
+		if ( *commandLine == '"' )
+		{
+			inq = !inq;
+		}
 		// look for a + seperating character
 		// if commandLine came from a file, we might have real line seperators
-		if ( (*commandLine == '+') || *commandLine == '\n'  || *commandLine == '\r' )
+		if ( *commandLine == '+' || *commandLine == '\n' )
 		{
 			if ( com_numConsoleLines == MAX_CONSOLE_LINES )
 			{
 				return;
 			}
-			if(*(commandLine +1) != '\n')
-			{
-				com_consoleLines[com_numConsoleLines] = commandLine + 1;
-				com_numConsoleLines = (com_numConsoleLines)+1;
-			}
+			com_consoleLines[com_numConsoleLines] = commandLine + 1;
+			com_numConsoleLines++;
 			*commandLine = 0;
 		}
 		commandLine++;
-	}
-
-	for (i = 0; i < com_numConsoleLines; i++)
-	{
-		line = com_consoleLines[i];
-		/* Remove trailling spaces and / or bad quotes */
-		while ( (*line == ' ' || *line == '\"') && *line != '\0')
-		{
-			line++;
-		}
-
-		memmove(com_consoleLines[i], line, strlen(line) +1);
-
-		numQuotes = 0;
-
-		/* Now verify quotes */
-		while (*line)
-		{
-
-			while (*line != '\"' && *line != '\0')
-			{
-				line ++;
-			}
-			if(*line == '\"' && *(line -1) != ' ')
-				break;
-
-			if(*line == '\"')
-				numQuotes++;
-
-			if(*line != '\0')
-			{
-				line ++;
-			}
-
-			while (*line != '\"' && *line != '\0')
-			{
-				line ++;
-			}
-			if(*line == '\"' && *(line +1) != ' ' && *(line +1) != '\0'  )
-				break;
-
-			if(*line == '\"')
-				numQuotes++;
-
-			if(*line != '\0')
-			{
-				line ++;
-			}
-		}
-
-		/* if we have bad quotes or an odd number of quotes we replace them all with ' ' */
-		if(*line != '\0' || numQuotes & 1)
-		{
-			line = com_consoleLines[i];
-			while (*line != '\0')
-			{
-				if(*line == '\"')
-				{
-					*line = ' ';
-
-				}
-				line++;
-			}
-		}
-
 	}
 }
 
@@ -428,8 +221,8 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 				rd_flush(rd_buffer);
 				*rd_buffer = 0;
 			}
+			I_strncat(rd_buffer, rd_buffersize, msg);
 		}
-		Q_strcat(rd_buffer, rd_buffersize, msg);
 		// TTimo nooo .. that would defeat the purpose
 		//rd_flush(rd_buffer);
 		//*rd_buffer = 0;
@@ -444,6 +237,9 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 	}
 #endif
 
+	if ( msg[0] == '^' && msg[1] )
+		msg += 2;
+
 	if ( channel != CON_CHANNEL_LOGFILEONLY )
 	{
 		// echo to dedicated console and early console
@@ -455,7 +251,7 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 	{
 		// TTimo: only open the qconsole.log if the filesystem is in an initialized state
 		//   also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
-		if ( !logfile && FS_Initialized() && !opening_qconsole)
+		if ( !logfile && !opening_qconsole)
 		{
 			struct tm *newtime;
 			time_t aclock;
@@ -474,7 +270,7 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 
 			opening_qconsole = qfalse;
 		}
-		if ( logfile && FS_Initialized())
+		if ( logfile )
 		{
 			FS_Write(msg, strlen(msg), logfile);
 
@@ -587,6 +383,9 @@ void Com_Restart()
 	DObjShutdown();
 	XAnimShutdown();
 	CM_Shutdown();
+#ifndef DEDICATED
+	SND_ShutdownChannels();
+#endif
 	Hunk_Clear();
 	Scr_Init();
 	Scr_UpdateSettings();
@@ -602,6 +401,9 @@ void Com_Close()
 	DObjShutdown();
 	XAnimShutdown();
 	CM_Shutdown();
+#ifndef DEDICATED
+	SND_ShutdownChannels();
+#endif
 	Hunk_Clear();
 	Scr_Shutdown();
 }
@@ -797,13 +599,6 @@ void Com_ExecStartupConfigs(const char *configFile)
 void Com_InitPlayerProfiles()
 {
 	Com_ExecStartupConfigs(CONFIG_NAME);
-}
-
-void Field_Clear( field_t *edit )
-{
-	memset(edit->buffer, 0, MAX_EDIT_LINE);
-	edit->cursor = 0;
-	edit->scroll = 0;
 }
 
 // bk001129 - here we go again: upped from 64

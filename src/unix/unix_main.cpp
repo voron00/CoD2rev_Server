@@ -470,6 +470,155 @@ void floating_point_exception_handler(int whatever)
   signal(SIGFPE, floating_point_exception_handler);
 }
 
+/*
+==================
+Field_Clear
+==================
+*/
+void Field_Clear( field_t *edit ) {
+	memset( edit->buffer, 0, MAX_EDIT_LINE );
+	edit->cursor = 0;
+	edit->scroll = 0;
+}
+
+static const char *completionString;
+static char shortestMatch[MAX_TOKEN_CHARS];
+static int matchCount;
+// field we are working on, passed to Field_CompleteCommand (&g_consoleCommand for instance)
+static field_t *completionField;
+
+/*
+===============
+FindMatches
+
+===============
+*/
+static void FindMatches( const char *s ) {
+	int i;
+
+	if ( Q_stricmpn( s, completionString, strlen( completionString ) ) ) {
+		return;
+	}
+	matchCount++;
+	if ( matchCount == 1 ) {
+		Q_strncpyz( shortestMatch, s, sizeof( shortestMatch ) );
+		return;
+	}
+
+	// cut shortestMatch to the amount common with s
+	for ( i = 0 ; s[i] ; i++ ) {
+		if ( tolower( shortestMatch[i] ) != tolower( s[i] ) ) {
+			shortestMatch[i] = 0;
+		}
+	}
+	shortestMatch[i] = 0;
+}
+
+/*
+===============
+PrintMatches
+
+===============
+*/
+static void PrintMatches( const char *s ) {
+	if ( !Q_stricmpn( s, shortestMatch, strlen( shortestMatch ) ) ) {
+		Com_Printf( "    %s\n", s );
+	}
+}
+
+static void keyConcatArgs( void ) {
+	int i;
+	const char    *arg;
+
+	for ( i = 1 ; i < Cmd_Argc() ; i++ ) {
+		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
+		arg = Cmd_Argv( i );
+		while ( *arg ) {
+			if ( *arg == ' ' ) {
+				Q_strcat( completionField->buffer, sizeof( completionField->buffer ),  "\"" );
+				break;
+			}
+			arg++;
+		}
+		Q_strcat( completionField->buffer, sizeof( completionField->buffer ),  Cmd_Argv( i ) );
+		if ( *arg == ' ' ) {
+			Q_strcat( completionField->buffer, sizeof( completionField->buffer ),  "\"" );
+		}
+	}
+}
+
+static void ConcatRemaining( const char *src, const char *start ) {
+	const char *str;
+
+	str = strstr( src, start );
+	if ( !str ) {
+		keyConcatArgs();
+		return;
+	}
+
+	str += strlen( start );
+	Q_strcat( completionField->buffer, sizeof( completionField->buffer ), str );
+}
+
+/*
+===============
+Field_CompleteCommand
+
+perform Tab expansion
+NOTE TTimo this was originally client code only
+  moved to common code when writing tty console for *nix dedicated server
+===============
+*/
+void Field_CompleteCommand( field_t *field ) {
+	field_t temp;
+	completionField = field;
+
+	// only look at the first token for completion purposes
+	Cmd_TokenizeString( completionField->buffer );
+
+	completionString = Cmd_Argv( 0 );
+	if ( completionString[0] == '\\' || completionString[0] == '/' ) {
+		completionString++;
+	}
+	matchCount = 0;
+	shortestMatch[0] = 0;
+
+	if ( strlen( completionString ) == 0 ) {
+		return;
+	}
+
+	Cmd_ForEach( FindMatches );
+	Dvar_ForEach( FindMatches );
+
+	if ( matchCount == 0 ) {
+		return; // no matches
+	}
+
+	Com_Memcpy( &temp, completionField, sizeof( field_t ) );
+
+	if ( matchCount == 1 ) {
+		Com_sprintf( completionField->buffer, sizeof( completionField->buffer ), "\\%s", shortestMatch );
+		if ( Cmd_Argc() == 1 ) {
+			Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
+		} else {
+			ConcatRemaining( temp.buffer, completionString );
+		}
+		completionField->cursor = strlen( completionField->buffer );
+		return;
+	}
+
+	// multiple matches, complete to shortest
+	Com_sprintf( completionField->buffer, sizeof( completionField->buffer ), "\\%s", shortestMatch );
+	completionField->cursor = strlen( completionField->buffer );
+	ConcatRemaining( temp.buffer, completionString );
+
+	Com_Printf( "]%s\n", completionField->buffer );
+
+	// run through again, printing matches
+	Cmd_ForEach( PrintMatches );
+	Dvar_ForEach( PrintMatches );
+}
+
 // initialize the console input (tty mode if wanted and possible)
 void Sys_ConsoleInputInit()
 {
