@@ -46,6 +46,8 @@ XANIM_DIR=$(SRC_DIR)/xanim
 
 # Libcod stuff
 WITH_LIBCOD=true
+WITH_MYSQL=false
+WITH_SQLITE=true
 
 ifeq ($(WITH_LIBCOD),true)
 LIBCOD_SETTINGS=-D LIBCOD
@@ -54,27 +56,35 @@ LIBCOD_SETTINGS+=-D COMPILE_ENTITY=1
 LIBCOD_SETTINGS+=-D COMPILE_EXEC=1
 LIBCOD_SETTINGS+=-D COMPILE_LEVEL=1
 LIBCOD_SETTINGS+=-D COMPILE_MEMORY=1
+ifeq ($(WITH_MYSQL),true)
 LIBCOD_SETTINGS+=-D COMPILE_MYSQL=1
+endif
 LIBCOD_SETTINGS+=-D COMPILE_PLAYER=1
 LIBCOD_SETTINGS+=-D COMPILE_RATELIMITER=1
+ifeq ($(WITH_SQLITE),true)
 LIBCOD_SETTINGS+=-D COMPILE_SQLITE=1
+endif
 LIBCOD_SETTINGS+=-D COMPILE_UTILS=1
 LIBCOD_SETTINGS+=-D COMPILE_WEAPONS=1
 endif
 
 ifeq ($(WITH_LIBCOD),true)
+ifeq ($(WITH_MYSQL),true)
 ifeq ($(OS),Windows_NT)
 MYSQL_COPY_CMD=xcopy $(SRC_DIR)\libcod\mysql\windows\lib\libmysql.dll $(BIN_DIR) /Y
 LLIBS+=$(SRC_DIR)/libcod/mysql/windows/lib/libmysql.lib
 else
 LLIBS+=-lmysqlclient -L$(SRC_DIR)/libcod/mysql/unix/lib
 endif
+endif
 LIBCOD_DIR=$(SRC_DIR)/libcod
-SQLITE_DIR=$(SRC_DIR)/libcod/sqlite
 LIBCOD_SOURCES=$(wildcard $(LIBCOD_DIR)/*.cpp)
-SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
 LIBCOD_OBJ=$(patsubst $(LIBCOD_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(LIBCOD_SOURCES))
+ifeq ($(WITH_SQLITE),true)
+SQLITE_DIR=$(SRC_DIR)/libcod/sqlite
+SQLITE_SOURCES=$(wildcard $(SQLITE_DIR)/*.c)
 SQLITE_OBJ=$(patsubst $(SQLITE_DIR)/%.c,$(OBJ_DIR)/%.o,$(SQLITE_SOURCES))
+endif
 endif
 
 # Target files
