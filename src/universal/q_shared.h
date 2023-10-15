@@ -311,6 +311,7 @@ char ColorIndex(unsigned char c);
 const char *Com_GetFilenameSubString(const char *pathname);
 const char *Com_GetExtensionSubString(const char *filename);
 void Com_StripExtension(const char *in, char *out);
+char *I_CleanStr(char *string);
 
 #define I_strcmp strcmp
 #define I_strcpy strcpy
@@ -335,6 +336,8 @@ void Com_StripExtension(const char *in, char *out);
 #define Q_strcmp I_strcmp
 #define Q_strcpy I_strcpy
 #define Q_strlen I_strlen
+
+#define Q_CleanStr I_CleanStr
 
 int Q_vsnprintf(char *str, size_t size, const char *format, va_list args);
 #define I_vsnprintf Q_vsnprintf
@@ -378,7 +381,6 @@ void Info_SetValueForKey_Big( char *s, const char *key, const char *value );
 const char *Info_ValueForKey( const char *s, const char *key );
 void Info_NextPair( const char **head, char *key, char *value );
 qboolean I_IsEqualUnitWSpace(char *cmp1, char *cmp2);
-char *I_CleanStr(char *string);
 char I_CleanChar(char character);
 bool Com_ValidXModelName(const char *name);
 qboolean Info_Validate( const char *s );

@@ -5,9 +5,69 @@ const char *SV_GetMapBaseName(const char *mapname)
 	return FS_GetMapBaseName(mapname);
 }
 
+/*
+==================
+SV_Heartbeat_f
+
+Also called by SV_DropClient, SV_DirectConnect, and SV_SpawnServer
+==================
+*/
 void SV_Heartbeat_f(void)
 {
 	svs.nextHeartbeatTime = 0x80000000;
+}
+
+/*
+==================
+SV_GetPlayerByName
+
+Returns the player with name from Cmd_Argv(1)
+==================
+*/
+static client_t *SV_GetPlayerByName( void )
+{
+	client_t    *cl;
+	int i;
+	const char        *s;
+	char cleanName[64];
+
+	// make sure server is running
+	if ( !com_sv_running->current.integer )
+	{
+		return NULL;
+	}
+
+	if ( Cmd_Argc() < 2 )
+	{
+		Com_Printf( "No player specified.\n" );
+		return NULL;
+	}
+
+	s = Cmd_Argv( 1 );
+
+	// check for a name match
+	for ( i = 0, cl = svs.clients ; i < sv_maxclients->current.integer ; i++,cl++ )
+	{
+		if ( !cl->state )
+		{
+			continue;
+		}
+		if ( !Q_stricmp( cl->name, s ) )
+		{
+			return cl;
+		}
+
+		Q_strncpyz( cleanName, cl->name, sizeof( cleanName ) );
+		Q_CleanStr( cleanName );
+		if ( !Q_stricmp( cleanName, s ) )
+		{
+			return cl;
+		}
+	}
+
+	Com_Printf( "Player %s is not on the server\n", s );
+
+	return NULL;
 }
 
 int SV_KickClient(client_s *cl, char *playerName, int maxPlayerNameLen)
@@ -19,217 +79,158 @@ int SV_KickClient(client_s *cl, char *playerName, int maxPlayerNameLen)
 		SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 101);
 		return 0;
 	}
-	else
+
+	if ( playerName )
 	{
-		if ( playerName )
-		{
-			I_strncpyz(playerName, cl->name, maxPlayerNameLen);
-			I_CleanStr(playerName);
-		}
-
-		guid = cl->guid;
-		SV_DropClient(cl, "EXE_PLAYERKICKED");
-		cl->lastPacketTime = svs.time;
-
-		return guid;
+		I_strncpyz(playerName, cl->name, maxPlayerNameLen);
+		I_CleanStr(playerName);
 	}
+
+	guid = cl->guid;
+	SV_DropClient(cl, "EXE_PLAYERKICKED");
+	cl->lastPacketTime = svs.time;
+
+	return guid;
 }
 
-client_s *SV_GetPlayerByName()
+static int SV_KickUser_f(char *playerName, int maxPlayerNameLen)
 {
-	char cleanName[64];
-	const char *name;
 	int i;
-	client_s *client;
+	client_t *cl;
 
 	if ( !com_sv_running->current.boolean )
-		return 0;
-
-	if ( SV_Cmd_Argc() > 1 )
-	{
-		name = SV_Cmd_Argv(1u);
-		i = 0;
-		client = svs.clients;
-
-		while ( i < sv_maxclients->current.integer )
-		{
-			if ( client->state )
-			{
-				if ( !I_stricmp(client->name, name) )
-					return client;
-
-				I_strncpyz(cleanName, client->name, sizeof(cleanName));
-				I_CleanStr(cleanName);
-
-				if ( !I_stricmp(cleanName, name) )
-					return client;
-			}
-
-			++i;
-			++client;
-		}
-
-		Com_Printf("Player %s is not on the server\n", name);
-		return 0;
-	}
-	else
-	{
-		Com_Printf("No player specified.\n");
-		return 0;
-	}
-}
-
-int SV_KickUser_f(char *playerName, int maxPlayerNameLen)
-{
-	int i;
-	client_s *client;
-
-	if ( com_sv_running->current.boolean )
-	{
-		if ( SV_Cmd_Argc() == 2 )
-		{
-			client = SV_GetPlayerByName();
-
-			if ( client )
-			{
-				return SV_KickClient(client, playerName, maxPlayerNameLen);
-			}
-			else
-			{
-				if ( !I_stricmp(SV_Cmd_Argv(1u), "all") )
-				{
-					i = 0;
-					client = svs.clients;
-
-					while ( i < sv_maxclients->current.integer )
-					{
-						if ( client->state )
-							SV_KickClient(client, 0, 0);
-
-						++i;
-						++client;
-					}
-				}
-
-				return 0;
-			}
-		}
-		else
-		{
-			Com_Printf("Usage: %s <player name>\n%s all = kick everyone\n", SV_Cmd_Argv(0), SV_Cmd_Argv(0));
-			return 0;
-		}
-	}
-	else
 	{
 		Com_Printf("Server is not running.\n");
 		return 0;
 	}
+
+	if ( SV_Cmd_Argc() != 2 )
+	{
+		Com_Printf("Usage: %s <player name>\n%s all = kick everyone\n", SV_Cmd_Argv(0), SV_Cmd_Argv(0));
+		return 0;
+	}
+
+	cl = SV_GetPlayerByName();
+
+	if ( cl )
+	{
+		return SV_KickClient(cl, playerName, maxPlayerNameLen);
+	}
+
+	if ( !I_stricmp(SV_Cmd_Argv(1), "all") )
+	{
+		for ( i = 0, cl = svs.clients ; i < sv_maxclients->current.integer ; i++, cl++ )
+		{
+			if ( cl->state )
+				SV_KickClient(cl, 0, 0);
+		}
+	}
+
+	return 0;
 }
 
-void SV_Drop_f(void)
+static void SV_Drop_f(void)
 {
 	SV_KickUser_f(0, 0);
 }
 
-void SV_Ban_f(void)
+static void SV_Ban_f(void)
 {
-	client_s *client;
-
-	if ( com_sv_running->current.boolean )
-	{
-		if ( SV_Cmd_Argc() == 2 )
-		{
-			client = SV_GetPlayerByName();
-
-			if ( client )
-				SV_BanClient(client);
-		}
-		else
-		{
-			Com_Printf("Usage: banUser <player name>\n");
-		}
-	}
-	else
-	{
-		Com_Printf("Server is not running.\n");
-	}
-}
-
-client_s *SV_GetPlayerByNum()
-{
-	const char *num;
-	int idnum;
-	int i;
+	client_t *cl;
 
 	if ( !com_sv_running->current.boolean )
-		return 0;
-
-	if ( SV_Cmd_Argc() > 1 )
-	{
-		num = SV_Cmd_Argv(1u);
-
-		for ( i = 0; num[i]; ++i )
-		{
-			if ( num[i] <= 47 || num[i] > 57 )
-			{
-				Com_Printf("Bad slot number: %s\n", num);
-				return 0;
-			}
-		}
-
-		idnum = atoi(num);
-
-		if ( idnum >= 0 && idnum < sv_maxclients->current.integer )
-		{
-			if ( svs.clients[idnum].state )
-			{
-				return &svs.clients[idnum];
-			}
-			else
-			{
-				Com_Printf("Client %i is not active\n", idnum);
-				return 0;
-			}
-		}
-		else
-		{
-			Com_Printf("Bad client slot: %i\n", idnum);
-			return 0;
-		}
-	}
-	else
-	{
-		Com_Printf("No player specified.\n");
-		return 0;
-	}
-}
-
-void SV_BanNum_f(void)
-{
-	client_s *client;
-
-	if ( com_sv_running->current.boolean )
-	{
-		if ( SV_Cmd_Argc() == 2 )
-		{
-			client = SV_GetPlayerByNum();
-
-			if ( client )
-				SV_BanClient(client);
-		}
-		else
-		{
-			Com_Printf("Usage: banClient <client number>\n");
-		}
-	}
-	else
 	{
 		Com_Printf("Server is not running.\n");
+		return;
 	}
+
+	if ( SV_Cmd_Argc() != 2 )
+	{
+		Com_Printf("Usage: banUser <player name>\n");
+		return;
+	}
+
+	cl = SV_GetPlayerByName();
+
+	if ( cl )
+		SV_BanClient(cl);
 }
 
-void SV_TempBan_f(void)
+/*
+==================
+SV_GetPlayerByNum
+
+Returns the player with idnum from Cmd_Argv(1)
+==================
+*/
+static client_t *SV_GetPlayerByNum( void )
+{
+	client_t	*cl;
+	int			i;
+	int			idnum;
+	const char		*s;
+
+	// make sure server is running
+	if ( !com_sv_running->current.boolean )
+	{
+		return NULL;
+	}
+
+	if ( Cmd_Argc() < 2 )
+	{
+		Com_Printf("No player specified.\n" );
+		return NULL;
+	}
+
+	s = Cmd_Argv(1);
+
+	for (i = 0; s[i]; i++)
+	{
+		if (s[i] < '0' || s[i] > '9')
+		{
+			Com_Printf("Bad slot number: %s\n", s);
+			return NULL;
+		}
+	}
+	idnum = atoi( s );
+	if ( idnum < 0 || idnum >= sv_maxclients->current.integer )
+	{
+		Com_Printf("Bad client slot: %i\n", idnum );
+		return NULL;
+	}
+
+	cl = &svs.clients[idnum];
+	if ( !cl->state )
+	{
+		Com_Printf("Client %i is not active\n", idnum );
+		return NULL;
+	}
+	return cl;
+}
+
+static void SV_BanNum_f(void)
+{
+	client_t *cl;
+
+	if ( !com_sv_running->current.boolean )
+	{
+		Com_Printf("Server is not running.\n");
+		return;
+	}
+
+	if ( SV_Cmd_Argc() != 2 )
+	{
+		Com_Printf("Usage: banClient <client number>\n");
+		return;
+	}
+
+	cl = SV_GetPlayerByNum();
+
+	if ( cl )
+		SV_BanClient(cl);
+}
+
+static void SV_TempBan_f(void)
 {
 	char name[64];
 	int guid;
@@ -243,7 +244,7 @@ void SV_TempBan_f(void)
 	}
 }
 
-void SV_Unban_f(void)
+static void SV_Unban_f(void)
 {
 	if ( SV_Cmd_Argc() == 2 )
 	{
@@ -257,38 +258,34 @@ void SV_Unban_f(void)
 
 int SV_KickClient_f(char *playerName, int maxPlayerNameLen)
 {
-	client_s *client;
+	client_t *cl;
 
-	if ( com_sv_running->current.boolean )
-	{
-		if ( SV_Cmd_Argc() == 2 )
-		{
-			client = SV_GetPlayerByNum();
-
-			if ( client )
-				return SV_KickClient(client, playerName, maxPlayerNameLen);
-			else
-				return 0;
-		}
-		else
-		{
-			Com_Printf("Usage: %s <client number>\n", SV_Cmd_Argv(0));
-			return 0;
-		}
-	}
-	else
+	if ( !com_sv_running->current.boolean )
 	{
 		Com_Printf("Server is not running.\n");
 		return 0;
 	}
+
+	if ( SV_Cmd_Argc() != 2 )
+	{
+		Com_Printf("Usage: %s <client number>\n", SV_Cmd_Argv(0));
+		return 0;
+	}
+
+	cl = SV_GetPlayerByNum();
+
+	if ( cl )
+		return SV_KickClient(cl, playerName, maxPlayerNameLen);
+
+	return 0;
 }
 
-void SV_TempBanNum_f(void)
+static void SV_TempBanNum_f(void)
 {
 	char name[64];
 	int guid;
 
-	guid = SV_KickClient_f(name, 64);
+	guid = SV_KickClient_f(name, sizeof(name));
 
 	if ( guid )
 	{
@@ -297,132 +294,150 @@ void SV_TempBanNum_f(void)
 	}
 }
 
-void SV_DropNum_f(void)
+static void SV_DropNum_f(void)
 {
 	SV_KickClient_f(0, 0);
 }
 
+/*
+================
+SV_Status_f
+================
+*/
 extern dvar_t *sv_mapname;
-void SV_Status_f()
+static void SV_Status_f( void )
 {
-	int score;
-	size_t len;
-	int j;
-	int k;
-	client_t *client;
-	int l;
-	const char *s;
-	int i;
+	int i, j, l;
+	client_t    *cl;
+	const char      *s;
+	int ping;
 
-	if ( com_sv_running->current.boolean )
+	// make sure server is running
+	if ( !com_sv_running->current.integer )
 	{
-		Com_Printf("map: %s\n", sv_mapname->current.string);
-		Com_Printf("num score ping guid   name            lastmsg address               qport rate\n");
-		Com_Printf("--- ----- ---- ------ --------------- ------- --------------------- ----- -----\n");
+		Com_Printf( "Server is not running.\n" );
+		return;
+	}
 
-		i = 0;
-		client = svs.clients;
+	Com_Printf( "map: %s\n", sv_mapname->current.string );
 
-		while ( i < sv_maxclients->current.integer )
+	Com_Printf( "num score ping guid   name            lastmsg address               qport rate\n" );
+	Com_Printf( "--- ----- ---- ------ --------------- ------- --------------------- ----- -----\n" );
+	for ( i = 0,cl = svs.clients ; i < sv_maxclients->current.integer ; i++,cl++ )
+	{
+		if ( !cl->state )
 		{
-			if ( client->state )
-			{
-				Com_Printf("%3i ", i);
-				SV_GameClientNum(i);
-				score = G_GetClientScore(client - svs.clients);
-				Com_Printf("%5i ", score);
+			continue;
+		}
+		Com_Printf( "%3i ", i );
+		Com_Printf( "%5i ", G_GetClientScore(cl - svs.clients) );
 
-				if ( client->state == CS_CONNECTED )
-				{
-					Com_Printf("CNCT ");
-				}
-				else if ( client->state == CS_ZOMBIE )
-				{
-					Com_Printf("ZMBI ");
-				}
-				else if ( client->ping >= 9999 )
-				{
-					Com_Printf("%4i ", 9999);
-				}
-				else
-				{
-					Com_Printf("%4i ", client->ping);
-				}
-
-				Com_Printf("%6i ", client->guid);
-				Com_Printf("%s^7", client->name);
-
-				l = 16 - I_DrawStrlen(client->name);
-
-				for ( j = 0; j < l; ++j )
-					Com_Printf(" ");
-
-				Com_Printf("%7i ", svs.time - client->lastPacketTime);
-				s = NET_AdrToString(client->netchan.remoteAddress);
-				Com_Printf("%s", s);
-
-				len = strlen(s);
-
-				for ( k = 0; k < (int)(22 - len); ++k )
-					Com_Printf(" ");
-
-				Com_Printf("%6i", client->netchan.qport);
-				Com_Printf(" %5i", client->rate);
-				Com_Printf("\n");
-			}
-
-			++i;
-			++client;
+		if ( cl->state == CS_CONNECTED )
+		{
+			Com_Printf( "CNCT " );
+		}
+		else if ( cl->state == CS_ZOMBIE )
+		{
+			Com_Printf( "ZMBI " );
+		}
+		else
+		{
+			ping = cl->ping < 9999 ? cl->ping : 9999;
+			Com_Printf( "%4i ", ping );
 		}
 
-		Com_Printf("\n");
+		Com_Printf( "%6i ", cl->guid );
+		Com_Printf( "%s^7", cl->name );
+		l = 16 - I_DrawStrlen( cl->name );
+		for ( j = 0 ; j < l ; j++ )
+			Com_Printf( " " );
+
+		Com_Printf( "%7i ", svs.time - cl->lastPacketTime );
+
+		s = NET_AdrToString( cl->netchan.remoteAddress );
+		Com_Printf( "%s", s );
+		l = 22 - strlen( s );
+		for ( j = 0 ; j < l ; j++ )
+			Com_Printf( " " );
+
+		Com_Printf( "%5i", cl->netchan.qport );
+
+		Com_Printf( " %5i", cl->rate );
+
+		Com_Printf( "\n" );
 	}
-	else
-	{
-		Com_Printf("Server is not running.\n");
-	}
+	Com_Printf( "\n" );
 }
 
-void SV_Serverinfo_f(void)
+/*
+===========
+SV_Serverinfo_f
+
+Examine the serverinfo string
+===========
+*/
+static void SV_Serverinfo_f(void)
 {
 	Com_Printf("Server info settings:\n");
 	Info_Print(Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
 }
 
-void SV_Systeminfo_f(void)
+/*
+===========
+SV_Systeminfo_f
+
+Examine or change the serverinfo string
+===========
+*/
+static void SV_Systeminfo_f(void)
 {
 	Com_Printf("System info settings:\n");
 	Info_Print(Dvar_InfoString(DVAR_SYSTEMINFO));
 }
 
-void SV_DumpUser_f(void)
+/*
+===========
+SV_DumpUser_f
+
+Examine all a users info strings FIXME: move to game
+===========
+*/
+static void SV_DumpUser_f( void )
 {
-	client_s *client;
+	client_t    *cl;
 
-	if ( com_sv_running->current.boolean )
+	// make sure server is running
+	if ( !com_sv_running->current.integer )
 	{
-		if ( SV_Cmd_Argc() == 2 )
-		{
-			client = SV_GetPlayerByName();
+		Com_Printf( "Server is not running.\n" );
+		return;
+	}
 
-			if ( client )
-			{
-				Com_Printf("userinfo\n");
-				Com_Printf("--------\n");
-				Info_Print(client->userinfo);
-			}
-		}
-		else
-		{
-			Com_Printf("Usage: info <userid>\n");
-		}
-	}
-	else
+	if ( Cmd_Argc() != 2 )
 	{
-		Com_Printf("Server is not running.\n");
+		Com_Printf( "Usage: info <userid>\n" );
+		return;
 	}
+
+	cl = SV_GetPlayerByName();
+	if ( !cl )
+	{
+		return;
+	}
+
+	Com_Printf( "userinfo\n" );
+	Com_Printf( "--------\n" );
+	Info_Print( cl->userinfo );
 }
 
+/*
+================
+SV_MapRestart_f
+
+Completely restarts a level, but doesn't send a new gamestate to the clients.
+This allows fair starts with variable load times.
+================
+*/
 extern dvar_t *sv_gametype;
 extern dvar_t *sv_serverid;
 #ifdef LIBCOD
@@ -431,10 +446,9 @@ extern dvar_t *sv_kickbots;
 void SV_MapRestart(int fast_restart)
 {
 	const char *dropreason;
-	const char *cmd;
 	int savepersist;
 	client_t *cl;
-	char mapname[64];
+	char mapname[MAX_QPATH];
 	int i;
 
 	// make sure server is running
@@ -445,84 +459,103 @@ void SV_MapRestart(int fast_restart)
 	}
 
 	SV_SetGametype();
-	I_strncpyz(sv.gametype, sv_gametype->current.string, 64);
+	I_strncpyz(sv.gametype, sv_gametype->current.string, sizeof(sv.gametype));
+
 	savepersist = G_GetSavePersist();
 
-	if ( !sv_maxclients->modified && !strcasecmp(sv.gametype, sv_gametype->current.string) && fast_restart )
-	{
-		if ( com_frameTime != sv.start_frameTime )
-		{
-#if COMPILE_SQLITE == 1
-			free_sqlite_db_stores_and_tasks();
-#endif
-			Dvar_ResetScriptInfo();
-			SV_InitArchivedSnapshot();
-			svs.snapFlagServerBit ^= 4u;
-			sv_serverId_value = (((byte)sv_serverId_value + 1) & 0xF) + (sv_serverId_value & 0xF0);
-			Dvar_SetInt(sv_serverid, sv_serverId_value);
-			sv.start_frameTime = com_frameTime;
-			sv.state = SS_LOADING;
-			sv.restarting = 1;
-			SV_RestartGameProgs(savepersist);
-
-			for(i = 0; i < 3; ++i)
-			{
-				svs.time += 100;
-				SV_RunFrame();
-			}
-
-			for(i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl)
-			{
-				if ( cl->state < CS_CONNECTED )
-				{
-					continue;
-				}
-#ifdef LIBCOD
-				if (sv_kickbots->current.boolean && cl->bot)
-				{
-					SV_DropClient(cl, "EXE_DISCONNECTED");
-					continue;
-				}
-#endif
-				if ( savepersist )
-					cmd = va("%c", 110);
-				else
-					cmd = va("%c", 66);
-
-				SV_AddServerCommand(cl, 1, cmd);
-
-				dropreason = ClientConnect(i, cl->clscriptid);
-
-				if ( dropreason )
-				{
-					SV_DropClient(cl, dropreason);
-					Com_Printf("SV_MapRestart_f: dropped client %i - denied!\n", i);
-				}
-				else if ( cl->state == CS_ACTIVE )
-				{
-					SV_ClientEnterWorld(cl, &cl->lastUsercmd);
-				}
-			}
-
-			sv.state = SS_GAME;
-			sv.restarting = 0;
-		}
-	}
-	else
+	// check for changes in variables that can't just be restarted
+	if ( sv_maxclients->modified || strcasecmp(sv.gametype, sv_gametype->current.string) || !fast_restart )
 	{
 		G_SetSavePersist(0);
-		I_strncpyz(mapname, Dvar_GetString("mapname"), 64);
+		I_strncpyz(mapname, Dvar_GetString("mapname"), sizeof(mapname));
 		FS_ConvertPath(mapname);
 		SV_SpawnServer(mapname);
+		return;
 	}
+
+	// make sure we aren't restarting twice in the same frame
+	if ( com_frameTime == sv.start_frameTime )
+		return;
+
+#if COMPILE_SQLITE == 1
+	free_sqlite_db_stores_and_tasks();
+#endif
+
+	Dvar_ResetScriptInfo();
+	SV_InitArchivedSnapshot();
+
+	// toggle the server bit so clients can detect that a
+	// map_restart has happened
+	svs.snapFlagServerBit ^= SNAPFLAG_SERVERCOUNT;
+
+	// generate a new serverid
+	// TTimo - don't update restartedserverId there, otherwise we won't deal correctly with multiple map_restart
+	sv_serverId_value = (((byte)sv_serverId_value + 1) & 0xF) + (sv_serverId_value & 0xF0);
+	Dvar_SetInt(sv_serverid, sv_serverId_value);
+
+	sv.start_frameTime = com_frameTime;
+
+	// reset all the vm data in place without changing memory allocation
+	// note that we do NOT set sv.state = SS_LOADING, so configstrings that
+	// had been changed from their default values will generate broadcast updates
+	sv.state = SS_LOADING;
+	sv.restarting = qtrue;
+
+	SV_RestartGameProgs(savepersist);
+
+	// run a few frames to allow everything to settle
+	for ( i = 0; i < GAME_INIT_FRAMES; i++ )
+	{
+		svs.time += FRAMETIME;
+		SV_RunFrame();
+	}
+
+	// connect and begin all the clients
+	for(i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl)
+	{
+		// send the new gamestate to all connected clients
+		if ( cl->state < CS_CONNECTED )
+		{
+			continue;
+		}
+
+#ifdef LIBCOD
+		if (sv_kickbots->current.boolean && cl->bot)
+		{
+			SV_DropClient(cl, "EXE_DISCONNECTED");
+			continue;
+		}
+#endif
+
+		// add the map_restart command
+		SV_AddServerCommand(cl, SV_CMD_RELIABLE, va("%c", savepersist == 0 ? 66 : 110));
+
+		// connect the client again, without the firstTime flag
+		dropreason = ClientConnect(i, cl->clscriptid);
+
+		if ( dropreason )
+		{
+			// this generally shouldn't happen, because the client
+			// was connected before the level change
+			SV_DropClient(cl, dropreason);
+			Com_Printf("SV_MapRestart_f: dropped client %i - denied!\n", i);
+		}
+		else if ( cl->state == CS_ACTIVE )
+		{
+			SV_ClientEnterWorld(cl, &cl->lastUsercmd);
+		}
+	}
+
+	sv.state = SS_GAME;
+	sv.restarting = qfalse;
 }
 
-void SV_MapRestart_f()
+static void SV_MapRestart_f()
 {
 	SV_MapRestart(0);
 }
 
-void SV_FastRestart_f()
+static void SV_FastRestart_f()
 {
 	SV_MapRestart(1);
 }
@@ -675,36 +708,44 @@ bool hook_SV_MapExists(const char *mapname)
 }
 #endif
 
+/*
+==================
+SV_Map_f
+
+Restart the server on a different map
+==================
+*/
 extern dvar_t *sv_cheats;
-void SV_Map_f()
+static void SV_Map_f()
 {
-	char mapname[64];
-	char *qpath;
-	const char *base;
+	char mapname[MAX_QPATH];
+	char *expanded;
 	const char *map;
 
-	map = SV_Cmd_Argv(1u);
+	map = SV_Cmd_Argv(1);
 
-	if ( *map )
+	if ( !map[0] )
 	{
-		base = SV_GetMapBaseName(map);
-		I_strncpyz(mapname, base, 64);
-		I_strlwr(mapname);
-		qpath = va("maps/mp/%s.%s", mapname, GetBspExtension());
+		return;
+	}
+
+	I_strncpyz(mapname, SV_GetMapBaseName(map), sizeof(mapname));
+	I_strlwr(mapname);
+
+	expanded = va("maps/mp/%s.%s", mapname, GetBspExtension());
 
 #ifdef LIBCOD
-		if ( hook_findMap(qpath, 0) != -1 )
+	if ( hook_findMap(expanded, 0) != -1 )
 #else
-		if ( FS_ReadFile(qpath, 0) != -1 )
+	if ( FS_ReadFile(expanded, 0) != -1 )
 #endif
-		{
-			FS_ConvertPath(mapname);
-			SV_SpawnServer(mapname);
-			Dvar_SetBool(sv_cheats, I_stricmp(SV_Cmd_Argv(0), "devmap") == 0);
-		}
-		else
-			Com_Printf("Can't find map %s\n", qpath);
+	{
+		FS_ConvertPath(mapname);
+		SV_SpawnServer(mapname);
+		Dvar_SetBool(sv_cheats, I_stricmp(SV_Cmd_Argv(0), "devmap") == 0);
 	}
+	else
+		Com_Printf("Can't find map %s\n", expanded);
 }
 
 extern dvar_t *sv_mapRotationCurrent;
@@ -729,7 +770,7 @@ const char* UI_GetMapRotationToken()
 }
 
 extern dvar_t *sv_mapRotation;
-void SV_MapRotate_f()
+static void SV_MapRotate_f()
 {
 	const char *token;
 
@@ -737,7 +778,7 @@ void SV_MapRotate_f()
 	Com_Printf("\"sv_mapRotation\" is:\"%s\"\n\n", sv_mapRotation->current.string);
 	Com_Printf("\"sv_mapRotationCurrent\" is:\"%s\"\n\n", sv_mapRotationCurrent->current.string);
 
-	if ( !*sv_mapRotationCurrent->current.string )
+	if ( !sv_mapRotationCurrent->current.string[0] )
 		Dvar_SetString(sv_mapRotationCurrent, sv_mapRotation->current.string);
 
 	token = UI_GetMapRotationToken();
@@ -802,23 +843,23 @@ retry:
 	}
 }
 
-void SV_GameCompleteStatus_f(void)
+static void SV_GameCompleteStatus_f(void)
 {
 	if ( com_sv_running->current.boolean )
 		SV_MasterGameCompleteStatus();
 }
 
-void SV_KillServer_f(void)
+static void SV_KillServer_f(void)
 {
 	Com_Shutdown("EXE_SERVERKILLED");
 }
 
-void SV_ScriptUsage_f(void)
+static void SV_ScriptUsage_f(void)
 {
 	Scr_DumpScriptThreads();
 }
 
-void SV_StringUsage_f(void)
+static void SV_StringUsage_f(void)
 {
 	MT_DumpTree();
 }
@@ -828,7 +869,7 @@ void SV_StringUsage_f(void)
 SV_ConSay_f
 ==================
 */
-void SV_ConSay_f( void )
+static void SV_ConSay_f( void )
 {
 	char    *p;
 	char text[MAX_STRING_CHARS];
@@ -863,7 +904,7 @@ void SV_ConSay_f( void )
 SV_ConTell_f
 ==================
 */
-void SV_ConTell_f( void )
+static void SV_ConTell_f( void )
 {
 	char    *p;
 	char text[MAX_STRING_CHARS];
@@ -913,46 +954,58 @@ void SV_AddDedicatedCommands()
 	Cmd_AddCommand("tell", SV_ConTell_f);
 }
 
+/*
+==================
+SV_AddOperatorCommands
+==================
+*/
 void SV_AddOperatorCommands()
 {
-	static qboolean initailized = 0;
+	static qboolean initialized;
 
-	if ( !initailized )
+	if ( initialized )
 	{
-		initailized = 1;
-
-		Cmd_AddCommand("heartbeat", SV_Heartbeat_f);
-		Cmd_AddCommand("onlykick", SV_Drop_f);
-		Cmd_AddCommand("banUser", SV_Ban_f);
-		Cmd_AddCommand("banClient", SV_BanNum_f);
-		Cmd_AddCommand("kick", SV_TempBan_f);
-		Cmd_AddCommand("tempBanUser", SV_TempBan_f);
-		Cmd_AddCommand("tempBanClient", SV_TempBanNum_f);
-		Cmd_AddCommand("unbanUser", SV_Unban_f);
-		Cmd_AddCommand("clientkick", SV_DropNum_f);
-		Cmd_AddCommand("status", SV_Status_f);
-		Cmd_AddCommand("serverinfo", SV_Serverinfo_f);
-		Cmd_AddCommand("systeminfo", SV_Systeminfo_f);
-		Cmd_AddCommand("dumpuser", SV_DumpUser_f);
-		Cmd_AddCommand("map_restart", SV_MapRestart_f);
-		Cmd_AddCommand("fast_restart", SV_FastRestart_f);
-		Cmd_AddCommand("map", SV_Map_f);
-		Cmd_SetAutoComplete("map", "maps/mp", "d3dbsp");
-		Cmd_AddCommand("map_rotate", SV_MapRotate_f);
-		Cmd_AddCommand("gameCompleteStatus", SV_GameCompleteStatus_f);
-		Cmd_AddCommand("devmap", SV_Map_f);
-		Cmd_SetAutoComplete("devmap", "maps/mp", "d3dbsp");
-		Cmd_AddCommand("killserver", SV_KillServer_f);
-
-		if ( com_dedicated->current.integer )
-			SV_AddDedicatedCommands();
-
-		Cmd_AddCommand("scriptUsage", SV_ScriptUsage_f);
-		Cmd_AddCommand("stringUsage", SV_StringUsage_f);
+		return;
 	}
+
+	initialized = qtrue;
+
+	Cmd_AddCommand("heartbeat", SV_Heartbeat_f);
+	Cmd_AddCommand("onlykick", SV_Drop_f);
+	Cmd_AddCommand("banUser", SV_Ban_f);
+	Cmd_AddCommand("banClient", SV_BanNum_f);
+	Cmd_AddCommand("kick", SV_TempBan_f);
+	Cmd_AddCommand("tempBanUser", SV_TempBan_f);
+	Cmd_AddCommand("tempBanClient", SV_TempBanNum_f);
+	Cmd_AddCommand("unbanUser", SV_Unban_f);
+	Cmd_AddCommand("clientkick", SV_DropNum_f);
+	Cmd_AddCommand("status", SV_Status_f);
+	Cmd_AddCommand("serverinfo", SV_Serverinfo_f);
+	Cmd_AddCommand("systeminfo", SV_Systeminfo_f);
+	Cmd_AddCommand("dumpuser", SV_DumpUser_f);
+	Cmd_AddCommand("map_restart", SV_MapRestart_f);
+	Cmd_AddCommand("fast_restart", SV_FastRestart_f);
+	Cmd_AddCommand("map", SV_Map_f);
+	Cmd_SetAutoComplete("map", "maps/mp", "d3dbsp");
+	Cmd_AddCommand("map_rotate", SV_MapRotate_f);
+	Cmd_AddCommand("gameCompleteStatus", SV_GameCompleteStatus_f);
+	Cmd_AddCommand("devmap", SV_Map_f);
+	Cmd_SetAutoComplete("devmap", "maps/mp", "d3dbsp");
+	Cmd_AddCommand("killserver", SV_KillServer_f);
+
+	if ( com_dedicated->current.integer )
+		SV_AddDedicatedCommands();
+
+	Cmd_AddCommand("scriptUsage", SV_ScriptUsage_f);
+	Cmd_AddCommand("stringUsage", SV_StringUsage_f);
 }
 
-void SV_RemoveOperatorCommands()
+/*
+==================
+SV_RemoveOperatorCommands
+==================
+*/
+void SV_RemoveOperatorCommands( void )
 {
-	;
+	// removing these won't let the server start again
 }
