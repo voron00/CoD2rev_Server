@@ -726,11 +726,13 @@ void Scr_InitSystem();
 void Scr_Init();
 
 void MT_Init();
+byte *MT_InitForceAlloc();
+void MT_ForceAllocIndex(unsigned char *allocBits, unsigned int nodeNum, int numBytes);
+void MT_FinishForceAlloc(unsigned char *allocBits);
 void MT_AddMemoryNode(int newNode, int size);
 bool MT_RemoveMemoryNode(int oldNode, int size);
 void MT_RemoveHeadMemoryNode(int size);
 int MT_GetSize(int numBytes);
-void MT_RelocateNode(int nodeNum);
 unsigned short MT_AllocIndex(int numBytes);
 void MT_FreeIndex(unsigned int nodeNum, int numBytes);
 void* MT_Alloc(int numBytes);
@@ -738,9 +740,6 @@ void MT_Free(void* p, int numBytes);
 qboolean MT_Realloc(int oldNumBytes, int newNumbytes);
 byte* MT_GetRefByIndex(int index);
 int MT_GetIndexByRef(byte* p);
-void MT_FreeForLength(byte *p, unsigned int data, int length);
-void *MT_BeginRelocate();
-void MT_EndRelocate(byte *ptr);
 void MT_DumpTree();
 
 struct __attribute__((aligned(4))) RefString
@@ -804,6 +803,7 @@ void SL_ChangeUser(unsigned char from, unsigned char to);
 void SL_AddRefToString(unsigned int stringValue);
 void SL_ShutdownSystem(unsigned char user);
 void SL_Shutdown();
+void SL_Restart();
 void SL_Init();
 
 unsigned int Scr_CreateCanonicalFilename(const char *name);

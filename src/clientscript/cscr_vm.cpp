@@ -3874,18 +3874,18 @@ void Scr_VM_Init()
 
 void Scr_Init()
 {
-	if ( !scrVarPub.bInited )
-	{
-		SL_Init();
-		Var_Init();
-		Scr_VM_Init();
-		scrCompilePub.script_loading = 0;
-		scrAnimPub.animtree_loading = 0;
-		scrCompilePub.scriptsPos = 0;
-		scrCompilePub.loadedscripts = 0;
-		scrAnimPub.animtrees = 0;
-		scrCompilePub.builtinMeth = 0;
-		scrCompilePub.builtinFunc = 0;
-		scrVarPub.bInited = 1;
-	}
+	if ( scrVarPub.bInited )
+		return;
+
+	SL_Init();
+	Var_Init();
+	Scr_VM_Init();
+	scrCompilePub.script_loading = 0;
+	scrAnimPub.animtree_loading = 0;
+	scrCompilePub.scriptsPos = 0;
+	scrCompilePub.loadedscripts = 0;
+	scrAnimPub.animtrees = 0;
+	scrCompilePub.builtinMeth = 0;
+	scrCompilePub.builtinFunc = 0;
+	scrVarPub.bInited = 1;
 }

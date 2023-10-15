@@ -644,14 +644,58 @@ void SL_Shutdown()
 	scrStringGlob.inited = 0;
 }
 
+void SL_Restart()
+{
+	size_t len;
+	const char *str;
+	unsigned char *bits;
+	HashEntry *entry;
+	unsigned int i;
+	unsigned int j;
+
+	for ( i = 1; i < HASH_TABLE_SIZE; ++i )
+	{
+		do
+		{
+			if ( (scrStringGlob.hashTable[i].status_next & HASH_STAT_MASK) == 0 )
+				break;
+
+			scrStringGlob.nextFreeEntry = 0;
+			SL_FreeEntry(scrStringGlob.hashTable[i].prev);
+		}
+		while ( scrStringGlob.nextFreeEntry );
+	}
+
+	bits = MT_InitForceAlloc();
+
+	for ( j = 1; j < HASH_TABLE_SIZE; ++j )
+	{
+		entry = &scrStringGlob.hashTable[j];
+
+		if ( (entry->status_next & HASH_STAT_MASK) != 0 && (GetRefString(entry->prev)->user & 4) != 0 )
+		{
+			str = SL_ConvertToString(entry->prev);
+			len = I_strlen(str);
+			MT_ForceAllocIndex(bits, entry->prev, len + 5);
+		}
+	}
+
+	MT_FinishForceAlloc(bits);
+}
+
 void SL_Init()
 {
 	unsigned int prev;
 	unsigned int hash;
 
-	assert( !scrStringGlob.inited );
+	if ( scrStringGlob.inited )
+	{
+		SL_Restart();
+		return;
+	}
 
 	MT_Init();
+
 	scrStringGlob.hashTable->status_next = HASH_STAT_FREE;
 	prev = 0;
 

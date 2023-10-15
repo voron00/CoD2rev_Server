@@ -483,6 +483,77 @@ int MT_GetIndexByRef(byte* p)
 	return index;
 }
 
+void MT_SafeFreeIndex(int nodeNum)
+{
+	int currentNode;
+	int size;
+	int bits;
+
+	size = 0;
+
+	for ( currentNode = nodeNum; !MT_RemoveMemoryNode(currentNode, size); currentNode &= ~(1 << size++) )
+	{
+		if ( size == MEMORY_NODE_SIZE )
+		{
+			size = 0;
+			currentNode = nodeNum;
+
+			while ( 1 )
+			{
+				bits = 1 << size;
+
+				if ( size == MEMORY_NODE_SIZE || !MT_RemoveMemoryNode(currentNode ^ bits, size) )
+					break;
+
+				currentNode &= ~bits;
+				++size;
+			}
+
+			break;
+		}
+	}
+
+	MT_AddMemoryNode(currentNode, size);
+}
+
+void MT_FinishForceAlloc(unsigned char *allocBits)
+{
+	int nodeNum;
+
+	for ( nodeNum = 1; nodeNum < MEMORY_NODE_COUNT; ++nodeNum )
+	{
+		if ( (((int)allocBits[nodeNum >> 3] >> (nodeNum & 7)) & 1) == 0 )
+			MT_SafeFreeIndex(nodeNum);
+	}
+
+	Z_FreeInternal(allocBits);
+}
+
+void MT_ForceAllocIndex(unsigned char *allocBits, unsigned int nodeNum, int numBytes)
+{
+	int count;
+	char size;
+
+	size = MT_GetSize(numBytes);
+	++scrMemTreeGlob.totalAlloc;
+	count = 1 << size;
+	scrMemTreeGlob.totalAllocBuckets += 1 << size;
+
+	while ( count )
+	{
+		allocBits[nodeNum >> 3] |= 1 << (nodeNum & 7);
+		++nodeNum;
+		--count;
+	}
+}
+
+byte *MT_InitForceAlloc()
+{
+	scrMemTreeGlob.totalAlloc = 0;
+	scrMemTreeGlob.totalAllocBuckets = 0;
+	return (byte *)Z_MallocInternal(0x2000u);
+}
+
 void MT_Init()
 {
 	int i;
