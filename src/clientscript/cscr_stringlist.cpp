@@ -434,7 +434,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 }
 
 // VoroN: Wrapper for assembly
-unsigned int QDECL SL_GetStringOfSize(const char *str, unsigned char user, unsigned int len, int type)
+unsigned int SL_GetStringOfSize(const char *str, unsigned char user, unsigned int len, int type)
 {
 	return SL_GetStringOfLen(str, user, len);
 }

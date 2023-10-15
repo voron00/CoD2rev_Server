@@ -148,7 +148,7 @@ int DObjSkelAreBonesUpToDate(const DObj_s *obj, int *partBits)
 	return 1;
 }
 
-int QDECL DObjGetBoneIndex(const DObj_s *obj, unsigned int name)
+int DObjGetBoneIndex(const DObj_s *obj, unsigned int name)
 {
 	int offset;
 	XModel *model;

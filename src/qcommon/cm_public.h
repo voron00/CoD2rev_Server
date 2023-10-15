@@ -89,12 +89,4 @@ void CM_AddStaticModelToNode(cStaticModel_s *model, unsigned short childNodeInde
 void CM_LinkAllStaticModels();
 void CM_LinkWorld();
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-qboolean QDECL CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction);
-
-#ifdef __cplusplus
-}
-#endif
+qboolean CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction);

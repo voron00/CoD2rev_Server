@@ -219,7 +219,7 @@ const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex)
 	}
 }
 
-unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels)
+unsigned int XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels)
 {
 	XModelParts_s *childPart;
 	int i;
@@ -1598,7 +1598,7 @@ void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bo
 	}
 }
 
-void QDECL XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update)
+void XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update)
 {
 	int16_t cycleCount;
 	int16_t oldCycleCount;
@@ -1796,7 +1796,7 @@ float XAnimGetServerNotifyFracSyncTotal(const XAnimTree_s *tree, XAnimInfo *info
 	return notifyFrac;
 }
 
-float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime)
+float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime)
 {
 	XAnimState localState;
 	float rate;

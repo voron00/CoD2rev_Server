@@ -109,7 +109,7 @@ int Mantle_GetAnim(MantleState *mstate)
 		return s_mantleTrans[mstate->transIndex].upAnimIndex;
 }
 
-void QDECL Mantle_CapView(playerState_s *ps)
+void Mantle_CapView(playerState_s *ps)
 {
 	float value;
 	float delta;

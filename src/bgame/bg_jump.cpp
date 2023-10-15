@@ -23,13 +23,13 @@ bool getJumpSlowdownEnable(playerState_t* ps)
 	return jump_slowdownEnable->current.boolean;
 }
 
-void QDECL Jump_ClearState(playerState_s *ps)
+void Jump_ClearState(playerState_s *ps)
 {
 	ps->pm_flags &= ~0x80000u;
 	ps->jumpOriginZ = 0.0;
 }
 
-bool QDECL Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize)
+bool Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize)
 {
 	if ( ps->jumpOriginZ + jump_height->current.decimal <= (float)origin[2] )
 		return 0;
@@ -42,12 +42,12 @@ bool QDECL Jump_GetStepHeight(playerState_s *ps, const float *origin, float *ste
 	return 1;
 }
 
-bool QDECL Jump_IsPlayerAboveMax(playerState_s *ps)
+bool Jump_IsPlayerAboveMax(playerState_s *ps)
 {
 	return ps->origin[2] >= ps->jumpOriginZ + jump_height->current.decimal;
 }
 
-void QDECL Jump_ActivateSlowdown(playerState_s *ps)
+void Jump_ActivateSlowdown(playerState_s *ps)
 {
 	if ( !ps->pm_time )
 	{
@@ -105,7 +105,7 @@ float Jump_ReduceFriction(playerState_s *ps)
 	}
 }
 
-void QDECL Jump_ClampVelocity(playerState_s *ps, const float *origin)
+void Jump_ClampVelocity(playerState_s *ps, const float *origin)
 {
 	float temp;
 	float maxJumpVel;
@@ -222,7 +222,7 @@ void Jump_Start(pmove_t *pm, pml_t *pml, float height)
 		ps->aimSpreadScale = 255.0;
 }
 
-bool QDECL Jump_Check(pmove_t *pm, pml_t *pml)
+bool Jump_Check(pmove_t *pm, pml_t *pml)
 {
 	playerState_s *ps;
 

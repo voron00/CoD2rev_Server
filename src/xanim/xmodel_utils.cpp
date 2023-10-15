@@ -5,7 +5,7 @@ unsigned short* XModelBoneNames(XModel *model)
 	return model->parts->hierarchy->names;
 }
 
-int QDECL XModelGetBoneIndex(const XModel *model, unsigned int name)
+int XModelGetBoneIndex(const XModel *model, unsigned int name)
 {
 	int i;
 
@@ -40,7 +40,7 @@ DObjAnimMat* XModelGetBasePose(const XModel *model)
 	return &model->parts->skel.Mat;
 }
 
-int QDECL XModelNumBones(const XModel *model)
+int XModelNumBones(const XModel *model)
 {
 	return model->parts->numBones;
 }

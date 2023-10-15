@@ -1322,7 +1322,7 @@ int G_XModelBad(int index);
 const char *vtos( const vec3_t v );
 const char *vtosf( const vec3_t v );
 
-void QDECL G_LogPrintf( const char *fmt, ... );
+void G_LogPrintf( const char *fmt, ... );
 
 int IsItemRegistered(unsigned int iItemIndex);
 void RegisterItem(unsigned int index, int global);

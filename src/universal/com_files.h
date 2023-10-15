@@ -108,16 +108,8 @@ void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char*
 int FS_Seek(int f, int offset, int origin);
 int FS_Read(void *buffer, int len, int h);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int QDECL FS_ReadFile(const char* qpath, void** buffer);
-void QDECL FS_FreeFile(void* buffer);
-
-#ifdef __cplusplus
-}
-#endif
+int FS_ReadFile(const char* qpath, void** buffer);
+void FS_FreeFile(void* buffer);
 
 int FS_FOpenTextFileWrite(const char* filename);
 int FS_FOpenFileWrite( const char *filename );

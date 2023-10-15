@@ -262,7 +262,7 @@ qboolean CM_TraceBoxInternal(TraceExtents *extents, const float *testvec, float 
 	return 0;
 }
 
-qboolean QDECL CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction)
+qboolean CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction)
 {
 	float lfraction = fraction;
 

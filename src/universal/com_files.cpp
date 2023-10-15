@@ -1644,7 +1644,7 @@ int FS_LoadStack()
 	return fs_loadStack;
 }
 
-void QDECL FS_FreeFile(void* buffer)
+void FS_FreeFile(void* buffer)
 {
 	FS_CheckFileSystemStarted();
 	--fs_loadStack;
@@ -1701,7 +1701,7 @@ int FS_WriteFile(const char* filename, const void* buffer, int size)
 	return 1;
 }
 
-int QDECL FS_ReadFile(const char* qpath, void** buffer)
+int FS_ReadFile(const char* qpath, void** buffer)
 {
 	char* buf;
 	int len;

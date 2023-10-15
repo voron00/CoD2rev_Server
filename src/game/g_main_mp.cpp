@@ -166,7 +166,7 @@ G_LogPrintf
 Print to the logfile with a time stamp if it is open
 =================
 */
-void QDECL G_LogPrintf( const char *fmt, ... )
+void G_LogPrintf( const char *fmt, ... )
 {
 	va_list argptr;
 	char string[1024];

@@ -551,7 +551,7 @@ void CompileError2(const char *codePos, const char *format, ...)
 	Com_Error(ERR_SCRIPT_DROP, "script compile error\n(see console for details)\n");
 }
 
-int QDECL Scr_ScanFile(char *buf, int max_size)
+int Scr_ScanFile(char *buf, int max_size)
 {
 	char c;
 	int i;

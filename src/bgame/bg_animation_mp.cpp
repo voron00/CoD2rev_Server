@@ -285,7 +285,7 @@ long BG_StringHashValue_Lwr( const char *fname )
 BG_AnimParseError
 =================
 */
-void QDECL BG_AnimParseError( const char *msg, ... )
+void BG_AnimParseError( const char *msg, ... )
 {
 	va_list argptr;
 	char text[1024];
@@ -783,7 +783,7 @@ BG_AnimScriptEvent
   returns the duration in milliseconds that this model should be paused. -1 if no event found
 ================
 */
-int QDECL BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force )
+int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force )
 {
 	animScriptCommand_t *script;
 	animScriptItem_t *item;
@@ -830,7 +830,7 @@ void BG_UpdateConditionValue(int client, int condition, int value, qboolean chec
 BG_GetConditionValue
 ==============
 */
-unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion)
+unsigned int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion)
 {
 	unsigned int i;
 

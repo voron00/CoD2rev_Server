@@ -1377,59 +1377,51 @@ typedef struct gitem_s
 
 extern gitem_t bg_itemlist[];
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+unsigned int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
+void PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
+void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
+qboolean PM_ShouldMakeFootsteps(pmove_t *pm);
+int BG_CheckProne(int passEntityNum, float const * const vPos, float fSize, float fHeight, float fYaw, float * pfTorsoHeight, float * pfTorsoPitch, float * pfWaistPitch, int bAlreadyProne, int bOnGround, float * const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist);
+int PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel);
+void PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
+void PM_AddTouchEnt(pmove_t *pm, int entityNum);
+void PM_StepSlideMove(pmove_t *pm, pml_t *pml, int gravity);
+void PM_ClipVelocity(const float *in, const float *normal, float *out);
+void PM_AirMove(pmove_t *pm, pml_t *pml);
+float PM_CmdScale(playerState_s *ps, usercmd_s *cmd);
+int PM_GroundSurfaceType(pml_t *pml);
+void PM_AddEvent(playerState_s *ps, int newEvent);
+int PM_GetEffectiveStance(const playerState_s *ps);
+void PM_UpdateViewAngles(playerState_s *ps, float msec, usercmd_s *cmd, unsigned char handler);
+void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);
 
-unsigned int QDECL BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
-void QDECL PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
-void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
-qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm);
-int QDECL BG_CheckProne(int passEntityNum, float const * const vPos, float fSize, float fHeight, float fYaw, float * pfTorsoHeight, float * pfTorsoPitch, float * pfWaistPitch, int bAlreadyProne, int bOnGround, float * const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist);
-int QDECL PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel);
-void QDECL PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
-void QDECL PM_AddTouchEnt(pmove_t *pm, int entityNum);
-void QDECL PM_StepSlideMove(pmove_t *pm, pml_t *pml, int gravity);
-void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out);
-void QDECL PM_AirMove(pmove_t *pm, pml_t *pml);
-float QDECL PM_CmdScale(playerState_s *ps, usercmd_s *cmd);
-int QDECL PM_GroundSurfaceType(pml_t *pml);
-void QDECL PM_AddEvent(playerState_s *ps, int newEvent);
-int QDECL PM_GetEffectiveStance(const playerState_s *ps);
-void QDECL PM_UpdateViewAngles(playerState_s *ps, float msec, usercmd_s *cmd, unsigned char handler);
-void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);
+void Jump_ClearState(playerState_s *ps);
+bool Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize);
+bool Jump_IsPlayerAboveMax(playerState_s *ps);
+void Jump_ClampVelocity(playerState_s *ps, const float *origin);
+void Jump_ActivateSlowdown(playerState_s *ps);
+bool Jump_Check(pmove_t *pm, pml_t *pml);
 
-void QDECL Jump_ClearState(playerState_s *ps);
-bool QDECL Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize);
-bool QDECL Jump_IsPlayerAboveMax(playerState_s *ps);
-void QDECL Jump_ClampVelocity(playerState_s *ps, const float *origin);
-void QDECL Jump_ActivateSlowdown(playerState_s *ps);
-bool QDECL Jump_Check(pmove_t *pm, pml_t *pml);
+void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
+int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 
-void QDECL BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
-int QDECL BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
+int BG_IsAimDownSightWeapon(int weapon);
+unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
+WeaponDef* BG_GetWeaponDef(int weaponIndex);
+void BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
 
-int QDECL BG_IsAimDownSightWeapon(int weapon);
-unsigned int QDECL BG_GetViewmodelWeaponIndex(const playerState_s *ps);
-WeaponDef* QDECL BG_GetWeaponDef(int weaponIndex);
-void QDECL BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
+float BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
+float BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
 
-float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
-float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
+void BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
+void BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
 
-void QDECL BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
-void QDECL BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
-
-void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
-float QDECL PM_PermuteRestrictiveClipPlanes(const float *velocity, int planeCount, const float (*planes)[3], int *permutation);
-int QDECL PM_SlideMove(pmove_t *pm, pml_t *pml, int gravity);
-void QDECL PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int));
-void QDECL Mantle_CapView(playerState_s *ps);
-int QDECL BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler);
-
-#ifdef __cplusplus
-}
-#endif
+void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
+float PM_PermuteRestrictiveClipPlanes(const float *velocity, int planeCount, const float (*planes)[3], int *permutation);
+int PM_SlideMove(pmove_t *pm, pml_t *pml, int gravity);
+void PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int));
+void Mantle_CapView(playerState_s *ps);
+int BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler);
 
 void PM_ExitAimDownSight(playerState_s *ps);
 void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_s *es);

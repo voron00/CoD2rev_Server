@@ -451,7 +451,7 @@ void MT_Free(void* p, int numBytes)
 	MT_FreeIndex((MemoryNode*)p - scrMemTreeGlob.nodes, numBytes);
 }
 
-qboolean MT_Realloc(int oldNumBytes, int newNumbytes)
+bool MT_Realloc(int oldNumBytes, int newNumbytes)
 {
 	int size;
 
@@ -485,27 +485,27 @@ int MT_GetIndexByRef(byte* p)
 
 void MT_SafeFreeIndex(int nodeNum)
 {
-	int currentNode;
+	int oldNode;
 	int size;
-	int bits;
+	int lowBit;
 
 	size = 0;
 
-	for ( currentNode = nodeNum; !MT_RemoveMemoryNode(currentNode, size); currentNode &= ~(1 << size++) )
+	for ( oldNode = nodeNum; !MT_RemoveMemoryNode(oldNode, size); oldNode &= ~(1 << size++) )
 	{
 		if ( size == MEMORY_NODE_SIZE )
 		{
 			size = 0;
-			currentNode = nodeNum;
+			oldNode = nodeNum;
 
 			while ( 1 )
 			{
-				bits = 1 << size;
+				lowBit = 1 << size;
 
-				if ( size == MEMORY_NODE_SIZE || !MT_RemoveMemoryNode(currentNode ^ bits, size) )
+				if ( size == MEMORY_NODE_SIZE || !MT_RemoveMemoryNode(oldNode ^ lowBit, size) )
 					break;
 
-				currentNode &= ~bits;
+				oldNode &= ~lowBit;
 				++size;
 			}
 
@@ -513,7 +513,7 @@ void MT_SafeFreeIndex(int nodeNum)
 		}
 	}
 
-	MT_AddMemoryNode(currentNode, size);
+	MT_AddMemoryNode(oldNode, size);
 }
 
 void MT_FinishForceAlloc(unsigned char *allocBits)
@@ -551,6 +551,7 @@ byte *MT_InitForceAlloc()
 {
 	scrMemTreeGlob.totalAlloc = 0;
 	scrMemTreeGlob.totalAllocBuckets = 0;
+
 	return (byte *)Z_MallocInternal(0x2000u);
 }
 

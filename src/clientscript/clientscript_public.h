@@ -737,7 +737,7 @@ unsigned short MT_AllocIndex(int numBytes);
 void MT_FreeIndex(unsigned int nodeNum, int numBytes);
 void* MT_Alloc(int numBytes);
 void MT_Free(void* p, int numBytes);
-qboolean MT_Realloc(int oldNumBytes, int newNumbytes);
+bool MT_Realloc(int oldNumBytes, int newNumbytes);
 byte* MT_GetRefByIndex(int index);
 int MT_GetIndexByRef(byte* p);
 void MT_DumpTree();
@@ -772,10 +772,6 @@ struct RefVector
 	vec3_t vec;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 const char* SL_ConvertToString(unsigned int index);
 unsigned int SL_ConvertToLowercase(unsigned int stringValue, unsigned char user);
 unsigned int SL_ConvertFromString(const char *str);
@@ -785,7 +781,7 @@ unsigned int GetHashCode(const char *str, unsigned int len);
 void SL_FreeString(unsigned int stringValue, RefString *refStr, unsigned int len);
 void SL_AddUserInternal(RefString *refStr, unsigned char user);
 unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int len);
-unsigned int QDECL SL_GetStringOfSize(const char *str, unsigned char user, unsigned int len, int type);
+unsigned int SL_GetStringOfSize(const char *str, unsigned char user, unsigned int len, int type);
 unsigned int SL_FindStringOfLen(const char *str, unsigned int len);
 unsigned int SL_FindLowercaseString(const char *upperstring);
 unsigned int SL_FindString(const char *string);
@@ -807,10 +803,6 @@ void SL_Restart();
 void SL_Init();
 
 unsigned int Scr_CreateCanonicalFilename(const char *name);
-
-#ifdef __cplusplus
-}
-#endif
 
 VariableValue* Scr_GetValue(unsigned int param);
 unsigned int FindNextSibling(unsigned int id);
@@ -983,10 +975,6 @@ void Scr_ClearOutParams();
 const char* Scr_GetDebugString(unsigned int index);
 void Scr_CastDebugString(VariableValue *value);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void Scr_PrintPrevCodePos(conChannel_t channel, const char *codePos, unsigned int index);
 void CompileError(unsigned int sourcePos, const char *format, ...);
 void CompileError2(const char *codePos, const char *format, ...);
@@ -997,8 +985,8 @@ void AddThreadStartOpcodePos(unsigned int sourcePos);
 void Scr_InitOpcodeLookup();
 void Scr_CompileShutdown();
 
-int QDECL yyparse();
-void QDECL ScriptParse(sval_u *parseData, unsigned char user);
+int yyparse();
+void ScriptParse(sval_u *parseData, unsigned char user);
 
 void EmitOpcode(unsigned int op, int offset, int callType);
 void Scr_CalcLocalVarsArrayPrimitiveExpressionRef(sval_u expr, scr_block_s *block);
@@ -1023,7 +1011,3 @@ void EmitMethod(sval_u expr, sval_u func_name, sval_u params, sval_u methodSourc
 void EmitThread(sval_u val);
 
 void ScriptCompile(sval_u val, unsigned int filePosId, unsigned int scriptId);
-
-#ifdef __cplusplus
-}
-#endif

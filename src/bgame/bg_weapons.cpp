@@ -9,7 +9,7 @@ bool BG_ValidateWeaponNumber(int weaponIndex)
 	return false;
 }
 
-int QDECL BG_IsAimDownSightWeapon(int weapon)
+int BG_IsAimDownSightWeapon(int weapon)
 {
 	return BG_GetWeaponDef(weapon)->aimDownSight;
 }
@@ -82,7 +82,7 @@ int BG_GetBinocularsIndex()
 	return 0;
 }
 
-unsigned int QDECL BG_GetViewmodelWeaponIndex(const playerState_s *ps)
+unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps)
 {
 	if ( (ps->pm_flags & 0x20000) != 0 )
 		return BG_GetBinocularsIndex();
@@ -2330,7 +2330,7 @@ float BG_GetBobCycle(gclient_s *client)
 	       + 6.283185307179586;
 }
 
-float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
+float BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
 {
 	float v4;
 	float v6;
@@ -2360,7 +2360,7 @@ float QDECL BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle,
 	return v8 * amplitude;
 }
 
-float QDECL BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
+float BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp)
 {
 	float v4;
 	float v6;

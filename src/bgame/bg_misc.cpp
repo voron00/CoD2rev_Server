@@ -259,7 +259,7 @@ qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched)
 BG_AddPredictableEventToPlayerstate
 ================
 */
-void QDECL BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
+void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
 {
 	ps->events[ps->eventSequence & ( MAX_EVENTS - 1 )] = newEvent;
 	ps->eventParms[ps->eventSequence & ( MAX_EVENTS - 1 )] = eventParm;
@@ -832,12 +832,12 @@ LABEL_30:
 	return 1;
 }
 
-int QDECL BG_CheckProne(int passEntityNum, const float *const vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, int bAlreadyProne, int bOnGround, float *const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist)
+int BG_CheckProne(int passEntityNum, const float *const vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, int bAlreadyProne, int bOnGround, float *const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist)
 {
 	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
 }
 
-int QDECL BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler)
+int BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler)
 {
 	float fraction;
 	float dist;

@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-int QDECL PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel)
+int PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel)
 {
 	int bProneOK;
 	playerState_s *ps;

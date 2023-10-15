@@ -280,7 +280,7 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 	}
 }
 
-void QDECL Com_Printf( const char *fmt, ...)
+void Com_Printf( const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
@@ -293,7 +293,7 @@ void QDECL Com_Printf( const char *fmt, ...)
 	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, msg);
 }
 
-void QDECL Com_DPrintf( const char *fmt, ...)
+void Com_DPrintf( const char *fmt, ...)
 {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];

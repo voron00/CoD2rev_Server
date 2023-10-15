@@ -170,13 +170,13 @@ qboolean XModelBad(XModel *model)
 	return model->bad;
 }
 
-void QDECL XModelGetBounds(const XModel *model, float *mins, float *maxs)
+void XModelGetBounds(const XModel *model, float *mins, float *maxs)
 {
 	VectorCopy(model->mins, mins);
 	VectorCopy(model->maxs, maxs);
 }
 
-void QDECL XModelPartsFree(XModelParts *modelParts)
+void XModelPartsFree(XModelParts *modelParts)
 {
 	int numBones;
 	int i;
@@ -189,7 +189,7 @@ void QDECL XModelPartsFree(XModelParts *modelParts)
 		SL_RemoveRefToString(name[i]);
 }
 
-void QDECL XModelFree(XModel *model)
+void XModelFree(XModel *model)
 {
 	int j;
 	int i;
@@ -239,7 +239,7 @@ const char* XModelSetData(const char *modelName, XModel *model, void *(*Alloc)(i
 	return Hunk_SetDataForFile(FILEDATA_XMODEL, modelName, model, Alloc);
 }
 
-XModelParts* QDECL XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)(int))
+XModelParts* XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)(int))
 {
 	XModelParts *parts;
 
@@ -383,7 +383,7 @@ bool XModelSurfsSupported()
 	return true;
 }
 
-XModel* QDECL XModelLoad(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
+XModel* XModelLoad(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
 {
 	XModel *model;
 

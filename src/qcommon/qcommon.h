@@ -323,21 +323,13 @@ unsigned int Com_BlockChecksumKey( void *buffer, int length, int key );
 
 int Com_HashKey( const char *string, int maxlen );
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void Com_InitDvars();
 void Com_StartupVariable( const char *match );
 void Com_PrintMessage( conChannel_t channel, const char *msg );
-void QDECL Com_Printf( const char *fmt, ...);
-void QDECL Com_DPrintf( const char *fmt, ...);
+void Com_Printf( const char *fmt, ...);
+void Com_DPrintf( const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
 void Com_WriteConfigToFile(const char *contents);
-
-#ifdef __cplusplus
-}
-#endif
 
 qboolean Com_SafeMode( void );
 int Com_Milliseconds( void );

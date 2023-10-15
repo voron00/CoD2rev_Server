@@ -389,7 +389,7 @@ void I_strncat( char *dest, int size, const char *src )
 	I_strncpyz( dest + l1, src, size - l1 );
 }
 
-int QDECL Com_sprintf(char *dest, size_t size, const char *format, ...)
+int Com_sprintf(char *dest, size_t size, const char *format, ...)
 {
 	int result;
 	va_list va;
@@ -1209,12 +1209,12 @@ void COM_BitClear(int array[], int bitNum)
 	array[bitNum >> 5] &= ~(1 << (bitNum & 0x1F));
 }
 
-float QDECL GetLeanFraction(const float fFrac)
+float GetLeanFraction(const float fFrac)
 {
 	return (2.0f - fabs(fFrac)) * fFrac;
 }
 
-float QDECL UnGetLeanFraction(const float fFrac)
+float UnGetLeanFraction(const float fFrac)
 {
 	return 1.0f - sqrtf(1.0f - fFrac);
 }

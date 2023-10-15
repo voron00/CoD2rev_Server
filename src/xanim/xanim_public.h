@@ -450,49 +450,41 @@ XAnimTree_s* DObjGetTree(const DObj_s *obj);
 void XAnimFree(XAnimParts *parts);
 void XAnimFreeList(XAnim *anims);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
+void DObjSetTree(DObj_s *obj, XAnimTree_s *tree);
+void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
 
-int QDECL DObjGetBoneIndex(const DObj_s *obj, unsigned int name);
-void QDECL DObjSetTree(DObj_s *obj, XAnimTree_s *tree);
-void QDECL DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits);
+void XModelPartsFree(XModelParts *modelParts);
+void XModelFree(XModel *model);
+XModel* XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
+XModelParts* XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)(int));
+XModelParts* XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int));
+XAnimParts* XAnimLoadFile(const char *name, void *(*Alloc)(int));
+void XModelGetBounds(const XModel *model, float *mins, float *maxs);
+int XModelGetBoneIndex(const XModel *model, unsigned int name);
+int XModelNumBones(const XModel *model);
+int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
 
-void QDECL XModelPartsFree(XModelParts *modelParts);
-void QDECL XModelFree(XModel *model);
-XModel* QDECL XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
-XModelParts* QDECL XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)(int));
-XModelParts* QDECL XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int));
-XAnimParts* QDECL XAnimLoadFile(const char *name, void *(*Alloc)(int));
-void QDECL XModelGetBounds(const XModel *model, float *mins, float *maxs);
-int QDECL XModelGetBoneIndex(const XModel *model, unsigned int name);
-int QDECL XModelNumBones(const XModel *model);
-int QDECL XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
+void XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update);
+float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime);
 
-void QDECL XAnimUpdateInfoInternal(XAnimTree_s *tree, unsigned int infoIndex, float dtime, bool update);
-float QDECL XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, float dtime);
+void DObjCalcAnim(const DObj_s *obj, int *partBits);
 
-void QDECL DObjCalcAnim(const DObj_s *obj, int *partBits);
+DObjAnimMat* DObjGetRotTransArray(const DObj_s *obj);
+void DObjCreateDuplicateParts(DObj_s *obj);
+void DObjCalcSkel(DObj_s *obj, int *partBits);
+void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorityMap, DObjTrace_s *trace);
 
-DObjAnimMat* QDECL DObjGetRotTransArray(const DObj_s *obj);
-void QDECL DObjCreateDuplicateParts(DObj_s *obj);
-void QDECL DObjCalcSkel(DObj_s *obj, int *partBits);
-void QDECL DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorityMap, DObjTrace_s *trace);
+void XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *rot, float *trans, float startTime, float endTime);
 
-void QDECL XAnimGetRelDelta(const XAnim_s *anim, unsigned int animIndex, float *rot, float *trans, float startTime, float endTime);
+void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAnimMat *rotTransArray, bool bClear, bool bNormQuat, XAnimCalcAnimInfo *animInfo, int rotTransArrayIndex);
+void XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
+void XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos);
+void XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
+void XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float factor);
+void XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans);
 
-void QDECL XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAnimMat *rotTransArray, bool bClear, bool bNormQuat, XAnimCalcAnimInfo *animInfo, int rotTransArrayIndex);
-void QDECL XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta);
-void QDECL XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos);
-void QDECL XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
-void QDECL XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float factor);
-void QDECL XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans);
-
-unsigned int QDECL XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels);
-
-#ifdef __cplusplus
-}
-#endif
+unsigned int XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels);
 
 void DObjDisplayAnim(DObj_s *obj);
 int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);

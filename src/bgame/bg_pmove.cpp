@@ -104,7 +104,7 @@ int PM_GetViewHeightLerpTime(const playerState_s *ps, int iTarget, int bDown)
 	return 400;
 }
 
-int QDECL PM_GetEffectiveStance(const playerState_s *ps)
+int PM_GetEffectiveStance(const playerState_s *ps)
 {
 	if ( ps->viewHeightTarget == 40 )
 		return 2;
@@ -112,7 +112,7 @@ int QDECL PM_GetEffectiveStance(const playerState_s *ps)
 		return ps->viewHeightTarget == 11;
 }
 
-void QDECL PM_AddEvent(playerState_s *ps, int newEvent)
+void PM_AddEvent(playerState_s *ps, int newEvent)
 {
 	BG_AddPredictableEventToPlayerstate(newEvent, 0, ps);
 }
@@ -127,7 +127,7 @@ void PM_trace(pmove_t *pm,trace_t *results, const float *start, const float *min
 	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask);
 }
 
-void QDECL PM_AddTouchEnt(pmove_t *pm, int entityNum)
+void PM_AddTouchEnt(pmove_t *pm, int entityNum)
 {
 	int i;
 
@@ -143,7 +143,7 @@ void QDECL PM_AddTouchEnt(pmove_t *pm, int entityNum)
 	}
 }
 
-void QDECL PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask)
+void PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask)
 {
 	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask);
 
@@ -158,7 +158,7 @@ void QDECL PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, con
 	}
 }
 
-int QDECL PM_GroundSurfaceType(pml_t *pml)
+int PM_GroundSurfaceType(pml_t *pml)
 {
 	if ( (pml->groundTrace.surfaceFlags & 0x2000) != 0 )
 		return 0;
@@ -166,7 +166,7 @@ int QDECL PM_GroundSurfaceType(pml_t *pml)
 		return (pml->groundTrace.surfaceFlags & 0x1F00000) >> 20;
 }
 
-void QDECL PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel)
+void PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel)
 {
 	vec2_t velocity;
 	vec3_t pushDir;
@@ -240,7 +240,7 @@ int PM_FootstepType(playerState_s *ps, pml_t *pml)
 	return iSurfType + 1;
 }
 
-void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep)
+void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep)
 {
 	int footstepType;
 	trace_t trace;
@@ -294,7 +294,7 @@ void QDECL PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewB
 	}
 }
 
-qboolean QDECL PM_ShouldMakeFootsteps(pmove_t *pm)
+qboolean PM_ShouldMakeFootsteps(pmove_t *pm)
 {
 	playerState_s *ps;
 	int flags;
@@ -438,7 +438,7 @@ float PM_MoveScale(playerState_s *ps, float fmove, float rmove, float umove)
 	}
 }
 
-float QDECL PM_CmdScale(playerState_s *ps, usercmd_s *cmd)
+float PM_CmdScale(playerState_s *ps, usercmd_s *cmd)
 {
 	float temp;
 	int set;
@@ -1260,7 +1260,7 @@ void PM_SetMovementDir(pmove_t *pm, pml_t *pml)
 	}
 }
 
-void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out)
+void PM_ClipVelocity(const float *in, const float *normal, float *out)
 {
 	float backoff;
 	float change;
@@ -1272,7 +1272,7 @@ void QDECL PM_ClipVelocity(const float *in, const float *normal, float *out)
 }
 
 extern dvar_t *jump_bounceEnable;
-void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
+void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 {
 	float lengthSq2D;
 	float adjusted;
@@ -1308,7 +1308,7 @@ void QDECL PM_ProjectVelocity(const float *velIn, const float *normal, float *ve
 	}
 }
 
-void QDECL PM_AirMove(pmove_t *pm, pml_t *pml)
+void PM_AirMove(pmove_t *pm, pml_t *pml)
 {
 	playerState_s *ps;
 	usercmd_s cmd;
@@ -3066,7 +3066,7 @@ void PM_LadderMove(pmove_t *pm, pml_t *pml)
 	}
 }
 
-void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
+void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
 {
 	int bProneOK;
 	unsigned char handler;
@@ -3174,7 +3174,7 @@ void QDECL PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
 	}
 }
 
-void QDECL PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
+void PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
 {
 	float fLeanFrac;
 	float fLean;

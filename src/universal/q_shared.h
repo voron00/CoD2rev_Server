@@ -246,13 +246,7 @@ struct TraceExtents
 	vec3_t invDelta;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 void CM_CalcTraceExtents(TraceExtents *extents);
-#ifdef __cplusplus
-}
-#endif
 
 extern qboolean com_fileAccessed;
 
@@ -286,18 +280,10 @@ char *I_strupr( char *s1 );
 void I_strcat( char *dest, int size, const char *src );
 void I_strncat( char *dest, int size, const char *src );
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int Com_sprintf(char *dest, size_t size, const char *format, ...);
 
-int QDECL Com_sprintf(char *dest, size_t size, const char *format, ...);
-
-float QDECL GetLeanFraction(const float fFrac);
-float QDECL UnGetLeanFraction(const float fFrac);
-
-#ifdef __cplusplus
-}
-#endif
+float GetLeanFraction(const float fFrac);
+float UnGetLeanFraction(const float fFrac);
 
 void Com_DefaultExtension( char *path, int maxSize, const char *extension );
 const char *Com_StringContains( const char *str1, const char *str2, int casesensitive);
