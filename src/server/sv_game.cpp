@@ -6,14 +6,21 @@ int g_sv_skel_warn_count;
 
 int gameInitialized;
 
-qboolean SV_GameCommand()
+/*
+====================
+SV_GameCommand
+
+See if the current console command is claimed by the game
+====================
+*/
+qboolean SV_GameCommand( void )
 {
-	if ( sv.state == SS_GAME )
+	if ( sv.state != SS_GAME )
 	{
-		return ConsoleCommand();
+		return qfalse;
 	}
 
-	return qfalse;
+	return ConsoleCommand();
 }
 
 qboolean SV_IsLocalClient(int clientNum)
@@ -26,15 +33,26 @@ qboolean SV_MapExists(const char *name)
 	return FS_ReadFile(va("maps/mp/%s.%s", SV_GetMapBaseName(name), GetBspExtension()), 0) >= 0;
 }
 
-void SV_GameSendServerCommand(int clientnum, int svscmd_type, const char *text)
+/*
+===============
+SV_GameSendServerCommand
+
+Sends a command string to a client
+===============
+*/
+void SV_GameSendServerCommand( int clientNum, int svscmd_type, const char *text )
 {
-	if ( clientnum == -1 )
+	if ( clientNum == -1 )
 	{
-		SV_SendServerCommand(0, svscmd_type, "%s", text);
+		SV_SendServerCommand( NULL, svscmd_type, "%s", text );
 	}
-	else if ( clientnum >= 0 && clientnum < sv_maxclients->current.integer )
+	else
 	{
-		SV_SendServerCommand(&svs.clients[clientnum], svscmd_type, "%s", text);
+		if ( clientNum < 0 || clientNum >= sv_maxclients->current.integer )
+		{
+			return;
+		}
+		SV_SendServerCommand( svs.clients + clientNum, svscmd_type, "%s", text );
 	}
 }
 
@@ -474,7 +492,7 @@ void SV_GameDropClient(int clientNum, const char *reason)
 
 void SV_GetUsercmd(int clientNum, usercmd_s *cmd)
 {
-	memcpy(cmd, &svs.clients[clientNum].lastUsercmd, sizeof(usercmd_s));
+	*cmd = svs.clients[clientNum].lastUsercmd;
 }
 
 int SV_GetGuid(int clientNum)
@@ -525,12 +543,19 @@ void SV_SetBrushModel(gentity_s *ent)
 	CM_ModelBounds(ent->s.index, mins, maxs);
 	VectorCopy(mins, ent->r.mins);
 	VectorCopy(maxs, ent->r.maxs);
-	ent->r.bmodel = 1;
+	ent->r.bmodel = qtrue;
 	ent->r.contents = -1;
 	SV_LinkEntity(ent);
 }
 
-void SV_InitGameVM(int restart, int registerDvars)
+/*
+==================
+SV_InitGameVM
+
+Called for both a full init and a restart
+==================
+*/
+static void SV_InitGameVM(int restart, int registerDvars)
 {
 	int msec;
 	int i;
@@ -548,7 +573,7 @@ void SV_InitGameVM(int restart, int registerDvars)
 	Sys_LoadingKeepAlive();
 #endif
 	for ( i = 0; i < sv_maxclients->current.integer; ++i )
-		svs.clients[i].gentity = 0;
+		svs.clients[i].gentity = NULL;
 
 	if ( com_dedicated->current.integer )
 		Com_DvarDump(CON_CHANNEL_LOGFILEONLY);
@@ -558,13 +583,13 @@ void SV_RestartGameProgs(int savepersist)
 {
 	G_ShutdownGame(0);
 	com_fixedConsolePosition = 0;
-	SV_InitGameVM(1, savepersist);
+	SV_InitGameVM(qtrue, savepersist);
 }
 
 void SV_InitGameProgs(int savepersist)
 {
 	gameInitialized = 1;
-	SV_InitGameVM(0, savepersist);
+	SV_InitGameVM(qfalse, savepersist);
 }
 
 void SV_ShutdownGameProgs()
