@@ -1,186 +1,189 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
-void CM_InitStaticModel(cStaticModel_s *model, const float *origin, const float *angles, const float *modelscale_vec)
+static void CM_InitStaticModel(cStaticModel_s *staticModel, const vec3_t origin, const vec3_t angles, const vec3_t scale)
 {
-	vec3_t axis[3];
+	float axis[3][3];
 
-	VectorCopy(origin, model->origin);
+	VectorCopy(origin, staticModel->origin);
 	AnglesToAxis(angles, axis);
 
-	VectorScale(axis[0], modelscale_vec[0], axis[0]);
-	VectorScale(axis[1], modelscale_vec[1], axis[1]);
-	VectorScale(axis[2], modelscale_vec[2], axis[2]);
+	VectorScale(axis[0], scale[0], axis[0]);
+	VectorScale(axis[1], scale[1], axis[1]);
+	VectorScale(axis[2], scale[2], axis[2]);
 
-	MatrixInverse(axis, model->invScaledAxis);
+	MatrixInverse(axis, staticModel->invScaledAxis);
 
-	if ( XModelGetStaticBounds(model->xmodel, axis, model->absmin, model->absmax) )
+	if ( XModelGetStaticBounds(staticModel->xmodel, axis, staticModel->absmin, staticModel->absmax) )
 	{
-		VectorAdd(model->absmin, origin, model->absmin);
-		VectorAdd(model->absmax, origin, model->absmax);
+		VectorAdd(staticModel->absmin, origin, staticModel->absmin);
+		VectorAdd(staticModel->absmax, origin, staticModel->absmax);
 	}
 }
 
-bool CM_CreateStaticModel(cStaticModel_s *model, const char *modelName, const float *origin, const float *angles, const float *modelscale_vec)
+static bool CM_CreateStaticModel(cStaticModel_s *staticModel, const char *name, const vec3_t origin, const vec3_t angles, const vec3_t scale)
 {
-	XModel *xmodel;
+	XModel *model;
 
-	if ( !modelName || !*modelName )
+	if ( !name || !name[0] )
 		Com_Error(ERR_DROP, "Invalid static model name");
 
-	if ( modelscale_vec[0] == 0.0 )
-		Com_Error(ERR_DROP, "Static model [%s] has x scale of 0.0", modelName);
+	if ( scale[0] == 0.0 )
+		Com_Error(ERR_DROP, "Static model [%s] has x scale of 0.0", name);
 
-	if ( modelscale_vec[1] == 0.0 )
-		Com_Error(ERR_DROP, "Static model [%s] has y scale of 0.0", modelName);
+	if ( scale[1] == 0.0 )
+		Com_Error(ERR_DROP, "Static model [%s] has y scale of 0.0", name);
 
-	if ( modelscale_vec[2] == 0.0 )
-		Com_Error(ERR_DROP, "Static model [%s] has z scale of 0.0", modelName);
+	if ( scale[2] == 0.0 )
+		Com_Error(ERR_DROP, "Static model [%s] has z scale of 0.0", name);
 
-	xmodel = CM_XModelPrecache(modelName);
+	model = CM_XModelPrecache(name);
 
-	if ( !xmodel )
-		return false;
+	if ( !model )
+		return 0;
 
-	model->xmodel = xmodel;
-	CM_InitStaticModel(model, origin, angles, modelscale_vec);
+	staticModel->xmodel = model;
+	CM_InitStaticModel(staticModel, origin, angles, scale);
 
-	return true;
+	return 1;
 }
 
 void CM_LoadStaticModels()
 {
-	int i;
-	qboolean isMiscModel;
-	vec3_t modelscale_vec;
+	int count;
+	qboolean bMiscModel;
+	vec3_t scale;
 	vec3_t angles;
 	vec3_t origin;
-	char string[MAX_QPATH];
-	char buffer[MAX_QPATH];
-	char xmodel[MAX_QPATH];
-	const char *entitystring;
-	char *parseData;
+	char value[MAX_QPATH];
+	char key[MAX_QPATH];
+	char modelName[MAX_QPATH];
+	const char *ptr;
+	const char *token;
 
-	entitystring = cm.entityString;
+	ptr = cm.entityString;
 
 	cm.numStaticModels = 0;
 	cm.staticModelList = 0;
 
 	while ( 1 )
 	{
-		parseData = Com_Parse(&entitystring);
+		token = Com_Parse(&ptr);
 
-		if ( !entitystring || *parseData != 123 )
+		if ( !ptr || token[0] != '{' )
 			break;
 
-		xmodel[0] = 0;
-		isMiscModel = 0;
+		modelName[0] = 0;
+		bMiscModel = 0;
 
 		while ( 1 )
 		{
-			parseData = Com_Parse(&entitystring);
+			token = Com_Parse(&ptr);
 
-			if ( !entitystring )
+			if ( !ptr )
 				break;
 
-			if ( *parseData == 125 )
+			if ( token[0] == '}' )
 				break;
 
-			strcpy(buffer, parseData);
-			parseData = Com_Parse(&entitystring);
+			strcpy(key, token);
+			token = Com_Parse(&ptr);
 
-			if ( !entitystring )
+			if ( !ptr )
 				break;
 
-			strcpy(string, parseData);
+			strcpy(value, token);
 
-			if ( !strcasecmp(buffer, "classname") )
+			if ( !strcasecmp(key, "classname") )
 			{
-				if ( !strcasecmp(string, "misc_model") )
-					isMiscModel = 1;
+				if ( !strcasecmp(value, "misc_model") )
+					bMiscModel = 1;
 			}
-			else if ( !strcasecmp(buffer, "model") )
+			else if ( !strcasecmp(key, "model") )
 			{
-				strcpy(xmodel, string);
+				strcpy(modelName, value);
 			}
 		}
 
-		if ( isMiscModel && Com_ValidXModelName(xmodel) )
+		if ( bMiscModel && Com_ValidXModelName(modelName) )
 			++cm.numStaticModels;
 	}
 
 	if ( cm.numStaticModels )
 	{
 		cm.staticModelList = (cStaticModel_s *)CM_Hunk_Alloc(sizeof(cStaticModel_s) * cm.numStaticModels);
-		entitystring = cm.entityString;
-		i = 0;
+		ptr = cm.entityString;
+		count = 0;
 
 		while ( 1 )
 		{
-			parseData = Com_Parse(&entitystring);
+			token = Com_Parse(&ptr);
 
-			if ( !entitystring || *parseData != 123 )
+			if ( !ptr || token[0] != '{' )
 				break;
 
-			xmodel[0] = 0;
+			modelName[0] = 0;
+
 			memset(origin, 0, sizeof(origin));
 			memset(angles, 0, sizeof(angles));
-			modelscale_vec[2] = 1.0;
-			modelscale_vec[1] = 1.0;
-			modelscale_vec[0] = 1.0;
-			isMiscModel = 0;
+
+			scale[2] = 1.0;
+			scale[1] = 1.0;
+			scale[0] = 1.0;
+
+			bMiscModel = 0;
 
 			while ( 1 )
 			{
-				parseData = Com_Parse(&entitystring);
+				token = Com_Parse(&ptr);
 
-				if ( !entitystring )
+				if ( !ptr )
 					break;
 
-				if ( *parseData == 125 )
+				if ( token[0] == '}' )
 					break;
 
-				strcpy(buffer, parseData);
-				parseData = Com_Parse(&entitystring);
+				strcpy(key, token);
+				token = Com_Parse(&ptr);
 
-				if ( !entitystring )
+				if ( !ptr )
 					break;
 
-				strcpy(string, parseData);
+				strcpy(value, token);
 
-				if ( !strcasecmp(buffer, "classname") )
+				if ( !strcasecmp(key, "classname") )
 				{
-					if ( !strcasecmp(string, "misc_model") )
-						isMiscModel = 1;
+					if ( !strcasecmp(value, "misc_model") )
+						bMiscModel = 1;
 				}
-				else if ( !strcasecmp(buffer, "model") )
+				else if ( !strcasecmp(key, "model") )
 				{
-					strcpy(xmodel, string);
+					strcpy(modelName, value);
 				}
-				else if ( !strcasecmp(buffer, "origin") )
+				else if ( !strcasecmp(key, "origin") )
 				{
-					sscanf(string, "%f %f %f", origin, &origin[1], &origin[2]);
+					sscanf(value, "%f %f %f", &origin[0], &origin[1], &origin[2]);
 				}
-				else if ( !strcasecmp(buffer, "angles") )
+				else if ( !strcasecmp(key, "angles") )
 				{
-					sscanf(string, "%f %f %f", angles, &angles[1], &angles[2]);
+					sscanf(value, "%f %f %f", &angles[0], &angles[1], &angles[2]);
 				}
-				else if ( !strcasecmp(buffer, "modelscale_vec") )
+				else if ( !strcasecmp(key, "modelscale_vec") )
 				{
-					sscanf(string, "%f %f %f", modelscale_vec, &modelscale_vec[1], &modelscale_vec[2]);
+					sscanf(value, "%f %f %f", &scale[0], &scale[1], &scale[2]);
 				}
-				else if ( !strcasecmp(buffer, "modelscale") )
+				else if ( !strcasecmp(key, "modelscale") )
 				{
-					modelscale_vec[2] = atof(string);
-					modelscale_vec[1] = modelscale_vec[2];
-					modelscale_vec[0] = modelscale_vec[2];
+					scale[2] = atof(value);
+					scale[1] = scale[2];
+					scale[0] = scale[2];
 				}
 			}
 
-			if ( isMiscModel && Com_ValidXModelName(xmodel) )
+			if ( bMiscModel && Com_ValidXModelName(modelName) )
 			{
-				if ( CM_CreateStaticModel(&cm.staticModelList[i], &xmodel[7], origin, angles, modelscale_vec) )
-					++i;
+				if ( CM_CreateStaticModel(&cm.staticModelList[count], &modelName[7], origin, angles, scale) )
+					++count;
 				else
 					--cm.numStaticModels;
 			}
