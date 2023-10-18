@@ -98,27 +98,27 @@ void MatrixTransposeTransformVector43(const vec3_t in1, const float in2[4][3], v
 	out[2] = DotProduct(in2[2], temp);
 }
 
-void MatrixInverse(float in1[3][3], float out[3][3])
+void MatrixInverse(const float in1[3][3], float out[3][3])
 {
 	float determinant;
 	float revdet;
 
-	determinant = ((*in1)[8] * (*in1)[4] - (*in1)[7] * (*in1)[5]) * (*in1)[0]
-	              - ((*in1)[8] * (*in1)[1] - (*in1)[7] * (*in1)[2]) * (*in1)[3]
-	              + ((*in1)[5] * (*in1)[1] - (*in1)[4] * (*in1)[2]) * (*in1)[6];
+	determinant = (in1[2][2] * in1[1][1] - in1[2][1] * in1[1][2]) * in1[0][0]
+	              - (in1[2][2] * in1[0][1] - in1[2][1] * in1[0][2]) * in1[1][0]
+	              + (in1[1][2] * in1[0][1] - in1[1][1] * in1[0][2]) * in1[2][0];
 	revdet = 1.0 / determinant;
-	(*out)[0] = ((*in1)[8] * (*in1)[4] - (*in1)[7] * (*in1)[5]) * revdet;
-	(*out)[1] = -((*in1)[8] * (*in1)[1] - (*in1)[7] * (*in1)[2]) * revdet;
-	(*out)[2] = ((*in1)[5] * (*in1)[1] - (*in1)[4] * (*in1)[2]) * revdet;
-	(*out)[3] = -((*in1)[8] * (*in1)[3] - (*in1)[6] * (*in1)[5]) * revdet;
-	(*out)[4] = ((*in1)[8] * (*in1)[0] - (*in1)[6] * (*in1)[2]) * revdet;
-	(*out)[5] = -((*in1)[5] * (*in1)[0] - (*in1)[3] * (*in1)[2]) * revdet;
-	(*out)[6] = ((*in1)[7] * (*in1)[3] - (*in1)[6] * (*in1)[4]) * revdet;
-	(*out)[7] = -((*in1)[7] * (*in1)[0] - (*in1)[6] * (*in1)[1]) * revdet;
-	(*out)[8] = ((*in1)[4] * (*in1)[0] - (*in1)[3] * (*in1)[1]) * revdet;
+	out[0][0] = (in1[2][2] * in1[1][1] - in1[2][1] * in1[1][2]) * revdet;
+	out[0][1] = -(in1[2][2] * in1[0][1] - in1[2][1] * in1[0][2]) * revdet;
+	out[0][2] = (in1[1][2] * in1[0][1] - in1[1][1] * in1[0][2]) * revdet;
+	out[1][0] = -(in1[2][2] * in1[1][0] - in1[2][0] * in1[1][2]) * revdet;
+	out[1][1] = (in1[2][2] * in1[0][0] - in1[2][0] * in1[0][2]) * revdet;
+	out[1][2] = -(in1[1][2] * in1[0][0] - in1[1][0] * in1[0][2]) * revdet;
+	out[2][0] = (in1[2][1] * in1[1][0] - in1[2][0] * in1[1][1]) * revdet;
+	out[2][1] = -(in1[2][1] * in1[0][0] - in1[2][0] * in1[0][1]) * revdet;
+	out[2][2] = (in1[1][1] * in1[0][0] - in1[1][0] * in1[0][1]) * revdet;
 }
 
-void MatrixMultiply( float in1[3][3], float in2[3][3], float out[3][3] )
+void MatrixMultiply( const float in1[3][3], const float in2[3][3], float out[3][3] )
 {
 	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
 	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
@@ -234,35 +234,36 @@ vec_t Vec4Normalize( vec4_t v )
 	return length;
 }
 
-float Vec2NormalizeTo(const float *v, float *out)
+vec_t Vec2NormalizeTo( const vec2_t v, vec2_t out )
 {
-	float length;
-
-	length = Vec2Length(v);
+	float length = Vec2Length(v);
 
 	if ( length == 0.0 )
 	{
-		length = 1.0;
+		Vector2Clear(out);
+	}
+	else
+	{
+		Vec2Scale(v, length, out);
 	}
 
-	Vec2Scale(v, length, out);
 	return length;
 }
 
 vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out )
 {
-	float length, result;
+	float length = VectorLength(v);
 
-	length = VectorLength(v);
-	result = length;
-
-	if ( length <= 0.0 )
+	if ( length == 0.0 )
 	{
-		length = 1.0;
+		VectorClear(out);
+	}
+	else
+	{
+		VectorScale(v, 1.0 / length, out);
 	}
 
-	VectorScale(v, 1.0 / length, out);
-	return result;
+	return length;
 }
 
 void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross)
@@ -446,7 +447,7 @@ void vectoangles( const vec3_t value1, vec3_t angles )
 			yaw += 360.0;
 		}
 		forward = sqrt( value1[0] * value1[0] + value1[1] * value1[1] );
-		pitch = ( -atan2( value1[2], forward ) * 180 / M_PI );
+		pitch = ( atan2( value1[2], forward ) * -180 / M_PI );
 		if(pitch < 0.0)
 		{
 			pitch += 360.0;
@@ -546,7 +547,7 @@ float AngleSubtract( float a1, float a2 )
 	return a;
 }
 
-float vectosignedyaw(float *vec)
+vec_t vectosignedyaw(vec3_t vec)
 {
 	float at;
 	float yaw;
@@ -561,45 +562,58 @@ float vectosignedyaw(float *vec)
 	return 0.0;
 }
 
-int BoxDistSqrdExceeds(const float *absmin, const float *absmax, const float *org, const float fogOpaqueDistSqrd)
+int BoxDistSqrdExceeds(const vec3_t absmin, const vec3_t absmax, const vec3_t org, float fogOpaqueDistSqrd)
 {
-	float f;
-	vec3_t ma;
-	vec3_t mi;
+	float minsSqrd;
+	vec3_t mins;
+	vec3_t maxs;
+	float total;
+	float maxsSqrd;
 	int i;
 
-	mi[0] = absmin[0] - org[0];
-	mi[1] = absmin[1] - org[1];
-	mi[2] = absmin[2] - org[2];
-	ma[0] = absmax[0] - org[0];
-	ma[1] = absmax[1] - org[1];
-	ma[2] = absmax[2] - org[2];
+	VectorSubtract(absmin, org, mins);
+	VectorSubtract(absmax, org, maxs);
 
-	for(i = 0, f = 0.0; i < 3; ++i)
+	total = 0.0;
+
+	for ( i = 0; i < 3; ++i )
 	{
-		if ((float)(mi[i] * ma[i]) > 0.0)
-			f = f + fminf(ma[i] * ma[i], mi[i] * mi[i]);
+		if ( mins[i] * maxs[i] > 0.0 )
+		{
+			minsSqrd = mins[i] * mins[i];
+			maxsSqrd = maxs[i] * maxs[i];
+
+			if ( minsSqrd <= maxsSqrd )
+				total += minsSqrd;
+			else
+				total += maxsSqrd;
+		}
 	}
 
-	if(f > fogOpaqueDistSqrd)
-		return 1;
-
-	return 0;
+	return total > fogOpaqueDistSqrd;
 }
 
-float Vec3Distance(const float* pointA, const float* pointB)
+float Vec3Distance(const vec3_t v1, const vec3_t v2)
 {
-	float diffx = pointA[0]-pointB[0];
-	float diffy = pointA[1]-pointB[1];
-	float diffz = pointA[2]-pointB[2];
-	return sqrtf(diffx*diffx + diffy*diffy + diffz*diffz);
+	vec3_t dir;
+
+	VectorSubtract(v2, v1, dir);
+	return VectorLength(dir);
 }
 
-void Vec3Lerp(const float *from, const float *to, float frac, float *result)
+float Vec3DistanceSq(const vec3_t v1, const vec3_t v2)
 {
-	result[0] = (to[0] - from[0]) * frac + from[0];
-	result[1] = (to[1] - from[1]) * frac + from[1];
-	result[2] = (to[2] - from[2]) * frac + from[2];
+	vec3_t dir;
+
+	VectorSubtract(v2, v1, dir);
+	return VectorLengthSquared(dir);
+}
+
+void Vec3Lerp(const vec3_t start, const vec3_t end, float fraction, vec3_t endpos)
+{
+	endpos[0] = (end[0] - start[0]) * fraction + start[0];
+	endpos[1] = (end[1] - start[1]) * fraction + start[1];
+	endpos[2] = (end[2] - start[2]) * fraction + start[2];
 }
 
 float DiffTrack(float tgt, float cur, float rate, float deltaTime)
@@ -688,7 +702,7 @@ float AngleNormalize360Accurate(float angle)
 	}
 }
 
-void VectorAngleMultiply(float *vec, float angle)
+void VectorAngleMultiply(vec3_t vec, float angle)
 {
 	float a;
 	float temp;
@@ -773,7 +787,7 @@ void YawVectors(const float yaw, vec3_t forward, vec3_t right)
 
 float vectopitch( const vec3_t vec )
 {
-	double forward;
+	float forward;
 	float at;
 	float a;
 
@@ -812,19 +826,19 @@ float PitchForYawOnNormal(const float fYaw, const vec3_t normal)
 	return vectopitch(dst);
 }
 
-float Abs(const float *v)
+float Abs(const vec3_t v)
 {
-	return (float)sqrt((float)((float)((float)(*v * *v) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
+	return (float)sqrt((float)((float)((float)(v[0] * v[0]) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
 }
 
-void VectorRint(float *v)
+void VectorRint(vec3_t v)
 {
 	v[0] = rint(v[0]);
 	v[1] = rint(v[1]);
 	v[2] = rint(v[2]);
 }
 
-void VectorCopyInverse(float *from, float *to)
+void VectorCopyInverse(const vec3_t from, vec3_t to)
 {
 	to[0] = -from[0];
 	to[1] = -from[1];
@@ -875,23 +889,32 @@ void ClearBounds( vec3_t mins, vec3_t maxs )
 	maxs[0] = maxs[1] = maxs[2] = -99999;
 }
 
-void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs )
+void AddPointToBounds(const vec3_t v, vec3_t mins, vec3_t maxs)
 {
-	int i;
-	vec_t val;
+	if ( mins[0] > v[0] )
+		mins[0] = v[0];
+	if ( v[0] > maxs[0] )
+		maxs[0] = v[0];
+	if ( mins[1] > v[1] )
+		mins[1] = v[1];
+	if ( v[1] > maxs[1] )
+		maxs[1] = v[1];
+	if ( mins[2] > v[2] )
+		mins[2] = v[2];
+	if ( v[2] > maxs[2] )
+		maxs[2] = v[2];
+}
 
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		val = v[i];
-		if ( val < mins[i] )
-		{
-			mins[i] = val;
-		}
-		if ( val > maxs[i] )
-		{
-			maxs[i] = val;
-		}
-	}
+void AddPointToBounds2D(const vec2_t v, vec2_t mins, vec2_t maxs)
+{
+	if ( mins[0] > v[0] )
+		mins[0] = v[0];
+	if ( v[0] > maxs[0] )
+		maxs[0] = v[0];
+	if ( mins[1] > v[1] )
+		mins[1] = v[1];
+	if ( v[1] > maxs[1] )
+		maxs[1] = v[1];
 }
 
 vec3_t bytedirs[] =
@@ -1096,9 +1119,9 @@ void ByteToDir(const int b, vec3_t dir)
 	}
 }
 
-float lerp(float x, float y, float z)
+float lerp(float from, float to, float t)
 {
-	return (1.0 - z) * x + y * z;
+	return (to - from) * t + from;
 }
 
 static unsigned int holdrand;
@@ -1123,59 +1146,46 @@ int irand(int min, int max)
 	return ((holdrand >> 17) * (max - min) >> 15) + min;
 }
 
-float Vec3DistanceSq(const float *p1, const float *p2)
+float RotationToYaw(const vec2_t rot)
 {
-	vec3_t d;
-
-	VectorSubtract(p2, p1, d);
-	return VectorLengthSquared( d );
-}
-
-float RotationToYaw(float *rot)
-{
-	float zz;
 	float r;
-	float v4;
-	float v6;
-	float v7;
+	float d;
+	float zz;
 
 	zz = rot[0] * rot[0];
 	r = rot[1] * rot[1] + zz;
+	d = 2.0 / r;
 
-	v4 = 2.0 / r;
-	v6 = rot[1] * rot[0] * v4;
-	v7 = 1.0 - zz * v4;
-
-	return atan2(v6, v7) * 57.2957763671875;
+	return (float)(atan2(rot[0] * rot[1] * d, 1.0 - zz * d) * 57.29577951308232);
 }
 
-void MatrixTranspose(const float (*in)[3], float (*out)[3])
+void MatrixTranspose(const float in[3][3], float out[3][3])
 {
-	(*out)[0] = (*in)[0];
-	(*out)[1] = (*in)[3];
-	(*out)[2] = (*in)[6];
-	(*out)[3] = (*in)[1];
-	(*out)[4] = (*in)[4];
-	(*out)[5] = (*in)[7];
-	(*out)[6] = (*in)[2];
-	(*out)[7] = (*in)[5];
-	(*out)[8] = (*in)[8];
+	out[0][0] = in[0][0];
+	out[0][1] = in[1][0];
+	out[0][2] = in[2][0];
+	out[1][0] = in[0][1];
+	out[1][1] = in[1][1];
+	out[1][2] = in[2][1];
+	out[2][0] = in[0][2];
+	out[2][1] = in[1][2];
+	out[2][2] = in[2][2];
 }
 
-void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
+void MatrixMultiply43(const float in1[4][3], const float in2[4][3], float out[4][3])
 {
-	(*out)[0] = (((*in1)[0] * (*in2)[0]) + ((*in1)[1] * (*in2)[3])) + ((*in1)[2] * (*in2)[6]);
-	(*out)[3] = (((*in1)[3] * (*in2)[0]) + ((*in1)[4] * (*in2)[3])) + ((*in1)[5] * (*in2)[6]);
-	(*out)[6] = (((*in1)[6] * (*in2)[0]) + ((*in1)[7] * (*in2)[3])) + ((*in1)[8] * (*in2)[6]);
-	(*out)[1] = (((*in1)[0] * (*in2)[1]) + ((*in1)[1] * (*in2)[4])) + ((*in1)[2] * (*in2)[7]);
-	(*out)[4] = (((*in1)[3] * (*in2)[1]) + ((*in1)[4] * (*in2)[4])) + ((*in1)[5] * (*in2)[7]);
-	(*out)[7] = (((*in1)[6] * (*in2)[1]) + ((*in1)[7] * (*in2)[4])) + ((*in1)[8] * (*in2)[7]);
-	(*out)[2] = (((*in1)[0] * (*in2)[2]) + ((*in1)[1] * (*in2)[5])) + ((*in1)[2] * (*in2)[8]);
-	(*out)[5] = (((*in1)[3] * (*in2)[2]) + ((*in1)[4] * (*in2)[5])) + ((*in1)[5] * (*in2)[8]);
-	(*out)[8] = (((*in1)[6] * (*in2)[2]) + ((*in1)[7] * (*in2)[5])) + ((*in1)[8] * (*in2)[8]);
-	(*out)[9] = ((((*in1)[9] * (*in2)[0]) + ((*in1)[10] * (*in2)[3])) + ((*in1)[11] * (*in2)[6])) + (*in2)[9];
-	(*out)[10] = ((((*in1)[9] * (*in2)[1]) + ((*in1)[10] * (*in2)[4])) + ((*in1)[11] * (*in2)[7])) + (*in2)[10];
-	(*out)[11] = ((((*in1)[9] * (*in2)[2]) + ((*in1)[10] * (*in2)[5])) + ((*in1)[11] * (*in2)[8])) + (*in2)[11];
+	out[0][0] = ((in1[0][0] * in2[0][0]) + (in1[0][1] * in2[1][0])) + (in1[0][2] * in2[2][0]);
+	out[1][0] = ((in1[1][0] * in2[0][0]) + (in1[1][1] * in2[1][0])) + (in1[1][2] * in2[2][0]);
+	out[2][0] = ((in1[2][0] * in2[0][0]) + (in1[2][1] * in2[1][0])) + (in1[2][2] * in2[2][0]);
+	out[0][1] = ((in1[0][0] * in2[0][1]) + (in1[0][1] * in2[1][1])) + (in1[0][2] * in2[2][1]);
+	out[1][1] = ((in1[1][0] * in2[0][1]) + (in1[1][1] * in2[1][1])) + (in1[1][2] * in2[2][1]);
+	out[2][1] = ((in1[2][0] * in2[0][1]) + (in1[2][1] * in2[1][1])) + (in1[2][2] * in2[2][1]);
+	out[0][2] = ((in1[0][0] * in2[0][2]) + (in1[0][1] * in2[1][2])) + (in1[0][2] * in2[2][2]);
+	out[1][2] = ((in1[1][0] * in2[0][2]) + (in1[1][1] * in2[1][2])) + (in1[1][2] * in2[2][2]);
+	out[2][2] = ((in1[2][0] * in2[0][2]) + (in1[2][1] * in2[1][2])) + (in1[2][2] * in2[2][2]);
+	out[3][0] = (((in1[3][0] * in2[0][0]) + (in1[3][1] * in2[1][0])) + (in1[3][2] * in2[2][0])) + in2[3][0];
+	out[3][1] = (((in1[3][0] * in2[0][1]) + (in1[3][1] * in2[1][1])) + (in1[3][2] * in2[2][1])) + in2[3][1];
+	out[3][2] = (((in1[3][0] * in2[0][2]) + (in1[3][1] * in2[1][2])) + (in1[3][2] * in2[2][2])) + in2[3][2];
 }
 
 void MatrixInverseOrthogonal43(const float in[4][3], float out[4][3])
@@ -1183,28 +1193,19 @@ void MatrixInverseOrthogonal43(const float in[4][3], float out[4][3])
 	vec3_t origin;
 
 	MatrixTranspose(in, out);
-	origin[0] = 0.0 - in[3][0];
-	origin[1] = 0.0 - in[3][1];
-	origin[2] = 0.0 - in[3][2];
-	MatrixTransformVector(origin, (const float (*)[3])out, out[3]);
+	VectorSubtract(vec3_origin, in[3], origin);
+	MatrixTransformVector(origin, out, out[3]);
 }
 
-void ExpandBoundsToWidth(float *mins, float *maxs)
+void ExpandBoundsToWidth(vec3_t mins, vec3_t maxs)
 {
 	float diff;
 	float s;
 	vec3_t size;
 
 	VectorSubtract(maxs, mins, size);
+	s = I_fmax(size[0], size[1]);
 
-	if ( (size[0] - size[1]) < 0.0 )
-	{
-		s = size[1];
-	}
-	else
-	{
-		s = size[0];
-	}
 	if ( s > size[2] )
 	{
 		diff = (s - size[2]) * 0.5;
@@ -1227,18 +1228,14 @@ void YawToAxis(float yaw, vec3_t axis[3])
 	axis[1][2] = 0.0 - right[2];
 }
 
-void ProjectPointOnPlane(const float *p, const float *normal, float *dst)
+void ProjectPointOnPlane(const vec3_t p, const vec3_t normal, vec3_t dst)
 {
-	float d;
+	float d = DotProduct(normal, p);
 
-	d = -(DotProduct(normal, p));
-
-	dst[0] = (d * normal[0]) + p[0];
-	dst[1] = (d * normal[1]) + p[1];
-	dst[2] = (d * normal[2]) + p[2];
+	VectorMA(p, -d, normal, dst);
 }
 
-void RoundFloatArray(float *x, float *y)
+void RoundFloatArray(vec3_t x, vec3_t y)
 {
 	int i;
 
@@ -1253,33 +1250,35 @@ void RoundFloatArray(float *x, float *y)
 
 float convertDegreesToTan(float d)
 {
-	float x;
-
-	x = d * 0.0174532925199433;
-	return tan(x);
+	return tan(d * 0.0174532925199433);
 }
 
-void TransposeMatrix(const float (*matrix)[3], float (*transpose)[3])
+// TTimo: const vec_t ** would require explicit casts for ANSI C conformance
+// see unix/const-arg.c in Wolf MP source
+void TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] )
 {
-	int j;
-	int i;
+	int i, j;
 
-	for ( i = 0; i < 3; ++i )
+	for ( i = 0; i < 3; i++ )
 	{
-		for ( j = 0; j < 3; ++j )
-			(*transpose)[3 * i + j] = (*matrix)[3 * j + i];
+		for ( j = 0; j < 3; j++ )
+		{
+			transpose[i][j] = matrix[j][i];
+		}
 	}
 }
 
-void RotatePoint(float *point, const float (*mat)[3])
+// TTimo: const vec_t ** would require explicit casts for ANSI C conformance
+// see unix/const-arg.c in Wolf MP source
+void RotatePoint( vec3_t point, const vec3_t matrix[3] )
 {
 	vec3_t tvec;
 
-	VectorCopy(point, tvec);
+	VectorCopy( point, tvec );
 
-	point[0] = (*mat)[0] * tvec[0] + (*mat)[1] * tvec[1] + (*mat)[2] * tvec[2];
-	point[1] = (*mat)[3] * tvec[0] + (*mat)[4] * tvec[1] + (*mat)[5] * tvec[2];
-	point[2] = (*mat)[6] * tvec[0] + (*mat)[7] * tvec[1] + (*mat)[8] * tvec[2];
+	point[0] = DotProduct( matrix[0], tvec );
+	point[1] = DotProduct( matrix[1], tvec );
+	point[2] = DotProduct( matrix[2], tvec );
 }
 
 void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3)
@@ -1293,4 +1292,14 @@ void I_sinCos(float value, float *pSin, float *pCos)
 {
 	*pSin = sin(value);
 	*pCos = cos(value);
+}
+
+float Vec2DistanceSq(const vec2_t v1, const vec2_t v2)
+{
+	return Square(v2[0] - v1[0]) + Square(v2[1] - v1[1]);
+}
+
+float Vec2Distance(const vec2_t v1, const vec2_t v2)
+{
+	return sqrt(Square(v2[0] - v1[0]) + Square(v2[1] - v1[1]));
 }
