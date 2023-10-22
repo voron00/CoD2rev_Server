@@ -9,6 +9,8 @@
 #define NUM_IW_IWDS 25
 
 #define BASEGAME "main"
+#define DEMOGAME "demomain"
+
 #define CONFIG_NAME "config_mp_server.cfg"
 #define DEFAULT_CONFIG "default_mp.cfg"
 
@@ -95,49 +97,93 @@ struct searchpath_t
 };
 // static_assert((sizeof(searchpath_t) == 20), "ERROR: searchpath_t size is invalid!");
 
+/*
+==============
+FileWrapper_Open
+==============
+*/
+inline FILE *FileWrapper_Open(const char *ospath, const char *mode)
+{
+	FILE* file;
+
+	file = fopen(ospath, mode);
+
+	if (file != (FILE*)-1)
+	{
+		return file;
+	}
+
+	return 0;
+}
+
+/*
+==============
+FileWrapper_Seek
+==============
+*/
+inline int FileWrapper_Seek(FILE *h, int offset, int origin)
+{
+	switch (origin)
+	{
+	case SEEK_SET:
+		return fseek(h, offset, SEEK_SET);
+	case SEEK_CUR:
+		return fseek(h, offset, SEEK_CUR);
+	case SEEK_END:
+		return fseek(h, offset, SEEK_END);
+	}
+
+	return 0;
+}
+
+/*
+==============
+FileWrapper_GetFileSize
+==============
+*/
+inline int FileWrapper_GetFileSize(FILE *h)
+{
+	int startPos;
+	int fileSize;
+
+	startPos = ftell(h);
+	fseek(h, 0, SEEK_END);
+
+	fileSize = ftell(h);
+	fseek(h, startPos, SEEK_SET);
+
+	return fileSize;
+}
+
 extern dvar_t* fs_ignoreLocalized;
 
 long FS_HashFileName( const char *fname, int hashSize );
-size_t FS_FileRead(void *ptr, size_t size, size_t n, FILE *stream);
-size_t FS_FileWrite(void *ptr, size_t size, size_t n, FILE *s);
-FILE* FS_FileOpen(const char *filename, const char *modes);
-int FS_FileSeek(FILE *stream, int off, int whence);
-int FS_FileClose(FILE *stream);
-int FS_LanguageHasAssets(int iLanguage);
-void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char* ospath);
 int FS_Seek(int f, int offset, int origin);
-int FS_Read(void *buffer, int len, int h);
-
+int FS_Read(void *buffer, int len, fileHandle_t h);
 int FS_ReadFile(const char* qpath, void** buffer);
 void FS_FreeFile(void* buffer);
-
-int FS_FOpenTextFileWrite(const char* filename);
-int FS_FOpenFileWrite( const char *filename );
-int FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
+fileHandle_t FS_FOpenFileWrite(const char *filename);
+fileHandle_t FS_FOpenTextFileWrite(const char* filename);
+fileHandle_t FS_FOpenFileAppend(const char *filename);
+int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode);
 void FS_Printf( fileHandle_t h, const char *fmt, ... );
-void FS_Flush(int f);
-int FS_Write(const void *buffer, int len, int h);
-void FS_CopyFile(char *fromOSPath, char *toOSPath);
+void FS_Flush(fileHandle_t f);
+int FS_Write(const void *buffer, int len, fileHandle_t h);
 void FS_FCloseFile( fileHandle_t f );
 void FS_Shutdown();
-qboolean FS_Initialized();
 void FS_InitFilesystem();
 int FS_LoadStack();
 void FS_ShutdownServerIwdNames();
 void FS_ShutdownServerReferencedIwds();
-int FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames);
+void FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames);
 int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
-int FS_FOpenFileReadStream(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
 int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
-fileHandle_t FS_SV_FOpenFileWrite( const char *filename );
+int FS_SV_FOpenFileWrite( const char *filename );
 void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir);
-int FS_FilenameCompare(const char *s1, const char *s2);
 int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listbuf, int bufsize);
-char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles);
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles);
 void FS_FreeFileList( char **list );
 void FS_ConvertPath(char *s);
-void FS_ReplaceSeparators( char *path );
 int FS_WriteFile(const char* filename, const void* buffer, int size);
 qboolean FS_iwIwd(char *iwd, const char *base);
 const char *FS_LoadedIwdNames();
@@ -146,8 +192,6 @@ const char *FS_ReferencedIwdChecksums();
 const char *FS_LoadedIwdChecksums();
 const char *FS_LoadedIwdPureChecksums();
 char *FS_GetMapBaseName(const char *mapname);
-void FS_Startup(const char *gameName);
 void FS_ClearIwdReferences();
 void FS_Restart(int checksumFeed);
 void FS_ResetFiles();
-void FS_RegisterDvars();
