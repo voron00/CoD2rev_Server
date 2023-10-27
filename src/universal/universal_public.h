@@ -9,5 +9,4 @@
 #include "surfaceflags.h"
 
 // Assertive
-void RefreshQuitOnErrorCondition();
 bool QuitOnError();

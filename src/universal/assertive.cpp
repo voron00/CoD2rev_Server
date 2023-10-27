@@ -1,20 +1,13 @@
 #include "../qcommon/qcommon.h"
 
-bool shouldQuitOnError = false;
+static bool shouldQuitOnError = false;
 
-void RefreshQuitOnErrorCondition()
+static void RefreshQuitOnErrorCondition()
 {
-	bool quit;
+	if ( !Dvar_IsSystemActive() )
+		return;
 
-	if ( Dvar_IsSystemActive() )
-	{
-		quit = false;
-
-		if ( Dvar_GetBool("QuitOnError") || Dvar_GetInt("r_vc_compile") == 2 )
-			quit = true;
-
-		shouldQuitOnError = quit;
-	}
+	shouldQuitOnError = Dvar_GetBool("QuitOnError") || Dvar_GetInt("r_vc_compile") == 2;
 }
 
 bool QuitOnError()

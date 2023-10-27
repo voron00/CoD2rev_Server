@@ -2,6 +2,30 @@
 #include "../qcommon/cmd.h"
 #include "dvar.h"
 
+int Dvar_GetCombinedString(char *dest, int arg)
+{
+	int length = 0;
+	int maxarg = Cmd_Argc();
+
+	dest[0] = '\0';
+
+	for (int i = arg; i < maxarg; i++)
+	{
+		const char *string = Cmd_Argv(i);
+		length += strlen(string + 1);
+
+		if (length > MAXPRINTMSG)
+			break;
+
+		I_strncat(dest, MAXPRINTMSG, string);
+
+		if (i < maxarg - 1)
+			I_strncat(dest, MAXPRINTMSG, " ");
+	}
+
+	return length;
+}
+
 void Dvar_ForEach( void(*callback)(const char *s) )
 {
 	dvar_t *var;

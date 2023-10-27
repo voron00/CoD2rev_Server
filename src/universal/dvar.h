@@ -66,7 +66,7 @@ typedef struct
 typedef struct dvar_s
 {
 	const char *name;
-	unsigned short flags;
+	unsigned int flags;
 	DvarType type;
 	bool modified;
 	DvarValue current;
@@ -107,70 +107,58 @@ dvar_t *Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, flo
 dvar_t *Dvar_RegisterVec3(const char *dvarName, float x, float y, float z, float min, float max, unsigned int flags);
 dvar_t *Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float w, float min, float max, unsigned int flags);
 dvar_t *Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned int flags);
-void Dvar_SetBoolFromSource(dvar_t *dvar, bool value, DvarSetSource source);
-void Dvar_SetFloatFromSource(dvar_t *dvar, float value, DvarSetSource source);
-void Dvar_SetIntFromSource(dvar_t *dvar, int value, DvarSetSource source);
-void Dvar_SetFromStringFromSource(dvar_t *dvar, const char *string, DvarSetSource source);
-bool Dvar_StringToBool(const char *string);
-int Dvar_StringToInt(const char *string);
-float Dvar_StringToFloat(const char *string);
-void Dvar_StringToVec2(const char *string, vec2_t vector);
-void Dvar_StringToVec3(const char *string, vec3_t vector);
-void Dvar_StringToVec4(const char *string, vec4_t vector);
-void Dvar_StringToColor(const char *string, unsigned char *color);
-int Dvar_StringToEnum(const DvarLimits *domain, const char *string);
-qboolean Dvar_ValuesEqual(DvarType type, DvarValue val0, DvarValue val1);
-DvarValue Dvar_StringToValue(const DvarType type, const DvarLimits domain, const char *string);
-void Dvar_SetLatchedValue(dvar_t *dvar, DvarValue value);
-void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
-void Dvar_WeakCopyString(const char *string, DvarValue *value);
-void Dvar_CopyString(const char *string, DvarValue *value);
-void Dvar_AssignCurrentStringValue(dvar_t *dvar, DvarValue *dest, const char *string);
-qboolean Dvar_ShouldFreeCurrentString(dvar_t *dvar);
-qboolean Dvar_ShouldFreeResetString(dvar_t *dvar);
-qboolean Dvar_ShouldFreeLatchedString(dvar_t *dvar);
-void Dvar_FreeString(DvarValue *value);
-void Dvar_UpdateResetValue(dvar_t *dvar, DvarValue value);
-void Dvar_PerformUnregistration(dvar_t *dvar);
-int Dvar_GetCombinedString(char *dest, int arg);
-const char *Dvar_IndexStringToEnumString(const dvar_t *dvar, const char *indexString);
-void Dvar_SetCommand(const char *dvarName, const char *string);
-qboolean Dvar_HasLatchedValue(dvar_t *var);
-qboolean Dvar_IsValidName(const char *dvarName);
-void Dvar_Reset(dvar_t *dvar, DvarSetSource setSource);
-void Dvar_AddFlags(dvar_t* var, unsigned short flags);
-void Dvar_ClearFlags(dvar_t* var, unsigned short flags);
-void Dvar_SetFromStringByName(const char *dvarName, const char *string);
-const char *Dvar_DisplayableLatchedValue(dvar_t *var);
-const char *Dvar_DisplayableResetValue(dvar_t *var);
-const char *Dvar_DisplayableValue(dvar_t *var);
-void Dvar_PrintDomain(DvarType type, DvarLimits domain);
-dvar_t* Dvar_FindVar(const char* dvarName);
+
 void Dvar_SetBool(dvar_t *dvar, bool value);
 void Dvar_SetInt(dvar_t *dvar, int value);
 void Dvar_SetFloat(dvar_t *dvar, float value);
 void Dvar_SetString(dvar_t *dvar, const char *value);
+
+void Dvar_SetBoolFromSource(dvar_t *dvar, bool value, DvarSetSource source);
+void Dvar_SetIntFromSource(dvar_t *dvar, int value, DvarSetSource source);
+void Dvar_SetFloatFromSource(dvar_t *dvar, float value, DvarSetSource source);
+void Dvar_SetFromStringFromSource(dvar_t *dvar, const char *string, DvarSetSource source);
+
 void Dvar_SetIntByName(const char *dvarName, int value);
 void Dvar_SetStringByName(const char *dvarName, const char *value);
-qboolean Dvar_GetBool(const char *dvarName);
+void Dvar_SetFromStringByName(const char *dvarName, const char *string);
+
+bool Dvar_GetBool(const char *dvarName);
 int Dvar_GetInt(const char *dvarName);
 float Dvar_GetFloat(const char *dvarName);
 const char* Dvar_GetString(const char *dvarName);
 const char* Dvar_GetVariantString(const char *dvarName);
+
+void Dvar_AddFlags(dvar_t* var, int flags);
+void Dvar_ClearFlags(dvar_t* var, int flags);
+
+const char *Dvar_DisplayableLatchedValue(dvar_t *var);
+const char *Dvar_DisplayableResetValue(dvar_t *var);
+const char *Dvar_DisplayableValue(dvar_t *var);
+const char *Dvar_IndexStringToEnumString(const dvar_t *dvar, const char *indexString);
+
+dvar_t* Dvar_FindVar(const char* dvarName);
+
+void Dvar_SetCommand(const char *dvarName, const char *string);
+bool Dvar_HasLatchedValue(dvar_t *var);
+bool Dvar_IsValidName(const char *dvarName);
+void Dvar_Reset(dvar_t *dvar, DvarSetSource setSource);
+void Dvar_PrintDomain(DvarType type, DvarLimits domain);
 void Dvar_ForEach( void(*callback)(const char *s) );
-void Dvar_SetInAutoExec(qboolean inAutoExec);
+void Dvar_SetInAutoExec(bool inAutoExec);
 void Dvar_WriteVariables(fileHandle_t f);
 void Dvar_WriteDefaults(fileHandle_t f);
 void Dvar_ClearModified(dvar_t* var);
+
 char *Dvar_InfoString(unsigned short bit);
 char *Dvar_InfoString_Big(unsigned short bit);
+
 void Dvar_Set_f(void);
 void Dvar_SetA_f(void);
-void Dvar_SetS_f(void);
-void Dvar_SetU_f(void);
+
 qboolean Dvar_Command();
+
 void Dvar_AddCommands();
-void Dvar_Shutdown();
-int Dvar_IsSystemActive();
+bool Dvar_IsSystemActive();
 void Dvar_ResetScriptInfo();
+void Dvar_Shutdown();
 void Dvar_Init();

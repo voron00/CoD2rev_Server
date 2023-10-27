@@ -6,8 +6,8 @@ dvar_t dvarPool[MAX_DVARS];
 int dvarCount;
 static dvar_t* dvarHashTable[FILE_HASH_SIZE];
 dvar_t *dvar_cheats;
-static qboolean isDvarSystemActive;
-qboolean isLoadingAutoExecGlobalFlag;
+static bool isDvarSystemActive;
+static bool isLoadingAutoExecGlobalFlag;
 int dvar_modifiedFlags;
 
 static long generateHashValue( const char *fname )
@@ -35,7 +35,7 @@ static long generateHashValue( const char *fname )
 	return hash;
 }
 
-dvar_t* Dvar_FindMalleableVar(const char* dvarName)
+static dvar_t* Dvar_FindMalleableVar(const char* dvarName)
 {
 	dvar_t *var;
 	long hash;
@@ -56,31 +56,39 @@ dvar_t* Dvar_FindVar(const char* dvarName)
 	return Dvar_FindMalleableVar(dvarName);
 }
 
-void Dvar_AddFlags(dvar_t* var, unsigned short flags)
+static void Dvar_FreeString(DvarValue *value)
 {
-	var->flags |= flags;
+	FreeString((char *)value->string);
+	value->string = NULL;
 }
 
-void Dvar_ClearFlags(dvar_t* var, unsigned short flags)
+static bool Dvar_ShouldFreeCurrentString(dvar_t *dvar)
 {
-	var->flags &= ~flags;
+	return dvar->current.string
+	       && dvar->current.string != dvar->latched.string
+	       && dvar->current.string != dvar->reset.string;
 }
 
-void Dvar_ClearModified(dvar_t* var)
+static bool Dvar_ShouldFreeResetString(dvar_t *dvar)
 {
-	var->modified = false;
+	return dvar->reset.string
+	       && dvar->reset.string != dvar->current.string
+	       && dvar->reset.string != dvar->latched.string;
 }
 
-void Dvar_MakeLatchedValueCurrent(dvar_t *dvar)
+static void Dvar_WeakCopyString(const char *string, DvarValue *value)
 {
-	Dvar_SetVariant(dvar, dvar->latched, DVAR_SOURCE_INTERNAL);
+	value->string = string;
 }
 
-void Dvar_ClampVectorToDomain(float* vector, int components, float min, float max)
+static void Dvar_CopyString(const char *string, DvarValue *value)
 {
-	int channel;
+	value->string = CopyString(string);
+}
 
-	for (channel = 0; channel < components; ++channel)
+static void Dvar_ClampVectorToDomain(vec_t *vector, int components, float min, float max)
+{
+	for (int channel = 0; channel < components; channel++)
 	{
 		if (min <= vector[channel])
 		{
@@ -96,12 +104,12 @@ void Dvar_ClampVectorToDomain(float* vector, int components, float min, float ma
 	}
 }
 
-DvarValue Dvar_ClampValueToDomain(DvarType type, DvarValue value, const DvarValue resetValue, const DvarLimits domain)
+static DvarValue Dvar_ClampValueToDomain(DvarType type, DvarValue value, const DvarValue resetValue, const DvarLimits domain)
 {
 	switch (type)
 	{
 	case DVAR_TYPE_BOOL:
-		value.boolean = value.boolean != 0;
+		value.boolean = value.boolean != false;
 		break;
 	case DVAR_TYPE_FLOAT:
 		if (domain.decimal.min <= value.decimal)
@@ -117,13 +125,13 @@ DvarValue Dvar_ClampValueToDomain(DvarType type, DvarValue value, const DvarValu
 		}
 		break;
 	case DVAR_TYPE_VEC2:
-		Dvar_ClampVectorToDomain(value.vec2, 2, domain.decimal.min, domain.decimal.max);
+		Dvar_ClampVectorToDomain(value.vec2, DVAR_TYPE_VEC2, domain.decimal.min, domain.decimal.max);
 		break;
 	case DVAR_TYPE_VEC3:
-		Dvar_ClampVectorToDomain(value.vec3, 3, domain.decimal.min, domain.decimal.max);
+		Dvar_ClampVectorToDomain(value.vec3, DVAR_TYPE_VEC3, domain.decimal.min, domain.decimal.max);
 		break;
 	case DVAR_TYPE_VEC4:
-		Dvar_ClampVectorToDomain(value.vec4, 4, domain.decimal.min, domain.decimal.max);
+		Dvar_ClampVectorToDomain(value.vec4, DVAR_TYPE_VEC4, domain.decimal.min, domain.decimal.max);
 		break;
 	case DVAR_TYPE_INT:
 		if (value.integer >= domain.enumeration.stringCount)
@@ -154,776 +162,7 @@ DvarValue Dvar_ClampValueToDomain(DvarType type, DvarValue value, const DvarValu
 	return value;
 }
 
-void Dvar_UpdateValue(dvar_t *dvar, DvarValue value)
-{
-	DvarValue oldString;
-	qboolean shouldFree;
-	DvarValue currentString;
-
-	switch (dvar->type)
-	{
-	case DVAR_TYPE_VEC2:
-		dvar->current.vec2[0] = value.vec2[0];
-		dvar->current.vec2[1] = value.vec2[1];
-
-		dvar->latched.vec2[0] = value.vec2[0];
-		dvar->latched.vec2[1] = value.vec2[1];
-		break;
-	case DVAR_TYPE_VEC3:
-		dvar->current.vec3[0] = value.vec3[0];
-		dvar->current.vec3[1] = value.vec3[1];
-		dvar->current.vec3[2] = value.vec3[2];
-
-		dvar->latched.vec3[0] = value.vec3[0];
-		dvar->latched.vec3[1] = value.vec3[1];
-		dvar->latched.vec3[2] = value.vec3[2];
-		break;
-	case DVAR_TYPE_VEC4:
-		dvar->current.vec4[0] = value.vec4[0];
-		dvar->current.vec4[1] = value.vec4[1];
-		dvar->current.vec4[2] = value.vec4[2];
-		dvar->current.vec4[3] = value.vec4[3];
-
-		dvar->latched.vec4[0] = value.vec4[0];
-		dvar->latched.vec4[1] = value.vec4[1];
-		dvar->latched.vec4[2] = value.vec4[2];
-		dvar->latched.vec4[3] = value.vec4[3];
-		break;
-	case DVAR_TYPE_STRING:
-		if (value.integer != dvar->current.integer)
-		{
-			shouldFree = Dvar_ShouldFreeCurrentString(dvar);
-			if (shouldFree)
-			{
-				oldString.integer = dvar->current.integer;
-			}
-			Dvar_AssignCurrentStringValue(dvar, &currentString, value.string);
-			dvar->current.integer = currentString.integer;
-			if (Dvar_ShouldFreeLatchedString(dvar))
-			{
-				Dvar_FreeString(&dvar->latched);
-			}
-			dvar->latched.integer = 0;
-			Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
-			if (shouldFree)
-			{
-				Dvar_FreeString(&oldString);
-			}
-		}
-		break;
-	default:
-		dvar->current = value;
-		dvar->latched = value;
-		break;
-	}
-}
-
-void Dvar_MakeExplicitType(dvar_t *dvar, const char *dvarName, DvarType type, unsigned int flags, DvarValue resetValue, DvarLimits domain)
-{
-	qboolean wasString;
-	DvarValue castValue;
-
-	dvar->type = type;
-	dvar->domain = domain;
-	if (flags & DVAR_ROM || (flags & DVAR_CHEAT && dvar_cheats && !dvar_cheats->current.boolean))
-	{
-		castValue = resetValue;
-	}
-	else
-	{
-		castValue = Dvar_StringToValue(dvar->type, dvar->domain, dvar->current.string);
-		castValue = Dvar_ClampValueToDomain(type, castValue, resetValue, domain);
-	}
-
-	wasString = dvar->type == DVAR_TYPE_STRING && castValue.integer;
-	if (wasString)
-	{
-		castValue.string = CopyString(castValue.string);
-	}
-
-	if (dvar->type != DVAR_TYPE_STRING && Dvar_ShouldFreeCurrentString(dvar))
-	{
-		Dvar_FreeString(&dvar->current);
-	}
-
-	dvar->current.string = 0;
-	if (Dvar_ShouldFreeLatchedString(dvar))
-	{
-		Dvar_FreeString(&dvar->latched);
-	}
-
-	dvar->latched.string = 0;
-	if (Dvar_ShouldFreeResetString(dvar))
-	{
-		Dvar_FreeString(&dvar->reset);
-	}
-
-	dvar->reset.string = 0;
-	Dvar_UpdateResetValue(dvar, resetValue);
-	Dvar_UpdateValue(dvar, castValue);
-
-	dvar_modifiedFlags |= flags;
-
-	if (wasString)
-	{
-		FreeString((char *)castValue.string);
-	}
-}
-
-void Dvar_ReinterpretDvar(dvar_t *dvar, const char *dvarName, DvarType type, unsigned int flags, DvarValue value, DvarLimits domain)
-{
-	DvarValue resetValue;
-
-	if (dvar->flags & DVAR_EXTERNAL && !(flags & DVAR_EXTERNAL))
-	{
-		resetValue = value;
-		Dvar_PerformUnregistration(dvar);
-		FreeString((char *)dvar->name);
-		dvar->name = dvarName;
-		dvar->flags &= ~DVAR_EXTERNAL;
-
-		Dvar_MakeExplicitType(dvar, dvarName, type, flags, resetValue, domain);
-	}
-}
-
-dvar_t *Dvar_RegisterNew(const char *dvarName, DvarType type, unsigned int flags, DvarValue value, DvarLimits domain)
-{
-	int hash;
-	dvar_t* dvar;
-	dvar_t** sorted;
-
-	if (dvarCount >= MAX_DVARS)
-		Com_Error(ERR_FATAL, "Can't create dvar '%s': %i dvars already exist", dvarName, MAX_DVARS);
-
-	dvar = &dvarPool[dvarCount];
-	dvarCount++;
-
-	if (flags & DVAR_EXTERNAL)
-	{
-		dvar->name = CopyString(dvarName);
-	}
-	else
-	{
-		dvar->name = dvarName;
-	}
-
-	dvar->flags = flags;
-	dvar->type = type;
-
-	switch (type)
-	{
-	case DVAR_TYPE_VEC2:
-		dvar->current.vec2[0] = value.vec2[0];
-		dvar->current.vec2[1] = value.vec2[1];
-
-		dvar->latched.vec2[0] = value.vec2[0];
-		dvar->latched.vec2[1] = value.vec2[1];
-
-		dvar->reset.vec2[0] = value.vec2[0];
-		dvar->reset.vec2[1] = value.vec2[1];
-		break;
-	case DVAR_TYPE_VEC3:
-		dvar->current.vec3[0] = value.vec3[0];
-		dvar->current.vec3[1] = value.vec3[1];
-		dvar->current.vec3[2] = value.vec3[2];
-
-		dvar->latched.vec3[0] = value.vec3[0];
-		dvar->latched.vec3[1] = value.vec3[1];
-		dvar->latched.vec3[2] = value.vec3[2];
-
-		dvar->reset.vec3[0] = value.vec3[0];
-		dvar->reset.vec3[1] = value.vec3[1];
-		dvar->reset.vec3[2] = value.vec3[2];
-		break;
-	case DVAR_TYPE_VEC4:
-		dvar->current.vec4[0] = value.vec4[0];
-		dvar->current.vec4[1] = value.vec4[1];
-		dvar->current.vec4[2] = value.vec4[2];
-		dvar->current.vec4[3] = value.vec4[3];
-
-		dvar->latched.vec4[0] = value.vec4[0];
-		dvar->latched.vec4[1] = value.vec4[1];
-		dvar->latched.vec4[2] = value.vec4[2];
-		dvar->latched.vec4[3] = value.vec4[3];
-
-		dvar->reset.vec4[0] = value.vec4[0];
-		dvar->reset.vec4[1] = value.vec4[1];
-		dvar->reset.vec4[2] = value.vec4[2];
-		dvar->reset.vec4[3] = value.vec4[3];
-		break;
-	case DVAR_TYPE_STRING:
-		Dvar_CopyString(value.string, &dvar->current);
-		Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
-		Dvar_WeakCopyString(dvar->current.string, &dvar->reset);
-		break;
-	default:
-		dvar->current = value;
-		dvar->latched = value;
-		dvar->reset = value;
-		break;
-	}
-
-	dvar->domain = domain;
-	dvar->modified = false;
-
-	for ( sorted = &sortedDvars; *sorted && strcasecmp(dvar->name, (*sorted)->name) >= 0; sorted = &(*sorted)->next );
-
-	dvar->next = *sorted;
-	*sorted = dvar;
-	hash = generateHashValue(dvarName);
-	dvar->hashNext = dvarHashTable[hash];
-	dvarHashTable[hash] = dvar;
-
-	return dvar;
-}
-
-void Dvar_Reregister(dvar_t *dvar, const char *dvarName, DvarType type, unsigned int flags, DvarValue resetValue, DvarLimits domain)
-{
-	if ((dvar->flags ^ flags) & DVAR_EXTERNAL)
-	{
-		Dvar_ReinterpretDvar(dvar, dvarName, type, flags, resetValue, domain);
-	}
-
-	if (dvar->flags & DVAR_EXTERNAL && dvar->type != type)
-	{
-		Dvar_MakeExplicitType(dvar, dvarName, type, flags, resetValue, domain);
-	}
-
-	dvar->flags |= flags;
-
-	if (dvar->flags & DVAR_CHEAT && dvar_cheats && !dvar_cheats->current.boolean)
-	{
-		Dvar_SetVariant(dvar, dvar->reset, DVAR_SOURCE_INTERNAL);
-		Dvar_SetLatchedValue(dvar, dvar->reset);
-	}
-
-	if (dvar->flags & DVAR_LATCH)
-	{
-		Dvar_MakeLatchedValueCurrent(dvar);
-	}
-}
-
-dvar_t *Dvar_RegisterVariant(const char *dvarName, DvarType type, unsigned int flags, DvarValue value, DvarLimits domain)
-{
-	dvar_t* dvar;
-
-	dvar = Dvar_FindMalleableVar(dvarName);
-
-	if (!dvar)
-	{
-		return Dvar_RegisterNew(dvarName, type, flags, value, domain);
-	}
-
-	Dvar_Reregister(dvar, dvarName, type, flags, value, domain);
-
-	return dvar;
-}
-
-dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.integer.min = 0;
-	dvarDomain.integer.max = 0;
-
-	dvarValue.boolean = value;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_BOOL, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.integer.max = max;
-	dvarDomain.integer.min = min;
-
-	dvarValue.integer = value;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_INT, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.decimal.max = max;
-	dvarDomain.decimal.min = min;
-
-	dvarValue.decimal = value;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_FLOAT, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.enumeration.stringCount = 0;
-	dvarDomain.enumeration.strings = NULL;
-	dvarValue.string = value;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_STRING, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterEnum(const char *dvarName, const char **valueList, int defaultIndex, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.enumeration.strings = valueList;
-	dvarDomain.enumeration.stringCount = 0;
-
-	while (valueList[dvarDomain.enumeration.stringCount] != NULL)
-	{
-		dvarDomain.enumeration.stringCount++;
-	}
-
-	dvarValue.integer = defaultIndex;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_ENUM, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, float max, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.decimal.max = max;
-	dvarDomain.decimal.min = min;
-
-	dvarValue.vec2[0] = x;
-	dvarValue.vec2[1] = y;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_VEC2, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterVec3(const char *dvarName, float x, float y, float z, float min, float max, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.decimal.max = max;
-	dvarDomain.decimal.min = min;
-
-	dvarValue.vec3[0] = x;
-	dvarValue.vec3[1] = y;
-	dvarValue.vec3[2] = z;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_VEC3, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float w, float min, float max, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.decimal.max = max;
-	dvarDomain.decimal.min = min;
-
-	dvarValue.vec4[0] = x;
-	dvarValue.vec4[1] = y;
-	dvarValue.vec4[2] = z;
-	dvarValue.vec4[3] = w;
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_VEC4, flags, dvarValue, dvarDomain);
-}
-
-dvar_t *Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned int flags)
-{
-	DvarLimits dvarDomain;
-	DvarValue dvarValue;
-
-	dvarDomain.integer.max = 0;
-	dvarDomain.integer.min = 0;
-
-	dvarValue.color[0] = (int)((float)((float)(255.0 * I_fclamp(r, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
-	dvarValue.color[1] = (int)((float)((float)(255.0 * I_fclamp(g, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
-	dvarValue.color[2] = (int)((float)((float)(255.0 * I_fclamp(b, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
-	dvarValue.color[3] = (int)((float)((float)(255.0 * I_fclamp(a, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
-
-	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_COLOR, flags, dvarValue, dvarDomain);
-}
-
-const char *Dvar_ValueToString(const dvar_t *dvar, DvarValue value)
-{
-	const char* result;
-
-	switch (dvar->type)
-	{
-	case DVAR_TYPE_BOOL:
-		result = value.boolean ? "1" : "0";
-		break;
-	case DVAR_TYPE_FLOAT:
-		result = va("%g", value.decimal);
-		break;
-	case DVAR_TYPE_VEC2:
-		result = va("%g %g", value.vec2[0], value.vec2[1]);
-		break;
-	case DVAR_TYPE_VEC3:
-		result = va("%g %g %g", value.vec3[0], value.vec3[1], value.vec3[2]);
-		break;
-	case DVAR_TYPE_VEC4:
-		result = va("%g %g %g %g", value.vec4[0], value.vec4[1], value.vec4[2], value.vec4[3]);
-		break;
-	case DVAR_TYPE_INT:
-		result = va("%i", value.integer);
-		break;
-	case DVAR_TYPE_ENUM:
-		if (dvar->domain.enumeration.stringCount)
-		{
-			result = dvar->domain.enumeration.strings[value.integer];
-		}
-		else
-		{
-			result = "";
-		}
-		break;
-	case DVAR_TYPE_STRING:
-		result = va("%s", value.integer);
-		break;
-	case DVAR_TYPE_COLOR:
-		result = va("%g %g %g %g",
-		            (float)((float)value.color[0] / 255.0f),
-		            (float)((float)value.color[1] / 255.0f),
-		            (float)((float)value.color[2] / 255.0f),
-		            (float)((float)value.color[3] / 255.0f));
-		break;
-	default:
-		result = "";
-		break;
-	}
-
-	return result;
-}
-
-const char *Dvar_DisplayableLatchedValue(dvar_t *var)
-{
-	return Dvar_ValueToString(var, var->latched);
-}
-
-const char *Dvar_DisplayableResetValue(dvar_t *var)
-{
-	return Dvar_ValueToString(var, var->reset);
-}
-
-const char *Dvar_DisplayableValue(dvar_t *var)
-{
-	return Dvar_ValueToString(var, var->current);
-}
-
-qboolean Dvar_IsAtDefaultValue(dvar_t *var)
-{
-	return Dvar_ValuesEqual(var->type, var->current, var->reset);
-}
-
-qboolean Dvar_HasLatchedValue(dvar_t *var)
-{
-	return Dvar_ValuesEqual(var->type, var->current, var->latched) == qfalse;
-}
-
-void Dvar_VectorDomainToString(int components, DvarLimits domain, char *outBuffer, int outBufferLen)
-{
-	if (domain.decimal.min == -FLT_MAX)
-	{
-		if (domain.decimal.max == FLT_MAX)
-		{
-			snprintf(outBuffer, outBufferLen, "Domain is any %iD vector", components);
-		}
-		else
-		{
-			snprintf(outBuffer, outBufferLen, "Domain is any %iD vector with components %g or smaller",
-			         components, domain.decimal.max);
-		}
-	}
-	else if (domain.decimal.max == FLT_MAX)
-	{
-		snprintf(outBuffer, outBufferLen, "Domain is any %iD vector with components %g or bigger",
-		         components, domain.decimal.min);
-	}
-	else
-	{
-		snprintf(outBuffer, outBufferLen, "Domain is any %iD vector with components from %g to %g",
-		         components, domain.decimal.min, domain.decimal.max);
-	}
-}
-
-const char *Dvar_DomainToString_Internal(DvarType type, DvarLimits domain, char *outBuffer, int outBufferLen, int *outLineCount)
-{
-	char* outBufferEnd;
-	char* outBufferWalk;
-	int charsWritten;
-	int stringIndex;
-
-	outBufferEnd = &outBuffer[outBufferLen];
-	if (outLineCount)
-	{
-		*outLineCount = 0;
-	}
-
-	switch (type)
-	{
-	case DVAR_TYPE_BOOL:
-		snprintf(outBuffer, outBufferLen, "Domain is 0 or 1");
-		break;
-	case DVAR_TYPE_FLOAT:
-		if (domain.decimal.min == -FLT_MAX)
-		{
-			if (domain.decimal.max == FLT_MAX)
-			{
-				snprintf(outBuffer, outBufferLen, "Domain is any number");
-			}
-			else
-			{
-				snprintf(outBuffer, outBufferLen, "Domain is any number %g or smaller", domain.decimal.max);
-			}
-		}
-		else if (domain.decimal.max == FLT_MAX)
-		{
-			snprintf(outBuffer, outBufferLen, "Domain is any number %g or bigger", domain.decimal.min);
-		}
-		else
-		{
-			snprintf(outBuffer, outBufferLen, "Domain is any number from %g to %g", domain.decimal.min, domain.decimal.max);
-		}
-		break;
-	case DVAR_TYPE_VEC2:
-		Dvar_VectorDomainToString(2, domain, outBuffer, outBufferLen);
-		break;
-	case DVAR_TYPE_VEC3:
-		Dvar_VectorDomainToString(3, domain, outBuffer, outBufferLen);
-		break;
-	case DVAR_TYPE_VEC4:
-		Dvar_VectorDomainToString(4, domain, outBuffer, outBufferLen);
-		break;
-	case DVAR_TYPE_INT:
-		if (domain.integer.min == INT_MAX)
-		{
-			if (domain.integer.max == INT_MAX)
-			{
-				snprintf(outBuffer, outBufferLen, "Domain is any integer");
-			}
-			else
-			{
-				snprintf(outBuffer, outBufferLen, "Domain is any integer %i or smaller", domain.integer.max);
-			}
-		}
-		else if (domain.integer.max == INT_MAX)
-		{
-			snprintf(outBuffer, outBufferLen, "Domain is any integer %i or bigger", domain.integer.min);
-		}
-		else
-		{
-			snprintf(outBuffer, outBufferLen, "Domain is any integer from %i to %i", domain.integer.min, domain.integer.max);
-		}
-		break;
-	case DVAR_TYPE_ENUM:
-		charsWritten = snprintf(outBuffer, outBufferEnd - outBuffer, "Domain is one of the following:");
-		if (charsWritten >= 0)
-		{
-			outBufferWalk = &outBuffer[charsWritten];
-			for (stringIndex = 0; stringIndex < domain.enumeration.stringCount; ++stringIndex)
-			{
-				charsWritten = snprintf(outBufferWalk, outBufferEnd - outBufferWalk, "\n  %2i: %s",
-				                        stringIndex, domain.enumeration.strings[stringIndex]);
-
-				if (charsWritten < 0)
-				{
-					break;
-				}
-
-				if (outLineCount)
-				{
-					++* outLineCount;
-				}
-				outBufferWalk += charsWritten;
-			}
-		}
-		break;
-	case DVAR_TYPE_STRING:
-		snprintf(outBuffer, outBufferLen, "Domain is any text");
-		break;
-	case DVAR_TYPE_COLOR:
-		snprintf(outBuffer, outBufferLen, "Domain is any 4-component color, in RGBA format");
-		break;
-	default:
-		*outBuffer = 0;
-		break;
-	}
-
-	*(outBufferEnd - 1) = 0;
-	return outBuffer;
-}
-
-void Dvar_PrintDomain(DvarType type, DvarLimits domain)
-{
-	char domainBuffer[MAX_STRING_CHARS];
-	Com_Printf("  %s\n", Dvar_DomainToString_Internal(type, domain, domainBuffer, sizeof(domainBuffer), 0));
-}
-
-qboolean Dvar_VectorInDomain(const float* vector, int components, float min, float max)
-{
-	int channel;
-
-	for (channel = 0; channel < components; ++channel)
-	{
-		if (min > vector[channel])
-		{
-			return 0;
-		}
-		if (vector[channel] > max)
-		{
-			return 0;
-		}
-	}
-	return 1;
-}
-
-qboolean Dvar_ValueInDomain(DvarType type, DvarValue value, DvarLimits domain)
-{
-	switch (type)
-	{
-	case DVAR_TYPE_BOOL:
-		return 1;
-	case DVAR_TYPE_FLOAT:
-		if (domain.decimal.min <= value.decimal)
-		{
-			return value.decimal <= domain.decimal.max;
-		}
-		return 0;
-	case DVAR_TYPE_VEC2:
-		return Dvar_VectorInDomain(value.vec2, 2, domain.decimal.min, domain.decimal.max);
-	case DVAR_TYPE_VEC3:
-		return Dvar_VectorInDomain(value.vec3, 3, domain.decimal.min, domain.decimal.max);
-	case DVAR_TYPE_VEC4:
-		return Dvar_VectorInDomain(value.vec4, 4, domain.decimal.min, domain.decimal.max);
-	case DVAR_TYPE_INT:
-		if (value.integer >= domain.integer.min)
-		{
-			return value.integer <= domain.integer.max;
-		}
-		return 0;
-	case DVAR_TYPE_ENUM:
-		return value.integer >= 0 && (value.integer < domain.enumeration.stringCount || !value.integer);
-	case DVAR_TYPE_STRING:
-		return 1;
-	case DVAR_TYPE_COLOR:
-		return 1;
-	default:
-		return 0;
-	}
-}
-
-qboolean Dvar_ShouldFreeLatchedString(dvar_t *dvar)
-{
-	return dvar->latched.string
-	       && dvar->latched.string != dvar->current.string
-	       && dvar->latched.string != dvar->reset.string;
-}
-
-void Dvar_AssignLatchedStringValue(dvar_t *dvar, DvarValue *dest, const char *string)
-{
-	if (dvar->current.string && (string == dvar->current.string || !strcmp(string, dvar->current.string)))
-		Dvar_WeakCopyString(dvar->current.string, dest);
-	else if (dvar->reset.string && (string == dvar->reset.string || !strcmp(string, dvar->reset.string)))
-		Dvar_WeakCopyString(dvar->reset.string, dest);
-	else
-		Dvar_CopyString(string, dest);
-}
-
-void Dvar_SetLatchedValue(dvar_t *dvar, DvarValue value)
-{
-	DvarValue latchedString;
-	DvarValue oldString;
-	qboolean shouldFree;
-
-	switch (dvar->type)
-	{
-	case DVAR_TYPE_VEC2:
-		dvar->latched.vec2[0] = value.vec2[0];
-		dvar->latched.vec2[1] = value.vec2[1];
-		break;
-	case DVAR_TYPE_VEC3:
-		dvar->latched.vec3[0] = value.vec3[0];
-		dvar->latched.vec3[1] = value.vec3[1];
-		dvar->latched.vec3[2] = value.vec3[2];
-		break;
-	case DVAR_TYPE_VEC4:
-		dvar->latched.vec4[0] = value.vec4[0];
-		dvar->latched.vec4[1] = value.vec4[1];
-		dvar->latched.vec4[2] = value.vec4[2];
-		dvar->latched.vec4[3] = value.vec4[3];
-		break;
-	case DVAR_TYPE_STRING:
-		if (dvar->latched.string != value.string)
-		{
-			shouldFree = Dvar_ShouldFreeLatchedString(dvar);
-			if (shouldFree)
-			{
-				oldString.string = dvar->latched.string;
-			}
-
-			Dvar_AssignLatchedStringValue(dvar, &latchedString, value.string);
-			dvar->latched.string = latchedString.string;
-			if (shouldFree)
-			{
-				Dvar_FreeString(&oldString);
-			}
-		}
-		break;
-	default:
-		dvar->latched = value;
-		break;
-	}
-}
-
-qboolean Dvar_ValuesEqual(DvarType type, DvarValue val0, DvarValue val1)
-{
-	qboolean result;
-
-	switch (type)
-	{
-	case DVAR_TYPE_BOOL:
-		result = val0.boolean == val1.boolean;
-		break;
-	case DVAR_TYPE_FLOAT:
-		result = val0.decimal == val1.decimal;
-		break;
-	case DVAR_TYPE_VEC2:
-		result = val0.vec2[0] == val1.vec2[0] && val0.vec2[1] == val1.vec2[1];
-		break;
-	case DVAR_TYPE_VEC3:
-		result = val0.vec3[0] == val1.vec3[0] && val0.vec3[1] == val1.vec3[1] && val0.vec3[2] == val1.vec3[2];
-		break;
-	case DVAR_TYPE_VEC4:
-		result = val0.vec4[0] == val1.vec4[0] && val0.vec4[1] == val1.vec4[1]
-		         && val0.vec4[2] == val1.vec4[2] && val0.vec4[3] == val1.vec4[3];
-		break;
-	case DVAR_TYPE_INT:
-		result = val0.integer == val1.integer;
-		break;
-	case DVAR_TYPE_ENUM:
-		result = val0.integer == val1.integer;
-		break;
-	case DVAR_TYPE_STRING:
-		result = strcmp(val0.string, val1.string) == 0;
-		break;
-	case DVAR_TYPE_COLOR:
-		result = val0.integer == val1.integer;
-		break;
-	default:
-		result = 0;
-		break;
-	}
-
-	return result;
-}
-
-void Dvar_AssignCurrentStringValue(dvar_t *dvar, DvarValue *dest, const char *string)
+static void Dvar_AssignCurrentStringValue(dvar_t *dvar, DvarValue *dest, const char *string)
 {
 	if (dvar->latched.string && (string == dvar->latched.string || !strcmp(string, dvar->latched.string)))
 		Dvar_WeakCopyString(dvar->latched.string, dest);
@@ -933,259 +172,75 @@ void Dvar_AssignCurrentStringValue(dvar_t *dvar, DvarValue *dest, const char *st
 		Dvar_CopyString(string, dest);
 }
 
-qboolean Dvar_CanChangeValue(const dvar_t *dvar, DvarValue value, DvarSetSource source)
+static bool Dvar_ShouldFreeLatchedString(dvar_t *dvar)
 {
-	char* reason;
-
-	if (!dvar)
-	{
-		return 0;
-	}
-
-	if (Dvar_ValuesEqual(dvar->type, value, dvar->reset))
-	{
-		return 1;
-	}
-
-	reason = NULL;
-
-	if (dvar->flags & DVAR_ROM)
-	{
-		reason = va("%s is read only.\n", dvar->name);
-	}
-	else if (dvar->flags & DVAR_INIT)
-	{
-		reason = va("%s is write protected.\n", dvar->name);
-	}
-	else if (dvar->flags & DVAR_CHEAT && !dvar_cheats->current.boolean)
-	{
-		if (source == DVAR_SOURCE_EXTERNAL)
-		{
-			reason = va("%s is cheat protected.\n", dvar->name);
-		}
-	}
-
-	if (!reason)
-	{
-		return 1;
-	}
-
-	Com_Printf(reason);
-	return 0;
+	return dvar->latched.string
+	       && dvar->latched.string != dvar->current.string
+	       && dvar->latched.string != dvar->reset.string;
 }
 
-void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
+static void Dvar_UpdateValue(dvar_t *dvar, DvarValue value)
 {
-	qboolean shouldFreeString;
 	DvarValue oldString;
+	bool shouldFree;
 	DvarValue currentString;
 
-	if (!dvar || !dvar->name || !dvar->name[0])
+	switch (dvar->type)
 	{
-		return;
-	}
+	case DVAR_TYPE_VEC2:
+		dvar->current.vec2[0] = value.vec2[0];
+		dvar->current.vec2[1] = value.vec2[1];
 
-	if (!Dvar_ValueInDomain(dvar->type, value, dvar->domain))
-	{
-		Com_Printf("'%s' is not a valid value for dvar '%s'\n", Dvar_ValueToString(dvar, value), dvar->name);
-		Dvar_PrintDomain(dvar->type, dvar->domain);
-		if (dvar->type == DVAR_TYPE_ENUM)
+		dvar->latched.vec2[0] = value.vec2[0];
+		dvar->latched.vec2[1] = value.vec2[1];
+		break;
+	case DVAR_TYPE_VEC3:
+		dvar->current.vec3[0] = value.vec3[0];
+		dvar->current.vec3[1] = value.vec3[1];
+		dvar->current.vec3[2] = value.vec3[2];
+
+		dvar->latched.vec3[0] = value.vec3[0];
+		dvar->latched.vec3[1] = value.vec3[1];
+		dvar->latched.vec3[2] = value.vec3[2];
+		break;
+	case DVAR_TYPE_VEC4:
+		dvar->current.vec4[0] = value.vec4[0];
+		dvar->current.vec4[1] = value.vec4[1];
+		dvar->current.vec4[2] = value.vec4[2];
+		dvar->current.vec4[3] = value.vec4[3];
+
+		dvar->latched.vec4[0] = value.vec4[0];
+		dvar->latched.vec4[1] = value.vec4[1];
+		dvar->latched.vec4[2] = value.vec4[2];
+		dvar->latched.vec4[3] = value.vec4[3];
+		break;
+	case DVAR_TYPE_STRING:
+		if (value.string != dvar->current.string)
 		{
-			Dvar_SetVariant(dvar, dvar->reset, source);
-		}
-		return;
-	}
-
-	if (source != DVAR_SOURCE_EXTERNAL && source != DVAR_SOURCE_SCRIPT)
-	{
-#if 0
-		if (source == DVAR_SOURCE_DEVGUI && dvar->flags & 0x800)
-		{
-			Dvar_SetLatchedValue(dvar, value);
-			return;
-		}
-#endif
-	}
-	else
-	{
-		if (!Dvar_CanChangeValue(dvar, value, source))
-		{
-			return;
-		}
-
-		if (dvar->flags & DVAR_LATCH)
-		{
-			Dvar_SetLatchedValue(dvar, value);
-			if (!Dvar_ValuesEqual(dvar->type, dvar->latched, dvar->current))
-			{
-				Com_Printf("%s will be changed upon restarting.\n", dvar->name);
-			}
-			return;
-		}
-	}
-
-	if (Dvar_ValuesEqual(dvar->type, dvar->current, value))
-	{
-		Dvar_SetLatchedValue(dvar, dvar->current);
-	}
-	else
-	{
-		dvar_modifiedFlags |= dvar->flags;
-
-		switch (dvar->type)
-		{
-		case DVAR_TYPE_VEC2:
-			dvar->current.vec2[0] = value.vec2[0];
-			dvar->current.vec2[1] = value.vec2[1];
-
-			dvar->latched.vec2[0] = value.vec2[0];
-			dvar->latched.vec2[1] = value.vec2[1];
-			break;
-		case DVAR_TYPE_VEC3:
-			dvar->current.vec3[0] = value.vec3[0];
-			dvar->current.vec3[1] = value.vec3[1];
-			dvar->current.vec3[2] = value.vec3[2];
-
-			dvar->latched.vec3[0] = value.vec3[0];
-			dvar->latched.vec3[1] = value.vec3[1];
-			dvar->latched.vec3[2] = value.vec3[2];
-			break;
-		case DVAR_TYPE_VEC4:
-			dvar->current.vec4[0] = value.vec4[0];
-			dvar->current.vec4[1] = value.vec4[1];
-			dvar->current.vec4[2] = value.vec4[2];
-			dvar->current.vec4[3] = value.vec4[3];
-
-			dvar->latched.vec4[0] = value.vec4[0];
-			dvar->latched.vec4[1] = value.vec4[1];
-			dvar->latched.vec4[2] = value.vec4[2];
-			dvar->latched.vec4[3] = value.vec4[3];
-			break;
-		case DVAR_TYPE_STRING:
-			shouldFreeString = Dvar_ShouldFreeCurrentString(dvar);
-			if (shouldFreeString)
+			shouldFree = Dvar_ShouldFreeCurrentString(dvar);
+			if (shouldFree)
 			{
 				oldString.string = dvar->current.string;
 			}
-
 			Dvar_AssignCurrentStringValue(dvar, &currentString, value.string);
 			dvar->current.string = currentString.string;
-
 			if (Dvar_ShouldFreeLatchedString(dvar))
 			{
 				Dvar_FreeString(&dvar->latched);
 			}
-
-			dvar->latched.string = NULL;
+			dvar->latched.string = 0;
 			Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
-			if (shouldFreeString)
+			if (shouldFree)
 			{
 				Dvar_FreeString(&oldString);
 			}
-			break;
-		default:
-			dvar->current = value;
-			dvar->latched = value;
-			break;
 		}
-
-		dvar->modified = true;
+		break;
+	default:
+		dvar->current = value;
+		dvar->latched = value;
+		break;
 	}
-}
-
-void Dvar_SetStringFromSource(dvar_t *dvar, const char *string, DvarSetSource source)
-{
-	char stringCopy[MAX_STRING_CHARS];
-	DvarValue newValue;
-
-	if (dvar && dvar->name)
-	{
-		if (dvar->type == DVAR_TYPE_STRING)
-		{
-			I_strncpyz(stringCopy, string, sizeof(stringCopy));
-			newValue.string = stringCopy;
-		}
-		else
-		{
-			newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
-		}
-
-		Dvar_SetVariant(dvar, newValue, source);
-	}
-}
-
-void Dvar_SetBool(dvar_t *dvar, bool value)
-{
-	Dvar_SetBoolFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
-}
-
-void Dvar_SetInt(dvar_t *dvar, int value)
-{
-	Dvar_SetIntFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
-}
-
-void Dvar_SetFloat(dvar_t *dvar, float value)
-{
-	Dvar_SetFloatFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
-}
-
-void Dvar_SetString(dvar_t *dvar, const char *value)
-{
-	Dvar_SetStringFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
-}
-
-qboolean Dvar_IsValidName(const char *dvarName)
-{
-	char nameChar;
-	int index;
-
-	if (!dvarName)
-	{
-		return 0;
-	}
-
-	for (index = 0; dvarName[index]; ++index)
-	{
-		nameChar = dvarName[index];
-		if (!isalnum(nameChar) && nameChar != '_')
-		{
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
-int Dvar_GetCombinedString(char *dest, int arg)
-{
-	int length = 0;
-	int maxarg = Cmd_Argc();
-
-	dest[0] = '\0';
-
-	for (int i = arg; i < maxarg; i++)
-	{
-		const char *string = Cmd_Argv(i);
-		length += strlen(string + 1);
-
-		if (length > MAXPRINTMSG)
-			break;
-
-		I_strncat(dest, MAXPRINTMSG, string);
-
-		if (i < maxarg - 1)
-			I_strncat(dest, MAXPRINTMSG, " ");
-	}
-
-	return length;
-}
-
-const char *Dvar_EnumToString(const dvar_t *dvar)
-{
-	if (dvar->domain.enumeration.stringCount)
-		return dvar->domain.enumeration.strings[dvar->current.integer];
-
-	return "";
 }
 
 bool Dvar_StringToBool(const char *string)
@@ -1317,36 +372,6 @@ DvarValue Dvar_StringToValue(const DvarType type, const DvarLimits domain, const
 	return value;
 }
 
-void Dvar_FreeString(DvarValue *value)
-{
-	FreeString((char *)value->string);
-	value->string = NULL;
-}
-
-qboolean Dvar_ShouldFreeCurrentString(dvar_t *dvar)
-{
-	return dvar->current.string
-	       && dvar->current.string != dvar->latched.string
-	       && dvar->current.string != dvar->reset.string;
-}
-
-qboolean Dvar_ShouldFreeResetString(dvar_t *dvar)
-{
-	return dvar->reset.string
-	       && dvar->reset.string != dvar->current.string
-	       && dvar->reset.string != dvar->latched.string;
-}
-
-void Dvar_WeakCopyString(const char *string, DvarValue *value)
-{
-	value->string = string;
-}
-
-void Dvar_CopyString(const char *string, DvarValue *value)
-{
-	value->string = CopyString(string);
-}
-
 void Dvar_AssignResetStringValue(dvar_t *dvar, DvarValue *dest, const char *string)
 {
 	if (dvar->current.integer && (string == dvar->current.string || !strcmp(string, dvar->current.string)))
@@ -1361,6 +386,985 @@ void Dvar_AssignResetStringValue(dvar_t *dvar, DvarValue *dest, const char *stri
 	{
 		Dvar_CopyString(string, dest);
 	}
+}
+
+void Dvar_UpdateResetValue(dvar_t *dvar, DvarValue value)
+{
+	DvarValue oldString;
+	bool shouldFree;
+	DvarValue resetString;
+
+	switch (dvar->type)
+	{
+	case DVAR_TYPE_VEC2:
+		dvar->reset.vec2[0] = value.vec2[0];
+		dvar->reset.vec2[1] = value.vec2[1];
+		break;
+	case DVAR_TYPE_VEC3:
+		dvar->reset.vec3[0] = value.vec3[0];
+		dvar->reset.vec3[1] = value.vec3[1];
+		dvar->reset.vec3[2] = value.vec3[2];
+		break;
+	case DVAR_TYPE_VEC4:
+		dvar->reset.vec4[0] = value.vec4[0];
+		dvar->reset.vec4[1] = value.vec4[1];
+		dvar->reset.vec4[2] = value.vec4[2];
+		dvar->reset.vec4[3] = value.vec4[3];
+		break;
+	case DVAR_TYPE_STRING:
+		if (dvar->reset.string != value.string)
+		{
+			shouldFree = Dvar_ShouldFreeResetString(dvar);
+			if (shouldFree)
+			{
+				oldString.string = dvar->reset.string;
+			}
+			Dvar_AssignResetStringValue(dvar, &resetString, value.string);
+			dvar->reset = resetString;
+			if (shouldFree)
+			{
+				Dvar_FreeString(&oldString);
+			}
+		}
+		break;
+	default:
+		dvar->reset = value;
+		break;
+	}
+}
+
+void Dvar_MakeExplicitType(dvar_t *dvar, const char *dvarName, DvarType type, unsigned int flags, DvarValue resetValue, DvarLimits domain)
+{
+	bool wasString;
+	DvarValue castValue;
+
+	dvar->type = type;
+	dvar->domain = domain;
+	if (flags & DVAR_ROM || (flags & DVAR_CHEAT && dvar_cheats && !dvar_cheats->current.boolean))
+	{
+		castValue = resetValue;
+	}
+	else
+	{
+		castValue = Dvar_StringToValue(dvar->type, dvar->domain, dvar->current.string);
+		castValue = Dvar_ClampValueToDomain(type, castValue, resetValue, domain);
+	}
+
+	wasString = dvar->type == DVAR_TYPE_STRING && castValue.integer;
+	if (wasString)
+	{
+		castValue.string = CopyString(castValue.string);
+	}
+
+	if (dvar->type != DVAR_TYPE_STRING && Dvar_ShouldFreeCurrentString(dvar))
+	{
+		Dvar_FreeString(&dvar->current);
+	}
+
+	dvar->current.string = 0;
+	if (Dvar_ShouldFreeLatchedString(dvar))
+	{
+		Dvar_FreeString(&dvar->latched);
+	}
+
+	dvar->latched.string = 0;
+	if (Dvar_ShouldFreeResetString(dvar))
+	{
+		Dvar_FreeString(&dvar->reset);
+	}
+
+	dvar->reset.string = 0;
+	Dvar_UpdateResetValue(dvar, resetValue);
+	Dvar_UpdateValue(dvar, castValue);
+
+	dvar_modifiedFlags |= flags;
+
+	if (wasString)
+	{
+		FreeString((char *)castValue.string);
+	}
+}
+
+void Dvar_PerformUnregistration(dvar_t *dvar)
+{
+	DvarValue resetString;
+
+	if (!(dvar->flags & DVAR_EXTERNAL))
+	{
+		dvar->flags |= DVAR_EXTERNAL;
+		dvar->name = CopyString(dvar->name);
+	}
+
+	if (dvar->type != DVAR_TYPE_STRING)
+	{
+		Dvar_CopyString(Dvar_DisplayableLatchedValue(dvar), &dvar->current);
+		if (Dvar_ShouldFreeLatchedString(dvar))
+		{
+			Dvar_FreeString(&dvar->latched);
+		}
+
+		dvar->latched.string = 0;
+		Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
+		if (Dvar_ShouldFreeResetString(dvar))
+		{
+			Dvar_FreeString(&dvar->reset);
+		}
+
+		dvar->reset.string = 0;
+		Dvar_AssignResetStringValue(dvar, &resetString, Dvar_DisplayableResetValue(dvar));
+		dvar->reset.string = resetString.string;
+		dvar->type = DVAR_TYPE_STRING;
+	}
+}
+
+void Dvar_ReinterpretDvar(dvar_t *dvar, const char *dvarName, DvarType type, unsigned int flags, DvarValue value, DvarLimits domain)
+{
+	DvarValue resetValue;
+
+	if (dvar->flags & DVAR_EXTERNAL && !(flags & DVAR_EXTERNAL))
+	{
+		resetValue = value;
+		Dvar_PerformUnregistration(dvar);
+		FreeString((char *)dvar->name);
+		dvar->name = dvarName;
+		dvar->flags &= ~DVAR_EXTERNAL;
+
+		Dvar_MakeExplicitType(dvar, dvarName, type, flags, resetValue, domain);
+	}
+}
+
+dvar_t *Dvar_RegisterNew(const char *dvarName, DvarType type, unsigned int flags, DvarValue value, DvarLimits domain)
+{
+	int hash;
+	dvar_t* dvar;
+	dvar_t** sorted;
+
+	if (dvarCount >= MAX_DVARS)
+		Com_Error(ERR_FATAL, "Can't create dvar '%s': %i dvars already exist", dvarName, MAX_DVARS);
+
+	dvar = &dvarPool[dvarCount];
+	dvarCount++;
+
+	if (flags & DVAR_EXTERNAL)
+	{
+		dvar->name = CopyString(dvarName);
+	}
+	else
+	{
+		dvar->name = dvarName;
+	}
+
+	dvar->flags = flags;
+	dvar->type = type;
+
+	switch (type)
+	{
+	case DVAR_TYPE_VEC2:
+		dvar->current.vec2[0] = value.vec2[0];
+		dvar->current.vec2[1] = value.vec2[1];
+
+		dvar->latched.vec2[0] = value.vec2[0];
+		dvar->latched.vec2[1] = value.vec2[1];
+
+		dvar->reset.vec2[0] = value.vec2[0];
+		dvar->reset.vec2[1] = value.vec2[1];
+		break;
+	case DVAR_TYPE_VEC3:
+		dvar->current.vec3[0] = value.vec3[0];
+		dvar->current.vec3[1] = value.vec3[1];
+		dvar->current.vec3[2] = value.vec3[2];
+
+		dvar->latched.vec3[0] = value.vec3[0];
+		dvar->latched.vec3[1] = value.vec3[1];
+		dvar->latched.vec3[2] = value.vec3[2];
+
+		dvar->reset.vec3[0] = value.vec3[0];
+		dvar->reset.vec3[1] = value.vec3[1];
+		dvar->reset.vec3[2] = value.vec3[2];
+		break;
+	case DVAR_TYPE_VEC4:
+		dvar->current.vec4[0] = value.vec4[0];
+		dvar->current.vec4[1] = value.vec4[1];
+		dvar->current.vec4[2] = value.vec4[2];
+		dvar->current.vec4[3] = value.vec4[3];
+
+		dvar->latched.vec4[0] = value.vec4[0];
+		dvar->latched.vec4[1] = value.vec4[1];
+		dvar->latched.vec4[2] = value.vec4[2];
+		dvar->latched.vec4[3] = value.vec4[3];
+
+		dvar->reset.vec4[0] = value.vec4[0];
+		dvar->reset.vec4[1] = value.vec4[1];
+		dvar->reset.vec4[2] = value.vec4[2];
+		dvar->reset.vec4[3] = value.vec4[3];
+		break;
+	case DVAR_TYPE_STRING:
+		Dvar_CopyString(value.string, &dvar->current);
+		Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
+		Dvar_WeakCopyString(dvar->current.string, &dvar->reset);
+		break;
+	default:
+		dvar->current = value;
+		dvar->latched = value;
+		dvar->reset = value;
+		break;
+	}
+
+	dvar->domain = domain;
+	dvar->modified = false;
+
+	for ( sorted = &sortedDvars; *sorted && strcasecmp(dvar->name, (*sorted)->name) >= 0; sorted = &(*sorted)->next );
+	dvar->next = *sorted;
+	*sorted = dvar;
+
+	hash = generateHashValue(dvarName);
+	dvar->hashNext = dvarHashTable[hash];
+	dvarHashTable[hash] = dvar;
+
+	return dvar;
+}
+
+const char *Dvar_ValueToString(const dvar_t *dvar, DvarValue value)
+{
+	switch (dvar->type)
+	{
+	case DVAR_TYPE_BOOL:
+		return value.boolean ? "1" : "0";
+	case DVAR_TYPE_FLOAT:
+		return va("%g", value.decimal);
+	case DVAR_TYPE_VEC2:
+		return va("%g %g", value.vec2[0], value.vec2[1]);
+	case DVAR_TYPE_VEC3:
+		return va("%g %g %g", value.vec3[0], value.vec3[1], value.vec3[2]);
+	case DVAR_TYPE_VEC4:
+		return va("%g %g %g %g", value.vec4[0], value.vec4[1], value.vec4[2], value.vec4[3]);
+	case DVAR_TYPE_INT:
+		return va("%i", value.integer);
+	case DVAR_TYPE_ENUM:
+		if (dvar->domain.enumeration.stringCount)
+			return dvar->domain.enumeration.strings[value.integer];
+		else
+			return "";
+	case DVAR_TYPE_STRING:
+		return va("%s", value.integer);
+	case DVAR_TYPE_COLOR:
+		return va("%g %g %g %g",
+		          (float)((float)value.color[0] / 255.0f),
+		          (float)((float)value.color[1] / 255.0f),
+		          (float)((float)value.color[2] / 255.0f),
+		          (float)((float)value.color[3] / 255.0f));
+	default:
+		return "";
+	}
+}
+
+bool Dvar_VectorInDomain(const vec_t* vector, int components, float min, float max)
+{
+	for (int channel = 0; channel < components; channel++)
+	{
+		if (min > vector[channel])
+		{
+			return false;
+		}
+
+		if (vector[channel] > max)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool Dvar_ValueInDomain(DvarType type, DvarValue value, DvarLimits domain)
+{
+	switch (type)
+	{
+	case DVAR_TYPE_BOOL:
+		return true;
+	case DVAR_TYPE_FLOAT:
+		if (domain.decimal.min <= value.decimal)
+		{
+			return value.decimal <= domain.decimal.max;
+		}
+		return false;
+	case DVAR_TYPE_VEC2:
+		return Dvar_VectorInDomain(value.vec2, 2, domain.decimal.min, domain.decimal.max);
+	case DVAR_TYPE_VEC3:
+		return Dvar_VectorInDomain(value.vec3, 3, domain.decimal.min, domain.decimal.max);
+	case DVAR_TYPE_VEC4:
+		return Dvar_VectorInDomain(value.vec4, 4, domain.decimal.min, domain.decimal.max);
+	case DVAR_TYPE_INT:
+		if (value.integer >= domain.integer.min)
+		{
+			return value.integer <= domain.integer.max;
+		}
+		return false;
+	case DVAR_TYPE_ENUM:
+		return value.integer >= 0 && (value.integer < domain.enumeration.stringCount || !value.integer);
+	case DVAR_TYPE_STRING:
+		return true;
+	case DVAR_TYPE_COLOR:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool Dvar_ValuesEqual(DvarType type, DvarValue val0, DvarValue val1)
+{
+	switch (type)
+	{
+	case DVAR_TYPE_BOOL:
+		return val0.boolean == val1.boolean;
+	case DVAR_TYPE_FLOAT:
+		return val0.decimal == val1.decimal;
+	case DVAR_TYPE_VEC2:
+		return val0.vec2[0] == val1.vec2[0] && val0.vec2[1] == val1.vec2[1];
+	case DVAR_TYPE_VEC3:
+		return val0.vec3[0] == val1.vec3[0] && val0.vec3[1] == val1.vec3[1] && val0.vec3[2] == val1.vec3[2];
+	case DVAR_TYPE_VEC4:
+		return val0.vec4[0] == val1.vec4[0] && val0.vec4[1] == val1.vec4[1] && val0.vec4[2] == val1.vec4[2] && val0.vec4[3] == val1.vec4[3];
+	case DVAR_TYPE_INT:
+		return val0.integer == val1.integer;
+	case DVAR_TYPE_ENUM:
+		return val0.integer == val1.integer;
+	case DVAR_TYPE_STRING:
+		return strcmp(val0.string, val1.string) == 0;
+	case DVAR_TYPE_COLOR:
+		return val0.integer == val1.integer;
+	default:
+		return false;
+	}
+}
+
+bool Dvar_CanChangeValue(const dvar_t *dvar, DvarValue value, DvarSetSource source)
+{
+	char* reason;
+
+	if (!dvar)
+	{
+		return false;
+	}
+
+	if (Dvar_ValuesEqual(dvar->type, value, dvar->reset))
+	{
+		return true;
+	}
+
+	reason = NULL;
+
+	if (dvar->flags & DVAR_ROM)
+	{
+		reason = va("%s is read only.\n", dvar->name);
+	}
+	else if (dvar->flags & DVAR_INIT)
+	{
+		reason = va("%s is write protected.\n", dvar->name);
+	}
+	else if (dvar->flags & DVAR_CHEAT && !dvar_cheats->current.boolean)
+	{
+		if (source == DVAR_SOURCE_EXTERNAL || source == DVAR_SOURCE_SCRIPT)
+		{
+			reason = va("%s is cheat protected.\n", dvar->name);
+		}
+	}
+
+	if (!reason)
+	{
+		return true;
+	}
+
+	Com_Printf(reason);
+	return false;
+}
+
+void Dvar_AssignLatchedStringValue(dvar_t *dvar, DvarValue *dest, const char *string)
+{
+	if (dvar->current.string && (string == dvar->current.string || !strcmp(string, dvar->current.string)))
+		Dvar_WeakCopyString(dvar->current.string, dest);
+	else if (dvar->reset.string && (string == dvar->reset.string || !strcmp(string, dvar->reset.string)))
+		Dvar_WeakCopyString(dvar->reset.string, dest);
+	else
+		Dvar_CopyString(string, dest);
+}
+
+void Dvar_SetLatchedValue(dvar_t *dvar, DvarValue value)
+{
+	DvarValue latchedString;
+	DvarValue oldString;
+	bool shouldFree;
+
+	switch (dvar->type)
+	{
+	case DVAR_TYPE_VEC2:
+		dvar->latched.vec2[0] = value.vec2[0];
+		dvar->latched.vec2[1] = value.vec2[1];
+		break;
+	case DVAR_TYPE_VEC3:
+		dvar->latched.vec3[0] = value.vec3[0];
+		dvar->latched.vec3[1] = value.vec3[1];
+		dvar->latched.vec3[2] = value.vec3[2];
+		break;
+	case DVAR_TYPE_VEC4:
+		dvar->latched.vec4[0] = value.vec4[0];
+		dvar->latched.vec4[1] = value.vec4[1];
+		dvar->latched.vec4[2] = value.vec4[2];
+		dvar->latched.vec4[3] = value.vec4[3];
+		break;
+	case DVAR_TYPE_STRING:
+		if (dvar->latched.string != value.string)
+		{
+			shouldFree = Dvar_ShouldFreeLatchedString(dvar);
+			if (shouldFree)
+			{
+				oldString.string = dvar->latched.string;
+			}
+
+			Dvar_AssignLatchedStringValue(dvar, &latchedString, value.string);
+			dvar->latched.string = latchedString.string;
+			if (shouldFree)
+			{
+				Dvar_FreeString(&oldString);
+			}
+		}
+		break;
+	default:
+		dvar->latched = value;
+		break;
+	}
+}
+
+void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
+{
+	bool shouldFreeString;
+	DvarValue oldString;
+	DvarValue currentString;
+
+	if (!dvar || !dvar->name || !dvar->name[0])
+	{
+		return;
+	}
+
+	Com_PrintMessage(CON_CHANNEL_LOGFILEONLY, va("      dvar set %s %s\n", dvar->name, Dvar_ValueToString(dvar, value)));
+
+	if (!Dvar_ValueInDomain(dvar->type, value, dvar->domain))
+	{
+		Com_Printf("'%s' is not a valid value for dvar '%s'\n", Dvar_ValueToString(dvar, value), dvar->name);
+		Dvar_PrintDomain(dvar->type, dvar->domain);
+		if (dvar->type == DVAR_TYPE_ENUM)
+		{
+			Dvar_SetVariant(dvar, dvar->reset, source);
+		}
+		return;
+	}
+
+	if (source != DVAR_SOURCE_EXTERNAL && source != DVAR_SOURCE_SCRIPT)
+	{
+#if 0
+		if (source == DVAR_SOURCE_DEVGUI && dvar->flags & 0x800)
+		{
+			Dvar_SetLatchedValue(dvar, value);
+			return;
+		}
+#endif
+	}
+	else
+	{
+		if (!Dvar_CanChangeValue(dvar, value, source))
+		{
+			return;
+		}
+
+		if (dvar->flags & DVAR_LATCH)
+		{
+			Dvar_SetLatchedValue(dvar, value);
+			if (!Dvar_ValuesEqual(dvar->type, dvar->latched, dvar->current))
+			{
+				Com_Printf("%s will be changed upon restarting.\n", dvar->name);
+			}
+			return;
+		}
+	}
+
+	if (Dvar_ValuesEqual(dvar->type, dvar->current, value))
+	{
+		Dvar_SetLatchedValue(dvar, dvar->current);
+	}
+	else
+	{
+		dvar_modifiedFlags |= dvar->flags;
+
+		switch (dvar->type)
+		{
+		case DVAR_TYPE_VEC2:
+			dvar->current.vec2[0] = value.vec2[0];
+			dvar->current.vec2[1] = value.vec2[1];
+
+			dvar->latched.vec2[0] = value.vec2[0];
+			dvar->latched.vec2[1] = value.vec2[1];
+			break;
+		case DVAR_TYPE_VEC3:
+			dvar->current.vec3[0] = value.vec3[0];
+			dvar->current.vec3[1] = value.vec3[1];
+			dvar->current.vec3[2] = value.vec3[2];
+
+			dvar->latched.vec3[0] = value.vec3[0];
+			dvar->latched.vec3[1] = value.vec3[1];
+			dvar->latched.vec3[2] = value.vec3[2];
+			break;
+		case DVAR_TYPE_VEC4:
+			dvar->current.vec4[0] = value.vec4[0];
+			dvar->current.vec4[1] = value.vec4[1];
+			dvar->current.vec4[2] = value.vec4[2];
+			dvar->current.vec4[3] = value.vec4[3];
+
+			dvar->latched.vec4[0] = value.vec4[0];
+			dvar->latched.vec4[1] = value.vec4[1];
+			dvar->latched.vec4[2] = value.vec4[2];
+			dvar->latched.vec4[3] = value.vec4[3];
+			break;
+		case DVAR_TYPE_STRING:
+			shouldFreeString = Dvar_ShouldFreeCurrentString(dvar);
+			if (shouldFreeString)
+			{
+				oldString.string = dvar->current.string;
+			}
+
+			Dvar_AssignCurrentStringValue(dvar, &currentString, value.string);
+			dvar->current.string = currentString.string;
+
+			if (Dvar_ShouldFreeLatchedString(dvar))
+			{
+				Dvar_FreeString(&dvar->latched);
+			}
+
+			dvar->latched.string = NULL;
+			Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
+			if (shouldFreeString)
+			{
+				Dvar_FreeString(&oldString);
+			}
+			break;
+		default:
+			dvar->current = value;
+			dvar->latched = value;
+			break;
+		}
+
+		dvar->modified = true;
+	}
+}
+
+void Dvar_MakeLatchedValueCurrent(dvar_t *dvar)
+{
+	Dvar_SetVariant(dvar, dvar->latched, DVAR_SOURCE_INTERNAL);
+}
+
+void Dvar_Reregister(dvar_t *dvar, const char *dvarName, DvarType type, unsigned int flags, DvarValue resetValue, DvarLimits domain)
+{
+	if ((dvar->flags ^ flags) & DVAR_EXTERNAL)
+	{
+		Dvar_ReinterpretDvar(dvar, dvarName, type, flags, resetValue, domain);
+	}
+
+	if (dvar->flags & DVAR_EXTERNAL && dvar->type != type)
+	{
+		Dvar_MakeExplicitType(dvar, dvarName, type, flags, resetValue, domain);
+	}
+
+	dvar->flags |= flags;
+
+	if (dvar->flags & DVAR_CHEAT && dvar_cheats && !dvar_cheats->current.boolean)
+	{
+		Dvar_SetVariant(dvar, dvar->reset, DVAR_SOURCE_INTERNAL);
+		Dvar_SetLatchedValue(dvar, dvar->reset);
+	}
+
+	if (dvar->flags & DVAR_LATCH)
+	{
+		Dvar_MakeLatchedValueCurrent(dvar);
+	}
+}
+
+dvar_t *Dvar_RegisterVariant(const char *dvarName, DvarType type, unsigned int flags, DvarValue value, DvarLimits domain)
+{
+	dvar_t *dvar = Dvar_FindMalleableVar(dvarName);
+
+	if (!dvar)
+	{
+		return Dvar_RegisterNew(dvarName, type, flags, value, domain);
+	}
+
+	Dvar_Reregister(dvar, dvarName, type, flags, value, domain);
+
+	return dvar;
+}
+
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.integer.min = 0;
+	dvarDomain.integer.max = 0;
+
+	dvarValue.boolean = value;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_BOOL, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.integer.max = max;
+	dvarDomain.integer.min = min;
+
+	dvarValue.integer = value;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_INT, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.decimal.max = max;
+	dvarDomain.decimal.min = min;
+
+	dvarValue.decimal = value;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_FLOAT, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.enumeration.stringCount = 0;
+	dvarDomain.enumeration.strings = NULL;
+
+	dvarValue.string = value;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_STRING, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterEnum(const char *dvarName, const char **valueList, int defaultIndex, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.enumeration.strings = valueList;
+	dvarDomain.enumeration.stringCount = 0;
+
+	while (valueList[dvarDomain.enumeration.stringCount] != NULL)
+	{
+		dvarDomain.enumeration.stringCount++;
+	}
+
+	dvarValue.integer = defaultIndex;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_ENUM, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, float max, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.decimal.max = max;
+	dvarDomain.decimal.min = min;
+
+	dvarValue.vec2[0] = x;
+	dvarValue.vec2[1] = y;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_VEC2, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterVec3(const char *dvarName, float x, float y, float z, float min, float max, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.decimal.max = max;
+	dvarDomain.decimal.min = min;
+
+	dvarValue.vec3[0] = x;
+	dvarValue.vec3[1] = y;
+	dvarValue.vec3[2] = z;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_VEC3, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float w, float min, float max, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.decimal.max = max;
+	dvarDomain.decimal.min = min;
+
+	dvarValue.vec4[0] = x;
+	dvarValue.vec4[1] = y;
+	dvarValue.vec4[2] = z;
+	dvarValue.vec4[3] = w;
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_VEC4, flags, dvarValue, dvarDomain);
+}
+
+dvar_t *Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned int flags)
+{
+	DvarLimits dvarDomain;
+	DvarValue dvarValue;
+
+	dvarDomain.integer.max = 0;
+	dvarDomain.integer.min = 0;
+
+	dvarValue.color[0] = (int)((float)((float)(255.0 * I_fclamp(r, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
+	dvarValue.color[1] = (int)((float)((float)(255.0 * I_fclamp(g, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
+	dvarValue.color[2] = (int)((float)((float)(255.0 * I_fclamp(b, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
+	dvarValue.color[3] = (int)((float)((float)(255.0 * I_fclamp(a, 0.0f, 1.0f)) + 0.001) + 9.313225746154785e-10);
+
+	return Dvar_RegisterVariant(dvarName, DVAR_TYPE_COLOR, flags, dvarValue, dvarDomain);
+}
+
+const char *Dvar_DisplayableLatchedValue(dvar_t *var)
+{
+	return Dvar_ValueToString(var, var->latched);
+}
+
+const char *Dvar_DisplayableResetValue(dvar_t *var)
+{
+	return Dvar_ValueToString(var, var->reset);
+}
+
+const char *Dvar_DisplayableValue(dvar_t *var)
+{
+	return Dvar_ValueToString(var, var->current);
+}
+
+void Dvar_VectorDomainToString(int components, DvarLimits domain, char *outBuffer, int outBufferLen)
+{
+	if (domain.decimal.min == -FLT_MAX)
+	{
+		if (domain.decimal.max == FLT_MAX)
+		{
+			snprintf(outBuffer, outBufferLen, "Domain is any %iD vector", components);
+		}
+		else
+		{
+			snprintf(outBuffer, outBufferLen, "Domain is any %iD vector with components %g or smaller",
+			         components, domain.decimal.max);
+		}
+	}
+	else if (domain.decimal.max == FLT_MAX)
+	{
+		snprintf(outBuffer, outBufferLen, "Domain is any %iD vector with components %g or bigger",
+		         components, domain.decimal.min);
+	}
+	else
+	{
+		snprintf(outBuffer, outBufferLen, "Domain is any %iD vector with components from %g to %g",
+		         components, domain.decimal.min, domain.decimal.max);
+	}
+}
+
+const char *Dvar_DomainToString_Internal(DvarType type, DvarLimits domain, char *outBuffer, int outBufferLen, int *outLineCount)
+{
+	char* outBufferEnd;
+	char* outBufferWalk;
+	int charsWritten;
+	int stringIndex;
+
+	outBufferEnd = &outBuffer[outBufferLen];
+	if (outLineCount)
+	{
+		*outLineCount = 0;
+	}
+
+	switch (type)
+	{
+	case DVAR_TYPE_BOOL:
+		snprintf(outBuffer, outBufferLen, "Domain is 0 or 1");
+		break;
+	case DVAR_TYPE_FLOAT:
+		if (domain.decimal.min == -FLT_MAX)
+		{
+			if (domain.decimal.max == FLT_MAX)
+			{
+				snprintf(outBuffer, outBufferLen, "Domain is any number");
+			}
+			else
+			{
+				snprintf(outBuffer, outBufferLen, "Domain is any number %g or smaller", domain.decimal.max);
+			}
+		}
+		else if (domain.decimal.max == FLT_MAX)
+		{
+			snprintf(outBuffer, outBufferLen, "Domain is any number %g or bigger", domain.decimal.min);
+		}
+		else
+		{
+			snprintf(outBuffer, outBufferLen, "Domain is any number from %g to %g", domain.decimal.min, domain.decimal.max);
+		}
+		break;
+	case DVAR_TYPE_VEC2:
+		Dvar_VectorDomainToString(2, domain, outBuffer, outBufferLen);
+		break;
+	case DVAR_TYPE_VEC3:
+		Dvar_VectorDomainToString(3, domain, outBuffer, outBufferLen);
+		break;
+	case DVAR_TYPE_VEC4:
+		Dvar_VectorDomainToString(4, domain, outBuffer, outBufferLen);
+		break;
+	case DVAR_TYPE_INT:
+		if (domain.integer.min == INT_MAX)
+		{
+			if (domain.integer.max == INT_MAX)
+			{
+				snprintf(outBuffer, outBufferLen, "Domain is any integer");
+			}
+			else
+			{
+				snprintf(outBuffer, outBufferLen, "Domain is any integer %i or smaller", domain.integer.max);
+			}
+		}
+		else if (domain.integer.max == INT_MAX)
+		{
+			snprintf(outBuffer, outBufferLen, "Domain is any integer %i or bigger", domain.integer.min);
+		}
+		else
+		{
+			snprintf(outBuffer, outBufferLen, "Domain is any integer from %i to %i", domain.integer.min, domain.integer.max);
+		}
+		break;
+	case DVAR_TYPE_ENUM:
+		charsWritten = snprintf(outBuffer, outBufferEnd - outBuffer, "Domain is one of the following:");
+		if (charsWritten >= 0)
+		{
+			outBufferWalk = &outBuffer[charsWritten];
+			for (stringIndex = 0; stringIndex < domain.enumeration.stringCount; ++stringIndex)
+			{
+				charsWritten = snprintf(outBufferWalk, outBufferEnd - outBufferWalk, "\n  %2i: %s",
+				                        stringIndex, domain.enumeration.strings[stringIndex]);
+
+				if (charsWritten < 0)
+				{
+					break;
+				}
+
+				if (outLineCount)
+				{
+					++*outLineCount;
+				}
+				outBufferWalk += charsWritten;
+			}
+		}
+		break;
+	case DVAR_TYPE_STRING:
+		snprintf(outBuffer, outBufferLen, "Domain is any text");
+		break;
+	case DVAR_TYPE_COLOR:
+		snprintf(outBuffer, outBufferLen, "Domain is any 4-component color, in RGBA format");
+		break;
+	default:
+		*outBuffer = 0;
+		break;
+	}
+
+	*(outBufferEnd - 1) = 0;
+	return outBuffer;
+}
+
+void Dvar_PrintDomain(DvarType type, DvarLimits domain)
+{
+	char domainBuffer[MAX_STRING_CHARS];
+	Com_Printf("  %s\n", Dvar_DomainToString_Internal(type, domain, domainBuffer, sizeof(domainBuffer), 0));
+}
+
+bool Dvar_IsAtDefaultValue(dvar_t *var)
+{
+	return Dvar_ValuesEqual(var->type, var->current, var->reset);
+}
+
+bool Dvar_HasLatchedValue(dvar_t *var)
+{
+	return Dvar_ValuesEqual(var->type, var->current, var->latched) == false;
+}
+
+void Dvar_SetStringFromSource(dvar_t *dvar, const char *string, DvarSetSource source)
+{
+	char stringCopy[MAX_STRING_CHARS];
+	DvarValue newValue;
+
+	if (dvar && dvar->name)
+	{
+		if (dvar->type == DVAR_TYPE_STRING)
+		{
+			I_strncpyz(stringCopy, string, sizeof(stringCopy));
+			newValue.string = stringCopy;
+		}
+		else
+		{
+			newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
+		}
+
+		Dvar_SetVariant(dvar, newValue, source);
+	}
+}
+
+void Dvar_SetBool(dvar_t *dvar, bool value)
+{
+	Dvar_SetBoolFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
+}
+
+void Dvar_SetInt(dvar_t *dvar, int value)
+{
+	Dvar_SetIntFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
+}
+
+void Dvar_SetFloat(dvar_t *dvar, float value)
+{
+	Dvar_SetFloatFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
+}
+
+void Dvar_SetString(dvar_t *dvar, const char *value)
+{
+	Dvar_SetStringFromSource(dvar, value, DVAR_SOURCE_INTERNAL);
+}
+
+bool Dvar_IsValidName(const char *dvarName)
+{
+	char nameChar;
+	int index;
+
+	if (!dvarName)
+	{
+		return 0;
+	}
+
+	for (index = 0; dvarName[index]; ++index)
+	{
+		nameChar = dvarName[index];
+		if (!isalnum(nameChar) && nameChar != '_')
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+const char *Dvar_EnumToString(const dvar_t *dvar)
+{
+	if (dvar->domain.enumeration.stringCount)
+		return dvar->domain.enumeration.strings[dvar->current.integer];
+
+	return "";
 }
 
 void Dvar_SetBoolFromSource(dvar_t *dvar, bool value, DvarSetSource source)
@@ -1469,52 +1473,7 @@ void Dvar_SetIntByName(const char *dvarName, int value)
 	}
 }
 
-void Dvar_UpdateResetValue(dvar_t *dvar, DvarValue value)
-{
-	DvarValue oldString;
-	qboolean shouldFree;
-	DvarValue resetString;
-
-	switch (dvar->type)
-	{
-	case DVAR_TYPE_VEC2:
-		dvar->reset.vec2[0] = value.vec2[0];
-		dvar->reset.vec2[1] = value.vec2[1];
-		break;
-	case DVAR_TYPE_VEC3:
-		dvar->reset.vec3[0] = value.vec3[0];
-		dvar->reset.vec3[1] = value.vec3[1];
-		dvar->reset.vec3[2] = value.vec3[2];
-		break;
-	case DVAR_TYPE_VEC4:
-		dvar->reset.vec4[0] = value.vec4[0];
-		dvar->reset.vec4[1] = value.vec4[1];
-		dvar->reset.vec4[2] = value.vec4[2];
-		dvar->reset.vec4[3] = value.vec4[3];
-		break;
-	case DVAR_TYPE_STRING:
-		if (dvar->reset.string != value.string)
-		{
-			shouldFree = Dvar_ShouldFreeResetString(dvar);
-			if (shouldFree)
-			{
-				oldString.string = dvar->reset.string;
-			}
-			Dvar_AssignResetStringValue(dvar, &resetString, value.string);
-			dvar->reset = resetString;
-			if (shouldFree)
-			{
-				Dvar_FreeString(&oldString);
-			}
-		}
-		break;
-	default:
-		dvar->reset = value;
-		break;
-	}
-}
-
-qboolean Dvar_GetBool(const char *dvarName)
+bool Dvar_GetBool(const char *dvarName)
 {
 	dvar_t *dvar;
 
@@ -1528,7 +1487,7 @@ qboolean Dvar_GetBool(const char *dvarName)
 		return Dvar_StringToBool(dvar->current.string);
 	}
 
-	return qfalse;
+	return false;
 }
 
 int Dvar_GetInt(const char *dvarName)
@@ -1648,7 +1607,7 @@ const char *Dvar_IndexStringToEnumString(const dvar_t *dvar, const char *indexSt
 
 void Dvar_SetStringByName(const char *dvarName, const char *value)
 {
-	dvar_s *var;
+	dvar_t *var;
 
 	var = Dvar_FindVar(dvarName);
 
@@ -1658,7 +1617,7 @@ void Dvar_SetStringByName(const char *dvarName, const char *value)
 		Dvar_RegisterString(dvarName, value, DVAR_EXTERNAL);
 }
 
-void Dvar_SetInAutoExec(qboolean inAutoExec)
+void Dvar_SetInAutoExec(bool inAutoExec)
 {
 	isLoadingAutoExecGlobalFlag = inAutoExec;
 }
@@ -1668,36 +1627,19 @@ void Dvar_Reset(dvar_t *dvar, DvarSetSource setSource)
 	Dvar_SetVariant(dvar, dvar->reset, setSource);
 }
 
-void Dvar_PerformUnregistration(dvar_t *dvar)
+void Dvar_AddFlags(dvar_t* var, int flags)
 {
-	DvarValue resetString;
+	var->flags |= flags;
+}
 
-	if (!(dvar->flags & DVAR_EXTERNAL))
-	{
-		dvar->flags |= DVAR_EXTERNAL;
-		dvar->name = CopyString(dvar->name);
-	}
+void Dvar_ClearFlags(dvar_t* var, int flags)
+{
+	var->flags &= ~flags;
+}
 
-	if (dvar->type != DVAR_TYPE_STRING)
-	{
-		Dvar_CopyString(Dvar_DisplayableLatchedValue(dvar), &dvar->current);
-		if (Dvar_ShouldFreeLatchedString(dvar))
-		{
-			Dvar_FreeString(&dvar->latched);
-		}
-
-		dvar->latched.string = 0;
-		Dvar_WeakCopyString(dvar->current.string, &dvar->latched);
-		if (Dvar_ShouldFreeResetString(dvar))
-		{
-			Dvar_FreeString(&dvar->reset);
-		}
-
-		dvar->reset.string = 0;
-		Dvar_AssignResetStringValue(dvar, &resetString, Dvar_DisplayableResetValue(dvar));
-		dvar->reset.string = resetString.string;
-		dvar->type = DVAR_TYPE_STRING;
-	}
+void Dvar_ClearModified(dvar_t* var)
+{
+	var->modified = false;
 }
 
 void Dvar_Shutdown()
@@ -1705,7 +1647,7 @@ void Dvar_Shutdown()
 	int dvarIter;
 	dvar_t* dvar;
 
-	isDvarSystemActive = 0;
+	isDvarSystemActive = false;
 
 	for (dvarIter = 0; dvarIter < dvarCount; ++dvarIter)
 	{
@@ -1744,7 +1686,7 @@ void Dvar_Shutdown()
 	Com_Memset(dvarHashTable, 0, sizeof(dvarHashTable));
 }
 
-int Dvar_IsSystemActive()
+bool Dvar_IsSystemActive()
 {
 	return isDvarSystemActive;
 }
@@ -1759,7 +1701,7 @@ void Dvar_ResetScriptInfo()
 
 void Dvar_Init()
 {
-	isDvarSystemActive = qtrue;
-	dvar_cheats = Dvar_RegisterBool("sv_cheats", qfalse, DVAR_INIT);
+	isDvarSystemActive = true;
+	dvar_cheats = Dvar_RegisterBool("sv_cheats", false, DVAR_INIT);
 	Dvar_AddCommands();
 }

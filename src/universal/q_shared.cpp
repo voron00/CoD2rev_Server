@@ -12,8 +12,6 @@ static qint64 ( *_LittleLong64 )( qint64 l ) = NULL;
 static float ( *_BigFloat )( float l ) = NULL;
 static float ( *_LittleFloat )( float l ) = NULL;
 
-qboolean com_fileAccessed;
-
 short   LittleShort( short l )
 {
 	return _LittleShort( l );

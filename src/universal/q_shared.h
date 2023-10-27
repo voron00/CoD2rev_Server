@@ -248,8 +248,6 @@ struct TraceExtents
 
 void CM_CalcTraceExtents(TraceExtents *extents);
 
-extern qboolean com_fileAccessed;
-
 short   LittleShort( short l );
 int     LittleLong( int l );
 qint64  LittleLong64( qint64 l );
