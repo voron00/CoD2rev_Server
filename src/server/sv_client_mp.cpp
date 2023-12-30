@@ -770,7 +770,7 @@ void SV_DropClient( client_t *drop, const char *reason )
 	if ( I_stricmp(reason, "EXE_DISCONNECTED") )
 	{
 		// VoroN: another stock bug fix for broken disconnect msg due to absence of localizedstrings
-		if ( !I_stricmpn(reason, "EXE", 3) || !I_stricmpn(reason, "GAME", 4) || !I_stricmpn(reason, "PC", 2) )
+		if ( !I_strnicmp(reason, "EXE", 3) || !I_strnicmp(reason, "GAME", 4) || !I_strnicmp(reason, "PC", 2) )
 			SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"\0", 101, name, "\x14", reason);
 		else
 			SV_SendServerCommand(0, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s\"\0", 101, name, reason);

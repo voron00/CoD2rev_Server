@@ -247,7 +247,7 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 	}
 
 	// logfile
-	if ( com_logfile && com_logfile->current.integer )
+	if ( com_logfile && com_logfile->current.integer && FS_Initialized() )
 	{
 		// TTimo: only open the qconsole.log if the filesystem is in an initialized state
 		//   also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)

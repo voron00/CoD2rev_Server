@@ -2,182 +2,179 @@
 #include "../qcommon/cmd.h"
 #include "dvar.h"
 
-int Dvar_GetCombinedString(char *dest, int arg)
+static void Dvar_GetCombinedString(char *combined, int first)
 {
-	int length = 0;
-	int maxarg = Cmd_Argc();
+	int c;
+	int l;
+	int len;
 
-	dest[0] = '\0';
+	c = Cmd_Argc();
+	*combined = 0;
+	l = 0;
 
-	for (int i = arg; i < maxarg; i++)
+	while ( first < c )
 	{
-		const char *string = Cmd_Argv(i);
-		length += strlen(string + 1);
+		len = strlen(Cmd_Argv(first)) + 1;
 
-		if (length > MAXPRINTMSG)
+		if ( len + l >= MAXPRINTMSG - 2 )
 			break;
 
-		I_strncat(dest, MAXPRINTMSG, string);
+		I_strncat(combined, MAXPRINTMSG, Cmd_Argv(first));
 
-		if (i < maxarg - 1)
-			I_strncat(dest, MAXPRINTMSG, " ");
+		if ( first != c - 1 )
+			I_strncat(combined, MAXPRINTMSG, " ");
+
+		l += len;
+		first++;
 	}
-
-	return length;
 }
 
-void Dvar_ForEach( void(*callback)(const char *s) )
+void Dvar_ForEach(void (*callback)(const char *dvarName))
 {
-	dvar_t *var;
+	dvar_t *dvar;
 
-	for ( var = sortedDvars ; var ; var = var->next )
-	{
-		callback( var->name );
-	}
+	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
+		callback(dvar->name);
 }
 
 void Dvar_WriteVariables(fileHandle_t f)
 {
-	dvar_t	*var;
+	dvar_t *dvar;
 
-	for (var = sortedDvars; var; var = var->next)
+	for (dvar = sortedDvars; dvar; dvar = dvar->next)
 	{
-		if (I_stricmp(var->name, "cl_cdkey"))
+		if (I_stricmp(dvar->name, "cl_cdkey"))
 		{
-			if (var->flags & DVAR_ARCHIVE)
-				FS_Printf(f, "seta %s \"%s\"\n", var->name, Dvar_DisplayableLatchedValue(var));
+			if (!(dvar->flags & DVAR_ARCHIVE))
+				FS_Printf(f, "seta %s \"%s\"\n", dvar->name, Dvar_DisplayableLatchedValue(dvar));
 		}
 	}
 }
 
 void Dvar_WriteDefaults(fileHandle_t f)
 {
-	dvar_t	*var;
+	dvar_t *dvar;
 
-	for (var = sortedDvars; var; var = var->next)
+	for (dvar = sortedDvars; dvar; dvar = dvar->next)
 	{
-		if (I_stricmp(var->name, "cl_cdkey"))
+		if (I_stricmp(dvar->name, "cl_cdkey"))
 		{
-			if ( ((var->flags & 0x40C0) == 0 ))
-				FS_Printf(f, "set %s \"%s\"\n", var->name, Dvar_DisplayableResetValue(var));
+			if (!(dvar->flags & (DVAR_ROM|DVAR_CHEAT|DVAR_EXTERNAL)))
+				FS_Printf(f, "set %s \"%s\"\n", dvar->name, Dvar_DisplayableResetValue(dvar));
 		}
 	}
 }
 
-void Dvar_RegisterBool_f(void)
+static void Dvar_RegisterBool_f()
 {
-	dvar_t *dvar;
-	const char *name, *value;
-	qboolean var_value;
+	const char *dvarName;
+	const dvar_t *dvar;
+	bool value;
 
-	if (Cmd_Argc() == 3)
+	if ( Cmd_Argc() == 3 )
 	{
-		name = Cmd_Argv(1);
-		value = Cmd_Argv(2);
-		var_value = atoi(value) != 0;
+		dvarName = Cmd_Argv(1);
+		value = atoi(Cmd_Argv(2)) != 0;
+		dvar = Dvar_FindVar(dvarName);
 
-		dvar = Dvar_FindVar(name);
-
-		if (dvar)
+		if ( !dvar || dvar->type == DVAR_TYPE_STRING && dvar->flags & DVAR_EXTERNAL )
 		{
-			if (dvar->type != DVAR_TYPE_BOOL)
-			{
-				Com_Printf("dvar '%s' is not a boolean dvar\n", dvar->name);
-				return;
-			}
+			Dvar_RegisterBool(dvarName, value, DVAR_EXTERNAL);
 		}
-		else
-			Dvar_RegisterBool(name, var_value, DVAR_EXTERNAL);
+		else if ( dvar->type )
+		{
+			Com_Printf("dvar '%s' is not a boolean dvar\n", dvar->name);
+		}
 	}
 	else
+	{
 		Com_Printf("USAGE: %s <name> <default>\n", Cmd_Argv(0));
+	}
 }
 
-void Dvar_RegisterInt_f(void)
+static void Dvar_RegisterInt_f()
 {
-	dvar_t *dvar;
-	const char *name, *value, *min, *max;
-	int var_min, var_max, var_value;
+	int min;
+	int max;
+	const char *dvarName;
+	const dvar_t *dvar;
+	int value;
 
-	if (Cmd_Argc() == 5)
+	if ( Cmd_Argc() == 5 )
 	{
-		name = Cmd_Argv(1);
-		value = Cmd_Argv(2);
-		min = Cmd_Argv(3);
-		max = Cmd_Argv(4);
+		dvarName = Cmd_Argv(1);
+		value = atoi(Cmd_Argv(2));
+		min = atoi(Cmd_Argv(3));
+		max = atoi(Cmd_Argv(4));
 
-		var_value = atoi(value);
-		var_min = atoi(min);
-		var_max = atoi(max);
-
-		dvar = Dvar_FindVar(name);
-
-		if (var_max >= var_min)
+		if ( min > max )
 		{
-			if (dvar)
-			{
-				if (dvar->type != DVAR_TYPE_INT)
-				{
-					Com_Printf("dvar '%s' is not a integer dvar\n", dvar->name);
-					return;
-				}
-			}
-			else
-				Dvar_RegisterFloat(name, var_value, var_min, var_max, DVAR_EXTERNAL);
+			Com_Printf("dvar %s: min %i should not be greater than max %i\n", dvarName, min, max);
+			return;
 		}
-		else
-			Com_Printf("dvar %s: min %i should not be greater than max %i\n", Cmd_Argv(0), var_min, var_max);
+
+		dvar = Dvar_FindVar(dvarName);
+
+		if ( !dvar || dvar->type == DVAR_TYPE_STRING && dvar->flags & DVAR_EXTERNAL)
+		{
+			Dvar_RegisterInt(dvarName, value, min, max, DVAR_EXTERNAL);
+		}
+		else if ( dvar->type != DVAR_TYPE_INT && dvar->type != DVAR_TYPE_ENUM )
+		{
+			Com_Printf("dvar '%s' is not an integer dvar\n", dvar->name);
+		}
 	}
 	else
+	{
 		Com_Printf("USAGE: %s <name> <default> <min> <max>\n", Cmd_Argv(0));
+	}
 }
 
-void Dvar_RegisterFloat_f(void)
+static void Dvar_RegisterFloat_f()
 {
-	dvar_t *dvar;
-	const char *name, *value, *min, *max;
-	float var_min, var_max, var_value;
+	float min;
+	float max;
+	const char *dvarName;
+	const dvar_t *dvar;
+	float value;
 
-	if (Cmd_Argc() == 5)
+	if ( Cmd_Argc() == 5 )
 	{
-		name = Cmd_Argv(1);
-		value = Cmd_Argv(2);
-		min = Cmd_Argv(3);
-		max = Cmd_Argv(4);
+		dvarName = Cmd_Argv(1);
+		value = atof(Cmd_Argv(2));
+		min = atof(Cmd_Argv(3));
+		max = atof(Cmd_Argv(4));
 
-		var_value = atof(value);
-		var_min = atof(min);
-		var_max = atof(max);
-
-		dvar = Dvar_FindVar(name);
-
-		if (var_max >= var_min)
+		if ( min > max )
 		{
-			if (dvar)
-			{
-				if (dvar->type != DVAR_TYPE_FLOAT)
-				{
-					Com_Printf("dvar '%s' is not a float dvar\n", dvar->name);
-					return;
-				}
-			}
-			else
-				Dvar_RegisterFloat(name, var_value, var_min, var_max, DVAR_EXTERNAL);
+			Com_Printf("dvar %s: min %g should not be greater than max %g\n", dvarName, min, max);
+			return;
 		}
-		else
-			Com_Printf("dvar %s: min %g should not be greater than max %g\n", Cmd_Argv(0), var_min, var_max);
+
+		dvar = Dvar_FindVar(dvarName);
+
+		if ( !dvar || dvar->type == DVAR_TYPE_STRING && dvar->flags & DVAR_EXTERNAL )
+		{
+			Dvar_RegisterFloat(dvarName, value, min, max, DVAR_EXTERNAL);
+		}
+		else if ( dvar->type != DVAR_TYPE_FLOAT )
+		{
+			Com_Printf("dvar '%s' is not an integer dvar\n", dvar->name);
+		}
 	}
 	else
+	{
 		Com_Printf("USAGE: %s <name> <default> <min> <max>\n", Cmd_Argv(0));
+	}
 }
 
-qboolean Dvar_ToggleSimple(dvar_t *dvar)
+static bool Dvar_ToggleSimple(dvar_t *dvar)
 {
 	switch (dvar->type)
 	{
 	case DVAR_TYPE_BOOL:
 		Dvar_SetBoolFromSource(dvar, !dvar->current.boolean, DVAR_SOURCE_EXTERNAL);
-		return qtrue;
+		return true;
 
 	case DVAR_TYPE_FLOAT:
 		if (dvar->domain.decimal.min > 0.0 || dvar->domain.decimal.max < 1.0)
@@ -188,10 +185,10 @@ qboolean Dvar_ToggleSimple(dvar_t *dvar)
 				Dvar_SetFloatFromSource(dvar, dvar->domain.decimal.min, DVAR_SOURCE_EXTERNAL);
 		}
 		else if (dvar->current.decimal == 0.0)
-			Dvar_SetFloatFromSource(dvar, 1, DVAR_SOURCE_EXTERNAL);
+			Dvar_SetFloatFromSource(dvar, 1.0, DVAR_SOURCE_EXTERNAL);
 		else
-			Dvar_SetFloatFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
-		return qtrue;
+			Dvar_SetFloatFromSource(dvar, 0.0, DVAR_SOURCE_EXTERNAL);
+		return true;
 
 	case DVAR_TYPE_VEC2:
 	case DVAR_TYPE_VEC3:
@@ -199,7 +196,7 @@ qboolean Dvar_ToggleSimple(dvar_t *dvar)
 	case DVAR_TYPE_STRING:
 	case DVAR_TYPE_COLOR:
 		Com_Printf("'toggle' with no arguments makes no sense for dvar '%s'\n", dvar->name);
-		return qfalse;
+		return false;
 
 	case DVAR_TYPE_INT:
 		if (dvar->domain.integer.min > 0 || dvar->domain.integer.max <= 0)
@@ -213,21 +210,21 @@ qboolean Dvar_ToggleSimple(dvar_t *dvar)
 			Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
 		else
 			Dvar_SetIntFromSource(dvar, 1, DVAR_SOURCE_EXTERNAL);
-		return qtrue;
+		return true;
 
 	case DVAR_TYPE_ENUM:
 		if (dvar->current.integer >= dvar->domain.enumeration.stringCount - 1)
 			Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);
 		else
 			Dvar_SetIntFromSource(dvar, dvar->current.integer + 1, DVAR_SOURCE_EXTERNAL);
-		return qtrue;
+		return true;
 
 	default:
-		return qfalse;
+		return false;
 	}
 }
 
-qboolean Dvar_ToggleInternal()
+static bool Dvar_ToggleInternal()
 {
 	const char* string;
 	int argIndex;
@@ -239,7 +236,7 @@ qboolean Dvar_ToggleInternal()
 	if (Cmd_Argc() < 2)
 	{
 		Com_Printf("USAGE: %s <variable> <optional value sequence>\n", Cmd_Argv(0));
-		return qfalse;
+		return false;
 	}
 
 	dvarName = Cmd_Argv(1);
@@ -247,7 +244,7 @@ qboolean Dvar_ToggleInternal()
 	if (!dvar)
 	{
 		Com_Printf("toggle failed: dvar '%s' not found.\n", dvarName);
-		return qfalse;
+		return false;
 	}
 
 	if (Cmd_Argc() != 2)
@@ -267,7 +264,7 @@ qboolean Dvar_ToggleInternal()
 			if (!I_stricmp(string, argString))
 			{
 				Dvar_SetCommand(dvarName, Cmd_Argv(argIndex + 1));
-				return qtrue;
+				return true;
 			}
 		}
 
@@ -281,86 +278,93 @@ qboolean Dvar_ToggleInternal()
 			}
 		}
 		Dvar_SetCommand(dvarName, argString);
-		return qtrue;
+		return true;
 	}
 
 	return Dvar_ToggleSimple(dvar);
 }
 
-void Dvar_Toggle_f(void)
+static void Dvar_Toggle_f(void)
 {
 	Dvar_ToggleInternal();
 }
 
 void Dvar_Set_f(void)
 {
-	char dvar_value[MAXPRINTMSG];
+	char combined[MAXPRINTMSG];
+	const char *dvarName;
 
-	if (Cmd_Argc() > 2)
+	if ( Cmd_Argc() < 3 )
 	{
-		const char *name = Cmd_Argv(1);
+		Com_Printf("USAGE: set <variable> <value>\n");
+		return;
+	}
 
-		if (Dvar_IsValidName(name))
-		{
-			Dvar_GetCombinedString(dvar_value, 2);
-			Dvar_SetCommand(name, dvar_value);
-		}
-		else
-			Com_Printf("invalid variable name: %s\n", name);
+	dvarName = Cmd_Argv(1);
+
+	if ( Dvar_IsValidName(dvarName) )
+	{
+		Dvar_GetCombinedString(combined, 2);
+		Dvar_SetCommand(Cmd_Argv(1), combined);
 	}
 	else
-		Com_Printf("USAGE: set <variable> <value>\n");
+	{
+		Com_Printf("invalid variable name: %s\n", Cmd_Argv(1));
+	}
 }
 
 void Dvar_SetA_f(void)
 {
 	dvar_t *dvar;
 
-	if (Cmd_Argc() > 2)
+	if ( Cmd_Argc() < 3 )
 	{
-		Dvar_Set_f();
-		dvar = Dvar_FindVar(Cmd_Argv(1));
-
-		if (dvar)
-			Dvar_AddFlags(dvar, DVAR_ARCHIVE);
-	}
-	else
 		Com_Printf("USAGE: seta <variable> <value>\n");
+		return;
+	}
+
+	Dvar_Set_f();
+	dvar = Dvar_FindVar(Cmd_Argv(1));
+
+	if ( dvar )
+		Dvar_AddFlags(dvar, DVAR_ARCHIVE);
 }
 
 void Dvar_SetS_f(void)
 {
 	dvar_t *dvar;
 
-	if (Cmd_Argc() > 2)
+	if ( Cmd_Argc() < 3 )
 	{
-		Dvar_Set_f();
-		dvar = Dvar_FindVar(Cmd_Argv(1));
-
-		if (dvar)
-			Dvar_AddFlags(dvar, DVAR_SERVERINFO);
-	}
-	else
 		Com_Printf("USAGE: sets <variable> <value>\n");
+		return;
+	}
+
+	Dvar_Set_f();
+	dvar = Dvar_FindVar(Cmd_Argv(1));
+
+	if ( dvar )
+		Dvar_AddFlags(dvar, DVAR_SERVERINFO);
 }
 
 void Dvar_SetU_f(void)
 {
 	dvar_t *dvar;
 
-	if (Cmd_Argc() > 2)
+	if ( Cmd_Argc() < 3 )
 	{
-		Dvar_Set_f();
-		dvar = Dvar_FindVar(Cmd_Argv(1));
-
-		if (dvar)
-			Dvar_AddFlags(dvar, DVAR_USERINFO);
-	}
-	else
 		Com_Printf("USAGE: setu <variable> <value>\n");
+		return;
+	}
+
+	Dvar_Set_f();
+	dvar = Dvar_FindVar(Cmd_Argv(1));
+
+	if ( dvar )
+		Dvar_AddFlags(dvar, DVAR_USERINFO);
 }
 
-void Dvar_SetFromDvar_f(void)
+static void Dvar_SetFromDvar_f(void)
 {
 	dvar_t *dvar;
 
@@ -377,7 +381,7 @@ void Dvar_SetFromDvar_f(void)
 		Com_Printf("USAGE: setfromdvar <dest_dvar> <source_dvar>\n");
 }
 
-void Dvar_Reset_f(void)
+static void Dvar_Reset_f(void)
 {
 	dvar_t *dvar;
 
@@ -409,10 +413,8 @@ void Com_DvarDump(conChannel_t channel)
 {
 	dvar_t *dvar;
 	const char *match;
-	int	i = 0;
 	int count = 0;
-	char message[8196];
-	char summary[128];
+	char summary[8192];
 
 	if ( Cmd_Argc() <= 1 )
 		match = NULL;
@@ -423,19 +425,17 @@ void Com_DvarDump(conChannel_t channel)
 	{
 		Com_PrintMessage(channel, "=============================== DVAR DUMP ========================================\n");
 
-		for (dvar = sortedDvars; dvar; dvar = dvar->next, i++)
+		for (dvar = sortedDvars; dvar; dvar = dvar->next, count++)
 		{
-			count++;
-
 			if (!match || Com_Filter(match, dvar->name, 0))
 			{
 				if (Dvar_HasLatchedValue(dvar))
-					Com_sprintf(message, sizeof(message), "      %s \"%s\" -- latched \"%s\"\n", dvar->name,
+					Com_sprintf(summary, sizeof(summary), "      %s \"%s\" -- latched \"%s\"\n", dvar->name,
 					            Dvar_DisplayableValue(dvar), Dvar_DisplayableLatchedValue(dvar));
 				else
-					Com_sprintf(message, sizeof(message), "      %s \"%s\"\n", dvar->name, Dvar_DisplayableValue(dvar));
+					Com_sprintf(summary, sizeof(summary), "      %s \"%s\"\n", dvar->name, Dvar_DisplayableValue(dvar));
 
-				Com_PrintMessage(channel, message);
+				Com_PrintMessage(channel, summary);
 			}
 		}
 
@@ -445,87 +445,79 @@ void Com_DvarDump(conChannel_t channel)
 	}
 }
 
-void Dvar_Dump_f(void)
+static void Dvar_Dump_f(void)
 {
 	Com_DvarDump(CON_CHANNEL_DONT_FILTER);
 }
 
-void Dvar_List_f(void)
+static void Dvar_List_f(void)
 {
-	dvar_t *var;
 	const char *match;
-	int	i = 0;
+	dvar_t *dvar;
 
-	if (Cmd_Argc() > 1)
-	{
-		match = Cmd_Argv(1);
-		Com_Printf("Displaying all dvars starting with: %s\n", match);
-	}
-	else
+	if ( Cmd_Argc() <= 1 )
 		match = NULL;
+	else
+		match = Cmd_Argv(1);
 
-	Com_Printf("====================================== Dvar List ======================================\n");
-
-	for (var = sortedDvars; var; var = var->next, i++)
+	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
-		if (match && !Com_Filter(match, var->name, qfalse))
+		if (match && !Com_Filter(match, dvar->name, qfalse))
 			continue;
 
-		if (var->flags & (DVAR_SERVERINFO | DVAR_SCRIPTINFO))
+		if (dvar->flags & (DVAR_SERVERINFO | DVAR_SCRIPTINFO))
 			Com_Printf("S");
 		else
 			Com_Printf(" ");
 
-		if (var->flags & DVAR_USERINFO)
+		if (dvar->flags & DVAR_USERINFO)
 			Com_Printf("U");
 		else
 			Com_Printf(" ");
 
-		if (var->flags & DVAR_ROM)
+		if (dvar->flags & DVAR_ROM)
 			Com_Printf("R");
 		else
 			Com_Printf(" ");
 
-		if (var->flags & DVAR_INIT)
+		if (dvar->flags & DVAR_INIT)
 			Com_Printf("I");
 		else
 			Com_Printf(" ");
 
-		if (var->flags & DVAR_ARCHIVE)
+		if (dvar->flags & DVAR_ARCHIVE)
 			Com_Printf("A");
 		else
 			Com_Printf(" ");
 
-		if (var->flags & DVAR_LATCH)
+		if (dvar->flags & DVAR_LATCH)
 			Com_Printf("L");
 		else
 			Com_Printf(" ");
 
-		if (var->flags & DVAR_CHEAT)
+		if (dvar->flags & DVAR_CHEAT)
 			Com_Printf("C");
 		else
 			Com_Printf(" ");
 
-		Com_Printf(" %s \"%s\"\n", var->name, Dvar_DisplayableValue(var));
+		Com_Printf(" %s \"%s\"\n", dvar->name, Dvar_DisplayableValue(dvar));
 	}
 
-	Com_Printf("\n%i total dvars\n", i);
-	Com_Printf("%i dvar indexes\n", dvarCount);
-	Com_Printf("==================================== End Dvar List ====================================\n");
+	Com_Printf("\n%i total dvars\n", dvarCount);
 }
 
 char *Dvar_InfoString(unsigned short bit)
 {
 	static char info[MAX_INFO_STRING];
-	dvar_t  *var;
+	dvar_t *dvar;
 
 	info[0] = 0;
 
-	for ( var = sortedDvars ; var ; var = var->next )
+	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
-		if ( var->flags & bit )
+		if ( dvar->flags & bit )
 		{
-			Info_SetValueForKey( info, var->name, Dvar_DisplayableValue(var) );
+			Info_SetValueForKey( info, dvar->name, Dvar_DisplayableValue(dvar) );
 		}
 	}
 
@@ -535,15 +527,15 @@ char *Dvar_InfoString(unsigned short bit)
 char *Dvar_InfoString_Big(unsigned short bit)
 {
 	static char info[BIG_INFO_STRING];
-	dvar_t  *var;
+	dvar_t *dvar;
 
 	info[0] = 0;
 
-	for ( var = sortedDvars ; var ; var = var->next )
+	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
-		if ( var->flags & bit )
+		if ( dvar->flags & bit )
 		{
-			Info_SetValueForKey_Big( info, var->name, Dvar_DisplayableValue(var) );
+			Info_SetValueForKey_Big( info, dvar->name, Dvar_DisplayableValue(dvar) );
 		}
 	}
 
@@ -552,13 +544,13 @@ char *Dvar_InfoString_Big(unsigned short bit)
 
 void SV_SetConfig(int start, int max, unsigned short bit)
 {
-	dvar_t *var;
+	dvar_t *dvar;
 
-	for ( var = sortedDvars ; var ; var = var->next )
+	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
-		if ( var->flags & bit )
+		if ( dvar->flags & bit )
 		{
-			SV_SetConfigValueForKey(start, max, var->name, Dvar_DisplayableValue(var));
+			SV_SetConfigValueForKey(start, max, dvar->name, Dvar_DisplayableValue(dvar));
 		}
 	}
 }
@@ -566,23 +558,23 @@ void SV_SetConfig(int start, int max, unsigned short bit)
 qboolean Dvar_Command()
 {
 	const char *cmd;
-	dvar_t *var;
+	dvar_t *dvar;
 	char dvar_value[MAXPRINTMSG];
 
 	cmd = Cmd_Argv(0);
-	var = Dvar_FindVar(cmd);
+	dvar = Dvar_FindVar(cmd);
 
-	if ( !var )
+	if ( !dvar )
 		return qfalse;
 
 	if ( Cmd_Argc() == 1 )
 	{
-		Com_Printf("\"%s\" is: \"%s^7\" default: \"%s^7\"\n", var->name, Dvar_DisplayableValue(var), Dvar_DisplayableResetValue(var));
-		if ( Dvar_HasLatchedValue(var) )
+		Com_Printf("\"%s\" is: \"%s^7\" default: \"%s^7\"\n", dvar->name, Dvar_DisplayableValue(dvar), Dvar_DisplayableResetValue(dvar));
+		if ( Dvar_HasLatchedValue(dvar) )
 		{
-			Com_Printf("latched: \"%s\"\n", Dvar_DisplayableLatchedValue(var));
+			Com_Printf("latched: \"%s\"\n", Dvar_DisplayableLatchedValue(dvar));
 		}
-		Dvar_PrintDomain(var->type, var->domain);
+		Dvar_PrintDomain(dvar->type, dvar->domain);
 	}
 	else
 	{

@@ -270,7 +270,6 @@ qboolean I_isintegral( float f );
 qboolean I_isprintstring( char* s );
 void I_strncpyz( char *dest, const char *src, int destsize );
 int I_strnicmp(const char *s0, const char *s1, int n);
-int I_stricmpn( const char *s1, const char *s2, int n );
 int I_strncmp( const char *s1, const char *s2, int n );
 int I_stricmp( const char *s1, const char *s2 );
 char *I_strlwr( char *s1 );
@@ -310,7 +309,6 @@ char *I_CleanStr(char *string);
 #define Q_isintegral I_isintegral
 #define Q_isprintstring I_isprintstring
 #define Q_strncpyz I_strncpyz
-#define Q_stricmpn I_stricmpn
 #define Q_strncmp I_strncmp
 #define Q_stricmp I_stricmp
 #define Q_strlwr I_strlwr
@@ -371,7 +369,7 @@ qboolean Info_Validate( const char *s );
 bool COM_BitTest(int array[], int bitNum);
 void COM_BitSet(int array[], int bitNum);
 void COM_BitClear(int array[], int bitNum);
-void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
+void AddLeanToPosition(float *position, float fViewYaw, float fLeanFrac, float fViewRoll, float fLeanDist);
 qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes, int (*parseSpecialFieldType)(unsigned char *, const char *, const int), void (*parseStrCpy)(unsigned char *, const char *));
 void SetConfigString(char **ppszConfigString, const char *pszKeyValue);
 void SetConfigString2(unsigned char *pMember, const char *pszKeyValue);

@@ -12,47 +12,47 @@ static qint64 ( *_LittleLong64 )( qint64 l ) = NULL;
 static float ( *_BigFloat )( float l ) = NULL;
 static float ( *_LittleFloat )( float l ) = NULL;
 
-short   LittleShort( short l )
+short LittleShort( short l )
 {
 	return _LittleShort( l );
 }
 
-int     LittleLong( int l )
+int LittleLong( int l )
 {
 	return _LittleLong( l );
 }
 
-qint64  LittleLong64( qint64 l )
+qint64 LittleLong64( qint64 l )
 {
 	return _LittleLong64( l );
 }
 
-float   LittleFloat( float l )
+float LittleFloat( float l )
 {
 	return _LittleFloat( l );
 }
 
-short   BigShort( short l )
+short BigShort( short l )
 {
 	return _BigShort( l );
 }
 
-int     BigLong( int l )
+int BigLong( int l )
 {
 	return _BigLong( l );
 }
 
-qint64  BigLong64( qint64 l )
+qint64 BigLong64( qint64 l )
 {
 	return _BigLong64( l );
 }
 
-float   BigFloat( float l )
+float BigFloat( float l )
 {
 	return _BigFloat( l );
 }
 
-short   ShortSwap( short l )
+short ShortSwap( short l )
 {
 	byte b1,b2;
 
@@ -62,12 +62,12 @@ short   ShortSwap( short l )
 	return ( b1 << 8 ) + b2;
 }
 
-short   ShortNoSwap( short l )
+short ShortNoSwap( short l )
 {
 	return l;
 }
 
-int    LongSwap( int l )
+int LongSwap( int l )
 {
 	byte b1,b2,b3,b4;
 
@@ -112,7 +112,6 @@ float FloatSwap( float f )
 		float f;
 		byte b[4];
 	} dat1, dat2;
-
 
 	dat1.f = f;
 	dat2.b[0] = dat1.b[3];
@@ -229,6 +228,9 @@ int I_strnicmp(const char *s0, const char *s1, int n)
 	int c1;
 	int c0;
 
+	assert(s0);
+	assert(s1);
+
 	if (!s0 || !s1)
 	{
 		return s1 - s0;
@@ -265,98 +267,71 @@ int I_strnicmp(const char *s0, const char *s1, int n)
 	return 0;
 }
 
-int I_stricmpn( const char *s1, const char *s2, int n )
+int I_strncmp(const char *s0, const char *s1, int n)
 {
-	int c1, c2;
+	int c1;
+	int c0;
+
+	assert(s0);
+	assert(s1);
+
+	if (!s0 || !s1)
+	{
+		return s1 - s0;
+	}
 
 	do
 	{
+		c0 = *s0++;
 		c1 = *s1++;
-		c2 = *s2++;
 
-		if ( !n-- )
+		if (!--n)       // strings are equal until end point
 		{
-			return 0;       // strings are equal until end point
+			return 0;
 		}
-
-		if ( c1 != c2 )
+		if (c0 != c1)
 		{
-			if ( c1 >= 'a' && c1 <= 'z' )
-			{
-				c1 -= ( 'a' - 'A' );
-			}
-			if ( c2 >= 'a' && c2 <= 'z' )
-			{
-				c2 -= ( 'a' - 'A' );
-			}
-			if ( c1 != c2 )
-			{
-				return c1 < c2 ? -1 : 1;
-			}
+			return c0 < c1 ? -1 : 1;
 		}
 	}
-	while ( c1 );
+	while (c0);
 
-	return 0;       // strings are equal
+	return 0;      // strings are equal
 }
 
-int I_strncmp( const char *s1, const char *s2, int n )
+int I_stricmp(const char *s0, const char *s1)
 {
-	int c1, c2;
+	assert(s0);
+	assert(s1);
+	return I_strnicmp(s0, s1, 0x7FFFFFFF);
+}
 
-	do
+char *I_strlwr(char *s)
+{
+	char* iter;
+
+	for (iter = s; *iter; ++iter)
 	{
-		c1 = *s1++;
-		c2 = *s2++;
-
-		if ( !n-- )
+		if (I_isupper(*iter))
 		{
-			return 0;       // strings are equal until end point
-		}
-
-		if ( c1 != c2 )
-		{
-			return c1 < c2 ? -1 : 1;
+			*iter += 32;
 		}
 	}
-	while ( c1 );
-
-	return 0;       // strings are equal
+	return s;
 }
 
-int I_stricmp( const char *s1, const char *s2 )
+char *I_strupr(char *s)
 {
-	return ( s1 && s2 ) ? I_stricmpn( s1, s2, 99999 ) : -1;
-}
+	char* iter;
 
-char *I_strlwr( char *s1 )
-{
-	char*   s;
-
-	for ( s = s1; *s; ++s )
+	for (iter = s; *iter; ++iter)
 	{
-		if ( ( 'A' <= *s ) && ( *s <= 'Z' ) )
+		if (I_islower(*iter))
 		{
-			*s -= 'A' - 'a';
+			*iter -= 32;
 		}
 	}
-
-	return s1;
-}
-
-char *I_strupr( char *s1 )
-{
-	char* cp;
-
-	for ( cp = s1 ; *cp ; ++cp )
-	{
-		if ( ( 'a' <= *cp ) && ( *cp <= 'z' ) )
-		{
-			*cp += 'A' - 'a';
-		}
-	}
-
-	return s1;
+	return s;
 }
 
 void I_strcat( char *dest, int size, const char *src )
@@ -1008,89 +983,152 @@ void Info_RemoveKey_Big( char *s, const char *key )
 
 }
 
-void Info_SetValueForKey( char *s, const char *key, const char *value )
+void Info_SetValueForKey(char *s, const char *key, const char *value)
 {
-	char	newi[MAX_INFO_STRING];
+	int j;
+	char c;
+	char cleanValue[MAX_INFO_STRING];
+	int len;
+	char newi[MAX_INFO_STRING];
+	int i;
 
-	if ( strlen( s ) >= MAX_INFO_STRING )
+	assert(value);
+	if (strlen(s) >= MAX_INFO_STRING)
 	{
-		Com_Error( ERR_DROP, "Info_SetValueForKey: oversize infostring" );
-	}
-
-	if (strchr (key, '\\') || strchr (value, '\\'))
-	{
-		Com_Printf ("Can't use keys or values with a \\\n");
+		Com_Printf("Info_SetValueForKey: oversize infostring");
 		return;
 	}
 
-	if (strchr (key, ';') || strchr (value, ';'))
+	j = 0;
+	for (i = 0; i < MAX_INFO_STRING - 1; ++i)
 	{
-		Com_Printf ("Can't use keys or values with a semicolon\n");
+		c = value[i];
+		if (!c)
+		{
+			break;
+		}
+		if (c != '\\' && c != ';' && c != '\"')
+		{
+			assert(j < MAX_INFO_STRING);
+			cleanValue[j++] = c;
+		}
+	}
+
+	assert(j < MAX_INFO_STRING);
+	cleanValue[j] = 0;
+	if (strchr(key, '\\'))
+	{
+		Com_Printf("Can\'t use keys with a \\\nkey: '%s'\nvalue: '%s'", key, value);
 		return;
 	}
 
-	if (strchr (key, '\"') || strchr (value, '\"'))
+	if (strchr(key, ';'))
 	{
-		Com_Printf ("Can't use keys or values with a \"\n");
+		Com_Printf("Can\'t use keys with a semicolon\nkey: '%s'\nvalue: '%s'", key, value);
 		return;
 	}
 
-	Info_RemoveKey (s, key);
-	if (!value || !strlen(value))
+	if (strchr(key, '\"'))
+	{
+		Com_Printf("Can\'t use keys with a \"\nkey: '%s'\nvalue: '%s'", key, value);
 		return;
+	}
 
-	Com_sprintf (newi, sizeof(newi), "\\%s\\%s", key, value);
+	Info_RemoveKey(s, key);
+	if (!cleanValue[0])
+	{
+		return;
+	}
+
+	len = Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, cleanValue);
+	if (len <= 0)
+	{
+		Com_Printf("Info buffer length exceeded, not including key/value pair inresponse\n");
+		return;
+	}
 
 	if (strlen(newi) + strlen(s) > MAX_INFO_STRING)
 	{
-		Com_Printf ("Info string length exceeded\n");
+		Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n", key, value, s);
 		return;
 	}
 
-	strcat (newi, s);
-	strcpy (s, newi);
+	strcat(s, newi);
 }
 
-void Info_SetValueForKey_Big( char *s, const char *key, const char *value )
+void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 {
-	char	newi[BIG_INFO_STRING];
+	int j;
+	char c;
+	char cleanValue[BIG_INFO_STRING];
+	int len;
+	char newi[BIG_INFO_STRING];
+	int i;
 
-	if ( strlen( s ) >= BIG_INFO_STRING )
+	assert(value);
+	if (strlen(s) >= BIG_INFO_STRING)
 	{
-		Com_Error( ERR_DROP, "Info_SetValueForKey: oversize infostring" );
-	}
-
-	if (strchr (key, '\\') || strchr (value, '\\'))
-	{
-		Com_Printf ("Can't use keys or values with a \\\n");
+		Com_Printf("Info_SetValueForKey: oversize infostring");
 		return;
 	}
 
-	if (strchr (key, ';') || strchr (value, ';'))
+	j = 0;
+	for (i = 0; i < BIG_INFO_STRING - 1; ++i)
 	{
-		Com_Printf ("Can't use keys or values with a semicolon\n");
+		c = value[i];
+		if (!c)
+		{
+			break;
+		}
+		if (c != 92 && c != 59 && c != 34)
+		{
+			assert(j < BIG_INFO_STRING);
+			cleanValue[j++] = c;
+		}
+	}
+
+	assert(j < BIG_INFO_STRING);
+	cleanValue[j] = 0;
+
+	if (strchr(key, '\\'))
+	{
+		Com_Printf("Can\'t use keys with a \\\nkey: '%s'\nvalue: '%s'", key, value);
 		return;
 	}
 
-	if (strchr (key, '\"') || strchr (value, '\"'))
+	if (strchr(key, ';'))
 	{
-		Com_Printf ("Can't use keys or values with a \"\n");
+		Com_Printf("Can\'t use keys with a semicolon\nkey: '%s'\nvalue: '%s'", key, value);
 		return;
 	}
 
-	Info_RemoveKey_Big (s, key);
-	if (!value || !strlen(value))
+	if (strchr(key, '\"'))
+	{
+		Com_Printf("Can\'t use keys with a \"\nkey: '%s'\nvalue: '%s'", key, value);
 		return;
+	}
 
-	Com_sprintf (newi, sizeof(newi), "\\%s\\%s", key, value);
+	Info_RemoveKey_Big(s, key);
+	if (!cleanValue[0])
+	{
+		return;
+	}
+
+	len = Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, cleanValue);
+	if (len <= 0)
+	{
+		Com_Printf("Info buffer length exceeded, not including key/value pair in response\n");
+		return;
+	}
 
 	if (strlen(newi) + strlen(s) > BIG_INFO_STRING)
 	{
-		Com_Printf ("BIG Info string length exceeded\n");
+		Com_Printf("Big info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n",
+		           key, value, s);
 		return;
 	}
 
-	strcat (s, newi);
+	strcat(s, newi);
 }
 
 qboolean I_IsEqualUnitWSpace(char *cmp1, char *cmp2)
@@ -1217,20 +1255,23 @@ float UnGetLeanFraction(const float fFrac)
 	return 1.0f - sqrtf(1.0f - fFrac);
 }
 
-void AddLeanToPosition(float *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist)
+void AddLeanToPosition(float *position, float fViewYaw, float fLeanFrac, float fViewRoll, float fLeanDist)
 {
-	float v;
-	vec3_t v3ViewAngles;
-	vec3_t right;
+	float fLean;
+	vec3_t vRight;
+	vec3_t vAng;
 
-	if (fLeanFrac != 0.0)
+	if ( fLeanFrac != 0.0 )
 	{
-		v = fLeanFrac * (2.0 - fabs(fLeanFrac));
-		v3ViewAngles[0] = 0.0;
-		v3ViewAngles[1] = fViewYaw;
-		v3ViewAngles[2] = fViewRoll * v;
-		AngleVectors(v3ViewAngles, 0, right, 0);
-		VectorMA(position, v * fLeanDist, right, position);
+		fLean = GetLeanFraction(fLeanFrac);
+		vAng[0] = 0.0;
+		vAng[1] = fViewYaw;
+		vAng[2] = fLean * fViewRoll;
+		AngleVectors(vAng, 0, vRight, 0);
+		fLean = fLean * fLeanDist;
+		position[0] = (float)(fLean * vRight[0]) + position[0];
+		position[1] = (float)(fLean * vRight[1]) + position[1];
+		position[2] = (float)(fLean * vRight[2]) + position[2];
 	}
 }
 

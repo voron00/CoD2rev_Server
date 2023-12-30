@@ -157,6 +157,7 @@ inline int FileWrapper_GetFileSize(FILE *h)
 
 extern dvar_t* fs_ignoreLocalized;
 
+bool FS_Initialized();
 long FS_HashFileName( const char *fname, int hashSize );
 int FS_Seek(int f, int offset, int origin);
 int FS_Read(void *buffer, int len, fileHandle_t h);

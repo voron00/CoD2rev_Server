@@ -38,9 +38,9 @@ int fs_fakeChkSum = 0;
 char lastValidBase[MAX_OSPATH];
 char lastValidGame[MAX_OSPATH];
 
-qboolean FS_Initialized()
+bool FS_Initialized()
 {
-	return (fs_searchpaths != NULL);
+	return fs_searchpaths != NULL;
 }
 
 void FS_CheckFileSystemStarted()
@@ -2236,7 +2236,7 @@ static int FS_GetModList( char *listbuf, int bufsize )
 		}
 
 		// we drop "baseq3" "." and ".."
-		if ( !bDrop && Q_stricmpn( name, ".", 1 ) )
+		if ( !bDrop && I_strnicmp( name, ".", 1 ) )
 		{
 			// now we need to find some .pk3 files to validate the mod
 			// NOTE TTimo: (actually I'm not sure why .. what if it's a mod under developement with no .pk3?)
@@ -2625,7 +2625,7 @@ char *FS_GetMapBaseName(const char *mapname)
 	int len;
 	static char basename[MAX_QPATH];
 
-	if ( !Q_stricmpn(mapname, "maps/mp/", 8) )
+	if ( !I_strnicmp(mapname, "maps/mp/", 8) )
 	{
 		mapname += 8;
 	}
