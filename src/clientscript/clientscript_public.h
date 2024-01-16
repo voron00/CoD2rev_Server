@@ -729,10 +729,6 @@ void MT_Init();
 byte *MT_InitForceAlloc();
 void MT_ForceAllocIndex(unsigned char *allocBits, unsigned int nodeNum, int numBytes);
 void MT_FinishForceAlloc(unsigned char *allocBits);
-void MT_AddMemoryNode(int newNode, int size);
-bool MT_RemoveMemoryNode(int oldNode, int size);
-void MT_RemoveHeadMemoryNode(int size);
-int MT_GetSize(int numBytes);
 unsigned short MT_AllocIndex(int numBytes);
 void MT_FreeIndex(unsigned int nodeNum, int numBytes);
 void* MT_Alloc(int numBytes);
@@ -748,7 +744,7 @@ struct __attribute__((aligned(4))) RefString
 	{
 		struct
 		{
-			unsigned int length : 8;
+			unsigned int byteLen : 8;
 			unsigned int user : 8;
 			unsigned int refCount : 16;
 		};
@@ -765,7 +761,7 @@ struct RefVector
 		{
 			unsigned int refCount : 16;
 			unsigned int user : 8;
-			unsigned int length : 8;
+			unsigned int byteLen : 8;
 		};
 		volatile int head;
 	};

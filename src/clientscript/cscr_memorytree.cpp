@@ -26,12 +26,7 @@ typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
 
 scrMemTreeGlob_t scrMemTreeGlob;
 
-int Scr_GetStringUsage()
-{
-	return scrMemTreeGlob.totalAllocBuckets;
-}
-
-int MT_GetSubTreeSize(int nodeNum)
+static int MT_GetSubTreeSize(int nodeNum)
 {
 	int treeSize;
 
@@ -65,13 +60,15 @@ void MT_DumpTree()
 	Com_Printf("********************************\n");
 	Com_Printf("********************************\n");
 	Com_Printf("total memory alloc buckets: %d (%d instances)\n", scrMemTreeGlob.totalAllocBuckets, scrMemTreeGlob.totalAlloc);
-	Com_Printf("total memory free buckets: %d\n", MEMORY_NODE_COUNT - scrMemTreeGlob.totalAllocBuckets);
+	Com_Printf("total memory free buckets: %d\n", (MEMORY_NODE_COUNT - 1) - scrMemTreeGlob.totalAllocBuckets);
 	Com_Printf("********************************\n");
 }
 
-int MT_GetScore(int num)
+static int MT_GetScore(int num)
 {
 	char bits;
+
+	assert(num != 0);
 
 	union MTnum_t
 	{
@@ -82,6 +79,7 @@ int MT_GetScore(int num)
 	MTnum_t mtnum;
 
 	mtnum.i = MEMORY_NODE_COUNT - num;
+	assert(mtnum.i != 0);
 
 	bits = scrMemTreeGlob.leftBits[mtnum.b[0]];
 
@@ -93,7 +91,7 @@ int MT_GetScore(int num)
 	return mtnum.i - (scrMemTreeGlob.numBits[mtnum.b[1]] + scrMemTreeGlob.numBits[mtnum.b[0]]) + (1 << bits);
 }
 
-void MT_InitBits()
+static void MT_InitBits()
 {
 	char bits;
 	int temp;
@@ -127,14 +125,16 @@ void MT_InitBits()
 	}
 }
 
-void MT_AddMemoryNode(int newNode, int size)
+static void MT_AddMemoryNode(int newNode, int size)
 {
 	int node;
 	int nodeNum;
 	int newScore;
-	uint16_t* parentNode;
+	uint16_t *parentNode;
 	int level;
 	int score;
+
+	assert(size >= 0 && size <= MEMORY_NODE_BITS);
 
 	parentNode = &scrMemTreeGlob.head[size];
 	node = scrMemTreeGlob.head[size];
@@ -145,12 +145,18 @@ void MT_AddMemoryNode(int newNode, int size)
 		level = MEMORY_NODE_COUNT;
 		do
 		{
+			assert(newNode != node);
 			score = MT_GetScore(node);
+
+			assert(score != newScore);
 
 			if (score < newScore)
 			{
 				while (1)
 				{
+					assert(node == *parentNode);
+					assert(node != newNode);
+
 					*parentNode = newNode;
 					scrMemTreeGlob.nodes[newNode] = scrMemTreeGlob.nodes[node];
 					if (!node)
@@ -158,6 +164,8 @@ void MT_AddMemoryNode(int newNode, int size)
 						break;
 					}
 					level >>= 1;
+
+					assert(node != nodeNum);
 
 					if (node >= nodeNum)
 					{
@@ -175,6 +183,8 @@ void MT_AddMemoryNode(int newNode, int size)
 				return;
 			}
 			level >>= 1;
+
+			assert(newNode != nodeNum);
 
 			if (newNode >= nodeNum)
 			{
@@ -198,16 +208,18 @@ void MT_AddMemoryNode(int newNode, int size)
 	scrMemTreeGlob.nodes[newNode].next = 0;
 }
 
-bool MT_RemoveMemoryNode(int oldNode, int size)
+static bool MT_RemoveMemoryNode(int oldNode, int size)
 {
 	MemoryNode tempNodeValue;
 	int node;
 	MemoryNode oldNodeValue;
 	int nodeNum;
-	uint16_t* parentNode;
+	uint16_t *parentNode;
 	int prevScore;
 	int nextScore;
 	int level;
+
+	assert(size >= 0 && size <= MEMORY_NODE_BITS);
 
 	nodeNum = 0;
 	level = MEMORY_NODE_COUNT;
@@ -227,6 +239,8 @@ bool MT_RemoveMemoryNode(int oldNode, int size)
 					{
 						prevScore = MT_GetScore(oldNodeValue.prev);
 						nextScore = MT_GetScore(oldNodeValue.next);
+
+						assert(prevScore != nextScore);
 
 						if (prevScore >= nextScore)
 						{
@@ -261,6 +275,8 @@ bool MT_RemoveMemoryNode(int oldNode, int size)
 					parentNode = &scrMemTreeGlob.nodes[oldNodeValue.next].next;
 				}
 
+				assert(oldNode != 0);
+
 				tempNodeValue = oldNodeValue;
 				oldNodeValue = scrMemTreeGlob.nodes[oldNode];
 				scrMemTreeGlob.nodes[oldNode] = tempNodeValue;
@@ -289,14 +305,16 @@ bool MT_RemoveMemoryNode(int oldNode, int size)
 	return false;
 }
 
-void MT_RemoveHeadMemoryNode(int size)
+static void MT_RemoveHeadMemoryNode(int size)
 {
 	MemoryNode tempNodeValue;
 	int oldNode;
 	MemoryNode oldNodeValue;
-	uint16_t* parentNode;
+	uint16_t *parentNode;
 	int prevScore;
 	int nextScore;
+
+	assert(size >= 0 && size <= MEMORY_NODE_BITS);
 
 	parentNode = &scrMemTreeGlob.head[size];
 	oldNodeValue = scrMemTreeGlob.nodes[*parentNode];
@@ -350,31 +368,32 @@ void MT_RemoveHeadMemoryNode(int size)
 	}
 }
 
-void MT_Error(const char *funcName, int numBytes)
+static void MT_Error(const char *funcName, int numBytes)
 {
 	MT_DumpTree();
 	Com_Printf("%s: failed memory allocation of %d bytes for script usage\n", funcName, numBytes);
 	Scr_TerminalError("failed memory allocation for script usage");
 }
 
-int MT_GetSize(int numBytes)
+static int MT_GetSize(int numBytes)
 {
 	int numBuckets;
 
+	assert(numBytes > 0);
 	if ( numBytes > MEMORY_NODE_COUNT )
 	{
 		MT_Error("MT_GetSize: max allocation exceeded", numBytes);
 		return 0;
 	}
-	else
-	{
-		numBuckets = (numBytes + 7) / 8 - 1;
 
-		if ( numBuckets > NUM_BUCKETS - 1 )
-			return scrMemTreeGlob.logBits[numBuckets >> 8] + 8;
-		else
-			return scrMemTreeGlob.logBits[(numBytes + 7) / 8 - 1];
+	numBuckets = (numBytes + 7) / 8 - 1;
+
+	if ( numBuckets > NUM_BUCKETS - 1 )
+	{
+		return scrMemTreeGlob.logBits[numBuckets >> 8] + 8;
 	}
+
+	return scrMemTreeGlob.logBits[numBuckets];
 }
 
 unsigned short MT_AllocIndex(int numBytes)
@@ -384,6 +403,7 @@ unsigned short MT_AllocIndex(int numBytes)
 	int newSize;
 
 	size = MT_GetSize(numBytes);
+	assert(size >= 0 && size <= MEMORY_NODE_BITS);
 
 	for (newSize = size; ; ++newSize)
 	{
@@ -421,19 +441,21 @@ void MT_FreeIndex(unsigned int nodeNum, int numBytes)
 	int lowBit;
 
 	size = MT_GetSize(numBytes);
+	assert(size >= 0 && size <= MEMORY_NODE_BITS);
+	assert(nodeNum > 0 && nodeNum < MEMORY_NODE_COUNT);
 
 	--scrMemTreeGlob.totalAlloc;
 	scrMemTreeGlob.totalAllocBuckets -= 1 << size;
 
 	while (1)
 	{
+		assert(size <= MEMORY_NODE_BITS);
 		lowBit = 1 << size;
-
+		assert(nodeNum == (nodeNum & ~(lowBit - 1)));
 		if (size == MEMORY_NODE_BITS || !MT_RemoveMemoryNode(lowBit ^ nodeNum, size))
 		{
 			break;
 		}
-
 		nodeNum &= ~lowBit;
 		++size;
 	}
@@ -446,17 +468,14 @@ void* MT_Alloc(int numBytes)
 	return scrMemTreeGlob.nodes + MT_AllocIndex(numBytes);
 }
 
-void MT_Free(void* p, int numBytes)
+void MT_Free(void *p, int numBytes)
 {
 	MT_FreeIndex((MemoryNode*)p - scrMemTreeGlob.nodes, numBytes);
 }
 
 bool MT_Realloc(int oldNumBytes, int newNumbytes)
 {
-	int size;
-
-	size = MT_GetSize(oldNumBytes);
-	return size >= MT_GetSize(newNumbytes);
+	return MT_GetSize(oldNumBytes) >= MT_GetSize(newNumbytes);
 }
 
 byte* MT_GetRefByIndex(int index)
@@ -470,7 +489,7 @@ byte* MT_GetRefByIndex(int index)
 	return (byte*)&scrMemTreeGlob.nodes[index];
 }
 
-int MT_GetIndexByRef(byte* p)
+int MT_GetIndexByRef(byte *p)
 {
 	int index = (MemoryNode *)p - scrMemTreeGlob.nodes;
 
@@ -483,7 +502,7 @@ int MT_GetIndexByRef(byte* p)
 	return index;
 }
 
-void MT_SafeFreeIndex(int nodeNum)
+static void MT_SafeFreeIndex(int nodeNum)
 {
 	int oldNode;
 	int size;

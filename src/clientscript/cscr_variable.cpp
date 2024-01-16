@@ -154,7 +154,7 @@ void AddRefToVector(const float *vectorValue)
 {
 	RefVector *refVec = (RefVector*)((byte*)vectorValue - 4);
 
-	if ( !refVec->length )
+	if ( !refVec->byteLen )
 		++refVec->refCount;
 }
 
@@ -162,7 +162,7 @@ void RemoveRefToVector(const float *vectorValue)
 {
 	RefVector *refVec = (RefVector*)((byte*)vectorValue - 4);
 
-	if ( !refVec->length )
+	if ( !refVec->byteLen )
 	{
 		if ( refVec->refCount )
 			--refVec->refCount;

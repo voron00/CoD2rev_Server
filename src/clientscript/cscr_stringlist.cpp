@@ -39,13 +39,13 @@ int SL_GetRefStringLen(RefString *refString)
 {
 	int len;
 
-	if(!refString->length)
+	if(!refString->byteLen)
 	{
 		len = 256 - 1; //Bugfix for 256 % 256 = 0 or 512 % 256 = 0 or... Just promote it to 256
 	}
 	else
 	{
-		len = refString->length - 1;
+		len = refString->byteLen - 1;
 	}
 
 	while(refString->str[len])
@@ -322,14 +322,14 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 		memcpy(refStr->str, str, len);
 		refStr->user = user;
 		refStr->refCount = 1;
-		refStr->length = len;
+		refStr->byteLen = len;
 
 		return stringValue;
 	}
 
 	refStr = GetRefString(entry->prev);
 
-	if ( refStr->length != len || memcmp(refStr->str, str, len) )
+	if ( refStr->byteLen != len || memcmp(refStr->str, str, len) )
 	{
 		newIndex = entry->status_next & HASH_NEXT_MASK;
 
@@ -337,7 +337,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 		{
 			refStr = GetRefString(prev->prev);
 
-			if ( refStr->length == len && !memcmp(refStr->str, str, len) )
+			if ( refStr->byteLen == len && !memcmp(refStr->str, str, len) )
 			{
 				scrStringGlob.hashTable[hash].status_next = scrStringGlob.hashTable[hash].status_next & HASH_STAT_MASK | prev->status_next & HASH_NEXT_MASK;
 				prev->status_next = prev->status_next & HASH_STAT_MASK | entry->status_next & HASH_NEXT_MASK;
@@ -375,7 +375,7 @@ unsigned int SL_GetStringOfLen(const char *str, unsigned char user, unsigned int
 		memcpy(refStr->str, str, len);
 		refStr->user = user;
 		refStr->refCount = 1;
-		refStr->length = len;
+		refStr->byteLen = len;
 
 		return stringValue;
 	}
@@ -402,7 +402,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 
 	refStr = GetRefString(entry->prev);
 
-	if ( refStr->length != len || memcmp(refStr->str, str, len) )
+	if ( refStr->byteLen != len || memcmp(refStr->str, str, len) )
 	{
 		index = hash;
 		newIndex = entry->status_next & HASH_NEXT_MASK;
@@ -411,7 +411,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 		{
 			refStr = GetRefString(newEntry->prev);
 
-			if ( refStr->length == len && !memcmp(refStr->str, str, len) )
+			if ( refStr->byteLen == len && !memcmp(refStr->str, str, len) )
 			{
 				scrStringGlob.hashTable[index].status_next = scrStringGlob.hashTable[index].status_next & HASH_STAT_MASK | newEntry->status_next & HASH_NEXT_MASK;
 				newEntry->status_next = newEntry->status_next & HASH_STAT_MASK | entry->status_next & HASH_NEXT_MASK;
