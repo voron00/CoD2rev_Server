@@ -32,7 +32,7 @@ static client_t *SV_GetPlayerByName( void )
 	char cleanName[64];
 
 	// make sure server is running
-	if ( !com_sv_running->current.integer )
+	if ( !com_sv_running->current.boolean )
 	{
 		return NULL;
 	}
@@ -313,7 +313,7 @@ static void SV_Status_f( void )
 	int ping;
 
 	// make sure server is running
-	if ( !com_sv_running->current.integer )
+	if ( !com_sv_running->current.boolean )
 	{
 		Com_Printf( "Server is not running.\n" );
 		return;
@@ -407,7 +407,7 @@ static void SV_DumpUser_f( void )
 	client_t    *cl;
 
 	// make sure server is running
-	if ( !com_sv_running->current.integer )
+	if ( !com_sv_running->current.boolean )
 	{
 		Com_Printf( "Server is not running.\n" );
 		return;

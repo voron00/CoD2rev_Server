@@ -927,11 +927,11 @@ TTimo - use sv_maxRate or sv_dl_maxRate depending on regular or downloading clie
 */
 #define HEADER_RATE_BYTES   48      // include our header, IP header, and some overhead
 extern dvar_t *sv_maxRate;
+extern dvar_t *sv_debugRate;
 static int SV_RateMsec( client_t *client, int messageSize )
 {
 	int rate;
 	int rateMsec;
-	int maxRate;
 
 	// individual messages will never be larger than fragment size
 	if ( messageSize > 1500 )
@@ -939,24 +939,27 @@ static int SV_RateMsec( client_t *client, int messageSize )
 		messageSize = 1500;
 	}
 
-	// low watermark for sv_maxRate, never 0 < sv_maxRate < 1000 (0 is no limitation)
-	if ( sv_maxRate->current.integer && sv_maxRate->current.integer < 1000 )
-	{
-		Dvar_SetInt( sv_maxRate, 1000 );
-	}
-
 	rate = client->rate;
-	maxRate = sv_maxRate->current.integer;
 
-	if ( maxRate )
+	if ( sv_maxRate->current.integer )
 	{
-		if ( maxRate < rate )
-		{
-			rate = maxRate;
-		}
+		if ( sv_maxRate->current.integer <= 999 )
+			Dvar_SetInt(sv_maxRate, 1000);
+
+		if ( sv_maxRate->current.integer < rate )
+			rate = sv_maxRate->current.integer;
 	}
 
-	rateMsec = ( messageSize + HEADER_RATE_BYTES ) * 1000 / rate;
+	rateMsec = ( 1000 * messageSize + (HEADER_RATE_BYTES * 1000) ) / rate;
+
+	if ( sv_debugRate->current.boolean )
+		Com_Printf(
+		    "It would take %ims to send %i bytes to client %s (rate %i)\n",
+		    rateMsec,
+		    messageSize,
+		    client->name,
+		    client->rate);
+
 	return rateMsec;
 }
 
