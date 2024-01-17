@@ -1,18 +1,18 @@
 #include "qcommon.h"
 
-#define MAX_BSP_CHUNCKS 39
+#define IBSP_VERSION 4
 
-struct BspChunk
+struct BspLump
 {
-	int type;
 	unsigned int length;
+	unsigned int offset;
 };
 
 struct BspHeader
 {
 	unsigned int ident;
 	unsigned int version;
-	BspChunk chunks[MAX_BSP_CHUNCKS];
+	BspLump lumps[LUMP_COUNT];
 };
 
 typedef struct comBspGlob_s
@@ -27,7 +27,7 @@ comBspGlob_t comBspGlob;
 
 qboolean Com_IsBspLoaded()
 {
-	return comBspGlob.header != 0;
+	return comBspGlob.header != NULL;
 }
 
 const char *GetBspExtension()
@@ -40,11 +40,6 @@ const char *GetBspExtension()
 		return va("%sbsp", string);
 	else
 		return va("d3dbsp");
-}
-
-int Com_GetBspHeaderData(int data)
-{
-	return data;
 }
 
 void Com_UnloadBsp()
@@ -95,7 +90,7 @@ byte* Com_ValidateBspLumpData(int type, unsigned int offset, unsigned int length
 
 byte* Com_GetBspLump(int type, unsigned int elemSize, unsigned int *count)
 {
-	return Com_ValidateBspLumpData(type, comBspGlob.header->chunks[type].length, comBspGlob.header->chunks[type].type, elemSize, count);
+	return Com_ValidateBspLumpData(type, comBspGlob.header->lumps[type].offset, comBspGlob.header->lumps[type].length, elemSize, count);
 }
 
 bool Com_BspHasLump(int type)
@@ -121,28 +116,29 @@ void Com_LoadBsp(const char *filename)
 	}
 
 	comBspGlob.header = (BspHeader *)Z_MallocGarbage(comBspGlob.fileSize);
-	bytesRead  = FS_Read(comBspGlob.header, comBspGlob.fileSize, h);
+	bytesRead = FS_Read(comBspGlob.header, comBspGlob.fileSize, h);
 	FS_FCloseFile(h);
 
-	if ( bytesRead  != comBspGlob.fileSize || comBspGlob.fileSize <= 0x13F )
+	if ( bytesRead != comBspGlob.fileSize || comBspGlob.fileSize < 320 )
 	{
 		Z_Free(comBspGlob.header);
 		Com_Error(ERR_DROP, "EXE_ERR_COULDNT_LOAD\x15%s", filename);
 	}
 
 	comBspGlob.checksum = Com_BlockChecksum(comBspGlob.header, comBspGlob.fileSize);
-	comBspGlob.header->ident = Com_GetBspHeaderData(comBspGlob.header->ident);
-	comBspGlob.header->version = Com_GetBspHeaderData(comBspGlob.header->version);
 
-	if ( comBspGlob.header->ident != (uint32_t)'PSBI' || comBspGlob.header->version != 4 )
+	comBspGlob.header->ident = LittleLong(comBspGlob.header->ident);
+	comBspGlob.header->version = LittleLong(comBspGlob.header->version);
+
+	if ( comBspGlob.header->ident != (uint32_t)'PSBI' || comBspGlob.header->version != IBSP_VERSION )
 	{
 		Z_Free(comBspGlob.header);
 		Com_Error(ERR_DROP, "EXE_ERR_WRONG_MAP_VERSION_NUM\x15%s", filename);
 	}
 
-	for ( i = 0; i < MAX_BSP_CHUNCKS; ++i )
+	for ( i = 0; i != LUMP_COUNT; ++i )
 	{
-		comBspGlob.header->chunks[i].type = Com_GetBspHeaderData(comBspGlob.header->chunks[i].type);
-		comBspGlob.header->chunks[i].length = Com_GetBspHeaderData(comBspGlob.header->chunks[i].length);
+		comBspGlob.header->lumps[i].length = LittleLong(comBspGlob.header->lumps[i].length);
+		comBspGlob.header->lumps[i].offset = LittleLong(comBspGlob.header->lumps[i].offset);
 	}
 }

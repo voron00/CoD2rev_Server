@@ -504,7 +504,7 @@ void MSG_WriteShort(msg_t *msg, int c)
 	}
 	else
 	{
-		*(int16_t *)&msg->data[msg->cursize] = c;
+		*(int16_t *)&msg->data[msg->cursize] = LittleShort(c);
 		msg->cursize = newsize;
 	}
 }
@@ -519,7 +519,7 @@ void MSG_WriteLong(msg_t *msg, int c)
 	}
 	else
 	{
-		*(int32_t *)&msg->data[msg->cursize] = c;
+		*(int32_t *)&msg->data[msg->cursize] = LittleLong(c);
 		msg->cursize = newsize;
 	}
 }
@@ -599,7 +599,7 @@ int MSG_ReadShort(msg_t *msg)
 		return -1;
 	}
 
-	int16_t c = *(int16_t *)&msg->data[msg->readcount];
+	int16_t c = LittleShort(*(int16_t *)&msg->data[msg->readcount]);
 	msg->readcount = newcount;
 
 	return c;
@@ -615,7 +615,7 @@ int MSG_ReadLong(msg_t *msg)
 		return -1;
 	}
 
-	int32_t c = *(int32_t *)&msg->data[msg->readcount];
+	int32_t c = LittleLong(*(int32_t *)&msg->data[msg->readcount]);
 	msg->readcount = newcount;
 
 	return c;
