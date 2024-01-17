@@ -45,7 +45,7 @@ const char *GetBspExtension()
 void Com_UnloadBsp()
 {
 	Z_FreeInternal(comBspGlob.header);
-	comBspGlob.header = 0;
+	comBspGlob.header = NULL;
 }
 
 void Com_CleanupBsp()

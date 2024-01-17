@@ -36,7 +36,7 @@ void CMod_LoadBrushes()
 
 	unsigned int outnumsides = numinsides - 6 * brushcount;
 
-	if ( outnumsides < 0 )
+	if ( (outnumsides & 0x80000000) != 0 )
 		Com_Error(ERR_DROP, "CMod_LoadBrushes: bad side count");
 
 	if ( outnumsides )
@@ -829,7 +829,7 @@ void CMod_LoadPlanes()
 	cm.planes = (cplane_s *)CM_Hunk_Alloc(sizeof(cplane_s) * count);
 	cm.planeCount = count;
 
-	for (planeIter = 0, out = cm.planes ; planeIter < count; ++in, ++out, ++planeIter )
+	for (planeIter = 0, out = cm.planes; planeIter < count; ++in, ++out, ++planeIter )
 	{
 		bits = 0;
 
@@ -922,6 +922,7 @@ void CMod_LoadLeafSurfaces()
 	unsigned int count;
 
 	in = (unsigned int *)Com_GetBspLump(LUMP_LEAFSURFACES, sizeof(uint32_t), &count);
+
 	cm.leafsurfaces = (unsigned int *)CM_Hunk_Alloc(sizeof(uint32_t) * count);
 	cm.numLeafSurfaces = count;
 	Com_Memcpy(cm.leafsurfaces, in, sizeof(uint32_t) * count);
@@ -929,22 +930,14 @@ void CMod_LoadLeafSurfaces()
 
 void CMod_LoadCollisionVerts()
 {
-	vec3_t *out;
-	unsigned int vertIter;
-	vec4_t *in;
+	vec3_t *in;
 	unsigned int count;
 
-	in = (vec4_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec4_t), &count);
+	in = (vec3_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec3_t), &count);
 
 	cm.verts = (vec3_t *)CM_Hunk_Alloc(sizeof(vec3_t) * count);
 	cm.vertCount = count;
-
-	for (vertIter = 0, out = cm.verts ; vertIter < count; ++in, ++out, ++vertIter )
-	{
-		(*out)[0] = (*in)[1];
-		(*out)[1] = (*in)[2];
-		(*out)[2] = (*in)[3];
-	}
+	Com_Memcpy(cm.verts, in, sizeof(vec3_t) * count);
 }
 
 struct EdgeInfo
@@ -968,7 +961,7 @@ void CMod_LoadCollisionEdges()
 	cm.edges = (CollisionEdge_s *)CM_Hunk_Alloc(sizeof(CollisionEdge_s) * count);
 	cm.edgeCount = count;
 
-	for (edgeIter = 0, out = cm.edges ; edgeIter < count; ++in, ++out, ++edgeIter )
+	for (edgeIter = 0, out = cm.edges; edgeIter < count; ++in, ++out, ++edgeIter )
 	{
 		VectorCopy(in->origin, out->origin);
 
@@ -994,7 +987,7 @@ void CMod_LoadCollisionTriangles()
 	cm.triIndices = (CollisionTriangle_s *)CM_Hunk_Alloc(sizeof(CollisionTriangle_s) * count);
 	cm.triCount = count;
 
-	for (triIter = 0, out = cm.triIndices ; triIter < count; ++in, ++out, ++triIter )
+	for (triIter = 0, out = cm.triIndices; triIter < count; ++in, ++out, ++triIter )
 	{
 		Vector4Copy(in->plane, out->plane);
 		Vector4Copy(in->svec, out->svec);
@@ -1025,6 +1018,7 @@ void CMod_LoadCollisionBorders()
 	unsigned int count;
 
 	in = (DiskCollBorder *)Com_GetBspLump(LUMP_COLLISIONBORDERS, sizeof(DiskCollBorder), &count);
+
 	cm.borders = (CollisionBorder *)CM_Hunk_Alloc(sizeof(CollisionBorder) * count);
 	cm.borderCount = count;
 	out = cm.borders;
@@ -1062,6 +1056,7 @@ void CMod_LoadCollisionPartitions()
 	unsigned int count;
 
 	in = (DiskCollPartition *)Com_GetBspLump(LUMP_COLLISIONPARTITIONS, sizeof(DiskCollPartition), &count);
+
 	cm.partitions = (CollisionPartition *)CM_Hunk_Alloc(sizeof(CollisionPartition) * count);
 	cm.partitionCount = count;
 	out = cm.partitions;
@@ -1098,7 +1093,7 @@ void CMod_LoadVisibility()
 	}
 
 	cm.vised = qtrue;
-	cm.visibility = (byte*)CM_Hunk_Alloc( len - VIS_HEADER );
+	cm.visibility = (byte *)CM_Hunk_Alloc( len - VIS_HEADER );
 	cm.numClusters = ( (int *)buf )[0];
 	cm.clusterBytes = ( (int *)buf )[1];
 
@@ -1110,7 +1105,8 @@ void CMod_LoadEntityString()
 	char *entityString;
 	unsigned int count;
 
-	entityString = (char*)Com_GetBspLump(LUMP_ENTITIES, sizeof(char), &count);
+	entityString = (char *)Com_GetBspLump(LUMP_ENTITIES, sizeof(char), &count);
+
 	cm.numEntityChars = count;
 	cm.entityString = (char *)CM_Hunk_Alloc(count);
 	Com_Memcpy(cm.entityString, entityString, count);
@@ -1152,5 +1148,5 @@ void CM_LoadMapFromBsp(const char *name, bool usePvs)
 
 	CMod_LoadEntityString();
 
-	cm.header = 0;
+	cm.header = NULL;
 }
