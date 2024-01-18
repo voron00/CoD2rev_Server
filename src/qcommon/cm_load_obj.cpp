@@ -930,14 +930,25 @@ void CMod_LoadLeafSurfaces()
 
 void CMod_LoadCollisionVerts()
 {
-	vec3_t *in;
+	vec4_t *in;
+	vec3_t *out;
+	unsigned int vertIter;
 	unsigned int count;
 
-	in = (vec3_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec3_t), &count);
+	in = (vec4_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec4_t), &count);
 
 	cm.verts = (vec3_t *)CM_Hunk_Alloc(sizeof(vec3_t) * count);
 	cm.vertCount = count;
-	Com_Memcpy(cm.verts, in, sizeof(vec3_t) * count);
+	out = cm.verts;
+
+	for ( vertIter = 0; vertIter < count; ++vertIter )
+	{
+		out[0][0] = in[0][1];
+		out[0][1] = in[0][2];
+		out[0][2] = in[0][3];
+		++in;
+		++out;
+	}
 }
 
 struct EdgeInfo
