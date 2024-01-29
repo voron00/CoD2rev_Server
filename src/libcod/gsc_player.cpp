@@ -356,6 +356,14 @@ void gsc_player_getip(scr_entref_t id)
 	char tmp[16];
 	snprintf(tmp, sizeof(tmp), "%d.%d.%d.%d", client->netchan.remoteAddress.ip[0], client->netchan.remoteAddress.ip[1], client->netchan.remoteAddress.ip[2], client->netchan.remoteAddress.ip[3]);
 
+	char localip[16] = "127.0.0.1";
+
+	if (strcmp(localip, tmp) == 0)
+	{
+		extern char proxy_realip[MAX_CLIENTS][16];
+		snprintf(tmp, sizeof(tmp), "%s", proxy_realip[id.entnum]);
+	}
+
 	stackPushString(tmp);
 }
 

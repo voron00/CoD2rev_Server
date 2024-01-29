@@ -1436,7 +1436,7 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd);
 void ClientThink(int clientNum);
 void G_SetLastServerTime(int clientNum, int lastServerTime);
 void ClientBegin(unsigned int clientNum);
-const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId);
+const char* ClientConnect(unsigned int clientNum, unsigned short scriptPersId);
 int G_GetClientScore(int clientNum);
 int G_GetSavePersist();
 void G_SetSavePersist(int savepersist);

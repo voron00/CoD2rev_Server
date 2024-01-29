@@ -304,49 +304,69 @@ void ClientBegin(unsigned int clientNum)
 	Scr_Notify(&g_entities[clientNum], scr_const.begin, 0);
 }
 
+#if COMPILE_PLAYER == 1
+char proxy_realip[MAX_CLIENTS][16] = {0};
+#endif
 extern dvar_t *g_password;
-const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId)
+const char* ClientConnect(unsigned int clientNum, unsigned short scriptPersId)
 {
-	XAnimTree_s *tree;
+	XAnimTree_s *pXAnimTree;
 	clientInfo_t *ci;
-	gentity_s *ent;
-	char userinfo[1024];
-	gclient_s *gclient;
+	gentity_t *ent;
+	char userinfo[MAX_INFO_STRING];
+	gclient_t *client;
 	const char *password;
-	uint16_t id;
 
-	id = scriptPersId;
 	ent = &g_entities[clientNum];
-	gclient = &level.clients[clientNum];
-	memset(gclient, 0, sizeof(gclient_s));
+	client = &level.clients[clientNum];
+	memset(client, 0, sizeof(gclient_s));
+
 	ci = &level_bgs.clientinfo[clientNum];
-	tree = level_bgs.clientinfo[clientNum].pXAnimTree;
+	pXAnimTree = level_bgs.clientinfo[clientNum].pXAnimTree;
 	memset(ci, 0, sizeof(clientInfo_t));
-	ci->pXAnimTree = tree;
+
+	ci->pXAnimTree = pXAnimTree;
+
 	ci->infoValid = 1;
 	ci->nextValid = 1;
-	gclient->sess.connected = CS_ZOMBIE;
-	gclient->sess.pers = id;
-	gclient->sess.state.team = 3;
-	gclient->sess.sessionState = SESS_STATE_SPECTATOR;
-	gclient->spectatorClient = -1;
-	gclient->sess.forceSpectatorClient = -1;
+
+	client->sess.connected = CON_CONNECTING;
+	client->sess.pers = scriptPersId;
+	client->sess.state.team = TEAM_SPECTATOR;
+	client->sess.sessionState = SESS_STATE_SPECTATOR;
+	client->spectatorClient = -1;
+	client->sess.forceSpectatorClient = -1;
+
 	G_InitGentity(ent);
+
 	ent->handler = 0;
-	ent->client = gclient;
-	gclient->useHoldEntity = 1023;
-	gclient->sess.state.clientIndex = clientNum;
-	gclient->ps.clientNum = clientNum;
+	ent->client = client;
+
+	client->useHoldEntity = 1023;
+	client->sess.state.clientIndex = clientNum;
+	client->ps.clientNum = clientNum;
+
 	ClientUserinfoChanged(clientNum);
-	SV_GetUserinfo(clientNum, userinfo, 1024);
-	if ( gclient->sess.localClient
+	SV_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
+
+	if ( client->sess.localClient
 	        || (password = Info_ValueForKey(userinfo, "password"), !*g_password->current.string)
 	        || !I_stricmp(g_password->current.string, "none")
 	        || !strcmp(g_password->current.string, password) )
 	{
+#if COMPILE_PLAYER == 1
+		char realIP[16];
+		strncpy(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(proxy_realip[clientNum]) - 1);
+
+		if (strlen(realIP) != 0)
+		{
+			strncpy(proxy_realip[clientNum], realIP, sizeof(proxy_realip[clientNum]) - 1);
+			Com_DPrintf("realip = %s\n", proxy_realip[clientNum]);
+		}
+#endif
 		Scr_PlayerConnect(ent);
 		CalculateRanks();
-		return 0;
+		return NULL;
 	}
 	else
 	{
@@ -354,7 +374,7 @@ const char* ClientConnect(unsigned int clientNum, unsigned int scriptPersId)
 		return "GAME_INVALIDPASSWORD";
 	}
 
-	return 0;
+	return NULL;
 }
 
 extern dvar_t *voice_global;
