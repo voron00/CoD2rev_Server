@@ -261,6 +261,9 @@ BG_AddPredictableEventToPlayerstate
 */
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
 {
+	if ( !newEvent )
+		return;
+
 	ps->events[ps->eventSequence & ( MAX_EVENTS - 1 )] = newEvent;
 	ps->eventParms[ps->eventSequence & ( MAX_EVENTS - 1 )] = eventParm;
 	ps->eventSequence++;

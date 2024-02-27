@@ -242,13 +242,12 @@ int PM_FootstepType(playerState_s *ps, pml_t *pml)
 
 void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep)
 {
-	int footstepType;
 	trace_t trace;
-	vec3_t end;
+	vec3_t vEnd;
 	vec3_t maxs;
 	vec3_t mins;
-	// float fTraceDist;
-	int contentMask;
+	float fTraceDist;
+	int iClipMask;
 	int iSurfaceType;
 	playerState_s *ps;
 
@@ -274,11 +273,11 @@ void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycl
 				if ( mins[2] > maxs[2] )
 					maxs[2] = mins[2];
 
-				contentMask = pm->tracemask & 0xFDFEFFFF;
-				// fTraceDist = -31.0;
-				VectorMA(ps->origin, -31.0, ps->vLadderVec, end);
-				PM_playerTrace(pm, &trace, ps->origin, mins, maxs, end, ps->clientNum, contentMask);
-				iSurfaceType = (trace.surfaceFlags & 0x1F00000) >> 20;
+				iClipMask = pm->tracemask & 0xFDFEFFFF;
+				fTraceDist = -31.0;
+				VectorMA(ps->origin, fTraceDist, ps->vLadderVec, vEnd);
+				PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, ps->clientNum, iClipMask);
+				iSurfaceType = SURF_TYPEINDEX(trace.surfaceFlags);
 
 				if ( trace.fraction == 1.0 || !iSurfaceType )
 					iSurfaceType = 21;
@@ -288,8 +287,7 @@ void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycl
 		}
 		else if ( bFootStep )
 		{
-			footstepType = PM_FootstepType(ps, pml);
-			PM_AddEvent(ps, (entity_event_t)footstepType);
+			PM_AddEvent(ps, PM_FootstepType(ps, pml));
 		}
 	}
 }
