@@ -146,7 +146,11 @@ void G_ExplodeMissile(gentity_s *ent)
 			//fx = FX_RegisterEffect(weaponDef->projExplosionEffect);
 			ent->s.time = level.time;
 			//ent->s.time2 = level.time + (int)(FX_GetEffectLength(fx) + 1.0);
-			ent->s.time2 = level.time + 50; // VoroN: HAX
+			//VoroN: HAX
+			if ( weaponDef->offhandClass == OFFHAND_CLASS_SMOKE_GRENADE )
+				ent->s.time2 = level.time + 60000;
+			else
+				ent->s.time2 = level.time + 50;
 		}
 		else
 		{
