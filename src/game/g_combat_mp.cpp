@@ -233,6 +233,7 @@ void LookAtKiller(gentity_s *self, gentity_s *inflictor, gentity_s *attacker)
 	vectoyaw(dir);
 }
 
+extern dvar_t *g_dropGrenadeOnDeath;
 void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int damage, int meansOfDeath, int iWeapon, const float *vDir, int hitLoc, int psTimeOffset)
 {
 	gentity_s *turret;
@@ -266,7 +267,7 @@ void player_die(gentity_s *self, gentity_s *inflictor, gentity_s *attacker, int 
 			}
 		}
 
-		if ( self->client->ps.grenadeTimeLeft )
+		if ( self->client->ps.grenadeTimeLeft && g_dropGrenadeOnDeath->current.boolean )
 		{
 			dir[0] = G_crandom();
 			dir[1] = G_crandom();

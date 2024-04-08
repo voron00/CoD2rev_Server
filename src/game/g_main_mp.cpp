@@ -66,6 +66,7 @@ dvar_t *g_playerEject;
 #endif
 
 dvar_t *g_fixedWeaponSpreads;
+dvar_t *g_dropGrenadeOnDeath;
 
 entityHandler_t entityHandlers[] =
 {
@@ -976,4 +977,5 @@ void G_RegisterDvars()
 	g_playerEject = Dvar_RegisterBool("g_playerEject", 1, DVAR_CHANGEABLE_RESET);
 #endif
 	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", 0, DVAR_CHANGEABLE_RESET);
+	g_dropGrenadeOnDeath = Dvar_RegisterBool("g_dropGrenadeOnDeath", 1, DVAR_CHANGEABLE_RESET);
 }
