@@ -1,5 +1,5 @@
 #include "../qcommon/qcommon.h"
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 
 unsigned int g_empty;
 

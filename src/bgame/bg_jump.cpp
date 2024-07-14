@@ -8,14 +8,14 @@ dvar_t *jump_ladderPushVel;
 dvar_t *jump_spreadAdd;
 dvar_t *jump_bounceEnable;
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 bool player_jump_slowdownenable_enabled[MAX_CLIENTS] = {0};
 bool player_jump_slowdownenable[MAX_CLIENTS] = {0};
 #endif
 
 bool getJumpSlowdownEnable(playerState_t* ps)
 {
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 	int clientid = playerstateToClientNum(ps);
 	if(player_jump_slowdownenable_enabled[clientid])
 		return player_jump_slowdownenable[clientid];

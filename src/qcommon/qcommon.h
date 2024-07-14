@@ -25,6 +25,8 @@ extern dvar_t *com_sv_running;
 extern dvar_t *com_logfile;
 extern dvar_t *com_dedicated;
 extern dvar_t *com_viewlog;
+extern dvar_t *com_developer;
+extern dvar_t *cl_paused;
 
 // returnbed by Sys_GetProcessorId
 #define CPUID_GENERIC			0				// any unrecognized processor
@@ -190,26 +192,49 @@ typedef enum
 	MSG_NORDPRINT
 } msgtype_t;
 
+enum DeltaFlags
+{
+	DELTA_FLAGS_NONE,
+	DELTA_FLAGS_FORCE
+};
+
 typedef void (*xcommand_t)(void);
 
 #define PORT_SERVER 28960
 #define	PORT_ANY -1
 
+// NERVE - SMF - wolf multiplayer master servers
 #define MASTER_SERVER_NAME "cod2master.activision.com"
-#define MAX_MASTER_SERVERS  5
+#define HEARTBEAT_GAME "COD-2"
+#define HEARTBEAT_DEAD "flatline"
 #define PORT_MASTER 20710
 
 #define AUTHORIZE_SERVER_NAME "cod2master.activision.com"
 #define PORT_AUTHORIZE 20700
-#define AUTHORIZE_TIMEOUT 5000
 
-#define	MAX_RELIABLE_COMMANDS 128
-#define MAX_DOWNLOAD_WINDOW	8
-#define MAX_DOWNLOAD_BLKSIZE 1024
-#define MAX_CLIENTS 64
-#define	PACKET_BACKUP 32
-#define PACKET_MASK ( PACKET_BACKUP - 1 )
-#define MAX_QPATH 64
+#define	HEARTBEAT_MSEC	180000
+#define	STATUS_MSEC		600000
+
+#define	MAX_RELIABLE_COMMANDS 128 // max string commands buffered for restransmit
+
+// max length of a message, which may
+// be fragmented into multiple packets
+#if PROTOCOL_VERSION < 118
+#define MAX_MSGLEN					0x4000
+#else
+#define MAX_MSGLEN					0x20000
+#endif
+
+#define MAX_SNAPSHOT_MSG_LEN		0x20000
+#define MAX_VOICE_MSG_LEN			0x20000
+
+#define MAX_DOWNLOAD_WINDOW         8       // max of eight download frames
+#define MAX_DOWNLOAD_BLKSIZE        2048    // 2048 byte block chunks
+
+#define PACKET_BACKUP   32  // number of old messages that must be kept on client and
+// server for delta comrpession and ping estimation
+#define PACKET_MASK     ( PACKET_BACKUP - 1 )
+
 #define MAX_PACKET_USERCMDS     32      // max number of usercmd_t in a packet
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data

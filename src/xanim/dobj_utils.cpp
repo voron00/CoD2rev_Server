@@ -195,6 +195,11 @@ int DObjGetAllocSkelSize(const DObj_s *obj)
 	return sizeof(DObjAnimMat) * obj->numBones + sizeof(DSkelPartBits_s);
 }
 
+int DObjNumBones(const DObj *obj)
+{
+	return obj->numBones;
+}
+
 void DObjCreateSkel(DObj_s *obj, DSkel_t *skel, int time)
 {
 	int i;

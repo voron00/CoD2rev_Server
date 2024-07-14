@@ -1,22 +1,7 @@
 #pragma once
 
-#if PROTOCOL_VERSION < 118
-#define MAX_MSGLEN				0x4000
-#else
-#define MAX_MSGLEN				0x20000
-#endif
-
-#define MAX_LARGE_MSGLEN		0x20000 // For voice chat and snapshot
-
 #define MAX_PACKETLEN           1400
 #define FRAGMENT_SIZE           ( MAX_PACKETLEN - 100 )
-
-typedef struct
-{
-	char command[MAX_STRING_CHARS];
-	int cmdTime;
-	int cmdType;
-} reliableCommands_t;
 
 struct netProfilePacket_t
 {
@@ -43,7 +28,9 @@ typedef struct netProfileInfo_s
 	netProfileStream_t send;
 	netProfileStream_t recieve;
 } netProfileInfo_t;
-// static_assert((sizeof(netProfileInfo_t) == 0x5E0), "ERROR: netProfileInfo_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(netProfileInfo_t) == 0x5E0), "ERROR: netProfileInfo_t size is invalid!");
+#endif
 
 typedef struct
 {
@@ -60,16 +47,24 @@ typedef struct
 	int			unsentFragmentStart;
 	int			unsentLength;
 	byte		unsentBuffer[MAX_MSGLEN];
-	netProfileInfo_t *prof;
+	netProfileInfo_t *pProf;
+#ifdef LIBCOD
 	int protocol;
+#endif
 } netchan_t;
-//static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
+/*
+#if defined(__i386__)
+static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
+#endif
+*/
 
 extern dvar_t* net_profile;
+extern dvar_t* net_lanauthorize;
 
 qboolean NET_GetLoopPacket(int sock, netadr_t *net_from, msg_t *net_message);
 void NET_SendLoopPacket(int sock, int length, const void *data, netadr_t to);
 const char* NET_AdrToString( netadr_t a );
+const char* NET_AdrToStringNoPort( netadr_t a );
 qboolean NET_StringToAdr( const char *s, netadr_t *a );
 qboolean NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to );
 qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message);
@@ -78,6 +73,7 @@ void NetProf_AddPacket(netProfileStream_t *pProfStream, int iSize, int bFragment
 void NetProf_SendProfile(netchan_t *chan, int iSize, int bFragment);
 void NetProf_ReceiveProfile(netchan_t *chan, int iSize, int bFragment);
 void NetProf_UpdateStatistics(netProfileStream_t *pStream);
+void SV_Netchan_PrintProfileStats(int bPrintToConsole);
 qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
 qboolean NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *data, int len);
 void Netchan_Prepare(netsrc_t src, netchan_t *chan, netadr_t adr, unsigned int qport);

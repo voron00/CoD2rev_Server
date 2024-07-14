@@ -442,7 +442,9 @@ struct gclient_s
 	int lastServerTime;
 	int lastSpawnTime;
 };
-// static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
+#endif
 
 extern gclient_t g_clients[];
 
@@ -465,7 +467,9 @@ struct turretInfo_s
 	char stopSnd;
 	char stopSndPlayer;
 };
-// static_assert((sizeof(turretInfo_s) == 0x44), "ERROR: turretInfo_s size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(turretInfo_s) == 0x44), "ERROR: turretInfo_s size is invalid!");
+#endif
 
 struct tagInfo_s
 {
@@ -476,7 +480,9 @@ struct tagInfo_s
 	float axis[4][3];
 	float parentInvAxis[4][3];
 };
-// static_assert((sizeof(tagInfo_s) == 112), "ERROR: tagInfo_s size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(tagInfo_s) == 112), "ERROR: tagInfo_s size is invalid!");
+#endif
 
 struct trigger_ent_t
 {
@@ -587,7 +593,9 @@ struct gentity_s
 	int useCount;
 	gentity_s *nextFree;
 };
-// static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
+#endif
 
 extern gentity_t g_entities[];
 
@@ -644,7 +652,9 @@ typedef struct
 	char *openScriptIOFileBuffers[1];
 	com_parse_mark_t currentScriptIOLineMark[1];
 } level_locals_t;
-// static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
+#endif
 
 extern level_locals_t level;
 
@@ -1147,8 +1157,13 @@ enum cs_index_t
 	CS_MULTI_MAPWINNER = 22,
 };
 
-#define	SVF_NOCLIENT  0x00000001
-#define	SVF_BROADCAST 0x00000008
+// entity->svFlags
+// the server does not know how to interpret most of the values
+// in entityStates (level eType), so the game must explicitly flag
+// special server behaviors
+#define	SVF_NOCLIENT  0x00000001 // don't send entity to clients, even if it has effects
+#define	SVF_BROADCAST 0x00000008 // send to all connected clients
+#define SVF_DISK      0x00000040
 
 #define KEY_MASK_NONE        	0
 
@@ -1173,6 +1188,27 @@ enum cs_index_t
 #define KEY_MASK_FRAG           65536
 #define KEY_MASK_SMOKE          131072
 
+#define BUTTON_NONE KEY_MASK_NONE
+
+#define BUTTON_FORWARD KEY_MASK_FORWARD
+#define BUTTON_BACK KEY_MASK_BACK
+#define BUTTON_RIGHT KEY_MASK_MOVERIGHT
+#define BUTTON_LEFT KEY_MASK_MOVELEFT
+
+#define BUTTON_FIRE KEY_MASK_FIRE
+#define BUTTON_MELEE KEY_MASK_MELEE
+#define BUTTON_USE KEY_MASK_USE
+#define BUTTON_RELOAD KEY_MASK_RELOAD
+#define BUTTON_USERELOAD KEY_MASK_USERELOAD
+#define BUTTON_PRONE KEY_MASK_PRONE
+#define BUTTON_CROUCH KEY_MASK_CROUCH
+#define BUTTON_JUMP KEY_MASK_JUMP
+#define BUTTON_ADS KEY_MASK_ADS_MODE
+#define BUTTON_MELEEBREATH KEY_MASK_MELEE_BREATH
+#define BUTTON_BREATH KEY_MASK_HOLDBREATH
+#define BUTTON_FRAG KEY_MASK_FRAG
+#define BUTTON_SMOKE KEY_MASK_SMOKE
+
 #define EF_VOTED 0x00100000
 #define EF_TALK 0x00200000
 #define EF_TAUNT 0x00400000
@@ -1196,6 +1232,7 @@ enum cs_index_t
 #define ENT_HANDLER_ROCKET          8
 #define ENT_HANDLER_PLAYER_CLONE    12
 
+extern dvar_t *g_password;
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);

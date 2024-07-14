@@ -1262,7 +1262,7 @@ unsigned int G_GetNonPVSPlayerInfo(gentity_s *pSelf, float *vPosition, int iLast
 	return (index | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6)) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15) & 0xFFFFFF | ((unsigned char)(int)(g_entities[iNum - (iNext >> 6 << 6)].r.currentAngles[1] * 0.71111113) << 24);
 }
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 int player_g_speed[MAX_CLIENTS] = {0};
 int player_g_gravity[MAX_CLIENTS] = {0};
 #endif
@@ -1340,7 +1340,7 @@ void ClientEndFrame(gentity_s *entity)
 
 			client->ps.gravity = (int)g_gravity->current.decimal;
 			client->ps.speed = g_speed->current.integer;
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 			int num = client->ps.clientNum;
 			if (player_g_gravity[num] > 0)
 				client->ps.gravity = player_g_gravity[num];

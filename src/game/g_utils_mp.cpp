@@ -1,6 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 #include "../server/server.h"
 
 XModel* cached_models[MAX_MODELS];

@@ -1,6 +1,6 @@
 #include "gsc_sqlite.hpp"
 
-#if COMPILE_SQLITE == 1
+#if LIBCOD_COMPILE_SQLITE == 1
 
 #include "../qcommon/sys_thread.h"
 #include "sqlite/sqlite3.h"

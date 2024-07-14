@@ -15,10 +15,6 @@ dvar_t* fs_gameDirVar;
 dvar_t* fs_restrict;
 dvar_t* fs_ignoreLocalized;
 
-#ifdef LIBCOD
-dvar_t* fs_library;
-#endif
-
 static searchpath_t *fs_searchpaths;
 static fileHandleData_t fsh[MAX_FILE_HANDLES];
 static char fs_gamedir[MAX_OSPATH];
@@ -2288,7 +2284,7 @@ static int FS_GetModList( char *listbuf, int bufsize )
 					}
 					FS_FCloseFile( descHandle );
 				}
-				else if ( I_stricmp(name, "main") )
+				else if ( I_stricmp(name, BASEGAME) )
 				{
 					strcpy(descPath, name);
 				}
@@ -2619,6 +2615,30 @@ const char *FS_LoadedIwdPureChecksums()
 	return info;
 }
 
+// CVE-2006-2082
+// compared requested iwd against the names as we built them in FS_ReferencedIwdNames
+qboolean FS_VerifyIwd( const char *iwd )
+{
+	char teststring[ BIG_INFO_STRING ];
+	searchpath_t    *search;
+
+	for ( search = fs_searchpaths ; search ; search = search->next )
+	{
+		if ( search->iwd )
+		{
+			Q_strncpyz( teststring, search->iwd->iwdGamename, sizeof( teststring ) );
+			Q_strcat( teststring, sizeof( teststring ), "/" );
+			Q_strcat( teststring, sizeof( teststring ), search->iwd->iwdBasename );
+			Q_strcat( teststring, sizeof( teststring ), ".iwd" );
+			if ( !Q_stricmp( teststring, iwd ) )
+			{
+				return qtrue;
+			}
+		}
+	}
+	return qfalse;
+}
+
 char *FS_GetMapBaseName(const char *mapname)
 {
 	int c;
@@ -2795,10 +2815,6 @@ static void FS_RegisterDvars()
 	fs_gameDirVar = Dvar_RegisterString("fs_game", "", DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
 	fs_restrict = Dvar_RegisterBool("fs_restrict", false, DVAR_INIT | DVAR_CHANGEABLE_RESET);
 	fs_ignoreLocalized = Dvar_RegisterBool("fs_ignoreLocalized", false, DVAR_INIT | DVAR_CHANGEABLE_RESET);
-
-#ifdef LIBCOD
-	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-#endif
 }
 
 static void FS_Startup(const char *gameName)
@@ -3010,7 +3026,7 @@ void FS_InitFilesystem()
 	Com_StartupVariable("fs_restrict");
 	Com_StartupVariable("loc_language");
 	SEH_InitLanguage();
-	FS_Startup("main");
+	FS_Startup(BASEGAME);
 	FS_SetRestrictions();
 
 	// if we can't find default.cfg, assume that the paths are

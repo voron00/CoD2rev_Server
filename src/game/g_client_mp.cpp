@@ -156,25 +156,6 @@ static void ClientCleanName( const char *in, char *out, int outSize )
 	}
 }
 
-#ifdef LIBCOD
-extern int codecallback_userinfochanged;
-void hook_ClientUserinfoChanged(int clientNum)
-{
-	if ( ! codecallback_userinfochanged)
-	{
-		ClientUserinfoChanged(clientNum);
-		return;
-	}
-
-	if (!Scr_IsSystemActive())
-		return;
-
-	stackPushInt(clientNum); // one parameter is required
-	short ret = Scr_ExecEntThread(&g_entities[clientNum], codecallback_userinfochanged, 1);
-	Scr_FreeThread(ret);
-}
-#endif
-
 void ClientUserinfoChanged(int clientNum)
 {
 	char userinfo[MAX_STRING_CHARS];
@@ -304,7 +285,7 @@ void ClientBegin(unsigned int clientNum)
 	Scr_Notify(&g_entities[clientNum], scr_const.begin, 0);
 }
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 char proxy_realip[MAX_CLIENTS][16] = {0};
 #endif
 extern dvar_t *g_password;
@@ -354,7 +335,7 @@ const char* ClientConnect(unsigned int clientNum, unsigned short scriptPersId)
 	        || !I_stricmp(g_password->current.string, "none")
 	        || !strcmp(g_password->current.string, password) )
 	{
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 		char realIP[16];
 		strncpy(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(proxy_realip[clientNum]) - 1);
 

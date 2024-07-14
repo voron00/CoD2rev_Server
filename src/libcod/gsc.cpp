@@ -91,20 +91,20 @@ const char *stackGetParamTypeAsString(int param)
 
 scr_function_t scriptFunctions[] =
 {
-#if COMPILE_EXEC == 1
+#if LIBCOD_COMPILE_EXEC == 1
 	{"exec", gsc_exec, 0},
 	{"exec_async_create", gsc_exec_async_create, 0},
 	{"exec_async_create_nosave", gsc_exec_async_create_nosave, 0},
 	{"exec_async_checkdone", gsc_exec_async_checkdone, 0},
 #endif
 
-#if COMPILE_LEVEL == 1
+#if LIBCOD_COMPILE_LEVEL == 1
 	{"getnumberofstaticmodels", gsc_level_getnumberofstaticmodels, 0},
 	{"getstaticmodelname", gsc_level_getstaticmodelname, 0},
 	{"getstaticmodelorigin", gsc_level_getstaticmodelorigin, 0},
 #endif
 
-#if COMPILE_MEMORY == 1
+#if LIBCOD_COMPILE_MEMORY == 1
 	{"memory_malloc", gsc_memory_malloc, 0},
 	{"memory_free", gsc_memory_free, 0},
 	{"memory_int_get", gsc_memory_int_get, 0},
@@ -117,7 +117,7 @@ scr_function_t scriptFunctions[] =
 	{"binarybuffer_read", gsc_binarybuffer_read, 0},
 #endif
 
-#if COMPILE_MYSQL == 1
+#if LIBCOD_COMPILE_MYSQL == 1
 	{"mysql_init", gsc_mysql_init, 0},
 	{"mysql_real_connect", gsc_mysql_real_connect, 0},
 	{"mysql_close", gsc_mysql_close, 0},
@@ -141,11 +141,11 @@ scr_function_t scriptFunctions[] =
 	{"mysql_reuse_connection", gsc_mysql_reuse_connection, 0},
 #endif
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 	{"kick2", gsc_kick_slot, 0},
 #endif
 
-#if COMPILE_SQLITE == 1
+#if LIBCOD_COMPILE_SQLITE == 1
 	{"sqlite_open", gsc_sqlite_open, 0},
 	{"sqlite_query", gsc_sqlite_query, 0},
 	{"sqlite_close", gsc_sqlite_close, 0},
@@ -158,7 +158,7 @@ scr_function_t scriptFunctions[] =
 	{"async_sqlite_checkdone", gsc_async_sqlite_checkdone, 0},
 #endif
 
-#if COMPILE_UTILS == 1
+#if LIBCOD_COMPILE_UTILS == 1
 	{"printf", gsc_utils_printf, 0},
 	{"printoutofband", gsc_utils_outofbandprint, 0},
 	{"getarraykeys", gsc_utils_getarraykeys, 0},
@@ -201,7 +201,7 @@ scr_function_t scriptFunctions[] =
 	{"remotecommand", gsc_utils_remotecommand, 0},
 #endif
 
-#if COMPILE_WEAPONS == 1
+#if LIBCOD_COMPILE_WEAPONS == 1
 	{"getweaponmaxammo", gsc_weapons_getweaponmaxammo, 0},
 	{"setweaponmaxammo", gsc_weapons_setweaponmaxammo, 0},
 	{"getweaponclipsize", gsc_weapons_getweaponclipsize, 0},
@@ -252,7 +252,7 @@ xfunction_t Scr_GetCustomFunction(const char **fname, qboolean *fdev)
 
 scr_method_t scriptMethods[] =
 {
-#if COMPILE_BOTS == 1
+#if LIBCOD_COMPILE_BOTS == 1
 	{"setwalkdir", gsc_bots_set_walkdir, 0},
 	{"setlean", gsc_bots_set_lean, 0},
 	{"setbotstance", gsc_bots_set_stance, 0},
@@ -264,12 +264,12 @@ scr_method_t scriptMethods[] =
 	{"switchtoweaponid", gsc_bots_switchtoweaponid, 0},
 #endif
 
-#if COMPILE_ENTITY == 1
+#if LIBCOD_COMPILE_ENTITY == 1
 	{"setalive", gsc_entity_setalive, 0},
 	{"setbounds", gsc_entity_setbounds, 0},
 #endif
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 	{"getstance", gsc_player_stance_get, 0},
 	{"setstance", gsc_player_stance_set, 0},
 	{"setvelocity", gsc_player_velocity_set, 0},
@@ -324,7 +324,7 @@ scr_method_t scriptMethods[] =
 	{"islocalclient", gsc_player_islocalclient, 0},
 #endif
 
-#if COMPILE_SQLITE == 1
+#if LIBCOD_COMPILE_SQLITE == 1
 	{"async_sqlite_create_entity_query", gsc_async_sqlite_create_entity_query, 0},
 	{"async_sqlite_create_entity_query_nosave", gsc_async_sqlite_create_entity_query_nosave, 0},
 #endif

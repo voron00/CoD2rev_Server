@@ -73,21 +73,27 @@ typedef struct cStaticModel_s
 	vec3_t absmin;
 	vec3_t absmax;
 } cStaticModel_t;
-// static_assert((sizeof(cStaticModel_t) == 80), "ERROR: cStaticModel_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cStaticModel_t) == 80), "ERROR: cStaticModel_t size is invalid!");
+#endif
 
 typedef struct cbrushside_s
 {
 	cplane_t *plane;
 	unsigned int materialNum;
 } cbrushside_t;
-// static_assert((sizeof(cbrushside_t) == 8), "ERROR: cbrushside_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cbrushside_t) == 8), "ERROR: cbrushside_t size is invalid!");
+#endif
 
 typedef struct cNode_s
 {
 	cplane_t *plane;
 	int16_t children[2];
 } cNode_t;
-// static_assert((sizeof(cNode_t) == 8), "ERROR: cNode_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cNode_t) == 8), "ERROR: cNode_t size is invalid!");
+#endif
 
 typedef struct cLeaf_s
 {
@@ -100,7 +106,9 @@ typedef struct cLeaf_s
 	int leafBrushNode;
 	int16_t cluster;
 } cLeaf_t;
-// static_assert((sizeof(cLeaf_t) == 44), "ERROR: cLeaf_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cLeaf_t) == 44), "ERROR: cLeaf_t size is invalid!");
+#endif
 
 typedef struct cLeafBrushNodeLeaf_s
 {
@@ -129,7 +137,9 @@ typedef struct cLeafBrushNode_s
 	cLeafBrushNodeData_t data;
 } cLeafBrushNode_t;
 #pragma pack(pop)
-// static_assert((sizeof(cLeafBrushNode_t) == 20), "ERROR: cLeafBrushNode_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cLeafBrushNode_t) == 20), "ERROR: cLeafBrushNode_t size is invalid!");
+#endif
 
 typedef struct CollisionBorder
 {
@@ -139,7 +149,9 @@ typedef struct CollisionBorder
 	float start;
 	float length;
 } CollisionBorder_t;
-// static_assert((sizeof(CollisionBorder_t) == 28), "ERROR: CollisionBorder_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(CollisionBorder_t) == 28), "ERROR: CollisionBorder_t size is invalid!");
+#endif
 
 typedef union CollisionAabbTreeIndex_s
 {
@@ -155,7 +167,9 @@ typedef struct CollisionAabbTree_s
 	uint16_t childCount;
 	CollisionAabbTreeIndex_t u;
 } CollisionAabbTree_t;
-// static_assert((sizeof(CollisionAabbTree_t) == 32), "ERROR: CollisionAabbTree_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(CollisionAabbTree_t) == 32), "ERROR: CollisionAabbTree_t size is invalid!");
+#endif
 
 typedef struct cmodel_s
 {
@@ -164,7 +178,9 @@ typedef struct cmodel_s
 	float radius;
 	cLeaf_t leaf;
 } cmodel_t;
-// static_assert((sizeof(cmodel_t) == 72), "ERROR: cmodel_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cmodel_t) == 72), "ERROR: cmodel_t size is invalid!");
+#endif
 
 typedef struct __attribute__((aligned(16))) cbrush_s
 {
@@ -175,14 +191,18 @@ typedef struct __attribute__((aligned(16))) cbrush_s
 	cbrushside_t *sides;
 	int16_t axialMaterialNum[2][3];
 } cbrush_t;
-// static_assert((sizeof(cbrush_t) == 48), "ERROR: cbrush_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cbrush_t) == 48), "ERROR: cbrush_t size is invalid!");
+#endif
 
 typedef struct CollisionEdge_s
 {
 	vec3_t origin;
 	vec3_t axis[3];
 } CollisionEdge_t;
-// static_assert((sizeof(CollisionEdge_t) == 48), "ERROR: CollisionEdge_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(CollisionEdge_t) == 48), "ERROR: CollisionEdge_t size is invalid!");
+#endif
 
 typedef struct CollisionTriangle_s
 {
@@ -192,7 +212,9 @@ typedef struct CollisionTriangle_s
 	unsigned int verts[3];
 	unsigned int edges[3];
 } CollisionTriangle_t;
-// static_assert((sizeof(CollisionTriangle_t) == 72), "ERROR: CollisionTriangle_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(CollisionTriangle_t) == 72), "ERROR: CollisionTriangle_t size is invalid!");
+#endif
 
 typedef struct CollisionPartition
 {
@@ -201,7 +223,9 @@ typedef struct CollisionPartition
 	CollisionTriangle_t *triIndices;
 	CollisionBorder_t *borders;
 } CollisionPartition_t;
-// static_assert((sizeof(CollisionPartition_t) == 12), "ERROR: CollisionPartition_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(CollisionPartition_t) == 12), "ERROR: CollisionPartition_t size is invalid!");
+#endif
 
 typedef struct clipMap_s
 {
@@ -260,7 +284,9 @@ typedef struct clipMap_s
 	struct BspHeader *header;
 	unsigned int checksum;
 } clipMap_t;
-// static_assert((sizeof(clipMap_t) == 0x110), "ERROR: clipMap_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(clipMap_t) == 284), "ERROR: clipMap_t size is invalid!"); // original size: 0x110
+#endif
 
 typedef struct TraceThreadInfo
 {
@@ -271,7 +297,9 @@ typedef struct TraceThreadInfo
 	cbrush_t *box_brush;
 	cmodel_t *box_model;
 } TraceThreadInfo;
-// static_assert((sizeof(TraceThreadInfo) == 0x18), "ERROR: TraceThreadInfo size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(TraceThreadInfo) == 0x18), "ERROR: TraceThreadInfo size is invalid!");
+#endif
 
 typedef struct traceWork_s
 {
@@ -292,7 +320,9 @@ typedef struct traceWork_s
 	vec3_t radiusOffset;
 	TraceThreadInfo threadInfo;
 } traceWork_t;
-// static_assert((sizeof(traceWork_t) == 0xB8), "ERROR: traceWork_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(traceWork_t) == 0xB8), "ERROR: traceWork_t size is invalid!");
+#endif
 
 typedef struct worldContents_s
 {
@@ -377,7 +407,9 @@ struct cm_world_t
 	uint16_t freeHead;
 	worldSector_t sectors[1024];
 };
-// static_assert((sizeof(cm_world_t) == 0x601C), "ERROR: cm_world_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cm_world_t) == 0x601C), "ERROR: cm_world_t size is invalid!");
+#endif
 
 typedef struct leafList_s
 {
@@ -399,4 +431,6 @@ typedef struct
 	int maxcount;
 	int contentmask;
 } areaParms_t;
-// static_assert((sizeof(areaParms_t) == 0x1C), "ERROR: areaParms_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(areaParms_t) == 0x1C), "ERROR: areaParms_t size is invalid!");
+#endif

@@ -574,7 +574,7 @@ char *BG_CopyStringIntoBuffer( const char *string, char *buffer, int bufSize, in
 	return pch;
 }
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 int custom_animation[MAX_CLIENTS] = {0};
 #endif
 
@@ -588,7 +588,7 @@ int BG_PlayAnim(playerState_s *ps, int animNum, int bodyPart, int forceDuration,
 	int wasSet;
 	int duration;
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 	if (custom_animation[ps->clientNum])
 		animNum = custom_animation[ps->clientNum];
 #endif

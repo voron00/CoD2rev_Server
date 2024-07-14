@@ -1,6 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 
 scr_data_t g_scr_data;
 
@@ -4704,13 +4704,6 @@ void Scr_ParseGameTypeList()
 	g_scr_data.gametype.iNumGameTypes = count;
 }
 
-#ifdef LIBCOD
-int codecallback_playercommand = 0;
-int codecallback_userinfochanged = 0;
-int codecallback_fire_grenade = 0;
-int codecallback_vid_restart = 0;
-#endif
-
 extern dvar_t *g_gametype;
 void GScr_LoadGameTypeScript()
 {
@@ -4725,10 +4718,7 @@ void GScr_LoadGameTypeScript()
 	g_scr_data.gametype.playerdamage = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerDamage", 1);
 	g_scr_data.gametype.playerkilled = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerKilled", 1);
 #ifdef LIBCOD
-	codecallback_playercommand = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerCommand", 0);
-	codecallback_userinfochanged = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_UserInfoChanged", 0);
-	codecallback_fire_grenade = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_FireGrenade", 0);
-	codecallback_vid_restart = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_VidRestart", 0);
+	InitLibcodCallbacks();
 #endif
 }
 

@@ -1,6 +1,6 @@
 #include "gsc_level.hpp"
 
-#if COMPILE_LEVEL == 1
+#if LIBCOD_COMPILE_LEVEL == 1
 
 void gsc_level_getnumberofstaticmodels()
 {

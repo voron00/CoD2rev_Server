@@ -1131,35 +1131,6 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 	strcat(s, newi);
 }
 
-qboolean I_IsEqualUnitWSpace(char *cmp1, char *cmp2)
-{
-	while ( 1 )
-	{
-		if ( !(*cmp1) || !(*cmp2) )
-			break;
-
-		if ( *cmp1 == ' ' || *cmp2 == ' ' )
-			break;
-
-		if ( *cmp1 != *cmp2 )
-			return qfalse;
-
-		cmp1++;
-		cmp2++;
-	}
-
-	if ( *cmp1 && *cmp1 != ' ')
-	{
-		return qfalse;
-	}
-	if ( *cmp2 && *cmp2 != ' ')
-	{
-		return qfalse;
-	}
-
-	return qtrue;
-}
-
 char *I_CleanStr(char *string)
 {
 	char* d;

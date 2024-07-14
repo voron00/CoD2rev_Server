@@ -1,6 +1,6 @@
 #include "gsc_utils.hpp"
 
-#if COMPILE_UTILS == 1
+#if LIBCOD_COMPILE_UTILS == 1
 
 //thanks to riicchhaarrd/php
 void gsc_utils_getarraykeys()

@@ -1,6 +1,6 @@
 #include "gsc_memory.hpp"
 
-#if COMPILE_MEMORY == 1
+#if LIBCOD_COMPILE_MEMORY == 1
 
 void gsc_memory_malloc()
 {

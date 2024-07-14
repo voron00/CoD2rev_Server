@@ -2,7 +2,7 @@
 #include "cmd.h"
 #include "sys_thread.h"
 
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 #include "../universal/universal_public.h"
 #include "../xanim/xanim_public.h"
 
@@ -460,7 +460,6 @@ void Com_ErrorCleanup( void )
 	int			currentTime;
 	char msgBuf[MAXPRINTMSG];
 
-	LargeLocalReset();
 	Dvar_SetInAutoExec(0);
 	Hunk_ClearTempMemory();
 	Hunk_ClearTempMemoryHigh();
@@ -550,7 +549,6 @@ void Com_InitDvars()
 	sv_paused = Dvar_RegisterInt("sv_paused", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	com_sv_running = Dvar_RegisterBool("sv_running", 0, DVAR_ROM | DVAR_CHANGEABLE_RESET);
-	//*((_DWORD *)legacyHacks + 1) = 0;
 	com_introPlayed = Dvar_RegisterBool("com_introPlayed", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	com_animCheck = Dvar_RegisterBool("com_animCheck", 0, DVAR_CHANGEABLE_RESET);
 

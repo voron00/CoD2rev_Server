@@ -1,6 +1,6 @@
 #include "gsc_mysql.hpp"
 
-#if COMPILE_MYSQL == 1
+#if LIBCOD_COMPILE_MYSQL == 1
 
 #include "../qcommon/sys_thread.h"
 #include "mysql/include/mysql.h"

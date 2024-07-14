@@ -1,8 +1,11 @@
-# cod2rev_server
+# CoD2rev_Server
 
-Reverse Engeneering of Call of Duty 2 Server
+## About
 
-Credits:
+This is a reverse-engenerred Call of Duty 2 dedicated server code.
+It fixes several bugs in the original binaries and allows developers to extend server functionality.
+
+## Credits:
 
 id Software
 

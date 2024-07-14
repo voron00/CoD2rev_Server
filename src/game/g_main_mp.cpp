@@ -60,11 +60,6 @@ dvar_t *g_useholdspawndelay;
 dvar_t *g_mantleBlockEnable;
 dvar_t *g_mantleBlockTimeBuffer;
 
-#ifdef LIBCOD
-dvar_t *g_playerCollision;
-dvar_t *g_playerEject;
-#endif
-
 dvar_t *g_fixedWeaponSpreads;
 dvar_t *g_dropGrenadeOnDeath;
 
@@ -972,10 +967,6 @@ void G_RegisterDvars()
 	g_mantleBlockEnable = Dvar_RegisterBool("g_mantleBlockEnable", 1, DVAR_CHANGEABLE_RESET);
 	g_mantleBlockTimeBuffer = Dvar_RegisterInt("g_mantleBlockTimeBuffer", 500, 0, 60000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	BG_RegisterDvars();
-#ifdef LIBCOD
-	g_playerCollision = Dvar_RegisterBool("g_playerCollision", 1, DVAR_CHANGEABLE_RESET);
-	g_playerEject = Dvar_RegisterBool("g_playerEject", 1, DVAR_CHANGEABLE_RESET);
-#endif
 	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", 0, DVAR_CHANGEABLE_RESET);
 	g_dropGrenadeOnDeath = Dvar_RegisterBool("g_dropGrenadeOnDeath", 1, DVAR_CHANGEABLE_RESET);
 }

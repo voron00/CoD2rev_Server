@@ -1,6 +1,6 @@
 #include "gsc_exec.hpp"
 
-#if COMPILE_EXEC == 1
+#if LIBCOD_COMPILE_EXEC == 1
 
 #include "../qcommon/sys_thread.h"
 

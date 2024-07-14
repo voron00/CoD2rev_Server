@@ -164,10 +164,48 @@ typedef int	clipHandle_t;
 #define	BIG_INFO_KEY		8192
 #define	BIG_INFO_VALUE		8192
 
-#define MAX_QPATH           64
-#define MAX_OSPATH          256
+#define MAX_QPATH           64      // max length of a quake game pathname
+#define MAX_OSPATH          256     // max length of a filesystem pathname
 
 #define MAX_EVENTS          4   // max events per frame before we drop events
+
+// these are the only configstrings that the system reserves, all the
+// other ones are strictly for servergame to clientgame communication
+#define CS_SERVERINFO       0       // an info string with all the serverinfo cvars
+#define CS_SYSTEMINFO       1       // an info string for server system to client system configuration (timescale, etc)
+
+#define SNAPFLAG_RATE_DELAYED   1
+#define SNAPFLAG_NOT_ACTIVE     2   // snapshot used during connection and for zombies
+#define SNAPFLAG_SERVERCOUNT    4   // toggled every map_restart so transitions can be detected
+
+#define MAX_NAME_LENGTH	32 // max length of a client name
+
+#define MAX_CONFIGSTRINGS   2048
+
+#define RESERVED_CONFIGSTRINGS  2   // game can't modify below this, only the system can
+
+#define MAX_MODELS          256     // these are sent over the net as 8 bits (Gordon: upped to 9 bits, erm actually it was already at 9 bits, wtf? NEVAR TRUST GAMECODE COMMENTS, comments are evil :E, lets hope it doesnt horribly break anything....)
+#define MAX_SOUNDS          256     // so they cannot be blindly increased
+
+#define GENTITYNUM_BITS     10  // JPW NERVE put q3ta default back for testing	// don't need to send any more
+#define MAX_GENTITIES       ( 1 << GENTITYNUM_BITS )
+
+#define GCLIENTNUM_BITS    6
+#define MAX_CLIENTS       ( 1 << GCLIENTNUM_BITS ) // JPW NERVE back to q3ta default was 128		// absolute limit
+
+// entitynums are communicated with GENTITY_BITS, so any reserved
+// values thatare going to be communcated over the net need to
+// also be in this range
+#define ENTITYNUM_NONE          ( MAX_GENTITIES - 1 )
+#define ENTITYNUM_WORLD         ( MAX_GENTITIES - 2 )
+#define ENTITYNUM_MAX_NORMAL    ( MAX_GENTITIES - 2 )
+
+#define SNAPFLAG_RATE_DELAYED   1
+#define SNAPFLAG_NOT_ACTIVE     2   // snapshot used during connection and for zombies
+#define SNAPFLAG_SERVERCOUNT    4   // toggled every map_restart so transitions can be detected
+
+#define GAME_INIT_FRAMES    3
+#define FRAMETIME           100                 // msec
 
 typedef struct usercmd_s
 {
@@ -179,6 +217,9 @@ typedef struct usercmd_s
 	char forwardmove;
 	char rightmove;
 } usercmd_t;
+
+// if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
+#define SOLID_BMODEL    0xffffff
 
 // 64-bit integers for global rankings interface
 // implemented as a struct for qvm compatibility
@@ -214,7 +255,9 @@ typedef struct cplane_s
 	byte signbits;
 	byte pad[2];
 } cplane_t;
-// static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(cplane_t) == 20), "ERROR: cplane_t size is invalid!");
+#endif
 
 typedef struct dmaterial_s
 {
@@ -222,7 +265,9 @@ typedef struct dmaterial_s
 	int surfaceFlags;
 	int contentFlags;
 } dmaterial_t;
-// static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(dmaterial_t) == 72), "ERROR: dmaterial_t size is invalid!");
+#endif
 
 typedef struct
 {
@@ -237,7 +282,9 @@ typedef struct
 	byte allsolid;
 	byte startsolid;
 } trace_t;
-// static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(trace_t) == 0x24), "ERROR: trace_t size is invalid!");
+#endif
 
 struct TraceExtents
 {
@@ -362,7 +409,6 @@ void Info_SetValueForKey( char *s, const char *key, const char *value );
 void Info_SetValueForKey_Big( char *s, const char *key, const char *value );
 const char *Info_ValueForKey( const char *s, const char *key );
 void Info_NextPair( const char **head, char *key, char *value );
-qboolean I_IsEqualUnitWSpace(char *cmp1, char *cmp2);
 char I_CleanChar(char character);
 bool Com_ValidXModelName(const char *name);
 qboolean Info_Validate( const char *s );

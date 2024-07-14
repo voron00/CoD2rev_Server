@@ -18,6 +18,8 @@ extern vec2_t vec2_origin;
 extern vec3_t vec3_origin;
 extern vec4_t vec4_origin;
 
+#define IS_NAN isnan
+
 #define DotProduct(a,b)         ((a)[0]*(b)[0]+(a)[1]*(b)[1]+(a)[2]*(b)[2])
 #define Dot2Product(a,b)        ((a)[0]*(b)[0]+(a)[1]*(b)[1])
 #define VectorSubtract(a,b,c)   ((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])

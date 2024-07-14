@@ -1,6 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 
 #define HEF_X( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.x
 #define HEF_Y( x ) # x,(intptr_t)&( (game_hudelem_t*)0 )->elem.y

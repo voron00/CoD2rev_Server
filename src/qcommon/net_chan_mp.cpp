@@ -36,7 +36,9 @@ typedef struct
 	loopmsg_t msgs[MAX_LOOPBACK];
 	int get, send;
 } loopback_t;
-// static_assert((sizeof(loopback_t) == 0x5808), "ERROR: loopback_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(loopback_t) == 0x5808), "ERROR: loopback_t size is invalid!");
+#endif
 
 loopback_t loopbacks[2];
 
@@ -117,6 +119,32 @@ const char* NET_AdrToString( netadr_t a )
 		Com_sprintf( s, sizeof( s ), "%02x%02x%02x%02x.%02x%02x%02x%02x%02x%02x:%hu",
 		             a.ipx[0], a.ipx[1], a.ipx[2], a.ipx[3], a.ipx[4], a.ipx[5], a.ipx[6], a.ipx[7], a.ipx[8], a.ipx[9],
 		             BigShort( a.port ) );
+	}
+
+	return s;
+}
+
+const char* NET_AdrToStringNoPort( netadr_t a )
+{
+	static char s[64];
+
+	if ( a.type == NA_LOOPBACK )
+	{
+		Com_sprintf( s, sizeof( s ), "loopback" );
+	}
+	else if ( a.type == NA_BOT )
+	{
+		Com_sprintf( s, sizeof( s ), "bot" );
+	}
+	else if ( a.type == NA_IP )
+	{
+		Com_sprintf( s, sizeof( s ), "%i.%i.%i.%i",
+		             a.ip[0], a.ip[1], a.ip[2], a.ip[3] );
+	}
+	else
+	{
+		Com_sprintf( s, sizeof( s ), "%02x%02x%02x%02x.%02x%02x%02x%02x%02x%02x",
+		             a.ipx[0], a.ipx[1], a.ipx[2], a.ipx[3], a.ipx[4], a.ipx[5], a.ipx[6], a.ipx[7], a.ipx[8], a.ipx[9] );
 	}
 
 	return s;
@@ -255,7 +283,7 @@ void NetProf_SendProfile(netchan_t *chan, int iSize, int bFragment)
 {
 	if ( net_iProfilingOn )
 	{
-		NetProf_AddPacket(&chan->prof->send, iSize, bFragment);
+		NetProf_AddPacket(&chan->pProf->send, iSize, bFragment);
 
 		if ( (net_showprofile->current.integer & 2) != 0 )
 		{
@@ -271,7 +299,7 @@ void NetProf_ReceiveProfile(netchan_t *chan, int iSize, int bFragment)
 {
 	if ( net_iProfilingOn )
 	{
-		NetProf_AddPacket(&chan->prof->recieve, iSize, bFragment);
+		NetProf_AddPacket(&chan->pProf->recieve, iSize, bFragment);
 
 		if ( (net_showprofile->current.integer & 2) != 0 )
 		{
@@ -416,7 +444,7 @@ qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg)
 
 qboolean NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *data, int len)
 {
-	char buf[MAX_LARGE_MSGLEN];
+	char buf[MAX_VOICE_MSG_LEN];
 	size_t buflen;
 
 	// set the header
@@ -442,7 +470,7 @@ void Netchan_Prepare(netsrc_t src, netchan_t *chan, netadr_t adr, unsigned int q
 	chan->qport = qport;
 	chan->incomingSequence = 0;
 	chan->outgoingSequence = 1;
-	NetProf_PrepProfiling(&chan->prof);
+	NetProf_PrepProfiling(&chan->pProf);
 }
 
 qboolean Netchan_TransmitNextFragment(netchan_t *chan)
@@ -452,7 +480,7 @@ qboolean Netchan_TransmitNextFragment(netchan_t *chan)
 	int fragmentLength;
 	int status;
 
-	NetProf_PrepProfiling(&chan->prof);
+	NetProf_PrepProfiling(&chan->pProf);
 
 	// write the packet header
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );                // <-- only do the oob here
@@ -472,10 +500,18 @@ qboolean Netchan_TransmitNextFragment(netchan_t *chan)
 		fragmentLength = chan->unsentLength - chan->unsentFragmentStart;
 	}
 
+#ifdef LIBCOD
 	if (chan->protocol < 118)
 		MSG_WriteShort( &send, chan->unsentFragmentStart );
 	else
 		MSG_WriteLong( &send, chan->unsentFragmentStart );
+#else
+#if PROTOCOL_VERSION < 118
+	MSG_WriteShort( &send, chan->unsentFragmentStart );
+#else
+	MSG_WriteLong( &send, chan->unsentFragmentStart );
+#endif
+#endif
 
 	MSG_WriteShort( &send, fragmentLength );
 	MSG_WriteData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
@@ -534,7 +570,7 @@ qboolean Netchan_Transmit(netchan_t *chan, int length, const byte *data)
 		return qtrue;
 	}
 
-	NetProf_PrepProfiling(&chan->prof);
+	NetProf_PrepProfiling(&chan->pProf);
 
 	// write the packet header
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
@@ -578,7 +614,7 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg)
 	int fragmentStart, fragmentLength;
 	qboolean fragmented;
 
-	NetProf_PrepProfiling(&chan->prof);
+	NetProf_PrepProfiling(&chan->pProf);
 
 	// get sequence numbers
 	MSG_BeginReading( msg );

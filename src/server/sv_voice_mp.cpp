@@ -1,96 +1,52 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
-extern dvar_t *sv_voice;
-
-bool SV_ClientHasClientMuted(int listener, int talker)
-{
-	return svs.clients[listener].mutedClients[talker];
-}
-
-bool SV_ClientWantsVoiceData(unsigned int clientNum)
-{
-	return svs.clients[clientNum].hasVoip;
-}
-
-void SV_WriteClientVoiceData(client_s *client, msg_t *msg)
-{
-	int i;
-
-	MSG_WriteByte(msg, client->unsentVoiceData);
-
-	for ( i = 0; i < client->unsentVoiceData; ++i )
-	{
-		MSG_WriteByte(msg, client->voicedata[i].num);
-		MSG_WriteByte(msg, client->voicedata[i].dataLen);
-		MSG_WriteData(msg, client->voicedata[i].data, client->voicedata[i].dataLen);
-	}
-}
-
-void SV_SendClientVoiceData(client_s *client)
-{
-	byte buf[MAX_LARGE_MSGLEN];
-	msg_t msg;
-
-	if ( client->state == CS_ACTIVE && client->unsentVoiceData )
-	{
-		MSG_Init(&msg, buf, sizeof(buf));
-		MSG_WriteString(&msg, "v");
-		SV_WriteClientVoiceData(client, &msg);
-
-		if ( msg.overflowed )
-		{
-			Com_Printf("WARNING: voice msg overflowed for %s\n", client->name);
-		}
-		else
-		{
-			NET_OutOfBandVoiceData(NS_SERVER, client->netchan.remoteAddress, msg.data, msg.cursize);
-			client->unsentVoiceData = 0;
-		}
-	}
-}
-
+/*
+==================
+SV_QueueVoicePacket
+==================
+*/
 void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacket)
 {
-	client_s *client;
+	client_t *client = &svs.clients[clientNum];
 
-	client = &svs.clients[clientNum];
-
-	if ( client->unsentVoiceData < 40 )
+	if ( client->voicePacketCount >= MAX_VOICE_PACKETS )
 	{
-		client->voicedata[client->unsentVoiceData].dataLen = voicePacket->dataLen;
-		memcpy(client->voicedata[client->unsentVoiceData].data, voicePacket->data, voicePacket->dataLen);
-		client->voicedata[client->unsentVoiceData++].num = talkerNum;
+		return;
 	}
+
+	client->voicePackets[client->voicePacketCount].dataSize = voicePacket->dataSize;
+	memcpy(client->voicePackets[client->voicePacketCount].data, voicePacket->data, voicePacket->dataSize);
+	client->voicePackets[client->voicePacketCount].talker = talkerNum;
+	client->voicePacketCount++;
 }
 
-void SV_UserVoice(client_s *cl, msg_t *msg)
+/*
+==================
+SV_ClientHasClientMuted
+==================
+*/
+bool SV_ClientHasClientMuted(int listener, int talker)
 {
-	int packet;
-	int packetCount;
-	VoicePacket_t voicePacket;
-
-	if ( sv_voice->current.boolean )
-	{
-		packetCount = MSG_ReadByte(msg);
-
-		for ( packet = 0; packet < packetCount; ++packet )
-		{
-			voicePacket.dataLen = MSG_ReadByte(msg);
-
-			if ( voicePacket.dataLen <= 0 || voicePacket.dataLen > 256 )
-			{
-				Com_Printf("Received invalid voice packet of size %i from %s\n", voicePacket.dataLen, cl->name);
-				return;
-			}
-
-			MSG_ReadData(msg, voicePacket.data, voicePacket.dataLen);
-			G_BroadcastVoice(cl->gentity, &voicePacket);
-		}
-	}
+	return svs.clients[listener].muteList[talker];
 }
 
-void SV_PreGameUserVoice(client_s *cl, msg_t *msg)
+/*
+==================
+SV_ClientWantsVoiceData
+==================
+*/
+bool SV_ClientWantsVoiceData(int clientNum)
+{
+	return svs.clients[clientNum].sendVoice;
+}
+
+/*
+==================
+SV_PreGameUserVoice
+==================
+*/
+void SV_PreGameUserVoice(client_t *cl, msg_t *msg)
 {
 	int talker;
 	int listener;
@@ -98,33 +54,123 @@ void SV_PreGameUserVoice(client_s *cl, msg_t *msg)
 	int packetCount;
 	VoicePacket_t voicePacket;
 
-	if ( sv_voice->current.boolean )
+	if ( !sv_voice->current.boolean )
 	{
-		talker = cl - svs.clients;
-		packetCount = MSG_ReadByte(msg);
+		return;
+	}
 
-		for ( packet = 0; packet < packetCount; ++packet )
+	talker = cl - svs.clients;
+	packetCount = MSG_ReadByte(msg);
+
+	for ( packet = 0; packet < packetCount; packet++ )
+	{
+		voicePacket.dataSize = MSG_ReadShort(msg);
+
+		if ( voicePacket.dataSize <= 0 || voicePacket.dataSize > MAX_VOICE_PACKET_DATA )
 		{
-			voicePacket.dataLen = MSG_ReadShort(msg);
+			Com_Printf("Received invalid voice packet of size %i from %s\n", voicePacket.dataSize, cl->name);
+			return;
+		}
 
-			if ( voicePacket.dataLen <= 0 || voicePacket.dataLen > 256 )
-			{
-				Com_Printf("Received invalid voice packet of size %i from %s\n", voicePacket.dataLen, cl->name);
-				return;
-			}
+		MSG_ReadData(msg, voicePacket.data, voicePacket.dataSize);
 
-			MSG_ReadData(msg, voicePacket.data, voicePacket.dataLen);
+		for ( listener = 0; listener < MAX_CLIENTS; listener++ )
+		{
+			if ( listener == talker )
+				continue;
 
-			for ( listener = 0; listener <= 63; ++listener )
-			{
-				if ( listener != talker
-				        && svs.clients[listener].state > CS_ZOMBIE
-				        && !SV_ClientHasClientMuted(listener, talker)
-				        && SV_ClientWantsVoiceData(listener) )
-				{
-					SV_QueueVoicePacket(talker, listener, &voicePacket);
-				}
-			}
+			if ( svs.clients[listener].state < CS_CONNECTED )
+				continue;
+
+			if ( SV_ClientHasClientMuted(listener, talker) )
+				continue;
+
+			if ( !SV_ClientWantsVoiceData(listener) )
+				continue;
+
+			SV_QueueVoicePacket(talker, listener, &voicePacket);
 		}
 	}
+}
+
+/*
+==================
+SV_UserVoice
+==================
+*/
+void SV_UserVoice(client_t *cl, msg_t *msg)
+{
+	int packet;
+	int packetCount;
+	VoicePacket_t voicePacket;
+
+	if ( !sv_voice->current.boolean )
+	{
+		return;
+	}
+
+	packetCount = MSG_ReadByte(msg);
+
+	for ( packet = 0; packet < packetCount; packet++ )
+	{
+		voicePacket.dataSize = MSG_ReadByte(msg);
+
+		if ( voicePacket.dataSize <= 0 || voicePacket.dataSize > MAX_VOICE_PACKET_DATA )
+		{
+			Com_Printf("Received invalid voice packet of size %i from %s\n", voicePacket.dataSize, cl->name);
+			return;
+		}
+
+		MSG_ReadData(msg, voicePacket.data, voicePacket.dataSize);
+		G_BroadcastVoice(cl->gentity, &voicePacket);
+	}
+}
+
+/*
+==================
+SV_WriteClientVoiceData
+==================
+*/
+void SV_WriteClientVoiceData(client_t *client, msg_t *msg)
+{
+	int i;
+
+	MSG_WriteByte(msg, client->voicePacketCount);
+
+	for ( i = 0; i < client->voicePacketCount; ++i )
+	{
+		MSG_WriteByte(msg, client->voicePackets[i].talker);
+		MSG_WriteByte(msg, client->voicePackets[i].dataSize);
+		MSG_WriteData(msg, client->voicePackets[i].data, client->voicePackets[i].dataSize);
+	}
+}
+
+/*
+==================
+SV_SendClientVoiceData
+==================
+*/
+void SV_SendClientVoiceData(client_t *client)
+{
+	byte msg_buf[MAX_VOICE_MSG_LEN];
+	msg_t msg;
+
+	if ( client->state != CS_ACTIVE )
+		return;
+
+	if ( !client->voicePacketCount )
+		return;
+
+	MSG_Init(&msg, msg_buf, sizeof(msg_buf));
+	MSG_WriteString(&msg, "v");
+	SV_WriteClientVoiceData(client, &msg);
+
+	if ( msg.overflowed )
+	{
+		Com_Printf("WARNING: voice msg overflowed for %s\n", client->name);
+		return;
+	}
+
+	NET_OutOfBandVoiceData(NS_SERVER, client->netchan.remoteAddress, msg.data, msg.cursize);
+	client->voicePacketCount = 0;
 }

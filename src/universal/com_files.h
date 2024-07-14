@@ -73,7 +73,9 @@ struct iwd_t
 	fileInIwd_t **hashTable;
 	fileInIwd_t *buildBuffer;
 };
-// static_assert((sizeof(iwd_t) == 800), "ERROR: iwd_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(iwd_t) == 800), "ERROR: iwd_t size is invalid!");
+#endif
 
 struct fileHandleData_t
 {
@@ -85,7 +87,9 @@ struct fileHandleData_t
 	qboolean streamed;
 	char name[MAX_ZPATH];
 };
-// static_assert((sizeof(fileHandleData_t) == 284), "ERROR: fileHandleData_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(fileHandleData_t) == 284), "ERROR: fileHandleData_t size is invalid!");
+#endif
 
 struct searchpath_t
 {
@@ -95,7 +99,9 @@ struct searchpath_t
 	qboolean localized;
 	int language;
 };
-// static_assert((sizeof(searchpath_t) == 20), "ERROR: searchpath_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(searchpath_t) == 20), "ERROR: searchpath_t size is invalid!");
+#endif
 
 /*
 ==============
@@ -156,6 +162,7 @@ inline int FileWrapper_GetFileSize(FILE *h)
 }
 
 extern dvar_t* fs_ignoreLocalized;
+extern int fs_numServerIwds;
 
 bool FS_Initialized();
 long FS_HashFileName( const char *fname, int hashSize );
@@ -192,6 +199,7 @@ const char *FS_ReferencedIwdNames();
 const char *FS_ReferencedIwdChecksums();
 const char *FS_LoadedIwdChecksums();
 const char *FS_LoadedIwdPureChecksums();
+qboolean FS_VerifyIwd( const char *iwd );
 char *FS_GetMapBaseName(const char *mapname);
 void FS_ClearIwdReferences();
 void FS_Restart(int checksumFeed);

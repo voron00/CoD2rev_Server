@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 #include "../xanim/xanim_public.h"
 
 //==================================================================
@@ -154,7 +154,9 @@ typedef struct animation_s
 	int stance;
 	int noteType;
 } animation_t;
-// static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
+#endif
 
 typedef struct
 {
@@ -177,7 +179,9 @@ typedef struct
 	unsigned short animDuration[2];
 	snd_alias_list_t *soundAlias;
 } animScriptCommand_t;
-// static_assert((sizeof(animScriptCommand_t) == 0x10), "ERROR: animScriptCommand_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(animScriptCommand_t) == 0x10), "ERROR: animScriptCommand_t size is invalid!");
+#endif
 
 typedef struct
 {
@@ -186,7 +190,9 @@ typedef struct
 	int numCommands;
 	animScriptCommand_t commands[MAX_ANIMSCRIPT_ANIMCOMMANDS];
 } animScriptItem_t;
-// static_assert((sizeof(animScriptItem_t) == 0xF4), "ERROR: animScriptItem_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(animScriptItem_t) == 0xF4), "ERROR: animScriptItem_t size is invalid!");
+#endif
 
 typedef struct
 {
@@ -212,7 +218,9 @@ typedef struct animScriptData_s
 	snd_alias_list_t *(*soundAlias)(const char *);
 	void (*playSoundAlias)(int, snd_alias_list_t *);
 } animScriptData_t;
-// static_assert((sizeof(animScriptData_t) == 736200), "ERROR: animScriptData_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(animScriptData_t) == 736200), "ERROR: animScriptData_t size is invalid!");
+#endif
 
 typedef struct
 {
@@ -271,7 +279,9 @@ typedef struct clientInfo_s
 	int turnAnimEndTime;
 	char turnAnimType;
 } clientInfo_t;
-// static_assert((sizeof(clientInfo_t) == 0x4B8), "ERROR: clientInfo_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(clientInfo_t) == 0x4B8), "ERROR: clientInfo_t size is invalid!");
+#endif
 
 struct corpseInfo_t
 {
@@ -308,7 +318,9 @@ typedef struct __attribute__((aligned(8))) bgs_s
 	void *(*AllocXAnim)(int);
 	clientInfo_t clientinfo[64];
 } bgs_t;
-// static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
+#endif
 
 extern bgs_t level_bgs;
 
@@ -710,7 +722,9 @@ typedef struct
 	const char *fireRumble;
 	const char *meleeImpactRumble;
 } WeaponDef;
-// static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
+#endif
 
 typedef struct
 {
@@ -1097,7 +1111,9 @@ typedef struct
 	const char *fireRumble;
 	const char *meleeImpactRumble;
 } WeaponFullDef;
-// static_assert((sizeof(WeaponFullDef) == 0x604), "ERROR: WeaponFullDef size is invalid!");
+#if defined(__i386__)
+static_assert((sizeof(WeaponFullDef) == 0x604), "ERROR: WeaponFullDef size is invalid!");
+#endif
 
 extern WeaponDef* bg_weaponDefs[];
 extern unsigned int bg_iNumWeapons;

@@ -21,43 +21,43 @@
 #include <sys/time.h> // milliseconds
 #include <ctype.h> // isdigit
 
-#if COMPILE_BOTS == 1
+#if LIBCOD_COMPILE_BOTS == 1
 #include "gsc_bots.hpp"
 #endif
 
-#if COMPILE_ENTITY == 1
+#if LIBCOD_COMPILE_ENTITY == 1
 #include "gsc_entity.hpp"
 #endif
 
-#if COMPILE_EXEC == 1
+#if LIBCOD_COMPILE_EXEC == 1
 #include "gsc_exec.hpp"
 #endif
 
-#if COMPILE_LEVEL == 1
+#if LIBCOD_COMPILE_LEVEL == 1
 #include "gsc_level.hpp"
 #endif
 
-#if COMPILE_MEMORY == 1
+#if LIBCOD_COMPILE_MEMORY == 1
 #include "gsc_memory.hpp"
 #endif
 
-#if COMPILE_MYSQL == 1
+#if LIBCOD_COMPILE_MYSQL == 1
 #include "gsc_mysql.hpp"
 #endif
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 #include "gsc_player.hpp"
 #endif
 
-#if COMPILE_SQLITE == 1
+#if LIBCOD_COMPILE_SQLITE == 1
 #include "gsc_sqlite.hpp"
 #endif
 
-#if COMPILE_UTILS == 1
+#if LIBCOD_COMPILE_UTILS == 1
 #include "gsc_utils.hpp"
 #endif
 
-#if COMPILE_WEAPONS == 1
+#if LIBCOD_COMPILE_WEAPONS == 1
 #include "gsc_weapons.hpp"
 #endif
 
@@ -123,5 +123,24 @@ xfunction_t Scr_GetCustomFunction(const char **fname, qboolean *fdev);
 xmethod_t Scr_GetCustomMethod(const char **fname, qboolean *fdev);
 
 uint64_t Sys_Milliseconds64(void);
+
+extern dvar_t *sv_master[MAX_MASTER_SERVERS];
+extern dvar_t *fs_library;
+extern dvar_t *sv_allowRcon;
+extern dvar_t *sv_downloadMessage;
+extern dvar_t *sv_cracked;
+extern dvar_t *sv_kickbots;
+
+void RegisterLibcodDvars();
+int hook_findMap(const char *qpath, void **buffer);
+bool SV_IsBannedIp(netadr_t adr);
+void hook_ClientCommand(int clientNum);
+void InitLibcodCallbacks();
+void SV_MasterHeartbeat_libcod(const char *hbname);
+void SV_ResetPureClient_libcod(client_t *cl);
+void SV_CalcPings_libcod( void );
+void SV_CheckTimeouts_libcod( void );
+void SV_BotUserMove_libcod(client_t *client);
+void SV_ClientThink_libcod(client_t *cl, usercmd_t *cmd);
 
 #endif

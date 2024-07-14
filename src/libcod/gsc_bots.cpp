@@ -1,6 +1,6 @@
 #include "gsc_bots.hpp"
 
-#if COMPILE_BOTS == 1
+#if LIBCOD_COMPILE_BOTS == 1
 
 void gsc_bots_set_walkdir(scr_entref_t id)
 {

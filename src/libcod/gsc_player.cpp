@@ -1,6 +1,6 @@
 #include "gsc_player.hpp"
 
-#if COMPILE_PLAYER == 1
+#if LIBCOD_COMPILE_PLAYER == 1
 
 void gsc_player_velocity_set(scr_entref_t id)
 {
@@ -796,6 +796,12 @@ void gsc_kick_slot()
 		return;
 	}
 
+	if (!client->state)
+	{
+		stackPushUndefined();
+		return;
+	}
+
 	strncpy(tmp, msg, sizeof(tmp));
 	tmp[sizeof(tmp) - 1] = '\0';
 
@@ -883,7 +889,7 @@ void gsc_player_isbot(scr_entref_t id)
 	}
 
 	client_t *client = &svs.clients[id.entnum];
-	stackPushBool(client->bot);
+	stackPushBool(client->bIsTestClient);
 }
 
 void gsc_player_disableitempickup(scr_entref_t id)

@@ -1,6 +1,6 @@
 #include "gsc_weapons.hpp"
 
-#if COMPILE_WEAPONS == 1
+#if LIBCOD_COMPILE_WEAPONS == 1
 
 qboolean isValidWeaponId(int id)
 {

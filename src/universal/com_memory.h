@@ -63,7 +63,6 @@ void Hunk_OverrideDataForFile(int type, const char *name, void *data);
 void Hunk_AddData(unsigned char type, void *data, void *(*alloc)(int));
 const char* Hunk_SetDataForFile(int type, const char *name, void *data, void *(*alloc)(int));
 qboolean Hunk_DataOnHunk(void *data);
-void ReplaceStringInternal(char **string, char *replacement);
 void FreeStringInternal(char *str);
 void* Hunk_AllocAlignInternal(int size, int aligment);
 void *Hunk_AllocInternal( int size );
@@ -103,22 +102,4 @@ void Com_InitHunkMemory( void );
 #define Hunk_AllocateTempMemory Hunk_AllocateTempMemoryInternal
 
 #define CopyString CopyStringInternal
-#define ReplaceString ReplaceStringInternal
 #define FreeString FreeStringInternal
-
-struct LargeLocal
-{
-	LargeLocal(int sizeParam);
-	~LargeLocal();
-
-	void* GetBuf();
-
-	int startPos;
-	int size;
-};
-
-void LargeLocalEnd(int startPos);
-void LargeLocalReset();
-int LargeLocalBegin(int size);
-void* LargeLocalGetBuf(int startPos, int size);
-unsigned int LargeLocalRoundSize(int size);

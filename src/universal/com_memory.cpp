@@ -50,7 +50,7 @@ void Z_FreeInternal( void *ptr )
 	free(ptr);
 }
 
-char* CopyStringInternal(const char *in)
+char* CopyStringInternal( const char *in )
 {
 	char *copy = (char *)malloc(strlen(in) + 1);
 	if (!copy)
@@ -60,30 +60,7 @@ char* CopyStringInternal(const char *in)
 	return copy;
 }
 
-void ReplaceStringInternal(char **string, char *replacement)
-{
-	unsigned int length;
-	char *str;
-
-	length = I_strlen(replacement);
-	str = *string;
-
-	if ( *string && strlen(str) < length )
-	{
-		Z_FreeInternal(str);
-		str = 0;
-	}
-
-	if ( !str )
-	{
-		str = (char *)Z_MallocInternal(length + 1);
-		*string = str;
-	}
-
-	strcpy(str, replacement);
-}
-
-void FreeStringInternal(char *str)
+void FreeStringInternal( char *str )
 {
 	if (str)
 		Z_FreeInternal(str);

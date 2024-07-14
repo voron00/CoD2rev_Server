@@ -1,6 +1,6 @@
 #include "gsc_entity.hpp"
 
-#if COMPILE_ENTITY == 1
+#if LIBCOD_COMPILE_ENTITY == 1
 
 void gsc_entity_setalive(scr_entref_t id)
 {

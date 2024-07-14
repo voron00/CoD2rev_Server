@@ -1,6 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
-#include "../clientscript/clientscript_public.h"
+#include "../script/script_public.h"
 
 #define GEF( x ) # x,(intptr_t)&( (gentity_t*)0 )->x
 #define GEF_ORIGIN( x ) # x,(intptr_t)&( (gentity_t*)0 )->r.currentOrigin
