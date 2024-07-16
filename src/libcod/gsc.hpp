@@ -4,7 +4,7 @@
 #include "../qcommon/qcommon.h"
 #include "../game/g_shared.h"
 
-#define COD2_MAX_STRINGLENGTH 1024
+#define COD2_MAX_STRINGLENGTH MAX_STRING_CHARS
 
 /* default stuff */
 #include <stdio.h>

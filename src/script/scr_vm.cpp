@@ -1423,10 +1423,6 @@ void runtimeError(conChannel_t channel, const char *codePos, unsigned int index,
 	Com_PrintMessage(channel, "************************************\n");
 }
 
-#ifdef LIBCOD
-extern dvar_t *com_developer;
-#endif
-
 void scriptError(const char *codePos, unsigned int index, const char *errorMsg, const char *format)
 {
 	const char *line;

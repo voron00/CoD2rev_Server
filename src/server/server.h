@@ -54,6 +54,7 @@ extern dvar_t *sv_cheats;
 extern dvar_t *sv_debugReliableCmds;
 extern dvar_t *sv_showAverageBPS;
 extern dvar_t *sv_padPackets;
+extern dvar_t *sv_debugRate;
 
 extern dvar_t *sv_wwwDownload;
 extern dvar_t *sv_wwwBaseURL;

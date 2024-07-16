@@ -683,8 +683,6 @@ TTimo - use sv_maxRate or sv_dl_maxRate depending on regular or downloading clie
 ====================
 */
 #define HEADER_RATE_BYTES   48      // include our header, IP header, and some overhead
-extern dvar_t *sv_maxRate;
-extern dvar_t *sv_debugRate;
 static int SV_RateMsec( client_t *client, int messageSize )
 {
 	int rate;

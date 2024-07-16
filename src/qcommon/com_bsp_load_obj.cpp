@@ -2,23 +2,23 @@
 
 #define IBSP_VERSION 4
 
-struct BspLump
+struct lump_t
 {
-	unsigned int length;
-	unsigned int offset;
+	int filelen;
+	int fileofs;
 };
 
-struct BspHeader
+struct dheader_t
 {
-	unsigned int ident;
-	unsigned int version;
-	BspLump lumps[LUMP_COUNT];
+	int ident;
+	int version;
+	lump_t lumps[LUMP_COUNT];
 };
 
 typedef struct comBspGlob_s
 {
-	BspHeader *header;
-	unsigned int fileSize;
+	dheader_t *header;
+	int fileSize;
 	unsigned int checksum;
 } comBspGlob_t;
 #if defined(__i386__)
@@ -34,19 +34,17 @@ qboolean Com_IsBspLoaded()
 
 const char *GetBspExtension()
 {
-	const char *string;
-
-	string = Dvar_GetString("gfx_driver");
+	const char *string = Dvar_GetString("gfx_driver");
 
 	if ( *string )
 		return va("%sbsp", string);
-	else
-		return va("d3dbsp");
+
+	return va("d3dbsp");
 }
 
 void Com_UnloadBsp()
 {
-	Z_FreeInternal(comBspGlob.header);
+	Z_Free(comBspGlob.header);
 	comBspGlob.header = NULL;
 }
 
@@ -56,10 +54,10 @@ void Com_CleanupBsp()
 		Com_UnloadBsp();
 }
 
-BspHeader* Com_GetBspHeader(unsigned int *size, unsigned int *checksum)
+dheader_t* Com_GetBsp(int *fileSize, unsigned int *checksum)
 {
-	if ( size )
-		*size = comBspGlob.fileSize;
+	if ( fileSize )
+		*fileSize = comBspGlob.fileSize;
 
 	if ( checksum )
 		*checksum = comBspGlob.checksum;
@@ -67,7 +65,7 @@ BspHeader* Com_GetBspHeader(unsigned int *size, unsigned int *checksum)
 	return comBspGlob.header;
 }
 
-byte* Com_ValidateBspLumpData(int type, unsigned int offset, unsigned int length, unsigned int elemSize, unsigned int *count)
+byte* Com_ValidateBspLumpData(int type, int offset, int length, int elemSize, int *count)
 {
 	if ( length )
 	{
@@ -90,16 +88,16 @@ byte* Com_ValidateBspLumpData(int type, unsigned int offset, unsigned int length
 	return NULL;
 }
 
-byte* Com_GetBspLump(int type, unsigned int elemSize, unsigned int *count)
+byte* Com_GetBspLump(int type, int elemSize, int *count)
 {
-	return Com_ValidateBspLumpData(type, comBspGlob.header->lumps[type].offset, comBspGlob.header->lumps[type].length, elemSize, count);
+	return Com_ValidateBspLumpData(type, comBspGlob.header->lumps[type].fileofs, comBspGlob.header->lumps[type].filelen, elemSize, count);
 }
 
 bool Com_BspHasLump(int type)
 {
-	unsigned int count;
+	int count;
 
-	Com_GetBspLump(type, 1u, &count);
+	Com_GetBspLump(type, 1, &count);
 
 	return count != 0;
 }
@@ -107,7 +105,7 @@ bool Com_BspHasLump(int type)
 void Com_LoadBsp(const char *filename)
 {
 	fileHandle_t h;
-	unsigned int bytesRead;
+	int bytesRead;
 	int i;
 
 	comBspGlob.fileSize = FS_FOpenFileRead(filename, &h, 0);
@@ -117,7 +115,7 @@ void Com_LoadBsp(const char *filename)
 		Com_Error(ERR_DROP, "EXE_ERR_COULDNT_LOAD\x15%s", filename);
 	}
 
-	comBspGlob.header = (BspHeader *)Z_MallocGarbage(comBspGlob.fileSize);
+	comBspGlob.header = (dheader_t *)Z_MallocGarbage(comBspGlob.fileSize);
 	bytesRead = FS_Read(comBspGlob.header, comBspGlob.fileSize, h);
 	FS_FCloseFile(h);
 
@@ -140,7 +138,7 @@ void Com_LoadBsp(const char *filename)
 
 	for ( i = 0; i != LUMP_COUNT; ++i )
 	{
-		comBspGlob.header->lumps[i].length = LittleLong(comBspGlob.header->lumps[i].length);
-		comBspGlob.header->lumps[i].offset = LittleLong(comBspGlob.header->lumps[i].offset);
+		comBspGlob.header->lumps[i].filelen = LittleLong(comBspGlob.header->lumps[i].filelen);
+		comBspGlob.header->lumps[i].fileofs = LittleLong(comBspGlob.header->lumps[i].fileofs);
 	}
 }

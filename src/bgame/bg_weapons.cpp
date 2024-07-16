@@ -609,7 +609,7 @@ int PM_Weapon_WeaponTimeAdjust(pmove_t *pm, pml_t *pml)
 	if ( ps->weaponRestrictKickTime > 0 )
 	{
 		ps->weaponRestrictKickTime -= pml->msec;
-		ps->weaponRestrictKickTime = I_min(ps->weaponRestrictKickTime, 0);
+		ps->weaponRestrictKickTime = I_max(ps->weaponRestrictKickTime, 0);
 	}
 
 	if ( ps->weaponTime )

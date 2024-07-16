@@ -115,11 +115,14 @@ I_max
 */
 inline int I_max(int x, int y)
 {
-	if (x < y)
+	if ((int)(x - y) < 0)
 	{
 		return y;
 	}
-	return x;
+	else
+	{
+		return x;
+	}
 }
 
 /*
@@ -129,35 +132,38 @@ I_min
 */
 inline int I_min(int x, int y)
 {
-	if (y >= x)
+	if ((int)(y - x) < 0)
+	{
+		return y;
+	}
+	else
 	{
 		return x;
 	}
-	return y;
 }
 
 /*
 ==============
-sub_80B9D06
+I_clamp
 ==============
 */
-inline float sub_80B9D06(float x, float y, float z)
+inline int I_clamp(int val, int min, int max)
+{
+	return I_max(min, I_min(val, max));
+}
+
+/*
+==============
+I_sgn
+==============
+*/
+inline float I_sgn(float x)
 {
 	if ( x < 0.0 )
 	{
-		return z;
+		return -1.0;
 	}
-	return y;
-}
-
-/*
-==============
-sub_80B9A48
-==============
-*/
-inline float sub_80B9A48(float x)
-{
-	return sub_80B9D06(x, 1.0, -1.0);
+	return 1.0;
 }
 
 /*

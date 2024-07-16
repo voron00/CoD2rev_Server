@@ -3,8 +3,8 @@
 
 struct dbrush_t
 {
-	uint16_t numSides;
-	uint16_t materialNum;
+	int16_t numSides;
+	int16_t materialNum;
 };
 
 struct dbrushside_t
@@ -17,132 +17,146 @@ struct dbrushside_t
 	int materialNum;
 };
 
-void CMod_LoadBrushes()
+/*
+=================
+CMod_LoadBrushes
+=================
+*/
+#define MIN_NUM_SIDES 6
+static void CMod_LoadBrushes()
 {
 	dbrushside_t *inSides;
 	cbrush_t *outBrush;
-	unsigned int axisIter;
-	signed int index;
-	unsigned int materialnum;
-	unsigned int brushcount;
+	int axisIter;
+	int index;
+	int brushcount;
 	dbrush_t *inBrush;
 	cbrushside_t *sides;
-	unsigned int numinsides;
-	unsigned int sideIter;
-	unsigned int brushIter;
+	int numinsides;
+	int sideIter;
+	int brushIter;
+	int materialNum;
 
 	inBrush = (dbrush_t *)Com_GetBspLump(LUMP_BRUSHES, sizeof(dbrush_t), &brushcount);
 	inSides = (dbrushside_t *)Com_GetBspLump(LUMP_BRUSHSIDES, sizeof(dbrushside_t), &numinsides);
 
-	unsigned int outnumsides = numinsides - 6 * brushcount;
+	int outnumsides = numinsides - MIN_NUM_SIDES * brushcount;
 
-	if ( (outnumsides & 0x80000000) != 0 )
+	if ( outnumsides < 0 )
+	{
 		Com_Error(ERR_DROP, "CMod_LoadBrushes: bad side count");
+	}
 
 	if ( outnumsides )
-		sides = (cbrushside_t *)CM_Hunk_Alloc(sizeof(cbrushside_t) * outnumsides);
+		sides = (cbrushside_t *)CM_Hunk_Alloc( outnumsides * sizeof( *cm.brushsides ) );
 	else
 		sides = NULL;
 
 	cm.brushsides = sides;
 	cm.numBrushSides = outnumsides;
-	cm.brushes = (cbrush_t *)CM_Hunk_Alloc(sizeof(cbrush_t) * (brushcount + 1));
+
+	cm.brushes = (cbrush_t *)CM_Hunk_Alloc( ( BOX_BRUSHES + brushcount ) * sizeof( *cm.brushes ) );
 	cm.numBrushes = brushcount;
 
-	if ( (uint16_t)brushcount != brushcount )
+	if ( cm.numBrushes != brushcount )
+	{
 		Com_Error(ERR_DROP, "CMod_LoadBrushes: cm.numBrushes exceeded");
+	}
 
 	outBrush = cm.brushes;
 
-	for (brushIter = 0; brushIter < brushcount; ++brushIter)
+	for ( brushIter = 0; brushIter < brushcount; brushIter++, outBrush++, inBrush++ )
 	{
-		outBrush->numsides = inBrush->numSides - 6;
+		outBrush->numsides = LittleShort(inBrush->numSides) - MIN_NUM_SIDES;
 
-		if ( (outBrush->numsides & 0x80000000) != 0 )
+		if ( outBrush->numsides < 0 )
+		{
 			Com_Error(ERR_DROP, "CMod_LoadBrushes: brush has less than 6 sides");
+		}
 
 		outBrush->sides = (outBrush->numsides != 0 ? sides : NULL);
 
-		for ( axisIter = 0; axisIter < 3; ++axisIter )
+		for ( axisIter = 0; axisIter < 3; axisIter++ )
 		{
-			for( index = 0; index < 2; ++index )
+			for( index = 0; index < 2; index++, inSides++ )
 			{
 				if ( index )
 				{
-					outBrush->maxs[axisIter] = inSides->bound;
+					outBrush->maxs[axisIter] = LittleFloat(inSides->bound);
 				}
 				else
 				{
-					outBrush->mins[axisIter] = inSides->bound;
+					outBrush->mins[axisIter] = LittleFloat(inSides->bound);
 				}
 
-				if ( (unsigned)inSides->materialNum < 0 || (unsigned)inSides->materialNum >= cm.numMaterials )
+				materialNum = LittleLong(inSides->materialNum);
+
+				if ( materialNum < 0 || materialNum >= cm.numMaterials )
 				{
-					Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", inSides->materialNum);
+					Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", materialNum);
 				}
 
-				outBrush->axialMaterialNum[index][axisIter] = inSides->materialNum;
+				outBrush->axialMaterialNum[index][axisIter] = materialNum;
 
-				if ( (int16_t)(inSides->materialNum) != inSides->materialNum )
+				if ( outBrush->axialMaterialNum[index][axisIter] != materialNum )
 				{
 					Com_Error(ERR_DROP, "CMod_LoadBrushes: axialMaterialNum exceeded");
 				}
-
-				++inSides;
 			}
 		}
 
-		for (sideIter = 0; sideIter < outBrush->numsides; ++sideIter)
+		for ( sideIter = 0; sideIter < outBrush->numsides; sideIter++, inSides++, sides++ )
 		{
-			sides->plane = &cm.planes[inSides->planeNum];
-			sides->materialNum = inSides->materialNum;
+			sides->plane = &cm.planes[LittleLong(inSides->planeNum)];
+			sides->materialNum = LittleLong(inSides->materialNum);
 
-			if ( (sides->materialNum & 0x80000000) != 0 || sides->materialNum >= cm.numMaterials )
-				Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %d brushIter", sides->materialNum);
-
-			++inSides;
-			++sides;
+			if ( sides->materialNum < 0 || sides->materialNum >= cm.numMaterials )
+			{
+				Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", sides->materialNum);
+			}
 		}
 
-		materialnum = inBrush->materialNum;
+		materialNum = LittleShort(inBrush->materialNum);
 
-		if ( materialnum < 0 || materialnum >= cm.numMaterials )
-			Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %d brushIter", inBrush->materialNum);
+		if ( materialNum < 0 || materialNum >= cm.numMaterials )
+		{
+			Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", materialNum);
+		}
 
-		++inBrush;
-		outBrush->contents = cm.materials[materialnum].contentFlags & 0xDFFFFFFB;
-		++outBrush;
+		outBrush->contents = cm.materials[materialNum].contentFlags & ~(CONTENTS_TRANSLUCENT | CONTENTS_NONCOLLIDING);
 	}
 }
 
-void CMod_LoadLeafBrushes()
+/*
+=================
+CMod_LoadLeafBrushes
+=================
+*/
+static void CMod_LoadLeafBrushes()
 {
-	unsigned int brushIndex;
+	int brushIndex;
 	uint16_t *out;
 	uint32_t *in;
-	unsigned int iter;
-	unsigned int count;
+	int iter;
+	int count;
 
 	in = (uint32_t *)Com_GetBspLump(LUMP_LEAFBRUSHES, sizeof(uint32_t), &count);
 
-	cm.leafbrushes = (uint16_t *)CM_Hunk_Alloc(sizeof(uint16_t) * count + 2);
+	// ydnar: more than <count> brushes are stored in leafbrushes...
+	cm.leafbrushes = (uint16_t *)CM_Hunk_Alloc( ( BOX_LEAF_BRUSHES + count ) * sizeof( *cm.leafbrushes ) );
 	cm.numLeafBrushes = count;
-	out = cm.leafbrushes;
-	iter = 0;
 
-	while ( iter < count )
+	out = cm.leafbrushes;
+
+	for ( iter = 0; iter < count; iter++, in++, out++ )
 	{
-		brushIndex = *in;
-		*out = *in;
+		brushIndex = LittleLong(*in);
+		*out = brushIndex;
 
 		if ( *out != brushIndex )
 		{
 			Com_Error(ERR_DROP, "CMod_LoadLeafBrushes: brushIndex exceeded");
 		}
-
-		++iter;
-		++in;
-		++out;
 	}
 }
 
@@ -159,78 +173,87 @@ struct DiskCollAabbTree
 	};
 };
 
-void CMod_LoadCollisionAabbTrees()
+/*
+=================
+CMod_LoadCollisionAabbTrees
+=================
+*/
+static void CMod_LoadCollisionAabbTrees()
 {
 	CollisionAabbTree_s *out;
 	DiskCollAabbTree *in;
-	unsigned int index;
-	unsigned int count;
+	int index;
+	int count;
 
 	in = (DiskCollAabbTree *)Com_GetBspLump(LUMP_COLLISIONAABBS, sizeof(DiskCollAabbTree), &count);
 
-	cm.aabbTrees = (CollisionAabbTree_s *)CM_Hunk_Alloc(sizeof(CollisionAabbTree_s) * count);
+	cm.aabbTrees = (CollisionAabbTree_s *)CM_Hunk_Alloc( count * sizeof( *cm.aabbTrees ) );
 	cm.aabbTreeCount = count;
-	out = cm.aabbTrees;
-	index = 0;
 
-	while ( index < count )
+	out = cm.aabbTrees;
+
+	for ( index = 0; index < count; index++, in++, out++ )
 	{
-		out->origin[0] = in->origin[0];
-		out->origin[1] = in->origin[1];
-		out->origin[2] = in->origin[2];
-		out->halfSize[0] = in->halfSize[0];
-		out->halfSize[1] = in->halfSize[1];
-		out->halfSize[2] = in->halfSize[2];
-		out->materialIndex = in->materialIndex;
-		out->childCount = in->childCount;
-		out->u.firstChildIndex = in->firstChildIndex;
-		++index;
-		++in;
-		++out;
+		out->origin[0] = LittleFloat(in->origin[0]);
+		out->origin[1] = LittleFloat(in->origin[1]);
+		out->origin[2] = LittleFloat(in->origin[2]);
+
+		out->halfSize[0] = LittleFloat(in->halfSize[0]);
+		out->halfSize[1] = LittleFloat(in->halfSize[1]);
+		out->halfSize[2] = LittleFloat(in->halfSize[2]);
+
+		out->materialIndex = LittleShort(in->materialIndex);
+		out->childCount = LittleShort(in->childCount);
+		out->u.firstChildIndex = LittleLong(in->firstChildIndex);
 	}
 }
 
-struct DiskLeaf
+struct DiskLeafCollision
 {
 	int cluster;
-	int unused0;
+	int area;
 	int firstCollAabbIndex;
 	int collAabbCount;
 	int firstLeafBrush;
 	int numLeafBrushes;
 	int cellNum;
-	int unused1;
-	int unused2;
+	int firstLightIndex;
+	int numLights;
 };
 
-void CMod_LoadLeafs(bool usePvs)
+/*
+=================
+CMod_LoadLeafs
+=================
+*/
+static void CMod_LoadLeafs(bool usePvs)
 {
 	int firstCollAabbIndex;
 	cLeaf_s *out;
 	int cluster;
-	unsigned int leafIter;
-	DiskLeaf *in;
-	unsigned int count;
+	int leafIter;
+	DiskLeafCollision *in;
+	int count;
 	int collAabbCount;
 
-	in = (DiskLeaf *)Com_GetBspLump(LUMP_LEAFS, sizeof(DiskLeaf), &count);
+	in = (DiskLeafCollision *)Com_GetBspLump(LUMP_LEAFS, sizeof(DiskLeafCollision), &count);
 
 	if ( !count )
 	{
 		Com_Error(ERR_DROP, "Map with no leafs");
 	}
 
-	cm.leafs = (cLeaf_s *)CM_Hunk_Alloc(sizeof(cLeaf_s) * count);
+	cm.leafs = (cLeaf_s *)CM_Hunk_Alloc( count * sizeof( *cm.leafs ) );
 	cm.numLeafs = count;
+
 	cluster = 0;
 	out = cm.leafs;
-	leafIter = 0;
 
-	while ( leafIter < count )
+	for ( leafIter = 0; leafIter < count; leafIter++, in++, out++ )
 	{
 		if ( usePvs )
 		{
-			cluster = in->cluster;
+			cluster = LittleLong(in->cluster);
 			out->cluster = cluster;
 
 			if ( out->cluster != cluster )
@@ -239,7 +262,7 @@ void CMod_LoadLeafs(bool usePvs)
 			}
 		}
 
-		firstCollAabbIndex = in->firstCollAabbIndex;
+		firstCollAabbIndex = LittleLong(in->firstCollAabbIndex);
 		out->firstCollAabbIndex = firstCollAabbIndex;
 
 		if ( out->firstCollAabbIndex != firstCollAabbIndex )
@@ -247,7 +270,7 @@ void CMod_LoadLeafs(bool usePvs)
 			Com_Error(ERR_DROP, "CMod_LoadLeafs: firstCollAabbIndex exceeded");
 		}
 
-		collAabbCount = in->collAabbCount;
+		collAabbCount = LittleLong(in->collAabbCount);
 		out->collAabbCount = collAabbCount;
 
 		if ( out->collAabbCount != collAabbCount )
@@ -259,34 +282,35 @@ void CMod_LoadLeafs(bool usePvs)
 		{
 			cm.numClusters = cluster + 1;
 		}
-
-		++leafIter;
-		++in;
-		++out;
 	}
 }
 
 struct DiskBrushModel
 {
-	float mins[3];
-	float maxs[3];
-	unsigned int firstTriSoup;
-	unsigned int triSoupCount;
+	vec3_t mins;
+	vec3_t maxs;
+	int firstTriangle;
+	int numTriangles;
 	int firstSurface;
 	int numSurfaces;
 	int firstBrush;
 	int numBrushes;
 };
 
-void CMod_LoadSubmodels()
+/*
+=================
+CMod_LoadSubmodels
+=================
+*/
+static void CMod_LoadSubmodels()
 {
 	int firstCollAabbIndex;
 	int j;
 	cmodel_t *out;
 	DiskBrushModel *in;
-	unsigned int bmodelIndex;
+	int bmodelIndex;
 	vec3_t extent;
-	unsigned int count;
+	int count;
 	int collAabbCount;
 
 	in = (DiskBrushModel *)Com_GetBspLump(LUMP_MODELS, sizeof(DiskBrushModel), &count);
@@ -296,7 +320,7 @@ void CMod_LoadSubmodels()
 		Com_Error(ERR_DROP, "Map with no brush models (should at least have the world model)");
 	}
 
-	cm.cmodels = (cmodel_t *)CM_Hunk_Alloc(sizeof(cmodel_t) * count);
+	cm.cmodels = (cmodel_t *)CM_Hunk_Alloc( count * sizeof( *cm.cmodels ) );
 	cm.numSubModels = count;
 
 	if ( count > MAX_SUBMODELS - 1 )
@@ -304,61 +328,54 @@ void CMod_LoadSubmodels()
 		Com_Error(ERR_DROP, "MAX_SUBMODELS exceeded");
 	}
 
-	bmodelIndex = 0;
-
-	while ( bmodelIndex < count )
+	for ( bmodelIndex = 0; bmodelIndex < count; bmodelIndex++, in++ )
 	{
 		out = &cm.cmodels[bmodelIndex];
 
-		for ( j = 0; j < 3; ++j )
+		for ( j = 0; j < 3; j++ )
 		{
-			out->mins[j] = in->mins[j] - 1.0;
-			out->maxs[j] = in->maxs[j] + 1.0;
+			// spread the mins / maxs by a pixel
+			out->mins[j] = LittleFloat(in->mins[j]) - 1;
+			out->maxs[j] = LittleFloat(in->maxs[j]) + 1;
 
-			if ( abs(out->mins[j]) - abs(out->maxs[j]) < 0.0 )
-			{
-				extent[j] = abs(out->maxs[j]);
-			}
-			else
-			{
-				extent[j] = abs(out->mins[j]);
-			}
+			extent[j] = I_fmax(fabs(out->mins[j]), fabs(out->maxs[j]));
 		}
 
 		out->radius = VectorLength(extent);
 
-		if ( bmodelIndex )
+		if ( bmodelIndex == 0 )
 		{
-			collAabbCount = in->numSurfaces;
-			out->leaf.collAabbCount = collAabbCount;
-
-			if ( out->leaf.collAabbCount != collAabbCount )
-			{
-				Com_Error(ERR_DROP, "CMod_LoadSubmodels: collAabbCount exceeded");
-			}
-
-			firstCollAabbIndex = in->firstSurface;
-			out->leaf.firstCollAabbIndex = firstCollAabbIndex;
-
-			if ( out->leaf.firstCollAabbIndex != firstCollAabbIndex )
-			{
-				Com_Error(ERR_DROP, "CMod_LoadSubmodels: firstCollAabbIndex exceeded");
-			}
+			continue;   // world model doesn't need other info
 		}
 
-		++bmodelIndex;
-		++in;
+		collAabbCount = LittleLong(in->numSurfaces);
+		out->leaf.collAabbCount = collAabbCount;
+
+		if ( out->leaf.collAabbCount != collAabbCount )
+		{
+			Com_Error(ERR_DROP, "CMod_LoadSubmodels: collAabbCount exceeded");
+		}
+
+		firstCollAabbIndex = LittleLong(in->firstSurface);
+		out->leaf.firstCollAabbIndex = firstCollAabbIndex;
+
+		if ( out->leaf.firstCollAabbIndex != firstCollAabbIndex )
+		{
+			Com_Error(ERR_DROP, "CMod_LoadSubmodels: firstCollAabbIndex exceeded");
+		}
 	}
 }
 
-int CMod_GetLeafTerrainContents(cLeaf_s *leaf)
+/*
+=================
+CMod_GetLeafTerrainContents
+=================
+*/
+static int CMod_GetLeafTerrainContents(cLeaf_s *leaf)
 {
-	int contents;
-	int k;
+	int contents = 0;
 
-	contents = 0;
-
-	for ( k = 0; k < leaf->collAabbCount; ++k )
+	for ( int k = 0; k < leaf->collAabbCount; k++ )
 	{
 		contents |= cm.materials[cm.aabbTrees[k + leaf->firstCollAabbIndex].materialIndex].contentFlags;
 	}
@@ -366,41 +383,51 @@ int CMod_GetLeafTerrainContents(cLeaf_s *leaf)
 	return contents;
 }
 
-cLeafBrushNode_s *CMod_AllocLeafBrushNode()
+/*
+=================
+CMod_AllocLeafBrushNode
+=================
+*/
+static cLeafBrushNode_s *CMod_AllocLeafBrushNode()
 {
 	cLeafBrushNode_s *node;
 
 	node = (cLeafBrushNode_s *)TempMalloc(sizeof(cLeafBrushNode_s));
-	memset(node, 0, sizeof(cLeafBrushNode_s));
-	node->data.children.dist = -3.4028235e38;
+	Com_Memset(node, 0, sizeof(cLeafBrushNode_s));
+	node->data.children.dist = -FLT_MAX;
+
 	return node;
 }
 
-float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist)
+/*
+=================
+CMod_AllocLeafBrushNode
+=================
+*/
+static float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const vec3_t mins, const vec3_t maxs, float *dist)
 {
-	signed int bc;
 	float max;
-	int rightBrushCount;
-	int k;
-	cbrush_t *b;
 	float min;
+	cbrush_t *b;
+	int k;
 	int leftBrushCount;
+	int rightBrushCount;
 
 	rightBrushCount = -1;
 	leftBrushCount = -1;
 
-	min = -3.4028235e38;
-	max = 3.4028235e38;
+	min = -FLT_MAX;
+	max = FLT_MAX;
 
-	for ( k = 0; k < numLeafBrushes; ++k )
+	for ( k = 0; k < numLeafBrushes; k++ )
 	{
 		b = &cm.brushes[leafBrushes[k]];
 
 		if ( b->mins[axis] < *dist )
 		{
-			if ( *dist >= b->maxs[axis] )
+			if ( *dist >= (b->maxs[axis] ))
 			{
-				++leftBrushCount;
+				leftBrushCount++;
 
 				if ( b->maxs[axis] > min )
 				{
@@ -410,7 +437,7 @@ float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis
 		}
 		else
 		{
-			++rightBrushCount;
+			rightBrushCount++;
 
 			if ( max > b->mins[axis] )
 			{
@@ -419,46 +446,40 @@ float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis
 		}
 	}
 
-	if ( rightBrushCount < leftBrushCount )
-	{
-		bc = rightBrushCount;
-	}
-	else
-	{
-		bc = leftBrushCount;
-	}
+	assert(min <= *dist);
+	assert(*dist <= max);
 
 	*dist = (min + max) * 0.5;
 
-	if ( bc <= 0 )
+	if ( I_min(leftBrushCount, rightBrushCount) <= 0 )
 	{
-		return 0.0;
+		return 0;
 	}
 
-	if ( (float)((float)(maxs[axis] - min) - (float)(max - mins[axis])) < 0.0 )
-	{
-		return bc * (maxs[axis] - min);
-	}
-
-	return bc * (max - mins[axis]);
+	return I_min(leftBrushCount, rightBrushCount) * I_fmin(max - mins[axis], maxs[axis] - min);
 }
 
-cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs)
+/*
+=================
+CMod_PartionLeafBrushes_r
+=================
+*/
+cLeafBrushNode_s* CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const vec3_t mins, const vec3_t maxs)
 {
 	int nodeOffset;
 	cLeafBrushNode_s *node;
 	int side;
 	float testDist;
 	int numLeafBrushesChild;
-	unsigned int testAxis;
+	int testAxis;
 	int k;
 	float dist;
 	float range;
-	float childMaxs[3];
+	vec3_t childMaxs;
 	cbrush_t *b;
 	float bestScore;
 	int len;
-	float childMins[3];
+	vec3_t childMins;
 	cLeafBrushNode_s *childNode;
 	uint16_t *leafBrushesCopy;
 	cLeafBrushNode_s *returnNode;
@@ -466,33 +487,40 @@ cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafB
 	int brushnum;
 	float score;
 
+	assert(numLeafBrushes);
+
 	node = CMod_AllocLeafBrushNode();
+
 	bestScore = 0.0;
 	axis = -1;
 	dist = 0.0;
 
-	for ( testAxis = 0; testAxis < 3; ++testAxis )
+	for ( testAxis = 0; testAxis < 3; testAxis++ )
 	{
-		for ( k = 0; k < numLeafBrushes; ++k )
+		for ( k = 0; k < numLeafBrushes; k++ )
 		{
 			brushnum = leafBrushes[k];
 			b = &cm.brushes[brushnum];
 			testDist = b->mins[testAxis];
+
 			score = CMod_GetPartitionScore(leafBrushes, numLeafBrushes, testAxis, mins, maxs, &testDist);
 
 			if ( score > bestScore )
 			{
 				bestScore = score;
+
 				axis = testAxis;
 				dist = testDist;
 			}
 
 			testDist = b->maxs[testAxis];
+
 			score = CMod_GetPartitionScore(leafBrushes, numLeafBrushes, testAxis, mins, maxs, &testDist);
 
 			if ( score > bestScore )
 			{
 				bestScore = score;
+
 				axis = testAxis;
 				dist = testDist;
 			}
@@ -501,35 +529,39 @@ cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafB
 
 	if ( axis >= 0 )
 	{
-		len = sizeof(uint16_t) * numLeafBrushes;
-		leafBrushesCopy = (uint16_t *)CM_Hunk_AllocateTempMemoryHigh(sizeof(uint16_t) * numLeafBrushes);
+		len = sizeof(*leafBrushes) * numLeafBrushes;
+		leafBrushesCopy = (uint16_t *)CM_Hunk_AllocateTempMemoryHigh(sizeof(*leafBrushes) * numLeafBrushes);
 		Com_Memcpy(leafBrushesCopy, leafBrushes, len);
 		numLeafBrushesChild = 0;
 
-		for ( k = 0; k < numLeafBrushes; ++k )
+		for ( k = 0; k < numLeafBrushes; k++ )
 		{
 			brushnum = leafBrushesCopy[k];
 			b = &cm.brushes[brushnum];
 
 			if ( cm.brushes[brushnum].mins[axis] < dist && dist < b->maxs[axis] )
 			{
-				leafBrushes[numLeafBrushesChild++] = brushnum;
+				leafBrushes[numLeafBrushesChild] = brushnum;
+				numLeafBrushesChild++;
 			}
 		}
 
 		if ( numLeafBrushesChild )
 		{
 			returnNode = CMod_PartionLeafBrushes_r(leafBrushes, numLeafBrushesChild, mins, maxs);
+			assert(returnNode == node + 1);
 			node->leafBrushCount = -1;
 			node->contents = returnNode->contents;
 			leafBrushes += numLeafBrushesChild;
 		}
 
-		range = 3.4028235e38;
+		range = FLT_MAX;
+
 		node->axis = axis;
 		node->data.children.dist = dist;
+
 		side = 0;
-LABEL_27:
+nextside:
 		if ( side > 1 )
 		{
 			node->data.children.range = range;
@@ -538,16 +570,14 @@ LABEL_27:
 
 		numLeafBrushesChild = 0;
 
-		for ( k = 0; ; ++k )
+		for ( k = 0; ; k++ )
 		{
 			if ( k >= numLeafBrushes )
 			{
-				childMins[0] = mins[0];
-				childMins[1] = mins[1];
-				childMins[2] = mins[2];
-				childMaxs[0] = maxs[0];
-				childMaxs[1] = maxs[1];
-				childMaxs[2] = maxs[2];
+				assert(numLeafBrushesChild);
+
+				VectorCopy(mins, childMins);
+				VectorCopy(maxs, childMaxs);
 
 				if ( side )
 				{
@@ -569,8 +599,9 @@ LABEL_27:
 
 				node->contents |= childNode->contents;
 				leafBrushes += numLeafBrushesChild;
-				++side;
-				goto LABEL_27;
+				side++;
+
+				goto nextside;
 			}
 
 			brushnum = leafBrushesCopy[k];
@@ -583,10 +614,7 @@ LABEL_27:
 					continue;
 				}
 
-				if ( ((dist - b->maxs[axis]) - range) < 0.0 )
-				{
-					range = dist - b->maxs[axis];
-				}
+				range = I_fmin(range, dist - b->maxs[axis]);
 			}
 			else
 			{
@@ -595,13 +623,11 @@ LABEL_27:
 					continue;
 				}
 
-				if ( ((b->mins[axis] - dist) - range) < 0.0 )
-				{
-					range = b->mins[axis] - dist;
-				}
+				range = I_fmin(range, b->mins[axis] - dist);
 			}
 
-			leafBrushes[numLeafBrushesChild++] = brushnum;
+			leafBrushes[numLeafBrushesChild] = brushnum;
+			numLeafBrushesChild++;
 		}
 	}
 
@@ -612,18 +638,25 @@ LABEL_27:
 		Com_Error(ERR_DROP, "CMod_PartionLeafBrushes_r: leafBrushCount exceeded");
 	}
 
-	for ( k = 0; k < numLeafBrushes; ++k )
+	for ( k = 0; k < numLeafBrushes; k++ )
 	{
 		brushnum = leafBrushes[k];
 		b = &cm.brushes[brushnum];
 		node->contents |= cm.brushes[brushnum].contents;
 	}
 
+	assert(node->contents);
 	node->data.leaf.brushes = leafBrushes;
+
 	return node;
 }
 
-void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf)
+/*
+=================
+CMod_PartionLeafBrushes
+=================
+*/
+static void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf)
 {
 	int j;
 	vec3_t mins;
@@ -632,155 +665,185 @@ void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s 
 	vec3_t maxs;
 	int brushnum;
 
-	if ( numLeafBrushes )
+	if ( !numLeafBrushes )
 	{
-		VectorSet(mins, 3.4028235e38, 3.4028235e38, 3.4028235e38);
-		VectorSet(maxs, -3.4028235e38, -3.4028235e38, -3.4028235e38);
+		return;
+	}
 
-		for ( k = 0; k < numLeafBrushes; ++k )
+	VectorSet(mins, FLT_MAX, FLT_MAX, FLT_MAX);
+	VectorSet(maxs, -FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+	for ( k = 0; k < numLeafBrushes; k++ )
+	{
+		brushnum = leafBrushes[k];
+		b = &cm.brushes[brushnum];
+
+		for ( j = 0; j < 3; j++ )
 		{
-			brushnum = leafBrushes[k];
-			b = &cm.brushes[brushnum];
-
-			for ( j = 0; j < 3; ++j )
+			if ( mins[j] > b->mins[j] )
 			{
-				if ( mins[j] > b->mins[j] )
-				{
-					mins[j] = b->mins[j];
-				}
+				mins[j] = b->mins[j];
+			}
 
-				if ( b->maxs[j] > maxs[j] )
-				{
-					maxs[j] = b->maxs[j];
-				}
+			if ( b->maxs[j] > maxs[j] )
+			{
+				maxs[j] = b->maxs[j];
 			}
 		}
-
-		VectorCopy(mins, leaf->mins);
-		VectorCopy(maxs, leaf->maxs);
-
-		for ( j = 0; j < 3; ++j )
-		{
-			leaf->mins[j] = leaf->mins[j] - 0.125;
-			leaf->maxs[j] = leaf->maxs[j] + 0.125;
-		}
-
-		CM_Hunk_CheckTempMemoryHighClear();
-		leaf->leafBrushNode = CMod_PartionLeafBrushes_r(leafBrushes, numLeafBrushes, mins, maxs) - cm.leafbrushNodes;
-		CM_Hunk_ClearTempMemoryHigh();
 	}
+
+	VectorCopy(mins, leaf->mins);
+	VectorCopy(maxs, leaf->maxs);
+
+	for ( j = 0; j < 3; j++ )
+	{
+		leaf->mins[j] = leaf->mins[j] - 0.125;
+		leaf->maxs[j] = leaf->maxs[j] + 0.125;
+	}
+
+	CM_Hunk_CheckTempMemoryHighClear();
+	leaf->leafBrushNode = CMod_PartionLeafBrushes_r(leafBrushes, numLeafBrushes, mins, maxs) - cm.leafbrushNodes;
+	CM_Hunk_ClearTempMemoryHigh();
 }
 
-void CMod_LoadLeafBrushNodes()
+/*
+=================
+CMod_LoadLeafBrushNodes
+=================
+*/
+static void CMod_LoadLeafBrushNodes()
 {
 	int contents;
 	cLeaf_s *out;
-	unsigned int numLeafBrushes;
-	unsigned int leafIter;
-	DiskLeaf *in;
+	int numLeafBrushes;
+	int leafIter;
+	DiskLeafCollision *in;
 	int indexFirstLeafBrush;
-	unsigned int count;
-	unsigned int brushIter;
+	int count;
+	int brushIter;
 	int brushnum;
 
-	in = (DiskLeaf*)Com_GetBspLump(LUMP_LEAFS, sizeof(DiskLeaf), &count);
+	in = (DiskLeafCollision*)Com_GetBspLump(LUMP_LEAFS, sizeof(DiskLeafCollision), &count);
+	assert(count == cm.numLeafs);
 	out = cm.leafs;
 
-	for (leafIter = 0; leafIter < cm.numLeafs; ++leafIter )
+	for ( leafIter = 0; leafIter < cm.numLeafs; leafIter++, in++, out++ )
 	{
-		numLeafBrushes = in->numLeafBrushes;
-		indexFirstLeafBrush = in->firstLeafBrush;
+		numLeafBrushes = LittleLong(in->numLeafBrushes);
+		indexFirstLeafBrush = LittleLong(in->firstLeafBrush);
 		contents = 0;
 
-		for ( brushIter = 0; brushIter < numLeafBrushes; ++brushIter )
+		for ( brushIter = 0; brushIter < numLeafBrushes; brushIter++ )
 		{
-			brushnum = cm.leafbrushes[brushIter + indexFirstLeafBrush];
-			contents |= cm.brushes[brushnum].contents;
+			contents |= cm.brushes[cm.leafbrushes[indexFirstLeafBrush + brushIter]].contents;
 		}
 
 		out->brushContents = contents;
 		out->terrainContents = CMod_GetLeafTerrainContents(out);
+
 		CMod_PartionLeafBrushes(&cm.leafbrushes[indexFirstLeafBrush], numLeafBrushes, out);
-		++in;
-		++out;
 	}
 }
 
-void CMod_LoadSubmodelBrushNodes()
+/*
+=================
+CMod_LoadSubmodelBrushNodes
+=================
+*/
+static void CMod_LoadSubmodelBrushNodes()
 {
 	int contents;
 	cmodel_t *out;
 	int numLeafBrushes;
 	int leafBrushIndex;
 	DiskBrushModel *in;
-	unsigned int bmodelIndex;
+	int bmodelIndex;
 	uint16_t *indexes;
-	unsigned int count;
+	int count;
 	int firstBrush;
+	int firstBrushIndex;
 
 	in = (DiskBrushModel *)Com_GetBspLump(LUMP_MODELS, sizeof(DiskBrushModel), &count);
+	assert(count == cm.numSubModels);
 
-	++in;
-	bmodelIndex = 1;
-
-	while ( bmodelIndex < cm.numSubModels )
+	for ( bmodelIndex = 0; bmodelIndex < cm.numSubModels; bmodelIndex++, in++ )
 	{
+		if ( !bmodelIndex )
+		{
+			continue;
+		}
+
 		out = &cm.cmodels[bmodelIndex];
-		numLeafBrushes = in->numBrushes;
-		indexes = (uint16_t *)CM_Hunk_Alloc(sizeof(uint16_t) * numLeafBrushes);
+		numLeafBrushes = LittleLong(in->numBrushes);
+
+		indexes = (uint16_t *)CM_Hunk_Alloc( numLeafBrushes * sizeof(uint16_t) );
 		contents = 0;
 
-		for ( leafBrushIndex = 0; leafBrushIndex < numLeafBrushes; ++leafBrushIndex )
+		for ( leafBrushIndex = 0; leafBrushIndex < numLeafBrushes; leafBrushIndex++ )
 		{
-			firstBrush = leafBrushIndex + in->firstBrush;
-			indexes[leafBrushIndex] = firstBrush;
+			firstBrushIndex = LittleLong(in->firstBrush);
+			indexes[leafBrushIndex] = leafBrushIndex + firstBrushIndex;
 
-			if ( indexes[leafBrushIndex] != firstBrush )
+			if ( indexes[leafBrushIndex] != leafBrushIndex + firstBrushIndex )
 			{
 				Com_Error(ERR_DROP, "CMod_LoadSubmodelBrushNodes: leafBrushes exceeded");
 			}
 
-			contents |= cm.brushes[firstBrush].contents;
+			contents |= cm.brushes[leafBrushIndex + firstBrushIndex].contents;
 		}
 
 		out->leaf.brushContents = contents;
 		out->leaf.terrainContents = CMod_GetLeafTerrainContents(&out->leaf);
+
 		CMod_PartionLeafBrushes(indexes, numLeafBrushes, &out->leaf);
-		++bmodelIndex;
-		++in;
 	}
 }
 
-void CM_InitBoxHull()
+/*
+===================
+CM_InitBoxHull
+
+Set up the planes and nodes so that the six floats of a bounding box
+can just be stored out and get a proper clipping hull structure.
+===================
+*/
+static void CM_InitBoxHull( void )
 {
 	cLeafBrushNode_s *node;
 
 	cm.box_brush = &cm.brushes[cm.numBrushes];
+
 	cm.box_brush->numsides = 0;
 	cm.box_brush->sides = 0;
 	cm.box_brush->contents = -1;
 	cm.box_model.leaf.brushContents = -1;
 	cm.box_model.leaf.terrainContents = 0;
-	cm.box_model.leaf.mins[0] = 3.4028235e38;
-	cm.box_model.leaf.mins[1] = 3.4028235e38;
-	cm.box_model.leaf.mins[2] = 3.4028235e38;
-	cm.box_model.leaf.maxs[0] = -3.4028235e38;
-	cm.box_model.leaf.maxs[1] = -3.4028235e38;
-	cm.box_model.leaf.maxs[2] = -3.4028235e38;
+
+	VectorSet(cm.box_model.leaf.mins, FLT_MAX, FLT_MAX, FLT_MAX);
+	VectorSet(cm.box_model.leaf.maxs, -FLT_MAX, -FLT_MAX, -FLT_MAX);
+
 	cm.box_brush->axialMaterialNum[0][0] = -1;
 	cm.box_brush->axialMaterialNum[0][1] = -1;
 	cm.box_brush->axialMaterialNum[0][2] = -1;
 	cm.box_brush->axialMaterialNum[1][0] = -1;
 	cm.box_brush->axialMaterialNum[1][1] = -1;
 	cm.box_brush->axialMaterialNum[1][2] = -1;
+
 	node = CMod_AllocLeafBrushNode();
 	cm.box_model.leaf.leafBrushNode = node - cm.leafbrushNodes;
+
 	node->leafBrushCount = 1;
 	node->data.leaf.brushes = &cm.leafbrushes[cm.numLeafBrushes];
+
 	cm.leafbrushes[cm.numLeafBrushes] = cm.numBrushes;
 }
 
-void CMod_LoadBrushRelated(bool usePvs)
+/*
+===================
+CMod_LoadBrushRelated
+===================
+*/
+static void CMod_LoadBrushRelated(bool usePvs)
 {
 	int leafbrushNodesCount;
 	cLeafBrushNode_s *leafbrushNodes;
@@ -790,34 +853,47 @@ void CMod_LoadBrushRelated(bool usePvs)
 	CMod_LoadCollisionAabbTrees();
 	CMod_LoadLeafs(usePvs);
 	CMod_LoadSubmodels();
+
 	TempMemoryReset();
+
 	cm.leafbrushNodes = ((cLeafBrushNode_s*)TempMalloc(0) - 1);
+
 	CMod_LoadLeafBrushNodes();
 	CMod_LoadSubmodelBrushNodes();
+
 	CM_InitBoxHull();
-	++cm.leafbrushNodes;
+
+	cm.leafbrushNodes++;
 	leafbrushNodesCount = ((cLeafBrushNode_s*)TempMalloc(0)) - cm.leafbrushNodes;
 	cm.leafbrushNodesCount = leafbrushNodesCount + 1;
+
 	leafbrushNodes = (cLeafBrushNode_s *)CM_Hunk_Alloc(sizeof(cLeafBrushNode_s) * (leafbrushNodesCount + 1));
 	Com_Memcpy(&leafbrushNodes[1], cm.leafbrushNodes, sizeof(cLeafBrushNode_s) * leafbrushNodesCount);
+
 	cm.leafbrushNodes = leafbrushNodes;
+
 	Hunk_ClearTempMemoryInternal();
 }
 
 struct dplane_t
 {
-	float normal[3];
+	vec3_t normal;
 	float dist;
 };
 
-void CMod_LoadPlanes()
+/*
+===================
+CMod_LoadPlanes
+===================
+*/
+static void CMod_LoadPlanes()
 {
 	cplane_s *out;
-	unsigned int planeIter;
+	int planeIter;
 	char bits;
 	dplane_t *in;
-	unsigned int axisIter;
-	unsigned int count;
+	int axisIter;
+	int count;
 
 	in = (dplane_t *)Com_GetBspLump(LUMP_PLANES, sizeof(dplane_t), &count);
 
@@ -826,33 +902,40 @@ void CMod_LoadPlanes()
 		Com_Error(ERR_DROP, "Map with no planes");
 	}
 
-	cm.planes = (cplane_s *)CM_Hunk_Alloc(sizeof(cplane_s) * count);
+	cm.planes = (cplane_s *)CM_Hunk_Alloc( count * sizeof( *cm.planes ) );
 	cm.planeCount = count;
 
-	for (planeIter = 0, out = cm.planes; planeIter < count; ++in, ++out, ++planeIter )
+	for ( planeIter = 0, out = cm.planes; planeIter < count; in++, out++, planeIter++ )
 	{
 		bits = 0;
 
-		for ( axisIter = 0; axisIter < 3; ++axisIter )
+		for ( axisIter = 0; axisIter < 3; axisIter++ )
 		{
-			out->normal[axisIter] = in->normal[axisIter];
+			out->normal[axisIter] = LittleFloat(in->normal[axisIter]);
 
-			if ( out->normal[axisIter] < 0.0 )
+			if ( out->normal[axisIter] < 0 )
 			{
 				bits |= 1 << axisIter;
 			}
 		}
 
-		out->dist = in->dist;
+		out->dist = LittleFloat(in->dist);
 		out->type = PlaneTypeForNormal(out->normal);
 		out->signbits = bits;
 	}
 }
 
-void CMod_LoadMaterials()
+/*
+===================
+CMod_LoadMaterials
+===================
+*/
+static void CMod_LoadMaterials()
 {
 	dmaterial_t *in;
-	unsigned int count;
+	dmaterial_t *out;
+	int count;
+	int matIndex;
 
 	in = (dmaterial_t *)Com_GetBspLump(LUMP_MATERIALS, sizeof(dmaterial_t), &count);
 
@@ -861,9 +944,23 @@ void CMod_LoadMaterials()
 		Com_Error(ERR_DROP, "Map with no materials");
 	}
 
-	cm.materials = (dmaterial_t *)CM_Hunk_Alloc(sizeof(dmaterial_t) * (count + 1));
+	cm.materials = (((dmaterial_t *)CM_Hunk_Alloc( sizeof(*cm.materials) * (count + 1))) + 1 );
 	cm.numMaterials = count;
-	Com_Memcpy(cm.materials, in, sizeof(dmaterial_t) * count);
+
+	Com_Memcpy( cm.materials, in, count * sizeof(*cm.materials) );
+
+	if ( LittleLong(1) == 1 )
+	{
+		return;
+	}
+
+	out = cm.materials;
+
+	for ( matIndex = 0; matIndex < count; matIndex++, in++, out++ )
+	{
+		out->contentFlags = LittleLong(out->contentFlags);
+		out->surfaceFlags = LittleLong(out->surfaceFlags);
+	}
 }
 
 struct dnode_t
@@ -874,14 +971,19 @@ struct dnode_t
 	int maxs[3];
 };
 
-void CMod_LoadNodes()
+/*
+===================
+CMod_LoadNodes
+===================
+*/
+static void CMod_LoadNodes()
 {
 	int child;
 	int j;
 	cNode_t *out;
 	dnode_t *in;
-	unsigned int nodeIter;
-	unsigned int count;
+	int nodeIter;
+	int count;
 
 	in = (dnode_t *)Com_GetBspLump(LUMP_NODES, sizeof(dnode_t), &count);
 
@@ -890,18 +992,18 @@ void CMod_LoadNodes()
 		Com_Error(ERR_DROP, "Map has no nodes");
 	}
 
-	cm.nodes = (cNode_t *)CM_Hunk_Alloc(sizeof(cNode_t) * count);
+	cm.nodes = (cNode_t *)CM_Hunk_Alloc( count * sizeof( *cm.nodes ) );
 	cm.numNodes = count;
+
 	out = cm.nodes;
-	nodeIter = 0;
 
-	while ( nodeIter < count )
+	for ( nodeIter = 0; nodeIter < count; nodeIter++, in++, out++ )
 	{
-		out->plane = &cm.planes[in->planeNum];
+		out->plane = &cm.planes[LittleLong(in->planeNum)];
 
-		for ( j = 0; j < 2; ++j )
+		for ( j = 0; j < 2; j++ )
 		{
-			child = in->children[j];
+			child = LittleLong(in->children[j]);
 			out->children[j] = child;
 
 			if ( out->children[j] != child )
@@ -909,45 +1011,58 @@ void CMod_LoadNodes()
 				Com_Error(ERR_DROP, "CMod_LoadNodes: children exceeded");
 			}
 		}
-
-		++nodeIter;
-		++out;
-		++in;
 	}
 }
 
-void CMod_LoadLeafSurfaces()
+/*
+===================
+CMod_LoadLeafSurfaces
+===================
+*/
+static void CMod_LoadLeafSurfaces()
 {
-	unsigned int *in;
-	unsigned int count;
+	int *in;
+	int *out;
+	int count;
+	int i;
 
-	in = (unsigned int *)Com_GetBspLump(LUMP_LEAFSURFACES, sizeof(uint32_t), &count);
+	in = (int *)Com_GetBspLump(LUMP_LEAFSURFACES, sizeof(int), &count);
 
-	cm.leafsurfaces = (unsigned int *)CM_Hunk_Alloc(sizeof(uint32_t) * count);
+	cm.leafsurfaces = (int *)CM_Hunk_Alloc( count * sizeof( *cm.leafsurfaces ) );
 	cm.numLeafSurfaces = count;
-	Com_Memcpy(cm.leafsurfaces, in, sizeof(uint32_t) * count);
+
+	out = cm.leafsurfaces;
+
+	for ( i = 0 ; i < count ; i++, in++, out++ )
+	{
+		*out = LittleLong( *in );
+	}
 }
 
-void CMod_LoadCollisionVerts()
+/*
+===================
+CMod_LoadCollisionVerts
+===================
+*/
+static void CMod_LoadCollisionVerts()
 {
 	vec4_t *in;
 	vec3_t *out;
-	unsigned int vertIter;
-	unsigned int count;
+	int vertIter;
+	int count;
 
 	in = (vec4_t *)Com_GetBspLump(LUMP_COLLISIONVERTS, sizeof(vec4_t), &count);
 
-	cm.verts = (vec3_t *)CM_Hunk_Alloc(sizeof(vec3_t) * count);
+	cm.verts = (vec3_t *)CM_Hunk_Alloc( count * sizeof( *cm.verts ) );
 	cm.vertCount = count;
+
 	out = cm.verts;
 
-	for ( vertIter = 0; vertIter < count; ++vertIter )
+	for ( vertIter = 0; vertIter < count; vertIter++, in++, out++ )
 	{
-		out[0][0] = in[0][1];
-		out[0][1] = in[0][2];
-		out[0][2] = in[0][3];
-		++in;
-		++out;
+		out[0][0] = LittleFloat(in[0][1]);
+		out[0][1] = LittleFloat(in[0][2]);
+		out[0][2] = LittleFloat(in[0][3]);
 	}
 }
 
@@ -959,55 +1074,90 @@ struct EdgeInfo
 	float discNormalDist;
 };
 
-void CMod_LoadCollisionEdges()
+/*
+===================
+CMod_LoadCollisionEdges
+===================
+*/
+static void CMod_LoadCollisionEdges()
 {
 	CollisionEdge_s *out;
-	unsigned int edgeIter;
+	int edgeIter;
 	EdgeInfo *in;
-	unsigned int count;
+	int count;
 	float dist;
 
 	in = (EdgeInfo *)Com_GetBspLump(LUMP_COLLISIONEDGES, sizeof(EdgeInfo), &count);
 
-	cm.edges = (CollisionEdge_s *)CM_Hunk_Alloc(sizeof(CollisionEdge_s) * count);
+	cm.edges = (CollisionEdge_s *)CM_Hunk_Alloc( count * sizeof( *cm.edges ) );
 	cm.edgeCount = count;
 
-	for (edgeIter = 0, out = cm.edges; edgeIter < count; ++in, ++out, ++edgeIter )
+	out = cm.edges;
+
+	for ( edgeIter = 0; edgeIter < count; edgeIter++, in++, out++ )
 	{
-		VectorCopy(in->origin, out->origin);
+		out->origin[0] = LittleFloat(in->origin[0]);
+		out->origin[1] = LittleFloat(in->origin[1]);
+		out->origin[2] = LittleFloat(in->origin[2]);
 
-		VectorCopy(in->axis[0], out->axis[0]);
-		VectorCopy(in->axis[1], out->axis[1]);
-		VectorCopy(in->axis[2], out->axis[2]);
+		out->axis[0][0] = LittleFloat(in->axis[0][0]);
+		out->axis[0][1] = LittleFloat(in->axis[0][1]);
+		out->axis[0][2] = LittleFloat(in->axis[0][2]);
 
-		dist = 1.0 / in->discNormalDist;
+		out->axis[1][0] = LittleFloat(in->axis[1][0]);
+		out->axis[1][1] = LittleFloat(in->axis[1][1]);
+		out->axis[1][2] = LittleFloat(in->axis[1][2]);
+
+		out->axis[2][0] = LittleFloat(in->axis[2][0]);
+		out->axis[2][1] = LittleFloat(in->axis[2][1]);
+		out->axis[2][2] = LittleFloat(in->axis[2][2]);
+
+		dist = 1.0 / LittleFloat(in->discNormalDist);
 		VectorScale(out->axis[2], dist, out->axis[2]);
 	}
 }
 
-void CMod_LoadCollisionTriangles()
+/*
+===================
+CMod_LoadCollisionTriangles
+===================
+*/
+static void CMod_LoadCollisionTriangles()
 {
 	CollisionTriangle_s *out;
-	unsigned int triIter;
+	int triIter;
 	CollisionTriangle_s *in;
-	unsigned int count;
+	int count;
 	int j;
 
 	in = (CollisionTriangle_s *)Com_GetBspLump(LUMP_COLLISIONTRIS, sizeof(CollisionTriangle_s), &count);
 
-	cm.triIndices = (CollisionTriangle_s *)CM_Hunk_Alloc(sizeof(CollisionTriangle_s) * count);
+	cm.tris = (CollisionTriangle_s *)CM_Hunk_Alloc( count * sizeof( *cm.tris ) );
 	cm.triCount = count;
 
-	for (triIter = 0, out = cm.triIndices; triIter < count; ++in, ++out, ++triIter )
-	{
-		Vector4Copy(in->plane, out->plane);
-		Vector4Copy(in->svec, out->svec);
-		Vector4Copy(in->tvec, out->tvec);
+	out = cm.tris;
 
-		for (j = 0; j < 3; ++j)
+	for ( triIter = 0; triIter < count; triIter++, in++, out++ )
+	{
+		out->plane[0] = LittleFloat(in->plane[0]);
+		out->plane[1] = LittleFloat(in->plane[1]);
+		out->plane[2] = LittleFloat(in->plane[2]);
+		out->plane[3] = LittleFloat(in->plane[3]);
+
+		out->svec[0] = LittleFloat(in->svec[0]);
+		out->svec[1] = LittleFloat(in->svec[1]);
+		out->svec[2] = LittleFloat(in->svec[2]);
+		out->svec[3] = LittleFloat(in->svec[3]);
+
+		out->tvec[0] = LittleFloat(in->tvec[0]);
+		out->tvec[1] = LittleFloat(in->tvec[1]);
+		out->tvec[2] = LittleFloat(in->tvec[2]);
+		out->tvec[3] = LittleFloat(in->tvec[3]);
+
+		for ( j = 0; j < 3; ++j )
 		{
-			out->edges[j] = in->edges[j];
-			out->verts[j] = in->verts[j];
+			out->edges[j] = LittleLong(in->edges[j]);
+			out->verts[j] = LittleLong(in->verts[j]);
 		}
 	}
 }
@@ -1021,32 +1171,35 @@ struct DiskCollBorder
 	float length;
 };
 
-void CMod_LoadCollisionBorders()
+/*
+===================
+CMod_LoadCollisionBorders
+===================
+*/
+static void CMod_LoadCollisionBorders()
 {
 	CollisionBorder *out;
 	DiskCollBorder *in;
-	unsigned int index;
-	unsigned int count;
+	int index;
+	int count;
 
 	in = (DiskCollBorder *)Com_GetBspLump(LUMP_COLLISIONBORDERS, sizeof(DiskCollBorder), &count);
 
-	cm.borders = (CollisionBorder *)CM_Hunk_Alloc(sizeof(CollisionBorder) * count);
+	cm.borders = (CollisionBorder *)CM_Hunk_Alloc( count * sizeof( *cm.borders ) );
 	cm.borderCount = count;
-	out = cm.borders;
-	index = 0;
 
-	while ( index < count )
+	out = cm.borders;
+
+	for ( index = 0; index < count; index++, in++, out++ )
 	{
-		out->distEq[0] = in->distEq[0];
-		out->distEq[1] = in->distEq[1];
-		out->distEq[2] = in->distEq[2];
-		out->zBase = in->zBase;
-		out->zSlope = in->zSlope;
-		out->start = in->start;
-		out->length = in->length;
-		++index;
-		++in;
-		++out;
+		out->distEq[0] = LittleFloat(in->distEq[0]);
+		out->distEq[1] = LittleFloat(in->distEq[1]);
+		out->distEq[2] = LittleFloat(in->distEq[2]);
+
+		out->zBase = LittleFloat(in->zBase);
+		out->zSlope = LittleFloat(in->zSlope);
+		out->start = LittleFloat(in->start);
+		out->length = LittleFloat(in->length);
 	}
 }
 
@@ -1059,62 +1212,72 @@ struct DiskCollPartition
 	int firstBorderIndex;
 };
 
-void CMod_LoadCollisionPartitions()
+/*
+===================
+CMod_LoadCollisionPartitions
+===================
+*/
+static void CMod_LoadCollisionPartitions()
 {
 	CollisionPartition *out;
 	DiskCollPartition *in;
-	unsigned int index;
-	unsigned int count;
+	int index;
+	int count;
 
 	in = (DiskCollPartition *)Com_GetBspLump(LUMP_COLLISIONPARTITIONS, sizeof(DiskCollPartition), &count);
 
-	cm.partitions = (CollisionPartition *)CM_Hunk_Alloc(sizeof(CollisionPartition) * count);
+	cm.partitions = (CollisionPartition *)CM_Hunk_Alloc( count * sizeof( *cm.partitions ) );
 	cm.partitionCount = count;
-	out = cm.partitions;
-	index = 0;
 
-	while ( index < count )
+	out = cm.partitions;
+
+	for ( index = 0; index < count; index++, in++, out++ )
 	{
 		out->triCount = in->triCount;
 		out->borderCount = in->borderCount;
-		out->triIndices = &cm.triIndices[in->firstTriIndex];
-		out->borders = &cm.borders[in->firstBorderIndex];
 
-		++index;
-		++in;
-		++out;
+		out->tris = &cm.tris[LittleLong(in->firstTriIndex)];
+		out->borders = &cm.borders[LittleLong(in->firstBorderIndex)];
 	}
 }
 
+/*
+===================
+CMod_LoadVisibility
+===================
+*/
 #define VIS_HEADER  8
-void CMod_LoadVisibility()
+static void CMod_LoadVisibility()
 {
-	unsigned int len;
+	int len;
 	byte    *buf;
 
-	buf = Com_GetBspLump(LUMP_VISIBILITY, 1u, &len);
+	buf = Com_GetBspLump(LUMP_VISIBILITY, sizeof(byte), &len);
 
 	if ( !len )
 	{
-		cm.clusterBytes = (cm.numClusters + 31) & ~31;
-		cm.numClusters = 1;
-		cm.visibility = (byte*)CM_Hunk_Alloc(cm.clusterBytes);
-		Com_Memset( cm.visibility, 0xFF, cm.clusterBytes );
+		cm.clusterBytes = ( cm.numClusters + 31 ) & ~31;
+		cm.visibility = (byte *)Hunk_Alloc( cm.clusterBytes );
+		Com_Memset( cm.visibility, 255, cm.clusterBytes );
 		return;
 	}
 
 	cm.vised = qtrue;
-	cm.visibility = (byte *)CM_Hunk_Alloc( len - VIS_HEADER );
-	cm.numClusters = ( (int *)buf )[0];
-	cm.clusterBytes = ( (int *)buf )[1];
-
+	cm.visibility = (byte *)Hunk_Alloc( len );
+	cm.numClusters = LittleLong( ( (int *)buf )[0] );
+	cm.clusterBytes = LittleLong( ( (int *)buf )[1] );
 	Com_Memcpy( cm.visibility, buf + VIS_HEADER, len - VIS_HEADER );
 }
 
-void CMod_LoadEntityString()
+/*
+===================
+CMod_LoadEntityString
+===================
+*/
+static void CMod_LoadEntityString()
 {
 	char *entityString;
-	unsigned int count;
+	int count;
 
 	entityString = (char *)Com_GetBspLump(LUMP_ENTITIES, sizeof(char), &count);
 
@@ -1123,20 +1286,25 @@ void CMod_LoadEntityString()
 	Com_Memcpy(cm.entityString, entityString, count);
 }
 
-char *CM_EntityString()
-{
-	return cm.entityString;
-}
-
+/*
+===================
+CM_LoadMapFromBsp
+===================
+*/
 void CM_LoadMapFromBsp(const char *name, bool usePvs)
 {
-	BspHeader *header;
+	dheader_t *header;
 
-	Com_Memset(&cm, 0, sizeof(clipMap_t));
+	// free old stuff
+	Com_Memset( &cm, 0, sizeof( cm ) );
+
 	cm.name = (char *)CM_Hunk_Alloc(strlen(name) + 1);
 	strcpy(cm.name, name);
-	header = Com_GetBspHeader(0, &cm.checksum);
+
+	header = Com_GetBsp(0, &cm.checksum);
 	cm.header = header;
+
+	// load into heap
 	CMod_LoadMaterials();
 	CMod_LoadPlanes();
 	CMod_LoadBrushRelated(usePvs);

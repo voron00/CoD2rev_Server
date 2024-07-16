@@ -408,7 +408,7 @@ void* CM_Hunk_Alloc(int size);
 void CM_Hunk_CheckTempMemoryHighClear();
 void CM_Hunk_ClearTempMemoryHigh();
 void* CM_Hunk_AllocateTempMemoryHigh(int size);
-byte* Com_GetBspLump(int type, unsigned int elemSize, unsigned int *count);
+byte* Com_GetBspLump(int type, int elemSize, int *count);
 bool Com_BspHasLump(int type);
 void CM_LoadMapFromBsp(const char *name, bool usePvs);
 void CM_LoadMap(const char *name, int *checksum);
@@ -425,6 +425,8 @@ void CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
 int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsize, int *lastLeaf );
 byte *CM_ClusterPVS( int cluster );
 int CM_PointLeafnum( const vec3_t p );
+
+void CM_GetBox(cbrush_t **box_brush, cmodel_t **box_model);
 
 #include "../xanim/xanim_public.h"
 XModel* CM_XModelPrecache(const char *name);

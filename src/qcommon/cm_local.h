@@ -3,7 +3,15 @@
 
 #include <stdint.h>
 
-#define MAX_SUBMODELS 1024
+#define MAX_SUBMODELS           1024
+#define BOX_MODEL_HANDLE        MAX_SUBMODELS - 1
+#define CAPSULE_MODEL_HANDLE    MAX_SUBMODELS - 2
+
+// to allow boxes to be treated as brush models, we allocate
+// some extra indexes along with those needed by the map
+#define BOX_BRUSHES         1
+#define BOX_LEAF_BRUSHES    2   // ydnar
+
 #define RADIUS_EPSILON 1.0f
 
 // plane types are used to speed some tests
@@ -80,7 +88,7 @@ static_assert((sizeof(cStaticModel_t) == 80), "ERROR: cStaticModel_t size is inv
 typedef struct cbrushside_s
 {
 	cplane_t *plane;
-	unsigned int materialNum;
+	int materialNum;
 } cbrushside_t;
 #if defined(__i386__)
 static_assert((sizeof(cbrushside_t) == 8), "ERROR: cbrushside_t size is invalid!");
@@ -187,7 +195,7 @@ typedef struct __attribute__((aligned(16))) cbrush_s
 	float mins[3];
 	int contents;
 	float maxs[3];
-	unsigned int numsides;
+	int numsides;
 	cbrushside_t *sides;
 	int16_t axialMaterialNum[2][3];
 } cbrush_t;
@@ -209,8 +217,8 @@ typedef struct CollisionTriangle_s
 	vec4_t plane;
 	vec4_t svec;
 	vec4_t tvec;
-	unsigned int verts[3];
-	unsigned int edges[3];
+	int verts[3];
+	int edges[3];
 } CollisionTriangle_t;
 #if defined(__i386__)
 static_assert((sizeof(CollisionTriangle_t) == 72), "ERROR: CollisionTriangle_t size is invalid!");
@@ -220,7 +228,7 @@ typedef struct CollisionPartition
 {
 	byte triCount;
 	byte borderCount;
-	CollisionTriangle_t *triIndices;
+	CollisionTriangle_t *tris;
 	CollisionBorder_t *borders;
 } CollisionPartition_t;
 #if defined(__i386__)
@@ -230,42 +238,42 @@ static_assert((sizeof(CollisionPartition_t) == 12), "ERROR: CollisionPartition_t
 typedef struct clipMap_s
 {
 	char *name;
-	unsigned int numStaticModels;
+	int numStaticModels;
 	cStaticModel_t *staticModelList;
-	unsigned int numMaterials;
+	int numMaterials;
 	dmaterial_t *materials;
-	unsigned int numBrushSides;
+	int numBrushSides;
 	cbrushside_t *brushsides;
-	unsigned int numNodes;
+	int numNodes;
 	cNode_t *nodes;
-	unsigned int numLeafs;
+	int numLeafs;
 	cLeaf_t *leafs;
-	unsigned int leafbrushNodesCount;
+	int leafbrushNodesCount;
 	cLeafBrushNode_t *leafbrushNodes;
-	unsigned int numLeafBrushes;
+	int numLeafBrushes;
 	uint16_t *leafbrushes;
-	unsigned int numLeafSurfaces;
-	unsigned int *leafsurfaces;
-	unsigned int vertCount;
+	int numLeafSurfaces;
+	int *leafsurfaces;
+	int vertCount;
 	float (*verts)[3];
-	unsigned int edgeCount;
+	int edgeCount;
 	CollisionEdge_t *edges;
 	int triCount;
-	CollisionTriangle_t *triIndices;
+	CollisionTriangle_t *tris;
 	int borderCount;
 	CollisionBorder_t *borders;
 	int partitionCount;
 	CollisionPartition_t *partitions;
 	int aabbTreeCount;
 	CollisionAabbTree_t *aabbTrees;
-	unsigned int numSubModels;
+	int numSubModels;
 	cmodel_t *cmodels;
 	uint16_t numBrushes;
 	cbrush_t *brushes;
 	int numClusters;
 	int clusterBytes;
 	byte *visibility;
-	int vised;
+	qboolean vised;             // if false, visibility is just a single cluster of ffs
 	int numEntityChars;
 	char *entityString;
 	cbrush_t *box_brush;
@@ -281,7 +289,7 @@ typedef struct clipMap_s
 	void *nodeTree;
 	int planeCount;
 	cplane_t *planes;
-	struct BspHeader *header;
+	struct dheader_t *header;
 	unsigned int checksum;
 } clipMap_t;
 #if defined(__i386__)
@@ -423,7 +431,7 @@ typedef struct leafList_s
 
 typedef struct
 {
-	int unused;
+	int start;
 	const float *mins;
 	const float *maxs;
 	int *list;

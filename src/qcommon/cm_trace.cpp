@@ -7,8 +7,19 @@ void CM_GetTraceThreadInfo(TraceThreadInfo *threadInfo)
 	TraceThreadInfo *value;
 
 	value = (TraceThreadInfo *)Sys_GetValue(THREAD_VALUE_TRACE);
+
 	++value->checkcount;
 	*threadInfo = *value;
+}
+
+void CM_GetBox(cbrush_t **box_brush, cmodel_t **box_model)
+{
+	TraceThreadInfo *value;
+
+	value = (TraceThreadInfo *)Sys_GetValue(THREAD_VALUE_TRACE);
+
+	*box_brush = value->box_brush;
+	*box_model = value->box_model;
 }
 
 cmodel_t *CM_ClipHandleToModel( clipHandle_t handle )

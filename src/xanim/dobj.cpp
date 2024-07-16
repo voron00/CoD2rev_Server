@@ -314,7 +314,7 @@ start:
 
 								if ( delta[0] == 0.0 && delta[1] == 0.0 )
 								{
-									trace->normal[2] = -sub_80B9A48(delta[2]);
+									trace->normal[2] = -I_sgn(delta[2]);
 								}
 								else
 								{

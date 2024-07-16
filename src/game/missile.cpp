@@ -1,10 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-#ifdef LIBCOD
-extern int codecallback_fire_grenade;
-#endif
-
 gentity_s* fire_grenade(gentity_s *self, float *start, float *dir, int grenadeWPID, int time)
 {
 	WeaponDef *weaponDef;
@@ -52,6 +48,7 @@ gentity_s* fire_grenade(gentity_s *self, float *start, float *dir, int grenadeWP
 	VectorCopy(start, grenade->r.currentOrigin);
 	VectorCopy(grenade->s.apos.trBase, grenade->r.currentAngles);
 #ifdef LIBCOD
+	extern int codecallback_fire_grenade;
 	if (codecallback_fire_grenade)
 	{
 		stackPushString(weaponDef->szInternalName);

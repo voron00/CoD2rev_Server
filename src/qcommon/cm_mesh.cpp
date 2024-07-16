@@ -688,7 +688,7 @@ void CM_PositionTestInAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree,
 				partition = &cm.partitions[index];
 
 				for ( i = 0; i < partition->triCount; ++i )
-					CM_PositionTestCapsuleInTriangle(tw, &partition->triIndices[i], trace);
+					CM_PositionTestCapsuleInTriangle(tw, &partition->tris[i], trace);
 			}
 		}
 	}
@@ -759,13 +759,13 @@ void CM_TraceThroughAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, t
 				if ( tw->isPoint )
 				{
 					for ( i = 0; i < partition->triCount; ++i )
-						CM_TracePointThroughTriangle(tw, &partition->triIndices[i], trace);
+						CM_TracePointThroughTriangle(tw, &partition->tris[i], trace);
 				}
 				else
 				{
 					for ( j = 0; j < partition->triCount; ++j )
 					{
-						collTri = &partition->triIndices[j];
+						collTri = &partition->tris[j];
 						CM_TraceCapsuleThroughTriangle(tw, collTri, tw->offsetZ, trace);
 
 						if ( collTri->plane[2] < 0.0 )

@@ -3,33 +3,10 @@
 
 extern clipMap_t cm;
 
-void CMod_LoadBrushes();
-void CMod_LoadLeafBrushes();
-void CMod_LoadCollisionAabbTrees();
-void CMod_LoadLeafs(bool usePvs);
-void CMod_LoadSubmodels();
-int CMod_GetLeafTerrainContents(cLeaf_s *leaf);
-float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, int axis, const float *mins, const float *maxs, float *dist);
-void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf);
-void CMod_LoadLeafBrushNodes();
-void CMod_LoadSubmodelBrushNodes();
-void CM_InitBoxHull();
-void CMod_LoadBrushRelated(bool usePvs);
-void CMod_LoadPlanes();
-void CMod_LoadMaterials();
-void CMod_LoadNodes();
-void CMod_LoadLeafSurfaces();
-void CMod_LoadCollisionVerts();
-void CMod_LoadCollisionEdges();
-void CMod_LoadCollisionTriangles();
-void CMod_LoadCollisionBorders();
-void CMod_LoadCollisionPartitions();
-void CMod_LoadVisibility();
-void CMod_LoadEntityString();
 char *CM_EntityString();
 void CM_LoadMapFromBsp(const char *name, bool usePvs);
 
-BspHeader* Com_GetBspHeader(unsigned int *size, unsigned int *checksum);
+dheader_t* Com_GetBsp(int *fileSize, unsigned int *checksum);
 cmodel_t *CM_ClipHandleToModel( clipHandle_t handle );
 void CM_SetAxialCullOnly(traceWork_t *tw);
 bool CM_CullBox(traceWork_t *tw, const float *origin, const float *halfSize);
