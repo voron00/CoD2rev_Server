@@ -168,6 +168,17 @@ inline float I_sgn(float x)
 
 /*
 ==============
+FastSinCos
+==============
+*/
+inline void FastSinCos(float value, float *pSin, float *pCos)
+{
+	*pSin = sin(value);
+	*pCos = cos(value);
+}
+
+/*
+==============
 I_rsqrt
 ==============
 */

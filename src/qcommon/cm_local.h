@@ -344,7 +344,11 @@ typedef struct worldTree_s
 {
 	float dist;
 	uint16_t axis;
-	uint16_t nextFree;
+	union
+	{
+		uint16_t parent;
+		uint16_t nextFree;
+	};
 	uint16_t child[2];
 } worldTree_t;
 
@@ -407,13 +411,14 @@ struct sightclip_t
 	int contentmask;
 };
 
+#define	AREA_NODES	1024
 struct cm_world_t
 {
 	float mins[3];
 	float maxs[3];
-	bool sorted;
+	bool lockTree;
 	uint16_t freeHead;
-	worldSector_t sectors[1024];
+	worldSector_t sectors[AREA_NODES];
 };
 #if defined(__i386__)
 static_assert((sizeof(cm_world_t) == 0x601C), "ERROR: cm_world_t size is invalid!");

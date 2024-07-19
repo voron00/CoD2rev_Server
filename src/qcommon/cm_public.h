@@ -15,7 +15,7 @@ void CM_BoxLeafnums_r( leafList_t *ll, int nodenum );
 void CM_TraceThroughAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 int CM_TestInLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *start, const float *end, int contentmask);
-unsigned int CM_TraceStaticModelComplete(cStaticModel_s *sm, const float *start, const float *end, int contentmask);
+int CM_TraceStaticModelComplete(cStaticModel_s *sm, const float *start, const float *end, int contentmask);
 int CM_PointTraceStaticModelsComplete(const float *start, const float *end, int contentmask);
 void CM_PointTraceStaticModels(trace_t *results, const float *start, const float *end, int contentmask);
 int CM_PointSightTraceToEntities(sightpointtrace_t *clip);
@@ -35,8 +35,6 @@ void CM_BoxTrace(trace_t *results, const float *start, const float *end, const f
 void CM_TransformedBoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles);
 void CM_TransformedBoxTraceExternal(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, unsigned int model, int brushmask, const float *origin, const float *angles);
 int CM_SightTraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf);
-void CM_PointTraceStaticModels_r(locTraceWork_t *tw, unsigned short nodeIndex, const float *p1_, const float *p2, trace_t *trace);
-int CM_PointTraceStaticModelsComplete_r(staticmodeltrace_t *clip, unsigned short nodeIndex, const float *p1_, const float *p2);
 bool CM_TraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs);
 void CM_TraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, const float *p1_, const float *p2, trace_t *trace);
@@ -61,8 +59,6 @@ void CM_PositionTest(traceWork_t *tw, trace_t *trace);
 int CM_PointContents(const float *p, unsigned int model);
 void CM_StoreLeafs( leafList_t *ll, int nodenum );
 int CM_PointLeafnum_r( const vec3_t p, int num );
-void CM_SortNode(unsigned short nodeIndex, float *mins, float *maxs);
-void CM_AddStaticModelToNode(cStaticModel_s *model, unsigned short childNodeIndex);
 void CM_LinkAllStaticModels();
 void CM_LinkWorld();
 
