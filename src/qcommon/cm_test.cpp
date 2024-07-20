@@ -6,7 +6,7 @@
 CM_PointLeafnum_r
 ==================
 */
-int CM_PointLeafnum_r( const vec3_t p, int num )
+static int CM_PointLeafnum_r( const vec3_t p, int num )
 {
 	float d;
 	cNode_t     *node;
@@ -49,6 +49,11 @@ LEAF LISTING
 ======================================================================
 */
 
+/*
+==================
+CM_StoreLeafs
+==================
+*/
 void CM_StoreLeafs( leafList_t *ll, int nodenum )
 {
 	int leafNum;
@@ -134,6 +139,11 @@ PVS
 ===============================================================================
 */
 
+/*
+==================
+CM_ClusterPVS
+==================
+*/
 byte *CM_ClusterPVS( int cluster )
 {
 	if ( cluster < 0 || cluster >= cm.numClusters || !cm.vised )
@@ -144,51 +154,58 @@ byte *CM_ClusterPVS( int cluster )
 	return cm.visibility + cluster * cm.clusterBytes;
 }
 
-int CM_PointContentsLeafBrushNode_r(const float *p, cLeafBrushNode_s *node)
+/*
+==================
+CM_PointContentsLeafBrushNode_r
+==================
+*/
+static int CM_PointContentsLeafBrushNode_r( const vec3_t p, cLeafBrushNode_s *node )
 {
-	cbrushside_t *side;
 	int contents;
+	cbrushside_s *side;
 	int k;
 	cbrush_t *b;
 	int i;
-	int numsides;
 
 	contents = 0;
 
 	while ( 1 )
 	{
 		if ( !node->leafBrushCount )
+		{
 			goto appendnode;
+		}
 
 		if ( node->leafBrushCount > 0 )
+		{
 			break;
+		}
 
 		contents |= CM_PointContentsLeafBrushNode_r(p, node + 1);
 appendnode:
 		node += node->data.children.childOffset[node->data.children.dist >= p[node->axis]];
 	}
 
-	for ( k = 0; k < node->leafBrushCount; ++k )
+	for ( k = 0; k < node->leafBrushCount; k++ )
 	{
 		b = &cm.brushes[node->data.leaf.brushes[k]];
 
 		for ( i = 0; i < 3; ++i )
 		{
 			if ( b->mins[i] > p[i] || p[i] > b->maxs[i] )
+			{
 				goto miss;
+			}
 		}
 
 		side = b->sides;
-		numsides = b->numsides;
 
-		while ( numsides )
+		for ( i = b->numsides; i; i--, side++ )
 		{
-			if ( (float)((float)((float)(*p * side->plane->normal[0]) + (float)(p[1] * side->plane->normal[1]))
-			             + (float)(p[2] * side->plane->normal[2])) > side->plane->dist )
+			if ( DotProduct(p, side->plane->normal) > side->plane->dist )
+			{
 				goto miss;
-
-			--numsides;
-			++side;
+			}
 		}
 
 		contents |= b->contents;
@@ -199,22 +216,31 @@ miss:
 	return contents;
 }
 
-int CM_PointContents(const float *p, unsigned int model)
+/*
+==================
+CM_PointContents
+==================
+*/
+int CM_PointContents( const vec3_t p, clipHandle_t model )
 {
 	int i;
 	cLeaf_s *leaf;
+
+	assert(cm.numNodes);
 
 	if ( model )
 		leaf = &CM_ClipHandleToModel(model)->leaf;
 	else
 		leaf = &cm.leafs[CM_PointLeafnum_r(p, 0)];
+
 	if ( !leaf->leafBrushNode )
 		return 0;
 
-	for ( i = 0; i <= 2; ++i )
+	for ( i = 0; i < 3; ++i )
 	{
 		if ( leaf->mins[i] >= p[i] )
 			return 0;
+
 		if ( p[i] >= leaf->maxs[i] )
 			return 0;
 	}

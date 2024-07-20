@@ -101,7 +101,7 @@ int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, co
 			ConvertQuatToMat(Mat, axis);
 			MatrixTransposeTransformVector(startDelta, axis, boneExtents.start);
 			MatrixTransposeTransformVector(endDelta, axis, boneExtents.end);
-			CM_CalcTraceExtents(&boneExtents);
+			CM_CalcTraceEntents(&boneExtents);
 
 			if ( !CM_TraceBox(&boneExtents, surf->mins, surf->maxs, results->fraction) )
 			{

@@ -933,7 +933,7 @@ qboolean CM_PointTraceStaticModelsComplete( const vec3_t start, const vec3_t end
 	VectorCopy(start, clip.extents.start);
 	VectorCopy(end, clip.extents.end);
 
-	CM_CalcTraceExtents(&clip.extents);
+	CM_CalcTraceEntents(&clip.extents);
 
 	return CM_PointTraceStaticModelsComplete_r(&clip, 1, clip.extents.start, clip.extents.end);
 }
@@ -1035,7 +1035,7 @@ void CM_PointTraceStaticModels( trace_t *results, const vec3_t start, const vec3
 	VectorCopy(start, tw.extents.start);
 	VectorCopy(end, tw.extents.end);
 
-	CM_CalcTraceExtents(&tw.extents);
+	CM_CalcTraceEntents(&tw.extents);
 
 	VectorCopy(tw.extents.start, start_);
 	start_[3] = 0.0;

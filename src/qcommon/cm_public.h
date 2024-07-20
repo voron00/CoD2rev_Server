@@ -11,7 +11,6 @@ cmodel_t *CM_ClipHandleToModel( clipHandle_t handle );
 void CM_SetAxialCullOnly(traceWork_t *tw);
 bool CM_CullBox(traceWork_t *tw, const float *origin, const float *halfSize);
 void CM_MeshTestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
-void CM_BoxLeafnums_r( leafList_t *ll, int nodenum );
 void CM_TraceThroughAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace);
 int CM_TestInLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_TraceStaticModel(cStaticModel_s *sm, trace_t *results, const float *start, const float *end, int contentmask);
@@ -39,7 +38,6 @@ bool CM_TraceThroughLeafBrushNode(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace
 cLeafBrushNode_s * CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const float *mins, const float *maxs);
 void CM_TraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, const float *p1_, const float *p2, trace_t *trace);
 void CM_TestInLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *node, trace_t *trace);
-int CM_PointContentsLeafBrushNode_r(const float *p, cLeafBrushNode_s *node);
 int CM_SightTraceThroughLeafBrushNode_r(traceWork_t *tw, cLeafBrushNode_s *remoteNode, const float *p1_, const float *p2);
 int CM_SightTraceThroughLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace);
 void CM_TestCapsuleInCapsule(traceWork_t *tw, trace_t *trace);
@@ -56,9 +54,9 @@ void CM_TraceCapsuleThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, f
 void CM_TraceCapsuleThroughBorder(traceWork_t *tw, CollisionBorder *border, trace_t *trace);
 void CM_TraceThroughBrush(traceWork_t *tw, cbrush_t *brush, trace_t *trace);
 void CM_PositionTest(traceWork_t *tw, trace_t *trace);
-int CM_PointContents(const float *p, unsigned int model);
+int CM_PointContents( const vec3_t p, clipHandle_t model );
+void CM_BoxLeafnums_r( leafList_t *ll, int nodenum );
 void CM_StoreLeafs( leafList_t *ll, int nodenum );
-int CM_PointLeafnum_r( const vec3_t p, int num );
 void CM_LinkAllStaticModels();
 void CM_LinkWorld();
 

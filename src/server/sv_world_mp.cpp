@@ -534,7 +534,7 @@ int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check )
 		VectorCopy(clip->start, extents.start);
 		VectorCopy(clip->end, extents.end);
 
-		CM_CalcTraceExtents(&extents);
+		CM_CalcTraceEntents(&extents);
 
 		if ( CM_TraceBox(&extents, absmin, absmax, 1.0) )
 		{
@@ -779,7 +779,7 @@ void SV_LocationalTraceToEntity( trace_t *results, const vec3_t start, const vec
 	VectorCopy(start, ptrace.extents.start);
 	VectorCopy(end, ptrace.extents.end);
 
-	CM_CalcTraceExtents(&ptrace.extents);
+	CM_CalcTraceEntents(&ptrace.extents);
 
 	ptrace.passEntNum = -1;
 	ptrace.ignoreEntNum = -1;
@@ -961,7 +961,7 @@ void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const ve
 		VectorCopy(start, pt.extents.start);
 		VectorCopy(end, pt.extents.end);
 
-		CM_CalcTraceExtents(&pt.extents);
+		CM_CalcTraceEntents(&pt.extents);
 
 		pt.passEntNum = passEntityNum;
 		pt.bLocational = locational;
@@ -1016,7 +1016,7 @@ void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const ve
 		VectorAdd(start, temp, clip.extents.start);
 		VectorAdd(end, temp, clip.extents.end);
 
-		CM_CalcTraceExtents(&clip.extents);
+		CM_CalcTraceEntents(&clip.extents);
 
 		// clip to other solid entities
 		CM_ClipMoveToEntities(&clip, results);

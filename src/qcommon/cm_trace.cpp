@@ -240,55 +240,6 @@ void CM_PositionTest(traceWork_t *tw, trace_t *trace)
 	}
 }
 
-qboolean CM_TraceBoxInternal(TraceExtents *extents, const float *testvec, float s, float *fraction)
-{
-	int i;
-	float d, o;
-
-	for(i = 0; i < 3; ++i)
-	{
-		d = (extents->start[i] - testvec[i]) * s;
-		o = (extents->end[i] - testvec[i]) * s;
-		if ( d <= 0.0 )
-		{
-			if ( o > 0.0 )
-			{
-				d = (d * extents->invDelta[i]) * s;
-				if ( d <= 0.0 )
-				{
-					return 1;
-				}
-				if ( d - *fraction < 0.0 )
-				{
-					*fraction = d;
-				}
-			}
-		}
-		else if ( o > 0.0 || ((float)(d * extents->invDelta[i]) * s) >= *fraction )
-		{
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-qboolean CM_TraceBox(TraceExtents *extents, const float *mins, const float *maxs, float fraction)
-{
-	float lfraction = fraction;
-
-	if(CM_TraceBoxInternal(extents, mins, -1.0, &lfraction) == qtrue)
-	{
-		return qtrue;
-	}
-	if(CM_TraceBoxInternal(extents, maxs, 1.0, &lfraction) == qtrue)
-	{
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
 void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace)
 {
 	if ( (tw->contents & cm.materials[aabbTree->materialIndex].contentFlags) != 0 )
@@ -1414,7 +1365,7 @@ int CM_BoxSightTrace(int oldHitNum, const float *start, const float *end, const 
 		tw.halfDeltaAbs[i] = fabs(tw.halfDelta[i]);
 	}
 
-	CM_CalcTraceExtents(&tw.extents);
+	CM_CalcTraceEntents(&tw.extents);
 	tw.deltaLenSq = VectorLengthSquared(tw.delta);
 	tw.deltaLen = sqrt(tw.deltaLenSq);
 
@@ -1922,7 +1873,7 @@ void CM_Trace(trace_t *results, const float *start, const float *end, const floa
 		tw.halfDeltaAbs[i] = fabs(tw.halfDelta[i]);
 	}
 
-	CM_CalcTraceExtents(&tw.extents);
+	CM_CalcTraceEntents(&tw.extents);
 	tw.deltaLenSq = VectorLengthSquared(tw.delta);
 	tw.deltaLen = sqrt(tw.deltaLenSq);
 
@@ -2100,23 +2051,4 @@ void CM_TransformedBoxTraceExternal(trace_t *results, const float *start, const 
 	memset(results, 0, sizeof(trace_t));
 	results->fraction = 0.0;
 	CM_TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, origin, angles);
-}
-
-void CM_CalcTraceExtents(TraceExtents *extents)
-{
-	float delta;
-	float diff;
-	int i;
-
-	for ( i = 0; i < 3; ++i )
-	{
-		diff = extents->start[i] - extents->end[i];
-
-		if ( diff == 0.0 )
-			delta = 0.0;
-		else
-			delta = 1.0 / diff;
-
-		extents->invDelta[i] = delta;
-	}
 }

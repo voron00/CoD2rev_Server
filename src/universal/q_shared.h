@@ -293,7 +293,7 @@ struct TraceExtents
 	vec3_t invDelta;
 };
 
-void CM_CalcTraceExtents(TraceExtents *extents);
+void CM_CalcTraceEntents(TraceExtents *extents);
 
 short   LittleShort( short l );
 int     LittleLong( int l );
