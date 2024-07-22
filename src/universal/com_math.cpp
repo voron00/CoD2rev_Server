@@ -1253,6 +1253,17 @@ float convertDegreesToTan(float d)
 	return tan(d * 0.0174532925199433);
 }
 
+/*
+================
+CreateRotationMatrix
+================
+*/
+void CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] )
+{
+	AngleVectors( angles, matrix[0], matrix[1], matrix[2] );
+	VectorInverse( matrix[1] );
+}
+
 // TTimo: const vec_t ** would require explicit casts for ANSI C conformance
 // see unix/const-arg.c in Wolf MP source
 void TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] )

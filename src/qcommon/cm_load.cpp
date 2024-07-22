@@ -5,35 +5,6 @@
 clipMap_t cm;
 
 /*
-===================
-CM_TempBoxModel
-
-To keep everything totally uniform, bounding boxes are turned into small
-BSP trees instead of being compared directly.
-Capsules are handled differently though.
-===================
-*/
-clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, int contents )
-{
-	cmodel_t *box_model;
-	cbrush_t *box_brush;
-
-	CM_GetBox(&box_brush, &box_model);
-
-	VectorCopy(mins, box_model->mins);
-	VectorCopy(maxs, box_model->maxs);
-
-	VectorCopy(mins, box_brush->mins);
-	VectorCopy(maxs, box_brush->maxs);
-
-// DHM - Nerve
-	box_brush->contents = contents;
-// dhm
-
-	return BOX_MODEL_HANDLE;
-}
-
-/*
 ==================
 CM_LeafCluster
 ==================

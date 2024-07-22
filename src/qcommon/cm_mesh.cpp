@@ -1,6 +1,52 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
+bool CM_CullBox(traceWork_t *tw, const float *origin, const float *halfSize)
+{
+	vec3_t distorig;
+	vec3_t mid;
+	int i;
+
+	VectorSubtract(tw->midpoint, origin, distorig);
+	VectorAdd(tw->size, halfSize, mid);
+
+	for(i = 0; i < 3; ++i)
+	{
+		if ( tw->halfDeltaAbs[i] + mid[i] < fabs(distorig[i]) )
+		{
+			return 1;
+		}
+	}
+
+	if ( tw->axialCullOnly)
+	{
+		return 0;
+	}
+
+	if(tw->halfDeltaAbs[1] * mid[2] + mid[1] * tw->halfDeltaAbs[2] < fabs(tw->halfDelta[1] * distorig[2] - tw->halfDelta[2] * distorig[1]))
+	{
+		return 1;
+	}
+
+	if(tw->halfDeltaAbs[0] * mid[2] + mid[0] * tw->halfDeltaAbs[2] < fabs(tw->halfDelta[2] * distorig[0] - tw->halfDelta[0] * distorig[2]))
+	{
+		return 1;
+	}
+
+	if(tw->halfDeltaAbs[1] * mid[0] + tw->halfDeltaAbs[0] * mid[1] < fabs(tw->halfDelta[0] * distorig[1] - tw->halfDelta[1] * distorig[0]))
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace)
+{
+	if ( (tw->contents & cm.materials[aabbTree->materialIndex].contentFlags) != 0 )
+		CM_TraceThroughAabbTree(tw, aabbTree, trace);
+}
+
 void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace)
 {
 	float absScale;

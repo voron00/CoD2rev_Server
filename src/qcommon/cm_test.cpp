@@ -162,7 +162,7 @@ CM_PointContentsLeafBrushNode_r
 static int CM_PointContentsLeafBrushNode_r( const vec3_t p, cLeafBrushNode_s *node )
 {
 	int contents;
-	cbrushside_s *side;
+	cbrushside_t *side;
 	int k;
 	cbrush_t *b;
 	int i;

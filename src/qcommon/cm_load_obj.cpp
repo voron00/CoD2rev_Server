@@ -888,7 +888,7 @@ CMod_LoadPlanes
 */
 static void CMod_LoadPlanes()
 {
-	cplane_s *out;
+	cplane_t *out;
 	int planeIter;
 	char bits;
 	dplane_t *in;
@@ -902,7 +902,7 @@ static void CMod_LoadPlanes()
 		Com_Error(ERR_DROP, "Map with no planes");
 	}
 
-	cm.planes = (cplane_s *)CM_Hunk_Alloc( count * sizeof( *cm.planes ) );
+	cm.planes = (cplane_t *)CM_Hunk_Alloc( count * sizeof( *cm.planes ) );
 	cm.planeCount = count;
 
 	for ( planeIter = 0, out = cm.planes; planeIter < count; in++, out++, planeIter++ )

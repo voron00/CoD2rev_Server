@@ -278,3 +278,4 @@ void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3);
 void I_sinCos(float value, float *pSin, float *pCos);
 float Vec2DistanceSq(const vec2_t v1, const vec2_t v2);
 float Vec2Distance(const vec2_t v1, const vec2_t v2);
+void CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );

@@ -5,7 +5,7 @@
 
 #define MAX_SUBMODELS           1024
 #define BOX_MODEL_HANDLE        MAX_SUBMODELS - 1
-#define CAPSULE_MODEL_HANDLE    MAX_SUBMODELS - 2
+#define CAPSULE_MODEL_HANDLE    MAX_SUBMODELS - 1
 
 // to allow boxes to be treated as brush models, we allocate
 // some extra indexes along with those needed by the map
@@ -13,6 +13,11 @@
 #define BOX_LEAF_BRUSHES    2   // ydnar
 
 #define RADIUS_EPSILON 1.0f
+#define TRACE_EPSILON 0.001f
+
+// keep 1/8 unit away to keep the position valid before network snapping
+// and to avoid various numeric issues
+#define SURFACE_CLIP_EPSILON    ( 0.125 )
 
 // plane types are used to speed some tests
 // 0-2 are axial planes
