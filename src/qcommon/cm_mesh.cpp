@@ -1,316 +1,488 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
-bool CM_CullBox(traceWork_t *tw, const float *origin, const float *halfSize)
+/*
+==================
+CM_RayTriangleIntersect
+==================
+*/
+bool CM_RayTriangleIntersect( const vec3_t orig, const vec3_t dir, const vec3_t vert1, const vec3_t vert2, const vec3_t vert3, float *pt, float *pu, float *pv )
 {
-	vec3_t distorig;
+	float d0;
+	vec3_t c2;
+	vec3_t c;
+	vec3_t v3;
+	vec3_t v2;
+	vec3_t v1;
+	float d2;
+	float d1;
+
+	VectorSubtract(vert2, vert1, v1);
+	VectorSubtract(vert3, vert1, v2);
+
+	Vec3Cross(dir, v2, c);
+	d0 = DotProduct(v1, c);
+
+	if ( d0 < 0.001 )
+	{
+		return false;
+	}
+
+	VectorSubtract(orig, vert1, v3);
+	d1 = DotProduct(v3, c);
+
+	if ( d1 < 0.0 || d1 > d0 )
+	{
+		return false;
+	}
+
+	Vec3Cross(v3, v1, c2);
+	d2 = DotProduct(dir, c2);
+
+	if ( d2 < 0.0 || d1 + d2 > d0 )
+	{
+		return false;
+	}
+
+	*pt = DotProduct(v2, c2) / d0;
+
+	if ( pu )
+		*pu = d1 / d0;
+
+	if ( pv )
+		*pv = d2 / d0;
+
+	return true;
+}
+
+/*
+==================
+CM_CullBox
+==================
+*/
+bool CM_CullBox( traceWork_t *tw, const vec3_t origin, const vec3_t halfSize )
+{
 	vec3_t mid;
-	int i;
+	vec3_t distorig;
 
 	VectorSubtract(tw->midpoint, origin, distorig);
-	VectorAdd(tw->size, halfSize, mid);
+	VectorAdd(halfSize, tw->size, mid);
 
-	for(i = 0; i < 3; ++i)
+	if ( fabs(distorig[0]) > mid[0] + tw->halfDeltaAbs[0] )
 	{
-		if ( tw->halfDeltaAbs[i] + mid[i] < fabs(distorig[i]) )
+		return true;
+	}
+
+	if ( fabs(distorig[1]) > mid[1] + tw->halfDeltaAbs[1] )
+	{
+		return true;
+	}
+
+	if ( fabs(distorig[2]) > mid[2] + tw->halfDeltaAbs[2] )
+	{
+		return true;
+	}
+
+	if ( tw->axialCullOnly )
+	{
+		return false;
+	}
+
+	if ( fabs(tw->halfDelta[1] * distorig[2] - tw->halfDelta[2] * distorig[1]) > mid[1] * tw->halfDeltaAbs[2] + mid[2] * tw->halfDeltaAbs[1] )
+	{
+		return true;
+	}
+
+	if ( fabs(tw->halfDelta[2] * distorig[0] - tw->halfDelta[0] * distorig[2]) > mid[2] * tw->halfDeltaAbs[0] + mid[0] * tw->halfDeltaAbs[2] )
+	{
+		return true;
+	}
+
+	if ( fabs(tw->halfDelta[0] * distorig[1] - tw->halfDelta[1] * distorig[0]) > mid[0] * tw->halfDeltaAbs[1] + mid[1] * tw->halfDeltaAbs[0] )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+/*
+==================
+CM_PositionTestInAabbTree_r
+==================
+*/
+static void CM_PositionTestInAabbTree_r( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace )
+{
+	int triCount;
+	int16_t checkStamp;
+	CollisionPartition *partition;
+	int partitionIndex;
+	CollisionAabbTree_t *child;
+	int childIndex;
+
+	if ( CM_CullBox(tw, aabbTree->origin, aabbTree->halfSize) )
+	{
+		return;
+	}
+
+	if ( aabbTree->childCount )
+	{
+		for ( childIndex = 0, child = &cm.aabbTrees[aabbTree->u.firstChildIndex]; childIndex < aabbTree->childCount; childIndex++, child++ )
 		{
-			return 1;
+			CM_PositionTestInAabbTree_r(tw, child, trace);
 		}
+
+		return;
 	}
 
-	if ( tw->axialCullOnly)
+	partitionIndex = aabbTree->u.firstChildIndex;
+	checkStamp = tw->threadInfo.checkcount;
+
+	if ( tw->threadInfo.partitions[partitionIndex] == checkStamp )
 	{
-		return 0;
+		return;
 	}
 
-	if(tw->halfDeltaAbs[1] * mid[2] + mid[1] * tw->halfDeltaAbs[2] < fabs(tw->halfDelta[1] * distorig[2] - tw->halfDelta[2] * distorig[1]))
+	tw->threadInfo.partitions[partitionIndex] = checkStamp;
+	partition = &cm.partitions[partitionIndex];
+
+	for ( triCount = 0; triCount < partition->triCount; triCount++ )
 	{
-		return 1;
+		CM_PositionTestCapsuleInTriangle(tw, &partition->tris[triCount], trace);
 	}
-
-	if(tw->halfDeltaAbs[0] * mid[2] + mid[0] * tw->halfDeltaAbs[2] < fabs(tw->halfDelta[2] * distorig[0] - tw->halfDelta[0] * distorig[2]))
-	{
-		return 1;
-	}
-
-	if(tw->halfDeltaAbs[1] * mid[0] + tw->halfDeltaAbs[0] * mid[1] < fabs(tw->halfDelta[0] * distorig[1] - tw->halfDelta[1] * distorig[0]))
-	{
-		return 1;
-	}
-
-	return 0;
 }
 
-void CM_SightTraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace)
+/*
+==================
+CM_TraceThroughAabbTree_r
+==================
+*/
+static void CM_TraceThroughAabbTree_r( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace )
 {
-	if ( (tw->contents & cm.materials[aabbTree->materialIndex].contentFlags) != 0 )
-		CM_TraceThroughAabbTree(tw, aabbTree, trace);
-}
-
-void CM_PositionTestCapsuleInTriangle(traceWork_t *tw, CollisionTriangle_s *collTtris, trace_t *trace)
-{
-	float absScale;
-	int side4;
-	int side2;
-	int side;
-	float offsetZ;
-	float length;
-	vec2_t scaledDist2;
-	float dist;
-	float offsetPos;
-	vec3_t top;
-	float distToEdge;
-	float cutoffDist;
-	float radius;
-	float radiusNegU;
-	float *vertex;
-	int vertexId;
-	CollisionEdge_s *edge;
-	int edgeIndex;
-	float scale;
-	vec3_t delta;
-	int sides;
-	vec2_t scaledDist;
-	vec3_t start;
+	CollisionTriangle_s *tri;
 	int i;
+	int16_t checkcount;
+	CollisionPartition *partition;
+	int partitionIndex;
+	CollisionAabbTree_t *child;
+	int childIndex;
 
-	offsetZ = tw->offsetZ;
-
-	if ( collTtris->plane[2] < 0.0 )
-		offsetZ = offsetZ * -1.0;
-
-	VectorCopy(tw->extents.start, top);
-	top[2] = top[2] - offsetZ;
-	radius = tw->radius;
-	dist = DotProduct(top, collTtris->plane) - collTtris->plane[3];
-
-	if ( dist < radius )
+	if ( CM_CullBox(tw, aabbTree->origin, aabbTree->halfSize) )
 	{
-		radiusNegU = -radius;
+		return;
+	}
 
-		if ( -radius < dist )
+	if ( aabbTree->childCount )
+	{
+		for ( childIndex = 0, child = &cm.aabbTrees[aabbTree->u.firstChildIndex]; childIndex < aabbTree->childCount; childIndex++, child++ )
 		{
-			sides = 0;
-			VectorMA(top, -dist, collTtris->plane, start);
-			scaledDist[1] = DotProduct(start, collTtris->svec) - collTtris->svec[3];
-			scaledDist[0] = DotProduct(start, collTtris->tvec) - collTtris->tvec[3];
-			side = sides;
-
-			if ( scaledDist[1] + scaledDist[0] > 1.0 )
-				side = sides | 1;
-
-			sides = side;
-			side2 = side;
-
-			if ( scaledDist[1] < 0.0 )
-				side2 = side | 2;
-
-			sides = side2;
-			side4 = side2;
-
-			if ( scaledDist[0] < 0.0 )
-				side4 = side2 | 4;
-
-			sides = side4;
-
-			if ( side4 )
-			{
-				for ( i = 0; i < 3; ++i )
-				{
-					if ( ((sides >> i) & 1) != 0 )
-					{
-						edgeIndex = collTtris->edges[i];
-
-						if ( edgeIndex >= 0 )
-						{
-							edge = &cm.edges[edgeIndex];
-							VectorSubtract(top, edge->origin, delta);
-							scale = DotProduct(delta, edge->axis[2]);
-							absScale = scale - 0.5;
-
-							if ( fabs(absScale) <= 0.5 )
-							{
-								length = VectorLengthSquared(edge->axis[2]);
-								scale = scale / length;
-								VectorMA(delta, -scale, edge->axis[2], delta);
-
-								if ( tw->radius * tw->radius > VectorLengthSquared(delta) )
-								{
-									trace->startsolid = 1;
-									trace->allsolid = 1;
-									trace->fraction = 0.0;
-									return;
-								}
-							}
-						}
-					}
-					else
-					{
-						vertexId = collTtris->verts[i];
-
-						if ( vertexId >= 0 )
-						{
-							vertex = cm.verts[vertexId];
-							VectorSubtract(top, vertex, delta);
-
-							if ( tw->radius * tw->radius > VectorLengthSquared(delta) )
-							{
-								trace->startsolid = 1;
-								trace->allsolid = 1;
-								trace->fraction = 0.0;
-								return;
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				trace->startsolid = 1;
-				trace->allsolid = 1;
-				trace->fraction = 0.0;
-			}
+			CM_TraceThroughAabbTree_r(tw, child, trace);
 		}
-		else
+
+		return;
+	}
+
+	partitionIndex = aabbTree->u.firstChildIndex;
+	checkcount = tw->threadInfo.checkcount;
+
+	if ( tw->threadInfo.partitions[partitionIndex] == checkcount )
+	{
+		return;
+	}
+
+	tw->threadInfo.partitions[partitionIndex] = checkcount;
+	partition = &cm.partitions[partitionIndex];
+
+	if ( tw->isPoint )
+	{
+		for ( i = 0; i < partition->triCount; i++ )
 		{
-			offsetPos = offsetZ + offsetZ;
-			distToEdge = offsetPos * collTtris->plane[2] + dist;
+			CM_TracePointThroughTriangle(tw, &partition->tris[i], trace);
+		}
 
-			if ( radiusNegU < distToEdge )
-			{
-				cutoffDist = (radiusNegU - dist) / collTtris->plane[2];
-				scaledDist2[1] = DotProduct(top, collTtris->svec) - collTtris->svec[3];
-				scaledDist2[0] = DotProduct(top, collTtris->tvec) - collTtris->tvec[3];
-				scaledDist[1] = cutoffDist * collTtris->svec[2] + scaledDist2[1];
+		return;
+	}
 
-				if ( scaledDist[1] < 0.0
-				        || (scaledDist[0] = cutoffDist * collTtris->tvec[2] + scaledDist2[0], scaledDist[0] < 0.0)
-				        || scaledDist[1] + scaledDist[0] > 1.0 )
-				{
-					if ( radius <= distToEdge )
-						cutoffDist = (radius - dist) / collTtris->plane[2];
-					else
-						cutoffDist = offsetZ + offsetZ;
+	for ( i = 0; i < partition->triCount; i++ )
+	{
+		tri = &partition->tris[i];
+		CM_TraceCapsuleThroughTriangle(tw, tri, tw->offsetZ, trace);
 
-					scaledDist[1] = cutoffDist * collTtris->svec[2] + scaledDist2[1];
+		if ( tri->plane[2] >= 0.0 )
+		{
+			continue;
+		}
 
-					if ( scaledDist[1] >= 0.0 )
-					{
-						scaledDist[0] = cutoffDist * collTtris->tvec[2] + scaledDist2[0];
+		CM_TraceCapsuleThroughTriangle(tw, tri, -tw->offsetZ, trace);
+	}
 
-						if ( scaledDist[0] >= 0.0 && scaledDist[1] + scaledDist[0] <= 1.0 )
-						{
-							trace->startsolid = 1;
-							trace->allsolid = 1;
-							trace->fraction = 0.0;
-						}
-					}
-				}
-				else
-				{
-					trace->startsolid = 1;
-					trace->allsolid = 1;
-					trace->fraction = 0.0;
-				}
-			}
+	if ( (tw->delta[0] || tw->delta[1] ) && tw->offsetZ != 0.0 )
+	{
+		for ( i = 0; i < partition->borderCount; i++ )
+		{
+			CM_TraceCapsuleThroughBorder(tw, &partition->borders[i], trace);
 		}
 	}
 }
 
-void CM_TraceCapsuleThroughBorder(traceWork_t *tw, CollisionBorder *border, trace_t *trace)
+/*
+==================
+CM_MeshTestInLeaf
+==================
+*/
+void CM_MeshTestInLeaf( traceWork_t *tw, cLeaf_t *leaf, trace_t *trace )
 {
-	float ePos;
-	float zStart;
-	float zPos;
-	float negDelta;
-	float negDot;
+	CollisionAabbTree_t *aabbTree;
+	dmaterial_t *materialInfo;
+	int k;
+
+	assert(!tw->isPoint);
+	assert(!trace->allsolid);
+
+	for ( k = 0; k < leaf->collAabbCount; k++ )
+	{
+		aabbTree = &cm.aabbTrees[k + leaf->firstCollAabbIndex];
+		materialInfo = &cm.materials[aabbTree->materialIndex];
+
+		if ( !(tw->contents & materialInfo->contentFlags) )
+		{
+			continue;
+		}
+
+		CM_PositionTestInAabbTree_r(tw, aabbTree, trace);
+
+		if ( trace->allsolid )
+		{
+			trace->surfaceFlags = materialInfo->surfaceFlags;
+			trace->contents = materialInfo->contentFlags;
+			trace->material = materialInfo;
+			return;
+		}
+	}
+}
+
+/*
+==================
+CM_TraceThroughAabbTree
+==================
+*/
+void CM_TraceThroughAabbTree( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace )
+{
+	dmaterial_t *materialInfo;
+	float oldFraction;
+
+	materialInfo = &cm.materials[aabbTree->materialIndex];
+
+	if ( !(tw->contents & materialInfo->contentFlags) )
+	{
+		return;
+	}
+
+	oldFraction = trace->fraction;
+	CM_TraceThroughAabbTree_r(tw, aabbTree, trace);
+
+	if ( oldFraction > trace->fraction )
+	{
+		trace->surfaceFlags = materialInfo->surfaceFlags;
+		trace->contents = materialInfo->contentFlags;
+		trace->material = materialInfo;
+	}
+}
+
+/*
+==================
+CM_SightTraceThroughAabbTree
+==================
+*/
+void CM_SightTraceThroughAabbTree( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace )
+{
+	if ( !(tw->contents & cm.materials[aabbTree->materialIndex].contentFlags) )
+	{
+		return;
+	}
+
+	CM_TraceThroughAabbTree(tw, aabbTree, trace);
+}
+
+/*
+==================
+CM_TracePointThroughTriangle
+==================
+*/
+void CM_TracePointThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, trace_t *trace )
+{
+	float negativeU;
+	float v;
+	vec3_t triNormalScaledByAreaX2;
+	float frac;
+	float projTriAreaScaledByTraceLenX2;
+	float t;
+
+	projTriAreaScaledByTraceLenX2 = DotProduct(tw->extents.end, tri->plane) - tri->plane[3];
+
+	if ( projTriAreaScaledByTraceLenX2 >= 0.0 )
+	{
+		return;
+	}
+
+	t = DotProduct(tw->extents.start, tri->plane) - tri->plane[3];
+
+	if ( t <= 0.0 )
+	{
+		return;
+	}
+
+	frac = (t - SURFACE_CLIP_EPSILON) / (t - projTriAreaScaledByTraceLenX2);
+	frac = I_fmax(frac, 0.0);
+
+	if ( frac >= trace->fraction )
+	{
+		return;
+	}
+
+	VectorMA(tw->extents.start, t / (t - projTriAreaScaledByTraceLenX2), tw->delta, triNormalScaledByAreaX2);
+	v = DotProduct(triNormalScaledByAreaX2, tri->svec) - tri->svec[3];
+
+	if ( v < -0.001 || v > 1.001 )
+	{
+		return;
+	}
+
+	negativeU = DotProduct(triNormalScaledByAreaX2, tri->tvec) - tri->tvec[3];
+
+	if ( negativeU < -0.001 || v + negativeU > 1.001 )
+	{
+		return;
+	}
+
+	trace->fraction = frac;
+	assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
+	VectorCopy(tri->plane, trace->normal);
+}
+
+/*
+==================
+CM_TraceCapsuleThroughBorder
+==================
+*/
+void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, trace_t *trace )
+{
 	vec3_t edgePoint;
 	float c;
 	float discriminant;
 	float offsetLenSq;
-	float deltaDotOffset;
-	vec3_t offset;
-	float zLen;
+	float b;
+	vec2_t offset;
 	vec3_t endpos;
-	float length;
+	float s;
 	float t;
+	float d;
 	float traceDeltaDot;
-	float tDot;
 	float radius;
 
 	traceDeltaDot = Dot2Product(tw->delta, border->distEq);
 
 	if ( traceDeltaDot >= 0.0 )
+	{
 		return;
+	}
 
-	radius = tw->radius + 0.125;
-	tDot = Dot2Product(tw->extents.start, border->distEq) - border->distEq[2];
-	t = (radius - tDot) / traceDeltaDot;
+	radius = tw->radius + SURFACE_CLIP_EPSILON;
+
+	d = Dot2Product(tw->extents.start, border->distEq) - border->distEq[2];
+	t = (radius - d) / traceDeltaDot;
 
 	if ( t >= trace->fraction || -radius > t * tw->deltaLen )
+	{
 		return;
+	}
 
 	VectorMA(tw->extents.start, t, tw->delta, endpos);
-	length = border->distEq[1] * endpos[0] - border->distEq[0] * endpos[1] - border->start;
+	s = border->distEq[1] * endpos[0] - border->distEq[0] * endpos[1] - border->start;
 
-	if ( length < 0.0 )
+	if ( s < 0.0 )
 	{
 		edgePoint[0] = border->distEq[1] * border->start + border->distEq[0] * border->distEq[2];
 		edgePoint[1] = border->distEq[1] * border->distEq[2] - border->distEq[0] * border->start;
 
 		Vector2Subtract(tw->extents.start, edgePoint, offset);
-		deltaDotOffset = Dot2Product(tw->delta, offset);
+		b = Dot2Product(tw->delta, offset);
 
-		if ( deltaDotOffset >= 0.0 )
+		if ( b >= 0.0 )
+		{
 			return;
+		}
 
 		offsetLenSq = Dot2Product(offset, offset);
-		c = offsetLenSq - radius * radius;
+		c = offsetLenSq - Square(radius);
 
 		if ( c < 0.0 )
 		{
 			edgePoint[2] = border->zBase;
-			ePos = edgePoint[2] - tw->extents.start[2];
 
-			if ( fabs(ePos) <= tw->offsetZ )
+			assert(tw->offsetZ == tw->size[2] - tw->radius);
+			assert(tw->offsetZ >= 0);
+
+			if ( fabs(edgePoint[2] - tw->extents.start[2]) <= tw->offsetZ )
 			{
 				VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
+				assert(Vec3IsNormalized( trace->normal ));
 				trace->fraction = 0.0;
 
-				if ( tw->radius * tw->radius > offsetLenSq )
-					trace->startsolid = 1;
+				if ( Square(tw->radius) > offsetLenSq )
+				{
+					trace->startsolid = qtrue;
+				}
 			}
+
 			return;
 		}
 
-		discriminant = deltaDotOffset * deltaDotOffset - tw->deltaLenSq * c;
+		discriminant = Square(b) - tw->deltaLenSq * c;
 
 		if ( discriminant < 0.0 )
+		{
 			return;
+		}
 
-		negDot = -deltaDotOffset;
-		t = (negDot - sqrt(discriminant)) / tw->deltaLenSq;
+		assert(tw->deltaLenSq > 0.0f);
+		t = (-b - sqrt(discriminant)) / tw->deltaLenSq;
 
 		if ( t >= trace->fraction || t <= 0.0 )
+		{
 			return;
+		}
 
 		VectorMA(tw->extents.start, t, tw->delta, endpos);
-		length = 0.0;
-		goto out;
-	}
+		s = 0.0;
 
-	if ( length <= border->length )
-	{
-		if ( t < 0.0 )
-			t = 0.0;
-out:
-		zLen = length * border->zSlope + border->zBase;
-		zPos = endpos[2] - zLen;
+		assert(tw->offsetZ == tw->size[2] - tw->radius);
+		assert(tw->offsetZ >= 0);
 
-		if ( fabs(zPos) <= tw->offsetZ )
+		if ( fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
 		{
 			trace->fraction = t;
+			assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
 			VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
+			assert(Vec3IsNormalized( trace->normal ));
+		}
+
+		return;
+	}
+
+	if ( s <= border->length )
+	{
+		if ( t < 0.0 )
+		{
+			t = 0.0;
+		}
+
+		if ( fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
+		{
+			trace->fraction = t;
+			assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
+			VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
+			assert(Vec3IsNormalized( trace->normal ));
 		}
 
 		return;
@@ -320,532 +492,567 @@ out:
 	edgePoint[1] = border->distEq[1] * border->distEq[2] - (border->start + border->length) * border->distEq[0];
 
 	Vector2Subtract(tw->extents.start, edgePoint, offset);
-	deltaDotOffset = Dot2Product(tw->delta, offset);
+	b = Dot2Product(tw->delta, offset);
 
-	if ( deltaDotOffset >= 0.0 )
+	if ( b >= 0.0 )
+	{
 		return;
+	}
 
 	offsetLenSq = Dot2Product(offset, offset);
-	c = offsetLenSq - radius * radius;
+	c = offsetLenSq - Square(radius);
 
 	if ( c >= 0.0 )
 	{
-		discriminant = deltaDotOffset * deltaDotOffset - tw->deltaLenSq * c;
+		discriminant = Square(b) - tw->deltaLenSq * c;
 
 		if ( discriminant < 0.0 )
+		{
 			return;
+		}
 
-		negDelta = -deltaDotOffset;
-		t = (negDelta - sqrt(discriminant)) / tw->deltaLenSq;
+		assert(tw->deltaLenSq > 0.0f);
+		t = (-b - sqrt(discriminant)) / tw->deltaLenSq;
 
 		if ( t >= trace->fraction || t <= 0.0 )
+		{
 			return;
+		}
 
 		VectorMA(tw->extents.start, t, tw->delta, endpos);
-		length = border->length;
-		goto out;
+		s = border->length;
+
+		assert(tw->offsetZ == tw->size[2] - tw->radius);
+		assert(tw->offsetZ >= 0);
+
+		if ( fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
+		{
+			trace->fraction = t;
+			assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
+			VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
+			assert(Vec3IsNormalized( trace->normal ));
+		}
+
+		return;
 	}
 
 	edgePoint[2] = border->zSlope * border->length + border->zBase;
-	zStart = tw->extents.start[2] - edgePoint[2];
 
-	if ( fabs(zStart) <= tw->offsetZ )
+	if ( fabs(tw->extents.start[2] - edgePoint[2]) <= tw->offsetZ )
 	{
 		VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
+		assert(Vec3IsNormalized( trace->normal ));
 		trace->fraction = 0.0;
 
-		if ( tw->radius * tw->radius > offsetLenSq )
-			trace->startsolid = 1;
-	}
-}
-
-void CM_TracePointThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, trace_t *trace)
-{
-	float dot2;
-	float dot2d2;
-	vec3_t v_start;
-	float scale;
-	float frac;
-	float dot;
-	float dot2d;
-
-	dot = DotProduct(tw->extents.end, tri->plane) - tri->plane[3];
-
-	if ( dot < 0.0 )
-	{
-		dot2d = DotProduct(tw->extents.start, tri->plane) - tri->plane[3];
-
-		if ( dot2d > 0.0 )
+		if ( Square(tw->radius) > offsetLenSq )
 		{
-			frac = (dot2d - 0.125) / (dot2d - dot);
-			frac = I_fmax(frac, 0.0);
-
-			if ( frac < trace->fraction )
-			{
-				scale = dot2d / (dot2d - dot);
-				VectorMA(tw->extents.start, scale, tw->delta, v_start);
-				dot2d2 = DotProduct(v_start, tri->svec) - tri->svec[3];
-
-				if ( dot2d2 >= -0.001 && dot2d2 <= 1.001 )
-				{
-					dot2 = DotProduct(v_start, tri->tvec) - tri->tvec[3];
-
-					if ( dot2 >= -0.001 && dot2d2 + dot2 <= 1.001 )
-					{
-						trace->fraction = frac;
-						VectorCopy(tri->plane, trace->normal);
-					}
-				}
-			}
+			trace->startsolid = qtrue;
 		}
 	}
 }
 
-void CM_TraceCapsuleThroughTriangle(traceWork_t *tw, CollisionTriangle_s *tri, float offsetZ, trace_t *trace)
+/*
+==================
+CM_TraceCapsuleThroughTriangle
+==================
+*/
+void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, float offsetZ, trace_t *trace )
 {
-	float dotLenSq;
-	float squaredDot;
-	float absDot;
-	float sphereScale;
-	float distScale;
-	int side4;
-	int side2;
-	float dist;
-	float tVecDot;
-	float sVecDot;
-	float areaX2;
-	float triNormalScaledByAreaX2;
-	vec3_t tracePlaneScaledNormal;
-	vec3_t start_v;
-	float *verts;
-	int vertId;
-	CollisionEdge_s *edge;
-	int edgeIndex;
-	float dot2Offset;
-	float dot3;
-	float len;
-	float dotLen;
-	vec2_t scaledDist;
-	float dot;
-	vec2_t scaledDist2;
-	vec3_t shiftedStart;
-	float dot2;
-	int side;
-	float tVecScale;
-	float fracScale;
+	float startDist;
+	float tScale;
+	float sScale;
+	float planeDist;
+	vec3_t endpos;
 	vec3_t sphereStart;
-	float frac;
-	float dot4;
-	float planeDot;
-	float offset;
-	float offsetNegU;
-	int i;
+	int vertId;
+	CollisionEdge_t *edge;
+	int edgeIndex;
+	float c;
+	float b;
+	float a;
+	float discriminant;
+	vec2_t offset;
+	vec2_t deltaOffset;
+	vec3_t hitDelta;
+	float offsetLenSq;
+	int vertToCheck;
+	float t;
+	float s;
+	float d;
+	vec3_t start;
+	float hitFrac;
+	float scaledPlaneDist;
+	float hitDist;
+	float radius;
+	float radiusNegU;
+	int checkIter;
 
-	VectorCopy(tw->extents.end, tracePlaneScaledNormal);
-	tracePlaneScaledNormal[2] = tracePlaneScaledNormal[2] - offsetZ;
-	offset = tw->radius + 0.125;
-	dot4 = DotProduct(tracePlaneScaledNormal, tri->plane) - tri->plane[3];
+	VectorCopy(tw->extents.end, endpos);
+	endpos[2] = endpos[2] - offsetZ;
 
-	if ( dot4 < offset )
+	radius = tw->radius + SURFACE_CLIP_EPSILON;
+	scaledPlaneDist = DotProduct(endpos, tri->plane) - tri->plane[3];
+
+	if ( scaledPlaneDist >= radius )
 	{
-		VectorCopy(tw->extents.start, start_v);
-		start_v[2] = start_v[2] - offsetZ;
-		planeDot = DotProduct(start_v, tri->plane) - tri->plane[3];
-		dist = planeDot - dot4;
+		return;
+	}
 
-		if ( dist > 0.000099999997 )
+	VectorCopy(tw->extents.start, sphereStart);
+	sphereStart[2] = sphereStart[2] - offsetZ;
+
+	hitDist = DotProduct(sphereStart, tri->plane) - tri->plane[3];
+	startDist = hitDist - scaledPlaneDist;
+
+	if ( startDist <= 0.000099999997 )
+	{
+		return;
+	}
+
+	radiusNegU = -radius;
+
+	if ( radiusNegU >= hitDist )
+	{
+		planeDist = (offsetZ + offsetZ) * tri->plane[2] + hitDist;
+
+		if ( radiusNegU >= planeDist )
 		{
-			offsetNegU = -offset;
+			return;
+		}
 
-			if ( -offset < planeDot )
+		hitFrac = (radiusNegU - hitDist) / tri->plane[2];
+
+		sScale = DotProduct(sphereStart, tri->svec) - tri->svec[3];
+		tScale = DotProduct(sphereStart, tri->tvec) - tri->tvec[3];
+
+		s = hitFrac * tri->svec[2] + sScale;
+
+		if ( s < 0.0 )
+		{
+			return;
+		}
+
+		t = hitFrac * tri->tvec[2] + tScale;
+
+		if ( t >= 0.0 && s + t <= 1.0 )
+		{
+			VectorCopy(tri->plane, trace->normal);
+			trace->fraction = 0.0;
+			trace->startsolid = qtrue;
+			return;
+		}
+
+		hitFrac = radius <= planeDist ? (radius - hitDist) / tri->plane[2] : offsetZ + offsetZ;
+		s = hitFrac * tri->svec[2] + sScale;
+
+		if ( s < 0.0 )
+		{
+			return;
+		}
+
+		t = hitFrac * tri->tvec[2] + tScale;
+
+		if ( t >= 0.0 && s + t <= 1.0 )
+		{
+			VectorCopy(tri->plane, trace->normal);
+			trace->fraction = 0.0;
+			trace->startsolid = qtrue;
+			return;
+		}
+
+		return;
+	}
+
+	if ( hitDist - radius <= 0.0 )
+	{
+		hitFrac = 0.0;
+		VectorCopy(sphereStart, start);
+	}
+	else
+	{
+		hitFrac = (hitDist - radius) / startDist;
+
+		if ( hitFrac > trace->fraction )
+		{
+			return;
+		}
+
+		VectorMA(sphereStart, hitFrac, tw->delta, start);
+	}
+
+	s = DotProduct(start, tri->svec) - tri->svec[3];
+	t = DotProduct(start, tri->tvec) - tri->tvec[3];
+
+	vertToCheck = s + t > 1.0;
+
+	if ( s < 0.0 )
+	{
+		vertToCheck |= 2;
+	}
+
+	if ( t < 0.0 )
+	{
+		vertToCheck |= 4;
+	}
+
+	if ( !vertToCheck )
+	{
+		VectorCopy(tri->plane, trace->normal);
+		trace->fraction = hitFrac;
+
+		if ( tw->radius > hitDist )
+		{
+			trace->startsolid = qtrue;
+		}
+
+		return;
+	}
+
+	for ( checkIter = 0; checkIter < 3; checkIter++ )
+	{
+		if ( ((vertToCheck >> checkIter) & 1) )
+		{
+			// checking edges
+			edgeIndex = tri->edges[checkIter];
+
+			if ( edgeIndex < 0 )
 			{
-				if ( planeDot - offset > 0.0 )
+				continue;
+			}
+
+			if ( tw->threadInfo.edges[edgeIndex] == tw->threadInfo.checkcount )
+			{
+				continue;
+			}
+
+			tw->threadInfo.edges[edgeIndex] = tw->threadInfo.checkcount;
+			edge = &cm.edges[edgeIndex];
+
+			VectorSubtract(sphereStart, edge->origin, hitDelta);
+
+			offset[0] = DotProduct(hitDelta, edge->axis[0]);
+			offset[1] = DotProduct(hitDelta, edge->axis[1]);
+
+			deltaOffset[0] = DotProduct(tw->delta, edge->axis[0]);
+			deltaOffset[1] = DotProduct(tw->delta, edge->axis[1]);
+
+			b = Dot2Product(deltaOffset, offset);
+
+			if ( b >= 0.0 )
+			{
+				continue;
+			}
+
+			offsetLenSq = Dot2Product(offset, offset);
+			c = offsetLenSq - Square(radius);
+
+			if ( c <= 0.0 )
+			{
+				d = DotProduct(hitDelta, edge->axis[2]);
+
+				if ( fabs(d - 0.5) > 0.5 )
 				{
-					frac = (planeDot - offset) / dist;
-
-					if ( frac > trace->fraction )
-						return;
-
-					VectorMA(start_v, frac, tw->delta, sphereStart);
-				}
-				else
-				{
-					frac = 0.0;
-					VectorCopy(start_v, sphereStart);
+					continue;
 				}
 
-				fracScale = DotProduct(sphereStart, tri->svec) - tri->svec[3];
-				tVecScale = DotProduct(sphereStart, tri->tvec) - tri->tvec[3];
-				side = fracScale + tVecScale > 1.0;
-				side2 = side;
+				VectorScale(edge->axis[0], offset[0], trace->normal);
+				VectorMA(trace->normal, offset[1], edge->axis[1], trace->normal);
+				Vec3Normalize(trace->normal);
 
-				if ( fracScale < 0.0 )
-					side2 = side | 2;
-
-				side = side2;
-				side4 = side2;
-
-				if ( tVecScale < 0.0 )
-					side4 = side2 | 4;
-
-				side = side4;
-
-				if ( side4 )
-				{
-					for ( i = 0; i < 3; ++i )
-					{
-						if ( ((side >> i) & 1) != 0 )
-						{
-							edgeIndex = tri->edges[i];
-
-							if ( edgeIndex >= 0 && tw->threadInfo.edges[edgeIndex] != tw->threadInfo.checkcount )
-							{
-								tw->threadInfo.edges[edgeIndex] = tw->threadInfo.checkcount;
-								edge = &cm.edges[edgeIndex];
-								VectorSubtract(start_v, edge->origin, shiftedStart);
-								scaledDist[0] = DotProduct(shiftedStart, edge->axis[0]);
-								scaledDist[1] = DotProduct(shiftedStart, edge->axis[1]);
-								scaledDist2[0] = DotProduct(tw->delta, edge->axis[0]);
-								scaledDist2[1] = DotProduct(tw->delta, edge->axis[1]);
-								dot3 = Dot2Product(scaledDist2, scaledDist);
-
-								if ( dot3 < 0.0 )
-								{
-									dot2 = Dot2Product(scaledDist, scaledDist);
-									dot2Offset = dot2 - offset * offset;
-
-									if ( dot2Offset > 0.0 )
-									{
-										len = Vec2Multiply(scaledDist2);
-										dotLen = dot3 * dot3 - len * dot2Offset;
-
-										if ( dotLen > 0.0 )
-										{
-											dotLenSq = sqrt(dotLen);
-											frac = (-dotLenSq - dot3) / len;
-
-											if ( trace->fraction > frac )
-											{
-												VectorMA(shiftedStart, frac, tw->delta, shiftedStart);
-												sphereStart[2] = DotProduct(shiftedStart, edge->axis[2]);
-												sphereScale = sphereStart[2] - 0.5;
-
-												if ( fabs(sphereScale) <= 0.5 )
-												{
-													sphereStart[0] = (frac * scaledDist2[0] + scaledDist[0]) / offset;
-													sphereStart[1] = (frac * scaledDist2[1] + scaledDist[1]) / offset;
-													VectorScale(edge->axis[0], sphereStart[0], trace->normal);
-													VectorMA(trace->normal, sphereStart[1], edge->axis[1], trace->normal);
-
-													if ( tri->plane[2] >= 0.69999999
-													        && trace->normal[2] >= 0.0
-													        && trace->normal[2] < 0.69999999
-													        && start_v[2] > tracePlaneScaledNormal[2] )
-													{
-														VectorCopy(tri->plane, trace->normal);
-													}
-
-													trace->fraction = frac;
-												}
-											}
-										}
-									}
-									else
-									{
-										dot = DotProduct(shiftedStart, edge->axis[2]);
-										absDot = dot - 0.5;
-
-										if ( fabs(absDot) <= 0.5 )
-										{
-											VectorScale(edge->axis[0], scaledDist[0], trace->normal);
-											VectorMA(trace->normal, scaledDist[1], edge->axis[1], trace->normal);
-											Vec3Normalize(trace->normal);
-
-											if ( tri->plane[2] >= 0.69999999
-											        && trace->normal[2] >= 0.0
-											        && trace->normal[2] < 0.69999999
-											        && start_v[2] > tracePlaneScaledNormal[2] )
-											{
-												VectorCopy(tri->plane, trace->normal);
-											}
-
-											trace->fraction = 0.0;
-
-											if ( tw->radius * tw->radius > dot2 )
-												trace->startsolid = 1;
-
-											return;
-										}
-									}
-								}
-							}
-						}
-						else
-						{
-							vertId = tri->verts[i];
-
-							if ( vertId >= 0 && tw->threadInfo.verts[vertId] != tw->threadInfo.checkcount )
-							{
-								tw->threadInfo.verts[vertId] = tw->threadInfo.checkcount;
-								verts = cm.verts[vertId];
-								VectorSubtract(start_v, verts, shiftedStart);
-								dot3 = DotProduct(tw->delta, shiftedStart);
-
-								if ( dot3 < 0.0 )
-								{
-									dot2 = DotProduct(shiftedStart, shiftedStart);
-									dot2Offset = dot2 - offset * offset;
-
-									if ( dot2Offset <= 0.0 )
-									{
-										frac = 1.0 / sqrt(dot2);
-										VectorScale(shiftedStart, frac, trace->normal);
-
-										if ( tri->plane[2] >= 0.69999999
-										        && trace->normal[2] >= 0.0
-										        && trace->normal[2] < 0.69999999
-										        && start_v[2] > tracePlaneScaledNormal[2] )
-										{
-											VectorCopy(tri->plane, trace->normal);
-										}
-
-										trace->fraction = 0.0;
-
-										if ( tw->radius * tw->radius > dot2 )
-											trace->startsolid = 1;
-
-										return;
-									}
-
-									len = tw->deltaLenSq;
-									dotLen = dot3 * dot3 - len * dot2Offset;
-
-									if ( dotLen >= 0.0 )
-									{
-										squaredDot = sqrt(dotLen);
-										frac = (-squaredDot - dot3) / len;
-
-										if ( trace->fraction > frac )
-										{
-											VectorMA(shiftedStart, frac, tw->delta, trace->normal);
-											distScale = 1.0 / offset;
-											VectorScale(trace->normal, distScale, trace->normal);
-
-											if ( tri->plane[2] >= 0.69999999
-											        && trace->normal[2] >= 0.0
-											        && trace->normal[2] < 0.69999999
-											        && start_v[2] > tracePlaneScaledNormal[2] )
-											{
-												VectorCopy(tri->plane, trace->normal);
-											}
-
-											trace->fraction = frac;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				else
+				if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
 				{
 					VectorCopy(tri->plane, trace->normal);
-					trace->fraction = frac;
-
-					if ( tw->radius > planeDot )
-						trace->startsolid = 1;
 				}
-			}
-			else
-			{
-				areaX2 = offsetZ + offsetZ;
-				triNormalScaledByAreaX2 = areaX2 * tri->plane[2] + planeDot;
 
-				if ( offsetNegU < triNormalScaledByAreaX2 )
+				trace->fraction = 0.0;
+
+				if ( Square(tw->radius) > offsetLenSq )
 				{
-					frac = (offsetNegU - planeDot) / tri->plane[2];
-					sVecDot = DotProduct(start_v, tri->svec) - tri->svec[3];
-					tVecDot = DotProduct(start_v, tri->tvec) - tri->tvec[3];
-					fracScale = frac * tri->svec[2] + sVecDot;
-
-					if ( fracScale >= 0.0 )
-					{
-						tVecScale = frac * tri->tvec[2] + tVecDot;
-
-						if ( tVecScale >= 0.0 && fracScale + tVecScale <= 1.0 )
-							goto out;
-					}
-
-					frac = offset <= triNormalScaledByAreaX2
-					       ? (offset - planeDot) / tri->plane[2]
-					       : offsetZ + offsetZ;
-
-					fracScale = frac * tri->svec[2] + sVecDot;
-
-					if ( fracScale >= 0.0 )
-					{
-						tVecScale = frac * tri->tvec[2] + tVecDot;
-
-						if ( tVecScale >= 0.0 && fracScale + tVecScale <= 1.0 )
-						{
-out:
-							VectorCopy(tri->plane, trace->normal);
-							trace->fraction = 0.0;
-							trace->startsolid = 1;
-						}
-					}
+					trace->startsolid = qtrue;
 				}
+
+				return;
 			}
-		}
-	}
-}
 
-void CM_PositionTestInAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace)
-{
-	int i;
-	signed short checkcount;
-	CollisionPartition *partition;
-	int index;
-	CollisionAabbTree_s *tree;
-	int count;
+			a = Vec2Multiply(deltaOffset);
+			discriminant = Square(b) - a * c;
 
-	if ( !CM_CullBox(tw, aabbTree->origin, aabbTree->halfSize) )
-	{
-		if ( aabbTree->childCount )
-		{
-			count = 0;
-			tree = &cm.aabbTrees[aabbTree->u.firstChildIndex];
-
-			while ( count < aabbTree->childCount )
+			if ( discriminant <= 0.0 )
 			{
-				CM_PositionTestInAabbTree_r(tw, tree, trace);
-				++count;
-				++tree;
+				continue;
 			}
+
+			hitFrac = (-sqrt(discriminant) - b) / a;
+
+			if ( trace->fraction <= hitFrac )
+			{
+				continue;
+			}
+
+			VectorMA(hitDelta, hitFrac, tw->delta, hitDelta);
+			start[2] = DotProduct(hitDelta, edge->axis[2]);
+
+			if ( fabs(start[2] - 0.5) > 0.5 )
+			{
+				continue;
+			}
+
+			start[0] = (hitFrac * deltaOffset[0] + offset[0]) / radius;
+			start[1] = (hitFrac * deltaOffset[1] + offset[1]) / radius;
+
+			VectorScale(edge->axis[0], start[0], trace->normal);
+			VectorMA(trace->normal, start[1], edge->axis[1], trace->normal);
+
+			if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+			{
+				VectorCopy(tri->plane, trace->normal);
+			}
+
+			trace->fraction = hitFrac;
 		}
 		else
 		{
-			index = aabbTree->u.firstChildIndex;
-			checkcount = tw->threadInfo.checkcount;
+			// checking verts
+			vertId = tri->verts[checkIter];
 
-			if ( tw->threadInfo.partitions[index] != checkcount )
+			if ( vertId < 0 )
 			{
-				tw->threadInfo.partitions[index] = checkcount;
-				partition = &cm.partitions[index];
-
-				for ( i = 0; i < partition->triCount; ++i )
-					CM_PositionTestCapsuleInTriangle(tw, &partition->tris[i], trace);
+				continue;
 			}
+
+			if ( tw->threadInfo.verts[vertId] == tw->threadInfo.checkcount )
+			{
+				continue;
+			}
+
+			tw->threadInfo.verts[vertId] = tw->threadInfo.checkcount;
+			VectorSubtract(sphereStart, cm.verts[vertId], hitDelta);
+			b = DotProduct(tw->delta, hitDelta);
+
+			if ( b >= 0.0 )
+			{
+				continue;
+			}
+
+			offsetLenSq = DotProduct(hitDelta, hitDelta);
+			c = offsetLenSq - Square(radius);
+
+			if ( c <= 0.0 )
+			{
+				hitFrac = 1.0 / sqrt(offsetLenSq);
+				VectorScale(hitDelta, hitFrac, trace->normal);
+
+				if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+				{
+					VectorCopy(tri->plane, trace->normal);
+				}
+
+				trace->fraction = 0.0;
+
+				if ( Square(tw->radius) > offsetLenSq )
+				{
+					trace->startsolid = qtrue;
+				}
+
+				return;
+			}
+
+			a = tw->deltaLenSq;
+			discriminant = Square(b) - a * c;
+
+			if ( discriminant < 0.0 )
+			{
+				continue;
+			}
+
+			hitFrac = (-sqrt(discriminant) - b) / a;
+
+			if ( trace->fraction <= hitFrac )
+			{
+				continue;
+			}
+
+			VectorMA(hitDelta, hitFrac, tw->delta, trace->normal);
+			VectorScale(trace->normal, 1.0 / radius, trace->normal);
+
+			if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+			{
+				VectorCopy(tri->plane, trace->normal);
+			}
+
+			trace->fraction = hitFrac;
 		}
 	}
 }
 
-void CM_MeshTestInLeaf(traceWork_t *tw, cLeaf_s *leaf, trace_t *trace)
+/*
+==================
+CM_PositionTestCapsuleInTriangle
+==================
+*/
+void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri, trace_t *trace )
 {
-	CollisionAabbTree_s *tree;
-	dmaterial_t *material;
-	int i;
+	float offsetZ;
+	float tScale;
+	float sScale;
+	float hitDist;
+	vec3_t sphereStart;
+	float planeDist;
+	float hitFrac;
+	float radius;
+	float radiusNegU;
+	int vertId;
+	CollisionEdge_t *edge;
+	int edgeIndex;
+	float d;
+	vec3_t hitDelta;
+	int vertToCheck;
+	float t;
+	float s;
+	vec3_t start;
+	int checkIter;
 
-	for ( i = 0; i < leaf->collAabbCount; ++i )
+	offsetZ = tw->offsetZ;
+
+	if ( tri->plane[2] < 0.0 )
 	{
-		tree = &cm.aabbTrees[i + leaf->firstCollAabbIndex];
-		material = &cm.materials[tree->materialIndex];
+		offsetZ = offsetZ * -1.0;
+	}
 
-		if ( (tw->contents & material->contentFlags) != 0 )
+	VectorCopy(tw->extents.start, sphereStart);
+	sphereStart[2] = sphereStart[2] - offsetZ;
+
+	radius = tw->radius;
+	hitDist = DotProduct(sphereStart, tri->plane) - tri->plane[3];
+
+	if ( hitDist >= radius )
+	{
+		return;
+	}
+
+	radiusNegU = -radius;
+
+	if ( radiusNegU >= hitDist )
+	{
+		planeDist = (offsetZ + offsetZ) * tri->plane[2] + hitDist;
+
+		if ( radiusNegU >= planeDist )
 		{
-			CM_PositionTestInAabbTree_r(tw, tree, trace);
+			return;
+		}
 
-			if ( trace->allsolid )
+		hitFrac = (radiusNegU - hitDist) / tri->plane[2];
+
+		sScale = DotProduct(sphereStart, tri->svec) - tri->svec[3];
+		tScale = DotProduct(sphereStart, tri->tvec) - tri->tvec[3];
+
+		s = hitFrac * tri->svec[2] + sScale;
+
+		if ( s < 0.0 || (t = hitFrac * tri->tvec[2] + tScale, t < 0.0) || s + t > 1.0 )
+		{
+			hitFrac = radius <= planeDist ? (radius - hitDist) / tri->plane[2] : offsetZ + offsetZ;
+			s = hitFrac * tri->svec[2] + sScale;
+
+			if ( s < 0.0 )
 			{
-				trace->surfaceFlags = material->surfaceFlags;
-				trace->contents = material->contentFlags;
-				trace->material = material;
+				return;
+			}
+
+			t = hitFrac * tri->tvec[2] + tScale;
+
+			if ( t >= 0.0 && s + t <= 1.0 )
+			{
+				trace->startsolid = qtrue;
+				trace->allsolid = qtrue;
+				trace->fraction = 0.0;
 				return;
 			}
 		}
-	}
-}
-
-void CM_TraceThroughAabbTree_r(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace)
-{
-	CollisionTriangle_s *collTri;
-	int i;
-	int j;
-	int k;
-	signed short checkcount;
-	CollisionPartition *partition;
-	int treeIndex;
-	CollisionAabbTree_s *tree;
-	int count;
-
-	if ( !CM_CullBox(tw, aabbTree->origin, aabbTree->halfSize) )
-	{
-		if ( aabbTree->childCount )
+		else
 		{
-			count = 0;
-			tree = &cm.aabbTrees[aabbTree->u.firstChildIndex];
+			trace->startsolid = qtrue;
+			trace->allsolid = qtrue;
+			trace->fraction = 0.0;
+		}
 
-			while ( count < aabbTree->childCount )
+		return;
+	}
+
+	VectorMA(sphereStart, -hitDist, tri->plane, start);
+
+	s = DotProduct(start, tri->svec) - tri->svec[3];
+	t = DotProduct(start, tri->tvec) - tri->tvec[3];
+
+	vertToCheck = s + t > 1.0;
+
+	if ( s < 0.0 )
+	{
+		vertToCheck |= 2;
+	}
+
+	if ( t < 0.0 )
+	{
+		vertToCheck |= 4;
+	}
+
+	if ( !vertToCheck )
+	{
+		trace->startsolid = qtrue;
+		trace->allsolid = qtrue;
+		trace->fraction = 0.0;
+		return;
+	}
+
+	for ( checkIter = 0; checkIter < 3; checkIter++ )
+	{
+		if ( ((vertToCheck >> checkIter) & 1) )
+		{
+			edgeIndex = tri->edges[checkIter];
+
+			if ( edgeIndex < 0 )
 			{
-				CM_TraceThroughAabbTree_r(tw, tree, trace);
-				++count;
-				++tree;
+				continue;
+			}
+
+			edge = &cm.edges[edgeIndex];
+
+			VectorSubtract(sphereStart, edge->origin, hitDelta);
+			d = DotProduct(hitDelta, edge->axis[2]);
+
+			if ( fabs(d - 0.5) > 0.5 )
+			{
+				continue;
+			}
+
+			d = d / VectorLengthSquared(edge->axis[2]);
+			VectorMA(hitDelta, -d, edge->axis[2], hitDelta);
+
+			if ( Square(tw->radius) > VectorLengthSquared(hitDelta) )
+			{
+				trace->startsolid = qtrue;
+				trace->allsolid = qtrue;
+				trace->fraction = 0.0;
+				return;
 			}
 		}
 		else
 		{
-			treeIndex = aabbTree->u.firstChildIndex;
-			checkcount = tw->threadInfo.checkcount;
+			vertId = tri->verts[checkIter];
 
-			if ( tw->threadInfo.partitions[treeIndex] != checkcount )
+			if ( vertId < 0 )
 			{
-				tw->threadInfo.partitions[treeIndex] = checkcount;
-				partition = &cm.partitions[treeIndex];
-
-				if ( tw->isPoint )
-				{
-					for ( i = 0; i < partition->triCount; ++i )
-						CM_TracePointThroughTriangle(tw, &partition->tris[i], trace);
-				}
-				else
-				{
-					for ( j = 0; j < partition->triCount; ++j )
-					{
-						collTri = &partition->tris[j];
-						CM_TraceCapsuleThroughTriangle(tw, collTri, tw->offsetZ, trace);
-
-						if ( collTri->plane[2] < 0.0 )
-							CM_TraceCapsuleThroughTriangle(tw, collTri, -tw->offsetZ, trace);
-					}
-
-					if ( (tw->delta[0] != 0.0 || tw->delta[1] != 0.0) && tw->offsetZ != 0.0 )
-					{
-						for ( k = 0; k < partition->borderCount; ++k )
-							CM_TraceCapsuleThroughBorder(tw, &partition->borders[k], trace);
-					}
-				}
+				continue;
 			}
-		}
-	}
-}
 
-void CM_TraceThroughAabbTree(traceWork_t *tw, CollisionAabbTree_s *aabbTree, trace_t *trace)
-{
-	dmaterial_t *material;
-	float fraction;
+			VectorSubtract(sphereStart, cm.verts[vertId], hitDelta);
 
-	material = &cm.materials[aabbTree->materialIndex];
-
-	if ( (tw->contents & material->contentFlags) != 0 )
-	{
-		fraction = trace->fraction;
-		CM_TraceThroughAabbTree_r(tw, aabbTree, trace);
-
-		if ( fraction > trace->fraction )
-		{
-			trace->surfaceFlags = material->surfaceFlags;
-			trace->contents = material->contentFlags;
-			trace->material = material;
+			if ( Square(tw->radius) > VectorLengthSquared(hitDelta) )
+			{
+				trace->startsolid = qtrue;
+				trace->allsolid = qtrue;
+				trace->fraction = 0.0;
+				return;
+			}
 		}
 	}
 }

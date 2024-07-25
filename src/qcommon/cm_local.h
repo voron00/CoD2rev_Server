@@ -222,8 +222,8 @@ typedef struct CollisionTriangle_s
 	vec4_t plane;
 	vec4_t svec;
 	vec4_t tvec;
-	int verts[3];
-	int edges[3];
+	int32_t verts[3];
+	int32_t edges[3];
 } CollisionTriangle_t;
 #if defined(__i386__)
 static_assert((sizeof(CollisionTriangle_t) == 72), "ERROR: CollisionTriangle_t size is invalid!");
@@ -304,9 +304,9 @@ static_assert((sizeof(clipMap_t) == 284), "ERROR: clipMap_t size is invalid!"); 
 typedef struct TraceThreadInfo
 {
 	int checkcount;
-	int *edges;
-	int *verts;
-	unsigned short *partitions;
+	int32_t *edges;
+	int32_t *verts;
+	uint16_t *partitions;
 	cbrush_t *box_brush;
 	cmodel_t *box_model;
 } TraceThreadInfo;

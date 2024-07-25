@@ -1375,8 +1375,8 @@ void CM_ClearWorld()
 
 	Vector2Subtract(cm_world.maxs, cm_world.mins, bounds);
 
-	cm_world.sectors[1].tree.axis = bounds[1] >= bounds[0];
-	cm_world.sectors[1].tree.dist = (cm_world.maxs[bounds[1] >= bounds[0]] + cm_world.mins[bounds[1] >= bounds[0]]) * 0.5;
+	cm_world.sectors[SECTOR_HEAD].tree.axis = bounds[1] >= bounds[0];
+	cm_world.sectors[SECTOR_HEAD].tree.dist = (cm_world.maxs[bounds[1] >= bounds[0]] + cm_world.mins[bounds[1] >= bounds[0]]) * 0.5;
 
 	assert(!cm_world.sectors[SECTOR_HEAD].tree.child[0]);
 	assert(!cm_world.sectors[SECTOR_HEAD].tree.child[1]);

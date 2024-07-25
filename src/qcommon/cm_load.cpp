@@ -75,6 +75,16 @@ void* CM_Hunk_AllocateTempMemoryHigh( int size )
 
 /*
 ===================
+CM_NumInlineModels
+===================
+*/
+int CM_NumInlineModels( void )
+{
+	return cm.numSubModels;
+}
+
+/*
+===================
 CM_EntityString
 ===================
 */
@@ -96,14 +106,14 @@ void CM_InitThreadData( int threadContext )
 
 	tti->checkcount = 0;
 
-	tti->partitions = (uint16_t *)Hunk_Alloc(sizeof(uint16_t) * cm.partitionCount);
-	tti->edges = (int32_t *)Hunk_Alloc(sizeof(int32_t) * cm.edgeCount);
-	tti->verts = (int32_t *)Hunk_Alloc(sizeof(int32_t) * cm.vertCount);
+	tti->partitions = (uint16_t *)Hunk_Alloc( cm.partitionCount * sizeof( *tti->partitions ) );
+	tti->edges = (int32_t *)Hunk_Alloc( cm.edgeCount * sizeof( *tti->edges ) );
+	tti->verts = (int32_t *)Hunk_Alloc( cm.vertCount * sizeof( *tti->verts ) );
 
-	tti->box_brush = (cbrush_t *)Hunk_Alloc(sizeof(cbrush_t));
+	tti->box_brush = (cbrush_t *)Hunk_Alloc( sizeof( *tti->box_brush ) );
 	tti->box_brush = cm.box_brush;
 
-	tti->box_model = (cmodel_t *)Hunk_Alloc(sizeof(cmodel_t));
+	tti->box_model = (cmodel_t *)Hunk_Alloc( sizeof( *tti->box_model ) );
 	tti->box_model = &cm.box_model;
 }
 
@@ -119,10 +129,10 @@ void CM_InitAllThreadData()
 
 /*
 ===================
-CM_LoadMapData
+CM_LoadMapInternal
 ===================
 */
-void CM_LoadMapData( const char *name )
+void CM_LoadMapInternal( const char *name )
 {
 	CM_LoadMapFromBsp(name, true);
 	CM_LoadStaticModels();
@@ -142,7 +152,7 @@ void CM_LoadMap( const char *name, int *checksum )
 
 	if ( !cm.name || strcasecmp(cm.name, name) )
 	{
-		CM_LoadMapData(name);
+		CM_LoadMapInternal(name);
 		CM_InitAllThreadData();
 	}
 
@@ -156,7 +166,7 @@ CM_Shutdown
 */
 void CM_Shutdown()
 {
-	Com_Memset(&cm, 0, sizeof(clipMap_t));
+	Com_Memset(&cm, 0, sizeof(cm));
 }
 
 /*

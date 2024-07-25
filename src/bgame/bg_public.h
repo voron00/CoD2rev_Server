@@ -1149,7 +1149,7 @@ enum hitLocation_t
 struct pmoveHandler_t
 {
 	void (*trace)(trace_t *, const float *, const float *, const float *, const float *, int, int);
-	int (*isEntWalkable)(const float *, int, int);
+	int  (*pointcontents)(const float *, int, int);
 	void (*playerEvent)(int, int);
 };
 

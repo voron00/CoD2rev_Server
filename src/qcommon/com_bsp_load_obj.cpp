@@ -119,7 +119,7 @@ void Com_LoadBsp(const char *filename)
 	bytesRead = FS_Read(comBspGlob.header, comBspGlob.fileSize, h);
 	FS_FCloseFile(h);
 
-	if ( bytesRead != comBspGlob.fileSize || comBspGlob.fileSize < 320 )
+	if ( bytesRead != comBspGlob.fileSize || comBspGlob.fileSize < sizeof(*comBspGlob.header) )
 	{
 		Z_Free(comBspGlob.header);
 		Com_Error(ERR_DROP, "EXE_ERR_COULDNT_LOAD\x15%s", filename);

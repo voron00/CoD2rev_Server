@@ -697,8 +697,8 @@ static void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, c
 
 	for ( j = 0; j < 3; j++ )
 	{
-		leaf->mins[j] = leaf->mins[j] - 0.125;
-		leaf->maxs[j] = leaf->maxs[j] + 0.125;
+		leaf->mins[j] = leaf->mins[j] - SURFACE_CLIP_EPSILON;
+		leaf->maxs[j] = leaf->maxs[j] + SURFACE_CLIP_EPSILON;
 	}
 
 	CM_Hunk_CheckTempMemoryHighClear();

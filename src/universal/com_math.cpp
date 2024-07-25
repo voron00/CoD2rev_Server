@@ -1314,3 +1314,21 @@ float Vec2Distance(const vec2_t v1, const vec2_t v2)
 {
 	return sqrt(Square(v2[0] - v1[0]) + Square(v2[1] - v1[1]));
 }
+
+bool Vec3IsNormalized(const vec3_t v)
+{
+	if(fabs(VectorLengthSquared(v) - 1.0) < 0.0020000001)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool Vec4IsNormalized(const vec4_t v)
+{
+	if(fabs(Vec4LengthSq(v) - 1.0) < 0.0020000001)
+	{
+		return true;
+	}
+	return false;
+}

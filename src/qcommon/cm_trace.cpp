@@ -425,7 +425,7 @@ qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart,
 
 	VectorSubtract(vStart, vStationary, vDelta);
 
-	fC = DotProduct(vDelta, vDelta) - (radius + tw->radius) * (radius + tw->radius);
+	fC = DotProduct(vDelta, vDelta) - Square(radius + tw->radius);
 
 	if ( fC <= 0 )
 	{
@@ -441,7 +441,7 @@ qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart,
 
 	fA = tw->deltaLenSq;
 
-	fDiscriminant = fB * fB - fA * fC;
+	fDiscriminant = Square(fB) - fA * fC;
 
 	if ( fDiscriminant < 0 )
 	{
@@ -519,7 +519,7 @@ qboolean CM_TraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, cons
 
 	fA = tw->deltaLenSq;
 	assert(fA > 0.0f);
-	fDiscriminant = fB * fB - fA * fC;
+	fDiscriminant = Square(fB) - fA * fC;
 
 	if ( fDiscriminant < 0 )
 	{
@@ -580,7 +580,7 @@ qboolean CM_SightTraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vSt
 	}
 
 	fA = tw->deltaLenSq;
-	fDiscriminant = fB * fB - fA * fC;
+	fDiscriminant = Square(fB) - fA * fC;
 
 	if ( fDiscriminant < 0 )
 	{
@@ -813,7 +813,7 @@ qboolean CM_TraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vStation
 
 	fA = Dot2Product(tw->delta, tw->delta);
 	assert(fA > 0.0f);
-	fDiscriminant = fB * fB - fA * fC;
+	fDiscriminant = Square(fB) - fA * fC;
 
 	if ( fDiscriminant < 0 )
 	{
@@ -1375,9 +1375,38 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 
 		if ( remoteNode->leafBrushCount )
 		{
-			break;
+			if ( remoteNode->leafBrushCount > 0 )
+			{
+				// trace line against all brushes in the leaf
+				for ( i = 0; i < remoteNode->leafBrushCount; i++ )
+				{
+					brushnum = remoteNode->data.leaf.brushes[i];
+					brush = &cm.brushes[brushnum];
+
+					if ( !(brush->contents & tw->contents) )
+					{
+						continue;
+					}
+
+					hitNum = CM_SightTraceThroughBrush(tw, brush);
+
+					if ( hitNum )
+					{
+						return hitNum;
+					}
+				}
+
+				return 0;
+			}
+
+			hitNum = CM_SightTraceThroughLeafBrushNode_r(tw, remoteNode + 1, p1, p2);
+
+			if ( hitNum )
+			{
+				return hitNum;
+			}
 		}
-LABEL_15:
+
 		t1 = p1[remoteNode->axis] - remoteNode->data.children.dist;
 		t2 = p2[remoteNode->axis] - remoteNode->data.children.dist;
 
@@ -1452,36 +1481,6 @@ LABEL_15:
 
 		remoteNode += remoteNode->data.children.childOffset[1 - side];
 	}
-
-	if ( remoteNode->leafBrushCount <= 0 )
-	{
-		hitNum = CM_SightTraceThroughLeafBrushNode_r(tw, remoteNode + 1, p1, p2);
-
-		if ( hitNum )
-		{
-			return hitNum;
-		}
-
-		goto LABEL_15;
-	}
-
-	for ( i = 0; i < remoteNode->leafBrushCount; i++ )
-	{
-		brushnum = remoteNode->data.leaf.brushes[i];
-		brush = &cm.brushes[brushnum];
-
-		if ( (brush->contents & tw->contents) )
-		{
-			hitNum = CM_SightTraceThroughBrush(tw, brush);
-
-			if ( hitNum )
-			{
-				return hitNum;
-			}
-		}
-	}
-
-	return 0;
 }
 
 /*
@@ -1626,7 +1625,7 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 	{
 		if ( !(node->contents & tw->contents) )
 		{
-			break;
+			return;
 		}
 
 		if ( node->leafBrushCount )
