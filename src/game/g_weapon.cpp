@@ -146,7 +146,7 @@ int G_GivePlayerWeapon(playerState_s *ps, int weapon)
 	WeaponDef *weaponDef;
 	WeaponDef *altWeaponDef;
 
-	if ( COM_BitTest(ps->weapons, weapon) )
+	if ( Com_BitCheck(ps->weapons, weapon) )
 		return 0;
 
 	altWeaponDef = BG_GetWeaponDef(weapon);
@@ -157,8 +157,8 @@ int G_GivePlayerWeapon(playerState_s *ps, int weapon)
 	if ( altWeaponDef->weaponClass == WEAPCLASS_NON_PLAYER )
 		return 0;
 
-	COM_BitSet(ps->weapons, weapon);
-	COM_BitClear(ps->weaponrechamber, weapon);
+	Com_BitSet(ps->weapons, weapon);
+	Com_BitClear(ps->weaponrechamber, weapon);
 
 	if ( altWeaponDef->weaponClass == WEAPCLASS_ITEM )
 		return 1;
@@ -203,11 +203,11 @@ int G_GivePlayerWeapon(playerState_s *ps, int weapon)
 			}
 		}
 		for ( altWeapon = altWeaponDef->altWeaponIndex;
-		        altWeapon && !COM_BitTest(ps->weapons, altWeapon);
+		        altWeapon && !Com_BitCheck(ps->weapons, altWeapon);
 		        altWeapon = BG_GetWeaponDef(altWeapon)->altWeaponIndex )
 		{
-			COM_BitSet(ps->weapons, altWeapon);
-			COM_BitClear(ps->weaponrechamber, weapon);
+			Com_BitSet(ps->weapons, altWeapon);
+			Com_BitClear(ps->weaponrechamber, weapon);
 		}
 
 		return 1;

@@ -21,7 +21,7 @@ bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex)
 
 	valid = BG_ValidateWeaponNumber(weaponIndex);
 
-	if ( !COM_BitTest(ps->weapons, weaponIndex) )
+	if ( !Com_BitCheck(ps->weapons, weaponIndex) )
 		return false;
 
 	WeaponDef = BG_GetWeaponDef(weaponIndex);
@@ -152,7 +152,7 @@ int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex)
 	WeaponDef *weaponDef;
 	int weapon;
 
-	if ( !COM_BitTest(ps->weapons, weaponIndex) )
+	if ( !Com_BitCheck(ps->weapons, weaponIndex) )
 		return 0;
 
 	weapon = weaponIndex;
@@ -186,7 +186,7 @@ int BG_GetFirstAvailableOffhand(playerState_s *ps, int offhandSlot)
 
 	for ( slot = 1; slot <= weapIndex; ++slot )
 	{
-		if ( BG_GetWeaponDef(slot)->offhandClass == offhandSlot && COM_BitTest(ps->weapons, slot) && BG_WeaponAmmo(ps, slot) )
+		if ( BG_GetWeaponDef(slot)->offhandClass == offhandSlot && Com_BitCheck(ps->weapons, slot) && BG_WeaponAmmo(ps, slot) )
 			return slot;
 	}
 
@@ -195,7 +195,7 @@ int BG_GetFirstAvailableOffhand(playerState_s *ps, int offhandSlot)
 
 int BG_IsAltSwitch(playerState_s *ps, unsigned int lastWeapon, unsigned int weapon)
 {
-	if ( !COM_BitTest(ps->weapons, weapon) )
+	if ( !Com_BitCheck(ps->weapons, weapon) )
 		return 0;
 
 	if ( (unsigned int)(BG_GetWeaponDef(weapon)->weaponSlot - 1) > 1 )
@@ -1000,7 +1000,7 @@ void PM_Weapon_CheckForOffHand(pmove_t *pm)
 	        && (ps->weaponstate <= WEAPON_OFFHAND_END || ps->weaponstate > WEAPON_BINOCULARS_END)
 	        && (ps->weaponstate <= WEAPON_MELEE_FIRE || ps->weaponstate >= WEAPON_OFFHAND_END) )
 	{
-		if ( COM_BitTest(ps->weapons, pm->cmd.offHandIndex) )
+		if ( Com_BitCheck(ps->weapons, pm->cmd.offHandIndex) )
 			ps->offHandIndex = pm->cmd.offHandIndex;
 
 		if ( (pm->cmd.buttons & 0x10000) != 0 )
@@ -1049,12 +1049,12 @@ void PM_BeginWeaponChange(playerState_s *pm, unsigned int newweapon)
 	WeaponDef *weaponDef;
 	int onlyClip;
 
-	if ( (!newweapon || COM_BitTest(pm->weapons, newweapon)) && pm->weaponstate != WEAPON_DROPPING )
+	if ( (!newweapon || Com_BitCheck(pm->weapons, newweapon)) && pm->weaponstate != WEAPON_DROPPING )
 	{
 		pm->weaponDelay = 0;
 		weaponIndex = pm->weapon;
 
-		if ( weaponIndex && COM_BitTest(pm->weapons, weaponIndex) && pm->grenadeTimeLeft <= 0 )
+		if ( weaponIndex && Com_BitCheck(pm->weapons, weaponIndex) && pm->grenadeTimeLeft <= 0 )
 		{
 			weaponDef = BG_GetWeaponDef(weaponIndex);
 			altWeapon = 0;
@@ -1163,7 +1163,7 @@ changeWeapon:
 			return;
 		}
 
-		if ( ps->weapon && !COM_BitTest(ps->weapons, ps->weapon) )
+		if ( ps->weapon && !Com_BitCheck(ps->weapons, ps->weapon) )
 			goto changeWeapon;
 	}
 }
@@ -1200,7 +1200,7 @@ void PM_SetWeaponReloadAddAmmoDelay(playerState_s *ps)
 			iReloadAddTime = weaponDef->reloadAddTime;
 	}
 
-	if ( weaponDef->boltAction && COM_BitTest(ps->weaponrechamber, ps->weapon) )
+	if ( weaponDef->boltAction && Com_BitCheck(ps->weaponrechamber, ps->weapon) )
 	{
 		if ( !iReloadAddTime )
 			iReloadAddTime = ps->weaponTime;
@@ -1455,13 +1455,13 @@ int PM_Weapon_CheckForRechamber(playerState_s *ps, int delayedAction)
 
 	if ( ps->weaponstate <= WEAPON_MELEE_FIRE || ps->weaponstate > WEAPON_OFFHAND_END )
 	{
-		if ( weaponDef->boltAction && COM_BitTest(ps->weaponrechamber, ps->weapon) )
+		if ( weaponDef->boltAction && Com_BitCheck(ps->weaponrechamber, ps->weapon) )
 		{
 			if ( ps->weaponstate == WEAPON_RECHAMBERING )
 			{
 				if ( delayedAction )
 				{
-					COM_BitClear(ps->weaponrechamber, ps->weapon);
+					Com_BitClear(ps->weaponrechamber, ps->weapon);
 					PM_AddEvent(ps, EV_EJECT_BRASS);
 
 					if ( ps->weaponTime )
@@ -1526,12 +1526,12 @@ void PM_Weapon_FinishWeaponChange(pmove_t *pm)
 
 	if ( Mantle_IsWeaponInactive(ps)
 	        || (ps->pm_flags & 0x20) != 0
-	        || !COM_BitTest(ps->weapons, pm->cmd.weapon)
+	        || !Com_BitCheck(ps->weapons, pm->cmd.weapon)
 	        || (ps->pm_flags & 0x4000000) != 0
-	        || !COM_BitTest(ps->weapons, pm->cmd.weapon) )
+	        || !Com_BitCheck(ps->weapons, pm->cmd.weapon) )
 	{
 		weapon = 0;
-		exist = COM_BitTest(ps->weapons, 0);
+		exist = Com_BitCheck(ps->weapons, 0);
 	}
 	else
 	{
@@ -1540,7 +1540,7 @@ void PM_Weapon_FinishWeaponChange(pmove_t *pm)
 		if ( weapon > BG_GetNumWeapons() )
 			weapon = 0;
 
-		exist = COM_BitTest(ps->weapons, weapon);
+		exist = Com_BitCheck(ps->weapons, weapon);
 	}
 
 	if ( !exist )
@@ -1655,14 +1655,14 @@ void PM_Weapon_ReloadDelayedAction(playerState_s *ps)
 
 	weaponDef = BG_GetWeaponDef(ps->weapon);
 
-	if ( !weaponDef->boltAction || !COM_BitTest(ps->weaponrechamber, ps->weapon) )
+	if ( !weaponDef->boltAction || !Com_BitCheck(ps->weaponrechamber, ps->weapon) )
 	{
 reload_clip:
 		PM_ReloadClip(ps);
 		return;
 	}
 
-	COM_BitClear(ps->weaponrechamber, ps->weapon);
+	Com_BitClear(ps->weaponrechamber, ps->weapon);
 	PM_AddEvent(ps, EV_EJECT_BRASS);
 
 	if ( ps->weaponstate != WEAPON_RELOAD_START && ps->weaponstate != WEAPON_RELOAD_START_INTERUPT
@@ -1710,7 +1710,7 @@ void PM_Weapon_FinishReload(playerState_s *ps, int delayedAction)
 	{
 		if ( !ps->weaponTime )
 		{
-			COM_BitClear(ps->weaponrechamber, ps->weapon);
+			Com_BitClear(ps->weaponrechamber, ps->weapon);
 
 			if ( !weaponDef->segmentedReload )
 				goto ready;
@@ -1752,7 +1752,7 @@ void PM_Weapon_FinishReloadStart(playerState_s *ps, int delayedAction)
 		if ( ps->weaponstate == WEAPON_RELOAD_START_INTERUPT && ps->ammoclip[BG_ClipForWeapon(ps->weapon)]
 		        || !PM_Weapon_AllowReload(ps) )
 		{
-			COM_BitClear(ps->weaponrechamber, ps->weapon);
+			Com_BitClear(ps->weaponrechamber, ps->weapon);
 
 			if ( weaponDef->reloadEndTime )
 			{
@@ -1999,7 +1999,7 @@ int PM_Weapon_CheckFiringAmmo(playerState_s *ps)
 	}
 	else
 	{
-		COM_BitClear(ps->weaponrechamber, ps->weapon);
+		Com_BitClear(ps->weaponrechamber, ps->weapon);
 		PM_ContinueWeaponAnim(ps, WEAP_IDLE);
 		ps->weaponTime += 500;
 	}
@@ -2055,7 +2055,7 @@ int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex)
 	int index;
 	int altIndex;
 
-	if ( !COM_BitTest(ps->weapons, weaponIndex) )
+	if ( !Com_BitCheck(ps->weapons, weaponIndex) )
 		return 0;
 
 	weaponDef = BG_GetWeaponDef(weaponIndex);
@@ -2071,7 +2071,7 @@ int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex)
 
 				if ( altWeaponDef->slotStackable
 				        && altWeaponDef->weaponSlot == weaponDef->weaponSlot
-				        && COM_BitTest(ps->weapons, index)
+				        && Com_BitCheck(ps->weapons, index)
 				        && !BG_PlayerHasWeapon(ps, index, 1) )
 				{
 					ps->weaponslots[slot] = index;
@@ -2088,13 +2088,13 @@ int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex)
 		}
 	}
 
-	COM_BitClear(ps->weapons, weaponIndex);
+	Com_BitClear(ps->weapons, weaponIndex);
 
 	for ( altIndex = weaponDef->altWeaponIndex;
-	        altIndex && COM_BitTest(ps->weapons, altIndex);
+	        altIndex && Com_BitCheck(ps->weapons, altIndex);
 	        altIndex = BG_GetWeaponDef(altIndex)->altWeaponIndex )
 	{
-		COM_BitClear(ps->weapons, altIndex);
+		Com_BitClear(ps->weapons, altIndex);
 	}
 
 	if ( weaponIndex == ps->weapon )
@@ -2145,7 +2145,7 @@ void PM_Weapon_StartFiring(playerState_s *ps, int delayedAction)
 		BG_AnimScriptEvent(ps, ANIM_ET_FIREWEAPON, 0, 1);
 
 		if ( weaponDef->boltAction )
-			COM_BitSet(ps->weaponrechamber, ps->weapon);
+			Com_BitSet(ps->weaponrechamber, ps->weapon);
 
 		if ( ps->weaponstate != WEAPON_FIRING )
 		{

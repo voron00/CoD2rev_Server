@@ -264,7 +264,7 @@ int Player_GetItemCursorHint(gclient_s *client, gentity_s *traceEnt)
 
 	if ( item->giType == IT_WEAPON
 	        && BG_GetWeaponDef(item->giTag)->weaponType != WEAPTYPE_GRENADE
-	        && !COM_BitTest(client->ps.weapons, item->giTag) )
+	        && !Com_BitCheck(client->ps.weapons, item->giTag) )
 	{
 		return item->giTag + 4;
 	}

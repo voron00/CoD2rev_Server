@@ -1299,12 +1299,6 @@ void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3)
 	v3[2] = AngleNormalize180(v1[2] - v2[2]);
 }
 
-void I_sinCos(float value, float *pSin, float *pCos)
-{
-	*pSin = sin(value);
-	*pCos = cos(value);
-}
-
 float Vec2DistanceSq(const vec2_t v1, const vec2_t v2)
 {
 	return Square(v2[0] - v1[0]) + Square(v2[1] - v1[1]);

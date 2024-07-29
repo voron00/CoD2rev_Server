@@ -589,7 +589,7 @@ void Scr_LoadAnimTreeAtIndex(unsigned int index, void *(*Alloc)(int), int user)
 	}
 }
 
-void Scr_FindAnimTreeInternal(scr_animtree_t *pTree, const char *filename)
+void Scr_FindAnimTree(scr_animtree_t *pTree, const char *filename)
 {
 	VariableValue tempValue;
 	unsigned int index;

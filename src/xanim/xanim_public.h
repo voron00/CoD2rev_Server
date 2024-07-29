@@ -351,6 +351,8 @@ struct DObjModel_s
 	qboolean ignoreCollision;
 };
 
+#define DOBJ_MAX_SUBMODELS 8
+
 typedef struct DObj_s
 {
 	XAnimTree_s *tree;
@@ -362,7 +364,7 @@ typedef struct DObj_s
 	byte numModels;
 	byte numBones;
 	byte ignoreCollision;
-	XModel *models[8];
+	XModel *models[DOBJ_MAX_SUBMODELS];
 	byte modelParents[8];
 	byte matOffset[8];
 	vec3_t mins;

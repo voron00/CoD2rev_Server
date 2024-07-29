@@ -334,20 +334,6 @@ char *I_strupr(char *s)
 	return s;
 }
 
-void I_strcat( char *dest, int size, const char *src )
-{
-	int l1;
-
-	l1 = strlen( dest );
-
-	if ( l1 >= size )
-	{
-		Com_Error( ERR_FATAL, "I_strcat: already overflowed" );
-	}
-
-	Q_strncpyz( dest + l1, src, size - l1 );
-}
-
 void I_strncat( char *dest, int size, const char *src )
 {
 	int		l1;
@@ -1201,19 +1187,40 @@ qboolean Info_Validate( const char *s )
 	return qtrue;
 }
 
-bool COM_BitTest(int array[], int bitNum)
+/*
+==================
+Com_BitCheck
+
+  Allows bit-wise checks on arrays with more than one item (> 32 bits)
+==================
+*/
+bool Com_BitCheck( const int array[], int bitNum )
 {
-	return (array[bitNum >> 5] >> (bitNum & 0x1F)) & 1;
+	return (array[bitNum >> 5] >> (bitNum & 31)) & 1;
 }
 
-void COM_BitSet(int array[], int bitNum)
+/*
+==================
+Com_BitSet
+
+  Allows bit-wise SETS on arrays with more than one item (> 32 bits)
+==================
+*/
+void Com_BitSet( int array[], int bitNum )
 {
-	array[bitNum >> 5] |= 1 << (bitNum & 0x1F);
+	array[bitNum >> 5] |= 1 << (bitNum & 31);
 }
 
-void COM_BitClear(int array[], int bitNum)
+/*
+==================
+Com_BitClear
+
+  Allows bit-wise CLEAR on arrays with more than one item (> 32 bits)
+==================
+*/
+void Com_BitClear( int array[], int bitNum )
 {
-	array[bitNum >> 5] &= ~(1 << (bitNum & 0x1F));
+	array[bitNum >> 5] &= ~(1 << (bitNum & 31));
 }
 
 float GetLeanFraction(const float fFrac)

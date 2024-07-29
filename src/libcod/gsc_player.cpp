@@ -586,7 +586,7 @@ void gsc_player_isusingturret(scr_entref_t id)
 		return;
 	}
 
-	stackPushBool(entity->s.eFlags & EF_USETURRET ? qtrue : qfalse);
+	stackPushBool(entity->s.eFlags & EF_TURRET_ACTIVE ? qtrue : qfalse);
 }
 
 void gsc_player_getjumpslowdowntimer(scr_entref_t id)

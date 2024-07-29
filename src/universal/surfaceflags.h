@@ -2,30 +2,35 @@
 
 #define SURF_START_BIT        20
 #define SURF_TYPEINDEX( x ) ( ( x >> ( SURF_START_BIT ) ) & 0x1f )
+#define SURF_INVALID          -1
 
-#define SURF_TYPE_NONE             0
-#define SURF_TYPE_BARK             1
-#define SURF_TYPE_BRICK            2
-#define SURF_TYPE_CARPET           3
-#define SURF_TYPE_CLOTH            4
-#define SURF_TYPE_CONCRETE         5
-#define SURF_TYPE_DIRT             6
-#define SURF_TYPE_FLESH            7
-#define SURF_TYPE_FOLIAGE          8
-#define SURF_TYPE_GLASS            9
-#define SURF_TYPE_GRASS            10
-#define SURF_TYPE_GRAVEL           11
-#define SURF_TYPE_ICE              12
-#define SURF_TYPE_METAL            13
-#define SURF_TYPE_MUD              14
-#define SURF_TYPE_PAPER            15
-#define SURF_TYPE_PLASTER          16
-#define SURF_TYPE_ROCK             17
-#define SURF_TYPE_SAND             18
-#define SURF_TYPE_SNOW             19
-#define SURF_TYPE_WATER            20
-#define SURF_TYPE_WOOD             21
-#define SURF_TYPE_ASPHALT          22
+enum
+{
+	SURF_TYPE_NONE,
+	SURF_TYPE_BARK,
+	SURF_TYPE_BRICK,
+	SURF_TYPE_CARPET,
+	SURF_TYPE_CLOTH,
+	SURF_TYPE_CONCRETE,
+	SURF_TYPE_DIRT,
+	SURF_TYPE_FLESH,
+	SURF_TYPE_FOLIAGE,
+	SURF_TYPE_GLASS,
+	SURF_TYPE_GRASS,
+	SURF_TYPE_GRAVEL,
+	SURF_TYPE_ICE,
+	SURF_TYPE_METAL,
+	SURF_TYPE_MUD,
+	SURF_TYPE_PAPER,
+	SURF_TYPE_PLASTER,
+	SURF_TYPE_ROCK,
+	SURF_TYPE_SAND,
+	SURF_TYPE_SNOW,
+	SURF_TYPE_WATER,
+	SURF_TYPE_WOOD,
+	SURF_TYPE_ASPHALT,
+	SURF_TYPECOUNT
+};
 
 #define SURF_NODAMAGE              0x00000001
 #define SURF_SLICK                 0x00000002
@@ -92,7 +97,7 @@
 #define CONTENTS_CLUSTERPORTAL     0x00100000
 #define CONTENTS_DONOTENTER        0x00200000
 #define CONTENTS_DONOTENTER_LARGE  0x00400000
-#define CONTENTS_UNKNOWN           0x00800000 
+#define CONTENTS_UNKNOWN           0x00800000
 #define CONTENTS_MANTLE            0x01000000
 #define CONTENTS_BODY              0x02000000
 #define CONTENTS_CORPSE            0x04000000

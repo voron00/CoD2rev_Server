@@ -3,7 +3,6 @@
 
 unsigned int g_playerAnimTypeNamesCount;
 const char *g_playerAnimTypeNames[32];
-animStringItem_t weaponStrings[128];
 WeaponDef bg_defaultWeaponDefs;
 
 static const char *globalTypesFilename = "mp/playeranimtypes.txt";    // to prevent redundant params
@@ -503,24 +502,12 @@ void BG_LoadPlayerAnimTypes()
 	Com_EndParseSession();
 }
 
-void BG_InitWeaponString(int index, const char *name)
-{
-	weaponStrings[index].string = name;
-	weaponStrings[index].hash = BG_StringHashValue_Lwr(name);
-}
-
 void BG_LoadWeaponStrings()
 {
 	int index;
 
 	for ( index = 0; index < g_playerAnimTypeNamesCount; ++index )
 		BG_InitWeaponString(index, g_playerAnimTypeNames[index]);
-}
-
-void BG_InitWeaponStrings()
-{
-	memset(weaponStrings, 0, sizeof(weaponStrings));
-	BG_LoadWeaponStrings();
 }
 
 void InitWeaponDef(WeaponDef *weapon)

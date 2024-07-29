@@ -95,12 +95,10 @@ void G_UpdatePlayerContents(gentity_s *ent)
 
 void G_PlayerEvent(int clientNum, int event)
 {
-#ifndef DEDICATED // VoroN: this code runs on client only. Running it on server breaks bots aim.
 	vec3_t kickAVel;
 
 	if ( event >= EV_FIRE_WEAPON && (event <= EV_FIRE_WEAPON_LASTSHOT || event == EV_FIRE_WEAPON_MG42) )
 		BG_WeaponFireRecoil(&g_entities[clientNum].client->ps, g_entities[clientNum].client->recoilSpeed, kickAVel);
-#endif
 }
 
 void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap)

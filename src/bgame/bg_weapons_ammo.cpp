@@ -99,7 +99,7 @@ int BG_GetMaxPickupableAmmo(playerState_s *ps, unsigned int weaponIndex)
 
 		for ( index = 1; index <= bg_iNumWeapons; ++index )
 		{
-			if ( COM_BitTest(ps->weapons, index) )
+			if ( Com_BitCheck(ps->weapons, index) )
 			{
 				altWeaponDef = BG_GetWeaponDef(index);
 

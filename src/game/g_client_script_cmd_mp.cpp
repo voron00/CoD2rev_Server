@@ -97,7 +97,7 @@ void PlayerCmd_giveWeapon(scr_entref_t entRef)
 
 	pszWeaponName = Scr_GetString(0);
 	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
-	hadWeapon = COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex);
+	hadWeapon = Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex);
 	weaponDef = BG_GetWeaponDef(iWeaponIndex);
 
 	if ( BG_DoesWeaponNeedSlot(iWeaponIndex) && !BG_GetEmptySlotForWeapon(&pSelf->client->ps, iWeaponIndex) )
@@ -265,7 +265,7 @@ void PlayerCmd_hasWeapon(scr_entref_t entref)
 	pszWeaponName = Scr_GetString(0);
 	iWeaponIndex = BG_FindWeaponIndexForName(pszWeaponName);
 
-	if ( iWeaponIndex && COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
+	if ( iWeaponIndex && Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex) )
 		Scr_AddBool(1);
 	else
 		Scr_AddBool(0);
@@ -300,7 +300,7 @@ void PlayerCmd_switchToWeapon(scr_entref_t entRef)
 		Scr_ParamError(0, va("unknown weapon '%s'", pszWeaponName));
 	}
 
-	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
+	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
 		G_SelectWeaponIndex(entRef.entnum, iWeaponIndex);
 		Scr_AddBool(1);
@@ -340,7 +340,7 @@ void PlayerCmd_switchToOffhand(scr_entref_t entref)
 		Scr_ParamError(0, va("unknown weapon '%s'", pszWeaponName));
 	}
 
-	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
+	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
 		G_SetEquippedOffHand(entref.entnum, iWeaponIndex);
 		Scr_AddBool(1);
@@ -377,7 +377,7 @@ void PlayerCmd_giveStartAmmo(scr_entref_t entref)
 	pszWeaponName = Scr_GetString(0);
 	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
+	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
 		weaponDef = BG_GetWeaponDef(iWeaponIndex);
 		ammoCount = weaponDef->startAmmo - pSelf->client->ps.ammo[weaponDef->ammoIndex];
@@ -413,7 +413,7 @@ void PlayerCmd_giveMaxAmmo(scr_entref_t entRef)
 	pszWeaponName = Scr_GetString(0);
 	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex) )
+	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
 		weaponDef = BG_GetWeaponDef(iWeaponIndex);
 		ammoCount = BG_GetMaxAmmo(weaponDef->ammoIndex) - pSelf->client->ps.ammo[weaponDef->ammoIndex];
@@ -449,7 +449,7 @@ void PlayerCmd_getFractionStartAmmo(scr_entref_t entRef)
 	pszWeaponName = Scr_GetString(0);
 	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex)
+	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex)
 	        && (weaponDef = BG_GetWeaponDef(iWeaponIndex), weaponDef->startAmmo > 0) )
 	{
 		if ( pSelf->client->ps.ammo[weaponDef->ammoIndex] > 0 )
@@ -494,7 +494,7 @@ void PlayerCmd_getFractionMaxAmmo(scr_entref_t entRef)
 	pszWeaponName = Scr_GetString(0);
 	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
-	if ( COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex)
+	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex)
 	        && (weaponDef = BG_GetWeaponDef(iWeaponIndex), BG_GetMaxAmmo(weaponDef->ammoIndex) > 0) )
 	{
 		if ( pSelf->client->ps.ammo[weaponDef->ammoIndex] > 0 )
@@ -1676,7 +1676,7 @@ void PlayerCmd_SetWeaponSlotWeapon(scr_entref_t entref)
 		if ( slot == SLOT_PRIMARYB && !pSelf->client->ps.weaponslots[1] )
 			isOnlyWeapon = 1;
 
-		hadWeapon = COM_BitTest(pSelf->client->ps.weapons, iWeaponIndex);
+		hadWeapon = Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex);
 		G_GivePlayerWeapon(&pSelf->client->ps, iWeaponIndex);
 
 		if ( isOnlyWeapon )

@@ -1483,7 +1483,7 @@ void SV_BotUserMove(client_t *cl)
 	if ( !G_GetClientArchiveTime(cl - svs.clients) )
 	{
 		if ( G_random() < 0.5 )
-			ucmd.buttons |= BUTTON_FIRE;
+			ucmd.buttons |= BUTTON_ATTACK;
 
 		if ( G_random() < 0.5 )
 			ucmd.buttons |= (BUTTON_USE | BUTTON_USERELOAD);

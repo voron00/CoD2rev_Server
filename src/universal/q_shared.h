@@ -321,7 +321,6 @@ int I_strncmp( const char *s1, const char *s2, int n );
 int I_stricmp( const char *s1, const char *s2 );
 char *I_strlwr( char *s1 );
 char *I_strupr( char *s1 );
-void I_strcat( char *dest, int size, const char *src );
 void I_strncat( char *dest, int size, const char *src );
 
 int Com_sprintf(char *dest, size_t size, const char *format, ...);
@@ -360,7 +359,6 @@ char *I_CleanStr(char *string);
 #define Q_stricmp I_stricmp
 #define Q_strlwr I_strlwr
 #define Q_strupr I_strupr
-#define Q_strcat I_strcat
 #define Q_strncat I_strncat
 #define Q_strcmp I_strcmp
 #define Q_strcpy I_strcpy
@@ -374,10 +372,10 @@ int Q_vsnprintf(char *str, size_t size, const char *format, va_list args);
 struct infoParm_t
 {
 	const char *name;
-	int clearSolid;
-	int surfaceFlags;
-	int contents;
-	int toolFlags;
+	qboolean clearSolid;
+	unsigned int surfaceFlags;
+	unsigned int contents;
+	unsigned int toolFlags;
 };
 
 struct cspField_t
@@ -412,9 +410,9 @@ void Info_NextPair( const char **head, char *key, char *value );
 char I_CleanChar(char character);
 bool Com_ValidXModelName(const char *name);
 qboolean Info_Validate( const char *s );
-bool COM_BitTest(int array[], int bitNum);
-void COM_BitSet(int array[], int bitNum);
-void COM_BitClear(int array[], int bitNum);
+bool Com_BitCheck(const int array[], int bitNum);
+void Com_BitSet(int array[], int bitNum);
+void Com_BitClear(int array[], int bitNum);
 void AddLeanToPosition(float *position, float fViewYaw, float fLeanFrac, float fViewRoll, float fLeanDist);
 qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes, int (*parseSpecialFieldType)(unsigned char *, const char *, const int), void (*parseStrCpy)(unsigned char *, const char *));
 void SetConfigString(char **ppszConfigString, const char *pszKeyValue);

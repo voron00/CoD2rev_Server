@@ -216,7 +216,7 @@ qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched)
 			{
 				if ( giType == IT_AMMO )
 				{
-					if ( COM_BitTest(ps->weapons, item->giTag) )
+					if ( Com_BitCheck(ps->weapons, item->giTag) )
 					{
 						if ( BG_GetMaxPickupableAmmo(ps, item->giTag) <= 0 )
 							return 0;
@@ -238,7 +238,7 @@ qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched)
 			return 0;
 		}
 
-		if ( BG_DoesWeaponNeedSlot(item->giTag) && !COM_BitTest(ps->weapons, item->giTag) )
+		if ( BG_DoesWeaponNeedSlot(item->giTag) && !Com_BitCheck(ps->weapons, item->giTag) )
 		{
 			if ( touched || BG_GetMaxPickupableAmmo(ps, item->giTag) <= 0 )
 				return 0;

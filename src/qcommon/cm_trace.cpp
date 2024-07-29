@@ -1449,7 +1449,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 			frac2 = (temp - offset) * invDist;
 			frac = (temp + offset) * invDist;
 
-			side = diff >= 0.0;
+			side = I_side(diff);
 		}
 		else
 		{
@@ -1699,7 +1699,7 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 			frac2 = (temp - offset) * invDist;
 			frac = (temp + offset) * invDist;
 
-			side = diff >= 0.0;
+			side = I_side(diff);
 		}
 		else
 		{
@@ -2094,9 +2094,11 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 				temp = -t1;
 
 			invDist = 1.0 / absDiff;
+
 			frac2 = (temp - offset) * invDist;
 			frac = (temp + offset) * invDist;
-			side = diff >= 0.0;
+
+			side = I_side(diff);
 		}
 		else
 		{
@@ -2266,7 +2268,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 			frac2 = (temp - offset) * invDist;
 			frac = (temp + offset) * invDist;
 
-			side = diff >= 0.0;
+			side = I_side(diff);
 		}
 		else
 		{

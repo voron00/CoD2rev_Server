@@ -136,24 +136,43 @@ typedef enum
 	PARSEMODE_EVENTS
 } animScriptParseMode_t;
 
+enum animScriptMounted_t
+{
+	MOUNTED_UNUSED,
+	MOUNTED_MG42,
+
+	NUM_ANIM_COND_MOUNTED
+};
+
+enum animScriptLean_t
+{
+	LEANING_NOT,
+	LEANING_LEFT,
+	LEANING_RIGHT,
+
+	NUM_ANIM_COND_LEANING
+};
+
 typedef struct
 {
 	const char *string;
 	int hash;
 } animStringItem_t;
 
+#pragma pack(push)
+#pragma pack(1)
 typedef struct animation_s
 {
-	char name[64];
+	char name[MAX_QPATH];
 	int initialLerp;
 	float moveSpeed;
 	int duration;
 	int nameHash;
 	int flags;
-	int32_t movetype;
-	int stance;
+	int64_t movetype;
 	int noteType;
 } animation_t;
+#pragma pack(pop)
 #if defined(__i386__)
 static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
 #endif
@@ -176,7 +195,7 @@ typedef struct
 {
 	short bodyPart[2];
 	short animIndex[2];
-	unsigned short animDuration[2];
+	short animDuration[2];
 	snd_alias_list_t *soundAlias;
 } animScriptCommand_t;
 #if defined(__i386__)
@@ -214,7 +233,6 @@ typedef struct animScriptData_s
 	unsigned short torsoAnim;
 	unsigned short legsAnim;
 	unsigned short turningAnim;
-	unsigned short rootAnim;
 	snd_alias_list_t *(*soundAlias)(const char *);
 	void (*playSoundAlias)(int, snd_alias_list_t *);
 } animScriptData_t;
@@ -226,7 +244,7 @@ typedef struct
 {
 	scr_anim_t anim;
 	int nameHash;
-	char name[64];
+	char name[MAX_QPATH];
 } loadAnim_t;
 
 struct lerpFrame_t
@@ -236,34 +254,51 @@ struct lerpFrame_t
 	float pitchAngle;
 	int pitching;
 	int animationNumber;
-	animation_s *animation;
+	animation_t *animation;
 	int animationTime;
 	vec3_t oldFramePos;
 	float animSpeedScale;
 	int oldFrameSnapshotTime;
 };
 
-struct clientControllers_t
+typedef enum
 {
-	vec3_t angles[6];
+	CONTROL_ANGLES_BACK_LOW,
+	CONTROL_ANGLES_BACK_MID,
+	CONTROL_ANGLES_BACK_UP,
+	CONTROL_ANGLES_NECK,
+	CONTROL_ANGLES_HEAD,
+	CONTROL_ANGLES_PELVIS,
+	CONTROL_ANGLES_COUNT
+} control_angles_t;
+
+struct controller_info_t
+{
+	vec3_t angles[CONTROL_ANGLES_COUNT];
 	vec3_t tag_origin_angles;
 	vec3_t tag_origin_offset;
 };
 
+// each client has an associated clientInfo_t
+// that contains media references necessary to present the
+// client model and other color coded effects
+// this is regenerated each time a client's configstring changes,
+// usually as a result of a userinfo (name, model, etc) change
+#define MAX_MODEL_ATTACHMENTS   6
 typedef struct clientInfo_s
 {
 	int infoValid;
 	int nextValid;
 	int clientNum;
-	char name[32];
+	char name[MAX_NAME_LENGTH];
 	int team;
 	int oldteam;
 	int score;
 	int location;
 	int health;
-	char model[64];
-	char attachModelNames[6][64];
-	char attachTagNames[6][64];
+	char model[MAX_QPATH];
+	char attachModelNames[MAX_MODEL_ATTACHMENTS][MAX_QPATH];
+	char attachTagNames[MAX_MODEL_ATTACHMENTS][MAX_QPATH];
 	lerpFrame_t legs;
 	lerpFrame_t torso;
 	float lerpMoveDir;
@@ -271,7 +306,7 @@ typedef struct clientInfo_s
 	vec3_t playerAngles;
 	int leftHandGun;
 	int dobjDirty;
-	clientControllers_t control;
+	controller_info_t control;
 	int clientConditions[NUM_ANIM_CONDITIONS][2];
 	XAnimTree_s *pXAnimTree;
 	int iDObjWeapon;
@@ -316,7 +351,7 @@ typedef struct __attribute__((aligned(8))) bgs_s
 	void (*CreateDObj)(DObjModel_s *, unsigned short, XAnimTree_s *, int);
 	void (*SafeDObjFree)(int);
 	void *(*AllocXAnim)(int);
-	clientInfo_t clientinfo[64];
+	clientInfo_t clientinfo[MAX_CLIENTS];
 } bgs_t;
 #if defined(__i386__)
 static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
@@ -1185,7 +1220,7 @@ struct pml_t
 	float impactSpeed;
 	vec3_t previous_origin;
 	vec3_t previous_velocity;
-	unsigned int holdrand;
+	unsigned int previous_waterlevel;
 };
 
 enum weaponstate_t
@@ -1240,17 +1275,44 @@ enum weapAnimNumber_t
 	MAX_WP_ANIMATIONS = 0x14,
 };
 
-#define PMF_PRONE 				1
-#define PMF_CROUCH 				2
-#define PMF_MANTLE 				4
-#define PMF_FRAG				16
-#define PMF_LADDER 				32
-#define PMF_BACKWARDS_RUN 		128
-#define PMF_SLIDING 			512
-#define PMF_MELEE 				8192
-#define PMF_JUMPING 			524288
-#define PMF_SPECTATING 			16777216
-#define PMF_DISABLEWEAPON 		67108864
+// pmove->pm_flags	(sent as max 16 bits in msg.c)
+#define PMF_PRONE           0x1
+#define PMF_CROUCH          0x2
+#define PMF_DUCKED          PMF_CROUCH
+#define PMF_MANTLE          0x4
+#define PMF_FRAG            0x10
+#define PMF_LADDER          0x20
+#define PMF_BACKWARDS_RUN   0x80
+#define PMF_SLIDING         0x200
+#define PMF_MELEE           0x2000
+#define PMF_JUMPING         0x80000
+#define PMF_VIEWLOCKED      0x800000    // Guessed name
+#define PMF_SPECTATING      0x1000000
+#define PMF_DISABLEWEAPON   0x4000000
+
+// playerState_t->eFlags
+// entityState_t->eFlags
+//
+// Only those with a comment are currently in use and verified usage-wise. For
+// reference, see Enemy-Territory:
+// https://github.com/id-Software/Enemy-Territory/blob/40342a9e3690cb5b627a433d4d5cbf30e3c57698/src/game/bg_public.h#L649
+//
+#define EF_TELEPORT_BIT 0x2         // Toggled every time the origin abruptly changes
+#define EF_CROUCHING    0x4         //
+#define EF_PRONE        0x8         //
+#define EF_FIRING       0x40
+#define EF_TURRET_PRONE 0x100       // See EF_TURRET_ACTIVE
+#define EF_TURRET_DUCK  0x200       // See EF_TURRET_ACTIVE
+#define EF_TURRET_ACTIVE 0x300       // Set on players that use a turret
+#define EF_MANTLE       0x4000      //
+#define EF_TAGCONNECT   0x8000      // Connected to another entity via tag
+#define EF_DEAD         0x20000     //
+#define EF_AIMDOWNSIGHT 0x40000     //
+#define EF_BODY_START   0x80000
+#define EF_VOTED        0x100000    //
+#define EF_TALK         0x200000    //
+#define EF_TAUNT        0x400000    //
+#define EF_BOUNCE       0x1000000   // Missile/grenade/gravity-enabled entity bounce
 
 extern dvar_t *player_view_pitch_up;
 extern dvar_t *player_view_pitch_down;
@@ -1393,7 +1455,8 @@ typedef struct gitem_s
 
 extern gitem_t bg_itemlist[];
 
-unsigned int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
+void BG_InitWeaponString( int index, const char *name );
+int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
 void PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
 void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
 qboolean PM_ShouldMakeFootsteps(pmove_t *pm);
@@ -1420,6 +1483,7 @@ bool Jump_Check(pmove_t *pm, pml_t *pml);
 
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
+animScriptItem_t *BG_FirstValidItem( int client, animScript_t *script );
 
 int BG_IsAimDownSightWeapon(int weapon);
 unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
@@ -1439,6 +1503,8 @@ void PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsule
 void Mantle_CapView(playerState_s *ps);
 int BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler);
 
+void BG_PlayerAngles(const entityState_s *es, clientInfo_t *ci);
+void BG_PlayerAnimation_VerifyAnim(XAnimTree_s *pAnimTree, lerpFrame_t *lf);
 void PM_ExitAimDownSight(playerState_s *ps);
 void BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_s *es);
 void BG_SwingAngles( float destination,  float swingTolerance, float clampTolerance, float speed, float *angle, qboolean *swinging );
@@ -1449,16 +1515,17 @@ int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qb
 void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
-int BG_AnimScriptAnimation(playerState_s *ps, int state, int movetype, qboolean force);
+int BG_AnimScriptAnimation( playerState_t *ps, int state, int movetype, qboolean isContinue );
 void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
-void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims, unsigned int *piNumAnims);
+void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims, int *piNumAnims);
 void BG_FindAnimTrees();
 void BG_FindAnims();
 void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove);
-unsigned int BG_AnimationIndexForString(const char *string);
+int BG_AnimationIndexForString(const char *string);
 void BG_FinalizePlayerAnims();
 void BG_LoadAnim();
-void BG_PostLoadAnim();
+void BG_InitWeaponStrings();
+void BG_LoadWeaponStrings();
 
 void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
@@ -1507,6 +1574,7 @@ int BG_GetEmptySlotForWeapon(playerState_s *ps, int weapon);
 qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched);
 int BG_GetWeaponSlotForName(const char *name);
 const char* BG_GetWeaponSlotNameForIndex(int index);
+void BG_LerpAngles(float *angles_goal, float maxAngleChange, float *angles);
 
 void BG_CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );
 void BG_TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] );
@@ -1529,7 +1597,6 @@ bool BG_DoesWeaponRequireSlot(int weaponIndex);
 bool BG_IsAnyEmptyPrimaryWeaponSlot(gclient_s *client);
 
 long BG_StringHashValue( const char *fname );
-long BG_StringHashValue_Lwr( const char *fname );
 
 bool Mantle_IsWeaponInactive(const playerState_s *ps);
 float Jump_ReduceFriction(playerState_s *ps);

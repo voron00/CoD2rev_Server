@@ -108,17 +108,17 @@ static void UpdateIPBans( ipFilterList_t *ipFilterList )
 		{
 			if ( m[j] != 255 )
 			{
-				Q_strcat( ip, sizeof( ip ), "*" );
+				Q_strncat( ip, sizeof( ip ), "*" );
 			}
 			else
 			{
-				Q_strcat( ip, sizeof( ip ), va( "%i", b[j] ) );
+				Q_strncat( ip, sizeof( ip ), va( "%i", b[j] ) );
 			}
-			Q_strcat( ip, sizeof( ip ), ( j < 3 ) ? "." : " " );
+			Q_strncat( ip, sizeof( ip ), ( j < 3 ) ? "." : " " );
 		}
 		if ( strlen( iplist_final ) + strlen( ip ) < MAX_CVAR_VALUE_STRING )
 		{
-			Q_strcat( iplist_final, sizeof( iplist_final ), ip );
+			Q_strncat( iplist_final, sizeof( iplist_final ), ip );
 		}
 	}
 

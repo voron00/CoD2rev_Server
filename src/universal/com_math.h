@@ -64,6 +64,14 @@ float Q_fabs( float f );
 #define YAW                 1       // left / right
 #define ROLL                2       // fall over
 
+#define Q_PI    3.14159265358979323846
+
+#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
+
+#ifndef M_PI
+#define M_PI        3.14159265358979323846  // matches value in gcc v2 math.h
+#endif
+
 /*
 ==============
 I_fmax
@@ -164,6 +172,16 @@ inline float I_sgn(float x)
 		return -1.0;
 	}
 	return 1.0;
+}
+
+/*
+==============
+I_side
+==============
+*/
+inline int I_side(float s)
+{
+	return s >= 0.0;
 }
 
 /*
@@ -275,7 +293,6 @@ float convertDegreesToTan(float d);
 void TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] );
 void RotatePoint( vec3_t point, const vec3_t matrix[3] );
 void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3);
-void I_sinCos(float value, float *pSin, float *pCos);
 float Vec2DistanceSq(const vec2_t v1, const vec2_t v2);
 float Vec2Distance(const vec2_t v1, const vec2_t v2);
 void CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );

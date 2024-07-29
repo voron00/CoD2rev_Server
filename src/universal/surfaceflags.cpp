@@ -95,12 +95,12 @@ infoParm_t infoParms[] =
 	{ "monsterclip", 1, 0, CONTENTS_MONSTERCLIP, 0 },
 	{ "vehicleclip", 1, 0, CONTENTS_VEHICLECLIP, 0 },
 	{ "itemclip", 1, 0, CONTENTS_ITEMCLIP, 0 },
-	{ "nodrop", 1, 0, int(CONTENTS_NODROP), 0 },
+	{ "nodrop", 1, 0, CONTENTS_NODROP, 0 },
 
 	{ "nonsolid", 1, SURF_NONSOLID, 0, 0 },
 	{ "detail", 0, 0, CONTENTS_DETAIL, 0 },
 	{ "structural", 0, 0, CONTENTS_STRUCTURAL, 0 },
-	{ "portal", 1, int(SURF_PORTAL), 0, 0 },
+	{ "portal", 1, SURF_PORTAL, 0, 0 },
 	{ "canshootclip", 0, 0, CONTENTS_CANSHOTCLIP, 0 },
 	{ "origin", 1, 0, 0, TOOL_ORIGIN },
 	{ "sky", 0, SURF_SKY, CONTENTS_SKY, 0 },
@@ -120,10 +120,10 @@ infoParm_t infoParms[] =
 	{ "nodlight", 0, SURF_NODLIGHT, 0, 0 },
 };
 
-const char* Com_SurfaceTypeToName(int iTypeIndex)
+const char* Com_SurfaceTypeToName( int iTypeIndex )
 {
-	if ( iTypeIndex < SURF_TYPE_BARK || iTypeIndex > SURF_TYPE_ASPHALT )
+	if ( iTypeIndex <= SURF_TYPE_NONE || iTypeIndex >= SURF_TYPECOUNT )
 		return "default";
-	else
-		return infoParms[iTypeIndex].name;
+
+	return infoParms[iTypeIndex].name;
 }

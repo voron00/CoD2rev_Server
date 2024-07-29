@@ -698,7 +698,7 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 			frac2 = (float)(temp - offset) * (float)(1.0 / absDiff);
 			frac = (float)(temp + offset) * (float)(1.0 / absDiff);
 
-			side = diff >= 0.0;
+			side = I_side(diff);
 		}
 
 		assert(frac >= 0);
@@ -755,6 +755,7 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 	float t1;
 	float frac;
 	float t2;
+	int side;
 	unsigned short entnum;
 	vec4_t mid;
 	svEntity_t *check;
@@ -782,7 +783,7 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 
 		if ( (float)(t1 * t2) >= 0.0 )
 		{
-			nodeIndex = node->tree.child[I_fmin(t1, t2) < 0.0];
+			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 			continue;
 		}
 
@@ -801,9 +802,11 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 		mid[2] = (float)((float)(p2[2] - p[2]) * frac) + p[2];
 		mid[3] = (float)((float)(p2[3] - p[3]) * frac) + p[3];
 
-		CM_PointTraceToEntities_r(clip, node->tree.child[t2 >= 0.0], p, mid, trace);
+		side = I_side(t2);
 
-		nodeIndex = node->tree.child[t2 < 0.0];
+		CM_PointTraceToEntities_r(clip, node->tree.child[side], p, mid, trace);
+
+		nodeIndex = node->tree.child[1 - side];
 
 		Vector4Copy(mid, p);
 	}
@@ -890,7 +893,7 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 				break;
 			}
 
-			nodeIndex = node->tree.child[I_fmin(t1, t2) < 0.0];
+			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 		}
 
 		assert(t1 - t2);
@@ -904,7 +907,7 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
 		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
 
-		side = t2 >= 0.0;
+		side = I_side(t2);
 
 		if ( !CM_PointTraceStaticModelsComplete_r(clip, node->tree.child[side], p1, mid) )
 		{
@@ -988,7 +991,7 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 
 		if ( (float)(t1 * t2) >= 0.0 )
 		{
-			nodeIndex = node->tree.child[I_fmin(t1, t2) < 0.0];
+			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 			continue;
 		}
 
@@ -1009,7 +1012,7 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
 		mid[3] = (float)((float)(p2[3] - p1[3]) * frac) + p1[3];
 
-		side = t2 >= 0.0;
+		side = I_side(t2);
 
 		CM_PointTraceStaticModels_r(tw, node->tree.child[side], p1, mid, trace);
 
@@ -1059,6 +1062,7 @@ static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned sho
 	float t2;
 	unsigned short entnum;
 	int hitNum;
+	int side;
 	vec3_t mid;
 	svEntity_t *check;
 
@@ -1074,7 +1078,7 @@ static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned sho
 
 	if ( (float)(t1 * t2) >= 0.0 )
 	{
-		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[I_fmin(t1, t2) < 0.0], p1, p2);
+		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[1 - I_side(I_fmin(t1, t2))], p1, p2);
 
 		if ( hitNum )
 		{
@@ -1092,14 +1096,16 @@ static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned sho
 		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
 		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
 
-		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[t2 >= 0.0], p1, mid);
+		side = I_side(t2);
+
+		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[side], p1, mid);
 
 		if ( hitNum )
 		{
 			return hitNum;
 		}
 
-		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[t2 < 0.0], mid, p2);
+		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[1 - side], mid, p2);
 
 		if ( hitNum )
 		{
@@ -1221,7 +1227,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 			frac2 = (float)(temp - offset) * (float)(1.0 / absDiff);
 			frac = (float)(temp + offset) * (float)(1.0 / absDiff);
 
-			side = diff >= 0.0;
+			side = I_side(diff);
 		}
 
 		frac = I_fmin(frac, 1.0);

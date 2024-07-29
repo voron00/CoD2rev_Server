@@ -298,7 +298,7 @@ gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag)
 
 	item = &bg_itemlist[weapon];
 
-	if ( entity->client && !COM_BitTest(entity->client->ps.weapons, weapon)
+	if ( entity->client && !Com_BitCheck(entity->client->ps.weapons, weapon)
 	        || (ammoIndex = BG_AmmoForWeapon(weapon), weaponIndex = BG_ClipForWeapon(weapon), BG_GetWeaponDef(weapon)->clipOnly)
 	        && !entity->client->ps.ammoclip[weaponIndex] )
 	{
@@ -886,7 +886,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 	{
 		clipAmmoCount = 0;
 	}
-	hasWeapon = COM_BitTest(other->client->ps.weapons, weaponIndex);
+	hasWeapon = Com_BitCheck(other->client->ps.weapons, weaponIndex);
 	bHasWeapon = hasWeapon;
 	if ( !hasWeapon )
 	{
@@ -894,7 +894,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 		{
 			if ( other->client->ps.weapon )
 			{
-				if ( !COM_BitTest(other->client->ps.weapons, other->client->ps.weapon) )
+				if ( !Com_BitCheck(other->client->ps.weapons, other->client->ps.weapon) )
 					return 0;
 				if ( !BG_PlayerHasWeapon(&other->client->ps, other->client->ps.weapon, 1) )
 				{
@@ -1083,7 +1083,7 @@ void Touch_Item(gentity_s *ent, gentity_s *other, int touched)
 				}
 				else if ( !touched && ent->s.clientNum != other->s.number && item->giType == IT_WEAPON )
 				{
-					if ( COM_BitTest(other->client->ps.weapons, item->giTag) )
+					if ( Com_BitCheck(other->client->ps.weapons, item->giTag) )
 					{
 						weaponDef = BG_GetWeaponDef(item->giTag);
 						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weaponDef->displayName));

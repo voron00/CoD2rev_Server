@@ -690,6 +690,21 @@ void G_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s
 	Com_ServerDObjCreate(dobjModels, numModels, tree, handle);
 }
 
+void G_LoadAnimTreeInstances()
+{
+	XAnim_s *anims;
+	int i;
+	int j;
+
+	anims = level_bgs.animData.generic_human.tree.anims;
+
+	for ( i = 0; i < 64; ++i )
+		level_bgs.clientinfo[i].pXAnimTree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
+
+	for ( j = 0; j < 8; ++j )
+		g_scr_data.playerCorpseInfo[j].tree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
+}
+
 void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars)
 {
 	char infostring[1024];
@@ -765,7 +780,7 @@ void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars)
 		level_bgs.animData.animScriptData.playSoundAlias = G_AnimScriptSound;
 		GScr_LoadScripts();
 		BG_LoadAnim();
-		BG_PostLoadAnim();
+		G_LoadAnimTreeInstances();
 	}
 
 	GScr_LoadConsts();

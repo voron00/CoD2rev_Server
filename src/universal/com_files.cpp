@@ -2627,9 +2627,9 @@ qboolean FS_VerifyIwd( const char *iwd )
 		if ( search->iwd )
 		{
 			Q_strncpyz( teststring, search->iwd->iwdGamename, sizeof( teststring ) );
-			Q_strcat( teststring, sizeof( teststring ), "/" );
-			Q_strcat( teststring, sizeof( teststring ), search->iwd->iwdBasename );
-			Q_strcat( teststring, sizeof( teststring ), ".iwd" );
+			Q_strncat( teststring, sizeof( teststring ), "/" );
+			Q_strncat( teststring, sizeof( teststring ), search->iwd->iwdBasename );
+			Q_strncat( teststring, sizeof( teststring ), ".iwd" );
 			if ( !Q_stricmp( teststring, iwd ) )
 			{
 				return qtrue;
