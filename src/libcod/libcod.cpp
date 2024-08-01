@@ -423,7 +423,9 @@ void SV_BotUserMove_libcod(client_t *client)
 		ucmd.forwardmove = bot_forwardmove[num];
 		ucmd.rightmove = bot_rightmove[num];
 
-		VectorCopy(ent->client->sess.cmd.angles, ucmd.angles);
+		ucmd.angles[0] = ent->client->sess.cmd.angles[0];
+		ucmd.angles[1] = ent->client->sess.cmd.angles[1];
+		ucmd.angles[2] = ent->client->sess.cmd.angles[2];
 	}
 
 	client->deltaMessage = client->netchan.outgoingSequence - 1;

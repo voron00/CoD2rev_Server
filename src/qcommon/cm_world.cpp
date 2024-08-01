@@ -151,12 +151,12 @@ static void CM_AreaEntities_r( unsigned short nodeIndex, areaParms_t *ap )
 			continue;
 		}
 
-		if (	          gcheck->r.absmin[ 0 ] > ap->maxs[ 0 ]
-		                  || gcheck->r.absmin[ 1 ] > ap->maxs[ 1 ]
-		                  || gcheck->r.absmin[ 2 ] > ap->maxs[ 2 ]
-		                  || gcheck->r.absmax[ 0 ] < ap->mins[ 0 ]
-		                  || gcheck->r.absmax[ 1 ] < ap->mins[ 1 ]
-		                  || gcheck->r.absmax[ 2 ] < ap->mins[ 2 ] )
+		if (	          	 gcheck->r.absmin[ 0 ] > ap->maxs[ 0 ]
+		                     || gcheck->r.absmax[ 0 ] < ap->mins[ 0 ]
+		                     || gcheck->r.absmin[ 1 ] > ap->maxs[ 1 ]
+		                     || gcheck->r.absmax[ 1 ] < ap->mins[ 1 ]
+		                     || gcheck->r.absmin[ 2 ] > ap->maxs[ 2 ]
+		                     || gcheck->r.absmax[ 2 ] < ap->mins[ 2 ] )
 		{
 			continue;
 		}
@@ -167,7 +167,7 @@ static void CM_AreaEntities_r( unsigned short nodeIndex, areaParms_t *ap )
 			return;
 		}
 
-		ap->list[ap->count] = gcheck - sv.gentities;
+		ap->list[ap->count] = &sv.svEntities[entnum - 1] - sv.svEntities;
 		ap->count++;
 	}
 
@@ -281,17 +281,17 @@ CM_AddEntityToNode
 static void CM_AddEntityToNode( svEntity_t *ent, unsigned short childNodeIndex )
 {
 	unsigned short entnum;
-	svEntity_t *prevEnt;
+	uint16_t *prevEnt;
 
 	entnum = ent - sv.svEntities;
 
-	for ( prevEnt = (svEntity_t *)&cm_world.sectors[childNodeIndex].contents.entities ; ; prevEnt = (svEntity_t *)&sv.svEntities[prevEnt->worldSector - 1].nextEntityInWorldSector )
+	for ( prevEnt = &cm_world.sectors[childNodeIndex].contents.entities ; ; prevEnt = &sv.svEntities[*prevEnt - 1].nextEntityInWorldSector )
 	{
-		if ( (unsigned short)(prevEnt->worldSector - 1) > entnum )
+		if ( (unsigned short)(*prevEnt - 1) > entnum )
 		{
 			ent->worldSector = childNodeIndex;
-			ent->nextEntityInWorldSector = prevEnt->worldSector;
-			prevEnt->worldSector = entnum + 1;
+			ent->nextEntityInWorldSector = *prevEnt;
+			*prevEnt = entnum + 1;
 			break;
 		}
 	}
@@ -315,11 +315,17 @@ static void CM_SortNode( unsigned short nodeIndex, vec2_t mins, vec2_t maxs )
 	cStaticModel_t *prevStaticModel;
 	unsigned short childNodeIndex;
 
+	if ( cm_world.lockTree )
+	{
+		return;
+	}
+
 	node = &cm_world.sectors[nodeIndex];
 
 	axis = cm_world.sectors[nodeIndex].tree.axis;
 	dist = cm_world.sectors[nodeIndex].tree.dist;
 
+	// Sort entities
 	prevEnt = NULL;
 	entnum = cm_world.sectors[nodeIndex].contents.entities;
 
@@ -389,7 +395,8 @@ skipEntity:
 		}
 	}
 
-	prevStaticModel = 0;
+	// Sort static models
+	prevStaticModel = NULL;
 	modelnum = node->contents.staticModels;
 
 	while ( modelnum )
@@ -465,18 +472,18 @@ CM_LinkEntity
 void CM_LinkEntity( svEntity_t *ent, vec3_t absmin, vec3_t absmax, clipHandle_t clipHandle )
 {
 	cmodel_t *cmod;
-	int contents;
+	int linkcontents;
 	worldSector_t *node;
 	vec2_t maxs;
-	vec2_t mins;
+	vec3_t mins;
 	float dist;
 	int axis;
-	uint16_t nodeIndex;
+	unsigned short nodeIndex;
 
 	cmod = CM_ClipHandleToModel(clipHandle);
-	contents = cmod->leaf.brushContents | cmod->leaf.terrainContents;
+	linkcontents = cmod->leaf.brushContents | cmod->leaf.terrainContents;
 
-	if ( !contents )
+	if ( !*(int64_t *)&cmod->leaf.brushContents )
 	{
 		CM_UnlinkEntity(ent);
 		return;
@@ -487,15 +494,15 @@ void CM_LinkEntity( svEntity_t *ent, vec3_t absmin, vec3_t absmax, clipHandle_t 
 		Vector2Copy(cm_world.mins, mins);
 		Vector2Copy(cm_world.maxs, maxs);
 
-		for ( nodeIndex = 1 ; ; nodeIndex = node->tree.child[1] )
+		for ( nodeIndex = 1; ; nodeIndex = node->tree.child[1] )
 		{
 			while ( 1 )
 			{
-				cm_world.sectors[nodeIndex].contents.contentsEntities |= contents;
+				cm_world.sectors[nodeIndex].contents.contentsEntities |= linkcontents;
 				node = &cm_world.sectors[nodeIndex];
 
-				axis = cm_world.sectors[nodeIndex].tree.axis;
-				dist = cm_world.sectors[nodeIndex].tree.dist;
+				axis = node->tree.axis;
+				dist = node->tree.dist;
 
 				if ( absmin[axis] <= dist )
 				{
@@ -506,30 +513,7 @@ void CM_LinkEntity( svEntity_t *ent, vec3_t absmin, vec3_t absmax, clipHandle_t 
 
 				if ( !node->tree.child[0] )
 				{
-					if ( !ent->worldSector )
-					{
-						break;
-					}
-
-					if ( nodeIndex == ent->worldSector )
-					{
-						if ( !(ent->linkcontents & ~contents) )
-						{
-							ent->linkcontents = contents;
-							Vector2Copy(absmin, ent->linkmin);
-							Vector2Copy(absmax, ent->linkmax);
-							CM_SortNode(nodeIndex, mins, maxs);
-							return;
-						}
-					}
-
-					CM_UnlinkEntity(ent);
-					CM_AddEntityToNode(ent, nodeIndex);
-					ent->linkcontents = contents;
-					Vector2Copy(absmin, ent->linkmin);
-					Vector2Copy(absmax, ent->linkmax);
-					CM_SortNode(nodeIndex, mins, maxs);
-					return;
+					goto LABEL_13;
 				}
 
 				nodeIndex = node->tree.child[0];
@@ -544,66 +528,33 @@ void CM_LinkEntity( svEntity_t *ent, vec3_t absmin, vec3_t absmax, clipHandle_t 
 
 			if ( !node->tree.child[1] )
 			{
-				if ( !ent->worldSector )
-				{
-					break;
-				}
-
-				if ( nodeIndex == ent->worldSector )
-				{
-					if ( !(ent->linkcontents & ~contents) )
-					{
-						ent->linkcontents = contents;
-						Vector2Copy(absmin, ent->linkmin);
-						Vector2Copy(absmax, ent->linkmax);
-						CM_SortNode(nodeIndex, mins, maxs);
-						return;
-					}
-				}
-
-				CM_UnlinkEntity(ent);
-				CM_AddEntityToNode(ent, nodeIndex);
-				ent->linkcontents = contents;
-				Vector2Copy(absmin, ent->linkmin);
-				Vector2Copy(absmax, ent->linkmax);
-				CM_SortNode(nodeIndex, mins, maxs);
-				return;
+				goto LABEL_13;
 			}
 		}
 
-		if ( nodeIndex == ent->worldSector )
+		if ( nodeIndex == ent->worldSector && !(ent->linkcontents & ~linkcontents) )
 		{
-			if ( !(ent->linkcontents & ~contents) )
-			{
-				ent->linkcontents = contents;
-				Vector2Copy(absmin, ent->linkmin);
-				Vector2Copy(absmax, ent->linkmax);
-				return;
-			}
+			ent->linkcontents = linkcontents;
+			Vector2Copy(absmin, ent->linkmin);
+			Vector2Copy(absmax, ent->linkmax);
+			return;
 		}
-
+LABEL_13:
 		if ( !ent->worldSector )
 		{
 			break;
 		}
 
-		if ( nodeIndex == ent->worldSector )
+		if ( nodeIndex == ent->worldSector && !(ent->linkcontents & ~linkcontents) )
 		{
-			if ( !(ent->linkcontents & ~contents) )
-			{
-				ent->linkcontents = contents;
-				Vector2Copy(absmin, ent->linkmin);
-				Vector2Copy(absmax, ent->linkmax);
-				CM_SortNode(nodeIndex, mins, maxs);
-				return;
-			}
+			goto LABEL_18;
 		}
 
 		CM_UnlinkEntity(ent);
 	}
-
 	CM_AddEntityToNode(ent, nodeIndex);
-	ent->linkcontents = contents;
+LABEL_18:
+	ent->linkcontents = linkcontents;
 	Vector2Copy(absmin, ent->linkmin);
 	Vector2Copy(absmax, ent->linkmax);
 	CM_SortNode(nodeIndex, mins, maxs);
@@ -630,7 +581,7 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 	svEntity_t *check;
 	vec4_t p;
 
-	Vector4Copy(p1, p);
+	VectorCopy4(p1, p);
 
 	while ( 1 )
 	{
@@ -688,16 +639,8 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 		else
 		{
 			absDiff = fabs(diff);
-			float temp;
-
-			if ( diff < 0.0 )
-				temp = p[node->tree.axis] - node->tree.dist;
-			else
-				temp = -t1;
-
-			frac2 = (float)(temp - offset) * (float)(1.0 / absDiff);
-			frac = (float)(temp + offset) * (float)(1.0 / absDiff);
-
+			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
+			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
 		}
 
@@ -761,7 +704,7 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 	svEntity_t *check;
 	vec4_t p;
 
-	Vector4Copy(p1, p);
+	VectorCopy4(p1, p);
 
 	while ( 1 )
 	{
@@ -808,7 +751,7 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 
 		nodeIndex = node->tree.child[1 - side];
 
-		Vector4Copy(mid, p);
+		VectorCopy4(mid, p);
 	}
 }
 
@@ -958,7 +901,7 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 	vec4_t p1;
 	cStaticModel_t *check;
 
-	Vector4Copy(p1_, p1);
+	VectorCopy4(p1_, p1);
 
 	while ( 1 )
 	{
@@ -1018,7 +961,7 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 
 		nodeIndex = node->tree.child[1 - side];
 
-		Vector4Copy(mid, p1);
+		VectorCopy4(mid, p1);
 	}
 }
 
@@ -1217,21 +1160,13 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 		else
 		{
 			absDiff = fabs(diff);
-			float temp;
-
-			if ( diff < 0.0 )
-				temp = p[node->tree.axis] - node->tree.dist;
-			else
-				temp = -t1;
-
-			frac2 = (float)(temp - offset) * (float)(1.0 / absDiff);
-			frac = (float)(temp + offset) * (float)(1.0 / absDiff);
-
+			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
+			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
 		}
 
-		frac = I_fmin(frac, 1.0);
 		assert(frac >= 0);
+		frac = I_fmin(frac, 1.0);
 
 		mid[0] = (float)((float)(p2[0] - p[0]) * frac) + p[0];
 		mid[1] = (float)((float)(p2[1] - p[1]) * frac) + p[1];
@@ -1244,8 +1179,8 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 			break;
 		}
 
-		frac2 = I_fmax(frac2, 0.0);
 		assert(frac2 <= 1.f);
+		frac2 = I_fmax(frac2, 0.0);
 
 		p[0] = (float)((float)(p2[0] - p[0]) * frac2) + p[0];
 		p[1] = (float)((float)(p2[1] - p[1]) * frac2) + p[1];
@@ -1272,7 +1207,7 @@ int CM_ClipSightTraceToEntities( sightclip_t *clip )
 CM_LinkStaticModel
 ================
 */
-void CM_LinkStaticModel( cStaticModel_s *staticModel )
+void CM_LinkStaticModel( cStaticModel_t *staticModel )
 {
 	int contents;
 	worldSector_t *node;

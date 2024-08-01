@@ -5,10 +5,10 @@
 typedef unsigned char byte;
 
 typedef float vec_t;
+
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
 typedef vec_t vec4_t[4];
-typedef vec_t vec5_t[5];
 
 typedef int fixed4_t;
 typedef int fixed8_t;
@@ -19,45 +19,6 @@ extern vec3_t vec3_origin;
 extern vec4_t vec4_origin;
 
 #define IS_NAN isnan
-
-#define DotProduct(a,b)         ((a)[0]*(b)[0]+(a)[1]*(b)[1]+(a)[2]*(b)[2])
-#define Dot2Product(a,b)        ((a)[0]*(b)[0]+(a)[1]*(b)[1])
-#define VectorSubtract(a,b,c)   ((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
-#define Vector2Subtract(a,b,c)  ((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1])
-#define VectorAdd(a,b,c)        ((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2])
-#define Vector2Add(a,b,c)       ((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1])
-#define VectorCopy(a,b)         ((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2])
-#define Vector2Copy(a,b)        ((b)[0]=(a)[0],(b)[1]=(a)[1])
-#define Vec2Multiply(v)         ((v)[0]*(v)[0]+(v)[1]*(v)[1])
-#define VectorMA2(v, s, b, o)   ((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s))
-
-#define	VectorScale(v, s, o)    ((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
-#define	Vec2Scale(v, s, o)      ((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s))
-#define VectorMA(v, s, b, o)    ((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s))
-#define CrossProduct(a,b,c)     ((c)[0]=(a)[1]*(b)[2]-(a)[2]*(b)[1],(c)[1]=(a)[2]*(b)[0]-(a)[0]*(b)[2],(c)[2]=(a)[0]*(b)[1]-(a)[1]*(b)[0])
-
-#define DotProduct4( x,y )        ( ( x )[0] * ( y )[0] + ( x )[1] * ( y )[1] + ( x )[2] * ( y )[2] + ( x )[3] * ( y )[3] )
-#define VectorSubtract4( a,b,c )  ( ( c )[0] = ( a )[0] - ( b )[0],( c )[1] = ( a )[1] - ( b )[1],( c )[2] = ( a )[2] - ( b )[2],( c )[3] = ( a )[3] - ( b )[3] )
-#define VectorAdd4( a,b,c )       ( ( c )[0] = ( a )[0] + ( b )[0],( c )[1] = ( a )[1] + ( b )[1],( c )[2] = ( a )[2] + ( b )[2],( c )[3] = ( a )[3] + ( b )[3] )
-#define VectorCopy4( a,b )        ( ( b )[0] = ( a )[0],( b )[1] = ( a )[1],( b )[2] = ( a )[2],( b )[3] = ( a )[3] )
-#define VectorScale4( v, s, o )   ( ( o )[0] = ( v )[0] * ( s ),( o )[1] = ( v )[1] * ( s ),( o )[2] = ( v )[2] * ( s ),( o )[3] = ( v )[3] * ( s ) )
-#define VectorMA4( v, s, b, o )   ( ( o )[0] = ( v )[0] + ( b )[0] * ( s ),( o )[1] = ( v )[1] + ( b )[1] * ( s ),( o )[2] = ( v )[2] + ( b )[2] * ( s ),( o )[3] = ( v )[3] + ( b )[3] * ( s ) )
-
-#define VectorClear(a)		      ((a)[0]=(a)[1]=(a)[2]=0)
-#define Vector2Clear(a)		      ((a)[0]=(a)[1]=0)
-#define VectorNegate( a,b )       ( ( b )[0] = -( a )[0],( b )[1] = -( a )[1],( b )[2] = -( a )[2] )
-#define VectorSet(v, x, y, z)	  ((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
-#define Vector4Copy( a,b )        ( ( b )[0] = ( a )[0],( b )[1] = ( a )[1],( b )[2] = ( a )[2],( b )[3] = ( a )[3] )
-
-#define SnapVector( v ) {v[0] = (int)v[0]; v[1] = (int)v[1]; v[2] = (int)v[2];}
-
-#define	ANGLE2SHORT(x)	((int)((x)*65536.0f/360.0f) & 65535)
-#define	SHORT2ANGLE(x)	((x)*(360.0/65536))
-
-#define abs32 abs
-#define Square( x ) ( ( x ) * ( x ) )
-
-float Q_fabs( float f );
 
 // angle indexes
 #define PITCH               0       // up / down
@@ -72,21 +33,296 @@ float Q_fabs( float f );
 #define M_PI        3.14159265358979323846  // matches value in gcc v2 math.h
 #endif
 
+#define abs32 abs
+#define Square( x ) ( ( x ) * ( x ) )
+
+#define	ANGLE2SHORT(x)	((int)((x)*65536.0f/360.0f) & 65535)
+#define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+
+#define SnapVector( v ) {v[0] = (int)v[0]; v[1] = (int)v[1]; v[2] = (int)v[2];}
+
+float Q_fabs( float f );
+
+/*
+==============
+DotProduct
+==============
+*/
+inline float DotProduct(const vec3_t a, const vec3_t b)
+{
+	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+/*
+==============
+Dot2Product
+==============
+*/
+inline float Dot2Product(const vec2_t a, const vec2_t b)
+{
+	return a[0] * b[0] + a[1] * b[1];
+}
+
+/*
+==============
+DotProduct4
+==============
+*/
+inline float DotProduct4(const vec4_t a, const vec4_t b)
+{
+	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+}
+
+/*
+==============
+VectorSubtract
+==============
+*/
+inline void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
+{
+	c[0] = a[0] - b[0];
+	c[1] = a[1] - b[1];
+	c[2] = a[2] - b[2];
+}
+
+/*
+==============
+Vector2Subtract
+==============
+*/
+inline void Vector2Subtract(const vec2_t a, const vec2_t b, vec2_t c)
+{
+	c[0] = a[0] - b[0];
+	c[1] = a[1] - b[1];
+}
+
+/*
+==============
+VectorSubtract4
+==============
+*/
+inline void VectorSubtract4(const vec4_t a, const vec4_t b, vec4_t c)
+{
+	c[0] = a[0] - b[0];
+	c[1] = a[1] - b[1];
+	c[2] = a[2] - b[2];
+	c[3] = a[3] - b[3];
+}
+
+/*
+==============
+VectorAdd
+==============
+*/
+inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
+{
+	c[0] = a[0] + b[0];
+	c[1] = a[1] + b[1];
+	c[2] = a[2] + b[2];
+}
+
+/*
+==============
+Vector2Add
+==============
+*/
+inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
+{
+	c[0] = a[0] + b[0];
+	c[1] = a[1] + b[1];
+}
+
+/*
+==============
+VectorAdd4
+==============
+*/
+inline void VectorAdd4(const vec4_t a, const vec4_t b, vec4_t c)
+{
+	c[0] = a[0] + b[0];
+	c[1] = a[1] + b[1];
+	c[2] = a[2] + b[2];
+	c[3] = a[3] + b[3];
+}
+
+/*
+==============
+VectorCopy
+==============
+*/
+inline void VectorCopy(const vec3_t a, vec3_t b)
+{
+	b[0] = a[0];
+	b[1] = a[1];
+	b[2] = a[2];
+}
+
+/*
+==============
+Vector2Copy
+==============
+*/
+inline void Vector2Copy(const vec2_t a, vec2_t b)
+{
+	b[0] = a[0];
+	b[1] = a[1];
+}
+
+/*
+==============
+VectorCopy4
+==============
+*/
+inline void VectorCopy4(const vec4_t a, vec4_t b)
+{
+	b[0] = a[0];
+	b[1] = a[1];
+	b[2] = a[2];
+	b[3] = a[3];
+}
+
+/*
+==============
+Vec2Multiply
+==============
+*/
+inline float Vec2Multiply(const vec2_t v)
+{
+	return v[0] * v[0] + v[1] * v[1];
+}
+
+/*
+==============
+VectorScale
+==============
+*/
+inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+{
+	o[0] = s * v[0];
+	o[1] = s * v[1];
+	o[2] = s * v[2];
+}
+
+/*
+==============
+Vec2Scale
+==============
+*/
+inline void Vec2Scale(const vec2_t v, const float s, vec2_t o)
+{
+	o[0] = s * v[0];
+	o[1] = s * v[1];
+}
+
+/*
+==============
+VectorScale4
+==============
+*/
+inline void VectorScale4(const vec4_t v, const float s, vec4_t o)
+{
+	o[0] = s * v[0];
+	o[1] = s * v[1];
+	o[2] = s * v[2];
+	o[3] = s * v[3];
+}
+
+/*
+==============
+VectorMA
+==============
+*/
+inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
+{
+	o[0] = s * b[0] + v[0];
+	o[1] = s * b[1] + v[1];
+	o[2] = s * b[2] + v[2];
+}
+
+/*
+==============
+VectorMA2
+==============
+*/
+inline void VectorMA2(const vec2_t v, const float s, const vec2_t b, vec2_t o)
+{
+	o[0] = s * b[0] + v[0];
+	o[1] = s * b[1] + v[1];
+}
+
+/*
+==============
+VectorMA4
+==============
+*/
+inline void VectorMA4(const vec4_t v, const float s, const vec4_t b, vec4_t o)
+{
+	o[0] = s * b[0] + v[0];
+	o[1] = s * b[1] + v[1];
+	o[2] = s * b[2] + v[2];
+	o[3] = s * b[3] + v[3];
+}
+
+/*
+==============
+VectorClear
+==============
+*/
+inline void VectorClear(vec3_t v)
+{
+	v[0] = 0;
+	v[1] = 0;
+	v[2] = 0;
+}
+
+/*
+==============
+Vector2Clear
+==============
+*/
+inline void Vector2Clear(vec2_t v)
+{
+	v[0] = 0;
+	v[1] = 0;
+}
+
+/*
+==============
+VectorSet
+==============
+*/
+inline void VectorSet(vec3_t v, const float x, const float y, const float z)
+{
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+}
+
+/*
+==============
+I_fsel
+==============
+*/
+inline float I_fsel(const float x, const float y, const float z)
+{
+	if ( x < 0.0 )
+	{
+		return z;
+	}
+
+	return y;
+}
+
 /*
 ==============
 I_fmax
 ==============
 */
-inline float I_fmax(float x, float y)
+inline float I_fmax(const float x, const float y)
 {
-	if ((float)(x - y) < 0.0)
-	{
-		return y;
-	}
-	else
-	{
-		return x;
-	}
+	float z = x - y;
+
+	return I_fsel(z, x, y);
 }
 
 /*
@@ -94,16 +330,11 @@ inline float I_fmax(float x, float y)
 I_fmin
 ==============
 */
-inline float I_fmin(float x, float y)
+inline float I_fmin(const float x, const float y)
 {
-	if ((float)(y - x) < 0.0)
-	{
-		return y;
-	}
-	else
-	{
-		return x;
-	}
+	float z = y - x;
+
+	return I_fsel(z, x, y);
 }
 
 /*
@@ -111,9 +342,24 @@ inline float I_fmin(float x, float y)
 I_fclamp
 ==============
 */
-inline float I_fclamp(float val, float min, float max)
+inline float I_fclamp(const float val, const float min, const float max)
 {
 	return I_fmax(min, I_fmin(val, max));
+}
+
+/*
+==============
+I_sel
+==============
+*/
+inline int I_sel(const int x, const int y, const int z)
+{
+	if ( x < 0.0 )
+	{
+		return z;
+	}
+
+	return y;
 }
 
 /*
@@ -121,16 +367,11 @@ inline float I_fclamp(float val, float min, float max)
 I_max
 ==============
 */
-inline int I_max(int x, int y)
+inline int I_max(const int x, const int y)
 {
-	if ((int)(x - y) < 0)
-	{
-		return y;
-	}
-	else
-	{
-		return x;
-	}
+	int z = x - y;
+
+	return I_sel(z, x, y);
 }
 
 /*
@@ -138,16 +379,11 @@ inline int I_max(int x, int y)
 I_min
 ==============
 */
-inline int I_min(int x, int y)
+inline int I_min(const int x, const int y)
 {
-	if ((int)(y - x) < 0)
-	{
-		return y;
-	}
-	else
-	{
-		return x;
-	}
+	int z = y - x;
+
+	return I_sel(z, x, y);
 }
 
 /*
@@ -155,7 +391,7 @@ inline int I_min(int x, int y)
 I_clamp
 ==============
 */
-inline int I_clamp(int val, int min, int max)
+inline int I_clamp(const int val, const int min, const int max)
 {
 	return I_max(min, I_min(val, max));
 }
@@ -165,12 +401,13 @@ inline int I_clamp(int val, int min, int max)
 I_sgn
 ==============
 */
-inline float I_sgn(float x)
+inline float I_sgn(const float x)
 {
 	if ( x < 0.0 )
 	{
 		return -1.0;
 	}
+
 	return 1.0;
 }
 
@@ -179,7 +416,7 @@ inline float I_sgn(float x)
 I_side
 ==============
 */
-inline int I_side(float s)
+inline int I_side(const float s)
 {
 	return s >= 0.0;
 }
@@ -189,7 +426,7 @@ inline int I_side(float s)
 FastSinCos
 ==============
 */
-inline void FastSinCos(float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
 	*pSin = sin(value);
 	*pCos = cos(value);

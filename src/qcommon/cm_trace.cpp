@@ -1351,7 +1351,6 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 	float frac2;
 	float frac;
 	int side;
-	float invDist;
 	vec3_t p1;
 	float tmax;
 	float tmin;
@@ -1437,18 +1436,8 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 
 		if ( absDiff > 0.00000047683716 )
 		{
-			float temp;
-
-			if ( diff < 0.0 )
-				temp = t1;
-			else
-				temp = -t1;
-
-			invDist = 1.0 / absDiff;
-
-			frac2 = (temp - offset) * invDist;
-			frac = (temp + offset) * invDist;
-
+			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
+			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
 		}
 		else
@@ -1458,7 +1447,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 			frac2 = 0.0;
 		}
 
-		assert(frac >= 0);
+		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
 
 		mid[0] = (p2[0] - p1[0]) * frac + p1[0];
@@ -1472,7 +1461,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 			return hitNum;
 		}
 
-		assert(frac2 <= 1.0001f);
+		assert(frac2 <= 1.0f + TRACE_EPSILON);
 		frac2 = I_fmax(frac2, 0.0);
 
 		p1[0] = (p2[0] - p1[0]) * frac2 + p1[0];
@@ -1607,7 +1596,6 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 	float frac2;
 	float frac;
 	int side;
-	float invDist;
 	vec4_t p1;
 	float tmax;
 	float tmin;
@@ -1619,7 +1607,7 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 	int i;
 
 	assert(node);
-	Vector4Copy(p1_, p1);
+	VectorCopy4(p1_, p1);
 
 	while ( 1 )
 	{
@@ -1687,18 +1675,8 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 
 		if ( absDiff > 0.00000047683716 )
 		{
-			float temp;
-
-			if ( diff < 0.0 )
-				temp = t1;
-			else
-				temp = -t1;
-
-			invDist = 1.0 / absDiff;
-
-			frac2 = (temp - offset) * invDist;
-			frac = (temp + offset) * invDist;
-
+			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
+			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
 		}
 		else
@@ -2002,7 +1980,6 @@ a smaller intercept fraction.
 */
 void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4_t p2, trace_t *trace )
 {
-	float invDist;
 	float absDiff;
 	float diff;
 	vec4_t p1;
@@ -2016,7 +1993,7 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 	cplane_t *plane;
 	cNode_t *node;
 
-	Vector4Copy(p1_, p1);
+	VectorCopy4(p1_, p1);
 
 	while ( num >= 0 )
 	{
@@ -2047,18 +2024,6 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 			}
 			else
 			{
-				/*
-				// an axial brush right behind a slanted bsp plane
-				// will poke through when expanded, so adjust
-				// by sqrt(3)
-				offset = Q_fabs(tw->extents[0]*plane->normal[0]) +
-				Q_fabs(tw->extents[1]*plane->normal[1]) +
-				Q_fabs(tw->extents[2]*plane->normal[2]);
-
-				offset *= 2;
-				offset = tw->maxOffset;
-				*/
-
 				// this is silly
 				offset = 2048;
 			}
@@ -2086,18 +2051,8 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 
 		if ( absDiff > 0.00000047683716 )
 		{
-			float temp;
-
-			if ( diff < 0.0 )
-				temp = t1;
-			else
-				temp = -t1;
-
-			invDist = 1.0 / absDiff;
-
-			frac2 = (temp - offset) * invDist;
-			frac = (temp + offset) * invDist;
-
+			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
+			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
 		}
 		else
@@ -2107,7 +2062,7 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 			frac2 = 0.0;
 		}
 
-		assert(frac >= 0);
+		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
 
 		mid[0] = (p2[0] - p1[0]) * frac + p1[0];
@@ -2189,7 +2144,6 @@ CM_SightTraceThroughTree
 */
 int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const vec3_t p2, trace_t *trace )
 {
-	float invDist;
 	float absDiff;
 	float diff;
 	vec3_t p1;
@@ -2256,18 +2210,8 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 
 		if ( absDiff > 0.00000047683716 )
 		{
-			float temp;
-
-			if ( diff < 0.0 )
-				temp = t1;
-			else
-				temp = -t1;
-
-			invDist = 1.0 / absDiff;
-
-			frac2 = (temp - offset) * invDist;
-			frac = (temp + offset) * invDist;
-
+			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
+			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
 		}
 		else
@@ -2277,7 +2221,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 			frac2 = 0.0;
 		}
 
-		assert(frac >= 0);
+		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
 
 		mid[0] = (p2[0] - p1[0]) * frac + p1[0];

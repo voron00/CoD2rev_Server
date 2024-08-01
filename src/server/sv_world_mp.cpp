@@ -189,7 +189,7 @@ int SV_SightTraceToEntity( const vec3_t start, const vec3_t mins, const vec3_t m
 
 /*
 ===============
-SV_SightTraceToEntity
+SV_ClipSightToEntity
 ===============
 */
 int SV_ClipSightToEntity( sightclip_t *clip, svEntity_t *check )
@@ -267,7 +267,7 @@ void SV_LinkEntity( gentity_t *gEnt )
 	int lastLeaf;
 	float *origin, *angles;
 	svEntity_s *ent;
-	DObj *dobj;
+	DObj *obj;
 	vec3_t min, max;
 	clipHandle_t clip;
 
@@ -421,9 +421,9 @@ void SV_LinkEntity( gentity_t *gEnt )
 	}
 
 	clip = SV_ClipHandleForEntity(gEnt);
-	dobj = Com_GetServerDObj(gEnt->s.number);
+	obj = Com_GetServerDObj(gEnt->s.number);
 
-	if ( dobj && gEnt->r.svFlags & 6 )
+	if ( obj && gEnt->r.svFlags & 6 )
 	{
 		if ( gEnt->r.svFlags & 2 )
 		{
@@ -432,7 +432,7 @@ void SV_LinkEntity( gentity_t *gEnt )
 		}
 		else
 		{
-			DObjGetBounds(dobj, min, max);
+			DObjGetBounds(obj, min, max);
 			VectorAdd(origin, min, min);
 			VectorAdd(origin, max, max);
 		}
@@ -457,6 +457,26 @@ void SV_UnlinkEntity( gentity_t *gEnt )
 	ent = SV_SvEntityForGentity(gEnt);
 	gEnt->r.linked = qfalse;
 	CM_UnlinkEntity(ent);
+}
+
+/*
+===============
+SV_LocationalSightTraceDObj
+===============
+*/
+DObj* SV_LocationalSightTraceDObj(const sightpointtrace_t *clip, const gentity_s *touch)
+{
+	if ( !clip->locational )
+	{
+		return NULL;
+	}
+
+	if ( !(touch->r.svFlags & 6) )
+	{
+		return NULL;
+	}
+
+	return Com_GetServerDObj(touch->s.number);
 }
 
 /*
@@ -517,40 +537,19 @@ int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check )
 		}
 	}
 
-	if ( clip->locational && (obj = Com_GetServerDObj(touch->s.number)) && touch->r.svFlags & 4 )
+	obj = SV_LocationalSightTraceDObj(clip, touch);
+
+	if ( !obj )
 	{
-		if ( !DObjHasContents(obj, clip->contentmask) )
+		model = SV_ClipHandleForEntity(touch);
+		angles = touch->r.currentAngles;
+
+		if ( !touch->r.bmodel )
 		{
-			return 0;
+			angles = vec3_origin; // boxes don't rotate
 		}
 
-		VectorCopy(touch->r.currentOrigin, entAxis[3]);
-
-		DObjGetBounds(obj, absmin, absmax);
-
-		VectorAdd(entAxis[3], absmin, absmin);
-		VectorAdd(entAxis[3], absmax, absmax);
-
-		VectorCopy(clip->start, extents.start);
-		VectorCopy(clip->end, extents.end);
-
-		CM_CalcTraceEntents(&extents);
-
-		if ( CM_TraceBox(&extents, absmin, absmax, 1.0) )
-		{
-			return 0;
-		}
-
-		G_DObjCalcPose(touch);
-		AnglesToAxis(touch->r.currentAngles, entAxis);
-
-		MatrixTransposeTransformVector43(extents.start, entAxis, localStart);
-		MatrixTransposeTransformVector43(extents.end, entAxis, localEnd);
-
-		objTrace.fraction = 1.0;
-		DObjGeomTraceline(obj, localStart, localEnd, clip->contentmask, &objTrace);
-
-		if ( objTrace.fraction < 1.0 )
+		if ( CM_TransformedBoxSightTrace(0, clip->start, clip->end, vec3_origin, vec3_origin, model, clip->contentmask, touch->r.currentOrigin, angles) )
 		{
 			return -1;
 		}
@@ -558,20 +557,70 @@ int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check )
 		return 0;
 	}
 
-	model = SV_ClipHandleForEntity(touch);
-	angles = touch->r.currentAngles;
-
-	if ( !touch->r.bmodel )
+	if ( touch->r.svFlags & 4 )
 	{
-		angles = vec3_origin; // boxes don't rotate
+		if ( !DObjHasContents(obj, clip->contentmask) )
+		{
+			return 0;
+		}
 	}
 
-	if ( CM_TransformedBoxSightTrace(0, clip->start, clip->end, vec3_origin, vec3_origin, model, clip->contentmask, touch->r.currentOrigin, angles) )
+	VectorCopy(touch->r.currentOrigin, entAxis[3]);
+	DObjGetBounds(obj, absmin, absmax);
+
+	VectorAdd(entAxis[3], absmin, absmin);
+	VectorAdd(entAxis[3], absmax, absmax);
+
+	VectorCopy(clip->start, extents.start);
+	VectorCopy(clip->end, extents.end);
+
+	CM_CalcTraceEntents(&extents);
+
+	if ( CM_TraceBox(&extents, absmin, absmax, 1.0) )
+	{
+		return 0;
+	}
+
+	G_DObjCalcPose(touch);
+	AnglesToAxis(touch->r.currentAngles, entAxis);
+
+	MatrixTransposeTransformVector43(extents.start, entAxis, localStart);
+	MatrixTransposeTransformVector43(extents.end, entAxis, localEnd);
+
+	objTrace.fraction = 1.0;
+	DObjGeomTraceline(obj, localStart, localEnd, clip->contentmask, &objTrace);
+
+	if ( objTrace.fraction < 1.0 )
 	{
 		return -1;
 	}
 
 	return 0;
+}
+
+/*
+===============
+SV_LocationalTraceDObj
+===============
+*/
+DObj* SV_LocationalTraceDObj( const pointtrace_t *clip, const gentity_t *touch )
+{
+	if ( !clip->bLocational )
+	{
+		return NULL;
+	}
+
+	if ( !(touch->r.svFlags & 6) )
+	{
+		return NULL;
+	}
+
+	if ( !clip->priorityMap )
+	{
+		return NULL;
+	}
+
+	return Com_GetServerDObj(touch->s.number);
 }
 
 /*
@@ -611,150 +660,114 @@ void SV_PointTraceToEntity( pointtrace_t *clip, svEntity_t *check, trace_t *trac
 		{
 			return;   // don't clip against the pass entity
 		}
+
 		if ( touch->r.ownerNum == clip->passEntNum )
 		{
 			return;   // don't clip against own missiles
 		}
+
 		if ( touch->r.ownerNum == clip->ignoreEntNum )
 		{
 			return;   // don't clip against other missiles from our owner
 		}
 	}
 
-	if ( clip->bLocational && (obj = Com_GetServerDObj(touch->s.number)) && touch->r.svFlags & 6 )
+	obj = SV_LocationalTraceDObj(clip, touch);
+
+	if ( !obj )
 	{
-		if ( (touch->r.svFlags & 4) )
+		// if it doesn't have any brushes of a type we
+		// are looking for, ignore it
+		if ( !(clip->contentmask & check->linkcontents) )
 		{
-			if ( !DObjHasContents(obj, clip->contentmask) )
-			{
-				return;
-			}
-
-			VectorCopy(touch->r.currentOrigin, entAxis[3]);
-			DObjGetBounds(obj, absmin, absmax);
-
-			VectorAdd(entAxis[3], absmin, absmin);
-			VectorAdd(entAxis[3], absmax, absmax);
-
-			if ( CM_TraceBox(&clip->extents, absmin, absmax, trace->fraction) )
-			{
-				return;
-			}
-
-			G_DObjCalcPose(touch);
-			AnglesToAxis(touch->r.currentAngles, entAxis);
-
-			MatrixTransposeTransformVector43(clip->extents.start, entAxis, localStart);
-			MatrixTransposeTransformVector43(clip->extents.end, entAxis, localEnd);
-
-			objTrace.fraction = trace->fraction;
-
-			if ( touch->r.svFlags & 4 )
-			{
-				DObjGeomTraceline(obj, localStart, localEnd, clip->contentmask, &objTrace);
-			}
-			else
-			{
-				DObjTraceline(obj, localStart, localEnd, clip->priorityMap, &objTrace);
-			}
-
-			if ( objTrace.fraction < trace->fraction )
-			{
-				trace->fraction = objTrace.fraction;
-				trace->surfaceFlags = objTrace.surfaceflags;
-				trace->partName = objTrace.partName;
-				trace->partGroup = objTrace.partGroup;
-
-				MatrixTransformVector(objTrace.normal, entAxis, trace->normal);
-
-				trace->entityNum = touch->s.number;
-				trace->contents = touch->r.contents;
-				trace->material = NULL;
-			}
-
 			return;
 		}
 
-		if ( clip->priorityMap )
+		if ( CM_TraceBox(&clip->extents, touch->r.absmin, touch->r.absmax, trace->fraction) )
 		{
-			VectorCopy(touch->r.currentOrigin, entAxis[3]);
-
-			VectorAdd(entAxis[3], actorLocationalMins, absmin);
-			VectorAdd(entAxis[3], actorLocationalMaxs, absmax);
-
-			if ( CM_TraceBox(&clip->extents, absmin, absmax, trace->fraction) )
-			{
-				return;
-			}
-
-			G_DObjCalcPose(touch);
-			AnglesToAxis(touch->r.currentAngles, entAxis);
-
-			MatrixTransposeTransformVector43(clip->extents.start, entAxis, localStart);
-			MatrixTransposeTransformVector43(clip->extents.end, entAxis, localEnd);
-
-			objTrace.fraction = trace->fraction;
-
-			if ( touch->r.svFlags & 4 )
-			{
-				DObjGeomTraceline(obj, localStart, localEnd, clip->contentmask, &objTrace);
-			}
-			else
-			{
-				DObjTraceline(obj, localStart, localEnd, clip->priorityMap, &objTrace);
-			}
-
-			if ( objTrace.fraction < trace->fraction )
-			{
-				trace->fraction = objTrace.fraction;
-				trace->surfaceFlags = objTrace.surfaceflags;
-				trace->partName = objTrace.partName;
-				trace->partGroup = objTrace.partGroup;
-
-				MatrixTransformVector(objTrace.normal, entAxis, trace->normal);
-
-				trace->entityNum = touch->s.number;
-				trace->contents = touch->r.contents;
-				trace->material = NULL;
-			}
-
 			return;
 		}
-	}
 
-	// if it doesn't have any brushes of a type we
-	// are looking for, ignore it
-	if ( !(clip->contentmask & check->linkcontents) )
-	{
-		return;
-	}
+		model = SV_ClipHandleForEntity(touch);
+		angles = touch->r.currentAngles;
 
-	if ( CM_TraceBox(&clip->extents, touch->r.absmin, touch->r.absmax, trace->fraction) )
-	{
-		return;
-	}
+		if ( !touch->r.bmodel )
+		{
+			angles = vec3_origin; // boxes don't rotate
+		}
 
-	model = SV_ClipHandleForEntity(touch);
-	angles = touch->r.currentAngles;
+		oldFraction = trace->fraction;
 
-	if ( !touch->r.bmodel )
-	{
-		angles = vec3_origin; // boxes don't rotate
-	}
+		CM_TransformedBoxTrace(trace, clip->extents.start, clip->extents.end, vec3_origin, vec3_origin, model, clip->contentmask, touch->r.currentOrigin, angles);
 
-	oldFraction = trace->fraction;
+		if ( trace->fraction >= oldFraction )
+		{
+			return;
+		}
 
-	CM_TransformedBoxTrace(trace, clip->extents.start, clip->extents.end, vec3_origin, vec3_origin, model, clip->contentmask, touch->r.currentOrigin, angles);
-
-	if ( trace->fraction < oldFraction )
-	{
 		trace->surfaceFlags = 0;
 		trace->partName = 0;
 		trace->partGroup = 0;
 		trace->entityNum = touch->s.number;
 		trace->contents = touch->r.contents;
-		trace->material = 0;
+		trace->material = NULL;
+
+		return;
 	}
+
+	if ( touch->r.svFlags & 4 )
+	{
+		if ( !DObjHasContents(obj, clip->contentmask) )
+		{
+			return;
+		}
+	}
+
+	assert(clip->priorityMap);
+
+	VectorCopy(touch->r.currentOrigin, entAxis[3]);
+	DObjGetBounds(obj, absmin, absmax);
+
+	VectorAdd(entAxis[3], absmin, absmin);
+	VectorAdd(entAxis[3], absmax, absmax);
+
+	if ( CM_TraceBox(&clip->extents, absmin, absmax, trace->fraction) )
+	{
+		return;
+	}
+
+	G_DObjCalcPose(touch);
+	AnglesToAxis(touch->r.currentAngles, entAxis);
+
+	MatrixTransposeTransformVector43(clip->extents.start, entAxis, localStart);
+	MatrixTransposeTransformVector43(clip->extents.end, entAxis, localEnd);
+
+	objTrace.fraction = trace->fraction;
+
+	if ( touch->r.svFlags & 4 )
+	{
+		DObjGeomTraceline(obj, localStart, localEnd, clip->contentmask, &objTrace);
+	}
+	else
+	{
+		DObjTraceline(obj, localStart, localEnd, clip->priorityMap, &objTrace);
+	}
+
+	if ( objTrace.fraction >= trace->fraction )
+	{
+		return;
+	}
+
+	trace->fraction = objTrace.fraction;
+	trace->surfaceFlags = objTrace.surfaceflags;
+	trace->partName = objTrace.partName;
+	trace->partGroup = objTrace.partGroup;
+
+	MatrixTransformVector(objTrace.normal, entAxis, trace->normal);
+
+	trace->entityNum = touch->s.number;
+	trace->contents = touch->r.contents;
+	trace->material = NULL;
 }
 
 /*
