@@ -853,7 +853,7 @@ void XAnimClearGoalWeightKnobInternal(XAnimTree_s *tree, unsigned int infoIndex,
 			if ( i + entry->u.animParent.children == infoIndex )
 			{
 				weightDiff = goalWeight - weight;
-				absWeight = fabs(weightDiff);
+				absWeight = I_fabs(weightDiff);
 			}
 			else
 			{

@@ -43,7 +43,7 @@ void ConsumeQuat(const unsigned char **pos, short *out)
 	}
 	else
 	{
-		out[3] = (int)floor(sqrt((float)temp) + 0.5);
+		out[3] = (int)floor(I_sqrt((float)temp) + 0.5);
 	}
 }
 
@@ -61,7 +61,7 @@ void ConsumeQuat2(const unsigned char **pos, short *out)
 
 	else
 	{
-		out[1] = (int)floor(sqrt((float)temp) + 0.5);
+		out[1] = (int)floor(I_sqrt((float)temp) + 0.5);
 	}
 }
 

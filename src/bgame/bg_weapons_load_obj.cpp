@@ -441,7 +441,7 @@ int BG_GetWeaponSlotForName(const char *name)
 {
 	int i;
 
-	for ( i = 0; i < COUNT_OF(szWeapSlotNames); ++i )
+	for ( i = 0; i < ARRAY_COUNT(szWeapSlotNames); ++i )
 	{
 		if ( !strcasecmp(name, szWeapSlotNames[i]) )
 			return i;
@@ -552,49 +552,49 @@ int BG_ParseWeaponDefSpecificFieldType(unsigned char *pStruct, const char *pValu
 	switch ( iFieldType )
 	{
 	case WFT_WEAPONTYPE:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapTypeNames, COUNT_OF(szWeapTypeNames));
+		value = Weapon_GetStringArrayIndex(pValue, szWeapTypeNames, ARRAY_COUNT(szWeapTypeNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown weapon type \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->weaponType = value;
 		break;
 
 	case WFT_WEAPONCLASS:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapClassNames, COUNT_OF(szWeapClassNames));
+		value = Weapon_GetStringArrayIndex(pValue, szWeapClassNames, ARRAY_COUNT(szWeapClassNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown weapon class \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->weaponClass = value;
 		break;
 
 	case WFT_OVERLAYRETICLE:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapOverlayReticleNames, COUNT_OF(szWeapOverlayReticleNames));
+		value = Weapon_GetStringArrayIndex(pValue, szWeapOverlayReticleNames, ARRAY_COUNT(szWeapOverlayReticleNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->adsOverlayReticle = value;
 		break;
 
 	case WFT_SLOT:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapSlotNames, COUNT_OF(szWeapSlotNames));
+		value = Weapon_GetStringArrayIndex(pValue, szWeapSlotNames, ARRAY_COUNT(szWeapSlotNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->weaponSlot = value;
 		break;
 
 	case WFT_STANCE:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapStanceNames, COUNT_OF(szWeapStanceNames));
+		value = Weapon_GetStringArrayIndex(pValue, szWeapStanceNames, ARRAY_COUNT(szWeapStanceNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->stance = value;
 		break;
 
 	case WFT_PROJ_EXPLOSION:
-		value = Weapon_GetStringArrayIndex(pValue, szProjectileExplosionNames, COUNT_OF(szProjectileExplosionNames));
+		value = Weapon_GetStringArrayIndex(pValue, szProjectileExplosionNames, ARRAY_COUNT(szProjectileExplosionNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->projExplosionType = value;
 		break;
 
 	case WFT_OFFHAND_CLASS:
-		value = Weapon_GetStringArrayIndex(pValue, offhandClassNames, COUNT_OF(offhandClassNames));
+		value = Weapon_GetStringArrayIndex(pValue, offhandClassNames, ARRAY_COUNT(offhandClassNames));
 		if ( value < 0 )
 			Com_Error(ERR_DROP, "Unknown offhand class \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
 		weapon->offhandClass = value;

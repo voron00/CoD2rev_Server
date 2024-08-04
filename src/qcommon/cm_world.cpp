@@ -638,7 +638,7 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 		}
 		else
 		{
-			absDiff = fabs(diff);
+			absDiff = I_fabs(diff);
 			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
 			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);
@@ -1159,7 +1159,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 		}
 		else
 		{
-			absDiff = fabs(diff);
+			absDiff = I_fabs(diff);
 			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
 			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
 			side = I_side(diff);

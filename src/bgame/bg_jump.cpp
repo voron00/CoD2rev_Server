@@ -6,274 +6,393 @@ dvar_t *jump_stepSize;
 dvar_t *jump_slowdownEnable;
 dvar_t *jump_ladderPushVel;
 dvar_t *jump_spreadAdd;
-dvar_t *jump_bounceEnable;
 
-#if LIBCOD_COMPILE_PLAYER == 1
-bool player_jump_slowdownenable_enabled[MAX_CLIENTS] = {0};
-bool player_jump_slowdownenable[MAX_CLIENTS] = {0};
-#endif
+#define JUMP_LAND_SLOWDOWN_TIME 1800
+#define JUMP_TIME_DELAY 500
 
-bool getJumpSlowdownEnable(playerState_t* ps)
+/*
+==================
+Jump_ActivateSlowdown
+==================
+*/
+void Jump_ActivateSlowdown( playerState_t *ps )
 {
-#if LIBCOD_COMPILE_PLAYER == 1
-	int clientid = playerstateToClientNum(ps);
-	if(player_jump_slowdownenable_enabled[clientid])
-		return player_jump_slowdownenable[clientid];
-#endif
-	return jump_slowdownEnable->current.boolean;
+	if ( ps->pm_time )
+	{
+		return;
+	}
+
+	ps->pm_flags |= PMF_JUMPING;
+	ps->pm_time = JUMP_LAND_SLOWDOWN_TIME;
 }
 
-void Jump_ClearState(playerState_s *ps)
+/*
+==================
+Jump_IsPlayerAboveMax
+==================
+*/
+bool Jump_IsPlayerAboveMax( playerState_t *ps )
 {
-	ps->pm_flags &= ~0x80000u;
-	ps->jumpOriginZ = 0.0;
+	assert(ps->pm_flags & PMF_JUMPING);
+	return ps->origin[2] >= ps->jumpOriginZ + jump_height->current.decimal;
 }
 
-bool Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize)
+/*
+==================
+Jump_GetStepHeight
+==================
+*/
+bool Jump_GetStepHeight( playerState_t *ps, const vec3_t origin, float *stepSize )
 {
-	if ( ps->jumpOriginZ + jump_height->current.decimal <= (float)origin[2] )
-		return 0;
+	assert(ps->pm_flags & PMF_JUMPING);
+	assert(origin);
+	assert(stepSize);
+
+	if ( ps->jumpOriginZ + jump_height->current.decimal <= origin[2] )
+	{
+		return false;
+	}
 
 	*stepSize = jump_stepSize->current.decimal;
 
 	if ( origin[2] + *stepSize > ps->jumpOriginZ + jump_height->current.decimal )
+	{
 		*stepSize = ps->jumpOriginZ + jump_height->current.decimal - origin[2];
-
-	return 1;
-}
-
-bool Jump_IsPlayerAboveMax(playerState_s *ps)
-{
-	return ps->origin[2] >= ps->jumpOriginZ + jump_height->current.decimal;
-}
-
-void Jump_ActivateSlowdown(playerState_s *ps)
-{
-	if ( !ps->pm_time )
-	{
-		ps->pm_flags |= 0x80000u;
-		ps->pm_time = 1800;
-	}
-}
-
-void Jump_ApplySlowdown(playerState_s *ps)
-{
-	float scale;
-
-	scale = 1.0;
-
-	if ( ps->pm_time <= 1800 )
-	{
-		if ( !ps->pm_time )
-		{
-			if ( ps->jumpOriginZ + 18.0 <= ps->origin[2] )
-			{
-				ps->pm_time = 1200;
-				scale = 0.5;
-			}
-			else
-			{
-				ps->pm_time = 1800;
-				scale = 0.64999998;
-			}
-		}
-	}
-	else
-	{
-		Jump_ClearState(ps);
-		scale = 0.64999998;
 	}
 
-	if ( !getJumpSlowdownEnable(ps) )
-		scale = 1.0;
-
-	VectorScale(ps->velocity, scale, ps->velocity);
+	return true;
 }
 
-float Jump_ReduceFriction(playerState_s *ps)
+/*
+==================
+Jump_ClearState
+==================
+*/
+void Jump_ClearState( playerState_t *ps )
 {
-	if ( getJumpSlowdownEnable(ps) )
-	{
-		if ( ps->pm_time <= 1699 )
-			return (float)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
-		else
-			return 2.5;
-	}
-	else
-	{
-		return 1.0;
-	}
+	ps->pm_flags &= ~PMF_JUMPING;
+	ps->jumpOriginZ = 0;
 }
 
-void Jump_ClampVelocity(playerState_s *ps, const float *origin)
+/*
+==================
+Jump_ClampVelocity
+==================
+*/
+void Jump_ClampVelocity( playerState_t *ps, const vec3_t origin )
 {
-	float temp;
 	float maxJumpVel;
 	float heightDiff;
 
-	if ( ps->origin[2] - origin[2] > 0.0 )
+	assert(ps->pm_flags & PMF_JUMPING);
+	assert(origin);
+
+	if ( ps->origin[2] - origin[2] <= 0 )
 	{
-		heightDiff = ps->jumpOriginZ + jump_height->current.decimal - ps->origin[2];
+		return;
+	}
 
-		if ( heightDiff >= 0.1 )
-		{
-			temp = (heightDiff + heightDiff) * (float)ps->gravity;
-			maxJumpVel = sqrt(temp);
+	heightDiff = ps->jumpOriginZ + jump_height->current.decimal - ps->origin[2];
 
-			if ( ps->velocity[2] > (float)maxJumpVel )
-				ps->velocity[2] = maxJumpVel;
-		}
-		else
-		{
-			ps->velocity[2] = 0.0;
-		}
+	if ( heightDiff < 0.1 )
+	{
+		ps->velocity[2] = 0;
+		return;
+	}
+
+	maxJumpVel = I_sqrt((heightDiff + heightDiff) * ps->gravity);
+
+	if ( ps->velocity[2] > maxJumpVel )
+	{
+		ps->velocity[2] = maxJumpVel;
 	}
 }
 
-float Jump_GetLandFactor(playerState_s *ps)
+/*
+==================
+Jump_ReduceFriction
+==================
+*/
+float Jump_ReduceFriction( playerState_t *ps )
 {
-	if ( getJumpSlowdownEnable(ps) )
-	{
-		if ( ps->pm_time <= 1699 )
-			return (float)ps->pm_time * 1.5 * 0.00058823527 + 1.0;
-		else
-			return 2.5;
-	}
-	else
+	assert(ps->pm_flags & PMF_JUMPING);
+
+	if ( !jump_slowdownEnable->current.boolean )
 	{
 		return 1.0;
 	}
+
+	if ( ps->pm_time >= JUMP_LAND_SLOWDOWN_TIME - FRAMETIME )
+	{
+		return 2.5;
+	}
+
+	return ps->pm_time * 1.5 * 0.00058823527 + 1.0;
 }
 
-void Jump_AddSurfaceEvent(playerState_s *ps, pml_t *pml)
+/*
+==================
+Jump_GetLandFactor
+==================
+*/
+float Jump_GetLandFactor( playerState_t *ps )
 {
-	int surfType;
+	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME);
 
-	if ( (ps->pm_flags & 0x20) != 0 )
+	if ( !jump_slowdownEnable->current.boolean )
+	{
+		return 1.0;
+	}
+
+	if ( ps->pm_time >= JUMP_LAND_SLOWDOWN_TIME - FRAMETIME )
+	{
+		return 2.5;
+	}
+
+	return ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+}
+
+/*
+==================
+Jump_GetSlowdownFriction
+==================
+*/
+float Jump_GetSlowdownFriction( playerState_t *ps )
+{
+	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME);
+
+	if ( !jump_slowdownEnable->current.boolean )
+	{
+		return 1.0;
+	}
+
+	if ( ps->pm_time >= JUMP_LAND_SLOWDOWN_TIME - FRAMETIME )
+	{
+		return 2.5;
+	}
+
+	return ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+}
+
+/*
+==================
+Jump_ApplySlowdown
+==================
+*/
+void Jump_ApplySlowdown( playerState_t *ps )
+{
+	assert(ps->pm_flags & PMF_JUMPING);
+
+	if ( !jump_slowdownEnable->current.boolean )
+	{
+		VectorScale(ps->velocity, 1.0, ps->velocity);
+		return;
+	}
+
+	if ( ps->pm_time > JUMP_LAND_SLOWDOWN_TIME )
+	{
+		Jump_ClearState(ps);
+		VectorScale(ps->velocity, 0.64999998, ps->velocity);
+		return;
+	}
+
+	if ( ps->pm_time )
+	{
+		VectorScale(ps->velocity, 1.0, ps->velocity);
+		return;
+	}
+
+	if ( ps->jumpOriginZ + 18.0 > ps->origin[2] )
+	{
+		ps->pm_time = JUMP_LAND_SLOWDOWN_TIME;
+		VectorScale(ps->velocity, 0.64999998, ps->velocity);
+		return;
+	}
+
+	ps->pm_time = JUMP_LAND_SLOWDOWN_TIME - FRAMETIME - JUMP_TIME_DELAY;
+	VectorScale(ps->velocity, 0.5, ps->velocity);
+}
+
+/*
+==================
+Jump_AddSurfaceEvent
+==================
+*/
+void Jump_AddSurfaceEvent( playerState_t *ps, pml_t *pml )
+{
+	if ( (ps->pm_flags & PMF_LADDER) )
 	{
 		PM_AddEvent(ps, EV_JUMP_WOOD);
+		return;
 	}
-	else
-	{
-		surfType = PM_GroundSurfaceType(pml);
 
-		if ( surfType )
-			PM_AddEvent(ps, surfType + 70);
+	int surfType = PM_GroundSurfaceType(pml);
+
+	if ( !surfType )
+	{
+		return;
 	}
+
+	PM_AddEvent(ps, surfType + EV_JUMP_DEFAULT);
 }
 
-void Jump_PushOffLadder(playerState_s *ps, pml_t *pml)
+/*
+==================
+Jump_PushOffLadder
+==================
+*/
+void Jump_PushOffLadder( playerState_t *ps, pml_t *pml )
 {
-	float scale;
-	float len;
 	float dot;
 	vec3_t flatForward;
 	vec3_t pushOffDir;
 
+	assert(ps->pm_flags & PMF_LADDER);
+
 	ps->velocity[2] = ps->velocity[2] * 0.75;
+
 	VectorSet(flatForward, pml->forward[0], pml->forward[1], 0.0);
 	Vec3Normalize(flatForward);
 
-	len = DotProduct(ps->vLadderVec, pml->forward);
+	dot = DotProduct(ps->vLadderVec, pml->forward);
 
-	if ( len >= 0.0 )
+	if ( dot < 0.0 )
 	{
-		VectorCopy(flatForward, pushOffDir);
+		dot = DotProduct(flatForward, ps->vLadderVec);
+
+		VectorMA(flatForward, dot * -2.0, ps->vLadderVec, pushOffDir);
+		Vec3Normalize(pushOffDir);
 	}
 	else
 	{
-		dot = DotProduct(flatForward, ps->vLadderVec);
-		scale = dot * -2.0;
-		VectorMA(flatForward, scale, ps->vLadderVec, pushOffDir);
-		Vec3Normalize(pushOffDir);
+		VectorCopy(flatForward, pushOffDir);
 	}
 
 	Vec2Scale(pushOffDir, jump_ladderPushVel->current.decimal, ps->velocity);
-	ps->pm_flags &= ~0x20u;
+	ps->pm_flags &= ~PMF_LADDER;
 }
 
-void Jump_Start(pmove_t *pm, pml_t *pml, float height)
+/*
+==================
+Jump_Start
+==================
+*/
+void Jump_Start( pmove_t *pm, pml_t *pml, float height )
 {
-	playerState_s *ps;
+	playerState_t *ps;
 	float factor;
 	float velocitySqrd;
 
 	ps = pm->ps;
-	velocitySqrd = (height + height) * (float)pm->ps->gravity;
+	assert(ps);
 
-	if ( (pm->ps->pm_flags & 0x80000) != 0 && ps->pm_time <= 1800 )
+	velocitySqrd = (height + height) * pm->ps->gravity;
+
+	if ( pm->ps->pm_flags & PMF_JUMPING && ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME )
 	{
 		factor = Jump_GetLandFactor(ps);
+		assert(factor);
 		velocitySqrd = velocitySqrd / factor;
 	}
 
-	pml->groundPlane = 0;
-	pml->almostGroundPlane = 0;
-	pml->walking = 0;
-	ps->groundEntityNum = 1023;
+	pml->groundPlane = qfalse;
+	pml->almostGroundPlane = qfalse;
+	pml->walking = qfalse;
+	ps->groundEntityNum = ENTITYNUM_NONE;
 	ps->jumpTime = pm->cmd.serverTime;
 	ps->jumpOriginZ = ps->origin[2];
-	ps->pm_flags |= 0x80000u;
+	ps->pm_flags |= PMF_JUMPING;
 	ps->pm_time = 0;
-	ps->velocity[2] = sqrt(velocitySqrd);
+	ps->velocity[2] = I_sqrt(velocitySqrd);
 	ps->aimSpreadScale = ps->aimSpreadScale + jump_spreadAdd->current.decimal;
 
-	if ( ps->aimSpreadScale > 255.0 )
-		ps->aimSpreadScale = 255.0;
+	if ( ps->aimSpreadScale > 255 )
+	{
+		ps->aimSpreadScale = 255;
+	}
 }
 
-bool Jump_Check(pmove_t *pm, pml_t *pml)
+/*
+==================
+Jump_Start
+==================
+*/
+bool Jump_Check( pmove_t *pm, pml_t *pml )
 {
-	playerState_s *ps;
+	playerState_t *ps;
 
+	assert(pm);
 	ps = pm->ps;
+	assert(ps);
 
-	if ( pm->cmd.serverTime - pm->ps->jumpTime <= 499 )
-		return 0;
+	if ( pm->cmd.serverTime - pm->ps->jumpTime < JUMP_TIME_DELAY )
+	{
+		return false;
+	}
 
-	if ( (ps->pm_flags & 0x1000) != 0 )
-		return 0;
+	if ( ps->pm_flags & PMF_RESPAWNED )
+	{
+		return false;
+	}
 
-	if ( (ps->pm_flags & 4) != 0 )
-		return 0;
+	if ( ps->pm_flags & PMF_MANTLE )
+	{
+		return false;
+	}
 
-	if ( ps->pm_type > PM_INTERMISSION )
-		return 0;
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		return false;
+	}
 
 	if ( PM_GetEffectiveStance(ps) )
-		return 0;
-
-	if ( (pm->cmd.buttons & 0x400) == 0 )
-		return 0;
-
-	if ( (pm->oldcmd.buttons & 0x400) != 0 )
 	{
-		pm->cmd.buttons &= ~0x400u;
-		return 0;
+		return false;
+	}
+
+	if ( !(pm->cmd.buttons & BUTTON_JUMP) )
+	{
+		return false;
+	}
+
+	if ( pm->oldcmd.buttons & BUTTON_JUMP )
+	{
+		pm->cmd.buttons &= ~BUTTON_JUMP;
+		return false;
+	}
+
+	Jump_Start(pm, pml, jump_height->current.decimal);
+	Jump_AddSurfaceEvent(ps, pml);
+
+	if ( ps->pm_flags & PMF_LADDER )
+	{
+		Jump_PushOffLadder(ps, pml);
+	}
+
+	if ( pm->cmd.forwardmove >= 0 )
+	{
+		BG_AnimScriptEvent(ps, ANIM_ET_JUMP, qfalse, qtrue);
 	}
 	else
 	{
-		Jump_Start(pm, pml, jump_height->current.decimal);
-		Jump_AddSurfaceEvent(ps, pml);
-
-		if ( (ps->pm_flags & 0x20) != 0 )
-			Jump_PushOffLadder(ps, pml);
-
-		if ( pm->cmd.forwardmove < 0 )
-			BG_AnimScriptEvent(ps, ANIM_ET_JUMPBK, 0, 1);
-		else
-			BG_AnimScriptEvent(ps, ANIM_ET_JUMP, 0, 1);
-
-		return 1;
+		BG_AnimScriptEvent(ps, ANIM_ET_JUMPBK, qfalse, qtrue);
 	}
+
+	return true;
 }
 
+/*
+==================
+Jump_RegisterDvars
+==================
+*/
 void Jump_RegisterDvars()
 {
-	jump_height = Dvar_RegisterFloat("jump_height", 39.0, 0.0, 128.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
-	jump_stepSize = Dvar_RegisterFloat("jump_stepSize", 18.0, 0.0, 64.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
-	jump_slowdownEnable = Dvar_RegisterBool("jump_slowdownEnable", 1, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
-	jump_ladderPushVel = Dvar_RegisterFloat("jump_ladderPushVel", 128.0, 0.0, 1024.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
-	jump_spreadAdd = Dvar_RegisterFloat("jump_spreadAdd", 64.0, 0.0, 512.0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
-	jump_bounceEnable = Dvar_RegisterBool("jump_bounceEnable", 0, DVAR_CHEAT | DVAR_DEVELOPER | DVAR_CHANGEABLE_RESET);
+	jump_height = Dvar_RegisterFloat("jump_height", 39, 0, 128, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	jump_stepSize = Dvar_RegisterFloat("jump_stepSize", 18, 0, 64, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	jump_slowdownEnable = Dvar_RegisterBool("jump_slowdownEnable", true, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	jump_ladderPushVel = Dvar_RegisterFloat("jump_ladderPushVel", 128, 0, 1024, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	jump_spreadAdd = Dvar_RegisterFloat("jump_spreadAdd", 64, 0, 512, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 }

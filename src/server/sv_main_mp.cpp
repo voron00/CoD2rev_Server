@@ -638,7 +638,7 @@ void SVC_Status( netadr_t from )
 #endif
 
 	qboolean serverModded = qfalse;
-	strcpy( infostring, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO) );
+	strcpy( infostring, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE) );
 
 	// echo back the parameter to status. so master servers can use it as a challenge
 	// to prevent timed spoofed reply packets that add ghost servers
@@ -732,7 +732,7 @@ void SVC_GameCompleteStatus( netadr_t from )
 	int playerLength;
 	char infostring[MAX_INFO_STRING];
 
-	strcpy( infostring, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO) );
+	strcpy( infostring, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE) );
 
 	// echo back the parameter to status. so master servers can use it as a challenge
 	// to prevent timed spoofed reply packets that add ghost servers
@@ -1128,10 +1128,10 @@ void SV_Frame(int msec)
 	}
 
 	// update infostrings if anything has been changed
-	if ( (dvar_modifiedFlags & (DVAR_SERVERINFO | DVAR_SCRIPTINFO)) )
+	if ( (dvar_modifiedFlags & (DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE)) )
 	{
-		SV_SetConfigstring(CS_SERVERINFO, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
-		dvar_modifiedFlags &= ~(DVAR_SERVERINFO | DVAR_SCRIPTINFO);
+		SV_SetConfigstring(CS_SERVERINFO, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE));
+		dvar_modifiedFlags &= ~(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE);
 	}
 
 	if ( (dvar_modifiedFlags & DVAR_SYSTEMINFO) )
@@ -1141,10 +1141,10 @@ void SV_Frame(int msec)
 	}
 
 	// NERVE - SMF
-	if ( (dvar_modifiedFlags & DVAR_DEVELOPER) )
+	if ( (dvar_modifiedFlags & DVAR_CODINFO) )
 	{
 		SV_SetConfig(142, 96, 256);
-		dvar_modifiedFlags &= ~DVAR_DEVELOPER;
+		dvar_modifiedFlags &= ~DVAR_CODINFO;
 	}
 
 	SV_UpdateBots();

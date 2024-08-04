@@ -148,13 +148,13 @@ int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const
 		tw.midpoint[i] = (tw.extents.start[i] + tw.extents.end[i]) * 0.5;
 		tw.delta[i] = tw.extents.end[i] - tw.extents.start[i];
 		tw.halfDelta[i] = tw.delta[i] * 0.5;
-		tw.halfDeltaAbs[i] = fabs(tw.halfDelta[i]);
+		tw.halfDeltaAbs[i] = I_fabs(tw.halfDelta[i]);
 	}
 
 	CM_CalcTraceEntents(&tw.extents);
 
 	tw.deltaLenSq = VectorLengthSquared(tw.delta);
-	tw.deltaLen = sqrt(tw.deltaLenSq);
+	tw.deltaLen = I_sqrt(tw.deltaLenSq);
 
 	if ( tw.size[0] > tw.size[2] )
 		tw.radius = tw.size[2];
@@ -450,7 +450,7 @@ qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart,
 
 	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
 
-	return (-fB - sqrt(fDiscriminant)) / fA + fB * SURFACE_CLIP_EPSILON / fDeltaLen >= trace->fraction;
+	return (-fB - I_sqrt(fDiscriminant)) / fA + fB * SURFACE_CLIP_EPSILON / fDeltaLen >= trace->fraction;
 }
 
 /*
@@ -527,7 +527,7 @@ qboolean CM_TraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, cons
 	}
 
 	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
-	fEntry = (-fB - sqrt(fDiscriminant)) / fA + fDeltaLen * SURFACE_CLIP_EPSILON / fB;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fDeltaLen * SURFACE_CLIP_EPSILON / fB;
 
 	if ( trace->fraction > fEntry )
 	{
@@ -569,7 +569,7 @@ qboolean CM_SightTraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vSt
 		fTotalHeight = tw->size[2] - tw->radius + fStationaryHalfHeight;
 		assert(fTotalHeight >= 0);
 
-		return fabs(vDelta[2]) > fTotalHeight;
+		return I_fabs(vDelta[2]) > fTotalHeight;
 	}
 
 	fB = Dot2Product(tw->delta, vDelta);
@@ -590,7 +590,7 @@ qboolean CM_SightTraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vSt
 	vDelta[2] = 0.0;
 	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
 	fEpsilon = fB * SURFACE_CLIP_EPSILON / fDeltaLen;
-	fEntry = (-fB - sqrt(fDiscriminant)) / fA + fEpsilon;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
 
 	if ( fEntry >= trace->fraction )
 	{
@@ -601,7 +601,7 @@ qboolean CM_SightTraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vSt
 	fHitHeight = (fEntry - fEpsilon) * tw->delta[2] + tw->extents.start[2] - vStationary[2];
 	assert(fTotalHeight >= 0);
 
-	return fabs(fHitHeight) > fTotalHeight;
+	return I_fabs(fHitHeight) > fTotalHeight;
 }
 
 /*
@@ -698,7 +698,7 @@ int CM_SightTraceThroughBrush( traceWork_t *tw, cbrush_t *brush )
 		assert(!IS_NAN((side->plane->normal)[0]) && !IS_NAN((side->plane->normal)[1]) && !IS_NAN((side->plane->normal)[2]));
 		assert(!IS_NAN(tw->offsetZ));
 
-		dist = side->plane->normal[3] + tw->radius + fabs(side->plane->normal[2] * tw->offsetZ);
+		dist = side->plane->normal[3] + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
 
 		assert(!IS_NAN(dist));
 
@@ -782,7 +782,7 @@ qboolean CM_TraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vStation
 		fTotalHeight = tw->size[2] - tw->radius + fStationaryHalfHeight;
 		assert(fTotalHeight >= 0);
 
-		if ( fabs(vDelta[2]) > fTotalHeight )
+		if ( I_fabs(vDelta[2]) > fTotalHeight )
 		{
 			return qtrue;
 		}
@@ -796,7 +796,7 @@ qboolean CM_TraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vStation
 		VectorSubtract(tw->extents.end, vStationary, vDelta);
 		assert(fTotalHeight >= 0);
 
-		if ( fTotalHeight >= fabs(vDelta[2]) )
+		if ( fTotalHeight >= I_fabs(vDelta[2]) )
 		{
 			trace->allsolid = 1;
 		}
@@ -823,7 +823,7 @@ qboolean CM_TraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vStation
 	vDelta[2] = 0.0;
 	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
 	fEpsilon = fDeltaLen * SURFACE_CLIP_EPSILON / fB;
-	fEntry = (-fB - sqrt(fDiscriminant)) / fA + fEpsilon;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
 
 	if ( trace->fraction > fEntry )
 	{
@@ -831,7 +831,7 @@ qboolean CM_TraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vStation
 		assert(fTotalHeight >= 0);
 		fHitHeight = (fEntry - fEpsilon) * tw->delta[2] + tw->extents.start[2] - vStationary[2];
 
-		if ( fabs(fHitHeight) > fTotalHeight )
+		if ( I_fabs(fHitHeight) > fTotalHeight )
 		{
 			return qtrue;
 		}
@@ -992,7 +992,7 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush, trace_t *trace )
 		assert(!IS_NAN(tw->offsetZ));
 
 		// adjust the plane distance apropriately for radius
-		dist = side->plane->dist + tw->radius + fabs(side->plane->normal[2] * tw->offsetZ);
+		dist = side->plane->dist + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
 		assert(!IS_NAN(dist));
 
 		d1 = DotProduct(tw->extents.start, side->plane->normal) - dist;
@@ -1152,7 +1152,7 @@ void CM_TestCapsuleInCapsule( traceWork_t *tw, trace_t *trace )
 	fHeightDiff = tw->extents.start[2] - offset[2];
 	fTotalHalfHeight = offs + tw->size[2] - tw->radius;
 	assert(fTotalHalfHeight >= 0);
-	if ( fTotalHalfHeight >= fabs(fHeightDiff) )
+	if ( fTotalHalfHeight >= I_fabs(fHeightDiff) )
 	{
 		// 2d coordinates
 		top[2] = p1[2] = 0;
@@ -1206,7 +1206,7 @@ void CM_TestBoxInBrush( traceWork_t *tw, cbrush_t *brush, trace_t *trace )
 		assert(!IS_NAN(tw->offsetZ));
 
 		// adjust the plane distance apropriately for mins/maxs
-		dist = side->plane->normal[3] + tw->radius + fabs(side->plane->normal[2] * tw->offsetZ);
+		dist = side->plane->normal[3] + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
 		assert(!IS_NAN(dist));
 
 		d1 = DotProduct(tw->extents.start, side->plane->normal) - dist;
@@ -1432,7 +1432,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 		}
 
 		diff = t2 - t1;
-		absDiff = fabs(diff);
+		absDiff = I_fabs(diff);
 
 		if ( absDiff > 0.00000047683716 )
 		{
@@ -1671,7 +1671,7 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 		}
 
 		diff = t2 - t1;
-		absDiff = fabs(diff);
+		absDiff = I_fabs(diff);
 
 		if ( absDiff > 0.00000047683716 )
 		{
@@ -2047,7 +2047,7 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 		}
 
 		diff = t2 - t1;
-		absDiff = fabs(diff);
+		absDiff = I_fabs(diff);
 
 		if ( absDiff > 0.00000047683716 )
 		{
@@ -2206,7 +2206,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 		}
 
 		diff = t2 - t1;
-		absDiff = fabs(diff);
+		absDiff = I_fabs(diff);
 
 		if ( absDiff > 0.00000047683716 )
 		{
@@ -2286,13 +2286,13 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
 		tw.midpoint[i] = (tw.extents.start[i] + tw.extents.end[i]) * 0.5;
 		tw.delta[i] = tw.extents.end[i] - tw.extents.start[i];
 		tw.halfDelta[i] = tw.delta[i] * 0.5;
-		tw.halfDeltaAbs[i] = fabs(tw.halfDelta[i]);
+		tw.halfDeltaAbs[i] = I_fabs(tw.halfDelta[i]);
 	}
 
 	CM_CalcTraceEntents(&tw.extents);
 
 	tw.deltaLenSq = VectorLengthSquared(tw.delta);
-	tw.deltaLen = sqrt(tw.deltaLenSq);
+	tw.deltaLen = I_sqrt(tw.deltaLenSq);
 
 	if ( tw.size[2] >= tw.size[0] )
 		tw.radius = tw.size[0];

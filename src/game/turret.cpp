@@ -19,8 +19,8 @@ qboolean turret_behind(gentity_s *self, gentity_s *player)
 
 	pTurretInfo = self->pTurretInfo;
 	minYaw = self->r.currentAngles[1] + pTurretInfo->arcmin[1];
-	absmin = fabs(pTurretInfo->arcmin[1]);
-	yawSpan = (fabs(pTurretInfo->arcmax[1]) + absmin) * 0.5;
+	absmin = I_fabs(pTurretInfo->arcmin[1]);
+	yawSpan = (I_fabs(pTurretInfo->arcmax[1]) + absmin) * 0.5;
 	yaw = minYaw + yawSpan;
 	centerYaw = AngleNormalize180(yaw);
 	YawVectors(centerYaw, forward, 0);
@@ -30,7 +30,7 @@ qboolean turret_behind(gentity_s *self, gentity_s *player)
 	Vec3Normalize(dir);
 	dot = DotProduct(forward, dir);
 	clamped = I_fclamp(dot, -1.0, 1.0);
-	angle = Q_acos(clamped) * 57.29577951308232;
+	angle = Q_acos(clamped) * DEGINRAD;
 
 	return angle <= yawSpan;
 }

@@ -71,7 +71,6 @@ qboolean G_UpdateClientInfo(gentity_s *ent)
 void G_UpdatePlayerContents(gentity_s *ent)
 {
 #ifdef LIBCOD
-	extern dvar_t *g_playerCollision;
 	if (!g_playerCollision->current.boolean)
 		return;
 #endif
@@ -1040,7 +1039,6 @@ int StuckInClient(gentity_s *self)
 	int iPushTime;
 
 #ifdef LIBCOD
-	extern dvar_t *g_playerEject;
 	if (!g_playerEject->current.boolean)
 		return 0;
 #endif

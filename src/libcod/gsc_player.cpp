@@ -933,38 +933,6 @@ void gsc_player_getcurrentoffhandslotammo(scr_entref_t id)
 	stackPushInt(ps->ammoclip[ps->offHandIndex - 1]);
 }
 
-void gsc_player_setjump_slowdownenable(scr_entref_t id)
-{
-	int slowdown;
-
-	if ( ! stackGetParams("i", &slowdown))
-	{
-		stackError("gsc_player_setjump_slowdownenable() argument is undefined or has a wrong type");
-		stackPushUndefined();
-		return;
-	}
-
-	if (id.entnum >= MAX_CLIENTS)
-	{
-		stackError("gsc_player_setjump_slowdownenable() entity %i is not a player", id.entnum);
-		stackPushUndefined();
-		return;
-	}
-
-	extern bool player_jump_slowdownenable_enabled[MAX_CLIENTS];
-	extern bool player_jump_slowdownenable[MAX_CLIENTS];
-
-	if (slowdown == -1)
-		player_jump_slowdownenable_enabled[id.entnum] = false;
-	else
-	{
-		player_jump_slowdownenable_enabled[id.entnum] = true;
-		player_jump_slowdownenable[id.entnum] = slowdown;
-	}
-
-	stackPushBool(qtrue);
-}
-
 void gsc_player_getprotocol(scr_entref_t id)
 {
 	if (id.entnum >= MAX_CLIENTS)

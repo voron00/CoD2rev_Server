@@ -232,7 +232,7 @@ void MissileLandAngles(gentity_s *ent, trace_t *trace, float *vAngles, int bForc
 	{
 		fSurfacePitch = PitchForYawOnNormal(vAngles[1], trace->normal);
 		aSub = AngleSubtract(fSurfacePitch, *vAngles);
-		vLen = fabs(aSub);
+		vLen = I_fabs(aSub);
 
 		if ( !bForceAlign )
 		{
@@ -254,7 +254,7 @@ void MissileLandAngles(gentity_s *ent, trace_t *trace, float *vAngles, int bForc
 
 		if ( bForceAlign || vLen < 45.0 )
 		{
-			if ( fabs(*vAngles) <= 90.0 )
+			if ( I_fabs(*vAngles) <= 90.0 )
 			{
 				aNorm = AngleNormalize360(fSurfacePitch);
 			}
@@ -576,7 +576,7 @@ void G_RunMissile(gentity_s *ent)
 		return;
 	}
 
-	if ( fabs(ent->s.pos.trDelta[2]) <= 30.0 || SV_PointContents(ent->r.currentOrigin, -1, 32) )
+	if ( I_fabs(ent->s.pos.trDelta[2]) <= 30.0 || SV_PointContents(ent->r.currentOrigin, -1, 32) )
 		G_MissileTrace(&trace, ent->r.currentOrigin, origin, ent->r.ownerNum, ent->clipmask);
 	else
 		G_MissileTrace(&trace, ent->r.currentOrigin, origin, ent->r.ownerNum, ent->clipmask | 0x20);

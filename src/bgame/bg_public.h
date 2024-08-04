@@ -1201,7 +1201,7 @@ struct pmove_t
 	float xyspeed;
 	int proneChange;
 	byte handler;
-	byte mantleStarted;
+	bool mantleStarted;
 	vec3_t mantleEndPos;
 	int mantleDuration;
 };
@@ -1284,6 +1284,7 @@ enum weapAnimNumber_t
 #define PMF_LADDER          0x20
 #define PMF_BACKWARDS_RUN   0x80
 #define PMF_SLIDING         0x200
+#define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
 #define PMF_JUMPING         0x80000
 #define PMF_VIEWLOCKED      0x800000    // Guessed name
@@ -1303,7 +1304,7 @@ enum weapAnimNumber_t
 #define EF_FIRING       0x40
 #define EF_TURRET_PRONE 0x100       // See EF_TURRET_ACTIVE
 #define EF_TURRET_DUCK  0x200       // See EF_TURRET_ACTIVE
-#define EF_TURRET_ACTIVE 0x300       // Set on players that use a turret
+#define EF_TURRET_ACTIVE 0x300      // Set on players that use a turret
 #define EF_MANTLE       0x4000      //
 #define EF_TAGCONNECT   0x8000      // Connected to another entity via tag
 #define EF_DEAD         0x20000     //
@@ -1612,6 +1613,11 @@ void Mantle_Start(pmove_t *pm, playerState_s *ps, MantleResults *mresults);
 void Mantle_Check(pmove_t *pmove, pml_t *pml);
 void Mantle_CreateAnims(void *(*Alloc)(int));
 void Mantle_ShutdownAnims();
+int Mantle_GetUpLength(const MantleState *mstate);
+int Mantle_GetOverLength(const MantleState *mstate);
+void Mantle_DebugPrint(const char *msg);
+bool Mantle_FindMantleSurface(pmove_t *pm, pml_t *pml, trace_t *trace, float *mantleDir);
+bool Mantle_CheckLedge(pmove_t *pmove, pml_t *pml, MantleResults *mresults, float units);
 
 unsigned int BG_GetNumWeapons();
 void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);

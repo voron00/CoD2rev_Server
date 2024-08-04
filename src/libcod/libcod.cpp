@@ -10,6 +10,7 @@ dvar_t *sv_allowRcon;
 dvar_t *sv_downloadMessage;
 dvar_t *sv_cracked;
 dvar_t *sv_kickbots;
+dvar_t *jump_bounceEnable;
 
 int codecallback_playercommand = 0;
 int codecallback_userinfochanged = 0;
@@ -26,13 +27,15 @@ void RegisterLibcodDvars()
 
 	fs_library = Dvar_RegisterString("fs_library", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
-	g_playerCollision = Dvar_RegisterBool("g_playerCollision", 1, DVAR_CHANGEABLE_RESET);
-	g_playerEject = Dvar_RegisterBool("g_playerEject", 1, DVAR_CHANGEABLE_RESET);
+	g_playerCollision = Dvar_RegisterBool("g_playerCollision", true, DVAR_CHANGEABLE_RESET);
+	g_playerEject = Dvar_RegisterBool("g_playerEject", true, DVAR_CHANGEABLE_RESET);
 
-	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", qtrue, DVAR_CHANGEABLE_RESET);
+	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", true, DVAR_CHANGEABLE_RESET);
 	sv_downloadMessage = Dvar_RegisterString("sv_downloadMessage", "", DVAR_CHANGEABLE_RESET);
-	sv_cracked = Dvar_RegisterBool("sv_cracked", qfalse, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	sv_kickbots = Dvar_RegisterBool("sv_kickbots", qfalse, DVAR_CHANGEABLE_RESET);
+	sv_cracked = Dvar_RegisterBool("sv_cracked", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_kickbots = Dvar_RegisterBool("sv_kickbots", false, DVAR_CHANGEABLE_RESET);
+
+	jump_bounceEnable = Dvar_RegisterBool("jump_bounceEnable", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 }
 
 void InitLibcodCallbacks()

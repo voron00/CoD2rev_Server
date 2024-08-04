@@ -807,11 +807,11 @@ void SV_SaveSystemInfo()
 	dvar_modifiedFlags &= ~DVAR_SYSTEMINFO;
 	SV_SetConfigstring(CS_SYSTEMINFO, info);
 
-	SV_SetConfigstring(CS_SERVERINFO, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
-	dvar_modifiedFlags &= ~(DVAR_SERVERINFO | DVAR_SCRIPTINFO);
+	SV_SetConfigstring(CS_SERVERINFO, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE));
+	dvar_modifiedFlags &= ~(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE);
 
 	SV_SetConfig(142, 96, 256);
-	dvar_modifiedFlags &= ~DVAR_DEVELOPER;
+	dvar_modifiedFlags &= ~DVAR_CODINFO;
 }
 
 /*

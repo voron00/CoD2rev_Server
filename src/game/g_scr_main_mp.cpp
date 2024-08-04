@@ -878,7 +878,7 @@ void GScr_SetDvar()
 		if ( info )
 		{
 			dvar = Dvar_FindVar(dvarName);
-			Dvar_AddFlags(dvar, DVAR_SCRIPTINFO);
+			Dvar_AddFlags(dvar, DVAR_SERVERINFO_NOUPDATE);
 		}
 	}
 	else
@@ -1546,7 +1546,7 @@ void GScr_asin()
 		Scr_Error(va("%g out of range", number));
 	}
 
-	value = asin(number) * 57.29577951308232;
+	value = asin(number) * DEGINRAD;
 	Scr_AddFloat(value);
 }
 
@@ -1562,7 +1562,7 @@ void GScr_acos()
 		Scr_Error(va("%g out of range", number));
 	}
 
-	value = acos(number) * 57.29577951308232;
+	value = acos(number) * DEGINRAD;
 	Scr_AddFloat(value);
 }
 
@@ -1572,7 +1572,7 @@ void GScr_atan()
 	float value;
 
 	number = Scr_GetFloat(0);
-	value = atan(number) * 57.29577951308232;
+	value = atan(number) * DEGINRAD;
 	Scr_AddFloat(value);
 }
 
@@ -2766,7 +2766,7 @@ int G_IndexForMeansOfDeath(const char *name)
 {
 	int i;
 
-	for ( i = 0; i < COUNT_OF(modNames); ++i )
+	for ( i = 0; i < ARRAY_COUNT(modNames); ++i )
 	{
 		if ( !I_stricmp(name, modNames[i]) )
 			return i;
@@ -3040,7 +3040,7 @@ void GScr_MakeDvarServerInfo()
 
 	if ( dvar )
 	{
-		Dvar_AddFlags(dvar, DVAR_DEVELOPER);
+		Dvar_AddFlags(dvar, DVAR_CODINFO);
 	}
 	else
 	{
@@ -3055,7 +3055,7 @@ void GScr_MakeDvarServerInfo()
 		}
 
 		CleanDvarValue(dvarValue, outString, sizeof(outString));
-		Dvar_RegisterString(dvarName, dvarValue, DVAR_DEVELOPER | DVAR_EXTERNAL);
+		Dvar_RegisterString(dvarName, dvarValue, DVAR_CODINFO | DVAR_EXTERNAL);
 	}
 }
 
@@ -4499,7 +4499,7 @@ void (*BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t)
 
 	name = *pName;
 
-	for ( i = 0; i < COUNT_OF(methods); ++i )
+	for ( i = 0; i < ARRAY_COUNT(methods); ++i )
 	{
 		if ( !strcmp(name, methods[i].name) )
 		{
@@ -4519,7 +4519,7 @@ void (*Scr_GetFunction(const char **pName, int *type))()
 
 	name = *pName;
 
-	for ( i = 0; i < COUNT_OF(functions); ++i )
+	for ( i = 0; i < ARRAY_COUNT(functions); ++i )
 	{
 		if ( !strcmp(name, functions[i].name) )
 		{

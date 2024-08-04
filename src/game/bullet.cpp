@@ -231,7 +231,7 @@ void Bullet_RandomSpread(float spread, float *end, const weaponParms *wp, float 
 	r = tan(spread * 0.017453292);
 	aimOffset = r * maxRange;
 
-	if (g_fixedWeaponSpreads->current.boolean && shot != -1 && shot < COUNT_OF(fixed_spread_grid))
+	if (g_fixedWeaponSpreads->current.boolean && shot != -1 && shot < ARRAY_COUNT(fixed_spread_grid))
 	{
 		right = fixed_spread_grid[shot][0];
 		up = fixed_spread_grid[shot][1];

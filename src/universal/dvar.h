@@ -77,22 +77,22 @@ typedef struct dvar_s
 	dvar_s *hashNext;
 } dvar_t;
 
-#define DVAR_NOFLAG             0               // 0x0000
-#define DVAR_ARCHIVE            (1 << 0)        // 0x0001
-#define DVAR_USERINFO           (1 << 1)        // 0x0002
-#define DVAR_SERVERINFO         (1 << 2)        // 0x0004
-#define DVAR_SYSTEMINFO         (1 << 3)        // 0x0008
-#define DVAR_INIT               (1 << 4)        // 0x0010
-#define DVAR_LATCH              (1 << 5)        // 0x0020
-#define DVAR_ROM                (1 << 6)        // 0x0040
-#define DVAR_CHEAT              (1 << 7)        // 0x0080
-#define DVAR_DEVELOPER          (1 << 8)        // 0x0100
-#define DVAR_SAVED              (1 << 9)        // 0x0200
-#define DVAR_SCRIPTINFO         (1 << 10)       // 0x0400
-#define DVAR_CHANGEABLE_RESET   (1 << 12)       // 0x1000
-#define DVAR_EXTERNAL           (1 << 14)       // 0x4000
-#define DVAR_AUTOEXEC           (1 << 15)       // 0x8000
-#define DVAR_INVALID_ENUM_INDEX -1337
+#define DVAR_NOFLAG              0               // 0x0000
+#define DVAR_ARCHIVE             (1 << 0)        // 0x0001
+#define DVAR_USERINFO            (1 << 1)        // 0x0002
+#define DVAR_SERVERINFO          (1 << 2)        // 0x0004
+#define DVAR_SYSTEMINFO          (1 << 3)        // 0x0008
+#define DVAR_INIT                (1 << 4)        // 0x0010
+#define DVAR_LATCH               (1 << 5)        // 0x0020
+#define DVAR_ROM                 (1 << 6)        // 0x0040
+#define DVAR_CHEAT               (1 << 7)        // 0x0080
+#define DVAR_CODINFO             (1 << 8)        // 0x0100
+#define DVAR_SAVED               (1 << 9)        // 0x0200
+#define DVAR_SERVERINFO_NOUPDATE (1 << 10)       // 0x0400
+#define DVAR_CHANGEABLE_RESET    (1 << 12)       // 0x1000
+#define DVAR_EXTERNAL            (1 << 14)       // 0x4000
+#define DVAR_AUTOEXEC            (1 << 15)       // 0x8000
+#define DVAR_INVALID_ENUM_INDEX  -1337
 
 extern dvar_t *sortedDvars;
 extern int dvarCount;

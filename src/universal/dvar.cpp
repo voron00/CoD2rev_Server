@@ -1937,7 +1937,7 @@ void Dvar_ResetScriptInfo()
 	int dvarIter;
 
 	for ( dvarIter = 0; dvarIter < dvarCount; ++dvarIter )
-		dvarPool[dvarIter].flags &= ~DVAR_SCRIPTINFO;
+		dvarPool[dvarIter].flags &= ~DVAR_SERVERINFO_NOUPDATE;
 }
 
 void Dvar_Init()

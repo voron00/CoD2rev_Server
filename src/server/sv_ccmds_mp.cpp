@@ -545,7 +545,7 @@ Examine the serverinfo string
 static void SV_Serverinfo_f(void)
 {
 	Com_Printf("Server info settings:\n");
-	Info_Print(Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO));
+	Info_Print(Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE));
 }
 
 /*

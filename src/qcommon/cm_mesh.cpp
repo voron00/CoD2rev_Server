@@ -68,17 +68,17 @@ bool CM_CullBox( traceWork_t *tw, const vec3_t origin, const vec3_t halfSize )
 	VectorSubtract(tw->midpoint, origin, distorig);
 	VectorAdd(halfSize, tw->size, mid);
 
-	if ( fabs(distorig[0]) > mid[0] + tw->halfDeltaAbs[0] )
+	if ( I_fabs(distorig[0]) > mid[0] + tw->halfDeltaAbs[0] )
 	{
 		return true;
 	}
 
-	if ( fabs(distorig[1]) > mid[1] + tw->halfDeltaAbs[1] )
+	if ( I_fabs(distorig[1]) > mid[1] + tw->halfDeltaAbs[1] )
 	{
 		return true;
 	}
 
-	if ( fabs(distorig[2]) > mid[2] + tw->halfDeltaAbs[2] )
+	if ( I_fabs(distorig[2]) > mid[2] + tw->halfDeltaAbs[2] )
 	{
 		return true;
 	}
@@ -88,17 +88,17 @@ bool CM_CullBox( traceWork_t *tw, const vec3_t origin, const vec3_t halfSize )
 		return false;
 	}
 
-	if ( fabs(tw->halfDelta[1] * distorig[2] - tw->halfDelta[2] * distorig[1]) > mid[1] * tw->halfDeltaAbs[2] + mid[2] * tw->halfDeltaAbs[1] )
+	if ( I_fabs(tw->halfDelta[1] * distorig[2] - tw->halfDelta[2] * distorig[1]) > mid[1] * tw->halfDeltaAbs[2] + mid[2] * tw->halfDeltaAbs[1] )
 	{
 		return true;
 	}
 
-	if ( fabs(tw->halfDelta[2] * distorig[0] - tw->halfDelta[0] * distorig[2]) > mid[2] * tw->halfDeltaAbs[0] + mid[0] * tw->halfDeltaAbs[2] )
+	if ( I_fabs(tw->halfDelta[2] * distorig[0] - tw->halfDelta[0] * distorig[2]) > mid[2] * tw->halfDeltaAbs[0] + mid[0] * tw->halfDeltaAbs[2] )
 	{
 		return true;
 	}
 
-	if ( fabs(tw->halfDelta[0] * distorig[1] - tw->halfDelta[1] * distorig[0]) > mid[0] * tw->halfDeltaAbs[1] + mid[1] * tw->halfDeltaAbs[0] )
+	if ( I_fabs(tw->halfDelta[0] * distorig[1] - tw->halfDelta[1] * distorig[0]) > mid[0] * tw->halfDeltaAbs[1] + mid[1] * tw->halfDeltaAbs[0] )
 	{
 		return true;
 	}
@@ -423,7 +423,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 			assert(tw->offsetZ == tw->size[2] - tw->radius);
 			assert(tw->offsetZ >= 0);
 
-			if ( fabs(edgePoint[2] - tw->extents.start[2]) <= tw->offsetZ )
+			if ( I_fabs(edgePoint[2] - tw->extents.start[2]) <= tw->offsetZ )
 			{
 				VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
 				assert(Vec3IsNormalized( trace->normal ));
@@ -446,7 +446,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 		}
 
 		assert(tw->deltaLenSq > 0.0f);
-		t = (-b - sqrt(discriminant)) / tw->deltaLenSq;
+		t = (-b - I_sqrt(discriminant)) / tw->deltaLenSq;
 
 		if ( t >= trace->fraction || t <= 0.0 )
 		{
@@ -459,7 +459,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 		assert(tw->offsetZ == tw->size[2] - tw->radius);
 		assert(tw->offsetZ >= 0);
 
-		if ( fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
+		if ( I_fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
 		{
 			trace->fraction = t;
 			assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
@@ -477,7 +477,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 			t = 0.0;
 		}
 
-		if ( fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
+		if ( I_fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
 		{
 			trace->fraction = t;
 			assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
@@ -512,7 +512,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 		}
 
 		assert(tw->deltaLenSq > 0.0f);
-		t = (-b - sqrt(discriminant)) / tw->deltaLenSq;
+		t = (-b - I_sqrt(discriminant)) / tw->deltaLenSq;
 
 		if ( t >= trace->fraction || t <= 0.0 )
 		{
@@ -525,7 +525,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 		assert(tw->offsetZ == tw->size[2] - tw->radius);
 		assert(tw->offsetZ >= 0);
 
-		if ( fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
+		if ( I_fabs(endpos[2] - s * border->zSlope + border->zBase) <= tw->offsetZ )
 		{
 			trace->fraction = t;
 			assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
@@ -538,7 +538,7 @@ void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, tra
 
 	edgePoint[2] = border->zSlope * border->length + border->zBase;
 
-	if ( fabs(tw->extents.start[2] - edgePoint[2]) <= tw->offsetZ )
+	if ( I_fabs(tw->extents.start[2] - edgePoint[2]) <= tw->offsetZ )
 	{
 		VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0);
 		assert(Vec3IsNormalized( trace->normal ));
@@ -750,7 +750,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 			{
 				d = DotProduct(hitDelta, edge->axis[2]);
 
-				if ( fabs(d - 0.5) > 0.5 )
+				if ( I_fabs(d - 0.5) > 0.5 )
 				{
 					continue;
 				}
@@ -782,7 +782,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 				continue;
 			}
 
-			hitFrac = (-sqrt(discriminant) - b) / a;
+			hitFrac = (-I_sqrt(discriminant) - b) / a;
 
 			if ( trace->fraction <= hitFrac )
 			{
@@ -792,7 +792,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 			VectorMA(hitDelta, hitFrac, tw->delta, hitDelta);
 			start[2] = DotProduct(hitDelta, edge->axis[2]);
 
-			if ( fabs(start[2] - 0.5) > 0.5 )
+			if ( I_fabs(start[2] - 0.5) > 0.5 )
 			{
 				continue;
 			}
@@ -839,7 +839,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 
 			if ( c <= 0.0 )
 			{
-				hitFrac = 1.0 / sqrt(offsetLenSq);
+				hitFrac = 1.0 / I_sqrt(offsetLenSq);
 				VectorScale(hitDelta, hitFrac, trace->normal);
 
 				if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
@@ -865,7 +865,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 				continue;
 			}
 
-			hitFrac = (-sqrt(discriminant) - b) / a;
+			hitFrac = (-I_sqrt(discriminant) - b) / a;
 
 			if ( trace->fraction <= hitFrac )
 			{
@@ -1019,7 +1019,7 @@ void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri
 			VectorSubtract(sphereStart, edge->origin, hitDelta);
 			d = DotProduct(hitDelta, edge->axis[2]);
 
-			if ( fabs(d - 0.5) > 0.5 )
+			if ( I_fabs(d - 0.5) > 0.5 )
 			{
 				continue;
 			}

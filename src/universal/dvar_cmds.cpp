@@ -465,7 +465,7 @@ static void Dvar_List_f(void)
 		if (match && !Com_Filter(match, dvar->name, qfalse))
 			continue;
 
-		if (dvar->flags & (DVAR_SERVERINFO | DVAR_SCRIPTINFO))
+		if (dvar->flags & (DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE))
 			Com_Printf("S");
 		else
 			Com_Printf(" ");

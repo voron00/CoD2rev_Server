@@ -415,7 +415,11 @@ LABEL_32:
 				}
 
 				Vec3Lerp(ps->origin, down, trace.fraction, ps->origin);
+#ifdef LIBCOD
 				PM_ProjectVelocity(ps->velocity, trace.normal, ps->velocity);
+#else
+				PM_ClipVelocity(ps->velocity, trace.normal, ps->velocity);
+#endif
 			}
 		}
 
@@ -460,7 +464,7 @@ LABEL_32:
 				{
 					deltaPos = ps->origin[2] - down_o[2];
 
-					if ( fabs(deltaPos) > 0.5 )
+					if ( I_fabs(deltaPos) > 0.5 )
 					{
 						deltaPos2 = ps->origin[2] - down_o[2];
 						iParm = floor(deltaPos2);
@@ -480,7 +484,7 @@ LABEL_32:
 							iParm2 = iParm + 128;
 							BG_AddPredictableEventToPlayerstate(EV_STEP_VIEW, iParm2, ps);
 							deltaPos3 = ps->origin[2] - start_o[2];
-							absPos = fabs(deltaPos3);
+							absPos = I_fabs(deltaPos3);
 							endPos = (1.0 - absPos / fStepSize) * 0.80000001 + 0.19999999;
 							VectorScale(ps->velocity, endPos, ps->velocity);
 							iParm3 = iParm2 - 128;

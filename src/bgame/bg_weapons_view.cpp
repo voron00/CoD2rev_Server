@@ -493,7 +493,7 @@ int BG_CalculateWeaponMovement_GunRecoil_SingleAngle(float *fOffset, float *spee
 
 	bCanStop = 0;
 
-	if ( fabs(*fOffset) >= 0.25 || fabs(*speed) >= 1.0 )
+	if ( I_fabs(*fOffset) >= 0.25 || I_fabs(*speed) >= 1.0 )
 	{
 		*fOffset = *speed * fTimeStep + *fOffset;
 		if ( *fOffset <= (float)fOfsCap )

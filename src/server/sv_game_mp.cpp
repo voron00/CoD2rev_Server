@@ -748,7 +748,7 @@ void SV_GetServerinfo(char *buffer, int bufferSize)
 		Com_Error(ERR_DROP, "SV_GetServerinfo: bufferSize == %i", bufferSize);
 	}
 
-	I_strncpyz(buffer, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SCRIPTINFO), bufferSize);
+	I_strncpyz(buffer, Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE), bufferSize);
 }
 
 /*

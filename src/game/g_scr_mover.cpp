@@ -677,7 +677,7 @@ void (*ScriptEnt_GetMethod(const char **pName))(scr_entref_t)
 
 	name = *pName;
 
-	for ( i = 0; i < COUNT_OF(scriptent_methods); ++i )
+	for ( i = 0; i < ARRAY_COUNT(scriptent_methods); ++i )
 	{
 		if ( !strcmp(name, scriptent_methods[i].name) )
 		{

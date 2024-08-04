@@ -338,7 +338,7 @@ static void CMod_LoadSubmodels()
 			out->mins[j] = LittleFloat(in->mins[j]) - 1;
 			out->maxs[j] = LittleFloat(in->maxs[j]) + 1;
 
-			extent[j] = I_fmax(fabs(out->mins[j]), fabs(out->maxs[j]));
+			extent[j] = I_fmax(I_fabs(out->mins[j]), I_fabs(out->maxs[j]));
 		}
 
 		out->radius = VectorLength(extent);

@@ -25,21 +25,18 @@ extern vec4_t vec4_origin;
 #define YAW                 1       // left / right
 #define ROLL                2       // fall over
 
-#define Q_PI    3.14159265358979323846
+#define DEG2RAD( a ) ( ( ( a ) * M_PI ) / 180.0F )
+#define RAD2DEG( a ) ( ( ( a ) * 180.0f ) / M_PI )
 
-#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
-
-#ifndef M_PI
-#define M_PI        3.14159265358979323846  // matches value in gcc v2 math.h
-#endif
+#define DEGINRAD  57.29577951308232 // degrees in one radian
 
 #define abs32 abs
 #define Square( x ) ( ( x ) * ( x ) )
 
-#define	ANGLE2SHORT(x)	((int)((x)*65536.0f/360.0f) & 65535)
-#define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+#define ANGLE2SHORT( x )  ( (int)( ( x ) * 65536 / 360 ) & 65535 )
+#define SHORT2ANGLE( x )  ( ( x ) * ( 360.0 / 65536 ) )
 
-#define SnapVector( v ) {v[0] = (int)v[0]; v[1] = (int)v[1]; v[2] = (int)v[2];}
+#define SnapVector( v ) {v[0] = ( (int)( v[0] ) ); v[1] = ( (int)( v[1] ) ); v[2] = ( (int)( v[2] ) );}
 
 float Q_fabs( float f );
 
@@ -300,6 +297,18 @@ inline void VectorSet(vec3_t v, const float x, const float y, const float z)
 
 /*
 ==============
+VectorNegate
+==============
+*/
+inline void VectorNegate(const vec3_t a, vec3_t b)
+{
+	b[0] = -a[0];
+	b[1] = -a[1];
+	b[2] = -a[2];
+}
+
+/*
+==============
 I_fsel
 ==============
 */
@@ -416,9 +425,29 @@ inline float I_sgn(const float x)
 I_side
 ==============
 */
-inline int I_side(const float s)
+inline int I_side(const float x)
 {
-	return s >= 0.0;
+	return x >= 0.0;
+}
+
+/*
+==============
+I_fabs
+==============
+*/
+inline float I_fabs(const float value)
+{
+	return fabs(value);
+}
+
+/*
+==============
+I_sqrt
+==============
+*/
+inline float I_sqrt(const float value)
+{
+	return sqrt(value);
 }
 
 /*

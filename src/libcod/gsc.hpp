@@ -126,10 +126,13 @@ uint64_t Sys_Milliseconds64(void);
 
 extern dvar_t *sv_master[MAX_MASTER_SERVERS];
 extern dvar_t *fs_library;
+extern dvar_t *g_playerCollision;
+extern dvar_t *g_playerEject;
 extern dvar_t *sv_allowRcon;
 extern dvar_t *sv_downloadMessage;
 extern dvar_t *sv_cracked;
 extern dvar_t *sv_kickbots;
+extern dvar_t *jump_bounceEnable;
 
 void RegisterLibcodDvars();
 int hook_findMap(const char *qpath, void **buffer);

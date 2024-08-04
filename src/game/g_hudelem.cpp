@@ -145,27 +145,27 @@ void HudElem_SetFontScale(game_hudelem_t *hud, int offset)
 
 void HudElem_SetFont(game_hudelem_t *hud, int offset)
 {
-	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_font, COUNT_OF(g_he_font));
+	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_font, ARRAY_COUNT(g_he_font));
 }
 
 void HudElem_SetAlignX(game_hudelem_t *hud, int offset)
 {
-	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_alignx, COUNT_OF(g_he_alignx));
+	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_alignx, ARRAY_COUNT(g_he_alignx));
 }
 
 void HudElem_SetAlignY(game_hudelem_t *hud, int offset)
 {
-	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_aligny, COUNT_OF(g_he_aligny));
+	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_aligny, ARRAY_COUNT(g_he_aligny));
 }
 
 void HudElem_SetHorzAlign(game_hudelem_t *hud, int offset)
 {
-	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_horzalign, COUNT_OF(g_he_horzalign));
+	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_horzalign, ARRAY_COUNT(g_he_horzalign));
 }
 
 void HudElem_SetVertAlign(game_hudelem_t *hud, int offset)
 {
-	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_vertalign, COUNT_OF(g_he_vertalign));
+	HudElem_SetEnumString(hud, &g_hudelem_fields[offset], g_he_vertalign, ARRAY_COUNT(g_he_vertalign));
 }
 
 void HudElem_SetColor(game_hudelem_t *hud, int offset)
@@ -693,7 +693,7 @@ void (*HudElem_GetMethod(const char **pName))(scr_entref_t)
 
 	name = *pName;
 
-	for ( i = 0; i < COUNT_OF(g_he_methods); ++i )
+	for ( i = 0; i < ARRAY_COUNT(g_he_methods); ++i )
 	{
 		if ( !strcmp(name, g_he_methods[i].name) )
 		{

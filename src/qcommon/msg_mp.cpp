@@ -1177,7 +1177,7 @@ netField_t entityStateFields[] =
 
 void MSG_WriteDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, qboolean force)
 {
-	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, COUNT_OF(entityStateFields), 10, entityStateFields, 0);
+	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, ARRAY_COUNT(entityStateFields), 10, entityStateFields, 0);
 }
 
 #define AEF( x ) # x,(intptr_t)&( (archivedEntity_t*)0 )->x
@@ -1255,7 +1255,7 @@ netField_t archivedEntityFields[] =
 
 void MSG_WriteDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int flags)
 {
-	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, flags, COUNT_OF(archivedEntityFields), 10, archivedEntityFields, 0);
+	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, flags, ARRAY_COUNT(archivedEntityFields), 10, archivedEntityFields, 0);
 }
 
 #define CSF( x ) # x,(intptr_t)&( (clientState_t*)0 )->x
@@ -1295,7 +1295,7 @@ void MSG_WriteDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, qb
 		Com_Memset(&nullstate, 0, sizeof(nullstate));
 	}
 
-	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, COUNT_OF(clientStateFields), 6, clientStateFields, 1);
+	MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, ARRAY_COUNT(clientStateFields), 6, clientStateFields, 1);
 }
 
 float MSG_ReadAngle16(msg_t *msg)
@@ -1453,12 +1453,12 @@ void MSG_ReadDeltaStruct(msg_t *msg, const void *from, void *to, unsigned int nu
 
 void MSG_ReadDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, int number)
 {
-	MSG_ReadDeltaStruct(msg, from, to, number, COUNT_OF(entityStateFields), 10, entityStateFields);
+	MSG_ReadDeltaStruct(msg, from, to, number, ARRAY_COUNT(entityStateFields), 10, entityStateFields);
 }
 
 void MSG_ReadDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int number)
 {
-	MSG_ReadDeltaStruct(msg, from, to, number, COUNT_OF(archivedEntityFields), 10, archivedEntityFields);
+	MSG_ReadDeltaStruct(msg, from, to, number, ARRAY_COUNT(archivedEntityFields), 10, archivedEntityFields);
 }
 
 void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int number)
@@ -1471,7 +1471,7 @@ void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int
 		Com_Memset(&nullstate, 0, sizeof(nullstate));
 	}
 
-	MSG_ReadDeltaStruct(msg, from, to, number, COUNT_OF(clientStateFields), 6, clientStateFields);
+	MSG_ReadDeltaStruct(msg, from, to, number, ARRAY_COUNT(clientStateFields), 6, clientStateFields);
 }
 
 #define HEF( x ) # x,(intptr_t)&( (hudelem_t*)0 )->x
@@ -1530,7 +1530,7 @@ void MSG_WriteDeltaHudElems(msg_t *msg, hudelem_s *from, hudelem_s *to, int coun
 	{
 		lc = 0;
 
-		for (j = 0, field = hudElemFields; j < COUNT_OF(hudElemFields); j++, field++)
+		for (j = 0, field = hudElemFields; j < ARRAY_COUNT(hudElemFields); j++, field++)
 		{
 			if (*(int32_t *)((byte *)(from + i) + field->offset) != *(int32_t *)((byte *)(to + i) + field->offset))
 			{
@@ -1562,7 +1562,7 @@ void MSG_ReadDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count
 			MSG_ReadDeltaField(msg, &from[i], &to[i], &hudElemFields[j], 0);
 		}
 
-		for ( k = j; j < COUNT_OF(hudElemFields); ++j, ++k )
+		for ( k = j; j < ARRAY_COUNT(hudElemFields); ++j, ++k )
 		{
 			*(int32_t *)((byte *)(from + i) + hudElemFields[k].offset) = *(int32_t *)((byte *)(to + i) + hudElemFields[k].offset);
 		}
@@ -1707,7 +1707,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 
 	lc = 0;
 
-	for ( i = 0, field = playerStateFields; i < COUNT_OF(playerStateFields); i++, field++ )
+	for ( i = 0, field = playerStateFields; i < ARRAY_COUNT(playerStateFields); i++, field++ )
 	{
 		fromF = ( int32_t * )( (byte *)from + field->offset );
 		toF = ( int32_t * )( (byte *)to + field->offset );
@@ -1914,7 +1914,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *t
 		for ( i = 0; i < MAX_OBJECTIVES; ++i )
 		{
 			MSG_WriteBits(msg, to->objective[i].state, 3);
-			MSG_WriteDeltaObjective(msg, &from->objective[i], &to->objective[i], 0, COUNT_OF(objectiveFields), objectiveFields);
+			MSG_WriteDeltaObjective(msg, &from->objective[i], &to->objective[i], 0, ARRAY_COUNT(objectiveFields), objectiveFields);
 		}
 	}
 
@@ -2011,7 +2011,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 		}
 	}
 
-	for ( i = lc, field = &playerStateFields[lc]; i < COUNT_OF(playerStateFields); i++, field++ )
+	for ( i = lc, field = &playerStateFields[lc]; i < ARRAY_COUNT(playerStateFields); i++, field++ )
 	{
 		fromF = ( int32_t * )( (byte *)from + field->offset );
 		toF = ( int32_t * )( (byte *)to + field->offset );
@@ -2092,7 +2092,7 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
 		for ( i = 0; i < MAX_OBJECTIVES; ++i )
 		{
 			to->objective[i].state = MSG_ReadBits(msg, 3);
-			MSG_ReadDeltaObjective(msg, &from->objective[i], &to->objective[i], COUNT_OF(objectiveFields), objectiveFields);
+			MSG_ReadDeltaObjective(msg, &from->objective[i], &to->objective[i], ARRAY_COUNT(objectiveFields), objectiveFields);
 		}
 	}
 

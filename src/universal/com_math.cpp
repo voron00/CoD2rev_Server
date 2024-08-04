@@ -36,12 +36,12 @@ int Vector4Compare(const vec4_t v1, const vec4_t v2)
 
 vec_t VectorLength( const vec3_t v )
 {
-	return sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+	return I_sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
 }
 
 vec_t Vec2Length( const vec2_t v )
 {
-	return sqrt( v[0] * v[0] + v[1] * v[1] );
+	return I_sqrt( v[0] * v[0] + v[1] * v[1] );
 }
 
 vec_t Vec2LengthSq( const vec2_t v )
@@ -184,7 +184,7 @@ vec_t Vec2Normalize( vec3_t v )
 	float length, ilength;
 
 	length = v[0] * v[0] + v[1] * v[1];
-	length = sqrt( length );
+	length = I_sqrt( length );
 
 	if ( length )
 	{
@@ -202,7 +202,7 @@ vec_t Vec3Normalize( vec3_t v )
 	float length, ilength;
 
 	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-	length = sqrt( length );
+	length = I_sqrt( length );
 
 	if ( length )
 	{
@@ -220,7 +220,7 @@ vec_t Vec4Normalize( vec4_t v )
 	float length, ilength;
 
 	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3];
-	length = sqrt( length );
+	length = I_sqrt( length );
 
 	if ( length )
 	{
@@ -377,8 +377,8 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs )
 
 	for ( i = 0 ; i < 3 ; i++ )
 	{
-		a = fabs( mins[i] );
-		b = fabs( maxs[i] );
+		a = I_fabs( mins[i] );
+		b = I_fabs( maxs[i] );
 		corner[i] = a > b ? a : b;
 	}
 
@@ -393,8 +393,8 @@ float RadiusFromBounds2D( const vec2_t mins, const vec2_t maxs )
 
 	for ( i = 0 ; i < 2 ; i++ )
 	{
-		a = fabs( mins[i] );
-		b = fabs( maxs[i] );
+		a = I_fabs( mins[i] );
+		b = I_fabs( maxs[i] );
 		corner[i] = a > b ? a : b;
 	}
 
@@ -446,7 +446,7 @@ void vectoangles( const vec3_t value1, vec3_t angles )
 		{
 			yaw += 360.0;
 		}
-		forward = sqrt( value1[0] * value1[0] + value1[1] * value1[1] );
+		forward = I_sqrt( value1[0] * value1[0] + value1[1] * value1[1] );
 		pitch = ( atan2( value1[2], forward ) * -180 / M_PI );
 		if(pitch < 0.0)
 		{
@@ -466,7 +466,7 @@ vec_t vectosignedpitch(const vec3_t vec)
 
 	if ( 0.0 != vec[1] || 0.0 != vec[0] )
 	{
-		t = atan2(vec[2], sqrt(vec[1] * vec[1] + vec[0] * vec[0]));
+		t = atan2(vec[2], I_sqrt(vec[1] * vec[1] + vec[0] * vec[0]));
 		return t * -180.0 / M_PI;
 	}
 
@@ -624,9 +624,9 @@ float DiffTrack(float tgt, float cur, float rate, float deltaTime)
 	d = tgt - cur;
 
 	step = rate * d * deltaTime;
-	ad = fabs(d);
+	ad = I_fabs(d);
 
-	if( ad <= 0.001 || fabs(step) > ad)
+	if( ad <= 0.001 || I_fabs(step) > ad)
 	{
 		return tgt;
 	}
@@ -793,7 +793,7 @@ float vectopitch( const vec3_t vec )
 
 	if ( 0.0 != vec[1] || 0.0 != vec[0] )
 	{
-		at = atan2(vec[2], sqrt(Square(vec[1]) + Square(vec[0])));
+		at = atan2(vec[2], I_sqrt(Square(vec[1]) + Square(vec[0])));
 		a = at * -180.0 / M_PI;
 		if ( a < 0.0 )
 		{
@@ -828,7 +828,7 @@ float PitchForYawOnNormal(const float fYaw, const vec3_t normal)
 
 float Abs(const vec3_t v)
 {
-	return (float)sqrt((float)((float)((float)(v[0] * v[0]) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
+	return (float)I_sqrt((float)((float)((float)(v[0] * v[0]) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
 }
 
 void VectorRint(vec3_t v)
@@ -1156,7 +1156,7 @@ float RotationToYaw(const vec2_t rot)
 	r = rot[1] * rot[1] + zz;
 	d = 2.0 / r;
 
-	return (float)(atan2(rot[0] * rot[1] * d, 1.0 - zz * d) * 57.29577951308232);
+	return (float)(atan2(rot[0] * rot[1] * d, 1.0 - zz * d) * DEGINRAD);
 }
 
 void MatrixTranspose(const float in[3][3], float out[3][3])
@@ -1306,12 +1306,12 @@ float Vec2DistanceSq(const vec2_t v1, const vec2_t v2)
 
 float Vec2Distance(const vec2_t v1, const vec2_t v2)
 {
-	return sqrt(Square(v2[0] - v1[0]) + Square(v2[1] - v1[1]));
+	return I_sqrt(Square(v2[0] - v1[0]) + Square(v2[1] - v1[1]));
 }
 
 bool Vec3IsNormalized(const vec3_t v)
 {
-	if(fabs(VectorLengthSquared(v) - 1.0) < 0.0020000001)
+	if(I_fabs(VectorLengthSquared(v) - 1.0) < 0.0020000001)
 	{
 		return true;
 	}
@@ -1320,7 +1320,7 @@ bool Vec3IsNormalized(const vec3_t v)
 
 bool Vec4IsNormalized(const vec4_t v)
 {
-	if(fabs(Vec4LengthSq(v) - 1.0) < 0.0020000001)
+	if(I_fabs(Vec4LengthSq(v) - 1.0) < 0.0020000001)
 	{
 		return true;
 	}

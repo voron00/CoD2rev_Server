@@ -2327,7 +2327,7 @@ void (*Player_GetMethod(const char **pName))(scr_entref_t)
 
 	name = *pName;
 
-	for ( i = 0; i < COUNT_OF(player_methods); ++i )
+	for ( i = 0; i < ARRAY_COUNT(player_methods); ++i )
 	{
 		if ( !strcmp(name, player_methods[i].name) )
 		{

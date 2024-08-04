@@ -27,7 +27,7 @@ void GScr_SetCursorHint(scr_entref_t entref)
 	}
 	else
 	{
-		for ( i = 1; i < COUNT_OF(hintStrings) && hintStrings[i]; ++i )
+		for ( i = 1; i < ARRAY_COUNT(hintStrings) && hintStrings[i]; ++i )
 		{
 			if ( !I_stricmp(pszHint, hintStrings[i]) )
 			{
@@ -41,7 +41,7 @@ void GScr_SetCursorHint(scr_entref_t entref)
 		if ( pEnt->classname == scr_const.trigger_use || pEnt->classname == scr_const.trigger_use_touch )
 			Com_Printf("HINT_INHERIT (for trigger_use or trigger_use_touch entities only)\n");
 
-		for ( j = 1; j < COUNT_OF(hintStrings) && hintStrings[j]; ++j )
+		for ( j = 1; j < ARRAY_COUNT(hintStrings) && hintStrings[j]; ++j )
 			Com_Printf("%s\n", hintStrings[j]);
 
 		Scr_Error(va("%s is not a valid hint type. See above for list of valid hint types\n", pszHint));
@@ -102,7 +102,7 @@ void trigger_use_shared(gentity_s *self)
 	{
 		if ( I_stricmp(cursorhint, "HINT_INHERIT") )
 		{
-			for ( i = 1; i < COUNT_OF(hintStrings); ++i )
+			for ( i = 1; i < ARRAY_COUNT(hintStrings); ++i )
 			{
 				if ( !I_stricmp(cursorhint, hintStrings[i]) )
 				{

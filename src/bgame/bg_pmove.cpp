@@ -402,13 +402,13 @@ float PM_MoveScale(playerState_s *ps, float fmove, float rmove, float umove)
 	float speed;
 	float max;
 
-	max = fabs(fmove);
+	max = I_fabs(fmove);
 
-	if ( fabs(rmove) > max )
-		max = fabs(rmove);
+	if ( I_fabs(rmove) > max )
+		max = I_fabs(rmove);
 
-	if ( fabs(umove) > max )
-		max = fabs(umove);
+	if ( I_fabs(umove) > max )
+		max = I_fabs(umove);
 
 	if ( max == 0.0 )
 	{
@@ -417,7 +417,7 @@ float PM_MoveScale(playerState_s *ps, float fmove, float rmove, float umove)
 	else
 	{
 		temp = fmove * fmove + rmove * rmove + umove * umove;
-		speed = sqrt(temp);
+		speed = I_sqrt(temp);
 		scale = (float)ps->speed * max / (speed * 127.0);
 
 		if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
@@ -447,7 +447,7 @@ float PM_CmdScale(playerState_s *ps, usercmd_s *cmd)
 	int value;
 
 	temp = (float)(cmd->rightmove * cmd->rightmove + cmd->forwardmove * cmd->forwardmove);
-	total = sqrt(temp);
+	total = I_sqrt(temp);
 	forwardmove = cmd->forwardmove;
 
 	if ( forwardmove < 0 )
@@ -634,7 +634,7 @@ void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 
 						height = ps->viewHeightLerpPosAdj - pfPosOfs;
 
-						if ( fabs(height) > 0.050000001 )
+						if ( I_fabs(height) > 0.050000001 )
 						{
 							VectorCopy(ps->velocity, velocity);
 							adjust = pfPosOfs - ps->viewHeightLerpPosAdj;
@@ -1264,12 +1264,12 @@ void PM_ClipVelocity(const float *in, const float *normal, float *out)
 	float change;
 
 	backoff = DotProduct(in, normal);
-	change = backoff - fabs(backoff) * 0.001;
+	change = backoff - I_fabs(backoff) * 0.001;
 
 	VectorMA(in, -change, normal, out);
 }
 
-extern dvar_t *jump_bounceEnable;
+#ifdef LIBCOD
 void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 {
 	float lengthSq2D;
@@ -1285,7 +1285,7 @@ void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 
 	lengthSq2D = (float)(velIn[0] * velIn[0]) + (float)(velIn[1] * velIn[1]);
 
-	if ( fabs(normal[2]) < 0.001 || lengthSq2D == 0.0 )
+	if ( I_fabs(normal[2]) < 0.001 || lengthSq2D == 0.0 )
 	{
 		velOut[0] = velIn[0];
 		velOut[1] = velIn[1];
@@ -1295,7 +1295,7 @@ void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 	{
 		newZ = (float)-(float)((float)(velIn[0] * normal[0]) + (float)(velIn[1] * normal[1])) / normal[2];
 		adjusted = velIn[1];
-		lengthScale = sqrt((float)((float)(velIn[2] * velIn[2]) + lengthSq2D) / (float)((float)(newZ * newZ) + lengthSq2D));
+		lengthScale = I_sqrt((float)((float)(velIn[2] * velIn[2]) + lengthSq2D) / (float)((float)(newZ * newZ) + lengthSq2D));
 
 		if ( lengthScale < 1.0 || newZ < 0.0 || velIn[2] > 0.0 )
 		{
@@ -1305,6 +1305,7 @@ void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 		}
 	}
 }
+#endif
 
 void PM_AirMove(pmove_t *pm, pml_t *pml)
 {
@@ -1424,16 +1425,16 @@ float PM_CmdScale_Walk(pmove_t *pm, usercmd_s *cmd)
 
 	ps = pm->ps;
 	totalForward = (float)(cmd->rightmove * cmd->rightmove + cmd->forwardmove * cmd->forwardmove);
-	forwardSquared = sqrt(totalForward);
+	forwardSquared = I_sqrt(totalForward);
 
 	if ( cmd->forwardmove >= 0 )
 		forward = (float)cmd->forwardmove;
 	else
 		forward = (float)cmd->forwardmove * player_backSpeedScale->current.decimal;
 
-	absTotal = fabs(forward);
+	absTotal = I_fabs(forward);
 	totalRight = (float)cmd->rightmove * player_strafeSpeedScale->current.decimal;
-	rightSquared = fabs(totalRight);
+	rightSquared = I_fabs(totalRight);
 	maxTotal = I_fmax(absTotal, rightSquared);
 
 	if ( maxTotal == 0.0 )
@@ -1753,7 +1754,7 @@ int PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
 
 	ps = pm->ps;
 
-	for ( i = 0; i < COUNT_OF(CorrectSolidDeltas); ++i )
+	for ( i = 0; i < ARRAY_COUNT(CorrectSolidDeltas); ++i )
 	{
 		VectorAdd(ps->origin, CorrectSolidDeltas[i], point);
 		PM_playerTrace(pm, trace, point, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
@@ -2012,7 +2013,7 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml)
 	if ( damageTime < 0 )
 		damageTime = 0;
 	velocitySquared = ps->velocity[0] * ps->velocity[0] + ps->velocity[1] * ps->velocity[1];
-	pm->xyspeed = sqrt(velocitySquared);
+	pm->xyspeed = I_sqrt(velocitySquared);
 	if ( (ps->eFlags & 0x300) != 0 )
 	{
 		if ( (ps->pm_flags & 1) != 0 )
@@ -2483,14 +2484,14 @@ void PmoveSingle(pmove_t *pmove)
 	{
 		if ( (pmove->cmd.forwardmove == pmove->oldcmd.forwardmove
 		        || (forwardmove = (float)pmove->cmd.forwardmove,
-		            absFmove = fabs(forwardmove),
+		            absFmove = I_fabs(forwardmove),
 		            oldFmove = (float)pmove->oldcmd.forwardmove,
-		            absFmove <= fabs(oldFmove)))
+		            absFmove <= I_fabs(oldFmove)))
 		        && (pmove->cmd.rightmove == pmove->oldcmd.rightmove
 		            || (rightmove = (float)pmove->cmd.rightmove,
-		                absRmove = fabs(rightmove),
+		                absRmove = I_fabs(rightmove),
 		                oldRmove = (float)pmove->oldcmd.rightmove,
-		                absRmove <= fabs(oldRmove))) )
+		                absRmove <= I_fabs(oldRmove))) )
 		{
 			if ( (ps->pm_flags & 0x40) == 0
 			        && (ps->weaponstate < (unsigned int)WEAPON_FIRING || ps->weaponstate == WEAPON_RELOADING) )
@@ -2824,7 +2825,7 @@ void PM_CrashLand(playerState_s *pm, pml_t *pml)
 
 	if ( den >= 0.0 )
 	{
-		t = (-vel - sqrt(den)) / (acc + acc);
+		t = (-vel - I_sqrt(den)) / (acc + acc);
 		landVel = t * -gravity + vel;
 		fallHeight = -landVel * -landVel / ((float)pm->gravity + (float)pm->gravity);
 
@@ -3016,11 +3017,11 @@ void PM_LadderMove(pmove_t *pm, pml_t *pml)
 			{
 				VectorMA2(ps->velocity, -fSideSpeedTemp, vSideDir, ps->velocity);
 				fSpeedDrop = fSideSpeedTemp * pml->frametime * 16.0;
-				absSpeedDrop = fabs(fSideSpeedTemp);
+				absSpeedDrop = I_fabs(fSideSpeedTemp);
 
-				if ( absSpeedDrop > fabs(fSpeedDrop) )
+				if ( absSpeedDrop > I_fabs(fSpeedDrop) )
 				{
-					if ( fabs(fSpeedDrop) < 1.0 )
+					if ( I_fabs(fSpeedDrop) < 1.0 )
 					{
 						if ( fSpeedDrop < 0.0 )
 							fSpeedDrop = -1.0;
@@ -3132,7 +3133,7 @@ void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
 
 		if ( delta != 0.0 )
 		{
-			if ( fabs(delta) <= pml->frametime * 70.0 )
+			if ( I_fabs(delta) <= pml->frametime * 70.0 )
 				ps->proneDirectionPitch = ps->proneDirectionPitch + delta;
 			else
 			{
@@ -3155,7 +3156,7 @@ void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
 
 		if ( delta != 0.0 )
 		{
-			if ( fabs(delta) <= pml->frametime * 70.0 )
+			if ( I_fabs(delta) <= pml->frametime * 70.0 )
 				ps->proneTorsoPitch = ps->proneTorsoPitch + delta;
 			else
 			{
@@ -3261,7 +3262,7 @@ void PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsule
 		capsuleTrace(&trace, start, tmins, tmaxs, end, ps->clientNum, 42008593);
 		fLean = UnGetLeanFraction(trace.fraction);
 
-		if ( fabs(ps->leanf) > fLean )
+		if ( I_fabs(ps->leanf) > fLean )
 		{
 			if ( ps->leanf < 0.0 )
 				ps->leanf = fLean * -1.0;
@@ -3402,7 +3403,7 @@ LABEL_105:
 				        || -(bg_prone_yawcap->current.decimal - 5.0) > deltaa
 				        || (cmd->forwardmove || cmd->rightmove) && deltaa != 0.0 )
 				{
-					if ( msec * 55.0 * 0.001 <= fabs(deltaa) )
+					if ( msec * 55.0 * 0.001 <= I_fabs(deltaa) )
 					{
 						if ( deltaa <= 0.0 )
 							proneDir = msec * 55.0 * 0.001 + ps->proneDirection;
@@ -3419,7 +3420,7 @@ LABEL_105:
 						if ( !valid )
 							goto LABEL_67;
 						deltab = AngleDelta(ps->proneDirection, proneDir);
-						deltaAbs = fabs(deltab);
+						deltaAbs = I_fabs(deltab);
 						valid = deltaAbs > 1.0;
 						if ( deltaAbs <= 1.0 )
 						{
@@ -3521,7 +3522,7 @@ LABEL_69:
 						}
 						if ( !bRetry )
 							goto LABEL_80;
-						v6 = fabs(deltac);
+						v6 = I_fabs(deltac);
 						bRetry = v6 > 1.0;
 						if ( v6 > 1.0 )
 						{
@@ -3561,7 +3562,7 @@ LABEL_80:
 				{
 					ps->pm_flags |= 0x10000u;
 					v19 = AngleDelta(oldViewYaw, ps->viewangles[1]);
-					if ( fabs(v19) <= 1.0 )
+					if ( I_fabs(v19) <= 1.0 )
 					{
 						v18 = AngleDelta(newViewYaw, ps->viewangles[1]);
 						if ( v19 * v18 > 0.0 )

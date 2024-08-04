@@ -1225,7 +1225,7 @@ void Com_BitClear( int array[], int bitNum )
 
 float GetLeanFraction(const float fFrac)
 {
-	return (2.0f - fabs(fFrac)) * fFrac;
+	return (2.0f - I_fabs(fFrac)) * fFrac;
 }
 
 float UnGetLeanFraction(const float fFrac)

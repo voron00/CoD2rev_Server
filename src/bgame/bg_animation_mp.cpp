@@ -1796,7 +1796,7 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	// modify the speed depending on the delta
 	// so it doesn't seem so linear
 	swing = AngleSubtract( destination, *angle );
-	scale = fabs( swing ) * 0.050000001;
+	scale = I_fabs( swing ) * 0.050000001;
 	if ( scale < 0.5 )
 	{
 		scale = 0.5;
@@ -2546,7 +2546,7 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 	{
 		if ( bNewAnim )
 		{
-			moveSpeed = fabs(lf->oldFramePos[2] - es->pos.trBase[2]);
+			moveSpeed = I_fabs(lf->oldFramePos[2] - es->pos.trBase[2]);
 		}
 		else
 		{

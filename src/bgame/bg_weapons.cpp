@@ -271,7 +271,7 @@ void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
 					temp1 = (float)pm->cmd.angles[i] * 0.0054931641;
 					temp2 = AngleSubtract(temp1, temp3);
 
-					sppedSquared = fabs(temp2) * 0.0099999998 * weaponDef->hipSpreadTurnAdd / pml->frametime + sppedSquared;
+					sppedSquared = I_fabs(temp2) * 0.0099999998 * weaponDef->hipSpreadTurnAdd / pml->frametime + sppedSquared;
 				}
 			}
 
