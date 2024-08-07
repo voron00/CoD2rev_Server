@@ -1121,11 +1121,10 @@ struct AntilagClientStore
 
 enum itemType_t
 {
-	IT_BAD = 0x0,
-	IT_WEAPON = 0x1,
-	IT_AMMO = 0x2,
-	IT_HEALTH = 0x3,
-	IT_HOLDABLE = 0x4,
+	IT_BAD,
+	IT_WEAPON,
+	IT_AMMO,
+	IT_HEALTH
 };
 
 struct spawn_t

@@ -57,7 +57,7 @@ qboolean PM_WeaponClipEmpty(playerState_s *ps)
 	return ps->ammoclip[BG_ClipForWeapon(ps->weapon)] == 0;
 }
 
-int BG_GetMaxPickupableAmmo(playerState_s *ps, unsigned int weaponIndex)
+int BG_GetMaxPickupableAmmo(const playerState_s *ps, unsigned int weaponIndex)
 {
 	int altClip;
 	int altAmmo;

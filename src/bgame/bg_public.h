@@ -1275,6 +1275,14 @@ enum weapAnimNumber_t
 	MAX_WP_ANIMATIONS = 0x14,
 };
 
+enum EffectiveStance
+{
+	PM_EFF_STANCE_STAND,
+	PM_EFF_STANCE_PRONE,
+	PM_EFF_STANCE_CROUCH,
+	PM_EFF_STANCE_COUNT
+};
+
 // pmove->pm_flags	(sent as max 16 bits in msg.c)
 #define PMF_PRONE           0x1
 #define PMF_CROUCH          0x2
@@ -1282,13 +1290,18 @@ enum weapAnimNumber_t
 #define PMF_MANTLE          0x4
 #define PMF_FRAG            0x10
 #define PMF_LADDER          0x20
+#define PMF_ADS             0x40
 #define PMF_BACKWARDS_RUN   0x80
 #define PMF_SLIDING         0x200
 #define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
 #define PMF_JUMPING         0x80000
-#define PMF_VIEWLOCKED      0x800000    // Guessed name
+#define PMF_LOOKAT_FRIEND	0x100000 // green crosshair
+#define PMF_LOOKAT_ENEMY	0x200000 // red crosshair
+#define PMF_UNKNOWN         0x400000
+#define PMF_UNKNOWN2        0x800000
 #define PMF_SPECTATING      0x1000000
+#define PMF_FOLLOW          0x2000000
 #define PMF_DISABLEWEAPON   0x4000000
 
 // playerState_t->eFlags
@@ -1439,29 +1452,38 @@ enum pmtype_t
 extern pmoveHandler_t pmoveHandlers[];
 extern int singleClientEvents[];
 
+#define MAX_ITEM_MODELS 2
+#define MAX_ITEM_ICONS 1
+
+// JOSEPH 4-17-00
 typedef struct gitem_s
 {
-	const char *classname;
+	const char *classname;   // spawning name
 	const char *pickup_sound;
-	const char *world_model;
-	const char *view_model;
+	const char *world_model[MAX_ITEM_MODELS];
 	const char *icon;
-	const char *pickup_name;
-	int quantity;
-	int giType;
+	const char *pickup_name;  // for printing on pickup
+	int quantity;			// for ammo how much, or duration of powerup (value not necessary for ammo/health.  that value set in gameskillnumber[] below)
+	int giType;		   		// IT_* flags
 	int giTag;
-	int giAmmoIndex;
-	int giClipIndex;
+	int giAmmoIndex;		// type of weapon ammo this uses.  (ex. WP_MP40 and WP_LUGER share 9mm ammo, so they both have WP_LUGER for giAmmoIndex)
+	int giClipIndex;		// which clip this weapon uses.  this allows the sniper rifle to use the same clip as the garand, etc.
 } gitem_t;
+#if defined(__i386__)
+static_assert((sizeof(gitem_t) == 44), "ERROR: gitem_t size is invalid!");
+#endif
+// END JOSEPH
 
+// included in both the game dll and the client
 extern gitem_t bg_itemlist[];
+extern int bg_numItems;
 
 void BG_InitWeaponString( int index, const char *name );
 int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
 void PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wishspeed, float accel);
 void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
 qboolean PM_ShouldMakeFootsteps(pmove_t *pm);
-int BG_CheckProne(int passEntityNum, float const * const vPos, float fSize, float fHeight, float fYaw, float * pfTorsoHeight, float * pfTorsoPitch, float * pfWaistPitch, int bAlreadyProne, int bOnGround, float * const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist);
+qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround, const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist);
 int PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel);
 void PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
 void PM_AddTouchEnt(pmove_t *pm, int entityNum);
@@ -1567,12 +1589,12 @@ float BG_GetBobCycle(gclient_s *client);
 float BG_GetSpeed(const playerState_s *ps, int time);
 void BG_GetSpreadForWeapon(const playerState_s *ps, int weaponIndex, float *minSpread, float *maxSpread);
 int BG_GetFirstAvailableOffhand(playerState_s *ps, int offhandSlot);
-int BG_GetMaxPickupableAmmo(playerState_s *ps, unsigned int weaponIndex);
+int BG_GetMaxPickupableAmmo(const playerState_s *ps, unsigned int weaponIndex);
 bool BG_DoesWeaponNeedSlot(int weapon);
 int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex);
 int BG_GetStackableSlot(gclient_s *client, int weapon, int slot);
 int BG_GetEmptySlotForWeapon(playerState_s *ps, int weapon);
-qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched);
+qboolean BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps, int bTouched );
 int BG_GetWeaponSlotForName(const char *name);
 const char* BG_GetWeaponSlotNameForIndex(int index);
 void BG_LerpAngles(float *angles_goal, float maxAngleChange, float *angles);

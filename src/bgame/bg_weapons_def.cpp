@@ -290,8 +290,8 @@ void BG_FillInWeaponItems(int weapIndex)
 	weaponDef = BG_GetWeaponDef(weapIndex);
 	item = &bg_itemlist[weapIndex];
 	item->pickup_sound = weaponDef->pickupSound;
-	item->world_model = weaponDef->worldModel;
-	item->view_model = 0;
+	item->world_model[0] = weaponDef->worldModel;
+	item->world_model[1] = 0;
 	item->icon = weaponDef->hudIcon;
 	item->pickup_name = weaponDef->displayName;
 	item->quantity = weaponDef->startAmmo;

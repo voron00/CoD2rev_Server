@@ -3594,3 +3594,34 @@ LABEL_80:
 		}
 	}
 }
+
+int BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler)
+{
+	float fraction;
+	float dist;
+	float abs;
+	float testYaw;
+	float delta;
+
+	delta = AngleDelta(newProneYaw, ps->viewangles[1]);
+	abs = I_fabs(delta) / 240.0;
+	fraction = newProneYaw - (1.0 - abs) * delta;
+	testYaw = AngleNormalize360Accurate(fraction);
+	dist = abs * 45.0 + (1.0 - abs) * 66.0;
+
+	return BG_CheckProne(
+	           ps->clientNum,
+	           ps->origin,
+	           ps->maxs[0],
+	           30.0,
+	           testYaw,
+	           &ps->fTorsoHeight,
+	           &ps->fTorsoPitch,
+	           &ps->fWaistPitch,
+	           1,
+	           ps->groundEntityNum != 1023,
+	           0,
+	           handler,
+	           0,
+	           dist);
+}

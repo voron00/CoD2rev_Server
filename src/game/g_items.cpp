@@ -26,11 +26,11 @@ void RegisterItem(unsigned int index, int global)
 
 		itemRegistered[index] = 1;
 
-		if ( bg_itemlist[index].world_model )
-			G_ModelIndex(bg_itemlist[index].world_model);
+		if ( bg_itemlist[index].world_model[0] )
+			G_ModelIndex(bg_itemlist[index].world_model[0]);
 
-		if ( bg_itemlist[index].view_model )
-			G_ModelIndex(bg_itemlist[index].view_model);
+		if ( bg_itemlist[index].world_model[1] )
+			G_ModelIndex(bg_itemlist[index].world_model[1]);
 
 		if ( global )
 			level.bRegisterItems = 1;
@@ -212,7 +212,7 @@ gentity_s* LaunchItem(const gitem_s *item, float *origin, float *angles, int own
 		ent->r.contents |= 0x200000u;
 
 	ent->s.clientNum = ownerNum;
-	G_SetModel(ent, item->world_model);
+	G_SetModel(ent, item->world_model[0]);
 	G_DObjUpdate(ent);
 	ent->handler = 15;
 	G_SetOrigin(ent, origin);
@@ -508,7 +508,7 @@ void G_SpawnItem(gentity_s *ent, const gitem_s *item)
 {
 	RegisterItem(item - bg_itemlist, 0);
 	ent->item.index = item - bg_itemlist;
-	G_SetModel(ent, item->world_model);
+	G_SetModel(ent, item->world_model[0]);
 
 	if ( item->giType == IT_WEAPON )
 	{

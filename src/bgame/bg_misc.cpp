@@ -48,6 +48,27 @@ dvar_t *player_dmgtimer_minScale;
 dvar_t *player_dmgtimer_stumbleTime;
 dvar_t *player_dmgtimer_flinchTime;
 
+/*QUAKED item_***** ( 0 0 0 ) (-16 -16 -16) (16 16 16) SUSPENDED SPIN PERSISTANT
+DO NOT USE THIS CLASS, IT JUST HOLDS GENERAL INFORMATION.
+SUSPENDED - will allow items to hang in the air, otherwise they are dropped to the next surface.
+SPIN - will allow items to spin in place.
+PERSISTANT - some items (ex. clipboards) can be picked up, but don't disappear
+
+If an item is the target of another entity, it will not spawn in until fired.
+
+An item fires all of its targets when it is picked up.  If the toucher can't carry it, the targets won't be fired.
+
+"notfree" if set to 1, don't spawn in free for all games
+"notteam" if set to 1, don't spawn in team games
+"notsingle" if set to 1, don't spawn in single player games
+"wait"	override the default wait before respawning.  -1 = never respawn automatically, which can be used with targeted spawning.
+"random" random number of plus or minus seconds varied from the respawn time
+"count" override quantity or duration on most items.
+"stand" if the item has a stand (ex: mp40_stand.md3) this specifies which stand tag to attach the weapon to ("stand":"4" would mean "tag_stand4" for example)  only weapons support stands currently
+*/
+
+// JOSEPH 5-2-00
+//----(SA) the addition of the 'ammotype' field was added by me, not removed by id (SA)
 gitem_t bg_itemlist[] =
 {
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 },
@@ -179,79 +200,79 @@ gitem_t bg_itemlist[] =
 	{ NULL, "", "", "", "", "", 0, 0, 0, 0, 0 },
 	{ NULL, "", "", "", "", "", 0, 0, 0, 0, 0 },
 	{ NULL, "", "", "", "", "", 0, 0, 0, 0, 0 },
-	{ "item_health_small", "health_pickup_small", "xmodel/health_small", NULL, "icons/iconh_small", "Small Health", 10, 3, 0, 0, 0 },
-	{ "item_health_large", "health_pickup_large", "xmodel/health_large", NULL, "icons/iconh_large", "Large Health", 50, 3, 0, 0, 0 },
-	{ NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 },
+
+	/*QUAKED item_health_small (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+	-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+	model="models/powerups/health/health_s.md3"
+	*/
+	{
+		"item_health_small",
+		"health_pickup_small",
+		"xmodel/health_small",
+		NULL,
+		"icons/iconh_small",  // ammo icon
+		"Small Health",
+		10,
+		3,
+		0,
+		0,
+		0
+	},
+
+	/*QUAKED item_health_large (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+	-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+	model="models/powerups/health/health_m.md3"
+	*/
+	{
+		"item_health_large",
+		"health_pickup_large",			// JPW NERVE was	"models/powerups/health/health_m.md3",
+		"xmodel/health_large",
+		NULL,
+		"icons/iconh_large",
+		"Large Health",
+		50,						// xkan, 12/20/2002 - increased to 50 from 30 and used it for SP.
+		3,
+		0,
+		0,
+		0
+	},
+
+	{ NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 }, // end of list marker
 };
+// END JOSEPH
 
-gitem_s* BG_FindItemForWeapon(int weapon)
+int bg_numItems = sizeof( bg_itemlist ) / sizeof( bg_itemlist[0] ) - 1;
+
+/*
+==================
+BG_LerpHudColors
+==================
+*/
+void BG_LerpHudColors( const hudelem_t *elem, int time, hudelem_color_t *toColor )
 {
-	return &bg_itemlist[weapon];
-}
+	float lerp;
+	int timeSinceFadeStarted;
 
-void BG_StringCopy(unsigned char *member, const char *keyValue)
-{
-	strcpy((char *)member, keyValue);
-}
+	timeSinceFadeStarted = time - elem->fadeStartTime;
 
-qboolean BG_CanItemBeGrabbed(entityState_s *ent, playerState_s *ps, int touched)
-{
-	int giType;
-	gitem_s *item;
-
-	if ( ent->index <= 0 || ent->index >= 131 )
+	if ( elem->fadeTime <= 0 || timeSinceFadeStarted >= elem->fadeTime )
 	{
-		Com_Error(ERR_DROP, va("BG_CanItemBeGrabbed: index out of range (index is %i, eType is %i)", ent->index, ent->eType));
+		*toColor = elem->color;
+		return;
 	}
 
-	item = &bg_itemlist[ent->index];
-
-	if ( ent->clientNum != ps->clientNum )
+	if ( timeSinceFadeStarted < 0 )
 	{
-		giType = item->giType;
-
-		if ( giType != IT_WEAPON )
-		{
-			if ( giType > IT_WEAPON )
-			{
-				if ( giType == IT_AMMO )
-				{
-					if ( Com_BitCheck(ps->weapons, item->giTag) )
-					{
-						if ( BG_GetMaxPickupableAmmo(ps, item->giTag) <= 0 )
-							return 0;
-					}
-					else if ( !BG_WeaponIsClipOnly(item->giTag) || BG_GetMaxPickupableAmmo(ps, item->giTag) <= 0 )
-					{
-						return 0;
-					}
-					return 1;
-				}
-
-				if ( giType == IT_HEALTH )
-					return ps->stats[0] < ps->stats[2];
-			}
-			else if ( giType == IT_BAD )
-			{
-				Com_Error(ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD");
-			}
-			return 0;
-		}
-
-		if ( BG_DoesWeaponNeedSlot(item->giTag) && !Com_BitCheck(ps->weapons, item->giTag) )
-		{
-			if ( touched || BG_GetMaxPickupableAmmo(ps, item->giTag) <= 0 )
-				return 0;
-		}
-		else if ( BG_GetMaxPickupableAmmo(ps, item->giTag) <= 0 )
-		{
-			return 0;
-		}
-
-		return 1;
+		timeSinceFadeStarted = 0;
 	}
 
-	return 0;
+	lerp = (float)timeSinceFadeStarted / (float)elem->fadeTime;
+	assert((lerp >= 0.0f && lerp <= 1.0f));
+
+	toColor->split.r = (int)(float)((float)elem->fromColor.split.r + (float)((float)(elem->color.split.r - elem->fromColor.split.r) * lerp));
+	toColor->split.g = (int)(float)((float)elem->fromColor.split.g + (float)((float)(elem->color.split.g - elem->fromColor.split.g) * lerp));
+	toColor->split.b = (int)(float)((float)elem->fromColor.split.b + (float)((float)(elem->color.split.b - elem->fromColor.split.b) * lerp));
+	toColor->split.a = (int)(float)((float)elem->fromColor.split.a + (float)((float)(elem->color.split.a - elem->fromColor.split.a) * lerp));
 }
 
 /*
@@ -262,11 +283,826 @@ BG_AddPredictableEventToPlayerstate
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
 {
 	if ( !newEvent )
+	{
 		return;
+	}
 
 	ps->events[ps->eventSequence & ( MAX_EVENTS - 1 )] = newEvent;
 	ps->eventParms[ps->eventSequence & ( MAX_EVENTS - 1 )] = eventParm;
 	ps->eventSequence++;
+}
+
+/*
+================
+BG_FindItemForWeapon
+================
+*/
+gitem_t* BG_FindItemForWeapon( int weapon )
+{
+	assert(weapon < BG_GetNumWeapons());
+	return &bg_itemlist[weapon];
+}
+
+/*
+========================
+BG_PlayerStateToEntityState
+
+This is done after each set of usercmd_t on the server,
+and after local prediction on the client
+========================
+*/
+void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean snap, byte handler )
+{
+	if ( (ps->pm_flags & (PMF_UNKNOWN | PMF_UNKNOWN2) ) ) // JPW NERVE limbo
+	{
+		s->eType = ET_PLAYER;
+	}
+	else
+	{
+		s->eType = ET_INVISIBLE;
+	}
+
+	s->pos.trType = TR_INTERPOLATE;
+	VectorCopy(ps->origin, s->pos.trBase);
+	if ( snap )
+	{
+		SnapVector( s->pos.trBase );
+	}
+
+	s->apos.trType = TR_INTERPOLATE;
+	VectorCopy(ps->viewangles, s->apos.trBase);
+	if ( snap )
+	{
+		SnapVector( s->apos.trBase );
+	}
+
+	s->angles2[YAW] = (float)ps->movementDir;
+
+	s->legsAnim = ps->legsAnim;
+	s->torsoAnim = ps->torsoAnim;
+	s->clientNum = ps->clientNum; // ET_PLAYER looks here instead of at number
+
+	s->eFlags = ps->eFlags;
+
+	// Ridah, let clients know if this person is using a mounted weapon
+	// so they don't show any client muzzle flashes
+	if ( ps->eFlags & EF_TURRET_ACTIVE )
+	{
+		s->otherEntityNum = ps->viewlocked_entNum;
+	}
+
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		s->eFlags |= EF_DEAD;
+	}
+	else
+	{
+		s->eFlags &= ~EF_DEAD;
+	}
+
+	if ( ps->pm_flags & PMF_ADS )
+	{
+		s->eFlags |= EF_AIMDOWNSIGHT;
+	}
+	else
+	{
+		s->eFlags &= ~EF_AIMDOWNSIGHT;
+	}
+
+	s->leanf = ps->leanf;
+
+	if ( PM_GetEffectiveStance(ps) == PM_EFF_STANCE_PRONE )
+	{
+		float fLerpFrac;
+
+		if ( ps->viewHeightLerpTime )
+		{
+			fLerpFrac = (ps->commandTime - ps->viewHeightLerpTime) / PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
+
+			if ( fLerpFrac < 0.0 )
+			{
+				fLerpFrac = 0.0;
+			}
+			else
+			{
+				if ( fLerpFrac > 1.0 )
+				{
+					fLerpFrac = 1.0;
+				}
+			}
+
+			if ( !ps->viewHeightLerpDown )
+			{
+				fLerpFrac = 1.0 - fLerpFrac;
+			}
+		}
+		else
+		{
+			fLerpFrac = 1.0;
+		}
+
+		s->fTorsoHeight = ps->fTorsoHeight * fLerpFrac;
+		s->fTorsoPitch = AngleNormalize180(ps->fTorsoPitch) * fLerpFrac;
+		s->fWaistPitch = AngleNormalize180(ps->fWaistPitch) * fLerpFrac;
+	}
+	else
+	{
+		s->fTorsoHeight = 0.0;
+		s->fTorsoPitch = 0.0;
+		s->fWaistPitch = 0.0;
+	}
+
+// from MP
+	if ( ps->entityEventSequence - ps->eventSequence < 0 )
+	{
+		int seq;
+
+		if ( ps->eventSequence - ps->entityEventSequence > MAX_EVENTS )
+		{
+			ps->entityEventSequence = ps->eventSequence - MAX_EVENTS;
+		}
+		seq = ps->entityEventSequence & ( MAX_EVENTS - 1 );
+		s->eventParm = ps->eventParms[ seq ];
+		ps->entityEventSequence++;
+	}
+	else
+	{
+		s->eventParm = 0;
+	}
+// end
+	// Ridah, now using a circular list of events for all entities
+	// add any new events that have been added to the playerState_t
+	// (possibly overwriting entityState_t events)
+	void (*playerEvent)(int, int);
+	int i, j;
+	for ( i = ps->oldEventSequence; i != ps->eventSequence; i++ )
+	{
+		int event = ps->events[i & ( MAX_EVENTS - 1 )];
+		playerEvent = pmoveHandlers[handler].playerEvent;
+
+		if ( playerEvent )
+		{
+			playerEvent(s->number, event);
+		}
+
+		for ( j = 0; singleClientEvents[j] > 0; j++ )
+		{
+			if ( singleClientEvents[j] == event )
+			{
+				break;
+			}
+		}
+
+		if ( singleClientEvents[j] >= 0 )
+		{
+			continue;
+		}
+
+		s->events[s->eventSequence & ( MAX_EVENTS - 1 )] = event;
+		s->eventParms[s->eventSequence & ( MAX_EVENTS - 1 )] = ps->eventParms[i & ( MAX_EVENTS - 1 )];
+		s->eventSequence++;
+	}
+	ps->oldEventSequence = ps->eventSequence;
+
+	s->weapon = ps->weapon; // Ridah
+//	s->loopSound = ps->loopSound;
+	s->groundEntityNum = ps->groundEntityNum; // xkan, 1/10/2003
+}
+
+/*
+============
+BG_GetMarkDir
+
+  used to find a good directional vector for a mark projection, which will be more likely
+  to wrap around adjacent surfaces
+
+  dir is the direction of the projectile or trace that has resulted in a surface being hit
+============
+*/
+void BG_GetMarkDir( const vec3_t dir, const vec3_t normal, vec3_t out )
+{
+	vec3_t ndir, lnormal;
+	float minDot = 0.3;
+
+	/*
+	if ( dir[0] < 0.001 && dir[1] < 0.001 )
+	{
+		VectorCopy( dir, out );
+		return;
+	}
+	*/
+
+	if ( VectorLengthSquared( normal ) < ( 1.f ) )      // this is needed to get rid of (0,0,0) normals (happens with entities?)
+	{
+		VectorSet( lnormal, 0.f, 0.f, 1.f );
+	}
+	else
+	{
+		VectorCopy( normal, lnormal );
+		//VectorNormalizeFast( lnormal );
+		//VectorNormalize2( normal, lnormal );
+	}
+
+	VectorNegate( dir, ndir );
+	Vec3Normalize( ndir );
+	if ( normal[2] > .8f )
+	{
+		minDot = .7f;
+	}
+
+	// make sure it makrs the impact surface
+	while ( minDot > DotProduct( ndir, lnormal ) )
+	{
+		VectorMA( ndir, .5, lnormal, ndir );
+		Vec3Normalize( ndir );
+	}
+
+	VectorCopy( ndir, out );
+}
+
+const char *eventnames[] =
+{
+	"EV_NONE",
+	"EV_FOOTSTEP_RUN_DEFAULT",
+	"EV_FOOTSTEP_RUN_BARK",
+	"EV_FOOTSTEP_RUN_BRICK",
+	"EV_FOOTSTEP_RUN_CARPET",
+	"EV_FOOTSTEP_RUN_CLOTH",
+	"EV_FOOTSTEP_RUN_CONCRETE",
+	"EV_FOOTSTEP_RUN_DIRT",
+	"EV_FOOTSTEP_RUN_FLESH",
+	"EV_FOOTSTEP_RUN_FOLIAGE",
+	"EV_FOOTSTEP_RUN_GLASS",
+	"EV_FOOTSTEP_RUN_GRASS",
+	"EV_FOOTSTEP_RUN_GRAVEL",
+	"EV_FOOTSTEP_RUN_ICE",
+	"EV_FOOTSTEP_RUN_METAL",
+	"EV_FOOTSTEP_RUN_MUD",
+	"EV_FOOTSTEP_RUN_PAPER",
+	"EV_FOOTSTEP_RUN_PLASTER",
+	"EV_FOOTSTEP_RUN_ROCK",
+	"EV_FOOTSTEP_RUN_SAND",
+	"EV_FOOTSTEP_RUN_SNOW",
+	"EV_FOOTSTEP_RUN_WATER",
+	"EV_FOOTSTEP_RUN_WOOD",
+	"EV_FOOTSTEP_RUN_ASPHALT",
+	"EV_FOOTSTEP_WALK_DEFAULT",
+	"EV_FOOTSTEP_WALK_BARK",
+	"EV_FOOTSTEP_WALK_BRICK",
+	"EV_FOOTSTEP_WALK_CARPET",
+	"EV_FOOTSTEP_WALK_CLOTH",
+	"EV_FOOTSTEP_WALK_CONCRETE",
+	"EV_FOOTSTEP_WALK_DIRT",
+	"EV_FOOTSTEP_WALK_FLESH",
+	"EV_FOOTSTEP_WALK_FOLIAGE",
+	"EV_FOOTSTEP_WALK_GLASS",
+	"EV_FOOTSTEP_WALK_GRASS",
+	"EV_FOOTSTEP_WALK_GRAVEL",
+	"EV_FOOTSTEP_WALK_ICE",
+	"EV_FOOTSTEP_WALK_METAL",
+	"EV_FOOTSTEP_WALK_MUD",
+	"EV_FOOTSTEP_WALK_PAPER",
+	"EV_FOOTSTEP_WALK_PLASTER",
+	"EV_FOOTSTEP_WALK_ROCK",
+	"EV_FOOTSTEP_WALK_SAND",
+	"EV_FOOTSTEP_WALK_SNOW",
+	"EV_FOOTSTEP_WALK_WATER",
+	"EV_FOOTSTEP_WALK_WOOD",
+	"EV_FOOTSTEP_WALK_ASPHALT",
+	"EV_FOOTSTEP_PRONE_DEFAULT",
+	"EV_FOOTSTEP_PRONE_BARK",
+	"EV_FOOTSTEP_PRONE_BRICK",
+	"EV_FOOTSTEP_PRONE_CARPET",
+	"EV_FOOTSTEP_PRONE_CLOTH",
+	"EV_FOOTSTEP_PRONE_CONCRETE",
+	"EV_FOOTSTEP_PRONE_DIRT",
+	"EV_FOOTSTEP_PRONE_FLESH",
+	"EV_FOOTSTEP_PRONE_FOLIAGE",
+	"EV_FOOTSTEP_PRONE_GLASS",
+	"EV_FOOTSTEP_PRONE_GRASS",
+	"EV_FOOTSTEP_PRONE_GRAVEL",
+	"EV_FOOTSTEP_PRONE_ICE",
+	"EV_FOOTSTEP_PRONE_METAL",
+	"EV_FOOTSTEP_PRONE_MUD",
+	"EV_FOOTSTEP_PRONE_PAPER",
+	"EV_FOOTSTEP_PRONE_PLASTER",
+	"EV_FOOTSTEP_PRONE_ROCK",
+	"EV_FOOTSTEP_PRONE_SAND",
+	"EV_FOOTSTEP_PRONE_SNOW",
+	"EV_FOOTSTEP_PRONE_WATER",
+	"EV_FOOTSTEP_PRONE_WOOD",
+	"EV_FOOTSTEP_PRONE_ASPHALT",
+	"EV_JUMP_DEFAULT",
+	"EV_JUMP_BARK",
+	"EV_JUMP_BRICK",
+	"EV_JUMP_CARPET",
+	"EV_JUMP_CLOTH",
+	"EV_JUMP_CONCRETE",
+	"EV_JUMP_DIRT",
+	"EV_JUMP_FLESH",
+	"EV_JUMP_FOLIAGE",
+	"EV_JUMP_GLASS",
+	"EV_JUMP_GRASS",
+	"EV_JUMP_GRAVEL",
+	"EV_JUMP_ICE",
+	"EV_JUMP_METAL",
+	"EV_JUMP_MUD",
+	"EV_JUMP_PAPER",
+	"EV_JUMP_PLASTER",
+	"EV_JUMP_ROCK",
+	"EV_JUMP_SAND",
+	"EV_JUMP_SNOW",
+	"EV_JUMP_WATER",
+	"EV_JUMP_WOOD",
+	"EV_JUMP_ASPHALT",
+	"EV_LANDING_DEFAULT",
+	"EV_LANDING_BARK",
+	"EV_LANDING_BRICK",
+	"EV_LANDING_CARPET",
+	"EV_LANDING_CLOTH",
+	"EV_LANDING_CONCRETE",
+	"EV_LANDING_DIRT",
+	"EV_LANDING_FLESH",
+	"EV_LANDING_FOLIAGE",
+	"EV_LANDING_GLASS",
+	"EV_LANDING_GRASS",
+	"EV_LANDING_GRAVEL",
+	"EV_LANDING_ICE",
+	"EV_LANDING_METAL",
+	"EV_LANDING_MUD",
+	"EV_LANDING_PAPER",
+	"EV_LANDING_PLASTER",
+	"EV_LANDING_ROCK",
+	"EV_LANDING_SAND",
+	"EV_LANDING_SNOW",
+	"EV_LANDING_WATER",
+	"EV_LANDING_WOOD",
+	"EV_LANDING_ASPHALT",
+	"EV_LANDING_PAIN_DEFAULT",
+	"EV_LANDING_PAIN_BARK",
+	"EV_LANDING_PAIN_BRICK",
+	"EV_LANDING_PAIN_CARPET",
+	"EV_LANDING_PAIN_CLOTH",
+	"EV_LANDING_PAIN_CONCRETE",
+	"EV_LANDING_PAIN_DIRT",
+	"EV_LANDING_PAIN_FLESH",
+	"EV_LANDING_PAIN_FOLIAGE",
+	"EV_LANDING_PAIN_GLASS",
+	"EV_LANDING_PAIN_GRASS",
+	"EV_LANDING_PAIN_GRAVEL",
+	"EV_LANDING_PAIN_ICE",
+	"EV_LANDING_PAIN_METAL",
+	"EV_LANDING_PAIN_MUD",
+	"EV_LANDING_PAIN_PAPER",
+	"EV_LANDING_PAIN_PLASTER",
+	"EV_LANDING_PAIN_ROCK",
+	"EV_LANDING_PAIN_SAND",
+	"EV_LANDING_PAIN_SNOW",
+	"EV_LANDING_PAIN_WATER",
+	"EV_LANDING_PAIN_WOOD",
+	"EV_LANDING_PAIN_ASPHALT",
+	"EV_FOLIAGE_SOUND",
+	"EV_STANCE_FORCE_STAND",
+	"EV_STANCE_FORCE_CROUCH",
+	"EV_STANCE_FORCE_PRONE",
+	"EV_STEP_VIEW",
+	"EV_ITEM_PICKUP",
+	"EV_AMMO_PICKUP",
+	"EV_NOAMMO",
+	"EV_EMPTYCLIP",
+	"EV_EMPTY_OFFHAND",
+	"EV_RESET_ADS",
+	"EV_RELOAD",
+	"EV_RELOAD_FROM_EMPTY",
+	"EV_RELOAD_START",
+	"EV_RELOAD_END",
+	"EV_RAISE_WEAPON",
+	"EV_PUTAWAY_WEAPON",
+	"EV_WEAPON_ALT",
+	"EV_PULLBACK_WEAPON",
+	"EV_FIRE_WEAPON",
+	"EV_FIRE_WEAPONB",
+	"EV_FIRE_WEAPON_LASTSHOT",
+	"EV_RECHAMBER_WEAPON",
+	"EV_EJECT_BRASS",
+	"EV_MELEE_SWIPE",
+	"EV_FIRE_MELEE",
+	"EV_PREP_OFFHAND",
+	"EV_USE_OFFHAND",
+	"EV_SWITCH_OFFHAND",
+	"EV_BINOCULAR_ENTER",
+	"EV_BINOCULAR_EXIT",
+	"EV_BINOCULAR_FIRE",
+	"EV_BINOCULAR_RELEASE",
+	"EV_BINOCULAR_DROP",
+	"EV_MELEE_HIT",
+	"EV_MELEE_MISS",
+	"EV_FIRE_WEAPON_MG42",
+	"EV_FIRE_QUADBARREL_1",
+	"EV_FIRE_QUADBARREL_2",
+	"EV_BULLET_TRACER",
+	"EV_SOUND_ALIAS",
+	"EV_SOUND_ALIAS_AS_MASTER",
+	"EV_BULLET_HIT_SMALL",
+	"EV_BULLET_HIT_LARGE",
+	"EV_SHOTGUN_HIT",
+	"EV_BULLET_HIT_AP",
+	"EV_BULLET_HIT_CLIENT_SMALL",
+	"EV_BULLET_HIT_CLIENT_LARGE",
+	"EV_GRENADE_BOUNCE",
+	"EV_GRENADE_EXPLODE",
+	"EV_ROCKET_EXPLODE",
+	"EV_ROCKET_EXPLODE_NOMARKS",
+	"EV_CUSTOM_EXPLODE",
+	"EV_CUSTOM_EXPLODE_NOMARKS",
+	"EV_BULLET",
+	"EV_PLAY_FX",
+	"EV_PLAY_FX_ON_TAG",
+	"EV_EARTHQUAKE",
+	"EV_GRENADE_SUICIDE",
+	"EV_OBITUARY",
+	"EV_MAX_EVENTS"
+};
+
+/*
+============
+BG_CheckProneValid
+============
+*/
+static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float fSize,  float fHeight,float fYaw,
+                                    float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
+                                    const vec3_t vGroundNormal, byte handler, int proneCheckType,  float prone_feet_dist)
+{
+	qboolean bLocational;
+	void (*traceFunc)(trace_t *, const float *, const float *, const float *, const float *, int, int);
+	float fPitchDiff;
+	int bFirstTraceHit;
+	float fWaistDistance;
+	float fFirstTraceDist;
+	float dist;
+	vec3_t vFeetDist;
+	vec3_t vWaistPos;
+	vec3_t vTorsoPos;
+	vec3_t vStart;
+	vec3_t vUp;
+	vec3_t vRight;
+	vec3_t vDelta;
+	vec3_t vFeetPos;
+	vec3_t vMaxs;
+	vec3_t vMins;
+	vec3_t vForward;
+	vec3_t vEnd;
+	trace_t trace;
+	int contentMask;
+
+	bFirstTraceHit = qfalse;
+	bLocational = qtrue;
+
+	traceFunc = pmoveHandlers[handler].trace;
+
+	VectorSet(vMins, -fSize, -fSize, 0.0);
+	VectorAdd(vMins, vPos, vMins);
+
+	VectorSet(vMaxs, fSize, fSize, fHeight);
+	VectorAdd(vMaxs, vPos, vMaxs);
+
+	if ( proneCheckType )
+	{
+		contentMask = 8519697;
+	}
+	else
+	{
+		contentMask = 8454161;
+	}
+
+	if ( !bAlreadyProne )
+	{
+		VectorSet(vMins, -fSize, -fSize, 0.0);
+		VectorSet(vMaxs, fSize, fSize, fHeight);
+
+		VectorCopy(vPos, vEnd);
+		VectorCopy(vPos, vForward);
+
+		vForward[2] = vForward[2] + 10.0;
+
+		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+		if ( trace.allsolid )
+		{
+			return qfalse;
+		}
+	}
+
+	if ( bOnGround && vGroundNormal && vGroundNormal[2] < 0.69999999 )
+	{
+		return qfalse;
+	}
+
+	VectorSet(vMins, -6.0, -6.0, -6.0);
+	VectorSet(vMaxs, 6.0, 6.0, 6.0);
+	VectorSet(vForward, 0.0, fYaw - 180.0, 0.0);
+
+	AngleVectors(vForward, vDelta, vRight, vUp);
+
+	fFirstTraceDist = fHeight - 6.0;
+	VectorCopy(vPos, vEnd);
+	vEnd[2] = vEnd[2] + fFirstTraceDist;
+
+	VectorMA(vEnd, prone_feet_dist - 6.0, vDelta, vForward);
+
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+	if ( trace.fraction < 1.0 )
+	{
+		if ( !bOnGround )
+		{
+			return qfalse;
+		}
+
+		bFirstTraceHit = qtrue;
+		fWaistDistance = (prone_feet_dist - 6.0) * trace.fraction + 6.0;
+
+		if ( fSize + 2.0 > fWaistDistance )
+		{
+			return qfalse;
+		}
+
+		if ( fFirstTraceDist * 0.69999999 + 48.0 > fWaistDistance )
+		{
+			bFirstTraceHit = qfalse;
+			vForward[2] = vForward[2] + 22.0;
+			VectorSubtract(vForward, vEnd, vFeetPos);
+
+			dist = Vec3NormalizeTo(vFeetPos, vDelta);
+
+			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+			if ( trace.fraction < 1.0 )
+			{
+				bFirstTraceHit = qtrue;
+				fWaistDistance = trace.fraction * dist + 6.0;
+
+				if ( fFirstTraceDist * 0.69999999 + 48.0 > fWaistDistance )
+				{
+					return qfalse;
+				}
+			}
+			else
+			{
+				fWaistDistance = prone_feet_dist;
+			}
+		}
+	}
+	else
+	{
+		fWaistDistance = prone_feet_dist;
+	}
+
+	Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
+	VectorMA(vPos, 48.0, vDelta, vEnd);
+
+	vEnd[2] = vEnd[2] + fFirstTraceDist;
+	VectorCopy(vEnd, vForward);
+
+	vForward[2] = vForward[2] - (fSize * 2.5 + fFirstTraceDist - 6.0);
+
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+	if ( trace.fraction == 1.0 )
+	{
+		goto fail;
+	}
+
+	if ( trace.normal[2] < 0.69999999 )
+	{
+		return qfalse;
+	}
+
+	fPitchDiff = (fSize * 2.5 + fFirstTraceDist - 6.0) * trace.fraction + 6.0;
+	Vec3Lerp(vEnd, vForward, trace.fraction, vTorsoPos);
+	vTorsoPos[2] = vTorsoPos[2] - 6.0;
+
+	if ( bFirstTraceHit )
+	{
+		if ( fPitchDiff * -0.75 > fWaistDistance - fPitchDiff )
+		{
+			goto fail;
+		}
+
+		VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
+		VectorMA(vFeetPos, 6.0, vDelta, vFeetPos);
+
+		vFeetPos[2] = vFeetPos[2] + 6.0;
+		Vec3Normalize(vFeetPos);
+
+		VectorMA(vEnd, prone_feet_dist - 6.0 - 48.0, vFeetPos, vForward);
+
+		vForward[0] = ((prone_feet_dist - 6.0) * vDelta[0] + vPos[0] + vForward[0]) * 0.5;
+		vForward[1] = ((prone_feet_dist - 6.0) * vDelta[1] + vPos[1] + vForward[1]) * 0.5;
+
+		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+		if ( trace.fraction < 1.0 )
+		{
+			goto fail;
+		}
+
+		Vec3Lerp(vEnd, vForward, trace.fraction, vEnd);
+
+		vEnd[2] = vEnd[2] + 18.0;
+		vForward[2] = vForward[2] + 18.0;
+
+		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+		if ( trace.fraction < 1.0 )
+		{
+			goto fail;
+		}
+
+		Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
+	}
+
+	VectorCopy(vWaistPos, vEnd);
+	VectorCopy(vEnd, vForward);
+
+	vForward[2] = vForward[2] - (vEnd[2] - vTorsoPos[2] + vEnd[2] - vTorsoPos[2] + fSize);
+
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+	if ( trace.fraction == 1.0 )
+	{
+		goto fail;
+	}
+
+	if ( trace.normal[2] < 0.69999999 )
+	{
+		return qfalse;
+	}
+
+	Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
+	vWaistPos[2] = vWaistPos[2] - 6.0;
+
+	VectorCopy(vPos, vStart);
+	VectorSubtract(vTorsoPos, vStart, vFeetPos);
+
+	vFeetDist[2] = vectopitch(vFeetPos);
+	VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
+
+	vFeetDist[1] = vectopitch(vFeetPos);
+	vFeetDist[0] = AngleSubtract(vFeetDist[1], vFeetDist[2]);
+
+	if ( vFeetDist[0] < -50.0 || vFeetDist[0] > 70.0 )
+	{
+		bLocational = qfalse;
+	}
+
+	VectorSet(vMins, -0.0, -0.0, -0.0);
+	VectorSet(vMaxs, 0.0, 0.0, 0.0);
+
+	VectorCopy(vStart, vEnd);
+	vEnd[2] = vEnd[2] + 5.0;
+
+	VectorCopy(vTorsoPos, vForward);
+	vForward[2] = vForward[2] + 5.0;
+
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+	if ( trace.fraction < 1.0 )
+	{
+		bLocational = qfalse;
+	}
+
+	VectorCopy(vForward, vEnd);
+	VectorCopy(vWaistPos, vForward);
+	vForward[2] = vForward[2] + 5.0;
+
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+
+	if ( trace.fraction < 1.0 )
+	{
+		bLocational = qfalse;
+	}
+
+	if ( pfTorsoHeight )
+	{
+		*pfTorsoHeight = 0;
+	}
+
+	if ( pfTorsoPitch )
+	{
+		VectorSubtract(vStart, vTorsoPos, vFeetPos);
+		*pfTorsoPitch = AngleNormalize180(vectopitch(vFeetPos));
+	}
+
+	if ( pfWaistPitch )
+	{
+		VectorSubtract(vTorsoPos, vWaistPos, vFeetPos);
+		*pfWaistPitch = AngleNormalize180(vectopitch(vFeetPos));
+	}
+
+	if ( bLocational )
+	{
+		return qtrue;
+	}
+fail:
+	if ( bOnGround )
+	{
+		return qfalse;
+	}
+
+	if ( pfTorsoHeight )
+	{
+		*pfTorsoHeight = 0;
+	}
+
+	if ( pfTorsoPitch )
+	{
+		*pfTorsoPitch = 0;
+	}
+
+	if ( pfWaistPitch )
+	{
+		*pfWaistPitch = 0;
+	}
+
+	return qtrue;
+}
+
+/*
+============
+BG_CheckProne
+============
+*/
+qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw,
+                       float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
+                       const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist)
+{
+	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
+}
+
+/*
+================
+BG_EvaluateTrajectoryDelta
+For determining velocity at a given time
+================
+*/
+void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result )
+{
+	float deltaTime;
+	float phase;
+
+	switch ( tr->trType )
+	{
+	case TR_STATIONARY:
+	case TR_INTERPOLATE:
+		VectorClear( result );
+		break;
+	case TR_LINEAR:
+		VectorCopy( tr->trDelta, result );
+		break;
+	case TR_LINEAR_STOP:
+		if ( atTime > tr->trTime + tr->trDuration )
+		{
+			VectorClear( result );
+			return;
+		}
+		VectorCopy( tr->trDelta, result );
+		break;
+	case TR_SINE:
+		deltaTime = ( atTime - tr->trTime ) / (float) tr->trDuration;
+		phase = cos( deltaTime * M_PI * 2 );    // derivative of sin = cos
+		phase *= 0.5;
+		VectorScale( tr->trDelta, phase, result );
+		break;
+	case TR_GRAVITY:
+		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
+		VectorCopy( tr->trDelta, result );
+		result[2] -= DEFAULT_GRAVITY * deltaTime;       // FIXME: local gravity...
+		break;
+	// RF, acceleration
+	case TR_ACCELERATE: // trDelta is eventual speed
+		if ( atTime > tr->trTime + tr->trDuration )
+		{
+			VectorClear( result );
+			return;
+		}
+		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
+		phase = deltaTime / (float)tr->trDuration;
+		VectorScale( tr->trDelta, deltaTime * deltaTime, result );
+		break;
+	case TR_DECCELERATE:    // trDelta is breaking force
+		if ( atTime > tr->trTime + tr->trDuration )
+		{
+			VectorClear( result );
+			return;
+		}
+		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
+		VectorScale( tr->trDelta, deltaTime, result );
+		break;
+	default:
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trType );
+		return;
+	}
 }
 
 /*
@@ -343,74 +1179,112 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result )
 		VectorMA( v, -phase * 0.5 * deltaTime * deltaTime, result, result );
 		break;
 	default:
-		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trTime );
-		break;
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trType );
+		return;
 	}
 }
 
+#define AMMOFORWEAP BG_FindAmmoForWeapon( item->giTag )
 /*
 ================
-BG_EvaluateTrajectoryDelta
-For determining velocity at a given time
+BG_CanItemBeGrabbed
+
+Returns false if the item should not be picked up.
+This needs to be the same for client side prediction and server use.
 ================
 */
-void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result)
+qboolean BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps, qboolean bTouched )
 {
-	float deltaTime;
-	float phase;
+	gitem_t *item;
 
-	switch ( tr->trType )
+	assert(ent);
+	assert(ps);
+
+	if ( ent->index < 1 || ent->index >= bg_numItems )
 	{
-	case TR_STATIONARY:
-	case TR_INTERPOLATE:
-		VectorClear( result );
-		break;
-	case TR_LINEAR:
-		VectorCopy( tr->trDelta, result );
-		break;
-	case TR_LINEAR_STOP:
-		if ( atTime > tr->trTime + tr->trDuration )
-		{
-			VectorClear( result );
-			return;
-		}
-		VectorCopy( tr->trDelta, result );
-		break;
-	case TR_SINE:
-		deltaTime = ( atTime - tr->trTime ) / (float) tr->trDuration;
-		phase = cos( deltaTime * M_PI * 2 );    // derivative of sin = cos
-		phase *= 0.5;
-		VectorScale( tr->trDelta, phase, result );
-		break;
-	case TR_GRAVITY:
-		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
-		VectorCopy( tr->trDelta, result );
-		result[2] -= DEFAULT_GRAVITY * deltaTime;       // FIXME: local gravity...
-		break;
-	// RF, acceleration
-	case TR_ACCELERATE: // trDelta is eventual speed
-		if ( atTime > tr->trTime + tr->trDuration )
-		{
-			VectorClear( result );
-			return;
-		}
-		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
-		phase = deltaTime / (float)tr->trDuration;
-		VectorScale( tr->trDelta, deltaTime * deltaTime, result );
-		break;
-	case TR_DECCELERATE:    // trDelta is breaking force
-		if ( atTime > tr->trTime + tr->trDuration )
-		{
-			VectorClear( result );
-			return;
-		}
-		deltaTime = ( atTime - tr->trTime ) * 0.001;    // milliseconds to seconds
-		VectorScale( tr->trDelta, deltaTime, result );
-		break;
-	default:
-		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trTime );
-		break;
+		Com_Error(ERR_DROP, va("BG_CanItemBeGrabbed: index out of range (index is %i, eType is %i)", ent->index, ent->eType));
 	}
+
+	item = &bg_itemlist[ent->index];
+
+	if ( ent->clientNum == ps->clientNum )
+	{
+		return qfalse;
+	}
+
+	switch ( item->giType )
+	{
+	case IT_WEAPON:
+		if ( BG_DoesWeaponNeedSlot(item->giTag) && !Com_BitCheck(ps->weapons, item->giTag) )
+		{
+			if ( bTouched || BG_GetMaxPickupableAmmo(ps, item->giTag) < 1 )
+				return qfalse;
+		}
+		else if ( BG_GetMaxPickupableAmmo(ps, item->giTag) < 1 )
+			return qfalse;
+
+		return qtrue;
+
+	case IT_AMMO:
+		if ( Com_BitCheck(ps->weapons, item->giTag) )
+		{
+			if ( BG_GetMaxPickupableAmmo(ps, item->giTag) < 1 )
+				return qfalse;
+		}
+		else if ( !BG_WeaponIsClipOnly(item->giTag) || BG_GetMaxPickupableAmmo(ps, item->giTag) < 1 )
+			return qfalse;
+
+		return qtrue;
+
+	case IT_HEALTH:
+		if ( ps->stats[STAT_HEALTH] >= ps->stats[STAT_MAX_HEALTH] )
+			return qfalse;
+
+		return qtrue;
+
+	case IT_BAD:
+		Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
+	}
+
+	return qfalse;
+}
+
+/*
+============
+BG_PlayerTouchesItem
+
+Items can be picked up without actually touching their physical bounds to make
+grabbing them easier
+============
+*/
+qboolean BG_PlayerTouchesItem( const playerState_t *ps, const entityState_t *item, int atTime )
+{
+	vec3_t origin;
+
+	BG_EvaluateTrajectory( &item->pos, atTime, origin );
+
+	// we are ignoring ducked differences here
+	if (	   ps->origin[0] - origin[0] > 36
+	           || ps->origin[0] - origin[0] < -36
+	           || ps->origin[1] - origin[1] > 36
+	           || ps->origin[1] - origin[1] < -36
+	           || ps->origin[2] - origin[2] > 18
+	           || ps->origin[2] - origin[2] < -88 )
+	{
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+/*
+============
+BG_StringCopy
+============
+*/
+void BG_StringCopy( unsigned char *member, const char *keyValue )
+{
+	strcpy((char *)member, keyValue);
 }
 
 /*
@@ -456,467 +1330,58 @@ void BG_RotatePoint( vec3_t point, const vec3_t matrix[3] )
 	point[2] = DotProduct( matrix[2], tvec );
 }
 
-void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler)
-{
-	int flags;
-	byte event;
-	int j;
-	float lerpTime;
-	void (*playerEvent)(int, int);
-	int i;
-
-	if ( (ps->pm_flags & 0xC00000) != 0 )
-		s->eType = ET_PLAYER;
-	else
-		s->eType = ET_INVISIBLE;
-
-	s->pos.trType = TR_INTERPOLATE;
-	VectorCopy(ps->origin, s->pos.trBase);
-
-	if ( snap )
-	{
-		s->pos.trBase[0] = (float)(int)s->pos.trBase[0];
-		s->pos.trBase[1] = (float)(int)s->pos.trBase[1];
-		s->pos.trBase[2] = (float)(int)s->pos.trBase[2];
-	}
-
-	s->apos.trType = TR_INTERPOLATE;
-	VectorCopy(ps->viewangles, s->apos.trBase);
-
-	if ( snap )
-	{
-		s->apos.trBase[0] = (float)(int)s->apos.trBase[0];
-		s->apos.trBase[1] = (float)(int)s->apos.trBase[1];
-		s->apos.trBase[2] = (float)(int)s->apos.trBase[2];
-	}
-
-	s->angles2[1] = (float)ps->movementDir;
-	s->legsAnim = ps->legsAnim;
-	s->torsoAnim = ps->torsoAnim;
-	s->clientNum = ps->clientNum;
-	s->eFlags = ps->eFlags;
-
-	if ( (ps->eFlags & 0x300) != 0 )
-		s->otherEntityNum = ps->viewlocked_entNum;
-
-	if ( ps->pm_type <= PM_INTERMISSION )
-		flags = s->eFlags & 0xFFFDFFFF;
-	else
-		flags = s->eFlags | 0x20000;
-
-	s->eFlags = flags;
-
-	if ( (ps->pm_flags & 0x40) != 0 )
-		flags = s->eFlags | 0x40000;
-	else
-		flags = s->eFlags & 0xFFFBFFFF;
-
-	s->eFlags = flags;
-	s->leanf = ps->leanf;
-
-	if ( PM_GetEffectiveStance(ps) == 1 )
-	{
-		if ( ps->viewHeightLerpTime )
-		{
-			lerpTime = (float)(ps->commandTime - ps->viewHeightLerpTime)
-			           / (float)PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
-
-			if ( lerpTime >= 0.0 )
-			{
-				if ( lerpTime > 1.0 )
-					lerpTime = 1.0;
-			}
-			else
-			{
-				lerpTime = 0.0;
-			}
-
-			if ( !ps->viewHeightLerpDown )
-				lerpTime = 1.0 - lerpTime;
-		}
-		else
-		{
-			lerpTime = 1.0;
-		}
-
-		s->fTorsoHeight = ps->fTorsoHeight * lerpTime;
-		s->fTorsoPitch = AngleNormalize180(ps->fTorsoPitch) * lerpTime;
-		s->fWaistPitch = AngleNormalize180(ps->fWaistPitch) * lerpTime;
-	}
-	else
-	{
-		s->fTorsoHeight = 0.0;
-		s->fTorsoPitch = 0.0;
-		s->fWaistPitch = 0.0;
-	}
-
-	if ( ps->entityEventSequence - ps->eventSequence >= 0 )
-	{
-		s->eventParm = 0;
-	}
-	else
-	{
-		if ( ps->eventSequence - ps->entityEventSequence > 4 )
-			ps->entityEventSequence = ps->eventSequence - 4;
-
-		s->eventParm = LOBYTE(ps->eventParms[ps->entityEventSequence++ & 3]);
-	}
-
-	for ( i = ps->oldEventSequence; i != ps->eventSequence; ++i )
-	{
-		event = ps->events[i & 3];
-		playerEvent = pmoveHandlers[handler].playerEvent;
-
-		if ( playerEvent )
-			playerEvent(s->number, event);
-
-		for ( j = 0; singleClientEvents[j] > 0 && singleClientEvents[j] != event; ++j )
-			;
-
-		if ( singleClientEvents[j] < 0 )
-		{
-			s->events[s->eventSequence & 3] = event;
-			s->eventParms[s->eventSequence++ & 3] = LOBYTE(ps->eventParms[i & 3]);
-		}
-	}
-
-	ps->oldEventSequence = ps->eventSequence;
-	s->weapon = LOBYTE(ps->weapon);
-	s->groundEntityNum = LOWORD(ps->groundEntityNum);
-}
-
-qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item, int atTime)
-{
-	vec3_t origin;
-
-	BG_EvaluateTrajectory(&item->pos, atTime, origin);
-	return ps->origin[0] - origin[0] <= 36.0
-	       && ps->origin[0] - origin[0] >= -36.0
-	       && ps->origin[1] - origin[1] <= 36.0
-	       && ps->origin[1] - origin[1] >= -36.0
-	       && ps->origin[2] - origin[2] <= 18.0
-	       && ps->origin[2] - origin[2] >= -88.0;
-}
-
-int BG_CheckProneValid(int passEntityNum, const float *const vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, int bAlreadyProne, int bOnGround, float *const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist)
-{
-	float feetPitch;
-	float feetPosPitch;
-	float proneFeedScale;
-	float feetDist;
-	float yawDist;
-	char bLanded;
-	void (*traceFunc)(trace_t *, const float *, const float *, const float *, const float *, int, int);
-	float frac;
-	int bFirstTraceHit;
-	float feetFrac;
-	float feetHeight;
-	float normalPos;
-	float dist;
-	float angle1;
-	float angle2;
-	vec3_t vEnd;
-	vec3_t vWaistPos;
-	vec3_t vEndPos;
-	vec3_t vUp;
-	vec3_t vRight;
-	vec3_t vForward;
-	vec3_t vFeetPos;
-	vec3_t maxs;
-	vec3_t mins;
-	vec3_t angles;
-	vec3_t start;
-	trace_t trace;
-	int contentMask;
-
-	bFirstTraceHit = 0;
-	bLanded = 1;
-
-	traceFunc = pmoveHandlers[handler].trace;
-
-	VectorSet(mins, -fSize, -fSize, 0.0);
-	VectorAdd(mins, vPos, mins);
-	VectorSet(maxs, fSize, fSize, fHeight);
-	VectorAdd(maxs, vPos, maxs);
-
-	if ( proneCheckType )
-		contentMask = 8519697;
-	else
-		contentMask = 8454161;
-
-	if ( !bAlreadyProne )
-	{
-		VectorSet(mins, -fSize, -fSize, 0.0);
-		VectorSet(maxs, fSize, fSize, fHeight);
-		VectorCopy(vPos, start);
-		VectorCopy(vPos, angles);
-		angles[2] = angles[2] + 10.0;
-
-		traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-		if ( trace.allsolid )
-			return 0;
-	}
-
-	if ( bOnGround && vGroundNormal && vGroundNormal[2] < 0.69999999 )
-		return 0;
-
-	VectorSet(mins, -6.0, -6.0, -6.0);
-	VectorSet(maxs, 6.0, 6.0, 6.0);
-	yawDist = fYaw - 180.0;
-	VectorSet(angles, 0.0, yawDist, 0.0);
-	AngleVectors(angles, vForward, vRight, vUp);
-	feetHeight = fHeight - 6.0;
-	VectorCopy(vPos, start);
-	start[2] = start[2] + feetHeight;
-	proneFeedScale = prone_feet_dist - 6.0;
-	VectorMA(start, proneFeedScale, vForward, angles);
-	traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-	if ( trace.fraction >= 1.0 )
-	{
-		feetFrac = prone_feet_dist;
-	}
-	else
-	{
-		if ( !bOnGround )
-			return 0;
-
-		bFirstTraceHit = 1;
-		feetFrac = (prone_feet_dist - 6.0) * trace.fraction + 6.0;
-
-		if ( fSize + 2.0 > feetFrac )
-			return 0;
-
-		if ( feetHeight * 0.69999999 + 48.0 > feetFrac )
-		{
-			bFirstTraceHit = 0;
-			angles[2] = angles[2] + 22.0;
-			VectorSubtract(angles, start, vFeetPos);
-			normalPos = Vec3NormalizeTo(vFeetPos, vForward);
-
-			traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-			if ( trace.fraction >= 1.0 )
-			{
-				feetFrac = prone_feet_dist;
-			}
-			else
-			{
-				bFirstTraceHit = 1;
-				feetFrac = trace.fraction * normalPos + 6.0;
-
-				if ( feetHeight * 0.69999999 + 48.0 > feetFrac )
-					return 0;
-			}
-		}
-	}
-
-	Vec3Lerp(start, angles, trace.fraction, vEnd);
-	VectorMA(vPos, 48.0, vForward, start);
-	start[2] = start[2] + feetHeight;
-	VectorCopy(start, angles);
-	angles[2] = angles[2] - (fSize * 2.5 + feetHeight - 6.0);
-
-	traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-	if ( trace.fraction != 1.0 )
-	{
-		if ( trace.normal[2] < 0.69999999 )
-			return 0;
-
-		frac = (fSize * 2.5 + feetHeight - 6.0) * trace.fraction + 6.0;
-		Vec3Lerp(start, angles, trace.fraction, vWaistPos);
-		vWaistPos[2] = vWaistPos[2] - 6.0;
-
-		if ( !bFirstTraceHit )
-			goto LABEL_30;
-
-		if ( frac * -0.75 <= feetFrac - frac )
-		{
-			VectorSubtract(vEnd, vWaistPos, vFeetPos);
-			VectorMA(vFeetPos, 6.0, vForward, vFeetPos);
-			vFeetPos[2] = vFeetPos[2] + 6.0;
-			Vec3Normalize(vFeetPos);
-			feetDist = prone_feet_dist - 6.0 - 48.0;
-			VectorMA(start, feetDist, vFeetPos, angles);
-			angles[0] = ((prone_feet_dist - 6.0) * vForward[0] + vPos[0] + angles[0]) * 0.5;
-			angles[1] = ((prone_feet_dist - 6.0) * vForward[1] + vPos[1] + angles[1]) * 0.5;
-
-			traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-			if ( trace.fraction >= 1.0
-			        || (Vec3Lerp(start, angles, trace.fraction, start),
-			            start[2] = start[2] + 18.0,
-			            angles[2] = angles[2] + 18.0,
-			            traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask),
-			            trace.fraction >= 1.0) )
-			{
-				Vec3Lerp(start, angles, trace.fraction, vEnd);
-LABEL_30:
-				VectorCopy(vEnd, start);
-				VectorCopy(start, angles);
-				angles[2] = angles[2] - (start[2] - vWaistPos[2] + start[2] - vWaistPos[2] + fSize);
-				traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-				if ( trace.fraction != 1.0 )
-				{
-					if ( trace.normal[2] < 0.69999999 )
-						return 0;
-
-					Vec3Lerp(start, angles, trace.fraction, vEnd);
-					vEnd[2] = vEnd[2] - 6.0;
-					VectorCopy(vPos, vEndPos);
-					VectorSubtract(vWaistPos, vEndPos, vFeetPos);
-					angle2 = vectopitch(vFeetPos);
-					VectorSubtract(vEnd, vWaistPos, vFeetPos);
-					angle1 = vectopitch(vFeetPos);
-					dist = AngleSubtract(angle1, angle2);
-
-					if ( dist < -50.0 || dist > 70.0 )
-						bLanded = 0;
-
-					VectorSet(mins, -0.0, -0.0, -0.0);
-					VectorSet(maxs, 0.0, 0.0, 0.0);
-					VectorCopy(vEndPos, start);
-					start[2] = start[2] + 5.0;
-					VectorCopy(vWaistPos, angles);
-					angles[2] = angles[2] + 5.0;
-					traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-					if ( trace.fraction < 1.0 )
-						bLanded = 0;
-
-					VectorCopy(angles, start);
-					VectorCopy(vEnd, angles);
-					angles[2] = angles[2] + 5.0;
-
-					traceFunc(&trace, start, mins, maxs, angles, passEntityNum, contentMask);
-
-					if ( trace.fraction < 1.0 )
-						bLanded = 0;
-
-					if ( pfTorsoHeight )
-						*pfTorsoHeight = 0.0;
-
-					if ( pfTorsoPitch )
-					{
-						VectorSubtract(vEndPos, vWaistPos, vFeetPos);
-						feetPitch = vectopitch(vFeetPos);
-						*pfTorsoPitch = AngleNormalize180(feetPitch);
-					}
-
-					if ( pfWaistPitch )
-					{
-						VectorSubtract(vWaistPos, vEnd, vFeetPos);
-						feetPosPitch = vectopitch(vFeetPos);
-						*pfWaistPitch = AngleNormalize180(feetPosPitch);
-					}
-
-					if ( bLanded )
-						return 1;
-				}
-			}
-		}
-	}
-
-	if ( bOnGround )
-		return 0;
-
-	if ( pfTorsoHeight )
-		*pfTorsoHeight = 0.0;
-
-	if ( pfTorsoPitch )
-		*pfTorsoPitch = 0.0;
-
-	if ( pfWaistPitch )
-		*pfWaistPitch = 0.0;
-
-	return 1;
-}
-
-int BG_CheckProne(int passEntityNum, const float *const vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, int bAlreadyProne, int bOnGround, float *const vGroundNormal, unsigned char handler, int proneCheckType, float prone_feet_dist)
-{
-	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
-}
-
-int BG_CheckProneTurned(playerState_s *ps, float newProneYaw, unsigned char handler)
-{
-	float fraction;
-	float dist;
-	float abs;
-	float testYaw;
-	float delta;
-
-	delta = AngleDelta(newProneYaw, ps->viewangles[1]);
-	abs = I_fabs(delta) / 240.0;
-	fraction = newProneYaw - (1.0 - abs) * delta;
-	testYaw = AngleNormalize360Accurate(fraction);
-	dist = abs * 45.0 + (1.0 - abs) * 66.0;
-
-	return BG_CheckProne(
-	           ps->clientNum,
-	           ps->origin,
-	           ps->maxs[0],
-	           30.0,
-	           testYaw,
-	           &ps->fTorsoHeight,
-	           &ps->fTorsoPitch,
-	           &ps->fWaistPitch,
-	           1,
-	           ps->groundEntityNum != 1023,
-	           0,
-	           handler,
-	           0,
-	           dist);
-}
-
+/*
+================
+BG_RegisterDvars
+================
+*/
 void BG_RegisterDvars()
 {
-	player_view_pitch_up = Dvar_RegisterFloat("player_view_pitch_up", 85.0, 0.0, 90.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_view_pitch_down = Dvar_RegisterFloat("player_view_pitch_down", 85.0, 0.0, 90.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_ladder_yawcap = Dvar_RegisterFloat("bg_ladder_yawcap", 100.0, 0.0, 360.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_prone_yawcap = Dvar_RegisterFloat("bg_prone_yawcap", 85.0, 0.0, 360.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_foliagesnd_minspeed = Dvar_RegisterFloat("bg_foliagesnd_minspeed", 40.0, 0.0, 3.4028235e38, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_foliagesnd_maxspeed = Dvar_RegisterFloat("bg_foliagesnd_maxspeed", 180.0, 0.0, 3.4028235e38, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_foliagesnd_slowinterval = Dvar_RegisterInt("bg_foliagesnd_slowinterval", 1500, 0, 0x7FFFFFFF, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_foliagesnd_fastinterval = Dvar_RegisterInt("bg_foliagesnd_fastinterval", 500, 0, 0x7FFFFFFF, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_foliagesnd_resetinterval = Dvar_RegisterInt("bg_foliagesnd_resetinterval", 500, 0, 0x7FFFFFFF, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_fallDamageMinHeight = Dvar_RegisterFloat("bg_fallDamageMinHeight", 256.0, 1.0, 3.4028235e38, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_fallDamageMaxHeight = Dvar_RegisterFloat("bg_fallDamageMaxHeight", 480.0, 1.0, 3.4028235e38, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	inertiaMax = Dvar_RegisterFloat("inertiaMax", 50.0, 0.0, 1000.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	inertiaDebug = Dvar_RegisterBool("inertiaDebug", 0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	inertiaAngle = Dvar_RegisterFloat("inertiaAngle", 0.0, -1.0, 1.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	friction = Dvar_RegisterFloat("friction", 5.5, 0.0, 100.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	stopspeed = Dvar_RegisterFloat("stopspeed", 100.0, 0.0, 1000.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_swingSpeed = Dvar_RegisterFloat("bg_swingSpeed", 0.2, 0.0, 1.0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	bg_bobAmplitudeStanding = Dvar_RegisterFloat("bg_bobAmplitudeStanding", 0.0070000002, 0.0, 1.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_bobAmplitudeDucked = Dvar_RegisterFloat("bg_bobAmplitudeDucked", 0.0074999998, 0.0, 1.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_bobAmplitudeProne = Dvar_RegisterFloat("bg_bobAmplitudeProne", 0.029999999, 0.0, 1.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_bobMax = Dvar_RegisterFloat("bg_bobMax", 8.0, 0.0, 36.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_aimSpreadMoveSpeedThreshold = Dvar_RegisterFloat("bg_aimSpreadMoveSpeedThreshold", 11.0, 0.0, 300.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_hold_time = Dvar_RegisterFloat("player_breath_hold_time", 4.5, 0.0, 30.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_gasp_time = Dvar_RegisterFloat("player_breath_gasp_time", 1.0, 0.0, 30.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_fire_delay = Dvar_RegisterFloat("player_breath_fire_delay", 0.0, 0.0, 30.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_gasp_scale = Dvar_RegisterFloat("player_breath_gasp_scale", 4.5, 0.0, 50.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_hold_lerp = Dvar_RegisterFloat("player_breath_hold_lerp", 4.0, 0.0, 50.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_gasp_lerp = Dvar_RegisterFloat("player_breath_gasp_lerp", 6.0, 0.0, 50.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_snd_lerp = Dvar_RegisterFloat("player_breath_snd_lerp", 2.0, 0.0, 100.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_breath_snd_delay = Dvar_RegisterFloat("player_breath_snd_delay", 1.0, 0.0, 2.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_toggleBinoculars = Dvar_RegisterBool("player_toggleBinoculars", 1, DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_scopeExitOnDamage = Dvar_RegisterBool("player_scopeExitOnDamage", 0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_view_pitch_up = Dvar_RegisterFloat("player_view_pitch_up", 85, 0, 90, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_view_pitch_down = Dvar_RegisterFloat("player_view_pitch_down", 85, 0, 90, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_ladder_yawcap = Dvar_RegisterFloat("bg_ladder_yawcap", 100, 0, 360, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_prone_yawcap = Dvar_RegisterFloat("bg_prone_yawcap", 85, 0, 360, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_foliagesnd_minspeed = Dvar_RegisterFloat("bg_foliagesnd_minspeed", 40, 0, FLT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_foliagesnd_maxspeed = Dvar_RegisterFloat("bg_foliagesnd_maxspeed", 180, 0, FLT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_foliagesnd_slowinterval = Dvar_RegisterInt("bg_foliagesnd_slowinterval", 1500, 0, INT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_foliagesnd_fastinterval = Dvar_RegisterInt("bg_foliagesnd_fastinterval", 500, 0, INT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_foliagesnd_resetinterval = Dvar_RegisterInt("bg_foliagesnd_resetinterval", 500, 0, INT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_fallDamageMinHeight = Dvar_RegisterFloat("bg_fallDamageMinHeight", 256, 1, FLT_MAX, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_fallDamageMaxHeight = Dvar_RegisterFloat("bg_fallDamageMaxHeight", 480, 1, FLT_MAX, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	inertiaMax = Dvar_RegisterFloat("inertiaMax", 50, 0, 1000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	inertiaDebug = Dvar_RegisterBool("inertiaDebug", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	inertiaAngle = Dvar_RegisterFloat("inertiaAngle", 0, -1, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	friction = Dvar_RegisterFloat("friction", 5.5, 0, 100, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	stopspeed = Dvar_RegisterFloat("stopspeed", 100, 0, 1000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_swingSpeed = Dvar_RegisterFloat("bg_swingSpeed", 0.2, 0, 1, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	bg_bobAmplitudeStanding = Dvar_RegisterFloat("bg_bobAmplitudeStanding", 0.0070000002, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_bobAmplitudeDucked = Dvar_RegisterFloat("bg_bobAmplitudeDucked", 0.0074999998, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_bobAmplitudeProne = Dvar_RegisterFloat("bg_bobAmplitudeProne", 0.029999999, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_bobMax = Dvar_RegisterFloat("bg_bobMax", 8, 0, 36, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_aimSpreadMoveSpeedThreshold = Dvar_RegisterFloat("bg_aimSpreadMoveSpeedThreshold", 11, 0, 300, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_hold_time = Dvar_RegisterFloat("player_breath_hold_time", 4.5, 0, 30, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_gasp_time = Dvar_RegisterFloat("player_breath_gasp_time", 1, 0, 30, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_fire_delay = Dvar_RegisterFloat("player_breath_fire_delay", 0, 0, 30, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_gasp_scale = Dvar_RegisterFloat("player_breath_gasp_scale", 4.5, 0, 50, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_hold_lerp = Dvar_RegisterFloat("player_breath_hold_lerp", 4, 0, 50, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_gasp_lerp = Dvar_RegisterFloat("player_breath_gasp_lerp", 6, 0, 50, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_snd_lerp = Dvar_RegisterFloat("player_breath_snd_lerp", 2, 0, 100, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_breath_snd_delay = Dvar_RegisterFloat("player_breath_snd_delay", 1, 0, 2, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_toggleBinoculars = Dvar_RegisterBool("player_toggleBinoculars", true, DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_scopeExitOnDamage = Dvar_RegisterBool("player_scopeExitOnDamage", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_adsExitDelay = Dvar_RegisterInt("player_adsExitDelay", 0, 0, 1000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_moveThreshhold = Dvar_RegisterFloat("player_moveThreshhold", 10.0, 0.0000000099999999, 20.0, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_footstepsThreshhold = Dvar_RegisterFloat("player_footstepsThreshhold", 0.0, 0.0, 50000.0, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_strafeSpeedScale = Dvar_RegisterFloat("player_strafeSpeedScale", 0.80000001, 0.0, 20.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_backSpeedScale = Dvar_RegisterFloat("player_backSpeedScale", 0.69999999, 0.0, 20.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_spectateSpeedScale = Dvar_RegisterFloat("player_spectateSpeedScale", 2.0, 0.0, 20.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_turnAnims = Dvar_RegisterBool("player_turnAnims", 0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_dmgtimer_timePerPoint = Dvar_RegisterFloat("player_dmgtimer_timePerPoint", 100.0, 0.0, 3.4028235e38, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_dmgtimer_maxTime = Dvar_RegisterFloat("player_dmgtimer_maxTime", 750.0, 0.0, 3.4028235e38, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_dmgtimer_minScale = Dvar_RegisterFloat("player_dmgtimer_minScale", 0.0, 0.0, 1.0, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_moveThreshhold = Dvar_RegisterFloat("player_moveThreshhold", 10, 0.0000000099999999, 20, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_footstepsThreshhold = Dvar_RegisterFloat("player_footstepsThreshhold", 0, 0, 50000, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_strafeSpeedScale = Dvar_RegisterFloat("player_strafeSpeedScale", 0.80000001, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_backSpeedScale = Dvar_RegisterFloat("player_backSpeedScale", 0.69999999, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_spectateSpeedScale = Dvar_RegisterFloat("player_spectateSpeedScale", 2, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_turnAnims = Dvar_RegisterBool("player_turnAnims", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_dmgtimer_timePerPoint = Dvar_RegisterFloat("player_dmgtimer_timePerPoint", 100, 0, FLT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_dmgtimer_maxTime = Dvar_RegisterFloat("player_dmgtimer_maxTime", 750, 0, FLT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_dmgtimer_minScale = Dvar_RegisterFloat("player_dmgtimer_minScale", 0, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_dmgtimer_stumbleTime = Dvar_RegisterInt("player_dmgtimer_stumbleTime", 500, 0, 2000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_dmgtimer_flinchTime = Dvar_RegisterInt("player_dmgtimer_flinchTime", 500, 0, 2000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+
 	Jump_RegisterDvars();
 	Mantle_RegisterDvars();
 }
