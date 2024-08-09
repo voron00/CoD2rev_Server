@@ -1283,18 +1283,28 @@ enum EffectiveStance
 	PM_EFF_STANCE_COUNT
 };
 
+enum proneCheckType_t
+{
+	PCT_CLIENT = 0x0,
+	PCT_ACTOR = 0x1,
+};
+
+#define MAXTOUCH    32
+
 // pmove->pm_flags	(sent as max 16 bits in msg.c)
 #define PMF_PRONE           0x1
 #define PMF_CROUCH          0x2
-#define PMF_DUCKED          PMF_CROUCH
 #define PMF_MANTLE          0x4
 #define PMF_FRAG            0x10
 #define PMF_LADDER          0x20
 #define PMF_ADS             0x40
 #define PMF_BACKWARDS_RUN   0x80
+#define PMF_ADS_WALK        0x100 // player can walk in ads mode
 #define PMF_SLIDING         0x200
+#define PMF_ADS_OVERRIDE    0x800 // ads will be cleared if player has moved aka when prone
 #define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
+#define PMF_PRONE_BLOCKED   0x10000
 #define PMF_JUMPING         0x80000
 #define PMF_LOOKAT_FRIEND	0x100000 // green crosshair
 #define PMF_LOOKAT_ENEMY	0x200000 // red crosshair
@@ -1496,7 +1506,7 @@ void PM_AddEvent(playerState_s *ps, int newEvent);
 int PM_GetEffectiveStance(const playerState_s *ps);
 void PM_UpdateViewAngles(playerState_s *ps, float msec, usercmd_s *cmd, unsigned char handler);
 void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);
-
+int PM_FootstepType(playerState_s *ps, pml_t *pml);
 void Jump_ClearState(playerState_s *ps);
 bool Jump_GetStepHeight(playerState_s *ps, const float *origin, float *stepSize);
 bool Jump_IsPlayerAboveMax(playerState_s *ps);
@@ -1618,6 +1628,7 @@ int BG_FindWeaponIndexForName(const char *name);
 int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex);
 bool BG_DoesWeaponRequireSlot(int weaponIndex);
 bool BG_IsAnyEmptyPrimaryWeaponSlot(gclient_s *client);
+void PM_SetProneMovementOverride( playerState_t *ps );
 
 long BG_StringHashValue( const char *fname );
 

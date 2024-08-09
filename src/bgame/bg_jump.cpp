@@ -8,7 +8,6 @@ dvar_t *jump_ladderPushVel;
 dvar_t *jump_spreadAdd;
 
 #define JUMP_LAND_SLOWDOWN_TIME 1800
-#define JUMP_TIME_DELAY 500
 
 /*
 ==================
@@ -211,7 +210,7 @@ void Jump_ApplySlowdown( playerState_t *ps )
 		return;
 	}
 
-	ps->pm_time = JUMP_LAND_SLOWDOWN_TIME - FRAMETIME - JUMP_TIME_DELAY;
+	ps->pm_time = JUMP_LAND_SLOWDOWN_TIME - FRAMETIME - 500;
 	VectorScale(ps->velocity, 0.5, ps->velocity);
 }
 
@@ -327,7 +326,7 @@ bool Jump_Check( pmove_t *pm, pml_t *pml )
 	ps = pm->ps;
 	assert(ps);
 
-	if ( pm->cmd.serverTime - pm->ps->jumpTime < JUMP_TIME_DELAY )
+	if ( pm->cmd.serverTime - pm->ps->jumpTime < 500 )
 	{
 		return false;
 	}

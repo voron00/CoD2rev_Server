@@ -282,6 +282,8 @@ BG_AddPredictableEventToPlayerstate
 */
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps )
 {
+	assert(ps);
+
 	if ( !newEvent )
 	{
 		return;
@@ -299,7 +301,7 @@ BG_FindItemForWeapon
 */
 gitem_t* BG_FindItemForWeapon( int weapon )
 {
-	assert(weapon < BG_GetNumWeapons());
+	assert(weapon <= BG_GetNumWeapons());
 	return &bg_itemlist[weapon];
 }
 

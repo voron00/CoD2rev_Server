@@ -463,6 +463,26 @@ inline void FastSinCos(const float value, float *pSin, float *pCos)
 
 /*
 ==============
+FastSinCos
+==============
+*/
+inline int const FloatIsNegative(const float x)
+{
+	return x < 0.0f;
+}
+
+/*
+==============
+FloatSign
+==============
+*/
+inline int const FloatSign(const float x)
+{
+	return -2 * FloatIsNegative(x) + 1;
+}
+
+/*
+==============
 I_rsqrt
 ==============
 */

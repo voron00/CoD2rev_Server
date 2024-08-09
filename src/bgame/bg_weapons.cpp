@@ -948,12 +948,6 @@ void PM_Weapon_CheckForBinoculars(pmove_t *pm)
 	}
 }
 
-void PM_SetProneMovementOverride(playerState_s *ps)
-{
-	if ( (ps->pm_flags & 1) != 0 )
-		ps->pm_flags |= 0x800u;
-}
-
 void PM_Weapon_OffHandInit(playerState_s *ps)
 {
 	WeaponDef *weaponDef;
