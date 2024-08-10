@@ -1283,6 +1283,8 @@ enum EffectiveStance
 	PM_EFF_STANCE_COUNT
 };
 
+#define PRONE_FEET_DIST_TURNED 45
+
 enum proneCheckType_t
 {
 	PCT_CLIENT = 0x0,
