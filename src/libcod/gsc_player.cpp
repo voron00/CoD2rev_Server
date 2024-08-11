@@ -613,7 +613,7 @@ void gsc_player_clearjumpstate(scr_entref_t id)
 
 	playerState_t *ps = SV_GameClientNum(id.entnum);
 
-	ps->pm_flags &= ~(PMF_JUMPING|PMF_SLIDING);
+	ps->pm_flags &= ~( PMF_TIME_LAND | PMF_TIME_SLIDE );
 	ps->pm_time = 0;
 	ps->jumpTime = 0;
 	ps->jumpOriginZ = 0;

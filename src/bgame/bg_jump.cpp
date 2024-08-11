@@ -21,7 +21,7 @@ void Jump_ActivateSlowdown( playerState_t *ps )
 		return;
 	}
 
-	ps->pm_flags |= PMF_JUMPING;
+	ps->pm_flags |= PMF_TIME_LAND;
 	ps->pm_time = JUMP_LAND_SLOWDOWN_TIME;
 }
 
@@ -32,7 +32,7 @@ Jump_IsPlayerAboveMax
 */
 bool Jump_IsPlayerAboveMax( playerState_t *ps )
 {
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 	return ps->origin[2] >= ps->jumpOriginZ + jump_height->current.decimal;
 }
 
@@ -43,7 +43,7 @@ Jump_GetStepHeight
 */
 bool Jump_GetStepHeight( playerState_t *ps, const vec3_t origin, float *stepSize )
 {
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 	assert(origin);
 	assert(stepSize);
 
@@ -69,7 +69,7 @@ Jump_ClearState
 */
 void Jump_ClearState( playerState_t *ps )
 {
-	ps->pm_flags &= ~PMF_JUMPING;
+	ps->pm_flags &= ~PMF_TIME_LAND;
 	ps->jumpOriginZ = 0;
 }
 
@@ -83,7 +83,7 @@ void Jump_ClampVelocity( playerState_t *ps, const vec3_t origin )
 	float maxJumpVel;
 	float heightDiff;
 
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 	assert(origin);
 
 	if ( ps->origin[2] - origin[2] <= 0 )
@@ -114,7 +114,7 @@ Jump_ReduceFriction
 */
 float Jump_ReduceFriction( playerState_t *ps )
 {
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 
 	if ( !jump_slowdownEnable->current.boolean )
 	{
@@ -136,7 +136,7 @@ Jump_GetLandFactor
 */
 float Jump_GetLandFactor( playerState_t *ps )
 {
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 	assert(ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME);
 
 	if ( !jump_slowdownEnable->current.boolean )
@@ -159,7 +159,7 @@ Jump_GetSlowdownFriction
 */
 float Jump_GetSlowdownFriction( playerState_t *ps )
 {
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 	assert(ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME);
 
 	if ( !jump_slowdownEnable->current.boolean )
@@ -182,7 +182,7 @@ Jump_ApplySlowdown
 */
 void Jump_ApplySlowdown( playerState_t *ps )
 {
-	assert(ps->pm_flags & PMF_JUMPING);
+	assert(ps->pm_flags & PMF_TIME_LAND);
 
 	if ( !jump_slowdownEnable->current.boolean )
 	{
@@ -234,7 +234,7 @@ void Jump_AddSurfaceEvent( playerState_t *ps, pml_t *pml )
 		return;
 	}
 
-	PM_AddEvent(ps, surfType + EV_JUMP_DEFAULT);
+	PM_AddEvent(ps, EV_JUMP_DEFAULT + surfType);
 }
 
 /*
@@ -289,7 +289,7 @@ void Jump_Start( pmove_t *pm, pml_t *pml, float height )
 
 	velocitySqrd = (height + height) * pm->ps->gravity;
 
-	if ( pm->ps->pm_flags & PMF_JUMPING && ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME )
+	if ( pm->ps->pm_flags & PMF_TIME_LAND && ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME )
 	{
 		factor = Jump_GetLandFactor(ps);
 		assert(factor);
@@ -302,7 +302,7 @@ void Jump_Start( pmove_t *pm, pml_t *pml, float height )
 	ps->groundEntityNum = ENTITYNUM_NONE;
 	ps->jumpTime = pm->cmd.serverTime;
 	ps->jumpOriginZ = ps->origin[2];
-	ps->pm_flags |= PMF_JUMPING;
+	ps->pm_flags |= PMF_TIME_LAND;
 	ps->pm_time = 0;
 	ps->velocity[2] = I_sqrt(velocitySqrd);
 	ps->aimSpreadScale = ps->aimSpreadScale + jump_spreadAdd->current.decimal;

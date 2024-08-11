@@ -30,7 +30,6 @@ extern vec4_t vec4_origin;
 
 #define DEGINRAD  57.29577951308232 // degrees in one radian
 
-#define abs32 abs
 #define Square( x ) ( ( x ) * ( x ) )
 
 #define ANGLE2SHORT( x )  ( (int)( ( x ) * 65536 / 360 ) & 65535 )

@@ -1302,12 +1302,14 @@ enum proneCheckType_t
 #define PMF_ADS             0x40
 #define PMF_BACKWARDS_RUN   0x80
 #define PMF_ADS_WALK        0x100 // player can walk in ads mode
-#define PMF_SLIDING         0x200
+#define PMF_TIME_SLIDE      0x200
+#define PMF_TIME_KNOCKBACK  0x400 // pm_time is an air-accelerate only time
 #define PMF_ADS_OVERRIDE    0x800 // ads will be cleared if player has moved aka when prone
 #define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
 #define PMF_PRONE_BLOCKED   0x10000
-#define PMF_JUMPING         0x80000
+#define PMF_LADDER_END      0x40000 // something to help with ladder transition
+#define PMF_TIME_LAND       0x80000 // pm_time is time before rejump
 #define PMF_LOOKAT_FRIEND	0x100000 // green crosshair
 #define PMF_LOOKAT_ENEMY	0x200000 // red crosshair
 #define PMF_UNKNOWN         0x400000
@@ -1315,6 +1317,8 @@ enum proneCheckType_t
 #define PMF_SPECTATING      0x1000000
 #define PMF_FOLLOW          0x2000000
 #define PMF_DISABLEWEAPON   0x4000000
+
+#define PMF_ALL_TIMES   ( PMF_TIME_SLIDE | PMF_TIME_KNOCKBACK | PMF_TIME_LAND )
 
 // playerState_t->eFlags
 // entityState_t->eFlags
@@ -1502,7 +1506,6 @@ void PM_AddTouchEnt(pmove_t *pm, int entityNum);
 void PM_StepSlideMove(pmove_t *pm, pml_t *pml, int gravity);
 void PM_ClipVelocity(const float *in, const float *normal, float *out);
 void PM_AirMove(pmove_t *pm, pml_t *pml);
-float PM_CmdScale(playerState_s *ps, usercmd_s *cmd);
 int PM_GroundSurfaceType(pml_t *pml);
 void PM_AddEvent(playerState_s *ps, int newEvent);
 int PM_GetEffectiveStance(const playerState_s *ps);
@@ -1569,7 +1572,6 @@ int CL_LocalClient_GetActiveCount();
 void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml);
 void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml);
 void PM_CheckDuck(pmove_t *pm, pml_t *pml);
-void PM_SetMovementDir(pmove_t *pm, pml_t *pml);
 void PM_WalkMove(pmove_t *pm, pml_t *pml);
 void PM_NoclipMove(pmove_t *pm, pml_t *pml);
 void PM_UFOMove(pmove_t *pm, pml_t *pml);
@@ -1578,8 +1580,9 @@ void PM_Footsteps(pmove_t *pm, pml_t *pml);
 void PM_CheckLadderMove(pmove_t *pm, pml_t *pml);
 void PM_CrashLand(playerState_s *pm, pml_t *pml);
 void PM_LadderMove(pmove_t *pm, pml_t *pml);
-
+int PM_FootstepForSurface( playerState_t *ps, pml_t *pml );
 void Pmove(pmove_t *pmove);
+void PmoveSingle(pmove_t *pmove);
 
 qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_s *item, int atTime);
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
