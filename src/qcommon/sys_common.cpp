@@ -1,6 +1,11 @@
 #include <dirent.h>
 #include "qcommon.h"
 
+int CL_LocalClient_GetActiveCount()
+{
+	return 1;
+}
+
 qboolean Sys_DirectoryHasContents(const char *dir)
 {
 	DIR *hdir;

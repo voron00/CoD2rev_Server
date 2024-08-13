@@ -60,6 +60,8 @@ typedef struct
 	void            *evPtr;         // this must be manually freed if not NULL
 } sysEvent_t;
 
+int CL_LocalClient_GetActiveCount();
+
 void Sys_Init (void);
 int Sys_Milliseconds (void);
 

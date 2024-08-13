@@ -278,7 +278,7 @@ void gsc_player_stance_get(scr_entref_t id)
 
 	playerState_t *ps = SV_GameClientNum(id.entnum);
 
-	if (ps->pm_flags & PMF_CROUCH)
+	if (ps->pm_flags & PMF_DUCKED)
 		stackPushString("duck");
 	else if (ps->pm_flags & PMF_PRONE)
 		stackPushString("lie");

@@ -1283,6 +1283,10 @@ enum EffectiveStance
 	PM_EFF_STANCE_COUNT
 };
 
+#define VIEW_HEIGHT_PRONE 11
+#define VIEW_HEIGHT_CROUCHED 40
+#define VIEW_HEIGHT_STANDING 60
+
 #define PRONE_FEET_DIST_TURNED 45
 
 enum proneCheckType_t
@@ -1295,7 +1299,7 @@ enum proneCheckType_t
 
 // pmove->pm_flags	(sent as max 16 bits in msg.c)
 #define PMF_PRONE           0x1
-#define PMF_CROUCH          0x2
+#define PMF_DUCKED          0x2
 #define PMF_MANTLE          0x4
 #define PMF_FRAG            0x10
 #define PMF_LADDER          0x20
@@ -1307,13 +1311,14 @@ enum proneCheckType_t
 #define PMF_ADS_OVERRIDE    0x800 // ads will be cleared if player has moved aka when prone
 #define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
+#define PMF_UNKNOWN_8000    0x8000
 #define PMF_PRONE_BLOCKED   0x10000
 #define PMF_LADDER_END      0x40000 // something to help with ladder transition
 #define PMF_TIME_LAND       0x80000 // pm_time is time before rejump
 #define PMF_LOOKAT_FRIEND	0x100000 // green crosshair
 #define PMF_LOOKAT_ENEMY	0x200000 // red crosshair
-#define PMF_UNKNOWN         0x400000
-#define PMF_UNKNOWN2        0x800000
+#define PMF_UNKNOWN_400000  0x400000
+#define PMF_UNKNOWN_800000  0x800000
 #define PMF_SPECTATING      0x1000000
 #define PMF_FOLLOW          0x2000000
 #define PMF_DISABLEWEAPON   0x4000000
@@ -1568,7 +1573,6 @@ void BG_LoadWeaponStrings();
 void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
 
-int CL_LocalClient_GetActiveCount();
 void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml);
 void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml);
 void PM_CheckDuck(pmove_t *pm, pml_t *pml);

@@ -286,22 +286,7 @@ qboolean PM_ShouldMakeFootsteps( pmove_t *pm )
 		return qfalse;
 	}
 
-	if ( ps->pm_flags >= 0 )
-	{
-		if ( !bCanWalk )
-		{
-			return pm->xyspeed >= player_footstepsThreshhold->current.decimal;
-		}
-
-		return qfalse;
-	}
-
-	if ( bCanWalk )
-	{
-		return qfalse;
-	}
-
-	return pm->xyspeed >= player_footstepsThreshhold->current.decimal;
+	return !bCanWalk && pm->xyspeed >= player_footstepsThreshhold->current.decimal; // optimized some bs here
 }
 
 /*
@@ -454,7 +439,7 @@ void PM_UpdateLean( playerState_t *ps, float msec, usercmd_t *cmd,
 	leaning = 0;
 	leanofs = 0;
 
-	if ( cmd->buttons & ( BUTTON_LEANLEFT | BUTTON_LEANRIGHT ) && ps->pm_flags >= 0 && ps->pm_type < PM_DEAD )
+	if ( cmd->buttons & ( BUTTON_LEANLEFT | BUTTON_LEANRIGHT ) && !(ps->pm_flags & PMF_UNKNOWN_8000) && ps->pm_type < PM_DEAD )
 	{
 		if ( ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED )
 		{
@@ -1306,7 +1291,8 @@ float PM_GetViewHeightLerp( const pmove_t *pm, int iFromHeight, int iToHeight )
 		return 0;
 	}
 
-	if ( iFromHeight != -1 && iToHeight != -1 && (iToHeight != ps->viewHeightLerpTarget || iToHeight == 40 && (iFromHeight != 11 || ps->viewHeightLerpDown) && (iFromHeight != 60 || !ps->viewHeightLerpDown)) )
+	if ( iFromHeight != -1 && iToHeight != -1 && (iToHeight != ps->viewHeightLerpTarget || iToHeight == VIEW_HEIGHT_CROUCHED
+	        && (iFromHeight != VIEW_HEIGHT_PRONE || ps->viewHeightLerpDown) && (iFromHeight != VIEW_HEIGHT_STANDING || !ps->viewHeightLerpDown)) )
 	{
 		return 0;
 	}
@@ -1822,85 +1808,715 @@ static float PM_MoveScale( playerState_t *ps, float fmove, float rmove, float um
 	return scale;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int CL_LocalClient_GetActiveCount()
+/*
+==================
+PM_Friction
+
+Handles both ground friction and water friction
+==================
+*/
+static void PM_Friction( playerState_t *ps, pml_t *pml )
 {
-	return 1;
+	vec3_t vec;
+	float   *vel;
+	float speed, newspeed, control;
+	float drop;
+
+	vel = ps->velocity;
+
+	VectorCopy( vel, vec );
+	if ( pml->walking )
+	{
+		vec[2] = 0; // ignore slope movement
+	}
+
+	speed = VectorLength( vec );
+	// rain - #179 don't do this for PM_SPECTATOR/PM_NOCLIP, we always want them to stop
+	if ( speed < 1  )
+	{
+		VectorClear(vel);     // allow sinking underwater
+		// FIXME: still have z friction underwater?
+		return;
+	}
+
+	drop = 0;
+
+	// apply ground friction
+	if ( pml->walking && !( pml->groundTrace.surfaceFlags & SURF_SLICK ) )
+	{
+		// if getting knocked back, no friction
+		if ( !( ps->pm_flags & PMF_TIME_KNOCKBACK ) )
+		{
+			control = speed < stopspeed->current.decimal ? stopspeed->current.decimal : speed;
+
+			if ( ps->pm_flags & PMF_TIME_SLIDE )
+			{
+				control *= 0.30000001;
+			}
+			else if ( ps->pm_flags & PMF_TIME_LAND )
+			{
+				control *= Jump_ReduceFriction(ps);
+			}
+
+			drop += control * friction->current.decimal * pml->frametime;
+		}
+	}
+
+	if ( ps->pm_type == PM_SPECTATOR )
+	{
+		drop += speed * 5 * pml->frametime;
+	}
+
+	// scale the velocity
+	newspeed = speed - drop;
+	if ( newspeed < 0 )
+	{
+		newspeed = 0;
+	}
+	newspeed /= speed;
+
+	// rain - used VectorScale instead of multiplying by hand
+	VectorScale( vel, newspeed, vel );
 }
+
+/*
+================
+PM_CheckLadderMove
+
+  Checks to see if we are on a ladder
+================
+*/
+void PM_CheckLadderMove( pmove_t *pm, pml_t *pml )
+{
+	playerState_t *ps;
+	float tracedist;
+#define TRACE_LADDER_DIST   30.0
+	qboolean fellOffLadderInAir;
+	vec3_t vLadderCheckDir;
+	vec3_t spot;
+	trace_t trace;
+	vec3_t mins;
+	vec3_t maxs;
+
+	assert(pm);
+	ps = pm->ps;
+	assert(ps);
+
+	if ( pml->walking )
+	{
+		ps->pm_flags &= ~PMF_LADDER_END;
+	}
+
+	if ( ps->pm_time && ps->pm_flags & ( PMF_TIME_SLIDE | PMF_TIME_KNOCKBACK) )
+	{
+		return;
+	}
+
+	if ( pml->walking )
+	{
+		tracedist = 8.0;
+	}
+	else
+	{
+		tracedist = TRACE_LADDER_DIST;
+	}
+
+	fellOffLadderInAir = ( ( pm->ps->pm_flags & PMF_LADDER ) != 0 ) && ps->groundEntityNum == ENTITYNUM_NONE;
+
+	if ( fellOffLadderInAir )
+	{
+		VectorNegate(ps->vLadderVec, vLadderCheckDir);
+	}
+	else
+	{
+		// check for ladder
+		vLadderCheckDir[0] = pml->forward[0];
+		vLadderCheckDir[1] = pml->forward[1];
+		vLadderCheckDir[2] = 0.0;
+
+		Vec3Normalize(vLadderCheckDir);
+	}
+
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		ps->groundEntityNum = ENTITYNUM_NONE;
+		pml->groundPlane = qfalse;
+		pml->almostGroundPlane = qfalse;
+		pml->walking = qfalse;
+		PM_ClearLadderFlag(ps);
+		return;
+	}
+
+	if ( ps->pm_flags & PMF_LADDER_END || PM_GetEffectiveStance(ps) == PM_EFF_STANCE_PRONE || pm->cmd.serverTime - ps->jumpTime < 300 )
+	{
+		PM_ClearLadderFlag(ps);
+		return;
+	}
+
+	VectorCopy(pm->mins, mins);
+
+	mins[0] = mins[0] + 6.0;
+	mins[1] = mins[1] + 6.0;
+	mins[2] = 8.0;
+
+	VectorCopy(pm->maxs, maxs);
+
+	maxs[0] = maxs[0] - 6.0;
+	maxs[1] = maxs[1] - 6.0;
+
+	if ( mins[2] > maxs[2] )
+	{
+		maxs[2] = mins[2];
+	}
+
+	assert(maxs[0] >= mins[0]);
+	assert(maxs[1] >= mins[1]);
+	assert(maxs[2] >= mins[2]);
+
+	VectorMA(ps->origin, tracedist, vLadderCheckDir, spot);
+	PM_playerTrace(pm, &trace, ps->origin, mins, maxs, spot, ps->clientNum, pm->tracemask);
+
+	if ( ( trace.fraction < 1 ) && ( trace.surfaceFlags & SURF_LADDER ) )
+	{
+		if ( !pml->walking || pm->cmd.forwardmove > 0 )
+		{
+			if ( ps->pm_flags & PMF_LADDER )
+			{
+				PM_SetLadderFlag(ps); // set ladder bit
+				return;
+			}
+
+			// if we are only just on the ladder, don't do this yet, or it may throw us back off the ladder
+			VectorCopy(trace.normal, ps->vLadderVec);
+			VectorNegate(ps->vLadderVec, vLadderCheckDir);
+
+			VectorMA(ps->origin, tracedist, vLadderCheckDir, spot);
+			PM_playerTrace(pm, &trace, ps->origin, mins, maxs, spot, ps->clientNum, pm->tracemask);
+
+			if ( ( trace.fraction < 1 ) && ( trace.surfaceFlags & SURF_LADDER ) )
+			{
+				PM_SetLadderFlag(ps); // set ladder bit
+				return;
+			}
+		}
+	}
+
+	PM_ClearLadderFlag(ps);
+
+	if ( fellOffLadderInAir )
+	{
+		BG_AnimScriptEvent(ps, ANIM_ET_JUMP, qfalse, qtrue);
+	}
+}
+
+/*
+===============
+PM_Footsteps
+===============
+*/
+void PM_Footsteps( pmove_t *pm, pml_t *pml )
+{
+	qboolean iswalking;
+	int turnAdjust;
+	clientInfo_t *ci;
+	int stumble_end_time;
+	playerState_t *ps;
+	float lerpFrac;
+	float fMaxSpeed;
+	int iStance;
+	qboolean footstep;
+	int old;
+	float bobmove;
+	int animResult = -1;
+
+	ps = pm->ps;
+
+	if ( pm->ps->pm_type >= PM_DEAD )
+	{
+		return;
+	}
+
+	if ( ps->clientNum >= MAX_CLIENTS )
+		ci = NULL;
+	else
+		ci = &level_bgs.clientinfo[ps->clientNum];
+
+	stumble_end_time = ps->damageDuration - player_dmgtimer_stumbleTime->current.integer;
+
+	if ( stumble_end_time < 0 )
+	{
+		stumble_end_time = 0;
+	}
+
+	//
+	// calculate speed and cycle to be used for
+	// all cyclic walking effects
+	//
+	pm->xyspeed = I_sqrt( Square(ps->velocity[0]) + Square(ps->velocity[1]) );
+
+	// mg42, always idle
+	if ( ps->eFlags & EF_TURRET_ACTIVE )
+	{
+		if ( ps->pm_flags & PMF_PRONE )
+		{
+			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
+			return;
+		}
+
+		if ( ps->pm_flags & PMF_DUCKED )
+		{
+			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+			return;
+		}
+
+		BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+		return;
+	}
+
+	iStance = PM_GetEffectiveStance(ps);
+	iswalking = ps->pm_flags & PMF_ADS_WALK || ps->leanf != 0;
+
+	// in the air
+	if ( ps->groundEntityNum == ENTITYNUM_NONE && ps->pm_type != PM_NORMAL_LINKED )
+	{
+		if ( ps->pm_flags & PMF_LADDER ) // on ladder
+		{
+			float fLadderSpeed;
+			float fMaxSpeed = (0.5 * 1.5) * 127.0;
+
+			if ( pm->cmd.serverTime - ps->jumpTime < 300 )
+			{
+				return;
+			}
+
+			fLadderSpeed = ps->velocity[2];
+
+			if ( !iswalking )
+				bobmove = fLadderSpeed / (fMaxSpeed * 0.40000001) * 0.34999999;
+			else
+				bobmove = fLadderSpeed / (fMaxSpeed * 0.44999999);
+
+			if ( fLadderSpeed >= 0.0 )
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBUP, qtrue);
+			else
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBDOWN, qtrue);
+
+			// check for footstep / splash sounds
+			old = ps->bobCycle;
+			ps->bobCycle = (int)( old + bobmove * pml->msec ) & 255;
+			PM_FootstepEvent(pm, pml, old, ps->bobCycle, qtrue);
+		}
+
+		assert( iStance == (ps->pm_flags & ( PMF_DUCKED | PMF_PRONE) ) );
+		return;
+	}
+
+	// if not trying to move
+	if ( player_moveThreshhold->current.decimal > pm->xyspeed || ps->pm_type == PM_NORMAL_LINKED )
+	{
+		if ( pm->xyspeed < 1 )
+		{
+			ps->bobCycle = 0; // start at beginning of cycle again
+		}
+
+		turnAdjust = ANIM_MT_UNUSED;
+
+		if ( ci && player_turnAnims->current.boolean )
+		{
+			if ( ci->turnAnimType && ci->turnAnimEndTime )
+			{
+				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, level_bgs.time);
+			}
+
+			if ( ci->legs.yawing )
+			{
+				if ( ci->legs.yawAngle > ci->torso.yawAngle )
+					turnAdjust = ANIM_MT_TURNRIGHT;
+				else
+					turnAdjust = ANIM_MT_TURNLEFT;
+
+				ci->legs.yawAngle = ci->torso.yawAngle;
+				ci->turnAnimType = turnAdjust;
+
+				if ( ci->turnAnimEndTime < level_bgs.time )
+				{
+					ci->turnAnimEndTime = 0;
+				}
+			}
+			else
+			{
+				if ( ci->turnAnimEndTime > level_bgs.time )
+				{
+					ci->legs.yawAngle = ci->torso.yawAngle;
+					return;
+				}
+
+				if ( ci->turnAnimEndTime )
+				{
+					ci->turnAnimEndTime = 0;
+					ci->legs.yawAngle = ci->torso.yawAngle;
+				}
+			}
+		}
+
+		if ( ps->viewHeightTarget == VIEW_HEIGHT_PRONE )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
+		}
+		else if ( ps->viewHeightTarget == VIEW_HEIGHT_CROUCHED )
+		{
+			if ( turnAdjust == ANIM_MT_TURNRIGHT )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHTCR, qtrue);
+
+				if ( animResult > 0 && !ci->turnAnimEndTime )
+				{
+					ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
+				}
+			}
+			else if ( turnAdjust == ANIM_MT_TURNLEFT )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFTCR, qtrue);
+
+				if ( animResult > 0 && !ci->turnAnimEndTime )
+				{
+					ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
+				}
+			}
+			else
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+			}
+		}
+		else if ( turnAdjust == ANIM_MT_TURNRIGHT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHT, qtrue);
+
+			if ( animResult > 0 && !ci->turnAnimEndTime )
+			{
+				ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
+			}
+		}
+		else if ( turnAdjust == ANIM_MT_TURNLEFT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFT, qtrue);
+
+			if ( animResult > 0 && !ci->turnAnimEndTime )
+			{
+				ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
+			}
+		}
+		else
+		{
+			if ( ps->damageTimer > stumble_end_time )
+			{
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, PM_GetFlinchAnim(ps->flinchYaw), qtrue);
+				return;
+			}
+
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+		}
+
+		if ( animResult < 0 )
+		{
+			if ( ps->viewHeightTarget == VIEW_HEIGHT_CROUCHED )
+			{
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+				return;
+			}
+
+			if ( ps->damageTimer <= stumble_end_time )
+			{
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+				return;
+			}
+
+			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, qtrue);
+		}
+
+		return;
+	}
+
+	fMaxSpeed = ps->speed;
+
+	if ( pm->cmd.forwardmove )
+	{
+		if ( pm->cmd.rightmove )
+		{
+			fMaxSpeed = ((player_strafeSpeedScale->current.decimal - 1.0) * 0.75 + 1.0 + 1.0) * 0.5 * fMaxSpeed;
+
+			if ( pm->cmd.forwardmove < 0 )
+			{
+				fMaxSpeed = (player_backSpeedScale->current.decimal + 1.0) * 0.5 * fMaxSpeed;
+			}
+		}
+		else if ( pm->cmd.forwardmove < 0 )
+		{
+			fMaxSpeed = fMaxSpeed * player_backSpeedScale->current.decimal;
+		}
+
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_NOT, qtrue);
+	}
+	else if ( pm->cmd.rightmove )
+	{
+		fMaxSpeed = ((player_strafeSpeedScale->current.decimal - 1.0) * 0.75 + 1.0) * fMaxSpeed;
+
+		if ( pm->cmd.rightmove > 0 )
+			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_RIGHT, qtrue);
+		else
+			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_LEFT, qtrue);
+	}
+
+	if ( iswalking )
+	{
+		fMaxSpeed *= 0.40000001;
+	}
+
+	lerpFrac = PM_GetViewHeightLerp(pm, VIEW_HEIGHT_CROUCHED, VIEW_HEIGHT_PRONE);
+
+	if ( lerpFrac == 0 )
+	{
+		lerpFrac = PM_GetViewHeightLerp(pm, VIEW_HEIGHT_PRONE, VIEW_HEIGHT_CROUCHED);
+
+		if ( lerpFrac == 0 )
+		{
+			if ( iStance == PM_EFF_STANCE_PRONE )
+			{
+				fMaxSpeed = fMaxSpeed * 0.15000001;
+			}
+			else if ( iStance == PM_EFF_STANCE_CROUCH )
+			{
+				fMaxSpeed = fMaxSpeed * 0.64999998;
+			}
+		}
+		else
+		{
+			fMaxSpeed = (lerpFrac * 0.64999998 + (1.0 - lerpFrac) * 0.15000001) * fMaxSpeed;
+		}
+	}
+	else
+	{
+		fMaxSpeed = (lerpFrac * 0.15000001 + (1.0 - lerpFrac) * 0.64999998) * fMaxSpeed;
+	}
+
+	if ( iStance == PM_EFF_STANCE_PRONE )
+	{
+		if ( iswalking )
+			bobmove = pm->xyspeed / fMaxSpeed * 0.23999999;
+		else
+			bobmove = pm->xyspeed / fMaxSpeed * 0.25;
+
+		if ( !(ps->pm_flags & PMF_BACKWARDS_RUN) )
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONE, qtrue);
+		else
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONEBK, qtrue);
+	}
+	else if ( iStance == PM_EFF_STANCE_CROUCH )
+	{
+		if ( iswalking )
+			bobmove = pm->xyspeed / fMaxSpeed * 0.315;
+		else
+			bobmove = pm->xyspeed / fMaxSpeed * 0.34;
+
+		if ( !(ps->pm_flags & PMF_BACKWARDS_RUN) )
+		{
+			if ( iswalking )
+			{
+				if ( ps->damageTimer <= stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCR, qtrue);
+				}
+			}
+			else
+			{
+				if ( ps->damageTimer > stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_FORWARD, qtrue);
+				}
+				else
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCR, qtrue);
+				}
+			}
+		}
+		else
+		{
+			if ( iswalking )
+			{
+				if ( ps->damageTimer <= stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCRBK, qtrue);
+				}
+			}
+			else
+			{
+				if ( ps->damageTimer > stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_BACKWARD, qtrue);
+				}
+				else
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCRBK, qtrue);
+				}
+			}
+		}
+	}
+	else if ( !(ps->pm_flags & PMF_BACKWARDS_RUN) )
+	{
+		if ( iswalking )
+		{
+			bobmove = pm->xyspeed / fMaxSpeed * 0.30500001;
+
+			if ( ps->damageTimer > stumble_end_time )
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_FORWARD, qtrue);
+			else
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALK, qtrue);
+		}
+		else
+		{
+			bobmove = pm->xyspeed / fMaxSpeed * 0.33500001;
+
+			if ( ps->damageTimer > stumble_end_time )
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_FORWARD, qtrue);
+			else
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUN, qtrue);
+		}
+	}
+	else if ( iswalking )
+	{
+		bobmove = pm->xyspeed / fMaxSpeed * 0.32499999;
+
+		if ( ps->damageTimer > stumble_end_time )
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_BACKWARD, qtrue);
+		else
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKBK, qtrue);
+	}
+	else
+	{
+		bobmove = pm->xyspeed / fMaxSpeed * 0.36000001;
+
+		if ( ps->damageTimer > stumble_end_time )
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_BACKWARD, qtrue);
+		else
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNBK, qtrue);
+	}
+
+	// check for footstep / splash sounds
+	footstep = PM_ShouldMakeFootsteps(pm);
+	old = ps->bobCycle;
+	ps->bobCycle = (int)( old + bobmove * pml->msec ) & 255;
+
+	// if not trying to move
+	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove )
+	{
+		if ( pm->xyspeed > 120 )
+		{
+			return; // continue what they were doing last frame, until we stop
+		}
+
+		if ( ps->viewHeightTarget == VIEW_HEIGHT_PRONE )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
+		}
+		else if ( ps->viewHeightTarget == VIEW_HEIGHT_CROUCHED )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+		}
+
+		if ( animResult < 0 )
+		{
+			if ( ps->damageTimer > stumble_end_time )
+			{
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, qtrue);
+			}
+			else
+			{
+				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+			}
+		}
+		//
+		return;
+	}
+
+	// if no anim found yet, then just use the idle as default
+	if ( animResult < 0 )
+	{
+		BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+	}
+
+	PM_FootstepEvent(pm, pml, old, ps->bobCycle, footstep);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1967,81 +2583,9 @@ void PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wi
 
 
 
-float PM_GetReducedFriction(playerState_s *ps)
-{
-	if ( ps->pm_time > 1800 )
-	{
-		Jump_ClearState(ps);
-		return 1.0;
-	}
-	else
-	{
-		return Jump_ReduceFriction(ps);
-	}
-}
 
-void PM_Friction(playerState_s *ps, pml_t *pml)
-{
-	float current;
-	float drop;
-	float control;
-	float newspeed;
-	float scale;
-	float speed;
-	vec_t *vel;
-	vec3_t vec;
 
-	vel = ps->velocity;
-	VectorCopy(ps->velocity, vec);
 
-	if ( pml->walking )
-		vec[2] = 0.0;
-
-	speed = VectorLength(vec);
-
-	if ( speed >= 1.0 )
-	{
-		drop = 0.0;
-
-		if ( pml->walking && (pml->groundTrace.surfaceFlags & 2) == 0 && (ps->pm_flags & 0x400) == 0 )
-		{
-			if ( stopspeed->current.decimal <= speed )
-				current = speed;
-			else
-				current = stopspeed->current.decimal;
-
-			control = current;
-
-			if ( (ps->pm_flags & 0x200) != 0 )
-			{
-				control = current * 0.30000001;
-			}
-			else if ( (ps->pm_flags & 0x80000) != 0 )
-			{
-				control = PM_GetReducedFriction(ps) * current;
-			}
-
-			drop = control * friction->current.decimal * pml->frametime + 0.0;
-		}
-
-		if ( ps->pm_type == PM_SPECTATOR )
-			drop = speed * 5.0 * pml->frametime + drop;
-
-		newspeed = speed - drop;
-
-		if ( newspeed < 0.0 )
-			newspeed = 0.0;
-
-		scale = newspeed / speed;
-		*vel = *vel * scale;
-		ps->velocity[1] = ps->velocity[1] * scale;
-		ps->velocity[2] = ps->velocity[2] * scale;
-	}
-	else
-	{
-		VectorClear(vel);
-	}
-}
 
 
 
@@ -3199,444 +3743,11 @@ void PM_GroundTrace(pmove_t *pm, pml_t *pml)
 
 
 
-void PM_Footsteps(pmove_t *pm, pml_t *pml)
-{
-	float newSpeedScale;
-	float xyzSpeedScale;
-	float velocitySquared;
-	float flinchYaw;
-	int animType;
-	int animWalking;
-	float height;
-	int animScriptResult;
-	int animResult;
-	int turnAnimType;
-	clientInfo_t *ci;
-	int damageTime;
-	playerState_s *ps;
-	float currentStanceScale;
-	float newStanceScale;
-	float speed;
-	int stance;
-	qboolean bFootStep;
-	int currentBobCycle;
-	int iOldBobCycle;
-	float bobCycleScale;
-	float newspeed;
-
-	ps = pm->ps;
-	if ( pm->ps->pm_type > PM_INTERMISSION )
-		return;
-	if ( ps->clientNum > 63 )
-		ci = 0;
-	else
-		ci = &level_bgs.clientinfo[ps->clientNum];
-	damageTime = ps->damageDuration - player_dmgtimer_stumbleTime->current.integer;
-	if ( damageTime < 0 )
-		damageTime = 0;
-	velocitySquared = ps->velocity[0] * ps->velocity[0] + ps->velocity[1] * ps->velocity[1];
-	pm->xyspeed = I_sqrt(velocitySquared);
-	if ( (ps->eFlags & 0x300) != 0 )
-	{
-		if ( (ps->pm_flags & 1) != 0 )
-		{
-			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, 1);
-			return;
-		}
-		if ( (ps->pm_flags & 2) != 0 )
-			goto LABEL_11;
-		goto LABEL_145;
-	}
-	stance = PM_GetEffectiveStance(ps);
-	if ( ps->groundEntityNum == 1023 && ps->pm_type != PM_NORMAL_LINKED )
-	{
-		if ( (ps->pm_flags & 0x20) != 0 )
-		{
-			if ( pm->cmd.serverTime - ps->jumpTime <= 299 )
-				return;
-			height = ps->velocity[2];
-			if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
-				bobCycleScale = height / (95.25 * 0.40000001) * 0.34999999;
-			else
-				bobCycleScale = height / 95.25 * 0.44999999;
-			if ( height < 0.0 )
-				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBDOWN, 1);
-			else
-				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBUP, 1);
-			currentBobCycle = ps->bobCycle;
-			ps->bobCycle = (unsigned char)(int)((float)currentBobCycle + (float)pml->msec * bobCycleScale);
-			PM_FootstepEvent(pm, pml, currentBobCycle, ps->bobCycle, 1);
-		}
-		if ( stance == (ps->pm_flags & 3) )
-			return;
-	}
-	animWalking = 0;
-	if ( (ps->pm_flags & 0x100) != 0 || ps->leanf != 0.0 )
-		animWalking = 1;
-	if ( player_moveThreshhold->current.decimal > (float)pm->xyspeed || ps->pm_type == PM_NORMAL_LINKED )
-	{
-		if ( pm->xyspeed < 1.0 )
-			ps->bobCycle = 0;
-		turnAnimType = 0;
-		if ( ci && player_turnAnims->current.boolean )
-		{
-			if ( ci->turnAnimType && ci->turnAnimEndTime )
-				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, level_bgs.time);
-			if ( ci->legs.yawing )
-			{
-				if ( ci->legs.yawAngle <= (float)ci->torso.yawAngle )
-					turnAnimType = 15;
-				else
-					turnAnimType = 14;
-				ci->legs.yawAngle = ci->torso.yawAngle;
-				ci->turnAnimType = turnAnimType;
-				if ( ci->turnAnimEndTime < level_bgs.time )
-					ci->turnAnimEndTime = 0;
-			}
-			else
-			{
-				if ( ci->turnAnimEndTime > level_bgs.time )
-				{
-					ci->legs.yawAngle = ci->torso.yawAngle;
-					return;
-				}
-				if ( ci->turnAnimEndTime )
-				{
-					ci->turnAnimEndTime = 0;
-					ci->legs.yawAngle = ci->torso.yawAngle;
-				}
-			}
-		}
-		if ( ps->viewHeightTarget == 11 )
-		{
-			animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, 1);
-		}
-		else if ( ps->viewHeightTarget == 40 )
-		{
-			if ( turnAnimType == 14 )
-			{
-				animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHTCR, 1);
-				if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-					ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
-			}
-			else if ( turnAnimType == 15 )
-			{
-				animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFTCR, 1);
-				if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-					ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
-			}
-			else
-			{
-				animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, 1);
-			}
-		}
-		else if ( turnAnimType == 14 )
-		{
-			animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHT, 1);
-			if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-				ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
-		}
-		else if ( turnAnimType == 15 )
-		{
-			animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFT, 1);
-			if ( animScriptResult > 0 && !ci->turnAnimEndTime )
-				ci->turnAnimEndTime = level_bgs.time + ps->legsAnimDuration;
-		}
-		else
-		{
-			if ( ps->damageTimer > damageTime )
-			{
-				flinchYaw = (float)ps->flinchYaw;
-				animType = PM_GetFlinchAnim(flinchYaw);
-				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, animType, 1);
-				return;
-			}
-			animScriptResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, 1);
-		}
-		if ( animScriptResult < 0 )
-		{
-			if ( ps->viewHeightTarget == 40 )
-			{
-LABEL_11:
-				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, 1);
-				return;
-			}
-			if ( ps->damageTimer <= damageTime )
-				goto LABEL_145;
-			goto LABEL_74;
-		}
-		return;
-	}
-	speed = (float)ps->speed;
-	if ( pm->cmd.forwardmove )
-	{
-		if ( pm->cmd.rightmove )
-		{
-			speed = ((player_strafeSpeedScale->current.decimal - 1.0) * 0.75 + 1.0 + 1.0) * 0.5 * speed;
-			if ( pm->cmd.forwardmove < 0 )
-				speed = (player_backSpeedScale->current.decimal + 1.0) * 0.5 * speed;
-		}
-		else if ( pm->cmd.forwardmove < 0 )
-		{
-			speed = speed * player_backSpeedScale->current.decimal;
-		}
-		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, 0, 1);
-	}
-	else if ( pm->cmd.rightmove )
-	{
-		speed = ((player_strafeSpeedScale->current.decimal - 1.0) * 0.75 + 1.0) * speed;
-		if ( pm->cmd.rightmove <= 0 )
-			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, 1, 1);
-		else
-			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, 2, 1);
-	}
-	if ( animWalking )
-		speed = speed * 0.40000001;
-	currentStanceScale = PM_GetViewHeightLerp(pm, 40, 11);
-	if ( currentStanceScale == 0.0 )
-	{
-		newStanceScale = PM_GetViewHeightLerp(pm, 11, 40);
-		if ( newStanceScale == 0.0 )
-		{
-			if ( stance == 1 )
-			{
-				speed = speed * 0.15000001;
-			}
-			else if ( stance == 2 )
-			{
-				speed = speed * 0.64999998;
-			}
-		}
-		else
-		{
-			speed = (newStanceScale * 0.64999998 + (1.0 - newStanceScale) * 0.15000001) * speed;
-		}
-	}
-	else
-	{
-		speed = (currentStanceScale * 0.15000001 + (1.0 - currentStanceScale) * 0.64999998) * speed;
-	}
-	if ( stance == 1 )
-	{
-		if ( animWalking )
-			newSpeedScale = pm->xyspeed / speed * 0.23999999;
-		else
-			newSpeedScale = pm->xyspeed / speed * 0.25;
-		newspeed = newSpeedScale;
-		if ( SLOBYTE(ps->pm_flags) >= 0 )
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONE, 1);
-		else
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONEBK, 1);
-	}
-	else if ( stance == 2 )
-	{
-		if ( animWalking )
-			xyzSpeedScale = pm->xyspeed / speed * 0.315;
-		else
-			xyzSpeedScale = pm->xyspeed / speed * 0.34;
-		newspeed = xyzSpeedScale;
-		if ( SLOBYTE(ps->pm_flags) >= 0 )
-		{
-			if ( animWalking )
-			{
-				if ( ps->damageTimer <= damageTime )
-				{
-					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCR, 1);
-					goto LABEL_136;
-				}
-			}
-			else if ( ps->damageTimer <= damageTime )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCR, 1);
-				goto LABEL_136;
-			}
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_FORWARD, 1);
-		}
-		else
-		{
-			if ( animWalking )
-			{
-				if ( ps->damageTimer <= damageTime )
-				{
-					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCRBK, 1);
-					goto LABEL_136;
-				}
-			}
-			else if ( ps->damageTimer <= damageTime )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCRBK, 1);
-				goto LABEL_136;
-			}
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_BACKWARD, 1);
-		}
-	}
-	else if ( SLOBYTE(ps->pm_flags) >= 0 )
-	{
-		if ( animWalking )
-		{
-			newspeed = pm->xyspeed / speed * 0.30500001;
-			if ( ps->damageTimer <= damageTime )
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALK, 1);
-			else
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_FORWARD, 1);
-		}
-		else
-		{
-			newspeed = pm->xyspeed / speed * 0.33500001;
-			if ( ps->damageTimer <= damageTime )
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUN, 1);
-			else
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_FORWARD, 1);
-		}
-	}
-	else if ( animWalking )
-	{
-		newspeed = pm->xyspeed / speed * 0.32499999;
-		if ( ps->damageTimer <= damageTime )
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKBK, 1);
-		else
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_BACKWARD, 1);
-	}
-	else
-	{
-		newspeed = pm->xyspeed / speed * 0.36000001;
-		if ( ps->damageTimer <= damageTime )
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNBK, 1);
-		else
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_BACKWARD, 1);
-	}
-LABEL_136:
-	bFootStep = PM_ShouldMakeFootsteps(pm);
-	iOldBobCycle = ps->bobCycle;
-	ps->bobCycle = (unsigned char)(int)((float)iOldBobCycle + (float)pml->msec * newspeed);
-	if ( pm->cmd.forwardmove || pm->cmd.rightmove )
-	{
-		if ( animResult < 0 )
-			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, 1);
-		PM_FootstepEvent(pm, pml, iOldBobCycle, ps->bobCycle, bFootStep);
-	}
-	else if ( pm->xyspeed <= 120.0 )
-	{
-		if ( ps->viewHeightTarget == 11 )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, 1);
-		}
-		else if ( ps->viewHeightTarget == 40 )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, 1);
-		}
-		if ( animResult < 0 )
-		{
-			if ( ps->damageTimer <= damageTime )
-			{
-LABEL_145:
-				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, 1);
-				return;
-			}
-LABEL_74:
-			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, 1);
-		}
-	}
-}
 
 
 
-void PM_CheckLadderMove(pmove_t *pm, pml_t *pml)
-{
-	int fellOffLadderInAir;
-	playerState_s *ps;
-	float tracedist;
-	trace_t trace;
-	vec3_t maxs;
-	vec3_t mins;
-	vec3_t vLadderCheckDir;
-	vec3_t spot;
 
-	ps = pm->ps;
 
-	if ( pml->walking )
-		ps->pm_flags &= ~0x40000u;
-
-	if ( !ps->pm_time || (ps->pm_flags & 0x600) == 0 )
-	{
-		if ( pml->walking )
-			tracedist = 8.0;
-		else
-			tracedist = 30.0;
-
-		fellOffLadderInAir = 0;
-
-		if ( (ps->pm_flags & 0x20) != 0 && ps->groundEntityNum == 1023 )
-			fellOffLadderInAir = 1;
-
-		if ( fellOffLadderInAir )
-		{
-			VectorCopyInverse(ps->vLadderVec, vLadderCheckDir);
-		}
-		else
-		{
-			vLadderCheckDir[0] = pml->forward[0];
-			vLadderCheckDir[1] = pml->forward[1];
-			vLadderCheckDir[2] = 0.0;
-
-			Vec3Normalize(vLadderCheckDir);
-		}
-		if ( ps->pm_type <= PM_INTERMISSION )
-		{
-			if ( (ps->pm_flags & 0x40000) != 0 || PM_GetEffectiveStance(ps) == 1 || pm->cmd.serverTime - ps->jumpTime <= 299 )
-			{
-				PM_ClearLadderFlag(ps);
-			}
-			else
-			{
-				VectorCopy(pm->mins, mins);
-
-				mins[0] = mins[0] + 6.0;
-				mins[1] = mins[1] + 6.0;
-				mins[2] = 8.0;
-
-				VectorCopy(pm->maxs, maxs);
-				maxs[0] = maxs[0] - 6.0;
-				maxs[1] = maxs[1] - 6.0;
-
-				if ( mins[2] > maxs[2] )
-					maxs[2] = mins[2];
-
-				VectorMA(ps->origin, tracedist, vLadderCheckDir, spot);
-				PM_playerTrace(pm, &trace, ps->origin, mins, maxs, spot, ps->clientNum, pm->tracemask);
-
-				if ( trace.fraction < 1.0
-				        && (trace.surfaceFlags & 8) != 0
-				        && (!pml->walking || pm->cmd.forwardmove > 0)
-				        && ((ps->pm_flags & 0x20) != 0
-				            || (VectorCopy(trace.normal, ps->vLadderVec),
-				                VectorCopyInverse(ps->vLadderVec, vLadderCheckDir),
-				                VectorMA(ps->origin, tracedist, vLadderCheckDir, spot),
-				                PM_playerTrace(pm, &trace, ps->origin, mins, maxs, spot, ps->clientNum, pm->tracemask),
-				                trace.fraction < 1.0)
-				            && (trace.surfaceFlags & 8) != 0) )
-				{
-					PM_SetLadderFlag(ps);
-				}
-				else
-				{
-					PM_ClearLadderFlag(ps);
-
-					if ( fellOffLadderInAir )
-						BG_AnimScriptEvent(ps, ANIM_ET_JUMP, 0, 1);
-				}
-			}
-		}
-		else
-		{
-			ps->groundEntityNum = 1023;
-			pml->groundPlane = 0;
-			pml->almostGroundPlane = 0;
-			pml->walking = 0;
-			PM_ClearLadderFlag(ps);
-		}
-	}
-}
 
 void PmoveSingle(pmove_t *pmove)
 {
