@@ -1503,7 +1503,7 @@ void GScr_sin()
 	float value;
 
 	number = Scr_GetFloat(0);
-	value = sin(number * 0.0174532925199433);
+	value = sin(number * RADINDEG);
 	Scr_AddFloat(value);
 }
 
@@ -1513,7 +1513,7 @@ void GScr_cos()
 	float value;
 
 	number = Scr_GetFloat(0);
-	value = cos(number * 0.0174532925199433);
+	value = cos(number * RADINDEG);
 	Scr_AddFloat(value);
 }
 
@@ -1523,7 +1523,7 @@ void GScr_tan()
 	float sinT;
 	float cosT;
 
-	number = Scr_GetFloat(0) * 0.0174532925199433;
+	number = Scr_GetFloat(0) * RADINDEG;
 
 	cosT = cos(number);
 	sinT = sin(number);

@@ -329,14 +329,14 @@ void BG_LerpOffset( vec3_t offset_goal, float maxOffsetChange, vec3_t offset )
 
 	error = VectorLengthSquared(diff);
 
-	if ( error == 0.0 )
+	if ( error == 0 )
 	{
 		return;
 	}
 
 	error = I_rsqrt(error) * maxOffsetChange;
 
-	if ( error < 1.0 )
+	if ( error < 1 )
 		VectorMA(offset, error, diff, offset);
 	else
 		VectorCopy(offset_goal, offset);
@@ -466,7 +466,7 @@ void BG_AnimUpdatePlayerStateConditions( pmove_t *pmove )
 		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_MOUNTED, MOUNTED_UNUSED, qtrue);
 
 	// UNDERHAND
-	BG_UpdateConditionValue(ps->clientNum, ANIM_COND_UNDERHAND, ps->viewangles[0] > 0.0, qtrue);
+	BG_UpdateConditionValue(ps->clientNum, ANIM_COND_UNDERHAND, ps->viewangles[PITCH] > 0, qtrue);
 
 	if ( pmove->cmd.buttons & BUTTON_ATTACK )
 		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_FIRING, qtrue, qtrue);
@@ -743,24 +743,24 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 
 	VectorCopy(ci->playerAngles, vHeadAngles);
 
-	tag_origin_angles[1] = ci->legs.yawAngle;
-	vTorsoAngles[1] = ci->torso.yawAngle;
+	tag_origin_angles[YAW] = ci->legs.yawAngle;
+	vTorsoAngles[YAW] = ci->torso.yawAngle;
 
 	if ( !( BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
 	{
-		vTorsoAngles[0] = ci->torso.pitchAngle;
+		vTorsoAngles[PITCH] = ci->torso.pitchAngle;
 
 		if ( es->eFlags & EF_PRONE )
 		{
-			vTorsoAngles[0] = AngleNormalize180(vTorsoAngles[0]);
+			vTorsoAngles[PITCH] = AngleNormalize180(vTorsoAngles[PITCH]);
 
-			if ( vTorsoAngles[0] > 0.0 )
+			if ( vTorsoAngles[PITCH] > 0 )
 			{
-				vTorsoAngles[0] = vTorsoAngles[0] * 0.5;
+				vTorsoAngles[PITCH] = vTorsoAngles[PITCH] * 0.5;
 			}
 			else
 			{
-				vTorsoAngles[0] = vTorsoAngles[0] * 0.25;
+				vTorsoAngles[PITCH] = vTorsoAngles[PITCH] * 0.25;
 			}
 		}
 	}
@@ -768,129 +768,131 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 	AnglesSubtract(vHeadAngles, vTorsoAngles, vHeadAngles);
 	AnglesSubtract(vTorsoAngles, tag_origin_angles, vTorsoAngles);
 
-	VectorSet(tag_origin_offset, 0.0, 0.0, es->fTorsoHeight);
-
+	VectorSet(tag_origin_offset, 0, 0, es->fTorsoHeight);
 	fLeanFrac = GetLeanFraction(ci->lerpLean);
 
-	vTorsoAngles[2] = fLeanFrac * 50.0 * 0.92500001;
-	vHeadAngles[2] = vTorsoAngles[2];
+	vTorsoAngles[ROLL] = fLeanFrac * 50.0 * 0.92500001;
+	vHeadAngles[ROLL] = vTorsoAngles[ROLL];
 
-	if ( fLeanFrac != 0.0 )
+	if ( fLeanFrac != 0 )
 	{
 		if ( es->eFlags & EF_CROUCHING )
 		{
-			if ( fLeanFrac > 0.0 )
+			if ( fLeanFrac > 0 )
 			{
-				tag_origin_offset[1] = -fLeanFrac * 2.5 + tag_origin_offset[1];
+				tag_origin_offset[YAW] = -fLeanFrac * 2.5 + tag_origin_offset[YAW];
 			}
 			else
 			{
-				tag_origin_offset[1] = -fLeanFrac * 12.5 + tag_origin_offset[1];
+				tag_origin_offset[YAW] = -fLeanFrac * 12.5 + tag_origin_offset[YAW];
 			}
-		}
-		else if ( fLeanFrac > 0.0 )
-		{
-			tag_origin_offset[1] = -fLeanFrac * 2.5 + tag_origin_offset[1];
 		}
 		else
 		{
-			tag_origin_offset[1] = -fLeanFrac * 5.0 + tag_origin_offset[1];
+			if ( fLeanFrac > 0 )
+			{
+				tag_origin_offset[YAW] = -fLeanFrac * 2.5 + tag_origin_offset[YAW];
+			}
+			else
+			{
+				tag_origin_offset[YAW] = -fLeanFrac * 5.0 + tag_origin_offset[YAW];
+			}
 		}
 	}
 
 	if ( !( es->eFlags & EF_DEAD ) )
 	{
-		tag_origin_angles[1] = AngleSubtract(tag_origin_angles[1], ci->playerAngles[1]);
+		tag_origin_angles[YAW] = AngleSubtract(tag_origin_angles[YAW], ci->playerAngles[YAW]);
 	}
 
 	if ( es->eFlags & EF_PRONE )
 	{
-		if ( fLeanFrac != 0.0 )
+		if ( fLeanFrac != 0 )
 		{
-			vHeadAngles[2] = vHeadAngles[2] * 0.5;
+			vHeadAngles[ROLL] = vHeadAngles[ROLL] * 0.5;
 		}
 
-		tag_origin_angles[0] = tag_origin_angles[0] + es->fTorsoPitch;
+		tag_origin_angles[PITCH] = tag_origin_angles[PITCH] + es->fTorsoPitch;
 
-		FastSinCos(vTorsoAngles[1] * 0.0174532925199433, &s, &c);
+		FastSinCos(vTorsoAngles[YAW] * RADINDEG, &s, &c);
 
-		tag_origin_offset[0] = (1.0 - c) * -24.0 + tag_origin_offset[0];
-		tag_origin_offset[1] = s * -12.0 + tag_origin_offset[1];
+		tag_origin_offset[PITCH] = (1.0 - c) * -24.0 + tag_origin_offset[PITCH];
+		tag_origin_offset[YAW] = s * -12.0 + tag_origin_offset[YAW];
 
-		if ( fLeanFrac * s > 0.0 )
+		if ( fLeanFrac * s > 0 )
 		{
-			tag_origin_offset[1] = -fLeanFrac * (1.0 - c) * 16.0 + tag_origin_offset[1];
+			tag_origin_offset[YAW] = -fLeanFrac * (1.0 - c) * 16.0 + tag_origin_offset[YAW];
 		}
 
-		angles[CONTROL_ANGLES_BACK_LOW][0] = 0.0;
-		angles[CONTROL_ANGLES_BACK_LOW][1] = vTorsoAngles[2] * -1.2;
-		angles[CONTROL_ANGLES_BACK_LOW][2] = vTorsoAngles[2] * 0.30000001;
+		angles[CONTROL_ANGLES_BACK_LOW][PITCH] = 0;
+		angles[CONTROL_ANGLES_BACK_LOW][YAW] = vTorsoAngles[ROLL] * -1.2;
+		angles[CONTROL_ANGLES_BACK_LOW][ROLL] = vTorsoAngles[ROLL] * 0.30000001;
 
-		if ( es->fTorsoPitch != 0.0 || es->fWaistPitch != 0.0 )
+		if ( es->fTorsoPitch != 0 || es->fWaistPitch != 0 )
 		{
-			angles[CONTROL_ANGLES_BACK_LOW][0] = AngleSubtract(es->fTorsoPitch, es->fWaistPitch) + angles[CONTROL_ANGLES_BACK_LOW][0];
+			angles[CONTROL_ANGLES_BACK_LOW][PITCH] = AngleSubtract(es->fTorsoPitch, es->fWaistPitch) + angles[CONTROL_ANGLES_BACK_LOW][PITCH];
 		}
 
-		angles[CONTROL_ANGLES_BACK_MID][0] = 0.0;
-		angles[CONTROL_ANGLES_BACK_MID][1] = vTorsoAngles[1] * 0.1 - vTorsoAngles[2] * 0.2;
-		angles[CONTROL_ANGLES_BACK_MID][2] = vTorsoAngles[2] * 0.2;
+		angles[CONTROL_ANGLES_BACK_MID][PITCH] = 0;
+		angles[CONTROL_ANGLES_BACK_MID][YAW] = vTorsoAngles[YAW] * 0.1 - vTorsoAngles[ROLL] * 0.2;
+		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.2;
 
-		angles[CONTROL_ANGLES_BACK_UP][0] = vTorsoAngles[0];
-		angles[CONTROL_ANGLES_BACK_UP][1] = vTorsoAngles[1] * 0.80000001 + vTorsoAngles[2];
-		angles[CONTROL_ANGLES_BACK_UP][2] = vTorsoAngles[2] * -0.2;
+		angles[CONTROL_ANGLES_BACK_UP][PITCH] = vTorsoAngles[PITCH];
+		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.80000001 + vTorsoAngles[ROLL];
+		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.2;
 	}
 	else
 	{
-		if ( fLeanFrac != 0.0 )
+		if ( fLeanFrac != 0 )
 		{
 			if ( es->eFlags & EF_CROUCHING )
 			{
-				if ( fLeanFrac <= 0.0 )
+				if ( fLeanFrac <= 0 )
 				{
-					vTorsoAngles[2] = vTorsoAngles[2] * 1.25;
-					vHeadAngles[2] = vHeadAngles[2] * 1.25;
+					vTorsoAngles[ROLL] = vTorsoAngles[ROLL] * 1.25;
+					vHeadAngles[ROLL] = vHeadAngles[ROLL] * 1.25;
 				}
 			}
 			else
 			{
-				vTorsoAngles[2] = vTorsoAngles[2] * 1.25;
-				vHeadAngles[2] = vHeadAngles[2] * 1.25;
+				vTorsoAngles[ROLL] = vTorsoAngles[ROLL] * 1.25;
+				vHeadAngles[ROLL] = vHeadAngles[ROLL] * 1.25;
 			}
 		}
 
-		tag_origin_angles[2] = fLeanFrac * 50.0 * 0.075000003 + tag_origin_angles[2];
+		tag_origin_angles[ROLL] = fLeanFrac * 50.0 * 0.075000003 + tag_origin_angles[ROLL];
 
-		angles[CONTROL_ANGLES_BACK_LOW][0] = vTorsoAngles[0] * 0.2;
-		angles[CONTROL_ANGLES_BACK_LOW][1] = vTorsoAngles[1] * 0.40000001;
-		angles[CONTROL_ANGLES_BACK_LOW][2] = vTorsoAngles[2] * 0.5;
+		angles[CONTROL_ANGLES_BACK_LOW][PITCH] = vTorsoAngles[PITCH] * 0.2;
+		angles[CONTROL_ANGLES_BACK_LOW][YAW] = vTorsoAngles[YAW] * 0.40000001;
+		angles[CONTROL_ANGLES_BACK_LOW][ROLL] = vTorsoAngles[ROLL] * 0.5;
 
-		if ( es->fTorsoPitch != 0.0 || es->fWaistPitch != 0.0 )
+		if ( es->fTorsoPitch != 0 || es->fWaistPitch != 0 )
 		{
-			angles[CONTROL_ANGLES_BACK_LOW][0] = AngleSubtract(es->fTorsoPitch, es->fWaistPitch) + angles[CONTROL_ANGLES_BACK_LOW][0];
+			angles[CONTROL_ANGLES_BACK_LOW][PITCH] = AngleSubtract(es->fTorsoPitch, es->fWaistPitch) + angles[CONTROL_ANGLES_BACK_LOW][PITCH];
 		}
 
-		angles[CONTROL_ANGLES_BACK_MID][0] = vTorsoAngles[0] * 0.30000001;
-		angles[CONTROL_ANGLES_BACK_MID][1] = vTorsoAngles[1] * 0.40000001;
-		angles[CONTROL_ANGLES_BACK_MID][2] = vTorsoAngles[2] * 0.5;
+		angles[CONTROL_ANGLES_BACK_MID][PITCH] = vTorsoAngles[PITCH] * 0.30000001;
+		angles[CONTROL_ANGLES_BACK_MID][YAW] = vTorsoAngles[YAW] * 0.40000001;
+		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.5;
 
-		angles[CONTROL_ANGLES_BACK_UP][0] = vTorsoAngles[0] * 0.5;
-		angles[CONTROL_ANGLES_BACK_UP][1] = vTorsoAngles[1] * 0.2;
-		angles[CONTROL_ANGLES_BACK_UP][2] = vTorsoAngles[2] * -0.60000002;
+		angles[CONTROL_ANGLES_BACK_UP][PITCH] = vTorsoAngles[PITCH] * 0.5;
+		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.2;
+		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.60000002;
 	}
 
-	angles[CONTROL_ANGLES_NECK][0] = vHeadAngles[0] * 0.30000001;
-	angles[CONTROL_ANGLES_NECK][1] = vHeadAngles[1] * 0.30000001;
-	angles[CONTROL_ANGLES_NECK][2] = 0.0;
+	angles[CONTROL_ANGLES_NECK][PITCH] = vHeadAngles[PITCH] * 0.30000001;
+	angles[CONTROL_ANGLES_NECK][YAW] = vHeadAngles[YAW] * 0.30000001;
+	angles[CONTROL_ANGLES_NECK][ROLL] = 0;
 
-	angles[CONTROL_ANGLES_HEAD][0] = vHeadAngles[0] * 0.69999999;
-	angles[CONTROL_ANGLES_HEAD][1] = vHeadAngles[1] * 0.69999999;
-	angles[CONTROL_ANGLES_HEAD][2] = vHeadAngles[2] * -0.30000001;
+	angles[CONTROL_ANGLES_HEAD][PITCH] = vHeadAngles[PITCH] * 0.69999999;
+	angles[CONTROL_ANGLES_HEAD][YAW] = vHeadAngles[YAW] * 0.69999999;
+	angles[CONTROL_ANGLES_HEAD][ROLL] = vHeadAngles[ROLL] * -0.30000001;
 
 	VectorClear(angles[CONTROL_ANGLES_PELVIS]);
 
-	if ( es->fWaistPitch != 0.0 || es->fTorsoPitch != 0.0 )
+	if ( es->fWaistPitch != 0 || es->fTorsoPitch != 0 )
 	{
-		angles[CONTROL_ANGLES_PELVIS][0] = AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
+		angles[CONTROL_ANGLES_PELVIS][PITCH] = AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
 	}
 
 	for ( i = 0; i < CONTROL_ANGLES_COUNT; ++i )
@@ -915,7 +917,7 @@ void BG_Player_DoControllers( DObj *obj, const gentity_s *ent, int *partBits, cl
 
 	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &info);
 
-	maxAngleChange = (float)frametime * 0.36000001;
+	maxAngleChange = frametime * 0.36000001;
 
 	for ( i = 0; i < CONTROL_ANGLES_COUNT; ++i )
 	{
@@ -924,7 +926,7 @@ void BG_Player_DoControllers( DObj *obj, const gentity_s *ent, int *partBits, cl
 	}
 
 	BG_LerpAngles(info.tag_origin_angles, maxAngleChange, ci->control.tag_origin_angles);
-	BG_LerpOffset(info.tag_origin_offset, (float)frametime * 0.1, ci->control.tag_origin_offset);
+	BG_LerpOffset(info.tag_origin_offset, frametime * 0.1, ci->control.tag_origin_offset);
 
 	DObjSetLocalTag(obj, partBits, scr_const.tag_origin, ci->control.tag_origin_offset, ci->control.tag_origin_angles);
 }
@@ -984,15 +986,13 @@ void BG_UpdatePlayerDObj( DObj *pDObj, entityState_t *es, clientInfo_t *ci, qboo
 		dobjModels[iNumModels].model = level_bgs.GetXModel(ci->attachModelNames[i]);
 		assert(dobjModels[iNumModels].model);
 		dobjModels[iNumModels].boneName = ci->attachTagNames[i];
-		dobjModels[iNumModels].ignoreCollision = (attachIgnoreCollision >> i) & 1;
+		dobjModels[iNumModels].ignoreCollision = (attachIgnoreCollision >> i) & qtrue;
 		iNumModels++;
 	}
 
 	ci->iDObjWeapon = iClientWeapon;
-
 	level_bgs.CreateDObj(dobjModels, iNumModels, pAnimTree, es->number);
-
-	ci->dobjDirty = 0;
+	ci->dobjDirty = qfalse;
 }
 
 /*
@@ -1731,7 +1731,7 @@ void BG_AnimPlayerConditions( entityState_t *es, clientInfo_t *ci )
 	else
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_MOUNTED, MOUNTED_UNUSED, qtrue);
 
-	BG_UpdateConditionValue(es->clientNum, ANIM_COND_UNDERHAND, ci->playerAngles[0] > 0.0, qtrue);
+	BG_UpdateConditionValue(es->clientNum, ANIM_COND_UNDERHAND, ci->playerAngles[PITCH] > 0, qtrue);
 
 	if ( es->eFlags & EF_CROUCHING )
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_CROUCHING, qtrue, qtrue);
@@ -1923,54 +1923,54 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 		// don't let dead bodies twitch
 		vLegsAngles[YAW] = vHeadAngles[YAW];
 		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90.0;
+		clampTolerance = 90;
 	}
 	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
 	{
 		vTorsoAngles[YAW] = vLegsAngles[YAW];
-		clampTolerance = 0.0;
+		clampTolerance = 0;
 	}
 	else if ( es->eFlags & EF_MANTLE )
 	{
 		vTorsoAngles[YAW] = vHeadAngles[YAW];
 		vLegsAngles[YAW] = vHeadAngles[YAW];
-		vTorsoAngles[PITCH] = 90.0;
-		clampTolerance = 90.0;
+		vTorsoAngles[PITCH] = 90;
+		clampTolerance = 90;
 	}
 	else if ( es->eFlags & EF_PRONE )
 	{
 		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90.0;
+		clampTolerance = 90;
 	}
 	else if ( es->eFlags & EF_FIRING )
 	{
 		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 45.0;
+		clampTolerance = 45;
 	}
 	else if ( es->eFlags & EF_AIMDOWNSIGHT )
 	{
 		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90.0;
+		clampTolerance = 90;
 	}
 	else
 	{
 		vTorsoAngles[YAW] = moveDir * 0.30000001 + vHeadAngles[YAW];
-		clampTolerance = 90.0;
+		clampTolerance = 90;
 	}
 
 	// torso
-	BG_SwingAngles(vTorsoAngles[YAW], 0.0, clampTolerance, bg_swingSpeed->current.decimal, &ci->torso.yawAngle, &ci->torso.yawing);
+	BG_SwingAngles(vTorsoAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->torso.yawAngle, &ci->torso.yawing);
 
 	assert(level_bgs.animData.animScriptData.animations);
 
 	// if the legs are yawing (facing heading direction), allow them to rotate a bit, so we don't keep calling
 	// the legs_turn animation while an AI is firing, and therefore his angles will be randomizing according to their accuracy
 
-	clampTolerance = 150.0;
+	clampTolerance = 150;
 
 	if ( es->eFlags & EF_DEAD )
 	{
-		BG_SwingAngles(vLegsAngles[YAW], 0.0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
 	}
 	else if ( es->eFlags & EF_PRONE )
 	{
@@ -1981,15 +1981,15 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 	{
 		ci->legs.yawing = qfalse; // set it if they really need to swing
 		vLegsAngles[YAW] = vHeadAngles[YAW];
-		BG_SwingAngles(vHeadAngles[YAW], 0.0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+		BG_SwingAngles(vHeadAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
 	}
 	else if ( ci->legs.yawing )
 	{
-		BG_SwingAngles(vLegsAngles[YAW], 0.0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
 	}
 	else
 	{
-		BG_SwingAngles(vLegsAngles[YAW], 40.0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+		BG_SwingAngles(vLegsAngles[YAW], 40, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
 	}
 
 	if ( es->eFlags & EF_TURRET_ACTIVE )
@@ -2005,21 +2005,21 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 
 	if ( es->eFlags & EF_DEAD )
 	{
-		destination = 0.0;
+		destination = 0;
 	}
 	else if ( es->eFlags & EF_TURRET_ACTIVE )
 	{
-		destination = 0.0;
+		destination = 0;
 	}
 	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
 	{
-		destination = 0.0;
+		destination = 0;
 	}
 	else if ( es->eFlags == EF_MANTLE )
 	{
-		destination = 0.0;
+		destination = 0;
 	}
-	else if ( vHeadAngles[PITCH] <= 180.0 )
+	else if ( vHeadAngles[PITCH] <= 180 )
 	{
 		destination = vHeadAngles[0] * 0.60000002;
 	}
@@ -2028,7 +2028,7 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 		destination = (vHeadAngles[0] + -360.0) * 0.60000002;
 	}
 
-	BG_SwingAngles(destination, 0.0, 45.0, 0.15000001, &ci->torso.pitchAngle, &ci->torso.pitching);
+	BG_SwingAngles(destination, 0, 45, 0.15000001, &ci->torso.pitchAngle, &ci->torso.pitching);
 }
 
 /*
@@ -2268,7 +2268,7 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 	animation_t *oldanim;
 
 	transitionMin = -1;
-	fStartTime = 0.0;
+	fStartTime = 0;
 
 	oldanim = lf->animation;
 	oldAnimNum = lf->animationNumber;
@@ -2314,9 +2314,9 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 	{
 		if ( !anim || lf->animationTime <= 0 )
 		{
-			if ( !anim || anim->moveSpeed == 0.0 )
+			if ( !anim || anim->moveSpeed == 0 )
 			{
-				if ( !oldanim || oldanim->moveSpeed == 0.0 )
+				if ( !oldanim || oldanim->moveSpeed == 0 )
 				{
 					transitionMin = 170;
 				}
@@ -2346,11 +2346,11 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 		lf->animationTime = 0;
 	}
 
-	if ( anim && anim->moveSpeed != 0.0 && XAnimIsLooped(pXAnims, animIndex) )
+	if ( anim && anim->moveSpeed != 0 && XAnimIsLooped(pXAnims, animIndex) )
 	{
 		oldAnimIndex = oldAnimNum & ~ANIM_TOGGLEBIT;
 
-		if ( oldanim && oldanim->moveSpeed != 0.0 && XAnimIsLooped(pXAnims, oldAnimIndex) )
+		if ( oldanim && oldanim->moveSpeed != 0 && XAnimIsLooped(pXAnims, oldAnimIndex) )
 		{
 			fStartTime = XAnimGetTime(pAnimTree, oldAnimIndex);
 		}
@@ -2535,7 +2535,7 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 
 	anim = lf->animation;
 
-	if ( anim->moveSpeed == 0.0 || !lf->oldFrameSnapshotTime )
+	if ( anim->moveSpeed == 0 || !lf->oldFrameSnapshotTime )
 	{
 		lf->animSpeedScale = 1.0;
 		lf->oldFrameSnapshotTime = level_bgs.latestSnapshotTime;
@@ -2593,7 +2593,7 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 		}
 		else if ( lf->animSpeedScale < 0.0099999998 && bNewAnim )
 		{
-			lf->animSpeedScale = 0.0;
+			lf->animSpeedScale = 0;
 		}
 		else
 		{
@@ -3060,7 +3060,7 @@ void BG_FinalizePlayerAnims()
 			}
 
 			pCurrAnim->duration = 0;
-			pCurrAnim->moveSpeed = 0.0;
+			pCurrAnim->moveSpeed = 0;
 			continue;
 		}
 
@@ -3074,15 +3074,15 @@ void BG_FinalizePlayerAnims()
 
 		duration = XAnimGetLength(pXAnims, i);
 
-		if ( duration == 0.0 )
+		if ( duration == 0 )
 		{
 			pCurrAnim->duration = 500;
-			pCurrAnim->moveSpeed = 0.0;
+			pCurrAnim->moveSpeed = 0;
 		}
 		else
 		{
 			pCurrAnim->duration = (int)(duration * 1000.0);
-			XAnimGetRelDelta(pXAnims, i, vRot, vDelta, 0.0, 1.0);
+			XAnimGetRelDelta(pXAnims, i, vRot, vDelta, 0, 1);
 			pCurrAnim->moveSpeed = VectorLength(vDelta) / duration;
 
 			if ( pCurrAnim->duration < 500 )

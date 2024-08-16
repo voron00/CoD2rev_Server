@@ -1236,7 +1236,7 @@ void RoundFloatArray(vec3_t x, vec3_t y)
 
 float convertDegreesToTan(float d)
 {
-	return tan(d * 0.0174532925199433);
+	return tan(d * RADINDEG);
 }
 
 /*

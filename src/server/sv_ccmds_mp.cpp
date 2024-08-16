@@ -981,6 +981,9 @@ void SV_AddOperatorCommands(void)
 	if ( com_dedicated->current.integer )
 	{
 		SV_AddDedicatedCommands();
+#ifdef LIBCOD
+		SV_AddLibcodCommands();
+#endif
 	}
 
 	Cmd_AddCommand("scriptUsage", SV_ScriptUsage_f);

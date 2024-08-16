@@ -144,13 +144,13 @@ void Mantle_CapView( playerState_t *ps )
 
 		value = mantle_view_yawcap->current.decimal;
 
-		if ( delta > 0.0 )
+		if ( delta > 0 )
 		{
 			value = value * -1.0;
 		}
 
-		ps->delta_angles[1] += ANGLE2SHORT(delta);
-		ps->viewangles[1] = AngleNormalize360Accurate(ps->mantleState.yaw + value);
+		ps->delta_angles[YAW] += ANGLE2SHORT(delta);
+		ps->viewangles[YAW] = AngleNormalize360Accurate(ps->mantleState.yaw + value);
 	}
 }
 
@@ -550,7 +550,7 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 	assert((maxs[1] - mins[1]) <= (ps->maxs[2] - ps->mins[2]));
 
 	VectorCopy(pml->forward, traceDir);
-	traceDir[2] = 0.0;
+	traceDir[2] = 0;
 
 	Vec3Normalize(traceDir);
 
@@ -578,7 +578,7 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 	}
 
 	VectorNegate(trace->normal, mantleDir);
-	mantleDir[2] = 0.0;
+	mantleDir[2] = 0;
 
 	if ( Vec3Normalize(mantleDir) < 0.000099999997 )
 	{

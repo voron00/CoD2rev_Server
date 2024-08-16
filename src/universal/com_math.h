@@ -29,6 +29,7 @@ extern vec4_t vec4_origin;
 #define RAD2DEG( a ) ( ( ( a ) * 180.0f ) / M_PI )
 
 #define DEGINRAD  57.29577951308232 // degrees in one radian
+#define RADINDEG  0.0174532925199433 // radian in one degree
 
 #define Square( x ) ( ( x ) * ( x ) )
 

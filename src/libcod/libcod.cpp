@@ -46,6 +46,11 @@ void InitLibcodCallbacks()
 	codecallback_vid_restart = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_VidRestart", 0);
 }
 
+void SV_AddLibcodCommands()
+{
+	// nothing here for now
+}
+
 void manymaps_prepare(const char *mapname, int read)
 {
 	char map_check[MAX_OSPATH];

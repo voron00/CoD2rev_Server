@@ -252,12 +252,12 @@ void Jump_PushOffLadder( playerState_t *ps, pml_t *pml )
 
 	ps->velocity[2] = ps->velocity[2] * 0.75;
 
-	VectorSet(flatForward, pml->forward[0], pml->forward[1], 0.0);
+	VectorSet(flatForward, pml->forward[0], pml->forward[1], 0);
 	Vec3Normalize(flatForward);
 
 	dot = DotProduct(ps->vLadderVec, pml->forward);
 
-	if ( dot < 0.0 )
+	if ( dot < 0 )
 	{
 		dot = DotProduct(flatForward, ps->vLadderVec);
 

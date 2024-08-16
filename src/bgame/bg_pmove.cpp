@@ -4404,11 +4404,9 @@ void PmoveSingle( pmove_t *pm )
 
 		Vector2Subtract(ps->velocity, ps->oldVelocity, oldVel);
 		Vec2Scale(oldVel, I_fmin(pml.frametime, 1.0), oldVel);
+		Vector2Add(ps->oldVelocity, oldVel, ps->oldVelocity);
 
 		// snap some parts of playerstate to save network bandwidth
-		Vector2Add(ps->oldVelocity, oldVel, ps->oldVelocity);
 		Sys_SnapVector(ps->velocity);
-
-		return;
 	}
 }

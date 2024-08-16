@@ -381,9 +381,9 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 		{
 			fLerpFrac = (ps->commandTime - ps->viewHeightLerpTime) / PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
 
-			if ( fLerpFrac < 0.0 )
+			if ( fLerpFrac < 0 )
 			{
-				fLerpFrac = 0.0;
+				fLerpFrac = 0;
 			}
 			else
 			{
@@ -409,9 +409,9 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	}
 	else
 	{
-		s->fTorsoHeight = 0.0;
-		s->fTorsoPitch = 0.0;
-		s->fWaistPitch = 0.0;
+		s->fTorsoHeight = 0;
+		s->fTorsoPitch = 0;
+		s->fWaistPitch = 0;
 	}
 
 // from MP
@@ -762,7 +762,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	traceFunc = pmoveHandlers[handler].trace;
 
-	VectorSet(vMins, -fSize, -fSize, 0.0);
+	VectorSet(vMins, -fSize, -fSize, 0);
 	VectorAdd(vMins, vPos, vMins);
 
 	VectorSet(vMaxs, fSize, fSize, fHeight);
@@ -770,16 +770,16 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	if ( proneCheckType )
 	{
-		contentMask = 8519697;
+		contentMask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MONSTERCLIP | CONTENTS_UNKNOWN;
 	}
 	else
 	{
-		contentMask = 8454161;
+		contentMask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_PLAYERCLIP | CONTENTS_UNKNOWN;
 	}
 
 	if ( !bAlreadyProne )
 	{
-		VectorSet(vMins, -fSize, -fSize, 0.0);
+		VectorSet(vMins, -fSize, -fSize, 0);
 		VectorSet(vMaxs, fSize, fSize, fHeight);
 
 		VectorCopy(vPos, vEnd);
@@ -802,7 +802,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	VectorSet(vMins, -6.0, -6.0, -6.0);
 	VectorSet(vMaxs, 6.0, 6.0, 6.0);
-	VectorSet(vForward, 0.0, fYaw - 180.0, 0.0);
+	VectorSet(vForward, 0, fYaw - 180.0, 0);
 
 	AngleVectors(vForward, vDelta, vRight, vUp);
 
