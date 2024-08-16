@@ -34,17 +34,17 @@ void gsc_bots_set_walkdir(scr_entref_t id)
 
 	if (strcmp(dir, "none") == 0)
 	{
-		bot_forwardmove[id.entnum] = KEY_MASK_NONE;
-		bot_rightmove[id.entnum] = KEY_MASK_NONE;
+		bot_forwardmove[id.entnum] = BUTTON_NONE;
+		bot_rightmove[id.entnum] = BUTTON_NONE;
 	}
 	else if (strcmp(dir, "forward") == 0)
-		bot_forwardmove[id.entnum] = KEY_MASK_FORWARD;
+		bot_forwardmove[id.entnum] = BUTTON_FORWARD;
 	else if (strcmp(dir, "back") == 0)
-		bot_forwardmove[id.entnum] = KEY_MASK_BACK;
+		bot_forwardmove[id.entnum] = BUTTON_BACK;
 	else if (strcmp(dir, "right") == 0)
-		bot_rightmove[id.entnum] = KEY_MASK_MOVERIGHT;
+		bot_rightmove[id.entnum] = BUTTON_MOVERIGHT;
 	else if (strcmp(dir, "left") == 0)
-		bot_rightmove[id.entnum] = KEY_MASK_MOVELEFT;
+		bot_rightmove[id.entnum] = BUTTON_MOVELEFT;
 	else
 	{
 		stackError("gsc_bots_set_walkdir() invalid argument '%s'. Valid arguments are: 'none' 'forward' 'back' 'right' 'left'", dir);
@@ -85,11 +85,11 @@ void gsc_bots_set_lean(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (strcmp(lean, "none") == 0)
-		bot_buttons[id.entnum] &= ~(KEY_MASK_LEANLEFT | KEY_MASK_LEANRIGHT);
+		bot_buttons[id.entnum] &= ~(BUTTON_LEANLEFT | BUTTON_LEANRIGHT);
 	else if (strcmp(lean, "left") == 0)
-		bot_buttons[id.entnum] |= KEY_MASK_LEANLEFT;
+		bot_buttons[id.entnum] |= BUTTON_LEANLEFT;
 	else if (strcmp(lean, "right") == 0)
-		bot_buttons[id.entnum] |= KEY_MASK_LEANRIGHT;
+		bot_buttons[id.entnum] |= BUTTON_LEANRIGHT;
 	else
 	{
 		stackError("gsc_bots_set_lean() invalid argument '%s'. Valid arguments are: 'right' 'left'", lean);
@@ -130,13 +130,13 @@ void gsc_bots_set_stance(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (strcmp(stance, "stand") == 0)
-		bot_buttons[id.entnum] &= ~(KEY_MASK_CROUCH | KEY_MASK_PRONE | KEY_MASK_JUMP);
+		bot_buttons[id.entnum] &= ~(BUTTON_CROUCH | BUTTON_PRONE | BUTTON_JUMP);
 	else if (strcmp(stance, "crouch") == 0)
-		bot_buttons[id.entnum] |= KEY_MASK_CROUCH;
+		bot_buttons[id.entnum] |= BUTTON_CROUCH;
 	else if (strcmp(stance, "prone") == 0)
-		bot_buttons[id.entnum] |= KEY_MASK_PRONE;
+		bot_buttons[id.entnum] |= BUTTON_PRONE;
 	else if (strcmp(stance, "jump") == 0)
-		bot_buttons[id.entnum] |= KEY_MASK_JUMP;
+		bot_buttons[id.entnum] |= BUTTON_JUMP;
 	else
 	{
 		stackError("gsc_bots_set_stance() invalid argument '%s'. Valid arguments are: 'stand' 'crouch' 'prone' 'jump'", stance);
@@ -177,9 +177,9 @@ void gsc_bots_thrownade(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (!grenade)
-		bot_buttons[id.entnum] &= ~KEY_MASK_FRAG;
+		bot_buttons[id.entnum] &= ~BUTTON_FRAG;
 	else
-		bot_buttons[id.entnum] |= KEY_MASK_FRAG;
+		bot_buttons[id.entnum] |= BUTTON_FRAG;
 
 	stackPushBool(qtrue);
 }
@@ -214,9 +214,9 @@ void gsc_bots_fireweapon(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (!shoot)
-		bot_buttons[id.entnum] &= ~KEY_MASK_FIRE;
+		bot_buttons[id.entnum] &= ~BUTTON_ATTACK;
 	else
-		bot_buttons[id.entnum] |= KEY_MASK_FIRE;
+		bot_buttons[id.entnum] |= BUTTON_ATTACK;
 
 	stackPushBool(qtrue);
 }
@@ -251,9 +251,9 @@ void gsc_bots_meleeweapon(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (!melee)
-		bot_buttons[id.entnum] &= ~KEY_MASK_MELEE;
+		bot_buttons[id.entnum] &= ~BUTTON_MELEE;
 	else
-		bot_buttons[id.entnum] |= KEY_MASK_MELEE;
+		bot_buttons[id.entnum] |= BUTTON_MELEE;
 
 	stackPushBool(qtrue);
 }
@@ -288,9 +288,9 @@ void gsc_bots_reloadweapon(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (!reload)
-		bot_buttons[id.entnum] &= ~KEY_MASK_RELOAD;
+		bot_buttons[id.entnum] &= ~BUTTON_RELOAD;
 	else
-		bot_buttons[id.entnum] |= KEY_MASK_RELOAD;
+		bot_buttons[id.entnum] |= BUTTON_RELOAD;
 
 	stackPushBool(qtrue);
 }
@@ -325,9 +325,9 @@ void gsc_bots_adsaim(scr_entref_t id)
 	extern int bot_buttons[MAX_CLIENTS];
 
 	if (!ads)
-		bot_buttons[id.entnum] &= ~KEY_MASK_ADS_MODE;
+		bot_buttons[id.entnum] &= ~BUTTON_ADS;
 	else
-		bot_buttons[id.entnum] |= KEY_MASK_ADS_MODE;
+		bot_buttons[id.entnum] |= BUTTON_ADS;
 
 	stackPushBool(qtrue);
 }

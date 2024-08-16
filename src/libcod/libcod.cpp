@@ -705,4 +705,40 @@ void SV_CheckTimeouts_libcod( void )
 	}
 }
 
+void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
+{
+	float lengthSq2D;
+	float adjusted;
+	float newZ;
+	float lengthScale;
+
+	if (!jump_bounceEnable->current.boolean)
+	{
+		PM_ClipVelocity(velIn, normal, velOut);
+		return;
+	}
+
+	lengthSq2D = (float)(velIn[0] * velIn[0]) + (float)(velIn[1] * velIn[1]);
+
+	if ( I_fabs(normal[2]) < 0.001 || lengthSq2D == 0.0 )
+	{
+		velOut[0] = velIn[0];
+		velOut[1] = velIn[1];
+		velOut[2] = velIn[2];
+	}
+	else
+	{
+		newZ = (float)-(float)((float)(velIn[0] * normal[0]) + (float)(velIn[1] * normal[1])) / normal[2];
+		adjusted = velIn[1];
+		lengthScale = I_sqrt((float)((float)(velIn[2] * velIn[2]) + lengthSq2D) / (float)((float)(newZ * newZ) + lengthSq2D));
+
+		if ( lengthScale < 1.0 || newZ < 0.0 || velIn[2] > 0.0 )
+		{
+			velOut[0] = lengthScale * velIn[0];
+			velOut[1] = lengthScale * adjusted;
+			velOut[2] = lengthScale * newZ;
+		}
+	}
+}
+
 #endif

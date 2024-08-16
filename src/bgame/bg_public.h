@@ -1188,18 +1188,20 @@ struct pmoveHandler_t
 	void (*playerEvent)(int, int);
 };
 
+#define MAXTOUCH    32
+
 struct pmove_t
 {
-	playerState_s *ps;
-	usercmd_s cmd;
-	usercmd_s oldcmd;
+	playerState_t *ps;
+	usercmd_t cmd;
+	usercmd_t oldcmd;
 	int tracemask;
 	int numtouch;
-	int touchents[32];
+	int touchents[MAXTOUCH];
 	vec3_t mins;
 	vec3_t maxs;
 	float xyspeed;
-	int proneChange;
+	qboolean proneChange;
 	byte handler;
 	bool mantleStarted;
 	vec3_t mantleEndPos;
@@ -1213,14 +1215,14 @@ struct pml_t
 	vec3_t up;
 	float frametime;
 	int msec;
-	int walking;
-	int groundPlane;
-	int almostGroundPlane;
+	qboolean walking;
+	qboolean groundPlane;
+	qboolean almostGroundPlane;
 	trace_t groundTrace;
 	float impactSpeed;
 	vec3_t previous_origin;
 	vec3_t previous_velocity;
-	unsigned int previous_waterlevel;
+	int previous_waterlevel;
 };
 
 enum weaponstate_t
@@ -1283,19 +1285,24 @@ enum EffectiveStance
 	PM_EFF_STANCE_COUNT
 };
 
-#define VIEW_HEIGHT_PRONE 11
-#define VIEW_HEIGHT_CROUCHED 40
-#define VIEW_HEIGHT_STANDING 60
+// Rafael
+// note to self: Corky test
+//#define	DEFAULT_VIEWHEIGHT	26
+//#define CROUCH_VIEWHEIGHT	12
+#define DEAD_VIEWHEIGHT 8
+#define PRONE_VIEWHEIGHT 11
+#define CROUCH_VIEWHEIGHT 40
+#define DEFAULT_VIEWHEIGHT 60
 
 #define PRONE_FEET_DIST_TURNED 45
+
+#define MIN_WALK_NORMAL 0.7
 
 enum proneCheckType_t
 {
 	PCT_CLIENT = 0x0,
 	PCT_ACTOR = 0x1,
 };
-
-#define MAXTOUCH    32
 
 // pmove->pm_flags	(sent as max 16 bits in msg.c)
 #define PMF_PRONE           0x1
@@ -1582,7 +1589,6 @@ void PM_UFOMove(pmove_t *pm, pml_t *pml);
 void PM_GroundTrace(pmove_t *pm, pml_t *pml);
 void PM_Footsteps(pmove_t *pm, pml_t *pml);
 void PM_CheckLadderMove(pmove_t *pm, pml_t *pml);
-void PM_CrashLand(playerState_s *pm, pml_t *pml);
 void PM_LadderMove(pmove_t *pm, pml_t *pml);
 int PM_FootstepForSurface( playerState_t *ps, pml_t *pml );
 void Pmove(pmove_t *pmove);

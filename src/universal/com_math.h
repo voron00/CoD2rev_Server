@@ -482,6 +482,18 @@ inline int const FloatSign(const float x)
 
 /*
 ==============
+Sys_SnapVector
+==============
+*/
+inline void Sys_SnapVector(vec3_t v)
+{
+	v[0] = rint(v[0]);
+	v[1] = rint(v[1]);
+	v[2] = rint(v[2]);
+}
+
+/*
+==============
 I_rsqrt
 ==============
 */
@@ -551,8 +563,6 @@ float vectoyaw( const vec3_t vec );
 float vectopitch( const vec3_t vec );
 float PitchForYawOnNormal(const float fYaw, const vec3_t normal);
 float Abs(const vec3_t v);
-void VectorRint(vec3_t v);
-void VectorCopyInverse(const vec3_t from, vec3_t to);
 float Q_acos( float c );
 void YawVectors2D(const float yaw, vec2_t forward, vec2_t right);
 void YawVectors(const float yaw, vec3_t forward, vec3_t right);

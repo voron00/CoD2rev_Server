@@ -608,7 +608,7 @@ void PlayerCmd_useButtonPressed(scr_entref_t entref)
 		}
 	}
 
-	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & (KEY_MASK_USE | KEY_MASK_USERELOAD) ? true : false);
+	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & (BUTTON_USE | BUTTON_USERELOAD) ? true : false);
 }
 
 void PlayerCmd_attackButtonPressed(scr_entref_t entref)
@@ -630,7 +630,7 @@ void PlayerCmd_attackButtonPressed(scr_entref_t entref)
 		}
 	}
 
-	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & KEY_MASK_FIRE ? true : false);
+	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & BUTTON_ATTACK ? true : false);
 }
 
 void PlayerCmd_meleeButtonPressed(scr_entref_t entref)
@@ -652,7 +652,7 @@ void PlayerCmd_meleeButtonPressed(scr_entref_t entref)
 		}
 	}
 
-	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & KEY_MASK_MELEE ? true : false);
+	Scr_AddBool((pSelf->client->buttonsSinceLastFrame | pSelf->client->buttons) & BUTTON_MELEE ? true : false);
 }
 
 void PlayerCmd_playerADS(scr_entref_t entref)

@@ -831,20 +831,6 @@ float Abs(const vec3_t v)
 	return (float)I_sqrt((float)((float)((float)(v[0] * v[0]) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
 }
 
-void VectorRint(vec3_t v)
-{
-	v[0] = rint(v[0]);
-	v[1] = rint(v[1]);
-	v[2] = rint(v[2]);
-}
-
-void VectorCopyInverse(const vec3_t from, vec3_t to)
-{
-	to[0] = -from[0];
-	to[1] = -from[1];
-	to[2] = -from[2];
-}
-
 float Q_acos( float c )
 {
 	float angle;
