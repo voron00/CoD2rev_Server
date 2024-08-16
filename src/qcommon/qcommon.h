@@ -61,6 +61,7 @@ typedef struct
 } sysEvent_t;
 
 int CL_LocalClient_GetActiveCount();
+void Sys_SnapVector(vec3_t v);
 
 void Sys_Init (void);
 int Sys_Milliseconds (void);

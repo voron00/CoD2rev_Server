@@ -6,6 +6,13 @@ int CL_LocalClient_GetActiveCount()
 	return 1;
 }
 
+void Sys_SnapVector(vec3_t v)
+{
+	v[0] = rint(v[0]);
+	v[1] = rint(v[1]);
+	v[2] = rint(v[2]);
+}
+
 qboolean Sys_DirectoryHasContents(const char *dir)
 {
 	DIR *hdir;

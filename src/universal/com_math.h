@@ -38,6 +38,8 @@ extern vec4_t vec4_origin;
 #define SnapVector( v ) {v[0] = ( (int)( v[0] ) ); v[1] = ( (int)( v[1] ) ); v[2] = ( (int)( v[2] ) );}
 
 float Q_fabs( float f );
+int Q_rint( float in );
+float Q_acos( float c );
 
 /*
 ==============
@@ -482,18 +484,6 @@ inline int const FloatSign(const float x)
 
 /*
 ==============
-Sys_SnapVector
-==============
-*/
-inline void Sys_SnapVector(vec3_t v)
-{
-	v[0] = rint(v[0]);
-	v[1] = rint(v[1]);
-	v[2] = rint(v[2]);
-}
-
-/*
-==============
 I_rsqrt
 ==============
 */
@@ -543,7 +533,6 @@ float AngleDelta( float angle1, float angle2 );
 int BoxOnPlaneSide( vec3_t emins, vec3_t emaxs, struct cplane_s *p );
 float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 float RadiusFromBounds2D( const vec2_t mins, const vec2_t maxs );
-vec_t Q_rint( vec_t in );
 void SnapAngles(vec3_t angles);
 void vectoangles( const vec3_t value1, vec3_t angles );
 void AxisToAngles( vec3_t axis[3], vec3_t angles );
@@ -563,7 +552,6 @@ float vectoyaw( const vec3_t vec );
 float vectopitch( const vec3_t vec );
 float PitchForYawOnNormal(const float fYaw, const vec3_t normal);
 float Abs(const vec3_t v);
-float Q_acos( float c );
 void YawVectors2D(const float yaw, vec2_t forward, vec2_t right);
 void YawVectors(const float yaw, vec3_t forward, vec3_t right);
 void ShrinkBoundsToHeight(vec3_t mins, vec3_t maxs);

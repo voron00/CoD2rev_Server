@@ -1298,6 +1298,9 @@ enum EffectiveStance
 
 #define MIN_WALK_NORMAL 0.7
 
+#define STEPSIZE        18
+#define STEPSIZE_PRONE  10
+
 enum proneCheckType_t
 {
 	PCT_CLIENT = 0x0,
@@ -1512,7 +1515,7 @@ void PM_Accelerate(playerState_s *ps, const pml_t *pml, float *wishdir, float wi
 void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, int bFootStep);
 qboolean PM_ShouldMakeFootsteps(pmove_t *pm);
 qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround, const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist);
-int PM_VerifyPronePosition(pmove_t *pm, float *vFallbackOrg, float *vFallbackVel);
+qboolean PM_VerifyPronePosition( pmove_t *pm, const vec3_t vFallbackOrg, const vec3_t vFallbackVel );
 void PM_playerTrace(pmove_t *pm, trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentMask);
 void PM_AddTouchEnt(pmove_t *pm, int entityNum);
 void PM_StepSlideMove(pmove_t *pm, pml_t *pml, int gravity);
@@ -1546,8 +1549,6 @@ float BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, flo
 void BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
 void BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
 
-void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
-float PM_PermuteRestrictiveClipPlanes(const float *velocity, int planeCount, const float (*planes)[3], int *permutation);
 int PM_SlideMove(pmove_t *pm, pml_t *pml, int gravity);
 void PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int));
 void Mantle_CapView(playerState_s *ps);

@@ -10,6 +10,30 @@ float Q_fabs( float f )
 	return *(float*)&tmp;
 }
 
+int Q_rint( float in )
+{
+	return floor( in + 0.5 );
+}
+
+float Q_acos( float c )
+{
+	float angle;
+
+	angle = acos( c );
+
+	if ( angle > M_PI )
+	{
+		return (float)M_PI;
+	}
+
+	if ( angle < -M_PI )
+	{
+		return (float)M_PI;
+	}
+
+	return angle;
+}
+
 int VectorCompare(const vec3_t v1, const vec3_t v2)
 {
 	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2])
@@ -399,11 +423,6 @@ float RadiusFromBounds2D( const vec2_t mins, const vec2_t maxs )
 	}
 
 	return Vec2Length( corner );
-}
-
-vec_t Q_rint( vec_t in )
-{
-	return floor( in + 0.5 );
 }
 
 void SnapAngles(vec3_t angles)
@@ -829,25 +848,6 @@ float PitchForYawOnNormal(const float fYaw, const vec3_t normal)
 float Abs(const vec3_t v)
 {
 	return (float)I_sqrt((float)((float)((float)(v[0] * v[0]) + (float)(v[1] * v[1])) + (float)(v[2] * v[2])));
-}
-
-float Q_acos( float c )
-{
-	float angle;
-
-	angle = acos( c );
-
-	if ( angle > M_PI )
-	{
-		return (float)M_PI;
-	}
-
-	if ( angle < -M_PI )
-	{
-		return (float)M_PI;
-	}
-
-	return angle;
 }
 
 void ShrinkBoundsToHeight(vec3_t mins, vec3_t maxs)

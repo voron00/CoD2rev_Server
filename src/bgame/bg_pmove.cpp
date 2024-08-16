@@ -2747,7 +2747,7 @@ void PM_ViewHeightAdjust( pmove_t *pm, pml_t *pml )
 				Vec3Normalize(vDir);
 				VectorScale(vDir, scale, ps->velocity);
 
-				PM_StepSlideMove(pm, pml, 1);
+				PM_StepSlideMove(pm, pml, qtrue);
 				VectorCopy(vel, ps->velocity);
 
 				ps->viewHeightLerpPosAdj = fNewPosOfs;
@@ -3764,7 +3764,7 @@ void PM_AirMove( pmove_t *pm, pml_t *pml )
 		PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
 	}
 
-	PM_StepSlideMove(pm, pml, 1);
+	PM_StepSlideMove(pm, pml, qtrue);
 
 	// Ridah, moved this down, so we use the actual movement direction
 	// set the movementDir so clients can rotate the legs for strafing
@@ -3827,7 +3827,7 @@ void PM_FlyMove( pmove_t *pm, pml_t *pml )
 
 	PM_Accelerate(ps, pml, wishdir, wishspeed, 8);
 
-	PM_StepSlideMove(pm, pml, 0);
+	PM_StepSlideMove(pm, pml, qfalse);
 }
 
 /*
@@ -3953,7 +3953,7 @@ void PM_LadderMove( pmove_t *pm, pml_t *pml )
 		}
 	}
 
-	PM_StepSlideMove(pm, pml, 0);  // no gravity while going up ladder
+	PM_StepSlideMove(pm, pml, qfalse);  // no gravity while going up ladder
 
 	scale = vectoyaw(ps->vLadderVec) + 180;
 	moveyaw = (int)AngleDelta(scale, ps->viewangles[YAW]);
@@ -4103,7 +4103,7 @@ void PM_WalkMove( pmove_t *pm, pml_t *pml )
 	// don't do anything if standing still
 	if ( ps->velocity[0] || ps->velocity[1] )
 	{
-		PM_StepSlideMove(pm, pml, 0);
+		PM_StepSlideMove(pm, pml, qfalse);
 	}
 
 	PM_SetMovementDir(pm, pml);
