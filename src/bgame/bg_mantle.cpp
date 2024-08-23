@@ -128,30 +128,32 @@ void Mantle_CapView( playerState_t *ps )
 		return;
 	}
 
-	delta = AngleDelta(ps->mantleState.yaw, ps->viewangles[1]);
+	delta = AngleDelta(ps->mantleState.yaw, ps->viewangles[YAW]);
 
-	if ( delta < -mantle_view_yawcap->current.decimal || mantle_view_yawcap->current.decimal < delta )
+	if ( delta >= -mantle_view_yawcap->current.decimal && mantle_view_yawcap->current.decimal >= delta )
 	{
-		while ( -mantle_view_yawcap->current.decimal > delta )
-		{
-			delta = delta + mantle_view_yawcap->current.decimal;
-		}
-
-		while ( delta > mantle_view_yawcap->current.decimal )
-		{
-			delta = delta - mantle_view_yawcap->current.decimal;
-		}
-
-		value = mantle_view_yawcap->current.decimal;
-
-		if ( delta > 0 )
-		{
-			value = value * -1.0;
-		}
-
-		ps->delta_angles[YAW] += ANGLE2SHORT(delta);
-		ps->viewangles[YAW] = AngleNormalize360Accurate(ps->mantleState.yaw + value);
+		return;
 	}
+
+	while ( -mantle_view_yawcap->current.decimal > delta )
+	{
+		delta = delta + mantle_view_yawcap->current.decimal;
+	}
+
+	while ( delta > mantle_view_yawcap->current.decimal )
+	{
+		delta = delta - mantle_view_yawcap->current.decimal;
+	}
+
+	value = mantle_view_yawcap->current.decimal;
+
+	if ( delta > 0 )
+	{
+		value = value * -1.0;
+	}
+
+	ps->delta_angles[YAW] += ANGLE2SHORT(delta);
+	ps->viewangles[YAW] = AngleNormalize360Accurate(ps->mantleState.yaw + value);
 }
 
 /*
@@ -331,7 +333,7 @@ void Mantle_Check( pmove_t *pmove, pml_t *pml )
 		return;
 	}
 
-	if ( ps->eFlags & (EF_CROUCHING | EF_PRONE) )
+	if ( ps->eFlags & (EF_CROUCH | EF_PRONE) )
 	{
 		Mantle_DebugPrint("Mantle Failed: Player not standing");
 		return;
@@ -671,7 +673,7 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 
 	Mantle_CalcEndPos(pmove, mresults);
 
-	if ( !(ps->eFlags & EF_CROUCHING) )
+	if ( !(ps->eFlags & EF_CROUCH) )
 	{
 		PM_trace(pmove, &trace, mresults->ledgePos, ps->mins, ps->maxs, mresults->ledgePos, ps->clientNum, pmove->tracemask);
 
@@ -697,7 +699,7 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 Mantle_Start
 ==================
 */
-void Mantle_Start( pmove_t *pm, playerState_s *ps, MantleResults *mresults )
+void Mantle_Start( pmove_t *pm, playerState_t *ps, MantleResults *mresults )
 {
 	int mantleTime;
 	vec3_t trans;

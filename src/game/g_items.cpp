@@ -341,7 +341,7 @@ gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag)
 
 					if ( ammoMin > 0 )
 					{
-						clipSize = BG_GetClipSize(weaponIndex);
+						clipSize = BG_GetAmmoClipSize(weaponIndex);
 
 						if ( clipSize )
 							randomCount = rand() % clipSize;
@@ -375,7 +375,7 @@ gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag)
 			else
 			{
 				randomTemp = (G_random() + 1.0) * 0.5;
-				randomAmmo = (float)(BG_GetClipSize(weaponIndex) - 1) * randomTemp;
+				randomAmmo = (float)(BG_GetAmmoClipSize(weaponIndex) - 1) * randomTemp;
 				clientAmmoCount = Q_rint(randomAmmo) + 1;
 				randomClip = (G_random() * 0.5 + 0.25) * (float)clientAmmoCount;
 				clipIndex = Q_rint(randomClip);
@@ -569,7 +569,7 @@ void Fill_Clip(playerState_s *ps, int weapon)
 	if ( weapon > 0 && weapon <= BG_GetNumWeapons() )
 	{
 		inclip = ps->ammoclip[weaponIndex];
-		ammomove = BG_GetClipSize(weaponIndex) - inclip;
+		ammomove = BG_GetAmmoClipSize(weaponIndex) - inclip;
 
 		if ( ammomove > ps->ammo[iAmmoIndex] )
 			ammomove = ps->ammo[iAmmoIndex];
@@ -613,15 +613,15 @@ int Add_Ammo(gentity_s *pSelf, int weaponIndex, int count, int fillClip)
 	}
 	else
 	{
-		if ( pSelf->client->ps.ammo[oldAmmo] > BG_GetMaxAmmo(oldAmmo) )
+		if ( pSelf->client->ps.ammo[oldAmmo] > BG_GetAmmoTypeMax(oldAmmo) )
 		{
-			pSelf->client->ps.ammo[oldAmmo] = BG_GetMaxAmmo(oldAmmo);
+			pSelf->client->ps.ammo[oldAmmo] = BG_GetAmmoTypeMax(oldAmmo);
 		}
 	}
 
-	if ( pSelf->client->ps.ammoclip[oldClip] > BG_GetClipSize(oldClip) )
+	if ( pSelf->client->ps.ammoclip[oldClip] > BG_GetAmmoClipSize(oldClip) )
 	{
-		pSelf->client->ps.ammoclip[oldClip] = BG_GetClipSize(oldClip);
+		pSelf->client->ps.ammoclip[oldClip] = BG_GetAmmoClipSize(oldClip);
 	}
 
 	if ( BG_GetWeaponDef(weaponIndex)->sharedAmmoCapIndex < 0 )
@@ -840,15 +840,15 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			{
 				tempRandom = (G_random() + 1.0) * 0.5;
 				clipForRandom = BG_ClipForWeapon(weaponIndex);
-				randomClipSize = (float)(BG_GetClipSize(clipForRandom) - 1) * tempRandom;
+				randomClipSize = (float)(BG_GetAmmoClipSize(clipForRandom) - 1) * tempRandom;
 				ent->count = Q_rint(randomClipSize) + 1;
 			}
 		}
 		otherAmmoIndex = BG_AmmoForWeapon(weaponIndex);
-		if ( ent->count > BG_GetMaxAmmo(otherAmmoIndex) )
+		if ( ent->count > BG_GetAmmoTypeMax(otherAmmoIndex) )
 		{
 			ammoIndex = BG_AmmoForWeapon(weaponIndex);
-			ent->count = BG_GetMaxAmmo(ammoIndex);
+			ent->count = BG_GetAmmoTypeMax(ammoIndex);
 		}
 		weaponModel = ent->count;
 	}
@@ -863,7 +863,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			if ( ent->count >= 0 )
 			{
 				clipIndex = BG_ClipForWeapon(weaponIndex);
-				ent->item.clipAmmoCount = BG_GetClipSize(clipIndex);
+				ent->item.clipAmmoCount = BG_GetAmmoClipSize(clipIndex);
 				if ( ent->item.clipAmmoCount > ent->count )
 					ent->item.clipAmmoCount = ent->count;
 				ent->count -= ent->item.clipAmmoCount;
@@ -875,10 +875,10 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			}
 		}
 		clipForWeapon = BG_ClipForWeapon(weaponIndex);
-		if ( ent->item.clipAmmoCount > BG_GetClipSize(clipForWeapon) )
+		if ( ent->item.clipAmmoCount > BG_GetAmmoClipSize(clipForWeapon) )
 		{
 			otherClipForWeapon = BG_ClipForWeapon(weaponIndex);
-			ent->item.clipAmmoCount = BG_GetClipSize(otherClipForWeapon);
+			ent->item.clipAmmoCount = BG_GetAmmoClipSize(otherClipForWeapon);
 		}
 		clipAmmoCount = ent->item.clipAmmoCount;
 	}
@@ -896,10 +896,10 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			{
 				if ( !Com_BitCheck(other->client->ps.weapons, other->client->ps.weapon) )
 					return 0;
-				if ( !BG_PlayerHasWeapon(&other->client->ps, other->client->ps.weapon, 1) )
+				if ( !BG_IsPlayerWeaponInSlot(&other->client->ps, other->client->ps.weapon, 1) )
 				{
 					debugWeaponDef = BG_GetWeaponDef(other->client->ps.weapon);
-					if ( !BG_GetStackableSlot(other->client, other->client->ps.weapon, debugWeaponDef->weaponSlot)
+					if ( !BG_GetStackSlotForWeapon(&other->client->ps, other->client->ps.weapon, debugWeaponDef->weaponSlot)
 					        && !BG_GetEmptySlotForWeapon(&other->client->ps, weaponIndex) )
 					{
 						Com_Printf("WARNING: cannot swap out a debug weapon (can result from too many weapons given to the player)\n");
@@ -910,7 +910,7 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 			if ( !BG_GetEmptySlotForWeapon(&other->client->ps, weaponIndex) )
 			{
 				weaponStackDef = BG_GetWeaponDef(other->client->ps.weapon);
-				if ( !BG_GetStackableSlot(other->client, weaponIndex, weaponStackDef->weaponSlot) )
+				if ( !BG_GetStackSlotForWeapon(&other->client->ps, weaponIndex, weaponStackDef->weaponSlot) )
 				{
 					if ( weaponDef->weaponSlot == BG_GetWeaponDef(other->client->ps.weapon)->weaponSlot )
 					{
@@ -985,12 +985,12 @@ int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touche
 		if ( clipAmmoCount >= 0 )
 		{
 			newClipForWeapon = BG_ClipForWeapon(weaponIndex);
-			if ( clipAmmoCount > BG_GetClipSize(newClipForWeapon) )
+			if ( clipAmmoCount > BG_GetAmmoClipSize(newClipForWeapon) )
 			{
 				newClipForWeapon2 = BG_ClipForWeapon(weaponIndex);
-				weaponModel += clipAmmoCount - BG_GetClipSize(newClipForWeapon2);
+				weaponModel += clipAmmoCount - BG_GetAmmoClipSize(newClipForWeapon2);
 				newClipForWeapon3 = BG_ClipForWeapon(weaponIndex);
-				clipAmmoCount = BG_GetClipSize(newClipForWeapon3);
+				clipAmmoCount = BG_GetAmmoClipSize(newClipForWeapon3);
 			}
 			client = other->client;
 			client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = clipAmmoCount;

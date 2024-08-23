@@ -1,6 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
+bgs_t level_bgs;
+
 uint16_t* controller_names[] =
 {
 	&scr_const.back_low,
@@ -170,7 +172,7 @@ static animStringItem_t animConditionLeaningStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t weaponStrings[128];
+animStringItem_t weaponStrings[MAX_WEAPONS];
 
 typedef enum
 {
@@ -183,7 +185,7 @@ typedef enum
 typedef struct
 {
 	animScriptConditionTypes_t type;
-	animStringItem_t            *values;
+	animStringItem_t *values;
 } animConditionTable_t;
 
 static animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
@@ -444,7 +446,7 @@ BG_AnimUpdatePlayerStateConditions
 void BG_AnimUpdatePlayerStateConditions( pmove_t *pmove )
 {
 	WeaponDef *weaponDef;
-	playerState_s *ps;
+	playerState_t *ps;
 
 	ps = pmove->ps;
 
@@ -776,7 +778,7 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 
 	if ( fLeanFrac != 0 )
 	{
-		if ( es->eFlags & EF_CROUCHING )
+		if ( es->eFlags & EF_CROUCH )
 		{
 			if ( fLeanFrac > 0 )
 			{
@@ -845,7 +847,7 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 	{
 		if ( fLeanFrac != 0 )
 		{
-			if ( es->eFlags & EF_CROUCHING )
+			if ( es->eFlags & EF_CROUCH )
 			{
 				if ( fLeanFrac <= 0 )
 				{
@@ -1733,7 +1735,7 @@ void BG_AnimPlayerConditions( entityState_t *es, clientInfo_t *ci )
 
 	BG_UpdateConditionValue(es->clientNum, ANIM_COND_UNDERHAND, ci->playerAngles[PITCH] > 0, qtrue);
 
-	if ( es->eFlags & EF_CROUCHING )
+	if ( es->eFlags & EF_CROUCH )
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_CROUCHING, qtrue, qtrue);
 	else
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_CROUCHING, qfalse, qtrue);

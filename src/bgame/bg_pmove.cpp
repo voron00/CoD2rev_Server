@@ -108,7 +108,7 @@ void PM_SetProneMovementOverride( playerState_t *ps )
 PM_GetViewHeightLerpTime
 ===============
 */
-int PM_GetViewHeightLerpTime( const playerState_s *ps, int iTarget, int bDown )
+int PM_GetViewHeightLerpTime( const playerState_t *ps, int iTarget, int bDown )
 {
 	if ( iTarget == PRONE_VIEWHEIGHT )
 	{
@@ -677,7 +677,7 @@ void PM_UpdateViewAngles_Clamp( playerState_t *ps, usercmd_t *cmd, byte handler 
 			}
 		}
 
-		ps->viewangles[i] = temp * 0.0054931641;
+		ps->viewangles[i] = SHORT2ANGLE( temp );
 	}
 }
 
@@ -975,11 +975,17 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 	{
 		if ( ps->stats[STAT_DEAD_YAW] == 999 )
 		{
-			ps->stats[STAT_DEAD_YAW] = ps->delta_angles[YAW] + cmd->angles[YAW] * 0.0054931641;
+			// DHM - Nerve :: Allow players to look around while 'wounded' or lock to a medic if nearby
+			short temp = cmd->angles[YAW] + ps->delta_angles[YAW];
+			// rain - always allow this.  viewlocking will take precedence
+			// if a medic is found
+			// rain - using a full short and converting on the client so that
+			// we get >1 degree resolution
+			ps->stats[STAT_DEAD_YAW] = SHORT2ANGLE ( temp );
 		}
 
 		PM_UpdateLean(ps, msec, cmd, pmoveHandlers[handler].trace);
-		return;
+		return; // no view changes at all
 	}
 
 	oldViewYaw = ps->viewangles[YAW];
@@ -3087,7 +3093,7 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 		pm->maxs[2] = 30.0;
 
 		ps->eFlags |= EF_PRONE;
-		ps->eFlags &= ~EF_CROUCHING;
+		ps->eFlags &= ~EF_CROUCH;
 
 		ps->pm_flags |= PMF_PRONE;
 		ps->pm_flags &= ~PMF_DUCKED;
@@ -3098,7 +3104,7 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 		{
 			pm->maxs[2] = 50.0;
 
-			ps->eFlags |= EF_CROUCHING;
+			ps->eFlags |= EF_CROUCH;
 			ps->eFlags &= ~EF_PRONE;
 
 			ps->pm_flags |= PMF_DUCKED;
@@ -3108,7 +3114,7 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 		{
 			pm->maxs[2] = ps->maxs[2];
 
-			ps->eFlags &= ~(EF_CROUCHING | EF_PRONE);
+			ps->eFlags &= ~(EF_CROUCH | EF_PRONE);
 			ps->pm_flags = ps->pm_flags & ~(PMF_PRONE | PMF_DUCKED);
 		}
 	}
@@ -3160,7 +3166,7 @@ PM_CrashLand
 Check for hard landings that generate sound events
 =================
 */
-static void PM_CrashLand( playerState_s *ps, pml_t *pml )
+static void PM_CrashLand( playerState_t *ps, pml_t *pml )
 {
 	float dist;
 	float vel, acc;

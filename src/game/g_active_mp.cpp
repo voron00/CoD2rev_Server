@@ -97,7 +97,7 @@ void G_PlayerEvent(int clientNum, int event)
 	vec3_t kickAVel;
 
 	if ( event >= EV_FIRE_WEAPON && (event <= EV_FIRE_WEAPON_LASTSHOT || event == EV_FIRE_WEAPON_MG42) )
-		BG_WeaponFireRecoil(&g_entities[clientNum].client->ps, g_entities[clientNum].client->recoilSpeed, kickAVel);
+		BG_WeaponFireRecoil(&g_entities[clientNum].client->ps, g_entities[clientNum].client->vGunSpeed, kickAVel);
 }
 
 void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap)
@@ -620,7 +620,7 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 				vs.fLastIdleFactor = client->fLastIdleFactor;
 				vs.weapIdleTime = &client->weapIdleTime;
 
-				BG_CalculateViewMovementAngles(&vs, angles);
+				BG_CalculateViewAngles(&vs, angles);
 				VectorAdd(client->ps.viewangles, angles, viewangles);
 				weaponDef = BG_GetWeaponDef(client->ps.weapon);
 				shellshockDuration = client->ps.shellshockTime + client->ps.shellshockDuration - vs.time;
@@ -658,12 +658,12 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 				ws.v_dmg_pitch = client->v_dmg_pitch;
 				ws.v_dmg_roll = client->v_dmg_roll;
 
-				VectorCopy(client->recoilAngles, ws.recoilAngles);
-				VectorCopy(client->recoilSpeed, ws.recoilSpeed);
+				VectorCopy(client->vGunOffset, ws.vGunOffset);
+				VectorCopy(client->vGunSpeed, ws.vGunSpeed);
 				VectorCopy(client->swayAngles, ws.swayAngles);
 
 				ws.weapIdleTime = &client->weapIdleTime;
-				BG_CalculateWeaponMovement(&ws, angles);
+				BG_CalculateWeaponAngles(&ws, angles);
 
 				if ( BG_IsAimDownSightWeapon(ws.ps->weapon) && ws.ps->fWeaponPosFrac != 0.0 && !weaponDef->adsOverlayReticle )
 				{
@@ -675,8 +675,8 @@ void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
 
 				VectorCopy(ws.vLastMoveAng, client->vLastMoveAng);
 				client->fLastIdleFactor = ws.fLastIdleFactor;
-				VectorCopy(ws.recoilAngles, client->recoilAngles);
-				VectorCopy(ws.recoilSpeed, client->recoilSpeed);
+				VectorCopy(ws.vGunOffset, client->vGunOffset);
+				VectorCopy(ws.vGunSpeed, client->vGunSpeed);
 				client->fGunPitch = viewangles[0];
 				client->fGunYaw = viewangles[1];
 

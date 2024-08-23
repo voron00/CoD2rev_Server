@@ -1,10 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-unsigned int g_playerAnimTypeNamesCount;
-const char *g_playerAnimTypeNames[32];
-WeaponDef bg_defaultWeaponDefs;
-
+static int g_playerAnimTypeNamesCount;
+static const char *g_playerAnimTypeNames[32];
 static const char *globalTypesFilename = "mp/playeranimtypes.txt";    // to prevent redundant params
 
 const char *szWeapTypeNames[] =
@@ -70,7 +68,7 @@ const char *offhandClassNames[] =
 cspField_t weaponDefFields[] =
 {
 	{ WEF( displayName ), 0, },
-	{ WEF( AIOverlayDescription ), 0, },
+	{ WEF( overlayName ), 0, },
 	{ WEF( modeName ), 0, },
 	{ WEF( playerAnimType ), 15, },
 	{ WEF( gunModel ), 0, },
@@ -437,348 +435,409 @@ cspField_t weaponDefFields[] =
 	{ WEF( meleeImpactRumble ), 0, },
 };
 
-int BG_GetWeaponSlotForName(const char *name)
+/*
+===============
+BG_GetWeaponSlotNameForIndex
+===============
+*/
+const char *BG_GetWeaponSlotNameForIndex( int iSlot )
 {
-	int i;
+	assert( iSlot >= SLOT_NONE && iSlot < SLOT_COUNT );
+	return szWeapSlotNames[iSlot];
+}
 
-	for ( i = 0; i < ARRAY_COUNT(szWeapSlotNames); ++i )
+/*
+===============
+BG_GetWeaponSlotForName
+===============
+*/
+int BG_GetWeaponSlotForName( const char *name )
+{
+	int slot;
+
+	for ( slot = SLOT_NONE; slot < SLOT_COUNT; slot++ )
 	{
-		if ( !strcasecmp(name, szWeapSlotNames[i]) )
-			return i;
+		if ( !strcasecmp(name, szWeapSlotNames[slot]) )
+		{
+			return slot;
+		}
 	}
 
-	return 0;
+	return SLOT_NONE;
 }
 
-const char* BG_GetWeaponSlotNameForIndex(int index)
+/*
+===============
+BG_GetWeaponTypeName
+===============
+*/
+const char *BG_GetWeaponTypeName( int weapType )
 {
-	return szWeapSlotNames[index];
+	return szWeapTypeNames[weapType];
 }
 
+/*
+===============
+BG_LoadWeaponStrings
+===============
+*/
+void BG_LoadWeaponStrings()
+{
+	for ( int i = 0; i < g_playerAnimTypeNamesCount; i++ )
+	{
+		BG_InitWeaponString(i, g_playerAnimTypeNames[i]);
+	}
+}
+
+/*
+===============
+BG_LoadPlayerAnimTypes
+===============
+*/
 void BG_LoadPlayerAnimTypes()
 {
-	unsigned int count;
 	int len;
 	fileHandle_t f;
-	char buffer[4096];
-	char *token;
-	const char *data_p;
+	char buf[4096];
+	const char *token;
+	const char *buftrav;
 
 	g_playerAnimTypeNamesCount = 0;
+
 	len = FS_FOpenFileByMode(globalTypesFilename, &f, FS_READ);
 
 	if ( len < 0 )
+	{
 		Com_Error(ERR_DROP, "Couldn't load file ", globalTypesFilename);
+	}
 
-	if ( len > 4095 )
+	if ( len >= sizeof(buf) )
 	{
 		FS_FCloseFile(f);
 		Com_Error(ERR_DROP, "%s max size exceeded", globalTypesFilename);
 	}
 
-	FS_Read(buffer, len, f);
-	buffer[len] = 0;
+	FS_Read(buf, len, f);
+	buf[len] = 0;
+
 	FS_FCloseFile(f);
-	data_p = buffer;
+	buftrav = buf;
 
 	Com_BeginParseSession("BG_AnimParseAnimScript");
 
 	while ( 1 )
 	{
-		token = Com_Parse(&data_p);
+		token = Com_Parse(&buftrav);
 
-		if ( !token || !*token )
+		if ( !token || !token[0] )
+		{
 			break;
+		}
 
-		if ( g_playerAnimTypeNamesCount > 63 )
+		if ( g_playerAnimTypeNamesCount >= 64 )
+		{
 			Com_Error(ERR_DROP, "Player anim type array size exceeded");
+		}
 
-		count = g_playerAnimTypeNamesCount;
-		g_playerAnimTypeNames[count] = (char *)Hunk_AllocLowInternal(strlen(token) + 1);
+		g_playerAnimTypeNames[g_playerAnimTypeNamesCount] = (const char *)Hunk_AllocLowInternal(strlen(token) + 1);
 		strcpy((char *)g_playerAnimTypeNames[g_playerAnimTypeNamesCount], token);
-		++g_playerAnimTypeNamesCount;
+		g_playerAnimTypeNamesCount++;
 	}
 
 	Com_EndParseSession();
 }
 
-void BG_LoadWeaponStrings()
+/*
+===============
+InitWeaponDef
+===============
+*/
+static void InitWeaponDef( WeaponDef *weapDef )
 {
-	int index;
+	const cspField_t *pField;
+	int iField;
 
-	for ( index = 0; index < g_playerAnimTypeNamesCount; ++index )
-		BG_InitWeaponString(index, g_playerAnimTypeNames[index]);
-}
+	weapDef->szInternalName = "";
 
-void InitWeaponDef(WeaponDef *weapon)
-{
-	cspField_t *field;
-	int count;
-
-	weapon->szInternalName = "";
-	count = 0;
-	field = weaponDefFields;
-
-	while ( count < sizeof( weaponDefFields ) / sizeof( weaponDefFields[0] ) )
+	for ( iField = 0, pField = weaponDefFields; iField < ARRAY_COUNT(weaponDefFields); iField++, pField++ )
 	{
-		if ( !field->iFieldType )
-			*(const char **)((char *)&weapon->szInternalName + field->iOffset) = "";
-
-		++count;
-		++field;
+		if ( pField->iFieldType == CSPFT_STRING )
+		{
+			*(const char **)((char *)&weapDef->szInternalName + pField->iOffset) = "";
+		}
 	}
 }
 
-int Weapon_GetStringArrayIndex(const char *value, const char **stringArray, int arraySize)
+/*
+===============
+Weapon_GetStringArrayIndex
+===============
+*/
+static int Weapon_GetStringArrayIndex( const char *value, const char **stringArray, int arraySize )
 {
-	int i;
+	assert(value);
+	assert(stringArray);
 
-	for ( i = 0; i < arraySize; ++i )
+	for ( int arrayIndex = 0; arrayIndex < arraySize; arrayIndex++ )
 	{
-		if ( !strcasecmp(value, stringArray[i]) )
-			return i;
+		if ( !strcasecmp(value, stringArray[arrayIndex]) )
+		{
+			return arrayIndex;
+		}
 	}
 
 	return -1;
 }
 
-int BG_ParseWeaponDefSpecificFieldType(unsigned char *pStruct, const char *pValue, int iFieldType)
+/*
+===============
+BG_ParseWeaponDefSpecificFieldType
+===============
+*/
+static qboolean BG_ParseWeaponDefSpecificFieldType( unsigned char *pStruct, const char *pValue, int iFieldType )
 {
-	int value;
-	WeaponDef* weapon;
+	int index;
+	WeaponDef *weapDef;
 
-	weapon = (WeaponDef*)pStruct;
+	assert(pStruct);
+	assert(pValue);
+
+	weapDef = (WeaponDef *)pStruct;
 
 	switch ( iFieldType )
 	{
 	case WFT_WEAPONTYPE:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapTypeNames, ARRAY_COUNT(szWeapTypeNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown weapon type \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->weaponType = value;
+		index = Weapon_GetStringArrayIndex(pValue, szWeapTypeNames, ARRAY_COUNT(szWeapTypeNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown weapon type \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->weaponType = index;
 		break;
 
 	case WFT_WEAPONCLASS:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapClassNames, ARRAY_COUNT(szWeapClassNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown weapon class \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->weaponClass = value;
+		index = Weapon_GetStringArrayIndex(pValue, szWeapClassNames, ARRAY_COUNT(szWeapClassNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown weapon class \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->weaponClass = index;
 		break;
 
 	case WFT_OVERLAYRETICLE:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapOverlayReticleNames, ARRAY_COUNT(szWeapOverlayReticleNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->adsOverlayReticle = value;
+		index = Weapon_GetStringArrayIndex(pValue, szWeapOverlayReticleNames, ARRAY_COUNT(szWeapOverlayReticleNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->adsOverlayReticle = index;
 		break;
 
 	case WFT_SLOT:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapSlotNames, ARRAY_COUNT(szWeapSlotNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->weaponSlot = value;
+		index = Weapon_GetStringArrayIndex(pValue, szWeapSlotNames, ARRAY_COUNT(szWeapSlotNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->weaponSlot = index;
 		break;
 
 	case WFT_STANCE:
-		value = Weapon_GetStringArrayIndex(pValue, szWeapStanceNames, ARRAY_COUNT(szWeapStanceNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->stance = value;
+		index = Weapon_GetStringArrayIndex(pValue, szWeapStanceNames, ARRAY_COUNT(szWeapStanceNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->stance = index;
 		break;
 
 	case WFT_PROJ_EXPLOSION:
-		value = Weapon_GetStringArrayIndex(pValue, szProjectileExplosionNames, ARRAY_COUNT(szProjectileExplosionNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->projExplosionType = value;
+		index = Weapon_GetStringArrayIndex(pValue, szProjectileExplosionNames, ARRAY_COUNT(szProjectileExplosionNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->projExplosionType = index;
 		break;
 
 	case WFT_OFFHAND_CLASS:
-		value = Weapon_GetStringArrayIndex(pValue, offhandClassNames, ARRAY_COUNT(offhandClassNames));
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown offhand class \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->offhandClass = value;
+		index = Weapon_GetStringArrayIndex(pValue, offhandClassNames, ARRAY_COUNT(offhandClassNames));
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown offhand class \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->offhandClass = index;
 		break;
 
 	case WFT_ANIMTYPE:
-		value = Weapon_GetStringArrayIndex(pValue, g_playerAnimTypeNames, g_playerAnimTypeNamesCount);
-		if ( value < 0 )
-			Com_Error(ERR_DROP, "Unknown playerAnimType \"%s\" in \"%s\"\n", pValue, weapon->szInternalName);
-		weapon->playerAnimType = value;
+		index = Weapon_GetStringArrayIndex(pValue, g_playerAnimTypeNames, g_playerAnimTypeNamesCount);
+		if ( index < 0 )
+			Com_Error(ERR_DROP, "Unknown playerAnimType \"%s\" in \"%s\"\n", pValue, weapDef->szInternalName);
+		weapDef->playerAnimType = index;
 		break;
 
 	default:
-		Com_Error(ERR_DROP, "Bad field type %i in %s\n", iFieldType, weapon->szInternalName);
-		return 0;
+		Com_Error(ERR_DROP, "Bad field type %i in %s\n", iFieldType, weapDef->szInternalName);
+		return qfalse;
 	}
 
-	return 1;
+	return qtrue;
 }
 
-void BG_SetupTransitionTimes(WeaponDef *weapon)
+/*
+===============
+BG_SetupTransitionTimes
+===============
+*/
+static void BG_SetupTransitionTimes( WeaponDef *weapDef )
 {
-	if ( weapon->adsTransInTime <= 0 )
-		weapon->OOPosAnimLength[0] = 0.0033333334;
+	if ( weapDef->adsTransInTime > 0 )
+		weapDef->OOPosAnimLength[0] = 1.0 / weapDef->adsTransInTime;
 	else
-		weapon->OOPosAnimLength[0] = 1.0 / (float)weapon->adsTransInTime;
+		weapDef->OOPosAnimLength[0] = 0.0033333334;
 
-	if ( weapon->adsTransOutTime <= 0 )
-		weapon->OOPosAnimLength[1] = 0.0020000001;
+	if ( weapDef->adsTransOutTime > 0 )
+		weapDef->OOPosAnimLength[1] = 1.0 / weapDef->adsTransOutTime;
 	else
-		weapon->OOPosAnimLength[1] = 1.0 / (float)weapon->adsTransOutTime;
+		weapDef->OOPosAnimLength[1] = 0.0020000001;
 }
 
-void BG_CheckWeaponDamageRanges(WeaponDef *weapon)
+/*
+===============
+BG_CheckWeaponDamageRanges
+===============
+*/
+static void BG_CheckWeaponDamageRanges( WeaponDef *weapDef )
 {
-	if ( weapon->maxDamageRange <= 0.0 )
-		weapon->maxDamageRange = 999999.0;
+	if ( weapDef->maxDamageRange <= 0.0 )
+		weapDef->maxDamageRange = 999999.0;
 
-	if ( weapon->minDamageRange <= 0.0 )
-		weapon->minDamageRange = 999999.12;
+	if ( weapDef->minDamageRange <= 0.0 )
+		weapDef->minDamageRange = 999999.12;
 }
 
-void BG_CheckProjectileValues(WeaponDef *weapon)
+/*
+===============
+BG_CheckProjectileValues
+===============
+*/
+static void BG_CheckProjectileValues( WeaponDef *weapDef )
 {
-	if ( (float)weapon->projectileSpeed <= 0.0 )
-		Com_Error(ERR_DROP, "Projectile speed for WeapType %s must be greater than 0.0", weapon->displayName);
+	assert(weapDef->weaponType == WEAPTYPE_PROJECTILE);
 
-	if ( weapon->destabilizationAngleMax >= 45.0 || weapon->destabilizationAngleMax < 0.0 )
-		Com_Error( ERR_DROP, "Destabilization angle for for WeapType %s must be between 0 and 45 degrees", weapon->displayName);
-
-	if ( weapon->destabilizationBaseTime <= 0.0 )
-		Com_Error(ERR_DROP, "Destabilization base time for for WeapType %s must be positive", weapon->displayName);
-
-	if ( weapon->destabilizationTimeReductionRatio <= 0.0 )
-		Com_Error(ERR_DROP, "Destabilization reduction ratio for for WeapType %s must be positive", weapon->displayName);
-}
-
-WeaponDef* BG_LoadWeaponDefInternal(const char *folder, const char *fileName)
-{
-	size_t n;
-	fileHandle_t f;
-	WeaponDef *newWeaponDef;
-	char buf[8192];
-	char name[64];
-	int len;
-
-	n = strlen("WEAPONFILE");
-	newWeaponDef = (WeaponDef *)Hunk_AllocLowInternal(sizeof(WeaponDef));
-	InitWeaponDef(newWeaponDef);
-	Com_sprintf(name, sizeof(name), "weapons/%s/%s", folder, fileName);
-	len = FS_FOpenFileByMode(name, &f, FS_READ);
-
-	if ( len >= 0 )
+	if ( (float)weapDef->projectileSpeed <= 0 )
 	{
-		FS_Read(buf, n, f);
-		buf[n] = 0;
-
-		if ( !strncmp(buf, "WEAPONFILE", n) )
-		{
-			if ( (int)(len - n) <= 0x1FFF )
-			{
-				memset(buf, 0, sizeof(buf));
-				FS_Read(buf, len - n, f);
-				buf[len - n] = 0;
-				FS_FCloseFile(f);
-
-				if ( Info_Validate(buf) )
-				{
-					SetConfigString((char **)newWeaponDef, fileName);
-
-					if ( ParseConfigStringToStruct(
-					            (unsigned char *)newWeaponDef,
-					            weaponDefFields,
-					            sizeof( weaponDefFields ) / sizeof( weaponDefFields[0] ),
-					            buf,
-					            16,
-					            BG_ParseWeaponDefSpecificFieldType,
-					            SetConfigString2) )
-					{
-						BG_SetupTransitionTimes(newWeaponDef);
-						BG_CheckWeaponDamageRanges(newWeaponDef);
-
-						if ( newWeaponDef->enemyCrosshairRange > 15000.0 )
-							Com_Error(ERR_DROP, "Enemy crosshair ranges should be less than %f ", 15000.0);
-
-						if ( newWeaponDef->weaponType == 2 )
-							BG_CheckProjectileValues(newWeaponDef);
-
-						if ( G_ParseWeaponAccurayGraphs(newWeaponDef) )
-						{
-							I_strlwr((char *)newWeaponDef->ammoName);
-							I_strlwr((char *)newWeaponDef->clipName);
-
-							return newWeaponDef;
-						}
-						else
-						{
-							return 0;
-						}
-					}
-					else
-					{
-						return 0;
-					}
-				}
-				else
-				{
-					Com_Printf("^3WARNING: \"%s\" is not a valid weapon file\n", name);
-					return 0;
-				}
-			}
-			else
-			{
-				Com_Printf("^3WARNING: \"%s\" Is too long of a weapon file to parse\n", name);
-				FS_FCloseFile(f);
-				return 0;
-			}
-		}
-		else
-		{
-			Com_Printf("^3WARNING: \"%s\" does not appear to be a weapon file\n", name);
-			FS_FCloseFile(f);
-			return 0;
-		}
+		Com_Error(ERR_DROP, "Projectile speed for WeapType %s must be greater than 0.0", weapDef->displayName);
 	}
-	else
+
+	if ( weapDef->destabilizationAngleMax >= 45 || weapDef->destabilizationAngleMax < 0 )
 	{
-		Com_Printf("^3WARNING: Could not load weapon file '%s'\n", name);
-		return 0;
+		Com_Error(ERR_DROP, "Destabilization angle for for WeapType %s must be between 0 and 45 degrees", weapDef->displayName);
 	}
 
-	return 0;
+	if ( weapDef->destabilizationBaseTime <= 0 )
+	{
+		Com_Error(ERR_DROP, "Destabilization base time for for WeapType %s must be positive", weapDef->displayName);
+	}
+
+	if ( weapDef->destabilizationTimeReductionRatio <= 0 )
+	{
+		Com_Error(ERR_DROP, "Destabilization reduction ratio for for WeapType %s must be positive", weapDef->displayName);
+	}
 }
 
-WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName)
-{
-	WeaponDef *weapon;
-
-	if ( !*weaponName )
-		return 0;
-
-	weapon = BG_LoadWeaponDefInternal(folderName, weaponName);
-
-	if ( weapon )
-		return weapon;
-
-	weapon = BG_LoadWeaponDefInternal(folderName, "defaultweapon_mp");
-
-	if ( !weapon )
-		Com_Error(ERR_DROP, "BG_LoadWeaponDef: Could not find default weapon");
-
-	SetConfigString((char **)weapon, weaponName);
-	return weapon;
-}
-
+/*
+===============
+BG_LoadDefaultWeaponDef
+===============
+*/
+WeaponDef bg_defaultWeaponDefs;
 WeaponDef *BG_LoadDefaultWeaponDef()
 {
 	InitWeaponDef(&bg_defaultWeaponDefs);
 
 	bg_defaultWeaponDefs.szInternalName = "none";
+
 	bg_defaultWeaponDefs.accuracyGraphName[0] = "noweapon.accu";
 	bg_defaultWeaponDefs.accuracyGraphName[1] = "noweapon.accu";
 
 	G_ParseWeaponAccurayGraphs(&bg_defaultWeaponDefs);
 
 	return &bg_defaultWeaponDefs;
+}
+
+/*
+===============
+BG_LoadWeaponDefInternal
+===============
+*/
+WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name )
+{
+#define SOURCE_FILE_NAME "WEAPONFILE"
+	int sourceLen;
+	fileHandle_t f;
+	WeaponDef *weapDef;
+	char szBuffer[8192];
+	char outputName[MAX_QPATH];
+	int len;
+
+	sourceLen = strlen(SOURCE_FILE_NAME);
+	weapDef = (WeaponDef *)Hunk_AllocLowInternal(sizeof(WeaponDef));
+
+	InitWeaponDef(weapDef);
+	Com_sprintf(outputName, sizeof(outputName), "weapons/%s/%s", folder, name);
+
+	len = FS_FOpenFileByMode(outputName, &f, FS_READ);
+
+	if ( len < 0 )
+	{
+		Com_Printf("^3WARNING: Could not load weapon file '%s'\n", outputName);
+		return NULL;
+	}
+
+	FS_Read(szBuffer, sourceLen, f);
+	szBuffer[sourceLen] = 0;
+
+	if ( strncmp(szBuffer, SOURCE_FILE_NAME, sourceLen) )
+	{
+		Com_Printf("^3WARNING: \"%s\" does not appear to be a weapon file\n", outputName);
+		FS_FCloseFile(f);
+		return NULL;
+	}
+
+	if ( len - sourceLen >= sizeof(szBuffer) )
+	{
+		Com_Printf("^3WARNING: \"%s\" Is too long of a weapon file to parse\n", outputName);
+		FS_FCloseFile(f);
+		return NULL;
+	}
+
+	memset(szBuffer, 0, sizeof(szBuffer));
+
+	FS_Read(szBuffer, len - sourceLen, f);
+	szBuffer[len - sourceLen] = 0;
+
+	FS_FCloseFile(f);
+
+	if ( !Info_Validate(szBuffer) )
+	{
+		Com_Printf("^3WARNING: \"%s\" is not a valid weapon file\n", outputName);
+		return NULL;
+	}
+
+	SetConfigString((char **)&weapDef->szInternalName, name);
+
+	if ( !ParseConfigStringToStruct( (unsigned char *)weapDef, weaponDefFields, ARRAY_COUNT(weaponDefFields), szBuffer, WFT_NUM_FIELD_TYPES, BG_ParseWeaponDefSpecificFieldType, SetConfigString2) )
+	{
+		return NULL;
+	}
+
+	BG_SetupTransitionTimes(weapDef);
+	BG_CheckWeaponDamageRanges(weapDef);
+
+	if ( weapDef->enemyCrosshairRange > 15000.0 )
+	{
+		Com_Error(ERR_DROP, "Enemy crosshair ranges should be less than %f ", 15000.0);
+	}
+
+	if ( weapDef->weaponType == WEAPTYPE_PROJECTILE )
+	{
+		BG_CheckProjectileValues(weapDef);
+	}
+
+	if ( !G_ParseWeaponAccurayGraphs(weapDef) )
+	{
+		return NULL;
+	}
+
+	I_strlwr(weapDef->ammoName);
+	I_strlwr(weapDef->clipName);
+
+	return weapDef;
 }

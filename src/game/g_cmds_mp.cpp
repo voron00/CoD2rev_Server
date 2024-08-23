@@ -883,13 +883,13 @@ void Cmd_Give_f(gentity_s *ent)
 					for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
 					{
 						if ( !BG_DoesWeaponRequireSlot(weaponIndex)
-						        || weaponIndex > currentWeapon && BG_IsAnyEmptyPrimaryWeaponSlot(ent->client) )
+						        || weaponIndex > currentWeapon && BG_IsAnyEmptyPrimaryWeaponSlot(&ent->client->ps) )
 						{
 							G_GivePlayerWeapon(&ent->client->ps, weaponIndex);
 						}
 					}
 					for ( weaponIndex = 1;
-					        BG_IsAnyEmptyPrimaryWeaponSlot(ent->client) && weaponIndex <= BG_GetNumWeapons();
+					        BG_IsAnyEmptyPrimaryWeaponSlot(&ent->client->ps) && weaponIndex <= BG_GetNumWeapons();
 					        ++weaponIndex )
 					{
 						if ( BG_DoesWeaponRequireSlot(weaponIndex) )

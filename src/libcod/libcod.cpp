@@ -46,9 +46,17 @@ void InitLibcodCallbacks()
 	codecallback_vid_restart = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_VidRestart", 0);
 }
 
+static void Com_Assert_f( void )
+{
+	assert(0);
+}
+
 void SV_AddLibcodCommands()
 {
-	// nothing here for now
+	if ( com_developer->current.integer )
+	{
+		Cmd_AddCommand("assert", Com_Assert_f);
+	}
 }
 
 void manymaps_prepare(const char *mapname, int read)

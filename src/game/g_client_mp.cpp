@@ -223,7 +223,7 @@ void G_GetPlayerViewOrigin(gentity_s *ent, float *origin)
 	{
 		VectorCopy(client->ps.origin, origin);
 		origin[2] = origin[2] + client->ps.viewHeightCurrent;
-		cycle = BG_GetBobCycle(client);
+		cycle = BG_GetBobCycle(&client->ps);
 		speed = BG_GetSpeed(&client->ps, level.time);
 		vFactor = BG_GetVerticalBobFactor(&client->ps, cycle, speed, bg_bobMax->current.decimal);
 		origin[2] = origin[2] + vFactor;

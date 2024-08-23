@@ -1,11 +1,6 @@
 #include <dirent.h>
 #include "qcommon.h"
 
-int CL_LocalClient_GetActiveCount()
-{
-	return 1;
-}
-
 void Sys_SnapVector(vec3_t v)
 {
 	v[0] = rint(v[0]);

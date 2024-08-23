@@ -7,6 +7,8 @@
 #define MAX_HUDELEMS_CURRENT MAX_HUDELEMENTS
 #define MAX_OBJECTIVES 16
 
+#define MAX_WEAPONS         128  // (SA) and yet more!
+
 typedef struct gclient_s gclient_t;
 typedef struct gentity_s gentity_t;
 
@@ -318,8 +320,8 @@ typedef struct playerState_s
 	int damagePitch;
 	int damageCount;
 	int stats[MAX_STATS];
-	int ammo[128];
-	int ammoclip[128];
+	int ammo[MAX_WEAPONS];
+	int ammoclip[MAX_WEAPONS];
 	int weapons[2];
 	int oldweapons[2];
 	char weaponslots[8];
@@ -436,8 +438,8 @@ struct gclient_s
 	vec3_t swayAngles;
 	vec3_t vLastMoveAng;
 	float fLastIdleFactor;
-	vec3_t recoilAngles;
-	vec3_t recoilSpeed;
+	vec3_t vGunOffset;
+	vec3_t vGunSpeed;
 	int weapIdleTime;
 	int lastServerTime;
 	int lastSpawnTime;
@@ -1117,14 +1119,6 @@ struct AntilagClientStore
 {
 	vec3_t realClientPositions[64];
 	bool clientMoved[64];
-};
-
-enum itemType_t
-{
-	IT_BAD,
-	IT_WEAPON,
-	IT_AMMO,
-	IT_HEALTH
 };
 
 struct spawn_t

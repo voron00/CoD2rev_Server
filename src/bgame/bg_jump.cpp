@@ -299,6 +299,7 @@ void Jump_Start( pmove_t *pm, pml_t *pml, float height )
 	pml->groundPlane = qfalse;
 	pml->almostGroundPlane = qfalse;
 	pml->walking = qfalse;
+
 	ps->groundEntityNum = ENTITYNUM_NONE;
 	ps->jumpTime = pm->cmd.serverTime;
 	ps->jumpOriginZ = ps->origin[2];

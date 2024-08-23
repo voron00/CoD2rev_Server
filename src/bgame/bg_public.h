@@ -439,37 +439,15 @@ typedef struct
 {
 	const char *szInternalName;
 	const char *displayName;
-	const char *AIOverlayDescription;
+	const char *overlayName;
 	const char *gunModel;
 	const char *handModel;
-	const char *defaultAnim;
-	const char *idleAnim;
-	const char *emptyIdleAnim;
-	const char *fireAnim;
-	const char *holdFireAnim;
-	const char *lastShotAnim;
-	const char *rechamberAnim;
-	const char *meleeAnim;
-	const char *reloadAnim;
-	const char *reloadEmptyAnim;
-	const char *reloadStartAnim;
-	const char *reloadEndAnim;
-	const char *raiseAnim;
-	const char *dropAnim;
-	const char *altRaiseAnim;
-	const char *altDropAnim;
-	const char *quickRaiseAnim;
-	const char *quickDropAnim;
-	const char *adsFireAnim;
-	const char *adsLastShotAnim;
-	const char *adsRechamberAnim;
-	const char *adsUpAnim;
-	const char *adsDownAnim;
+	const char *XAnims[23];
 	const char *modeName;
 	int playerAnimType;
 	int weaponType;
 	int weaponClass;
-	int weaponSlot;
+	unsigned int weaponSlot;
 	int offhandClass;
 	int slotStackable;
 	int stance;
@@ -550,9 +528,9 @@ typedef struct
 	const char *hudIcon;
 	const char *modeIcon;
 	int startAmmo;
-	const char *ammoName;
+	char *ammoName;
 	int ammoIndex;
-	const char *clipName;
+	char *clipName;
 	int clipIndex;
 	int maxAmmo;
 	int clipSize;
@@ -765,7 +743,7 @@ typedef struct
 {
 	const char *szInternalName;
 	const char *displayName;
-	const char *AIOverlayDescription;
+	const char *overlayName;
 	const char *gunModel;
 	const char *handModel;
 	const char *defaultAnim;
@@ -795,7 +773,7 @@ typedef struct
 	int playerAnimType;
 	int weaponType;
 	int weaponClass;
-	int weaponSlot;
+	unsigned int weaponSlot;
 	int offhandClass;
 	int slotStackable;
 	int stance;
@@ -1151,11 +1129,15 @@ static_assert((sizeof(WeaponFullDef) == 0x604), "ERROR: WeaponFullDef size is in
 #endif
 
 extern WeaponDef* bg_weaponDefs[];
-extern unsigned int bg_iNumWeapons;
+extern int bg_iNumWeapons;
 
 extern WeaponDef *bg_weapAmmoTypes[];
 extern WeaponDef *bg_weapClips[];
 extern WeaponDef *bg_sharedAmmoCaps[];
+
+extern int bg_iNumAmmoTypes;
+extern int bg_iNumWeapClips;
+extern int bg_iNumSharedAmmoCaps;
 
 enum hitLocation_t
 {
@@ -1245,9 +1227,9 @@ enum weaponstate_t
 	WEAPON_OFFHAND = 0xF,
 	WEAPON_OFFHAND_END = 0x10,
 	WEAPON_BINOCULARS_INIT = 0x11,
-	WEAPON_BINOCULARS_PREPARE = 0x12,
+	WEAPON_BINOCULARS_RAISE = 0x12,
 	WEAPON_BINOCULARS_HOLD = 0x13,
-	WEAPON_BINOCULARS_START = 0x14,
+	WEAPON_BINOCULARS_EXIT_ADS = 0x14,
 	WEAPON_BINOCULARS_DROP = 0x15,
 	WEAPON_BINOCULARS_END = 0x16,
 	WEAPONSTATES_NUM = 0x17,
@@ -1270,11 +1252,19 @@ enum weapAnimNumber_t
 	WEAP_RELOAD_EMPTY = 0xC,
 	WEAP_RELOAD_START = 0xD,
 	WEAP_RELOAD_END = 0xE,
-	WEAP_ALTSWITCH = 0xF,
+	WEAP_ALTSWITCHFROM = 0xF,
+	WEAP_ALTSWITCHTO = 0x10,
 	WEAP_EMPTY_DROP = 0x11,
 	WEAP_EMPTY_RAISE = 0x12,
 	WEAP_HOLD_FIRE = 0x13,
 	MAX_WP_ANIMATIONS = 0x14,
+};
+
+enum OffhandSlot
+{
+	OFFHAND_SLOT_NONE = 0x0,
+	OFFHAND_SLOT_FRAG_GRENADE = 0x1,
+	OFFHAND_SLOT_SMOKE_GRENADE = 0x2,
 };
 
 enum EffectiveStance
@@ -1311,6 +1301,7 @@ enum proneCheckType_t
 #define PMF_PRONE           0x1
 #define PMF_DUCKED          0x2
 #define PMF_MANTLE          0x4
+#define PMF_RELOAD          0x8
 #define PMF_FRAG            0x10
 #define PMF_LADDER          0x20
 #define PMF_ADS             0x40
@@ -1321,8 +1312,10 @@ enum proneCheckType_t
 #define PMF_ADS_OVERRIDE    0x800 // ads will be cleared if player has moved aka when prone
 #define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
+#define PMF_BREATH          0x4000
 #define PMF_UNKNOWN_8000    0x8000
 #define PMF_PRONE_BLOCKED   0x10000
+#define PMF_BINOCULARS      0x20000
 #define PMF_LADDER_END      0x40000 // something to help with ladder transition
 #define PMF_TIME_LAND       0x80000 // pm_time is time before rejump
 #define PMF_LOOKAT_FRIEND	0x100000 // green crosshair
@@ -1343,7 +1336,7 @@ enum proneCheckType_t
 // https://github.com/id-Software/Enemy-Territory/blob/40342a9e3690cb5b627a433d4d5cbf30e3c57698/src/game/bg_public.h#L649
 //
 #define EF_TELEPORT_BIT 0x2         // Toggled every time the origin abruptly changes
-#define EF_CROUCHING    0x4         //
+#define EF_CROUCH       0x4         //
 #define EF_PRONE        0x8         //
 #define EF_FIRING       0x40
 #define EF_TURRET_PRONE 0x100       // See EF_TURRET_ACTIVE
@@ -1435,7 +1428,7 @@ struct weaponParms
 	float up[3];
 	float muzzleTrace[3];
 	float gunForward[3];
-	const WeaponDef *weapDef;
+	WeaponDef *weapDef;
 };
 
 struct viewState_t
@@ -1453,18 +1446,18 @@ struct viewState_t
 
 struct weaponState_t
 {
-	const playerState_s *ps;
+	playerState_t *ps;
 	float xyspeed;
 	float frametime;
-	float vLastMoveAng[3];
+	vec3_t vLastMoveAng;
 	float fLastIdleFactor;
 	int time;
 	int damageTime;
 	float v_dmg_pitch;
 	float v_dmg_roll;
-	float recoilAngles[3];
-	float recoilSpeed[3];
-	float swayAngles[3];
+	vec3_t vGunOffset;
+	vec3_t vGunSpeed;
+	vec3_t swayAngles;
 	int *weapIdleTime;
 };
 
@@ -1485,6 +1478,17 @@ extern int singleClientEvents[];
 
 #define MAX_ITEM_MODELS 2
 #define MAX_ITEM_ICONS 1
+
+enum itemType_t
+{
+	IT_BAD,
+	IT_WEAPON,
+	IT_AMMO,
+	IT_HEALTH
+};
+
+#define WP_NONE 0
+#define WP_DEFAULTWEAPON 1
 
 // JOSEPH 4-17-00
 typedef struct gitem_s
@@ -1508,6 +1512,7 @@ static_assert((sizeof(gitem_t) == 44), "ERROR: gitem_t size is invalid!");
 // included in both the game dll and the client
 extern gitem_t bg_itemlist[];
 extern int bg_numItems;
+extern int bg_numWeaponItems;
 
 void BG_InitWeaponString( int index, const char *name );
 int BG_GetConditionValue(clientInfo_t *ci, int condition, qboolean checkConversion);
@@ -1533,21 +1538,29 @@ bool Jump_IsPlayerAboveMax(playerState_s *ps);
 void Jump_ClampVelocity(playerState_s *ps, const float *origin);
 void Jump_ActivateSlowdown(playerState_s *ps);
 bool Jump_Check(pmove_t *pm, pml_t *pml);
+bool BG_ValidateWeaponNumber( int weaponIndex );
 
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 int BG_AnimScriptEvent( playerState_s *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
 animScriptItem_t *BG_FirstValidItem( int client, animScript_t *script );
 
 int BG_IsAimDownSightWeapon(int weapon);
-unsigned int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
+int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
 WeaponDef* BG_GetWeaponDef(int weaponIndex);
 void BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
 
 float BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
 float BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
 
-void BG_CalculateViewMovementAngles(viewState_t *vs, float *angles);
-void BG_CalculateWeaponMovement(weaponState_t *ws, float *angles);
+void BG_CalculateViewAngles(viewState_t *vs, float *angles);
+void BG_CalculateWeaponAngles(weaponState_t *ws, float *angles);
+
+void BG_CalculateWeaponPosition_BaseAngles(weaponState_t *ws, float *angles);
+void BG_CalculateWeaponPosition_IdleAngles(weaponState_t *ws, float *angles);
+void BG_CalculateWeaponPosition_BobOffset(weaponState_t *ws, float *angles);
+void BG_CalculateWeaponPosition_DamageKick(weaponState_t *ws, float *angles);
+int BG_CalculateWeaponPosition_GunRecoil_SingleAngle(float *fOffset, float *speed, float fTimeStep, float fOfsCap, float fGunKickAccel, float fGunKickSpeedMax, float fGunKickSpeedDecay, float fGunKickStaticDecay);
+void BG_CalculateWeaponPosition_GunRecoil(weaponState_t *ws, float *angles);
 
 int PM_SlideMove(pmove_t *pm, pml_t *pml, int gravity);
 void PM_UpdateLean(playerState_s *ps, float msec, usercmd_s *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int));
@@ -1580,6 +1593,7 @@ void BG_LoadWeaponStrings();
 
 void BG_LoadPlayerAnimTypes();
 void BG_InitWeaponStrings();
+void BG_SetupWeaponIndex(int weapIndex);
 
 void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml);
 void PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml);
@@ -1603,23 +1617,24 @@ int BG_WeaponAmmo(const playerState_s *ps, int weaponIndex);
 int BG_WeaponIsClipOnly(int weapon);
 int BG_AmmoForWeapon(int weapon);
 int BG_ClipForWeapon(int weapon);
-int BG_GetClipSize(int weaponIndex);
-int BG_GetMaxAmmo(int weaponIndex);
+int BG_GetAmmoClipSize(int weaponIndex);
+int BG_GetAmmoTypeMax(int weaponIndex);
 int BG_GetSharedAmmoCapSize(int weaponIndex);
 qboolean PM_WeaponClipEmpty(playerState_s *ps);
 int PM_InteruptWeaponWithProneMove(playerState_s *ps);
 void PM_ResetWeaponState(playerState_s *ps);
 void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml);
 void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml);
-float BG_GetBobCycle(gclient_s *client);
+float BG_GetBobCycle( const playerState_t *ps );
 float BG_GetSpeed(const playerState_s *ps, int time);
 void BG_GetSpreadForWeapon(const playerState_s *ps, int weaponIndex, float *minSpread, float *maxSpread);
-int BG_GetFirstAvailableOffhand(playerState_s *ps, int offhandSlot);
-int BG_GetMaxPickupableAmmo(const playerState_s *ps, unsigned int weaponIndex);
+int BG_GetFirstAvailableOffhand( const playerState_t *ps, int offhandSlot );
+int BG_GetMaxPickupableAmmo(const playerState_s *ps, int weaponIndex);
 bool BG_DoesWeaponNeedSlot(int weapon);
-int BG_PlayerHasWeapon(playerState_s *ps, int weaponIndex, int altWeaponIndex);
-int BG_GetStackableSlot(gclient_s *client, int weapon, int slot);
+int BG_IsPlayerWeaponInSlot(playerState_s *ps, int weaponIndex, int altWeaponIndex);
+int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsigned int preferedSlot );
 int BG_GetEmptySlotForWeapon(playerState_s *ps, int weapon);
+void PM_Weapon_Idle(playerState_s *ps);
 qboolean BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps, int bTouched );
 int BG_GetWeaponSlotForName(const char *name);
 const char* BG_GetWeaponSlotNameForIndex(int index);
@@ -1632,20 +1647,54 @@ void BG_RotatePoint( vec3_t point, const vec3_t matrix[3] );
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);
 void BG_StringCopy(unsigned char *member, const char *keyValue);
-bool BG_IsWeaponValid(playerState_t *ps, int weaponIndex);
+bool BG_IsWeaponValid( const playerState_t *ps, int weaponIndex );
+bool PM_IsAdsAllowed(playerState_s *ps, pml_t *pml);
 int BG_SetupWeaponDef(WeaponDef *weapDef, int (*regWeap)(int));
+void BG_CalculateView_DamageKick(viewState_t *vs, float *angles);
+void BG_CalculateView_IdleAngles(viewState_t *vs, float *angles);
+void BG_CalculateView_BobAngles(viewState_t *vs, float *angles);
+void BG_CalculateView_Velocity(viewState_t *vs, float *angles);
 void BG_FillInAmmoItems(int (*regWeap)(int));
 WeaponDef *BG_LoadDefaultWeaponDef();
 void BG_ClearWeaponDef();
 void BG_ShutdownWeaponDefFiles();
-
+WeaponDef* BG_LoadWeaponDefInternal(const char *folder, const char *fileName);
 int BG_GetWeaponIndexForName(const char *name, int (*regWeap)(int));
 int BG_FindWeaponIndexForName(const char *name);
 int BG_TakePlayerWeapon(playerState_s *ps, int weaponIndex);
 bool BG_DoesWeaponRequireSlot(int weaponIndex);
-bool BG_IsAnyEmptyPrimaryWeaponSlot(gclient_s *client);
+bool BG_IsAnyEmptyPrimaryWeaponSlot( const playerState_t *ps );
 void PM_SetProneMovementOverride( playerState_t *ps );
+void PM_EnterBinoculars(playerState_s *ps);
 
+void PM_UpdateHoldBreath(pmove_t *pm, pml_t *pml);
+bool PM_UpdateGrenadeThrow(playerState_s *ps, pml_t *pml);
+int PM_Weapon_WeaponTimeAdjust(pmove_t *pm, pml_t *pml);
+void PM_Weapon_FireMelee(playerState_s *ps);
+void PM_Weapon_OffHandPrepare(playerState_s *ps);
+void PM_Weapon_FinishReloadStart(playerState_s *ps, int delayedAction);
+void PM_Weapon_FinishReload(playerState_s *ps, int delayedAction);
+void PM_Weapon_FinishWeaponChange(pmove_t *pm);
+void PM_Weapon_FinishWeaponRaise(playerState_s *ps);
+int PM_Weapon_CheckForRechamber(playerState_s *ps, int delayedAction);
+void PM_Weapon_CheckForMelee(pmove_t *pm, int delayedAction);
+void PM_Weapon_CheckForReload(pmove_t *pm);
+void PM_Weapon_CheckForChangeWeapon(pmove_t *pm);
+void PM_Weapon_CheckForOffHand(pmove_t *pm);
+void PM_Weapon_CheckForBinoculars(pmove_t *pm);
+void PM_Weapon_FinishReloadEnd(playerState_s *ps);
+void PM_Weapon_FinishMelee(playerState_s *ps);
+void PM_Weapon_OffHandHold(playerState_s *ps);
+void PM_Weapon_OffHand(pmove_t *pm);
+void PM_Weapon_OffHandEnd(playerState_s *ps);
+void Binocular_State_Raise( playerState_t *ps );
+void Binocular_State_Hold(playerState_s *ps);
+void Binocular_State_Exit_ADS(playerState_s *ps);
+void Binocular_State_End(pmove_t *pm);
+int PM_Weapon_FinishFiring(pmove_t *pm, int delayedAction);
+void PM_Weapon_StartFiring(playerState_s *ps, int delayedAction);
+void PM_Weapon_FireWeapon(playerState_s *ps, int delayedAction);
+void PM_BeginWeaponChange(playerState_s *pm, int newweapon);
 long BG_StringHashValue( const char *fname );
 
 bool Mantle_IsWeaponInactive(const playerState_s *ps);
@@ -1668,9 +1717,10 @@ void Mantle_DebugPrint(const char *msg);
 bool Mantle_FindMantleSurface(pmove_t *pm, pml_t *pml, trace_t *trace, float *mantleDir);
 bool Mantle_CheckLedge(pmove_t *pmove, pml_t *pml, MantleResults *mresults, float units);
 
-unsigned int BG_GetNumWeapons();
-void BG_WeaponFireRecoil(playerState_s *ps, float *recoilSpeed, float *kickAVel);
+int BG_GetNumWeapons();
+void BG_WeaponFireRecoil(playerState_s *ps, float *vGunSpeed, float *kickAVel);
 void PM_WeaponUseAmmo(playerState_s *ps, int weaponIndex, int amount);
+int BG_GetBinocularWeaponIndex();
 
 WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
 gitem_s* BG_FindItemForWeapon(int weapon);;

@@ -416,7 +416,7 @@ void PlayerCmd_giveMaxAmmo(scr_entref_t entRef)
 	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex) )
 	{
 		weaponDef = BG_GetWeaponDef(iWeaponIndex);
-		ammoCount = BG_GetMaxAmmo(weaponDef->ammoIndex) - pSelf->client->ps.ammo[weaponDef->ammoIndex];
+		ammoCount = BG_GetAmmoTypeMax(weaponDef->ammoIndex) - pSelf->client->ps.ammo[weaponDef->ammoIndex];
 
 		if ( ammoCount > 0 )
 			Add_Ammo(pSelf, iWeaponIndex, ammoCount, 0);
@@ -495,11 +495,11 @@ void PlayerCmd_getFractionMaxAmmo(scr_entref_t entRef)
 	iWeaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
 	if ( Com_BitCheck(pSelf->client->ps.weapons, iWeaponIndex)
-	        && (weaponDef = BG_GetWeaponDef(iWeaponIndex), BG_GetMaxAmmo(weaponDef->ammoIndex) > 0) )
+	        && (weaponDef = BG_GetWeaponDef(iWeaponIndex), BG_GetAmmoTypeMax(weaponDef->ammoIndex) > 0) )
 	{
 		if ( pSelf->client->ps.ammo[weaponDef->ammoIndex] > 0 )
 		{
-			fAmmoFrac = (float)pSelf->client->ps.ammo[weaponDef->ammoIndex] / (float)BG_GetMaxAmmo(weaponDef->ammoIndex);
+			fAmmoFrac = (float)pSelf->client->ps.ammo[weaponDef->ammoIndex] / (float)BG_GetAmmoTypeMax(weaponDef->ammoIndex);
 			Scr_AddFloat(fAmmoFrac);
 		}
 		else
@@ -1793,8 +1793,8 @@ void PlayerCmd_SetWeaponSlotAmmo(scr_entref_t entref)
 			{
 				if ( ammoCount >= 0 )
 				{
-					if ( ammoCount > BG_GetClipSize(clipIndex) )
-						ammoCount = BG_GetClipSize(clipIndex);
+					if ( ammoCount > BG_GetAmmoClipSize(clipIndex) )
+						ammoCount = BG_GetAmmoClipSize(clipIndex);
 				}
 				else
 				{
@@ -1812,8 +1812,8 @@ void PlayerCmd_SetWeaponSlotAmmo(scr_entref_t entref)
 			{
 				if ( ammoCount >= 0 )
 				{
-					if ( ammoCount > BG_GetMaxAmmo(ammoIndex) )
-						ammoCount = BG_GetMaxAmmo(ammoIndex);
+					if ( ammoCount > BG_GetAmmoTypeMax(ammoIndex) )
+						ammoCount = BG_GetAmmoTypeMax(ammoIndex);
 				}
 				else
 				{
@@ -1911,8 +1911,8 @@ void PlayerCmd_SetWeaponSlotClipAmmo(scr_entref_t entref)
 			if ( ammoCount < 0 )
 				ammoCount = 0;
 
-			if ( ammoCount > BG_GetClipSize(clipIndex) )
-				ammoCount = BG_GetClipSize(clipIndex);
+			if ( ammoCount > BG_GetAmmoClipSize(clipIndex) )
+				ammoCount = BG_GetAmmoClipSize(clipIndex);
 
 			pSelf->client->ps.ammoclip[clipIndex] = ammoCount;
 		}
@@ -1959,8 +1959,8 @@ void PlayerCmd_SetWeaponClipAmmo(scr_entref_t entref)
 			if ( ammoCount < 0 )
 				ammoCount = 0;
 
-			if ( ammoCount > BG_GetClipSize(clipIndex) )
-				ammoCount = BG_GetClipSize(clipIndex);
+			if ( ammoCount > BG_GetAmmoClipSize(clipIndex) )
+				ammoCount = BG_GetAmmoClipSize(clipIndex);
 
 			pSelf->client->ps.ammoclip[clipIndex] = ammoCount;
 		}
