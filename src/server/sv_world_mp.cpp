@@ -433,6 +433,7 @@ void SV_LinkEntity( gentity_t *gEnt )
 		else
 		{
 			DObjGetBounds(obj, min, max);
+
 			VectorAdd(origin, min, min);
 			VectorAdd(origin, max, max);
 		}
@@ -464,14 +465,14 @@ void SV_UnlinkEntity( gentity_t *gEnt )
 SV_LocationalSightTraceDObj
 ===============
 */
-DObj* SV_LocationalSightTraceDObj(const sightpointtrace_t *clip, const gentity_s *touch)
+DObj* SV_LocationalSightTraceDObj( const sightpointtrace_t *clip, const gentity_t *touch )
 {
 	if ( !clip->locational )
 	{
 		return NULL;
 	}
 
-	if ( !(touch->r.svFlags & 6) )
+	if ( !(touch->r.svFlags & 4) )
 	{
 		return NULL;
 	}
@@ -557,12 +558,9 @@ int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check )
 		return 0;
 	}
 
-	if ( touch->r.svFlags & 4 )
+	if ( !DObjHasContents(obj, clip->contentmask) )
 	{
-		if ( !DObjHasContents(obj, clip->contentmask) )
-		{
-			return 0;
-		}
+		return 0;
 	}
 
 	VectorCopy(touch->r.currentOrigin, entAxis[3]);
@@ -611,11 +609,6 @@ DObj* SV_LocationalTraceDObj( const pointtrace_t *clip, const gentity_t *touch )
 	}
 
 	if ( !(touch->r.svFlags & 6) )
-	{
-		return NULL;
-	}
-
-	if ( !clip->priorityMap )
 	{
 		return NULL;
 	}
@@ -721,15 +714,24 @@ void SV_PointTraceToEntity( pointtrace_t *clip, svEntity_t *check, trace_t *trac
 		{
 			return;
 		}
+
+		VectorCopy(touch->r.currentOrigin, entAxis[3]);
+		DObjGetBounds(obj, absmin, absmax);
+
+		VectorAdd(entAxis[3], absmin, absmin);
+		VectorAdd(entAxis[3], absmax, absmax);
 	}
+	else if ( clip->priorityMap )
+	{
+		VectorCopy(touch->r.currentOrigin, entAxis[3]);
 
-	assert(clip->priorityMap);
-
-	VectorCopy(touch->r.currentOrigin, entAxis[3]);
-	DObjGetBounds(obj, absmin, absmax);
-
-	VectorAdd(entAxis[3], absmin, absmin);
-	VectorAdd(entAxis[3], absmax, absmax);
+		VectorAdd(entAxis[3], actorLocationalMins, absmin);
+		VectorAdd(entAxis[3], actorLocationalMaxs, absmax);
+	}
+	else
+	{
+		return;
+	}
 
 	if ( CM_TraceBox(&clip->extents, absmin, absmax, trace->fraction) )
 	{

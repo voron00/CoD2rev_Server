@@ -3459,6 +3459,11 @@ float PM_PlayerInertia( playerState_t *ps, float accelspeed, const vec3_t wishdi
 		return accelspeed;
 	}
 
+	if ( ps->pm_type == PM_UFO )
+	{
+		return accelspeed;
+	}
+
 	if ( inertiaMax->current.decimal >= accelspeed )
 	{
 		return accelspeed;
