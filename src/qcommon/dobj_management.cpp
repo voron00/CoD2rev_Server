@@ -1,96 +1,290 @@
 #include "qcommon.h"
 
-char objBuf[204800];
-short serverObjMap[2048];
-bool objAlloced[2048];
+#define DOBJ_HANDLE_MAX 2 << 10
+
+DObj objBuf[DOBJ_HANDLE_MAX];
+
+short clientObjMap[DOBJ_HANDLE_MAX];
+short serverObjMap[DOBJ_HANDLE_MAX];
+
+bool objAlloced[DOBJ_HANDLE_MAX];
 
 int objFreeCount;
 int com_lastDObjIndex;
-int g_bDObjInited;
 
+qboolean g_bDObjInited;
+
+/*
+==================
+Com_AbortDObj
+==================
+*/
+void Com_AbortDObj()
+{
+	g_bDObjInited = qfalse;
+}
+
+/*
+==================
+Com_ShutdownDObj
+==================
+*/
+void Com_ShutdownDObj()
+{
+	if ( !g_bDObjInited )
+	{
+		return;
+	}
+
+	g_bDObjInited = qfalse;
+}
+
+/*
+==================
+Com_ShutdownDObj
+==================
+*/
+void Com_InitDObj()
+{
+	Com_Memset(objAlloced, 0, sizeof(objAlloced));
+	objFreeCount = DOBJ_HANDLE_MAX - 1;
+
+	Com_Memset(clientObjMap, 0, sizeof(clientObjMap));
+	Com_Memset(serverObjMap, 0, sizeof(serverObjMap));
+
+	com_lastDObjIndex = 1;
+	g_bDObjInited = qtrue;
+}
+
+/*
+==================
+Com_GetServerDObj
+==================
+*/
+DObj* Com_GetServerDObj( int handle )
+{
+	assert(((unsigned)handle < (sizeof( serverObjMap ) / (sizeof( serverObjMap[0] ) * (sizeof( serverObjMap ) != 4 || sizeof( serverObjMap[0] ) <= 4)))));
+	assert((unsigned)serverObjMap[handle] < DOBJ_HANDLE_MAX);
+
+	if ( !serverObjMap[handle] )
+	{
+		return NULL;
+	}
+
+	return &objBuf[serverObjMap[handle]];
+}
+
+/*
+==================
+Com_GetClientDObj
+==================
+*/
+DObj* Com_GetClientDObj( int handle )
+{
+	assert((handle >= 0 && handle < ((((1<<10) + 512)) + 1)));
+	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
+	assert(((unsigned)clientObjMap[handle] < (2048+1024)));
+
+	if ( !clientObjMap[handle] )
+	{
+		return NULL;
+	}
+
+	return &objBuf[clientObjMap[handle]];
+}
+
+/*
+==================
+Com_ClientDObjClearAllSkel
+==================
+*/
+void Com_ClientDObjClearAllSkel()
+{
+	for ( int handleOffset = 0; handleOffset < DOBJ_HANDLE_MAX; handleOffset++ )
+	{
+		if ( !clientObjMap[handleOffset] )
+		{
+			continue;
+		}
+
+		DObjSkelClear(&objBuf[clientObjMap[handleOffset]]);
+	}
+}
+
+/*
+==================
+Com_SafeServerDObjFree
+==================
+*/
+void Com_SafeServerDObjFree( int handle )
+{
+	int index;
+
+	assert(((unsigned)handle < ((1<<10))));
+	index = serverObjMap[handle];
+
+	if ( !index )
+	{
+		return;
+	}
+
+	serverObjMap[handle] = 0;
+	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
+
+	objAlloced[index] = false;
+	objFreeCount++;
+
+	DObjFree(&objBuf[index]);
+}
+
+/*
+==================
+Com_SafeClientDObjFree
+==================
+*/
+void Com_SafeClientDObjFree( int handle )
+{
+	int index;
+
+	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
+	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
+
+	index = clientObjMap[handle];
+
+	if ( !index )
+	{
+		return;
+	}
+
+	clientObjMap[handle] = 0;
+	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
+
+	objAlloced[index] = false;
+	objFreeCount++;
+
+	DObjFree(&objBuf[index]);
+}
+
+/*
+==================
+DB_LoadDObjs
+==================
+*/
+void* DB_LoadDObjs( void * )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return NULL;
+}
+
+/*
+==================
+DB_SaveDObjs
+==================
+*/
+void* DB_SaveDObjs( void * )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return NULL;
+}
+
+/*
+==================
+Com_ServerDObjCreate
+==================
+*/
+void Com_ServerDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle )
+{
+	int index;
+
+	assert(dobjModels);
+	assert(((unsigned)handle < ((1<<10))));
+	assert(!Com_GetServerDObj( handle ));
+
+	index = Com_GetFreeDObjIndex();
+	assert((unsigned)handle < ARRAY_COUNT( serverObjMap ));
+
+	serverObjMap[handle] = index;
+	assert((unsigned)index < DOBJ_HANDLE_MAX);
+
+	DObjCreate(dobjModels, numModels, tree, &objBuf[index], handle + 1);
+
+	if ( !objFreeCount )
+	{
+		Com_Error(ERR_DROP, "No free DObjs");
+	}
+}
+
+/*
+==================
+Com_ClientDObjCreate
+==================
+*/
+void Com_ClientDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle )
+{
+	int index;
+
+	assert(dobjModels);
+	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
+	assert(!Com_GetClientDObj( handle ));
+
+	index = Com_GetFreeDObjIndex();
+	assert((unsigned)handle < ARRAY_COUNT( clientObjMap ));
+
+	clientObjMap[handle] = index;
+	assert((unsigned)index < DOBJ_HANDLE_MAX);
+
+	DObjCreate(dobjModels, numModels, tree, &objBuf[index], handle + 1);
+
+	if ( !objFreeCount )
+	{
+		Com_Error(ERR_DROP, "No free DObjs");
+	}
+}
+
+/*
+==================
+Com_GetFreeDObjIndex
+==================
+*/
 int Com_GetFreeDObjIndex()
 {
 	int i;
 
-	for ( i = com_lastDObjIndex + 1; i < 2048; ++i )
+	for ( i = com_lastDObjIndex + 1; i < DOBJ_HANDLE_MAX; i++ )
 	{
-		if ( !objAlloced[i] )
+		if ( objAlloced[i] )
 		{
-			com_lastDObjIndex = i;
-			objAlloced[i] = 1;
-			--objFreeCount;
-
-			return i;
+			continue;
 		}
+
+		com_lastDObjIndex = i;
+		assert(i);
+		assert((unsigned)i < ARRAY_COUNT( objAlloced ));
+
+		objAlloced[i] = true;
+		assert(objFreeCount);
+		--objFreeCount;
+
+		return i;
 	}
 
-	for ( i = 1; i < com_lastDObjIndex; ++i )
+	for ( i = 1; i < com_lastDObjIndex; i++ )
 	{
-		if ( !objAlloced[i] )
+		if ( objAlloced[i] )
 		{
-			com_lastDObjIndex = i;
-			objAlloced[i] = 1;
-			--objFreeCount;
-
-			return i;
+			continue;
 		}
+
+		com_lastDObjIndex = i;
+		assert(i);
+		assert((unsigned)i < ARRAY_COUNT( objAlloced ));
+
+		objAlloced[i] = true;
+		assert(objFreeCount);
+		--objFreeCount;
+
+		return i;
 	}
 
 	return 0;
-}
-
-void Com_ServerDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle)
-{
-	int index;
-
-	index = Com_GetFreeDObjIndex();
-	serverObjMap[handle] = index;
-
-	DObjCreate(dobjModels, numModels, tree, (void *)&objBuf[sizeof(DObj) * index], handle + 1);
-
-	if ( !objFreeCount )
-		Com_Error(ERR_DROP, "No free DObjs");
-}
-
-void Com_SafeServerDObjFree(int handle)
-{
-	int index;
-
-	index = serverObjMap[handle];
-
-	if ( serverObjMap[handle] )
-	{
-		serverObjMap[handle] = 0;
-		objAlloced[index] = 0;
-		++objFreeCount;
-		DObjFree((DObj_s *)(&objBuf[sizeof(DObj) * index]));
-	}
-}
-
-DObj* Com_GetServerDObj(int handle)
-{
-	if ( serverObjMap[handle] )
-		return (DObj *)&objBuf[sizeof(DObj) * serverObjMap[handle]];
-	else
-		return 0;
-}
-
-void Com_InitDObj()
-{
-	Com_Memset(objAlloced, 0, sizeof(objAlloced));
-	objFreeCount = 2047;
-	Com_Memset(serverObjMap, 0, sizeof(serverObjMap));
-	com_lastDObjIndex = 1;
-	g_bDObjInited = 1;
-}
-
-void Com_ShutdownDObj()
-{
-	if ( g_bDObjInited )
-		g_bDObjInited = 0;
-}
-
-void Com_AbortDObj()
-{
-	g_bDObjInited = 0;
 }

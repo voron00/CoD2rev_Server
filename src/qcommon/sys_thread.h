@@ -35,6 +35,7 @@ enum ThreadValue
 	THREAD_VALUE_COUNT = 0x4,
 };
 
+// Libcod stuff
 enum CriticalSection
 {
 	CRITSECT_EXEC,

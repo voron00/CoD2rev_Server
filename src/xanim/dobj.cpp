@@ -3,6 +3,12 @@
 
 unsigned int g_empty;
 
+void DObjSkelClear( DObj_s *obj )
+{
+	obj->timeStamp = 0;
+	obj->skel = 0;
+}
+
 void DObjCreateDuplicateParts(DObj_s *obj)
 {
 	static int duplicatePartBits[5];
@@ -806,9 +812,8 @@ void DObjSetBounds(DObj *obj)
 	VectorCopy(dobjmaxs, obj->maxs);
 }
 
-void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum)
+void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, DObj *obj, unsigned int entnum)
 {
-	DObj *newobj;
 	int modelIndex;
 	int boneIndex;
 	unsigned int name;
@@ -818,13 +823,12 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 	int j;
 	unsigned int i;
 
-	newobj = (DObj *)buf;
-	newobj->skel = 0;
-	newobj->timeStamp = 0;
-	newobj->duplicateParts = 0;
-	newobj->ignoreCollision = 0;
+	obj->skel = 0;
+	obj->timeStamp = 0;
+	obj->duplicateParts = 0;
+	obj->ignoreCollision = 0;
 
-	DObjSetTree(newobj, tree);
+	DObjSetTree(obj, tree);
 
 	if ( tree )
 		tree->entnum = entnum;
@@ -836,12 +840,12 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 	{
 		model = dobjModels->model;
 
-		newobj->models[modelIndex] = dobjModels->model;
-		newobj->modelParents[modelIndex] = -1;
-		newobj->matOffset[modelIndex] = numBones;
+		obj->models[modelIndex] = dobjModels->model;
+		obj->modelParents[modelIndex] = -1;
+		obj->matOffset[modelIndex] = numBones;
 
 		if ( dobjModels->ignoreCollision )
-			newobj->ignoreCollision |= 1 << i;
+			obj->ignoreCollision |= 1 << i;
 
 		if ( i )
 		{
@@ -857,11 +861,11 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 					{
 						for ( j = 0; j < modelIndex; ++j )
 						{
-							boneIndex = XModelGetBoneIndex(newobj->models[j], name);
+							boneIndex = XModelGetBoneIndex(obj->models[j], name);
 
 							if ( boneIndex >= 0 )
 							{
-								newobj->modelParents[modelIndex] = newobj->matOffset[j] + boneIndex;
+								obj->modelParents[modelIndex] = obj->matOffset[j] + boneIndex;
 								goto setmodel;
 							}
 						}
@@ -870,7 +874,7 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
 					Com_Printf(
 					    "WARNING: Part '%s' not found in model '%s' or any of its descendants\n",
 					    parentName,
-					    newobj->models[0]->name);
+					    obj->models[0]->name);
 				}
 			}
 		}
@@ -878,7 +882,7 @@ setmodel:
 		if ( model )
 		{
 			if ( numBones + model->parts->numBones > 127 )
-				Com_Error(ERR_DROP, "dobj for xmodel %s has more than %d bones", newobj->models[0]->name, 127);
+				Com_Error(ERR_DROP, "dobj for xmodel %s has more than %d bones", obj->models[0]->name, 127);
 
 			numBones += model->parts->numBones;
 		}
@@ -887,10 +891,10 @@ setmodel:
 		++dobjModels;
 	}
 
-	newobj->numModels = modelIndex;
-	newobj->numBones = numBones;
+	obj->numModels = modelIndex;
+	obj->numBones = numBones;
 
-	DObjSetBounds(newobj);
+	DObjSetBounds(obj);
 }
 
 void DObjFree(DObj *obj)

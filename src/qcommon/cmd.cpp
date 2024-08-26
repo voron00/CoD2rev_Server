@@ -343,7 +343,7 @@ are inserted in the apropriate place, The argv array
 will point into this temporary buffer.
 ============
 */
-int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char **argv, char *textOut)
+int Cmd_TokenizeStringInternal( const char *text_in, int max_tokens, char **argv, char *textOut )
 {
 	const char *str;
 #ifdef TKN_DBG
@@ -481,12 +481,12 @@ int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char **argv,
 	return argc + 1;
 }
 
-void Cmd_TokenizeStringWithLimit(const char *text_in, int max_tokens)
+void Cmd_TokenizeStringWithLimit( const char *text_in, int max_tokens )
 {
 	cmd_argc = Cmd_TokenizeStringInternal(text_in, max_tokens, cmd_argv, cmd_tokenized);
 }
 
-void Cmd_TokenizeString(const char *text_in)
+void Cmd_TokenizeString( const char *text_in )
 {
 	Cmd_TokenizeStringWithLimit(text_in, 0);
 }
@@ -496,7 +496,7 @@ void Cmd_TokenizeString(const char *text_in)
 Cmd_FindCommand
 ==============
 */
-cmd_function_t* Cmd_FindCommand(const char *cmdName)
+cmd_function_t* Cmd_FindCommand( const char *cmdName )
 {
 	cmd_function_t *cmd;
 
@@ -611,7 +611,7 @@ void Cmd_List_f( void )
 Cmd_Exec_f
 ===============
 */
-bool Cmd_ExecFromDisk(const char *filename)
+bool Cmd_ExecFromDisk( const char *filename )
 {
 	char *text;
 
@@ -627,7 +627,7 @@ bool Cmd_ExecFromDisk(const char *filename)
 	return true;
 }
 
-void Cmd_Exec_f(void)
+void Cmd_Exec_f( void )
 {
 	char filename[MAX_QPATH];
 
@@ -722,7 +722,7 @@ void Cbuf_Init( void )
 Cmd_SetAutoComplete
 ==============
 */
-void Cmd_SetAutoComplete(const char *cmdName, const char *dir, const char *ext)
+void Cmd_SetAutoComplete( const char *cmdName, const char *dir, const char *ext )
 {
 	cmd_function_t* cmd;
 

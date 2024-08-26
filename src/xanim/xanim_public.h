@@ -447,7 +447,7 @@ struct DObjTrace_s
 	unsigned short partGroup;
 };
 
-void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, void *buf, unsigned int entnum);
+void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, DObj *obj, unsigned int entnum);
 void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs);
 void DObjInit();
 void DObjShutdown();
@@ -590,3 +590,4 @@ void QuatMultiplyReverseEquals(float *in, float *inout);
 void MatrixTransformVectorQuatTransEquals(float *inout, DObjAnimMat *in);
 void InvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out);
 void DObjCalcTransWeight(DObjAnimMat *Mat);
+void DObjSkelClear( DObj_s *obj );

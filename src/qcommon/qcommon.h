@@ -435,6 +435,8 @@ int CM_PointLeafnum( const vec3_t p );
 
 void CM_GetBox(cbrush_t **box_brush, cmodel_t **box_model);
 
+int Com_GetFreeDObjIndex();
+
 #include "../xanim/xanim_public.h"
 XModel* CM_XModelPrecache(const char *name);
 
