@@ -271,6 +271,11 @@ typedef struct
 	node_t*     nodePtrs[768];
 } huff_t;
 
+#define	SV_ENCODE_START		4
+#define	SV_DECODE_START		12
+#define	CL_ENCODE_START		12
+#define	CL_DECODE_START		4
+
 typedef struct
 {
 	huff_t compressor;

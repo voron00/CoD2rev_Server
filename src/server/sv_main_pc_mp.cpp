@@ -5,9 +5,9 @@
 SV_FlushRedirect
 ==============
 */
-void SV_FlushRedirect(char *outputbuf)
+void SV_FlushRedirect( char *outputbuf )
 {
-	char buf[1300];
+	char buf[FRAGMENT_SIZE];
 	char c;
 	size_t len;
 
@@ -141,7 +141,7 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	Com_EndRedirect();
 }
 
-void SV_MatchEnd(void)
+void SV_MatchEnd( void )
 {
 	UNIMPLEMENTED(__FUNCTION__);
 }
@@ -261,7 +261,7 @@ Informs all masters that this server is going down
 void SV_MasterShutdown( void )
 {
 	// send a hearbeat right now
-	svs.nextHeartbeatTime = 0x80000000;
+	svs.nextHeartbeatTime = -1;
 
 #ifdef LIBCOD
 	SV_MasterHeartbeat_libcod( HEARTBEAT_DEAD );

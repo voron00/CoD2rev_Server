@@ -1,13 +1,16 @@
 #include "../qcommon/qcommon.h"
+#include "../qcommon/sys_thread.h"
 
 /*
 ================
 SV_FreeClientScriptId
 ================
 */
-void SV_FreeClientScriptId(client_t *cl)
+void SV_FreeClientScriptId( client_t *cl )
 {
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 	assert(cl->scriptId);
+
 	Scr_FreeValue(cl->scriptId);
 	cl->scriptId = 0;
 }
@@ -165,7 +168,7 @@ void SV_CheckTimeouts( void )
 SV_CullIgnorableServerCommands
 ===================
 */
-void SV_CullIgnorableServerCommands(client_t *client)
+void SV_CullIgnorableServerCommands( client_t *client )
 {
 	svscmd_info_t *svscmd;
 	int from;
@@ -198,7 +201,7 @@ void SV_CullIgnorableServerCommands(client_t *client)
 SV_IsFirstTokenEqual
 ===================
 */
-qboolean SV_IsFirstTokenEqual(const char *str1, const char *str2)
+qboolean SV_IsFirstTokenEqual( const char *str1, const char *str2 )
 {
 	while ( 1 )
 	{
@@ -219,6 +222,7 @@ qboolean SV_IsFirstTokenEqual(const char *str1, const char *str2)
 	{
 		return qfalse;
 	}
+
 	if ( *str2 && *str2 != ' ')
 	{
 		return qfalse;
@@ -232,7 +236,7 @@ qboolean SV_IsFirstTokenEqual(const char *str1, const char *str2)
 SV_CanReplaceServerCommand
 ===================
 */
-int SV_CanReplaceServerCommand(client_t *client, const char *cmd)
+int SV_CanReplaceServerCommand( client_t *client, const char *cmd )
 {
 	int i;
 	int index;
@@ -243,6 +247,8 @@ int SV_CanReplaceServerCommand(client_t *client, const char *cmd)
 
 		if ( client->reliableCommandInfo[index].type == SV_CMD_CAN_IGNORE )
 			continue;
+
+		assert(client->reliableCommandInfo[index].type == SV_CMD_RELIABLE);
 
 		if ( client->reliableCommandInfo[index].cmd[0] != cmd[0] )
 			continue;
@@ -267,6 +273,7 @@ int SV_CanReplaceServerCommand(client_t *client, const char *cmd)
 			return i;
 		case 'd':
 		case 'v':
+			assert(cmd[1] == ' ');
 			if ( !SV_IsFirstTokenEqual(cmd + 2, &client->reliableCommandInfo[index].cmd[2]) )
 				continue;
 			return i;
@@ -398,40 +405,52 @@ void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... )
 SV_VoicePacket
 ================
 */
-void SV_VoicePacket(netadr_t from, msg_t *msg)
+void SV_VoicePacket( netadr_t from, msg_t *msg )
 {
 	int qport;
 	int i;
-	client_t *client;
+	client_t *cl;
 
 	qport = MSG_ReadShort(msg);
 
-	for ( i = 0, client = svs.clients; i < sv_maxclients->current.integer; i++, client++ )
+	for ( i = 0, cl = svs.clients; i < sv_maxclients->current.integer; i++, cl++ )
 	{
-		if ( !client->state )
-			continue;
-
-		if ( !NET_CompareBaseAdr(from, client->netchan.remoteAddress) )
-			continue;
-
-		if ( client->netchan.qport != qport )
-			continue;
-
-		if ( client->netchan.remoteAddress.port != from.port )
+		if ( !cl->state )
 		{
-			Com_Printf( "SV_VoicePacket: fixing up a translated port\n" );
-			client->netchan.remoteAddress.port = from.port;
+			continue;
 		}
 
-		if ( client->state == CS_ZOMBIE )
+		if ( !NET_CompareBaseAdr(from, cl->netchan.remoteAddress) )
+		{
 			continue;
+		}
 
-		client->lastPacketTime = svs.time;
+		if ( cl->netchan.qport != qport )
+		{
+			continue;
+		}
 
-		if ( client->state < CS_ACTIVE )
-			SV_PreGameUserVoice(client, msg);
-		else
-			SV_UserVoice(client, msg);
+		if ( cl->netchan.remoteAddress.port != from.port )
+		{
+			Com_Printf( "SV_VoicePacket: fixing up a translated port\n" );
+			cl->netchan.remoteAddress.port = from.port;
+		}
+
+		if ( cl->state == CS_ZOMBIE )
+		{
+			continue;
+		}
+
+		cl->lastPacketTime = svs.time;
+
+		if ( cl->state < CS_ACTIVE )
+		{
+			SV_PreGameUserVoice(cl, msg);
+			return;
+		}
+
+		assert(cl->gentity);
+		SV_UserVoice(cl, msg);
 	}
 }
 
@@ -1015,7 +1034,7 @@ Player movement occurs as a result of packet events, which
 happen before SV_Frame is called
 ==================
 */
-void SV_Frame(int msec)
+void SV_Frame( int msec )
 {
 	char mapname[MAX_QPATH];
 	int frameMsec;
@@ -1031,7 +1050,11 @@ void SV_Frame(int msec)
 		return;
 	}
 
+	assert(Sys_IsMainThread());
+	assert(msec >= 0);
+
 	frameMsec = 1000 / sv_fps->current.integer;
+	assert(sv.timeResidual < frameMsec);
 	sv.timeResidual += msec;
 
 	if ( sv.timeResidual < frameMsec )

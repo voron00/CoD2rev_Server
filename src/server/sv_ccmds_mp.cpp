@@ -5,7 +5,7 @@
 SV_GetMapBaseName
 ==================
 */
-const char *SV_GetMapBaseName(const char *mapname)
+const char *SV_GetMapBaseName( const char *mapname )
 {
 	return FS_GetMapBaseName(mapname);
 }
@@ -18,7 +18,7 @@ Completely restarts a level, but doesn't send a new gamestate to the clients.
 This allows fair starts with variable load times.
 ================
 */
-static void SV_MapRestart(qboolean fast_restart)
+static void SV_MapRestart( qboolean fast_restart )
 {
 	const char *dropreason;
 	int savepersist;
@@ -130,7 +130,7 @@ static void SV_MapRestart(qboolean fast_restart)
 SV_MapRestart_f
 ================
 */
-static void SV_MapRestart_f(void)
+static void SV_MapRestart_f( void )
 {
 	SV_MapRestart(qfalse);
 }
@@ -140,7 +140,7 @@ static void SV_MapRestart_f(void)
 SV_FastRestart_f
 ================
 */
-static void SV_FastRestart_f(void)
+static void SV_FastRestart_f( void )
 {
 	SV_MapRestart(qtrue);
 }
@@ -152,13 +152,14 @@ SV_Map_f
 Restart the server on a different map
 ==================
 */
-static void SV_Map_f(void)
+static void SV_Map_f( void )
 {
 	char mapname[MAX_QPATH];
 	char *expanded;
 	const char *map;
 
 	map = SV_Cmd_Argv(1);
+	assert(map);
 	if ( !map[0] )
 		return;
 
@@ -197,7 +198,7 @@ static void SV_Map_f(void)
 SV_KillServer
 =================
 */
-static void SV_KillServer_f(void)
+static void SV_KillServer_f( void )
 {
 	Com_Shutdown("EXE_SERVERKILLED");
 }
@@ -260,9 +261,11 @@ static client_t *SV_GetPlayerByName( void )
 SV_KickClient
 ==================
 */
-static int SV_KickClient(client_t *cl, char *playerName, int maxPlayerNameLen)
+static int SV_KickClient( client_t *cl, char *playerName, int maxPlayerNameLen )
 {
 	int guid;
+
+	assert(cl);
 
 	if ( cl->netchan.remoteAddress.type == NA_LOOPBACK )
 	{
@@ -290,7 +293,7 @@ SV_KickUser_f
 Kick a user off of the server
 ==================
 */
-static int SV_KickUser_f(char *playerName, int maxPlayerNameLen)
+static int SV_KickUser_f( char *playerName, int maxPlayerNameLen )
 {
 	int i;
 	client_t *cl;
@@ -334,7 +337,7 @@ static int SV_KickUser_f(char *playerName, int maxPlayerNameLen)
 SV_TempBan_f
 ==================
 */
-static void SV_TempBan_f(void)
+static void SV_TempBan_f( void )
 {
 	char name[64];
 	int guid;
@@ -354,7 +357,7 @@ static void SV_TempBan_f(void)
 SV_Drop_f
 ==================
 */
-static void SV_Drop_f(void)
+static void SV_Drop_f( void )
 {
 	SV_KickUser_f(NULL, 0);
 }
@@ -416,7 +419,7 @@ static client_t *SV_GetPlayerByNum( void )
 SV_KickClient_f
 ==================
 */
-static int SV_KickClient_f(char *playerName, int maxPlayerNameLen)
+static int SV_KickClient_f( char *playerName, int maxPlayerNameLen )
 {
 	client_t *cl;
 
@@ -448,7 +451,7 @@ static int SV_KickClient_f(char *playerName, int maxPlayerNameLen)
 SV_DropNum_f
 ==================
 */
-static void SV_DropNum_f(void)
+static void SV_DropNum_f( void )
 {
 	SV_KickClient_f(NULL, 0);
 }
@@ -458,7 +461,7 @@ static void SV_DropNum_f(void)
 SV_TempBanNum_f
 ==================
 */
-static void SV_TempBanNum_f(void)
+static void SV_TempBanNum_f( void )
 {
 	char name[64];
 	int guid;
@@ -480,7 +483,7 @@ Ban a user from being able to play on this server through the auth
 server
 ==================
 */
-static void SV_Ban_f(void)
+static void SV_Ban_f( void )
 {
 	client_t *cl;
 
@@ -510,7 +513,7 @@ static void SV_Ban_f(void)
 SV_BanNum_f
 ==================
 */
-static void SV_BanNum_f(void)
+static void SV_BanNum_f( void )
 {
 	client_t *cl;
 
@@ -542,7 +545,7 @@ SV_Serverinfo_f
 Examine the serverinfo string
 ===========
 */
-static void SV_Serverinfo_f(void)
+static void SV_Serverinfo_f( void )
 {
 	Com_Printf("Server info settings:\n");
 	Info_Print(Dvar_InfoString(DVAR_SERVERINFO | DVAR_SERVERINFO_NOUPDATE));
@@ -555,7 +558,7 @@ SV_Systeminfo_f
 Examine or change the serverinfo string
 ===========
 */
-static void SV_Systeminfo_f(void)
+static void SV_Systeminfo_f( void )
 {
 	Com_Printf("System info settings:\n");
 	Info_Print(Dvar_InfoString(DVAR_SYSTEMINFO));
@@ -601,7 +604,7 @@ static void SV_DumpUser_f( void )
 SV_Unban_f
 ==================
 */
-static void SV_Unban_f(void)
+static void SV_Unban_f( void )
 {
 	if ( SV_Cmd_Argc() != 2 )
 	{
@@ -770,7 +773,7 @@ static void SV_ConTell_f( void )
 SV_ScriptUsage_f
 =================
 */
-static void SV_ScriptUsage_f(void)
+static void SV_ScriptUsage_f( void )
 {
 	Scr_DumpScriptThreads();
 }
@@ -780,7 +783,7 @@ static void SV_ScriptUsage_f(void)
 SV_StringUsage_f
 =================
 */
-static void SV_StringUsage_f(void)
+static void SV_StringUsage_f( void )
 {
 	MT_DumpTree();
 }
@@ -815,7 +818,7 @@ const char* UI_GetMapRotationToken()
 SV_MapRotate_f
 ================
 */
-static void SV_MapRotate_f(void)
+static void SV_MapRotate_f( void )
 {
 	const char *token;
 
@@ -896,7 +899,7 @@ SV_GameCompleteStatus_f
 NERVE - SMF
 =================
 */
-static void SV_GameCompleteStatus_f(void)
+static void SV_GameCompleteStatus_f( void )
 {
 	if ( com_sv_running->current.boolean )
 	{
@@ -911,9 +914,9 @@ SV_Heartbeat_f
 Also called by SV_DropClient, SV_DirectConnect, and SV_SpawnServer
 ==================
 */
-void SV_Heartbeat_f(void)
+void SV_Heartbeat_f( void )
 {
-	svs.nextHeartbeatTime = 0x80000000;
+	svs.nextHeartbeatTime = -1;
 }
 
 /*
@@ -921,7 +924,7 @@ void SV_Heartbeat_f(void)
 SV_AddDedicatedCommands
 ==================
 */
-static void SV_AddDedicatedCommands(void)
+static void SV_AddDedicatedCommands( void )
 {
 	Cmd_AddCommand("say", SV_ConSay_f);
 	Cmd_AddCommand("tell", SV_ConTell_f);
@@ -932,7 +935,7 @@ static void SV_AddDedicatedCommands(void)
 SV_RemoveDedicatedCommands
 ==================
 */
-static void SV_RemoveDedicatedCommands(void)
+static void SV_RemoveDedicatedCommands( void )
 {
 	Cmd_RemoveCommand("say");
 	Cmd_RemoveCommand("tell");
@@ -943,7 +946,7 @@ static void SV_RemoveDedicatedCommands(void)
 SV_AddOperatorCommands
 ==================
 */
-void SV_AddOperatorCommands(void)
+void SV_AddOperatorCommands( void )
 {
 	static qboolean initialized;
 

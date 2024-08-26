@@ -1,4 +1,5 @@
 #include "../qcommon/qcommon.h"
+#include "../qcommon/sys_thread.h"
 
 serverStatic_t svs;
 server_t sv;
@@ -172,14 +173,12 @@ void SV_ClearServer( void )
 SV_GetConfigstring
 ===============
 */
-const char* SV_GetConfigstringConst(unsigned int index)
+const char* SV_GetConfigstringConst( int index )
 {
-	const char *cs = sv.configstrings[index];
+	assert((unsigned)index < MAX_CONFIGSTRINGS);
+	assert(sv.configstrings[index]);
 
-	if ( cs )
-		return cs;
-
-	return "";
+	return sv.configstrings[index];
 }
 
 /*
@@ -223,7 +222,7 @@ void SV_CreateBaseline( void )
 SV_EnableArchivedSnapshot
 ================
 */
-void SV_EnableArchivedSnapshot(qboolean bEnable)
+void SV_EnableArchivedSnapshot( qboolean bEnable )
 {
 	svs.archiveEnabled = bEnable;
 
@@ -409,7 +408,7 @@ void SV_SetConfigstring( unsigned int index, const char *val )
 SV_SetConfigValueForKey
 ===============
 */
-void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value)
+void SV_SetConfigValueForKey( int start, int max, const char *key, const char *value )
 {
 	const char *cs;
 	int i;
@@ -439,7 +438,7 @@ void SV_SetConfigValueForKey(int start, int max, const char *key, const char *va
 SV_BoundMaxClients
 ===============
 */
-void SV_BoundMaxClients(int minimum)
+void SV_BoundMaxClients( int minimum )
 {
 	// get the current maxclients value
 	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, MAX_CLIENTS, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
@@ -683,9 +682,11 @@ Called when each game quits,
 before Sys_Quit or Sys_Error
 ================
 */
-void SV_Shutdown(const char *finalmsg)
+void SV_Shutdown( const char *finalmsg )
 {
 	qboolean bLoading;
+
+	assert(Sys_IsMainThread());
 
 	if ( !com_sv_running || !com_sv_running->current.boolean )
 	{
@@ -776,6 +777,7 @@ void SV_SetExpectedHunkUsage( char *mapname )
 			{
 				// found a match
 				token = Com_Parse( &buftrav );  // read the size
+				assert(token);
 				if ( token && token[0] )
 				{
 					// this is the usage
@@ -823,7 +825,7 @@ clients along with it.
 This is NOT called for map_restart
 ================
 */
-void SV_SpawnServer(char *server)
+void SV_SpawnServer( char *server )
 {
 	char mapname[MAX_QPATH];
 	client_t *cl;

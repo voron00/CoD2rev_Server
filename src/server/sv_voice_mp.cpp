@@ -6,9 +6,14 @@
 SV_QueueVoicePacket
 ==================
 */
-void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacket)
+void SV_QueueVoicePacket( int talkerNum, int clientNum, VoicePacket_t *voicePacket )
 {
-	client_t *client = &svs.clients[clientNum];
+	client_t *client;
+
+	assert(talkerNum >= 0 && talkerNum < MAX_CLIENTS);
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
+	client = &svs.clients[clientNum];
 
 	if ( client->voicePacketCount >= MAX_VOICE_PACKETS )
 	{
@@ -17,6 +22,7 @@ void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacke
 
 	client->voicePackets[client->voicePacketCount].dataSize = voicePacket->dataSize;
 	memcpy(client->voicePackets[client->voicePacketCount].data, voicePacket->data, voicePacket->dataSize);
+	assert(talkerNum == static_cast<byte>(talkerNum));
 	client->voicePackets[client->voicePacketCount].talker = talkerNum;
 	client->voicePacketCount++;
 }
@@ -26,8 +32,10 @@ void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacke
 SV_ClientHasClientMuted
 ==================
 */
-bool SV_ClientHasClientMuted(int listener, int talker)
+bool SV_ClientHasClientMuted( int listener, int talker )
 {
+	assert(listener >= 0 && listener < MAX_CLIENTS);
+	assert(talker >= 0 && talker < MAX_CLIENTS);
 	return svs.clients[listener].muteList[talker];
 }
 
@@ -36,8 +44,9 @@ bool SV_ClientHasClientMuted(int listener, int talker)
 SV_ClientWantsVoiceData
 ==================
 */
-bool SV_ClientWantsVoiceData(int clientNum)
+bool SV_ClientWantsVoiceData( int clientNum )
 {
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
 	return svs.clients[clientNum].sendVoice;
 }
 
@@ -46,7 +55,7 @@ bool SV_ClientWantsVoiceData(int clientNum)
 SV_PreGameUserVoice
 ==================
 */
-void SV_PreGameUserVoice(client_t *cl, msg_t *msg)
+void SV_PreGameUserVoice( client_t *cl, msg_t *msg )
 {
 	int talker;
 	int listener;
@@ -60,6 +69,7 @@ void SV_PreGameUserVoice(client_t *cl, msg_t *msg)
 	}
 
 	talker = cl - svs.clients;
+	assert(talker >= 0 && talker < MAX_CLIENTS);
 	packetCount = MSG_ReadByte(msg);
 
 	for ( packet = 0; packet < packetCount; packet++ )
@@ -71,6 +81,9 @@ void SV_PreGameUserVoice(client_t *cl, msg_t *msg)
 			Com_Printf("Received invalid voice packet of size %i from %s\n", voicePacket.dataSize, cl->name);
 			return;
 		}
+
+		assert(msg->data);
+		assert(voicePacket.data);
 
 		MSG_ReadData(msg, voicePacket.data, voicePacket.dataSize);
 
@@ -98,7 +111,7 @@ void SV_PreGameUserVoice(client_t *cl, msg_t *msg)
 SV_UserVoice
 ==================
 */
-void SV_UserVoice(client_t *cl, msg_t *msg)
+void SV_UserVoice( client_t *cl, msg_t *msg )
 {
 	int packet;
 	int packetCount;
@@ -110,6 +123,7 @@ void SV_UserVoice(client_t *cl, msg_t *msg)
 	}
 
 	packetCount = MSG_ReadByte(msg);
+	assert(cl->gentity);
 
 	for ( packet = 0; packet < packetCount; packet++ )
 	{
@@ -121,6 +135,9 @@ void SV_UserVoice(client_t *cl, msg_t *msg)
 			return;
 		}
 
+		assert(msg->data);
+		assert(voicePacket.data);
+
 		MSG_ReadData(msg, voicePacket.data, voicePacket.dataSize);
 		G_BroadcastVoice(cl->gentity, &voicePacket);
 	}
@@ -131,7 +148,7 @@ void SV_UserVoice(client_t *cl, msg_t *msg)
 SV_WriteClientVoiceData
 ==================
 */
-void SV_WriteClientVoiceData(client_t *client, msg_t *msg)
+void SV_WriteClientVoiceData( client_t *client, msg_t *msg )
 {
 	int i;
 
@@ -150,10 +167,12 @@ void SV_WriteClientVoiceData(client_t *client, msg_t *msg)
 SV_SendClientVoiceData
 ==================
 */
-void SV_SendClientVoiceData(client_t *client)
+void SV_SendClientVoiceData( client_t *client )
 {
 	byte msg_buf[MAX_VOICE_MSG_LEN];
 	msg_t msg;
+
+	assert(client->voicePacketCount >= 0);
 
 	if ( client->state != CS_ACTIVE )
 		return;
@@ -162,6 +181,9 @@ void SV_SendClientVoiceData(client_t *client)
 		return;
 
 	MSG_Init(&msg, msg_buf, sizeof(msg_buf));
+	assert(msg.cursize == 0);
+	assert(msg.bit == 0);
+
 	MSG_WriteString(&msg, "v");
 	SV_WriteClientVoiceData(client, &msg);
 

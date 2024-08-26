@@ -38,7 +38,7 @@ void SV_Netchan_UpdateProfileStats()
 SV_Netchan_AddOOBProfilePacket
 ==================
 */
-void SV_Netchan_AddOOBProfilePacket(int iLength)
+void SV_Netchan_AddOOBProfilePacket( int iLength )
 {
 	if ( net_profile->current.integer )
 	{
@@ -52,7 +52,7 @@ void SV_Netchan_AddOOBProfilePacket(int iLength)
 SV_Netchan_TransmitNextFragment
 ==================
 */
-bool SV_Netchan_TransmitNextFragment(netchan_t *chan)
+bool SV_Netchan_TransmitNextFragment( netchan_t *chan )
 {
 	return Netchan_TransmitNextFragment(chan);
 }
@@ -62,9 +62,9 @@ bool SV_Netchan_TransmitNextFragment(netchan_t *chan)
 SV_Netchan_Transmit
 ==================
 */
-bool SV_Netchan_Transmit(client_t *client, byte *data, int length)
+bool SV_Netchan_Transmit( client_t *client, byte *data, int length )
 {
-	SV_Netchan_Encode(client, data + 4, length - 4);
+	SV_Netchan_Encode(client, data + SV_ENCODE_START, length - SV_ENCODE_START);
 	return Netchan_Transmit(&client->netchan, length, data);
 }
 
@@ -73,7 +73,7 @@ bool SV_Netchan_Transmit(client_t *client, byte *data, int length)
 SV_Netchan_PrintProfileStats
 ==================
 */
-void SV_Netchan_PrintProfileStats(int bPrintToConsole)
+void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 {
 	UNIMPLEMENTED(__FUNCTION__);
 }
@@ -83,7 +83,7 @@ void SV_Netchan_PrintProfileStats(int bPrintToConsole)
 SV_Netchan_SendOOBPacket
 ==================
 */
-void SV_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
+void SV_Netchan_SendOOBPacket( int iLength, const void *pData, netadr_t to )
 {
 	if ( *(int *)pData != -1 )
 		Com_Printf("SV_Netchan_SendOOBPacket used to send non-OOB packet.\n");
@@ -94,9 +94,13 @@ void SV_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
 }
 
 /*
-==================
+==============
 SV_Netchan_Encode
-==================
+
+	// first four bytes of the data are always:
+	long reliableAcknowledge;
+
+==============
 */
 void SV_Netchan_Encode( client_t *client, byte *data, int cursize )
 {
@@ -104,6 +108,7 @@ void SV_Netchan_Encode( client_t *client, byte *data, int cursize )
 	byte key, *string;
 
 	string = (byte *)client->lastClientCommandString;
+	// xor the client challenge with the netchan sequence number
 	key = client->challenge ^ client->netchan.outgoingSequence;
 
 	for ( i = 0, index = 0; i < cursize; i++ )
@@ -122,9 +127,15 @@ void SV_Netchan_Encode( client_t *client, byte *data, int cursize )
 }
 
 /*
-==================
+==============
 SV_Netchan_Decode
-==================
+
+	// first 12 bytes of the data are always:
+	long serverId;
+	long messageAcknowledge;
+	long reliableAcknowledge;
+
+==============
 */
 void SV_Netchan_Decode( client_t *client, byte *data, int remaining )
 {

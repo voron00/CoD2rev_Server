@@ -6,9 +6,18 @@
 SV_DelayDropClient
 =================
 */
-void SV_DelayDropClient(client_t *drop, const char *reason)
+void SV_DelayDropClient( client_t *drop, const char *reason )
 {
-	if ( drop->state != CS_ZOMBIE && drop->dropReason == NULL)
+	assert(drop);
+	assert(reason);
+	assert(drop->state != CS_FREE);
+
+	if ( drop->state == CS_ZOMBIE )
+	{
+		return; // already dropped
+	}
+
+	if ( drop->dropReason == NULL )
 	{
 		drop->dropReason = reason;
 	}
@@ -43,7 +52,7 @@ unsigned int SV_FindFreeTempBanSlot()
 SV_BanGuidBriefly
 =================
 */
-void SV_BanGuidBriefly(int guid)
+void SV_BanGuidBriefly( int guid )
 {
 	unsigned int slot;
 
@@ -58,7 +67,7 @@ void SV_BanGuidBriefly(int guid)
 SV_IsBannedGuid
 =================
 */
-bool SV_IsBannedGuid(int guid)
+bool SV_IsBannedGuid( int guid )
 {
 	bool banned;
 	char *file;
@@ -100,7 +109,7 @@ bool SV_IsBannedGuid(int guid)
 SV_IsTempBannedGuid
 =================
 */
-bool SV_IsTempBannedGuid(int guid)
+bool SV_IsTempBannedGuid( int guid )
 {
 	unsigned int banSlot;
 
@@ -124,7 +133,7 @@ bool SV_IsTempBannedGuid(int guid)
 SV_FX_GetVisibility
 =================
 */
-float SV_FX_GetVisibility(const vec3_t start, const vec3_t end)
+float SV_FX_GetVisibility( const vec3_t start, const vec3_t end )
 {
 	UNIMPLEMENTED(__FUNCTION__);
 	return 1.0;
@@ -141,7 +150,7 @@ void SV_FreeClientScriptPers()
 	client_t *cl;
 	int i;
 
-	for (i = 0, cl = svs.clients; i < sv_maxclients->current.integer; ++i, ++cl )
+	for ( i = 0, cl = svs.clients; i < sv_maxclients->current.integer; i++, cl++ )
 	{
 		if ( cl->state < CS_CONNECTED )
 			continue;
@@ -156,10 +165,12 @@ void SV_FreeClientScriptPers()
 SV_BanClient
 =================
 */
-void SV_BanClient(client_t *cl)
+void SV_BanClient( client_t *cl )
 {
 	int file;
 	char cleanName[64];
+
+	assert(cl);
 
 	if ( cl->netchan.remoteAddress.type == NA_LOOPBACK )
 	{
@@ -184,8 +195,10 @@ void SV_BanClient(client_t *cl)
 
 	I_strncpyz(cleanName, cl->name, sizeof(cleanName));
 	I_CleanStr(cleanName);
+
 	FS_Printf(file, "%i %s\r\n", cl->guid, cleanName);
 	FS_FCloseFile(file);
+
 	SV_DropClient(cl, "EXE_PLAYERKICKED");
 	cl->lastPacketTime = svs.time;
 }
@@ -195,7 +208,7 @@ void SV_BanClient(client_t *cl)
 SV_UnbanClient
 =================
 */
-void SV_UnbanClient(const char *name)
+void SV_UnbanClient( const char *name )
 {
 	int nameLen;
 	char *file;
@@ -460,6 +473,7 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd )
 
 	// set up the entity for the client
 	clientNum = client - svs.clients;
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
 	ent = SV_GentityNum(clientNum);
 	ent->s.number = clientNum;
 	client->gentity = ent;
@@ -477,8 +491,11 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd )
 SV_FreeClient
 ==================
 */
-void SV_FreeClient(client_t *cl)
+void SV_FreeClient( client_t *cl )
 {
+	assert(cl->state > CS_ZOMBIE);
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
+
 	// Kill any existing download
 	SV_CloseDownload(cl);
 
@@ -506,10 +523,14 @@ void SV_DropClient( client_t *drop, const char *reason )
 	int i;
 	char name[MAX_NAME_LENGTH];
 
+	assert(drop->state != CS_FREE);
+
 	if ( drop->state == CS_ZOMBIE )
 	{
 		return;     // already dropped
 	}
+
+	assert(drop->state >= CS_ZOMBIE);
 
 	// VoroN: Stock CoD2 bug fix: game attempts to use already freed name
 	I_strncpyz(name, drop->name, sizeof(name));
@@ -532,7 +553,7 @@ void SV_DropClient( client_t *drop, const char *reason )
 				break;
 			}
 
-			++challenge;
+			challenge++;
 		}
 	}
 
@@ -546,6 +567,7 @@ void SV_DropClient( client_t *drop, const char *reason )
 			SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s\"\0", 101, name, reason);
 	}
 
+	assert(drop - svs.clients >= 0 && drop - svs.clients < MAX_CLIENTS);
 	Com_Printf("%i:%s %s\n", drop - svs.clients, name, reason);
 
 	// add the disconnect command
@@ -767,6 +789,8 @@ gotnewcl:
 	clientNum = newcl - svs.clients;
 	ent = SV_GentityNum( clientNum );
 	newcl->gentity = ent;
+	assert(ent->s.clientNum == ent->s.number);
+	assert(!newcl->scriptId);
 	newcl->scriptId = Scr_AllocArray();
 
 	// save the challenge
@@ -1067,6 +1091,8 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	int iwdFile;
 	char errorMessage[MAX_STRING_CHARS];
 
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
+
 	if ( cl->state == CS_ACTIVE )
 	{
 		return; // Client already in game
@@ -1329,8 +1355,9 @@ SV_ClientThink
 Also called by bot code
 ==================
 */
-void SV_ClientThink(client_t *cl, usercmd_t *cmd)
+void SV_ClientThink( client_t *cl, usercmd_t *cmd )
 {
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 	cl->lastUsercmd = *cmd;
 
 	if ( cl->state != CS_ACTIVE )
@@ -1360,6 +1387,8 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 	usercmd_t cmds[MAX_PACKET_USERCMDS];
 	usercmd_t   *cmd, *oldcmd;
 	playerState_t *ps;
+
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 
 	if ( delta )
 	{
@@ -1396,6 +1425,8 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 	// also use the last acknowledged server command in the key
 	key ^= Com_HashKey( cl->reliableCommandInfo[ cl->reliableAcknowledge & ( MAX_RELIABLE_COMMANDS - 1 ) ].cmd, 32 );
 	ps = SV_GameClientNum(cl - svs.clients);
+	assert(ps);
+	assert(BG_ValidateWeaponNumber( ps->weapon ));
 	MSG_SetDefaultUserCmd(ps, &nullcmd);
 	oldcmd = &nullcmd;
 
@@ -1405,6 +1436,7 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 		MSG_ReadDeltaUsercmdKey( msg, key, oldcmd, cmd );
 		if ( !BG_IsWeaponValid(ps, cmd->weapon) )
 			cmd->weapon = ps->weapon;
+		assert(ps->offHandIndex == static_cast<byte>( ps->offHandIndex ));
 		if ( !BG_IsWeaponValid(ps, cmd->offHandIndex) )
 			cmd->offHandIndex = ps->offHandIndex;
 		oldcmd = cmd;
@@ -1467,7 +1499,7 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 SV_BotUserMove
 ==================
 */
-void SV_BotUserMove(client_t *cl)
+void SV_BotUserMove( client_t *cl )
 {
 	usercmd_t ucmd;
 
@@ -1605,6 +1637,8 @@ void SV_SendClientGameState( client_t *client )
 	msg_t msg;
 	byte msgBuffer[MAX_MSGLEN];
 
+	assert(client - svs.clients >= 0 && client - svs.clients < MAX_CLIENTS);
+
 	while ( client->state && client->netchan.unsentFragments )
 	{
 		SV_Netchan_TransmitNextFragment(&client->netchan);
@@ -1682,7 +1716,7 @@ void SV_SendClientGameState( client_t *client )
 SV_AuthorizeRequest
 =================
 */
-void SV_AuthorizeRequest(netadr_t from, int challenge)
+void SV_AuthorizeRequest( netadr_t from, int challenge )
 {
 	char gameDir[MAX_STRING_CHARS];
 	dvar_t *fs_game;
@@ -1851,7 +1885,7 @@ static void SV_VerifyIwds_f( client_t *cl )
 SV_ResetPureClient_f
 =================
 */
-static void SV_ResetPureClient_f(client_t *cl)
+static void SV_ResetPureClient_f( client_t *cl )
 {
 	cl->pureAuthentic = 0;
 }
@@ -1861,7 +1895,7 @@ static void SV_ResetPureClient_f(client_t *cl)
 SV_MutePlayer_f
 ==================
 */
-static void SV_MutePlayer_f(client_t *cl)
+static void SV_MutePlayer_f( client_t *cl )
 {
 	int muteClient = atoi(SV_Cmd_Argv(1));
 
@@ -1879,7 +1913,7 @@ static void SV_MutePlayer_f(client_t *cl)
 SV_UnmutePlayer_f
 ==================
 */
-static void SV_UnmutePlayer_f(client_t *cl)
+static void SV_UnmutePlayer_f( client_t *cl )
 {
 	int muteClient = atoi(SV_Cmd_Argv(1));
 
@@ -1897,8 +1931,9 @@ static void SV_UnmutePlayer_f(client_t *cl)
 SV_UpdateUserinfo_f
 ==================
 */
-static void SV_UpdateUserinfo_f(client_t *cl)
+static void SV_UpdateUserinfo_f( client_t *cl )
 {
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 	I_strncpyz(cl->userinfo, SV_Cmd_Argv(1), sizeof( cl->userinfo ));
 	SV_UserinfoChanged(cl);
 	// call prog code to allow overrides
@@ -1918,6 +1953,7 @@ The client is going to disconnect, so remove the connection immediately  FIXME: 
 */
 static void SV_Disconnect_f( client_t *cl )
 {
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 	SV_DropClient(cl, "EXE_DISCONNECTED");
 }
 
@@ -1946,6 +1982,7 @@ the same as cl->downloadClientBlock
 */
 static void SV_NextDownload_f( client_t *cl )
 {
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 	int block = atoi( Cmd_Argv( 1 ) );
 
 	if ( block == cl->downloadClientBlock )
@@ -1979,6 +2016,8 @@ Abort a download if in progress
 */
 static void SV_StopDownload_f( client_t *cl )
 {
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
+
 	if ( *cl->downloadName )
 	{
 		Com_DPrintf( "clientDownload: %d : file \"%s\" aborted\n", cl - svs.clients, cl->downloadName );
@@ -2129,6 +2168,8 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK )
 {
 	ucmd_t  *u;
 
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
+
 	Cmd_TokenizeString( s );
 
 	// see if it is a server level command
@@ -2167,6 +2208,8 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg )
 	qboolean clientOk = qtrue;
 	qboolean floodprotect = qtrue;
 	char strBuf[MAX_STRING_CHARS];
+
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 
 	seq = MSG_ReadLong( msg );
 	s = MSG_ReadString( msg, strBuf, sizeof(strBuf) );
@@ -2239,6 +2282,8 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	byte msgBuf[MAX_MSGLEN];
 	msg_t decompressMsg;
 	int c;
+
+	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 
 	MSG_Init(&decompressMsg, msgBuf, sizeof(msgBuf));
 	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msgBuf, msg->cursize - msg->readcount);

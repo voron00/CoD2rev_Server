@@ -721,16 +721,17 @@ void SV_PointTraceToEntity( pointtrace_t *clip, svEntity_t *check, trace_t *trac
 		VectorAdd(entAxis[3], absmin, absmin);
 		VectorAdd(entAxis[3], absmax, absmax);
 	}
-	else if ( clip->priorityMap )
+	else
 	{
+		if ( !clip->priorityMap )
+		{
+			return;
+		}
+
 		VectorCopy(touch->r.currentOrigin, entAxis[3]);
 
 		VectorAdd(entAxis[3], actorLocationalMins, absmin);
 		VectorAdd(entAxis[3], actorLocationalMaxs, absmax);
-	}
-	else
-	{
-		return;
 	}
 
 	if ( CM_TraceBox(&clip->extents, absmin, absmax, trace->fraction) )

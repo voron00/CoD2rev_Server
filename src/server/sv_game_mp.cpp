@@ -11,8 +11,9 @@ qboolean gameInitialized = qfalse;
 SV_GetClientPing
 ====================
 */
-int SV_GetClientPing(int clientNum)
+int SV_GetClientPing( int clientNum )
 {
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
 	return svs.clients[clientNum].ping;
 }
 
@@ -21,8 +22,10 @@ int SV_GetClientPing(int clientNum)
 SV_GetGuid
 ===============
 */
-int SV_GetGuid(int clientNum)
+int SV_GetGuid( int clientNum )
 {
+	assert(sv_maxclients);
+
 	if ( clientNum < 0 || clientNum >= sv_maxclients->current.integer )
 	{
 		return 0;
@@ -36,7 +39,7 @@ int SV_GetGuid(int clientNum)
 SV_MapExists
 ====================
 */
-qboolean SV_MapExists(const char *name)
+qboolean SV_MapExists( const char *name )
 {
 	return FS_ReadFile(va("maps/mp/%s.%s", SV_GetMapBaseName(name), GetBspExtension()), 0) >= 0;
 }
@@ -48,6 +51,8 @@ SV_GetUsercmd
 */
 void SV_GetUsercmd( int clientNum, usercmd_t *cmd )
 {
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
 	if ( clientNum < 0 || clientNum >= sv_maxclients->current.integer )
 	{
 		Com_Error( ERR_DROP, "SV_GetUsercmd: bad clientNum:%i", clientNum );
@@ -61,7 +66,7 @@ void SV_GetUsercmd( int clientNum, usercmd_t *cmd )
 SV_LocateGameData
 ===============
 */
-void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient)
+void SV_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient )
 {
 	sv.gentities = gEnts;
 	sv.gentitySize = sizeofGEntity_t;
@@ -138,8 +143,9 @@ qboolean SV_GetEntityToken( char *buffer, int bufferSize )
 SV_IsLocalClient
 ====================
 */
-qboolean SV_IsLocalClient(int clientNum)
+qboolean SV_IsLocalClient( int clientNum )
 {
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
 	return NET_IsLocalAddress(svs.clients[clientNum].netchan.remoteAddress);
 }
 
@@ -168,7 +174,7 @@ void SV_FreeWeaponInfoMemory()
 SV_Hunk_FreeTempMemoryInternal
 ===============
 */
-void SV_Hunk_FreeTempMemoryInternal(void *buf)
+void SV_Hunk_FreeTempMemoryInternal( void *buf )
 {
 	Hunk_FreeTempMemory(buf);
 }
@@ -178,7 +184,7 @@ void SV_Hunk_FreeTempMemoryInternal(void *buf)
 SV_Hunk_AllocateTempMemoryInternal
 ===============
 */
-void* SV_Hunk_AllocateTempMemoryInternal(int size)
+void* SV_Hunk_AllocateTempMemoryInternal( int size )
 {
 	return Hunk_AllocateTempMemory(size);
 }
@@ -188,7 +194,7 @@ void* SV_Hunk_AllocateTempMemoryInternal(int size)
 SV_Hunk_AllocAlignInternal
 ===============
 */
-void* SV_Hunk_AllocAlignInternal(int size, int aligment)
+void* SV_Hunk_AllocAlignInternal( int size, int aligment )
 {
 	return Hunk_AllocAlignInternal(size, aligment);
 }
@@ -198,7 +204,7 @@ void* SV_Hunk_AllocAlignInternal(int size, int aligment)
 SV_Hunk_AllocInternal
 ===============
 */
-void* SV_Hunk_AllocInternal(int size)
+void* SV_Hunk_AllocInternal( int size )
 {
 	return Hunk_Alloc(size);
 }
@@ -208,7 +214,7 @@ void* SV_Hunk_AllocInternal(int size)
 SV_AllocXModelPrecache
 ===============
 */
-void *SV_AllocXModelPrecache(int size)
+void *SV_AllocXModelPrecache( int size )
 {
 	return Hunk_Alloc(size);
 }
@@ -218,7 +224,7 @@ void *SV_AllocXModelPrecache(int size)
 SV_AllocXModelPrecacheColl
 ===============
 */
-void *SV_AllocXModelPrecacheColl(int size)
+void *SV_AllocXModelPrecacheColl( int size )
 {
 	return Hunk_Alloc(size);
 }
@@ -228,7 +234,7 @@ void *SV_AllocXModelPrecacheColl(int size)
 SV_XModelGet
 ===============
 */
-XModel* SV_XModelGet(const char *name)
+XModel* SV_XModelGet( const char *name )
 {
 	if ( !Com_ValidXModelName(name) )
 		Com_Error(ERR_DROP, "bad model name %s", name);
@@ -241,7 +247,7 @@ XModel* SV_XModelGet(const char *name)
 SV_inSnapshot
 ===============
 */
-qboolean SV_inSnapshot(const float *origin, int iEntityNum)
+qboolean SV_inSnapshot( const vec3_t origin, int iEntityNum )
 {
 	int clientcluster;
 	float fogOpaqueDistSqrd;
@@ -339,7 +345,7 @@ void SV_ResetEntityParsePoint()
 SV_DObjUpdateServerTime
 ===============
 */
-int SV_DObjUpdateServerTime(gentity_t *ent, float dtime, int bNotify)
+int SV_DObjUpdateServerTime( gentity_t *ent, float dtime, int bNotify )
 {
 	DObj *obj;
 
@@ -356,7 +362,7 @@ int SV_DObjUpdateServerTime(gentity_t *ent, float dtime, int bNotify)
 SV_DObjDisplayAnim
 ===============
 */
-void SV_DObjDisplayAnim(gentity_t *ent)
+void SV_DObjDisplayAnim( gentity_t *ent )
 {
 	DObj *obj;
 
@@ -371,7 +377,7 @@ void SV_DObjDisplayAnim(gentity_t *ent)
 SV_DObjInitServerTime
 ===============
 */
-void SV_DObjInitServerTime(gentity_t *ent, float dtime)
+void SV_DObjInitServerTime( gentity_t *ent, float dtime )
 {
 	DObj *obj;
 
@@ -386,10 +392,12 @@ void SV_DObjInitServerTime(gentity_t *ent, float dtime)
 SV_DObjExists
 ===============
 */
-qboolean SV_DObjExists(gentity_t *ent)
+qboolean SV_DObjExists( gentity_t *ent )
 {
 	return Com_GetServerDObj(ent->s.number) != NULL;
 }
+
+#define SKEL_MEM_ALIGNMENT 16
 
 /*
 ===============
@@ -401,7 +409,7 @@ void SV_ResetSkeletonCache()
 	if ( !++sv.skelTimeStamp )
 		++sv.skelTimeStamp;
 
-	g_sv_skel_memory_start = (char *)PADP(g_sv_skel_memory, 16);
+	g_sv_skel_memory_start = (char *)PADP(g_sv_skel_memory, SKEL_MEM_ALIGNMENT);
 	sv.skelMemPos = 0;
 }
 
@@ -410,16 +418,20 @@ void SV_ResetSkeletonCache()
 SV_AllocSkelMemory
 ===============
 */
-char* SV_AllocSkelMemory(unsigned int size)
+char* SV_AllocSkelMemory( unsigned int size )
 {
 	char *pos;
+
+	assert(size);
+	assert(size <= sizeof( g_sv_skel_memory ) - SKEL_MEM_ALIGNMENT);
+	assert(g_sv_skel_memory_start);
 
 	while ( 1 )
 	{
 		pos = &g_sv_skel_memory_start[sv.skelMemPos];
-		sv.skelMemPos += PAD(size, 16);
+		sv.skelMemPos += PAD(size, SKEL_MEM_ALIGNMENT);
 
-		if ( sv.skelMemPos <= sizeof(g_sv_skel_memory) - 16 )
+		if ( sv.skelMemPos <= sizeof(g_sv_skel_memory) - SKEL_MEM_ALIGNMENT )
 			break;
 
 		if ( g_sv_skel_warn_count != sv.skelTimeStamp )
@@ -431,6 +443,7 @@ char* SV_AllocSkelMemory(unsigned int size)
 		SV_ResetSkeletonCache();
 	}
 
+	assert(pos);
 	return pos;
 }
 
@@ -439,7 +452,7 @@ char* SV_AllocSkelMemory(unsigned int size)
 SV_DObjCreateSkelForBone
 ===============
 */
-int SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
+int SV_DObjCreateSkelForBone( gentity_t *ent, int boneIndex )
 {
 	DSkel_t *buf;
 	DObj *obj;
@@ -464,7 +477,7 @@ int SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
 SV_DObjCreateSkelForBones
 ===============
 */
-int SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits)
+int SV_DObjCreateSkelForBones( gentity_t *ent, int *partBits )
 {
 	DSkel_t *buf;
 	DObj *obj;
@@ -489,7 +502,7 @@ int SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits)
 SV_DObjCalcAnim
 ===============
 */
-void SV_DObjCalcAnim(gentity_t *ent, int *partBits)
+void SV_DObjCalcAnim( gentity_t *ent, int *partBits )
 {
 	DObj *obj;
 
@@ -502,7 +515,7 @@ void SV_DObjCalcAnim(gentity_t *ent, int *partBits)
 SV_DObjGetHierarchyBits
 ===============
 */
-void SV_DObjGetHierarchyBits(gentity_t *ent, int boneIndex, int *partBits)
+void SV_DObjGetHierarchyBits( gentity_t *ent, int boneIndex, int *partBits )
 {
 	DObj *obj;
 
@@ -515,7 +528,7 @@ void SV_DObjGetHierarchyBits(gentity_t *ent, int boneIndex, int *partBits)
 SV_DObjCalcSkel
 ===============
 */
-void SV_DObjCalcSkel(gentity_t *ent, int *partBits)
+void SV_DObjCalcSkel( gentity_t *ent, int *partBits )
 {
 	DObj *obj;
 
@@ -528,7 +541,7 @@ void SV_DObjCalcSkel(gentity_t *ent, int *partBits)
 SV_DObjGetTree
 ===============
 */
-XAnimTree_s* SV_DObjGetTree(gentity_t *ent)
+XAnimTree_s* SV_DObjGetTree( gentity_t *ent )
 {
 	DObj *obj;
 
@@ -545,7 +558,7 @@ XAnimTree_s* SV_DObjGetTree(gentity_t *ent)
 SV_DObjSetControlRotTransIndex
 ===============
 */
-int SV_DObjSetControlRotTransIndex(const gentity_t *ent, int *partBits, int boneIndex)
+int SV_DObjSetControlRotTransIndex( const gentity_t *ent, int *partBits, int boneIndex )
 {
 	DObj *obj;
 
@@ -558,7 +571,7 @@ int SV_DObjSetControlRotTransIndex(const gentity_t *ent, int *partBits, int bone
 SV_DObjSetRotTransIndex
 ===============
 */
-int SV_DObjSetRotTransIndex(const gentity_t *ent, int *partBits, int boneIndex)
+int SV_DObjSetRotTransIndex( const gentity_t *ent, int *partBits, int boneIndex )
 {
 	DObj *obj;
 
@@ -571,7 +584,7 @@ int SV_DObjSetRotTransIndex(const gentity_t *ent, int *partBits, int boneIndex)
 SV_DObjGetRotTransArray
 ===============
 */
-DObjAnimMat* SV_DObjGetRotTransArray(gentity_t *ent)
+DObjAnimMat* SV_DObjGetRotTransArray( gentity_t *ent )
 {
 	DObj *obj;
 
@@ -584,7 +597,7 @@ DObjAnimMat* SV_DObjGetRotTransArray(gentity_t *ent)
 SV_DObjGetBoneIndex
 ===============
 */
-int SV_DObjGetBoneIndex(const gentity_t *ent, unsigned int boneName)
+int SV_DObjGetBoneIndex( const gentity_t *ent, unsigned int boneName )
 {
 	DObj *obj;
 
@@ -601,7 +614,7 @@ int SV_DObjGetBoneIndex(const gentity_t *ent, unsigned int boneName)
 SV_DObjNumBones
 ===============
 */
-int SV_DObjNumBones(gentity_t *ent)
+int SV_DObjNumBones( gentity_t *ent )
 {
 	DObj *obj;
 
@@ -614,7 +627,7 @@ int SV_DObjNumBones(gentity_t *ent)
 SV_DObjGetMatrixArray
 ===============
 */
-DObjAnimMat* SV_DObjGetMatrixArray(gentity_t *ent)
+DObjAnimMat* SV_DObjGetMatrixArray( gentity_t *ent )
 {
 	DObj *obj;
 
@@ -627,7 +640,7 @@ DObjAnimMat* SV_DObjGetMatrixArray(gentity_t *ent)
 SV_DObjDumpInfo
 ===============
 */
-void SV_DObjDumpInfo(gentity_t *ent)
+void SV_DObjDumpInfo( gentity_t *ent )
 {
 	DObj *obj;
 
@@ -741,7 +754,7 @@ qboolean SV_GameCommand( void )
 SV_GetServerinfo
 ===============
 */
-void SV_GetServerinfo(char *buffer, int bufferSize)
+void SV_GetServerinfo( char *buffer, int bufferSize )
 {
 	if ( bufferSize < 1 )
 	{
@@ -812,11 +825,12 @@ SV_SetBrushModel
 sets mins and maxs for inline bmodels
 =================
 */
-void SV_SetBrushModel(gentity_t *ent)
+void SV_SetBrushModel( gentity_t *ent )
 {
 	vec3_t maxs;
 	vec3_t mins;
 
+	assert(ent->r.inuse);
 	CM_ModelBounds(ent->s.index, mins, maxs);
 	VectorCopy(mins, ent->r.mins);
 	VectorCopy(maxs, ent->r.maxs);
@@ -834,7 +848,7 @@ SV_InitGameVM
 Called for both a full init and a restart
 ==================
 */
-void SV_InitGameVM(qboolean restart, qboolean registerDvars)
+void SV_InitGameVM( qboolean restart, qboolean registerDvars )
 {
 	int i;
 
@@ -877,7 +891,7 @@ SV_RestartGameProgs
 Called on a map_restart, but not on a normal map change
 ===================
 */
-void SV_RestartGameProgs(qboolean savepersist)
+void SV_RestartGameProgs( qboolean savepersist )
 {
 	G_ShutdownGame(qfalse);
 	com_fixedConsolePosition = 0;
@@ -916,7 +930,7 @@ SV_InitGameProgs
 Called on a normal map change, not on a map_restart
 ===============
 */
-void SV_InitGameProgs(qboolean savepersist)
+void SV_InitGameProgs( qboolean savepersist )
 {
 	gameInitialized = qtrue;
 	SV_InitGameVM(qfalse, savepersist);

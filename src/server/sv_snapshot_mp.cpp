@@ -56,6 +56,8 @@ void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg )
 {
 	int i;
 
+	assert(client - svs.clients >= 0 && client - svs.clients < MAX_CLIENTS);
+
 	if ( client->reliableAcknowledge + 1 < client->reliableSequence && sv_debugReliableCmds->current.boolean )
 		Com_Printf("Client %s has the following un-ack'd reliable commands:\n", client->name);
 
@@ -92,7 +94,8 @@ void SV_ArchiveSnapshot()
 	svEntity_t *svEnt;
 	archivedEntity_s to;
 	gentity_t *ent;
-	int num;
+	int e;
+	archivedEntity_s *baseline;
 
 	if ( !SV_Loaded() )
 	{
@@ -103,6 +106,11 @@ void SV_ArchiveSnapshot()
 	{
 		return;
 	}
+
+	assert(svs.cachedSnapshotEntities);
+	assert(svs.cachedSnapshotClients);
+	assert(svs.archivedSnapshotBuffer);
+	assert(svs.cachedSnapshotFrames);
 
 	MSG_Init(&msg, msg_buf, sizeof(msg_buf));
 
@@ -173,6 +181,7 @@ void SV_ArchiveSnapshot()
 
 			if ( clientNum == newnum )
 			{
+				assert(cachedClient2);
 				MSG_WriteDeltaClient(&msg, &cachedClient2->cs, G_GetClientState(clientNum), qtrue);
 
 				if ( GetFollowPlayerState(clientNum, &ps) )
@@ -220,10 +229,11 @@ void SV_ArchiveSnapshot()
 		}
 
 		MSG_WriteBit0(&msg);
+		int lastEntityNum = -1;
 
-		for ( num = 0; num < sv.num_entities; ++num )
+		for ( e = 0; e < sv.num_entities; e++ )
 		{
-			ent = SV_GentityNum(num);
+			ent = SV_GentityNum(e);
 
 			// never send entities that aren't linked in
 			if ( !ent->r.linked )
@@ -231,7 +241,9 @@ void SV_ArchiveSnapshot()
 				continue;
 			}
 
-			if ( !ent->r.broadcastTime  )
+			assert(ent->s.number == e);
+
+			if ( !ent->r.broadcastTime )
 			{
 				// entities can be flagged to explicitly not be sent to the client
 				if ( ent->r.svFlags & SVF_NOCLIENT )
@@ -250,6 +262,9 @@ void SV_ArchiveSnapshot()
 				}
 			}
 
+			baseline = &sv.svEntities[ent->s.number].baseline;
+			assert( baseline );
+
 			to.s = ent->s;
 			to.r.svFlags = ent->r.svFlags;
 
@@ -264,7 +279,9 @@ void SV_ArchiveSnapshot()
 			VectorCopy(ent->r.absmin, to.r.absmin);
 			VectorCopy(ent->r.absmax, to.r.absmax);
 
-			MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, &to, DELTA_FLAGS_FORCE);
+			assert(lastEntityNum != ent->s.number);
+			MSG_WriteDeltaArchivedEntity(&msg, baseline, &to, DELTA_FLAGS_FORCE);
+			lastEntityNum = ent->s.number;
 		}
 
 		MSG_WriteBits( &msg, ( MAX_GENTITIES - 1 ), GENTITYNUM_BITS );   // end of packetentities
@@ -363,15 +380,17 @@ void SV_ArchiveSnapshot()
 
 	MSG_WriteBit0(&msg);
 
-	for ( num = 0; num < sv.num_entities; ++num )
+	for ( e = 0; e < sv.num_entities; e++ )
 	{
-		ent = SV_GentityNum(num);
+		ent = SV_GentityNum(e);
 
 		// never send entities that aren't linked in
 		if ( !ent->r.linked )
 		{
 			continue;
 		}
+
+		assert(ent->s.number == e);
 
 		if ( !ent->r.broadcastTime  )
 		{
@@ -392,6 +411,9 @@ void SV_ArchiveSnapshot()
 			}
 		}
 
+		baseline = &sv.svEntities[ent->s.number].baseline;
+		assert( baseline );
+
 		archEnt = &svs.cachedSnapshotEntities[svs.nextCachedSnapshotEntities % CACHED_SNAPSHOT_ENTITY_SIZE];
 
 		archEnt->s = ent->s;
@@ -408,7 +430,7 @@ void SV_ArchiveSnapshot()
 		VectorCopy(ent->r.absmin, archEnt->r.absmin);
 		VectorCopy(ent->r.absmax, archEnt->r.absmax);
 
-		MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, archEnt, DELTA_FLAGS_FORCE);
+		MSG_WriteDeltaArchivedEntity(&msg, baseline, archEnt, DELTA_FLAGS_FORCE);
 
 		svs.nextCachedSnapshotEntities++;
 
@@ -474,7 +496,7 @@ void SV_ArchiveSnapshot()
 SV_GetArchivedClientInfo
 ===============
 */
-qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs)
+qboolean SV_GetArchivedClientInfo( int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs )
 {
 	cachedSnapshot_t *cachedSnapshot;
 	unsigned int i;
@@ -492,6 +514,8 @@ qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_
 
 		return qfalse;
 	}
+
+	assert(*pArchiveTime > 0);
 
 	offsettime = svs.time - cachedSnapshot->time;
 	cachedClient = NULL;
@@ -515,6 +539,8 @@ qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_
 	{
 		return qfalse;
 	}
+
+	assert(cachedClient);
 
 	// VoroN: Just in case
 	assert(ps);
@@ -591,7 +617,7 @@ qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_
 SV_GetClientPositionsAtTime
 ===============
 */
-bool SV_GetClientPositionsAtTime(int clientNum, int gametime, vec3_t pos)
+bool SV_GetClientPositionsAtTime( int clientNum, int gametime, vec3_t pos )
 {
 	int pArchiveTime;
 	int frameHistCount;
@@ -732,12 +758,18 @@ void SV_SendMessageToClient( msg_t *msg, client_t *client )
 	int compressedSize;
 	int rateMsec;
 
-	memcpy(svCompressBuf, msg->data, 4);
-	compressedSize = MSG_WriteBitsCompress(msg->data + 4, svCompressBuf + 4, msg->cursize - 4) + 4;
+	assert(client - svs.clients >= 0 && client - svs.clients < MAX_CLIENTS);
+	assert(msg->cursize >= SV_ENCODE_START);
+
+	memcpy(svCompressBuf, msg->data, SV_ENCODE_START);
+	compressedSize = MSG_WriteBitsCompress(msg->data + SV_ENCODE_START, svCompressBuf + SV_ENCODE_START, msg->cursize - SV_ENCODE_START) + SV_ENCODE_START;
 
 	if ( client->dropReason )
 	{
 		SV_DropClient(client, client->dropReason);
+
+		assert(!client->dropReason);
+		assert(client->state == CS_ZOMBIE);
 	}
 
 	// record information about the message
@@ -1005,6 +1037,8 @@ SV_GetCurrentClientInfo
 */
 qboolean SV_GetCurrentClientInfo( int clientNum, playerState_t *ps, clientState_t *cs )
 {
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
 	if ( svs.clients[clientNum].state != CS_ACTIVE )
 	{
 		return qfalse;
@@ -1034,7 +1068,9 @@ void SV_AddCachedEntitiesVisibleFromPoint( int from_num_entities, int from_first
 	float fogOpaqueDistSqrd;
 	int clusternums[MAX_TOTAL_ENT_LEAFS];
 	int lastLeaf;
-	archivedEntity_t *aent;
+	archivedEntity_t *ent;
+
+	assert(SV_Loaded());
 
 	leafnum = CM_PointLeafnum( origin );
 	clientcluster = CM_LeafCluster( leafnum );
@@ -1049,25 +1085,26 @@ void SV_AddCachedEntitiesVisibleFromPoint( int from_num_entities, int from_first
 
 	if ( fogOpaqueDistSqrd == FLT_MAX )
 	{
-		fogOpaqueDistSqrd = 0.0;
+		fogOpaqueDistSqrd = 0;
 	}
 
 	for ( e = 0 ; e < from_num_entities ; e++ )
 	{
-		aent = &svs.cachedSnapshotEntities[(e + from_first_entity) % CACHED_SNAPSHOT_ENTITY_SIZE];
+		ent = &svs.cachedSnapshotEntities[(e + from_first_entity) % CACHED_SNAPSHOT_ENTITY_SIZE];
+		//assert(!entityIndex[ent->s.number]);
 
-		if ( (1 << (clientNum & 31)) & aent->r.clientMask[clientNum >> 5] || aent->s.number == clientNum )
+		if ( (1 << (clientNum & 31)) & ent->r.clientMask[clientNum >> 5] || ent->s.number == clientNum )
 		{
 			continue;
 		}
 
-		if ( aent->r.svFlags & 0x18 )
+		if ( ent->r.svFlags & 0x18 )
 		{
 			SV_AddArchivedEntToSnapshot( e, eNums );
 			continue;
 		}
 
-		boxleafnums = CM_BoxLeafnums(aent->r.absmin, aent->r.absmax, clusternums, sizeof(clusternums) / sizeof(clusternums[0]), &lastLeaf);
+		boxleafnums = CM_BoxLeafnums(ent->r.absmin, ent->r.absmax, clusternums, sizeof(clusternums) / sizeof(clusternums[0]), &lastLeaf);
 
 		if ( !boxleafnums )
 		{
@@ -1091,7 +1128,7 @@ void SV_AddCachedEntitiesVisibleFromPoint( int from_num_entities, int from_first
 			continue;
 		}
 
-		if ( !(fogOpaqueDistSqrd == 0.0 || BoxDistSqrdExceeds(aent->r.absmin, aent->r.absmax, origin, fogOpaqueDistSqrd) == qfalse) )
+		if ( !(fogOpaqueDistSqrd == 0 || BoxDistSqrdExceeds(ent->r.absmin, ent->r.absmax, origin, fogOpaqueDistSqrd) == qfalse) )
 		{
 			continue;
 		}
@@ -1118,6 +1155,8 @@ void SV_AddEntitiesVisibleFromPoint( vec3_t origin, int clientNum, snapshotEntit
 	byte    *bitvector;
 	float fogOpaqueDistSqrd;
 
+	assert(SV_Loaded());
+
 	leafnum = CM_PointLeafnum( origin );
 	clientcluster = CM_LeafCluster( leafnum );
 
@@ -1131,7 +1170,7 @@ void SV_AddEntitiesVisibleFromPoint( vec3_t origin, int clientNum, snapshotEntit
 
 	if ( fogOpaqueDistSqrd == FLT_MAX )
 	{
-		fogOpaqueDistSqrd = 0.0;
+		fogOpaqueDistSqrd = 0;
 	}
 
 	for ( e = 0 ; e < sv.num_entities ; e++ )
@@ -1141,7 +1180,14 @@ void SV_AddEntitiesVisibleFromPoint( vec3_t origin, int clientNum, snapshotEntit
 		// never send entities that aren't linked in.
 		// never send client's own entity, because it can
 		// be regenerated from the playerstate
-		if ( !ent->r.linked || e == clientNum)
+		if ( !ent->r.linked )
+		{
+			continue;
+		}
+
+		assert(ent->s.number == e);
+
+		if ( e == clientNum )
 		{
 			continue;
 		}
@@ -1219,7 +1265,7 @@ void SV_AddEntitiesVisibleFromPoint( vec3_t origin, int clientNum, snapshotEntit
 				}
 			}
 
-			if ( fogOpaqueDistSqrd != 0.0)
+			if ( fogOpaqueDistSqrd != 0)
 			{
 				if ( BoxDistSqrdExceeds(ent->r.absmin, ent->r.absmax, origin, fogOpaqueDistSqrd) )
 				{
@@ -1402,6 +1448,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 	cachedClient_t *oldCachedClient;
 
 	frame = &svs.archivedSnapshotFrames[archivedFrame % NUM_ARCHIVED_FRAMES];
+	assert(frame->size);
 
 	if ( frame->start < svs.nextArchivedSnapshotBuffer - ARCHIVED_SNAPSHOT_BUFFER_SIZE )
 	{
@@ -1421,6 +1468,8 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 		if ( cachedFrame->archivedFrame == archivedFrame )
 		{
+			assert(cachedFrame->first_entity >= 0);
+
 			if ( cachedFrame->first_entity >= svs.nextCachedSnapshotEntities - CACHED_SNAPSHOT_ENTITY_SIZE )
 			{
 				if ( cachedFrame->first_client >= svs.nextCachedSnapshotClients - CACHED_SNAPSHOT_CLIENT_SIZE )
@@ -1451,6 +1500,8 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 	if ( MSG_ReadBit(&msg) )
 	{
+		assert(!msg.overflowed);
+
 		cachedFrame = &svs.cachedSnapshotFrames[svs.nextCachedSnapshotFrames % NUM_CACHED_FRAMES];
 
 		cachedFrame->archivedFrame = archivedFrame;
@@ -1530,6 +1581,8 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 		return cachedFrame;
 	}
 
+	assert(!msg.overflowed);
+
 	oldArchivedFrame = MSG_ReadLong(&msg);
 
 	if ( oldArchivedFrame < svs.nextArchivedSnapshotFrames - NUM_ARCHIVED_FRAMES )
@@ -1550,6 +1603,8 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 	{
 		return NULL;
 	}
+
+	assert(!oldCachedFrame->usesDelta);
 
 	cachedFrame = &svs.cachedSnapshotFrames[svs.nextCachedSnapshotFrames % NUM_CACHED_FRAMES];
 
@@ -1580,6 +1635,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 	while ( MSG_ReadBit(&msg) )
 	{
 		newnum = MSG_ReadBits(&msg, GCLIENTNUM_BITS);
+		assert(newnum >= 0);
 
 		if ( msg.readcount > msg.cursize )
 		{
@@ -1604,6 +1660,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 		if ( oldnum == newnum )
 		{
 			cachedClient = &svs.cachedSnapshotClients[svs.nextCachedSnapshotClients % CACHED_SNAPSHOT_CLIENT_SIZE];
+			assert(cachedClient != oldCachedClient);
 
 			MSG_ReadDeltaClient(&msg, &oldCachedClient->cs, &cachedClient->cs, newnum);
 
@@ -1640,6 +1697,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 		if ( oldnum != newnum )
 		{
+			assert(oldnum > newnum);
 			cachedClient = &svs.cachedSnapshotClients[svs.nextCachedSnapshotClients % CACHED_SNAPSHOT_CLIENT_SIZE];
 
 			MSG_ReadDeltaClient(&msg, NULL, &cachedClient->cs, newnum);
@@ -1714,6 +1772,7 @@ void SV_WriteSnapshotToClient( client_t *client, msg_t *msg )
 
 	// this is the snapshot we are creating
 	frame = &client->frames[ client->netchan.outgoingSequence & PACKET_MASK ];
+	assert(frame);
 
 	// try to use a previous frame as the source for delta compressing the snapshot
 	if ( client->deltaMessage <= 0 || client->state != CS_ACTIVE )
@@ -1733,6 +1792,7 @@ void SV_WriteSnapshotToClient( client_t *client, msg_t *msg )
 	{
 		// we have a valid snapshot to delta from
 		oldframe = &client->frames[ client->deltaMessage & PACKET_MASK ];
+		assert(oldframe);
 		lastframe = client->netchan.outgoingSequence - client->deltaMessage;
 
 		// the snapshot's entities may still have rolled off the buffer, though
@@ -1811,6 +1871,9 @@ cachedSnapshot_t* SV_GetCachedSnapshot( int *pArchiveTime )
 {
 	cachedSnapshot_t *cachedFrame;
 	int archivedFrame;
+
+	assert(SV_Loaded());
+	assert(sv_fps->current.integer);
 
 	if ( !svs.archiveEnabled )
 	{
