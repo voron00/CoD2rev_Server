@@ -439,7 +439,7 @@ void PM_UpdateLean( playerState_t *ps, float msec, usercmd_t *cmd,
 	leaning = 0;
 	leanofs = 0;
 
-	if ( cmd->buttons & ( BUTTON_LEANLEFT | BUTTON_LEANRIGHT ) && !(ps->pm_flags & PMF_UNKNOWN_8000) && ps->pm_type < PM_DEAD )
+	if ( cmd->buttons & ( BUTTON_LEANLEFT | BUTTON_LEANRIGHT ) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type < PM_DEAD )
 	{
 		if ( ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED )
 		{
@@ -2943,7 +2943,7 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 			}
 		}
 	}
-	else if ( !(ps->pm_flags & PMF_UNKNOWN_8000) )
+	else if ( !(ps->pm_flags & PMF_FROZEN) )
 	{
 		if ( ps->pm_flags & PMF_LADDER && pm->cmd.buttons & (BUTTON_PRONE | BUTTON_CROUCH) )
 		{
@@ -4139,7 +4139,7 @@ void PmoveSingle( pmove_t *pm )
 	// RF, update conditional values for anim system
 	BG_AnimUpdatePlayerStateConditions(pm);
 
-	if ( ps->pm_flags & PMF_UNKNOWN_8000 )
+	if ( ps->pm_flags & PMF_FROZEN )
 	{
 		pm->cmd.buttons &= (BUTTON_PRONE | BUTTON_CROUCH | BUTTON_CANNOT_PRONE);
 		pm->cmd.forwardmove = 0;

@@ -1313,7 +1313,7 @@ enum proneCheckType_t
 #define PMF_RESPAWNED       0x1000
 #define PMF_MELEE           0x2000
 #define PMF_BREATH          0x4000
-#define PMF_UNKNOWN_8000    0x8000
+#define PMF_FROZEN          0x8000 // freezeControls func
 #define PMF_PRONE_BLOCKED   0x10000
 #define PMF_BINOCULARS      0x20000
 #define PMF_LADDER_END      0x40000 // something to help with ladder transition

@@ -4443,7 +4443,7 @@ void PM_Weapon_CheckForChangeWeapon( pmove_t *pm )
 
 	if ( ps->weapon != pm->cmd.weapon )
 	{
-		if ( ( !(ps->pm_flags & PMF_UNKNOWN_8000) || !ps->weapon ) )
+		if ( ( !(ps->pm_flags & PMF_FROZEN) || !ps->weapon ) )
 		{
 			if ( !pm->cmd.weapon || BG_IsWeaponValid(ps, pm->cmd.weapon) )
 			{

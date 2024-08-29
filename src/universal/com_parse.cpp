@@ -3,7 +3,7 @@
 
 static ParseThreadInfo g_parse[NUMTHREADS];
 
-const char* punctuation[17] =
+const char* punctuation[] =
 {
 	"+=",
 	"-=",

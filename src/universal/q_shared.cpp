@@ -7,8 +7,8 @@ static short ( *_BigShort )( short l ) = NULL;
 static short ( *_LittleShort )( short l ) = NULL;
 static int ( *_BigLong )( int l ) = NULL;
 static int ( *_LittleLong )( int l ) = NULL;
-static qint64 ( *_BigLong64 )( qint64 l ) = NULL;
-static qint64 ( *_LittleLong64 )( qint64 l ) = NULL;
+static int64_t ( *_BigLong64 )( int64_t l ) = NULL;
+static int64_t ( *_LittleLong64 )( int64_t l ) = NULL;
 static float ( *_BigFloat )( float l ) = NULL;
 static float ( *_LittleFloat )( float l ) = NULL;
 
@@ -22,7 +22,7 @@ int LittleLong( int l )
 	return _LittleLong( l );
 }
 
-qint64 LittleLong64( qint64 l )
+int64_t LittleLong64( int64_t l )
 {
 	return _LittleLong64( l );
 }
@@ -42,7 +42,7 @@ int BigLong( int l )
 	return _BigLong( l );
 }
 
-qint64 BigLong64( qint64 l )
+int64_t BigLong64( int64_t l )
 {
 	return _BigLong64( l );
 }
@@ -84,23 +84,23 @@ int LongNoSwap( int l )
 	return l;
 }
 
-qint64 Long64Swap( qint64 ll )
+int64_t Long64Swap (int64_t i)
 {
-	qint64 result;
+	byte b1, b2, b3, b4,b5,b6,b7,b8;
 
-	result.b0 = ll.b7;
-	result.b1 = ll.b6;
-	result.b2 = ll.b5;
-	result.b3 = ll.b4;
-	result.b4 = ll.b3;
-	result.b5 = ll.b2;
-	result.b6 = ll.b1;
-	result.b7 = ll.b0;
+	b1 = i & 255;
+	b2 = ( i >> 8 ) & 255;
+	b3 = ( i>>16 ) & 255;
+	b4 = ( i>>24 ) & 255;
+	b5 = ( i>>32 ) & 255;
+	b6 = ( i>>40 ) & 255;
+	b7 = ( i>>48 ) & 255;
+	b8 = ( i>>56 ) & 255;
 
-	return result;
+	return ((int64_t)b1 << 56) + ((int64_t)b2 << 48) + ((int64_t)b3 << 40) +((int64_t)b4 << 32) +((int64_t)b5 << 24) +((int64_t)b6 << 16) + ((int64_t)b7 << 8)+ b8;
 }
 
-qint64 Long64NoSwap( qint64 ll )
+int64_t Long64NoSwap( int64_t ll )
 {
 	return ll;
 }

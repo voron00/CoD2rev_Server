@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <math.h>
 
 #include "com_math.h"
@@ -251,20 +252,6 @@ typedef struct usercmd_s
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define SOLID_BMODEL    0xffffff
 
-// 64-bit integers for global rankings interface
-// implemented as a struct for qvm compatibility
-typedef struct
-{
-	byte	b0;
-	byte	b1;
-	byte	b2;
-	byte	b3;
-	byte	b4;
-	byte	b5;
-	byte	b6;
-	byte	b7;
-} qint64;
-
 #define MAX_TOKENLENGTH     1024
 typedef struct pc_token_s
 {
@@ -327,12 +314,12 @@ void CM_CalcTraceEntents(TraceExtents *extents);
 
 short   LittleShort( short l );
 int     LittleLong( int l );
-qint64  LittleLong64( qint64 l );
+int64_t LittleLong64( int64_t l );
 float   LittleFloat( float l );
 
 short   BigShort( short l );
 int BigLong( int l );
-qint64  BigLong64( qint64 l );
+int64_t  BigLong64( int64_t l );
 float   BigFloat( float l );
 
 void Swap_Init( void );
