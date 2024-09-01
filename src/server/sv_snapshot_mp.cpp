@@ -1517,7 +1517,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 		while ( MSG_ReadBit(&msg) )
 		{
-			newnum = MSG_ReadBits(&msg, GCLIENTNUM_BITS);
+			newnum = MSG_ReadBits(&msg, CLIENTNUM_BITS);
 
 			if ( msg.readcount > msg.cursize )
 			{
@@ -1634,7 +1634,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 	while ( MSG_ReadBit(&msg) )
 	{
-		newnum = MSG_ReadBits(&msg, GCLIENTNUM_BITS);
+		newnum = MSG_ReadBits(&msg, CLIENTNUM_BITS);
 		assert(newnum >= 0);
 
 		if ( msg.readcount > msg.cursize )

@@ -191,8 +191,8 @@ typedef int	clipHandle_t;
 #define GENTITYNUM_BITS     10  // JPW NERVE put q3ta default back for testing	// don't need to send any more
 #define MAX_GENTITIES       ( 1 << GENTITYNUM_BITS )
 
-#define GCLIENTNUM_BITS    6
-#define MAX_CLIENTS       ( 1 << GCLIENTNUM_BITS ) // JPW NERVE back to q3ta default was 128		// absolute limit
+#define CLIENTNUM_BITS    6
+#define MAX_CLIENTS       ( 1 << CLIENTNUM_BITS ) // JPW NERVE back to q3ta default was 128		// absolute limit
 
 // entitynums are communicated with GENTITY_BITS, so any reserved
 // values thatare going to be communcated over the net need to
