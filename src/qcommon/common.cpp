@@ -1070,7 +1070,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 	FxMem_Init();
 #endif
 	Sys_Init();
-	Netchan_Init(Com_Milliseconds());
+	Netchan_Init();
 	Scr_Init();
 	Scr_UpdateSettings();
 	XAnimInit();

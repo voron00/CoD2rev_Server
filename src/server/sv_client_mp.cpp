@@ -798,7 +798,7 @@ gotnewcl:
 	newcl->guid = guid;
 
 	// save the address
-	Netchan_Prepare(NS_SERVER, &newcl->netchan, from, qport);
+	Netchan_Setup(NS_SERVER, &newcl->netchan, from, qport);
 #ifdef LIBCOD
 	newcl->netchan.protocol = version;
 #endif

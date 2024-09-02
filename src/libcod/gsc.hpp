@@ -145,6 +145,7 @@ void SV_CalcPings_libcod( void );
 void SV_CheckTimeouts_libcod( void );
 void SV_BotUserMove_libcod(client_t *client);
 void SV_ClientThink_libcod(client_t *cl, usercmd_t *cmd);
+const char* NET_AdrToStringNoPort( netadr_t a );
 
 void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
 void SV_AddLibcodCommands();
