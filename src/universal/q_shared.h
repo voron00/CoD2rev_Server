@@ -435,4 +435,3 @@ qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFi
 void SetConfigString(char **ppszConfigString, const char *pszKeyValue);
 void SetConfigString2(unsigned char *pMember, const char *pszKeyValue);
 int I_DrawStrlen(const char *str);
-int Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQuotes);

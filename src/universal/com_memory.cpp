@@ -362,12 +362,6 @@ void Hunk_ClearTempMemoryHigh()
 	Hunk_ClearTempMemoryHighInternal();
 }
 
-void Hunk_ClearTempMemory()
-{
-	Hunk_ClearTempMemoryInternal();
-	Hunk_ClearTempMemoryHighInternal();
-}
-
 void* TempMalloc(int size)
 {
 	int pos;

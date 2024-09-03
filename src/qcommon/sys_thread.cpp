@@ -10,9 +10,7 @@ static pthread_mutex_t crit_sections[CRITSECT_COUNT];
 
 threadid_t threadId[NUMTHREADS];
 threadid_t mainthread;
-
-void* g_threadValues[NUMTHREADS + MAX_KEYS];
-
+void* g_threadValues[NUMTHREADS];
 va_info_t va_info[NUMTHREADS];
 jmp_buf g_com_error[NUMTHREADS];
 TraceThreadInfo g_traceThreadInfo[NUMTHREADS];

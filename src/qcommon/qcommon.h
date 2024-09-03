@@ -93,6 +93,16 @@ char *Sys_DefaultInstallPath(void);
 void Sys_SetDefaultHomePath(const char *path);
 const char *Sys_DefaultHomePath(void);
 
+int Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQuotes);
+int Com_ModifyMsec( int msec );
+void Com_ErrorCleanup( void );
+void Com_SetCinematic();
+void Com_ClearTempMemory();
+void Com_ExecStartupConfigs( const char *configFile );
+void COM_PlayIntroMovies();
+void Com_StartupConfigs();
+void Com_DedicatedModified();
+
 enum errorParm_t
 {
 	ERR_FATAL = 0x0,

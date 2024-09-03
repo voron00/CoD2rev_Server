@@ -33,6 +33,12 @@ struct languageInfo_t
 	int bPresent;
 };
 
+extern dvar_t* loc_language;
+extern dvar_t* loc_forceEnglish;
+extern dvar_t* loc_translate;
+extern dvar_t* loc_warnings;
+extern dvar_t* loc_warningsAsErrors;
+
 qboolean SEH_GetLanguageIndexForName(const char* language, int *langindex);
 const char *SEH_GetLanguageName(const int iLanguage);
 int SEH_GetCurrentLanguage();
