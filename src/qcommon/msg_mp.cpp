@@ -23,7 +23,7 @@ void MSG_SetDefaultUserCmd( playerState_t *ps, usercmd_t *ucmd )
 		ucmd->angles[i] = ANGLE2SHORT( ps->viewangles[i] ) - ps->delta_angles[i];
 	}
 
-	if ( !(ps->pm_flags & PMF_UNKNOWN_800000) )
+	if ( !(ps->pm_flags & PMF_PLAYER) )
 	{
 		return;
 	}

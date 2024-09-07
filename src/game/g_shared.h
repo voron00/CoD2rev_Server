@@ -261,6 +261,10 @@ enum statIndex_t
 	MAX_STATS = 0x6,
 };
 
+// gentity->flags
+#define FL_GODMODE 0x0000001
+#define FL_DEMIGOD 0x0000002
+
 typedef struct playerState_s
 {
 	int commandTime;
@@ -1080,6 +1084,17 @@ typedef enum
 	EV_MAX_EVENTS
 } entity_event_t;
 
+inline int singleClientEvents[] =
+{
+	EV_STANCE_FORCE_STAND,
+	EV_STANCE_FORCE_CROUCH,
+	EV_STANCE_FORCE_PRONE,
+	EV_STEP_VIEW,
+	EV_BULLET_HIT_CLIENT_SMALL,
+	EV_BULLET_HIT_CLIENT_LARGE,
+	-1,
+};
+
 enum entityType_t
 {
 	ET_GENERAL = 0x0,
@@ -1150,14 +1165,25 @@ enum cs_index_t
 	CS_MULTI_MAPWINNER = 22,
 };
 
+enum fixed_link_t
+{
+	FIXED_LINK_ANGLES = 0x0,
+	FIXED_LINK_ANGLES_YAW_ONLY = 0x1,
+	FIXED_LINK_ANGLES_NONE = 0x2,
+};
+
 // entity->svFlags
 // the server does not know how to interpret most of the values
 // in entityStates (level eType), so the game must explicitly flag
 // special server behaviors
 #define	SVF_NOCLIENT  0x00000001 // don't send entity to clients, even if it has effects
+#define	SVF_BODY      0x00000002 // player or corpse
+#define	SVF_DOBJ      0x00000004 // dobj model, can be player model, script model, item.
 #define	SVF_BROADCAST 0x00000008 // send to all connected clients
-#define SVF_DISK      0x00000040
+#define SVF_RADIUS    0x00000020 // trigger_radius and few other things
+#define SVF_DISK      0x00000040 // trigger_disk and few other things
 
+#define DFLAGS_NONE		     		 0
 #define DFLAGS_RADIUS				 1
 #define DFLAGS_NO_ARMOR				 2
 #define DFLAGS_NO_KNOCKBACK			 4
@@ -1165,11 +1191,25 @@ enum cs_index_t
 #define DFLAGS_NO_PROTECTION		 16
 #define DFLAGS_PASSTHRU				 32
 
+#define ENT_HANDLER_ACTOR_INIT      1
 #define ENT_HANDLER_GRENADE         7
 #define ENT_HANDLER_ROCKET          8
+#define ENT_HANDLER_CLIENT          9
+#define ENT_HANDLER_CLIENT_SPECTATOR 10
+#define ENT_HANDLER_CLIENT_DEAD     11
 #define ENT_HANDLER_PLAYER_CLONE    12
+#define ENT_HANDLER_PLAYER_BLOCK    19
 
 extern dvar_t *g_password;
+extern dvar_t *g_playerCollisionEjectSpeed;
+extern dvar_t *g_inactivity;
+extern dvar_t *g_antilag;
+extern dvar_t *g_smoothClients;
+extern dvar_t *g_gravity;
+extern dvar_t *g_speed;
+extern dvar_t *g_debugLocDamage;
+extern dvar_t *g_synchronousClients;
+extern dvar_t *g_mantleBlockTimeBuffer;
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
@@ -1276,7 +1316,6 @@ void G_DObjCalcPose(gentity_s *ent);
 void G_DObjCalcBone(gentity_s *ent, int boneIndex);
 
 qboolean G_UpdateClientInfo(gentity_s *ent);
-void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap);
 void G_FreeEntityDelay(gentity_s *ent);
 
 gentity_t* GetEntity(scr_entref_t entref);
@@ -1418,6 +1457,8 @@ void G_FreeAnimTreeInstances();
 
 #include "../server/server.h"
 void G_BroadcastVoice(gentity_s *talker, VoicePacket_t *voicePacket);
+
+void G_PlayerStateToEntityStateExtrapolate( playerState_t *ps, entityState_t *s, int time, qboolean snap );
 
 void GScr_AddFieldsForEntity();
 void GScr_AddFieldsForRadiant();
@@ -1562,12 +1603,14 @@ void turret_controller(gentity_s *self, int *partBits);
 void FinishSpawningItem(gentity_s *ent);
 void DroppedItemClearOwner(gentity_s *pSelf);
 
+#define COMPFR_GET_INDEX( i ) ( i & ( MAX_CLIENTS - 1 ) )
+unsigned int G_GetNonPVSFriendlyInfo(gentity_s *pSelf, float *vPosition, int iLastUpdateEnt);
 
 void SpectatorClientEndFrame(gentity_s *ent);
 int StuckInClient(gentity_s *self);
 void ClientEndFrame(gentity_s *entity);
 void ClientSpawn(gentity_s *ent, const float *spawn_origin, const float *spawn_angles);
-void G_UpdatePlayerContents(gentity_s *ent);
+void G_SetClientContents(gentity_s *ent);
 gentity_s* G_SpawnPlayerClone();
 int G_GetFreePlayerCorpseIndex();
 void G_GetItemClassname(const gitem_s *item, unsigned short *out);

@@ -57,7 +57,6 @@ dvar_t *player_meleeHeight;
 dvar_t *g_dumpAnims;
 dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
-dvar_t *g_mantleBlockEnable;
 dvar_t *g_mantleBlockTimeBuffer;
 
 dvar_t *g_fixedWeaponSpreads;
@@ -979,7 +978,6 @@ void G_RegisterDvars()
 	g_dumpAnims = Dvar_RegisterInt("g_dumpAnims", -1, -1, 1023, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	g_useholdtime = Dvar_RegisterInt("g_useholdtime", 0, 0, 0x7FFFFFFF, DVAR_CHANGEABLE_RESET);
 	g_useholdspawndelay = Dvar_RegisterInt("g_useholdspawndelay", 1, 0, 10, DVAR_ARCHIVE | DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	g_mantleBlockEnable = Dvar_RegisterBool("g_mantleBlockEnable", 1, DVAR_CHANGEABLE_RESET);
 	g_mantleBlockTimeBuffer = Dvar_RegisterInt("g_mantleBlockTimeBuffer", 500, 0, 60000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	BG_RegisterDvars();
 	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", 0, DVAR_CHANGEABLE_RESET);

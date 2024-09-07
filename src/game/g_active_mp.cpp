@@ -1,746 +1,90 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-int singleClientEvents[] =
+/*
+===============
+GetFollowPlayerState
+===============
+*/
+qboolean GetFollowPlayerState( int clientNum, playerState_t *ps )
 {
-	140,
-	141,
-	142,
-	143,
-	185,
-	186,
-	-1,
-};
+	gclient_t *client;
 
-vec3_t TouchTriggersgentity_range = { 40.0, 40.0, 52.0 };
+	assert( clientNum >= 0 && clientNum < level.maxclients );
+	client = g_entities[clientNum].client;
 
-qboolean G_UpdateClientInfo(gentity_s *ent)
-{
-	gclient_s *client;
-	qboolean updated = 0;
-	int i;
-	const char *tagName;
-	const char *modelName;
-	clientInfo_t *info;
+	assert(client);
+	assert(client == g_entities[clientNum].client);
 
-	client = ent->client;
-	info = &level_bgs.clientinfo[ent->s.clientNum];
-	modelName = G_ModelName(ent->model);
-	client->sess.state.modelindex = ent->model;
-
-	if ( strcmp(info->model, modelName) )
+	if ( !(client->ps.pm_flags & PMF_PLAYER) )
 	{
-		updated = 1;
-		I_strncpyz(info->model, modelName, 64);
+		return qfalse;
 	}
 
-	for ( i = 0; i < 6; ++i )
-	{
-		if ( ent->attachModelNames[i] )
-		{
-			modelName = G_ModelName(ent->attachModelNames[i]);
-			client->sess.state.attachModelIndex[i] = ent->attachModelNames[i];
+	*ps = client->ps;
+	memset(&ps->hud.current, 0, sizeof(ps->hud.current));
 
-			if ( strcmp(info->attachModelNames[i], modelName) )
-			{
-				updated = 1;
-				I_strncpyz(info->attachModelNames[i], modelName, 64);
-			}
-
-			tagName = SL_ConvertToString(ent->attachTagNames[i]);
-			client->sess.state.attachTagIndex[i] = G_TagIndex(tagName);
-
-			if ( strcmp(info->attachTagNames[i], tagName) )
-			{
-				updated = 1;
-				I_strncpyz(info->attachTagNames[i], tagName, 64);
-			}
-		}
-		else
-		{
-			info->attachModelNames[i][0] = 0;
-			info->attachTagNames[i][0] = 0;
-			client->sess.state.attachModelIndex[i] = 0;
-			client->sess.state.attachTagIndex[i] = 0;
-		}
-	}
-
-	return updated;
+	return qtrue;
 }
 
-void G_UpdatePlayerContents(gentity_s *ent)
+/*
+===============
+G_ClientCanSpectateTeam
+===============
+*/
+qboolean G_ClientCanSpectateTeam( gclient_t *client, int team )
+{
+	return (client->sess.noSpectate & (1 << team)) == qfalse;
+}
+
+/*
+===============
+G_SetClientContents
+===============
+*/
+void G_SetClientContents( gentity_t *pEnt )
 {
 #ifdef LIBCOD
-	if (!g_playerCollision->current.boolean)
+	if ( !g_playerCollision->current.boolean )
+	{
 		return;
+	}
 #endif
-	if ( ent->client->noclip )
+
+	assert(pEnt->client);
+
+	if ( pEnt->client->noclip )
 	{
-		ent->r.contents = 0;
-	}
-	else if ( ent->client->ufo )
-	{
-		ent->r.contents = 0;
-	}
-	else if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
-	{
-		ent->r.contents = 0;
-	}
-	else
-	{
-		ent->r.contents = 0x2000000;
-	}
-}
-
-void G_PlayerEvent(int clientNum, int event)
-{
-	vec3_t kickAVel;
-
-	if ( event >= EV_FIRE_WEAPON && (event <= EV_FIRE_WEAPON_LASTSHOT || event == EV_FIRE_WEAPON_MG42) )
-		BG_WeaponFireRecoil(&g_entities[clientNum].client->ps, g_entities[clientNum].client->vGunSpeed, kickAVel);
-}
-
-void G_PlayerStateToEntityStateExtrapolate(playerState_s *ps, entityState_s *s, int time, int snap)
-{
-	int flags;
-	float lerpTime;
-	byte event;
-	int j;
-	int i;
-
-	s->pos.trType = TR_LINEAR_STOP;
-	VectorCopy(ps->origin, s->pos.trBase);
-	VectorCopy(ps->velocity, s->pos.trDelta);
-	s->pos.trTime = time;
-	s->pos.trDuration = 50;
-	s->apos.trType = TR_INTERPOLATE;
-	VectorCopy(ps->viewangles, s->apos.trBase);
-	s->angles2[1] = (float)ps->movementDir;
-	s->eFlags = ps->eFlags;
-
-	if ( ps->entityEventSequence - ps->eventSequence >= 0 )
-	{
-		s->eventParm = 0;
-	}
-	else
-	{
-		if ( ps->eventSequence - ps->entityEventSequence > 4 )
-			ps->entityEventSequence = ps->eventSequence - 4;
-
-		s->eventParm = LOBYTE(ps->eventParms[ps->entityEventSequence++ & 3]);
-	}
-
-	if ( ps->oldEventSequence - ps->eventSequence > 0 )
-		ps->oldEventSequence = ps->eventSequence;
-
-	for ( i = ps->oldEventSequence; i != ps->eventSequence; ++i )
-	{
-		event = ps->events[i & 3];
-		G_PlayerEvent(s->number, event);
-
-		for ( j = 0; singleClientEvents[j] > 0 && singleClientEvents[j] != event; ++j )
-			;
-
-		if ( singleClientEvents[j] < 0 )
-		{
-			s->events[s->eventSequence & 3] = event;
-			s->eventParms[s->eventSequence++ & 3] = LOBYTE(ps->eventParms[i & 3]);
-		}
-	}
-
-	ps->oldEventSequence = ps->eventSequence;
-	s->weapon = LOBYTE(ps->weapon);
-	s->groundEntityNum = LOWORD(ps->groundEntityNum);
-
-	if ( (ps->pm_flags & 0xC00000) != 0 )
-		s->eType = ET_PLAYER;
-	else
-		s->eType = ET_INVISIBLE;
-
-	if ( snap )
-	{
-		s->pos.trBase[0] = (float)(int)s->pos.trBase[0];
-		s->pos.trBase[1] = (float)(int)s->pos.trBase[1];
-		s->pos.trBase[2] = (float)(int)s->pos.trBase[2];
-		s->apos.trBase[0] = (float)(int)s->apos.trBase[0];
-		s->apos.trBase[1] = (float)(int)s->apos.trBase[1];
-		s->apos.trBase[2] = (float)(int)s->apos.trBase[2];
-	}
-
-	s->legsAnim = ps->legsAnim;
-	s->torsoAnim = ps->torsoAnim;
-	s->clientNum = ps->clientNum;
-
-	if ( (ps->eFlags & 0x300) != 0 )
-		s->otherEntityNum = ps->viewlocked_entNum;
-
-	if ( ps->pm_type <= PM_INTERMISSION )
-		flags = s->eFlags & 0xFFFDFFFF;
-	else
-		flags = s->eFlags | 0x20000;
-
-	s->eFlags = flags;
-
-	if ( (ps->pm_flags & 0x40) != 0 )
-		flags = s->eFlags | 0x40000;
-	else
-		flags = s->eFlags & 0xFFFBFFFF;
-
-	s->eFlags = flags;
-	s->leanf = ps->leanf;
-
-	if ( PM_GetEffectiveStance(ps) == 1 )
-	{
-		lerpTime = (float)(ps->commandTime - ps->viewHeightLerpTime)
-		           / (float)PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
-
-		if ( lerpTime >= 0.0 )
-		{
-			if ( lerpTime > 1.0 )
-				lerpTime = 1.0;
-		}
-		else
-		{
-			lerpTime = 0.0;
-		}
-
-		if ( !ps->viewHeightLerpDown )
-			lerpTime = 1.0 - lerpTime;
-
-		s->fTorsoHeight = ps->fTorsoHeight * lerpTime;
-		s->fTorsoPitch = AngleNormalize180(ps->fTorsoPitch) * lerpTime;
-		s->fWaistPitch = AngleNormalize180(ps->fWaistPitch) * lerpTime;
-	}
-	else
-	{
-		s->fTorsoHeight = 0.0;
-		s->fTorsoPitch = 0.0;
-		s->fWaistPitch = 0.0;
-	}
-}
-
-void ClientImpacts(gentity_s *ent, pmove_t *pm)
-{
-	void (*entTouch)(struct gentity_s *, struct gentity_s *, int);
-	void (*otherTouch)(struct gentity_s *, struct gentity_s *, int);
-	gentity_s *other;
-	int j;
-	int i;
-
-	otherTouch = entityHandlers[ent->handler].touch;
-
-	for ( i = 0; i < pm->numtouch; ++i )
-	{
-		for ( j = 0; j < i && pm->touchents[j] != pm->touchents[i]; ++j )
-			;
-
-		if ( j == i )
-		{
-			other = &g_entities[pm->touchents[i]];
-
-			if ( Scr_IsSystemActive() )
-			{
-				Scr_AddEntity(other);
-				Scr_Notify(ent, scr_const.touch, 1u);
-				Scr_AddEntity(ent);
-				Scr_Notify(other, scr_const.touch, 1u);
-			}
-
-			entTouch = entityHandlers[other->handler].touch;
-
-			if ( entTouch )
-				entTouch(other, ent, 1);
-
-			if ( otherTouch )
-				otherTouch(ent, other, 1);
-		}
-	}
-}
-
-void G_TouchTriggers(gentity_s *ent)
-{
-	void (*entTouch)(struct gentity_s *, struct gentity_s *, int);
-	void (*otherTouch)(struct gentity_s *, struct gentity_s *, int);
-	vec3_t maxs;
-	vec3_t mins;
-	gentity_s *touch;
-	int entityList[1024];
-	int entities;
-	int i;
-
-	if ( ent->client->ps.pm_type <= PM_NORMAL_LINKED )
-	{
-		VectorSubtract(ent->client->ps.origin, TouchTriggersgentity_range, mins);
-		VectorAdd(ent->client->ps.origin, TouchTriggersgentity_range, maxs);
-		entities = CM_AreaEntities(mins, maxs, entityList, 1024, 1079771144);
-		VectorAdd(ent->client->ps.origin, ent->r.mins, mins);
-		VectorAdd(ent->client->ps.origin, ent->r.maxs, maxs);
-		ShrinkBoundsToHeight(mins, maxs);
-		otherTouch = entityHandlers[ent->handler].touch;
-
-		for ( i = 0; ; ++i )
-		{
-			if ( i >= entities )
-				return;
-
-			touch = &g_entities[entityList[i]];
-			entTouch = entityHandlers[touch->handler].touch;
-
-			if ( entTouch || otherTouch )
-			{
-				if ( touch->s.eType == ET_ITEM )
-				{
-					if ( !BG_PlayerTouchesItem(&ent->client->ps, &touch->s, level.time) )
-						continue;
-				}
-				else if ( !SV_EntityContact(mins, maxs, touch) )
-				{
-					continue;
-				}
-
-				if ( Scr_IsSystemActive() )
-				{
-					Scr_AddEntity(ent);
-					Scr_Notify(touch, scr_const.touch, 1);
-					Scr_AddEntity(touch);
-					Scr_Notify(ent, scr_const.touch, 1);
-				}
-
-				if ( entTouch )
-					entTouch(touch, ent, 1);
-			}
-		}
-	}
-}
-
-int GetFollowPlayerState(int clientNum, playerState_s *ps)
-{
-	if ( (g_entities[clientNum].client->ps.pm_flags & 0x800000) == 0 )
-		return 0;
-
-	memcpy(ps, g_entities[clientNum].client, sizeof(playerState_s));
-	memset(&ps->hud, 0, sizeof(hudElemState_t) / 2);
-
-	return 1;
-}
-
-extern dvar_t *g_antilag;
-void ClientEvents(gentity_s *ent, int oldEventSequence)
-{
-	gclient_s *self;
-	vec3_t dir;
-	float dmgScale;
-	gclient_s *client;
-	int dmg;
-	int event;
-	int i;
-
-	client = ent->client;
-
-	if ( oldEventSequence < client->ps.eventSequence - 4 )
-		oldEventSequence = client->ps.eventSequence - 4;
-
-	for ( i = oldEventSequence; i < client->ps.eventSequence; ++i )
-	{
-		event = client->ps.events[i & 3];
-		dmg = client->ps.eventParms[i & 3];
-
-		if ( event < EV_LANDING_PAIN_DEFAULT || event > EV_LANDING_PAIN_ASPHALT )
-		{
-			switch ( event )
-			{
-			case EV_FIRE_WEAPON:
-			case EV_FIRE_WEAPONB:
-			case EV_FIRE_WEAPON_LASTSHOT:
-			case EV_FIRE_WEAPON_MG42:
-				if ( g_antilag->current.boolean )
-					FireWeapon(ent, client->lastServerTime);
-				else
-					FireWeapon(ent, level.time);
-				break;
-			case EV_FIRE_MELEE:
-				FireWeaponMelee(ent);
-				break;
-			case EV_USE_OFFHAND:
-				G_UseOffHand(ent);
-				break;
-			case EV_BINOCULAR_ENTER:
-				Scr_Notify(ent, scr_const.binocular_enter, 0);
-				break;
-			case EV_BINOCULAR_EXIT:
-				Scr_Notify(ent, scr_const.binocular_exit, 0);
-				break;
-			case EV_BINOCULAR_FIRE:
-				Scr_Notify(ent, scr_const.binocular_fire, 0);
-				break;
-			case EV_BINOCULAR_RELEASE:
-				Scr_Notify(ent, scr_const.binocular_release, 0);
-				break;
-			case EV_BINOCULAR_DROP:
-				Scr_Notify(ent, scr_const.binocular_drop, 0);
-				break;
-			case EV_GRENADE_SUICIDE:
-				if ( ent->client && (ent->flags & 3) == 0 )
-				{
-					self = ent->client;
-					ent->health = 0;
-					self->ps.stats[0] = 0;
-					player_die(ent, ent, ent, 100000, 12, 0, 0, HITLOC_NONE, 0);
-				}
-				break;
-			default:
-				continue;
-			}
-		}
-		else
-		{
-			if ( ent->s.eType != ET_PLAYER )
-				return;
-
-			if ( dmg <= 99 )
-				dmgScale = (float)dmg * 0.0099999998;
-			else
-				dmgScale = 1.1;
-
-			if ( dmgScale != 0.0 )
-			{
-				dmgScale = (float)client->ps.stats[2] * dmgScale;
-				VectorSet(dir, 0.0, 0.0, 1.0);
-				G_Damage(ent, 0, 0, 0, 0, (int)dmgScale, 0, 11, HITLOC_NONE, 0);
-			}
-		}
-	}
-}
-
-extern dvar_t *g_mantleBlockEnable;
-extern dvar_t *g_mantleBlockTimeBuffer;
-void G_AddPlayerMantleBlockage(float *endPos, int duration, pmove_t *pm)
-{
-	gentity_s *owner;
-	gentity_s *ent;
-
-	if (!g_mantleBlockEnable->current.boolean)
+		pEnt->r.contents = CONTENTS_NONE;
 		return;
+	}
 
-	owner = &g_entities[pm->ps->clientNum];
-	ent = G_Spawn();
-	ent->parent = owner;
-	ent->r.ownerNum = pm->ps->clientNum;
-	ent->r.contents = 0x10000;
-	ent->clipmask = 0x10000;
-	ent->r.svFlags = 33;
-	ent->s.eType = ET_INVISIBLE;
-	ent->handler = 19;
-	VectorCopy(owner->r.mins, ent->r.mins);
-	VectorCopy(owner->r.maxs, ent->r.maxs);
-	G_SetOrigin(ent, endPos);
-	SV_LinkEntity(ent);
-	ent->nextthink = g_mantleBlockTimeBuffer->current.integer + level.time + duration;
+	if ( pEnt->client->ufo )
+	{
+		pEnt->r.contents = CONTENTS_NONE;
+		return;
+	}
+
+	if ( pEnt->client->sess.sessionState == SESS_STATE_DEAD )
+	{
+		pEnt->r.contents = CONTENTS_NONE;
+		return;
+	}
+
+	pEnt->r.contents = CONTENTS_BODY;
 }
 
-extern dvar_t *g_inactivity;
-int ClientInactivityTimer(gclient_s *client)
+/*
+===============
+G_SetLastServerTime
+===============
+*/
+void G_SetLastServerTime( int clientNum, int lastServerTime )
 {
-	if ( !g_inactivity->current.integer )
-	{
-		client->inactivityTime = level.time + 60000;
-		client->inactivityWarning = 0;
-		return 1;
-	}
-
-	if ( client->sess.cmd.forwardmove || client->sess.cmd.rightmove || (client->sess.cmd.buttons & 0x401) != 0 )
-	{
-		client->inactivityTime = level.time + 1000 * g_inactivity->current.integer;
-		client->inactivityWarning = 0;
-		return 1;
-	}
-
-	if ( client->sess.localClient )
-		return 1;
-
-	if ( level.time <= client->inactivityTime )
-	{
-		if ( level.time > client->inactivityTime - 10000 && !client->inactivityWarning )
-		{
-			client->inactivityWarning = 1;
-			SV_GameSendServerCommand(client - level.clients, SV_CMD_CAN_IGNORE, va("%c \"GAME_INACTIVEDROPWARNING\"", 99));
-		}
-
-		return 1;
-	}
-
-	SV_GameDropClient(client - level.clients, "GAME_DROPPEDFORINACTIVITY");
-
-	return 0;
-}
-
-void ClientIntermissionThink(gentity_s *ent)
-{
-	gclient_s *client;
-
-	client = ent->client;
-	client->oldbuttons = client->buttons;
-	client->buttons = client->sess.cmd.buttons;
-	client->buttonsSinceLastFrame |= client->buttons & ~client->oldbuttons;
-}
-
-qboolean G_ClientCanSpectateTeam(gclient_s *client, int team)
-{
-	return (client->sess.noSpectate & (1 << team)) == 0;
-}
-
-void SpectatorThink(gentity_s *ent, usercmd_s *ucmd)
-{
-	gclient_s *client;
-	pmove_t pm;
-
-	client = ent->client;
-	client->oldbuttons = client->buttons;
-
-	client->buttons = client->sess.cmd.buttons;
-	client->buttonsSinceLastFrame |= client->buttons & ~client->oldbuttons;
-
-	if ( client->sess.forceSpectatorClient < 0
-	        && G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS)
-	        && client->spectatorClient >= 0
-	        && (client->buttons & 4) != (client->oldbuttons & 4) )
-	{
-		StopFollowing(ent);
-	}
-
-	if ( (client->buttons & 1) != 0 && (client->oldbuttons & 1) == 0 )
-	{
-		Cmd_FollowCycle_f(ent, 1);
-	}
-	else if ( (client->buttons & 0x1000) != 0 && (client->oldbuttons & 0x1000) == 0 )
-	{
-		Cmd_FollowCycle_f(ent, -1);
-	}
-
-	if ( (client->ps.pm_flags & 0x400000) == 0 )
-	{
-		client->ps.pm_type = PM_SPECTATOR;
-
-		if ( G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
-			client->ps.speed = 400;
-		else
-			client->ps.speed = 0;
-
-		memset(&pm, 0, sizeof(pm));
-		pm.ps = &client->ps;
-		memcpy(&pm.cmd, ucmd, sizeof(pm.cmd));
-		pm.tracemask = 8390673;
-		pm.handler = 1;
-		Pmove(&pm);
-		VectorCopy(client->ps.origin, ent->r.currentOrigin);
-		SV_UnlinkEntity(ent);
-	}
-}
-
-extern dvar_t *g_smoothClients;
-void ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
-{
-	int flags;
-	float vAxis3[3][3];
-	float vAxis2[3][3];
-	float vAxis[3][3];
-	int shellshockDuration;
-	float shellshockScale;
-	float shellshockCalc;
-	WeaponDef *weaponDef;
-	vec3_t angles;
-	vec3_t viewangles;
-	weaponState_t ws;
-	viewState_t vs;
-	int frametime;
-	int eventSequence;
-	pmove_t pm;
-	gclient_s *client;
-
-	client = ent->client;
-
-	if ( client->sess.connected == CS_CONNECTED )
-	{
-		if ( ucmd->serverTime > level.time + 200 )
-			ucmd->serverTime = level.time + 200;
-
-		if ( ucmd->serverTime < level.time - 1000 )
-			ucmd->serverTime = level.time - 1000;
-
-		frametime = ucmd->serverTime - client->ps.commandTime;
-
-		if ( frametime > 0 || client->ps.clientNum != ent - g_entities )
-		{
-			if ( frametime > 200 )
-				frametime = 200;
-
-			if ( client->bFrozen )
-				flags = client->ps.pm_flags | 0x8000;
-			else
-				flags = client->ps.pm_flags & 0xFFFF7FFF;
-
-			client->ps.pm_flags = flags;
-
-			if ( client->sess.sessionState == SESS_STATE_INTERMISSION )
-			{
-				ClientIntermissionThink(ent);
-			}
-			else if ( client->sess.sessionState == SESS_STATE_SPECTATOR )
-			{
-				SpectatorThink(ent, ucmd);
-			}
-			else if ( ClientInactivityTimer(client) )
-			{
-				eventSequence = client->ps.eventSequence;
-				memset(&pm, 0, sizeof(pm));
-				pm.ps = &client->ps;
-				memcpy(&pm.cmd, ucmd, sizeof(pm.cmd));
-				pm.oldcmd = client->sess.oldcmd;
-
-				if ( client->ps.pm_type <= PM_INTERMISSION )
-					pm.tracemask = 42008593;
-				else
-					pm.tracemask = 8454161;
-
-				pm.handler = 1;
-				VectorCopy(client->ps.origin, client->oldOrigin);
-
-				client->oldbuttons = client->buttons;
-				client->buttons = client->sess.cmd.buttons;
-				client->latched_buttons = client->buttons & ~client->oldbuttons;
-				client->buttonsSinceLastFrame |= client->latched_buttons;
-
-				vs.ps = &client->ps;
-				vs.damageTime = client->damageTime;
-				vs.time = level.time;
-				vs.v_dmg_pitch = client->v_dmg_pitch;
-				vs.v_dmg_roll = client->v_dmg_roll;
-				vs.xyspeed = BG_GetSpeed(&client->ps, level.time);
-				vs.frametime = (float)frametime * 0.001;
-				vs.fLastIdleFactor = client->fLastIdleFactor;
-				vs.weapIdleTime = &client->weapIdleTime;
-
-				BG_CalculateViewAngles(&vs, angles);
-				VectorAdd(client->ps.viewangles, angles, viewangles);
-				weaponDef = BG_GetWeaponDef(client->ps.weapon);
-				shellshockDuration = client->ps.shellshockTime + client->ps.shellshockDuration - vs.time;
-
-				if ( shellshockDuration <= 0 )
-				{
-					shellshockScale = 1.0;
-				}
-				else
-				{
-					shellshockCalc = 1.0;
-
-					if ( shellshockDuration <= 2999 )
-						shellshockCalc = (float)shellshockDuration / 3000.0;
-
-					shellshockCalc = (3.0 - (shellshockCalc + shellshockCalc)) * shellshockCalc * shellshockCalc;
-					shellshockScale = (weaponDef->swayShellShockScale - 1.0) * shellshockCalc + 1.0;
-				}
-
-				BG_CalculateWeaponPosition_Sway(
-				    &client->ps,
-				    client->swayViewAngles,
-				    client->swayOffset,
-				    client->swayAngles,
-				    1.0,
-				    frametime);
-
-				ws.ps = vs.ps;
-				ws.xyspeed = vs.xyspeed;
-				ws.frametime = (float)frametime * 0.001;
-				VectorCopy(client->vLastMoveAng, ws.vLastMoveAng);
-				ws.fLastIdleFactor = client->fLastIdleFactor;
-				ws.time = vs.time;
-				ws.damageTime = client->damageTime;
-				ws.v_dmg_pitch = client->v_dmg_pitch;
-				ws.v_dmg_roll = client->v_dmg_roll;
-
-				VectorCopy(client->vGunOffset, ws.vGunOffset);
-				VectorCopy(client->vGunSpeed, ws.vGunSpeed);
-				VectorCopy(client->swayAngles, ws.swayAngles);
-
-				ws.weapIdleTime = &client->weapIdleTime;
-				BG_CalculateWeaponAngles(&ws, angles);
-
-				if ( BG_IsAimDownSightWeapon(ws.ps->weapon) && ws.ps->fWeaponPosFrac != 0.0 && !weaponDef->adsOverlayReticle )
-				{
-					AnglesToAxis(angles, vAxis);
-					AnglesToAxis(viewangles, vAxis2);
-					MatrixMultiply(vAxis, vAxis2, vAxis3);
-					AxisToAngles(vAxis3, viewangles);
-				}
-
-				VectorCopy(ws.vLastMoveAng, client->vLastMoveAng);
-				client->fLastIdleFactor = ws.fLastIdleFactor;
-				VectorCopy(ws.vGunOffset, client->vGunOffset);
-				VectorCopy(ws.vGunSpeed, client->vGunSpeed);
-				client->fGunPitch = viewangles[0];
-				client->fGunYaw = viewangles[1];
-
-				Pmove(&pm);
-
-				if ( pm.mantleStarted )
-					G_AddPlayerMantleBlockage(pm.mantleEndPos, pm.mantleDuration, &pm);
-
-				ent->s.animMovetype = (ent->client->ps.pm_flags & 2) != 0;
-
-				if ( ent->client->ps.eventSequence != eventSequence )
-				{
-					ent->eventTime = level.time;
-					ent->r.eventTime = level.time;
-				}
-
-				if ( g_smoothClients->current.boolean )
-					G_PlayerStateToEntityStateExtrapolate(&ent->client->ps, &ent->s, ent->client->ps.commandTime, 1);
-				else
-					BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, 1, 1);
-
-				VectorCopy(ent->s.pos.trBase, ent->r.currentOrigin);
-				VectorCopy(pm.mins, ent->r.mins);
-				VectorCopy(pm.maxs, ent->r.maxs);
-				ClientEvents(ent, eventSequence);
-				SV_LinkEntity(ent);
-
-				if ( !ent->client->noclip )
-					G_TouchTriggers(ent);
-
-				VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
-				VectorClear(ent->r.currentAngles);
-				ent->r.currentAngles[1] = ent->client->ps.viewangles[1];
-				ClientImpacts(ent, &pm);
-
-				if ( ent->client->ps.eventSequence != eventSequence )
-					ent->eventTime = level.time;
-
-				Player_UpdateActivate(ent);
-			}
-		}
-	}
-}
-
-extern dvar_t *g_synchronousClients;
-void ClientThink(int clientNum)
-{
-	gentity_s *ent;
+	gentity_t *ent;
 
 	ent = &g_entities[clientNum];
-
-	memcpy(&ent->client->sess.oldcmd, &ent->client->sess.cmd, sizeof(ent->client->sess.oldcmd));
-	SV_GetUsercmd(clientNum, &ent->client->sess.cmd);
-	ent->client->lastCmdTime = level.time;
-
-	if ( !g_synchronousClients->current.boolean )
-		ClientThink_real(ent, &ent->client->sess.cmd);
-}
-
-void G_SetLastServerTime(int clientNum, int lastServerTime)
-{
-	gentity_s *ent;
-
-	ent = &g_entities[clientNum];
+	assert(ent->client);
 
 	if ( level.time - lastServerTime > 1000 )
 		lastServerTime = level.time - 1000;
@@ -749,226 +93,538 @@ void G_SetLastServerTime(int clientNum, int lastServerTime)
 		ent->client->lastServerTime = lastServerTime;
 }
 
-void G_PlayerController(gentity_s *self, int *partBits)
+/*
+====================
+ClientIntermissionThink
+====================
+*/
+void ClientIntermissionThink( gentity_t *ent )
 {
-	DObj_s *obj;
+	gclient_t *client;
+
+	client = ent->client;
+	assert(client);
+
+	// the level will exit when everyone wants to or after timeouts
+
+	// swap and latch button actions
+	client->oldbuttons = client->buttons;
+	client->buttons = client->sess.cmd.buttons;
+//----(SA)	added
+	client->buttonsSinceLastFrame |= client->buttons & ~client->oldbuttons;
+}
+
+/*
+===============
+G_SetClientSound
+===============
+*/
+void G_SetClientSound( gentity_t *ent )
+{
+	assert(ent);
+	ent->s.loopSound = 0;
+}
+
+/*
+===============
+StuckInClient
+===============
+*/
+#define PLAYER_PUSH_TIME 300
+qboolean StuckInClient( gentity_t *self )
+{
+	vec2_t vDelta;
+	gentity_t *hit;
+	float hitSpeed;
+	float selfSpeed;
+	int num;
+
+#ifdef LIBCOD
+	if ( !g_playerEject->current.boolean )
+	{
+		return qfalse;
+	}
+#endif
+
+	assert(self);
+
+	if ( !(self->client->ps.pm_flags & PMF_PLAYER) )
+	{
+		return qfalse;
+	}
+
+	if ( self->client->sess.sessionState != SESS_STATE_PLAYING )
+	{
+		return qfalse;
+	}
+
+	if ( self->r.contents != CONTENTS_BODY && self->r.contents != CONTENTS_CORPSE )
+	{
+		return qfalse;
+	}
+
+	for ( num = 0, hit = g_entities; num < MAX_GENTITIES; num++, hit++ )
+	{
+		if ( num >= level.maxclients )
+		{
+			return qfalse;
+		}
+
+		if ( !hit->r.inuse )
+		{
+			continue;
+		}
+
+		if ( hit->client == NULL )
+		{
+			continue;
+		}
+
+		if ( !( hit->client->ps.pm_flags & PMF_PLAYER ) )
+		{
+			continue;
+		}
+
+		if ( hit->client->sess.sessionState != SESS_STATE_PLAYING )
+		{
+			continue;
+		}
+
+		if ( hit == self )
+		{
+			continue;
+		}
+
+		if ( hit->health <= 0 )
+		{
+			continue;
+		}
+
+		if ( hit->r.contents != CONTENTS_BODY && hit->r.contents != CONTENTS_CORPSE )
+		{
+			continue;
+		}
+
+		if ( hit->r.absmin[0] > self->r.absmax[0] )
+		{
+			continue;
+		}
+
+		if ( self->r.absmin[0] > hit->r.absmax[0] )
+		{
+			continue;
+		}
+
+		if ( hit->r.absmin[1] > self->r.absmax[1] )
+		{
+			continue;
+		}
+
+		if ( self->r.absmin[1] > hit->r.absmax[1] )
+		{
+			continue;
+		}
+
+		if ( hit->r.absmin[2] > self->r.absmax[2] )
+		{
+			continue;
+		}
+
+		if ( self->r.absmin[2] > hit->r.absmax[2] )
+		{
+			continue;
+		}
+
+		Vector2Subtract(hit->r.currentOrigin, self->r.currentOrigin, vDelta);
+
+		if ( Vec2LengthSq(vDelta) <= Square(self->r.maxs[0] + hit->r.maxs[0]) )
+		{
+			break;
+		}
+	}
+
+	assert(hit->client);
+
+	Vector2Subtract(hit->r.currentOrigin, self->r.currentOrigin, vDelta);
+
+	vDelta[0] = G_crandom() + vDelta[0];
+	vDelta[1] = G_crandom() + vDelta[1];
+
+	Vec2Length(hit->client->ps.velocity);
+
+	if ( Vec2Normalize(vDelta) > 0 )
+		hitSpeed = (float)g_playerCollisionEjectSpeed->current.integer;
+	else
+		hitSpeed = 0;
+
+	Vec2Length(self->client->ps.velocity);
+
+	if ( hitSpeed > 0 )
+		selfSpeed = (float)g_playerCollisionEjectSpeed->current.integer;
+	else
+		selfSpeed = 0;
+
+	if ( hitSpeed < 0.000099999997 && selfSpeed < 0.000099999997 )
+	{
+		hitSpeed = (float)hit->client->ps.speed;
+		selfSpeed = (float)self->client->ps.speed;
+	}
+
+	Vec2Scale(vDelta, hitSpeed, hit->client->ps.velocity);
+
+	hit->client->ps.pm_time = PLAYER_PUSH_TIME;
+	hit->client->ps.pm_flags |= PMF_TIME_SLIDE;
+
+	Vec2Scale(vDelta, -selfSpeed, self->client->ps.velocity);
+
+	self->client->ps.pm_time = PLAYER_PUSH_TIME;
+	self->client->ps.pm_flags |= PMF_TIME_SLIDE;
+
+	return qtrue;
+}
+
+/*
+===============
+G_PlayerEvent
+===============
+*/
+void G_PlayerEvent( int clientNum, int event )
+{
+	gclient_t *client;
+	vec3_t kickAVel;
+
+	client = g_entities[clientNum].client;
+	assert(client);
+
+	if ( event < EV_FIRE_WEAPON )
+	{
+		return;
+	}
+
+	if ( event > EV_FIRE_WEAPON_LASTSHOT && event != EV_FIRE_WEAPON_MG42 )
+	{
+		return;
+	}
+
+	BG_WeaponFireRecoil(&client->ps, client->vGunSpeed, kickAVel);
+}
+
+/*
+===============
+G_DamageFeedback
+
+Called just before a snapshot is sent to the given player.
+Totals up all damage and generates both the player_state_t
+damage values to that client for pain blends and kicks, and
+global pain sound events for all clients.
+===============
+*/
+#define DAMAGE_COUNT_DURATION 20
+void P_DamageFeedback( gentity_t *player )
+{
+	vec3_t viewaxis[3];
+	float kick;
+	vec3_t angles;
+	int count;
+	gclient_t *client;
+
+	assert(player);
+	client = player->client;
+	assert(client);
+
+	if ( client->ps.pm_type >= PM_DEAD )
+	{
+		return;
+	}
+
+	// total points of damage shot at the player this frame
+	client->ps.damageCount = 0;
+	count = client->damage_blood;
+
+	if ( count <= 0 )
+	{
+		return; // didn't take any damage
+	}
+
+	if ( client->sess.maxHealth <= 0 )
+	{
+		return;
+	}
+
+	count = 100 * count / client->sess.maxHealth;
+
+	if ( count > 127 )
+	{
+		count = 127;
+	}
+
+	// send the information to the client
+	client->ps.aimSpreadScale = count + client->ps.aimSpreadScale;
+
+	if ( client->ps.aimSpreadScale > 255 )
+	{
+		client->ps.aimSpreadScale = 255;
+	}
+
+	kick = count * 0.2;
+
+	if ( kick < 5.0 )
+	{
+		kick = 5.0;
+	}
+	else if ( kick > 90.0 )
+	{
+		kick = 90.0;
+	}
+
+	// world damage (falling, slime, etc) uses a special code
+	// to make the blend blob centered instead of positional
+	if ( client->damage_fromWorld )
+	{
+		client->v_dmg_roll = 0;
+		client->v_dmg_pitch = -kick;
+		client->ps.damagePitch = 255;
+		client->ps.damageYaw = 255;
+		client->damage_fromWorld = 0;
+	}
+	else
+	{
+		vectoangles(client->damage_from, angles);
+		AnglesToAxis(client->ps.viewangles, viewaxis);
+
+		client->v_dmg_roll  = DotProduct(client->damage_from, viewaxis[1]) * -kick;
+		client->v_dmg_pitch = DotProduct(client->damage_from, viewaxis[0]) * kick;
+
+		client->ps.damagePitch = angles[PITCH] / 360.0 * 256;
+		client->ps.damageYaw = angles[YAW] / 360.0 * 256;
+	}
+
+	client->ps.damageEvent++; // Ridah, always increment this since we do multiple view damage anims
+	client->damageTime = level.time - DAMAGE_COUNT_DURATION;
+	client->ps.damageCount = count;
+
+	//
+	// clear totals
+	//
+	client->damage_blood = 0;
+}
+
+/*
+===============
+G_PlayerController
+===============
+*/
+void G_PlayerController( gentity_t *self, int *partBits )
+{
+	DObj *obj;
 	clientInfo_t *ci;
 
+	assert(self->s.clientNum >= 0 && self->s.clientNum <= MAX_CLIENTS);
+
 	ci = &level_bgs.clientinfo[self->s.clientNum];
+	assert(ci->infoValid);
 	obj = Com_GetServerDObj(self->s.number);
 
 	BG_Player_DoControllers(obj, self, partBits, ci, level.frameTime);
 }
 
-extern dvar_t *g_friendlyNameDist;
-extern dvar_t *g_friendlyfireDist;
-void Player_UpdateLookAtEntity(gentity_s *ent)
+/*
+===============
+IntermissionClientEndFrame
+===============
+*/
+void IntermissionClientEndFrame( gentity_t *ent )
 {
-	unsigned char *priorityMap;
-	vec3_t vPos;
-	vec3_t vForward;
-	vec3_t vEnd;
-	vec3_t vOrigin;
-	trace_t trace;
-	gentity_s *lookAtEnt;
-	gclient_s *client;
-	WeaponDef *weaponDef;
+	gclient_t *client;
 
+	assert(ent);
 	client = ent->client;
-	client->ps.pm_flags &= 0xFFCFFFFF;
-	ent->client->pLookatEnt = 0;
-	G_GetPlayerViewOrigin(ent, vOrigin);
-	G_GetPlayerViewDirection(ent, vForward, 0, 0);
+	assert(client);
 
-	if ( (client->ps.eFlags & 0x300) != 0 )
-		weaponDef = BG_GetWeaponDef(g_entities[client->ps.viewlocked_entNum].s.weapon);
-	else
-		weaponDef = BG_GetWeaponDef(ent->client->ps.weapon);
+	ent->r.svFlags &= ~SVF_BODY;
+	ent->r.svFlags |= SVF_NOCLIENT;
 
-	if ( ent->client->ps.weapon && weaponDef->rifleBullet )
-		priorityMap = riflePriorityMap;
-	else
-		priorityMap = bulletPriorityMap;
-
-	VectorMA(vOrigin, 15000.0, vForward, vEnd);
-	lookAtEnt = G_FX_VisibilityTrace(&trace, vOrigin, vEnd, ent->s.number, 578824193, priorityMap, vForward);
-
-	if ( lookAtEnt )
-	{
-		if ( lookAtEnt->classname != scr_const.trigger_lookat
-		        || (ent->client->pLookatEnt = lookAtEnt,
-		            G_Trigger(lookAtEnt, ent),
-		            (lookAtEnt = G_FX_VisibilityTrace(&trace, vOrigin, vEnd, ent->s.number, 41953281, priorityMap, vForward)) != 0) )
-		{
-			if ( lookAtEnt->s.eType == ET_PLAYER && (trace.surfaceFlags & 0x10) == 0 )
-			{
-				VectorSubtract(lookAtEnt->r.currentOrigin, vOrigin, vPos);
-
-				if ( lookAtEnt->client->sess.state.team == ent->client->sess.state.team && ent->client->sess.state.team )
-				{
-					if ( Square(g_friendlyNameDist->current.decimal) > VectorLengthSquared(vPos) && !ent->client->pLookatEnt )
-						ent->client->pLookatEnt = lookAtEnt;
-
-					if ( Square(g_friendlyfireDist->current.decimal) > VectorLengthSquared(vPos) )
-						client->ps.pm_flags |= 0x100000u;
-				}
-				else
-				{
-					if ( Square(weaponDef->enemyCrosshairRange) > VectorLengthSquared(vPos) )
-					{
-						if ( !ent->client->pLookatEnt )
-							ent->client->pLookatEnt = lookAtEnt;
-
-						client->ps.pm_flags |= 0x200000u;
-					}
-				}
-			}
-		}
-	}
-}
-
-void P_DamageFeedback(gentity_s *player)
-{
-	float viewaxis[3][3];
-	float kick;
-	vec3_t angles;
-	int damage;
-	gclient_s *client;
-
-	client = player->client;
-
-	if ( client->ps.pm_type <= PM_INTERMISSION )
-	{
-		client->ps.damageCount = 0;
-		damage = client->damage_blood;
-
-		if ( damage > 0 && client->sess.maxHealth > 0 )
-		{
-			damage = 100 * damage / client->sess.maxHealth;
-
-			if ( damage > 127 )
-				damage = 127;
-
-			client->ps.aimSpreadScale = (float)damage + client->ps.aimSpreadScale;
-
-			if ( client->ps.aimSpreadScale > 255.0 )
-				client->ps.aimSpreadScale = 255.0;
-
-			kick = (float)damage * 0.2;
-
-			if ( kick >= 5.0 )
-			{
-				if ( kick > 90.0 )
-					kick = 90.0;
-			}
-			else
-			{
-				kick = 5.0;
-			}
-
-			if ( client->damage_fromWorld )
-			{
-				client->v_dmg_roll = 0.0;
-				client->v_dmg_pitch = -kick;
-				client->ps.damagePitch = 255;
-				client->ps.damageYaw = 255;
-				client->damage_fromWorld = 0;
-			}
-			else
-			{
-				vectoangles(client->damage_from, angles);
-				AnglesToAxis(client->ps.viewangles, viewaxis);
-
-				client->v_dmg_roll = DotProduct(client->damage_from, viewaxis[1]) * -kick;
-				client->v_dmg_pitch = DotProduct(client->damage_from, viewaxis[0]) * kick;
-
-				client->ps.damagePitch = (int)(angles[0] / 360.0 * 256.0);
-				client->ps.damageYaw = (int)(angles[1] / 360.0 * 256.0);
-			}
-
-			++client->ps.damageEvent;
-			client->damageTime = level.time - 20;
-			client->ps.damageCount = damage;
-			client->damage_blood = 0;
-		}
-	}
-}
-
-void Player_ResetLoopSound(gentity_s *ent)
-{
-	ent->s.loopSound = 0;
-}
-
-void IntermissionClientEndFrame(gentity_s *ent)
-{
-	gclient_s *client;
-
-	client = ent->client;
-	ent->r.svFlags &= ~2u;
-	ent->r.svFlags |= 1u;
 	ent->takedamage = 0;
 	ent->r.contents = 0;
-	client->ps.pm_flags &= 0xFC7FFFFF;
+
+	client->ps.pm_flags &= ~( CONTENTS_UNKNOWN | CONTENTS_MANTLE | CONTENTS_BODY );
 	client->ps.pm_type = PM_INTERMISSION;
-	client->ps.eFlags &= ~0x200000u;
-	client->ps.eFlags &= ~0x40u;
+
+	client->ps.eFlags &= ~EF_TALK;
+	client->ps.eFlags &= ~EF_FIRING;
+
 	client->ps.viewmodelIndex = 0;
 	ent->s.eType = ET_INVISIBLE;
 
-	SV_SetConfigstring(CS_SCORES1, va("%i", level.teamScores[1]));
-	SV_SetConfigstring(CS_SCORES2, va("%i", level.teamScores[2]));
+	SV_SetConfigstring(CS_SCORES1, va("%i", level.teamScores[TEAM_AXIS]));
+	SV_SetConfigstring(CS_SCORES2, va("%i", level.teamScores[TEAM_ALLIES]));
 }
 
-void SpectatorClientEndFrame(gentity_s *ent)
+/*
+============
+G_TouchTriggers
+
+Find all trigger entities that ent's current position touches.
+Spectators will only interact with teleporters.
+============
+*/
+void G_TouchTriggers( gentity_t *ent )
+{
+	int i, num;
+	int touch[MAX_GENTITIES];
+	gentity_t   *hit;
+	trace_t trace;
+	vec3_t mins, maxs;
+	static vec3_t range = { 40, 40, 52 };
+	void (*hitTouch)(gentity_t *, gentity_t *, int);
+	void (*entTouch)(gentity_t *, gentity_t *, int);
+
+	assert(ent->client);
+
+	// dead clients don't activate triggers!
+	if ( ent->client->ps.pm_type >= PM_DEAD )
+	{
+		return;
+	}
+
+	VectorSubtract( ent->client->ps.origin, range, mins );
+	VectorAdd( ent->client->ps.origin, range, maxs );
+
+	num = CM_AreaEntities( mins, maxs, touch, MAX_GENTITIES, CONTENTS_LAVA | CONTENTS_TELEPORTER | CONTENTS_JUMPPAD | CONTENTS_CLUSTERPORTAL | CONTENTS_DONOTENTER_LARGE | CONTENTS_TRIGGER );
+
+	// can't use ent->absmin, because that has a one unit pad
+	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
+	VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
+
+	ShrinkBoundsToHeight( mins, maxs );
+	entTouch = entityHandlers[ent->handler].touch;
+
+	for ( i = 0 ; i < num ; i++ )
+	{
+		hit = &g_entities[touch[i]];
+		hitTouch = entityHandlers[hit->handler].touch;
+
+		if ( !hitTouch && !entTouch )
+		{
+			continue;
+		}
+
+		// use seperate code for determining if an item is picked up
+		// so you don't have to actually contact its bounding box
+		if ( hit->s.eType == ET_ITEM )
+		{
+			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) )
+			{
+				continue;
+			}
+		}
+		else
+		{
+			// MrE: always use capsule for player
+			if ( !SV_EntityContact( mins, maxs, hit ) )
+			{
+				//if ( !SV_EntityContact( mins, maxs, hit ) ) {
+				continue;
+			}
+		}
+
+		if ( Scr_IsSystemActive() )
+		{
+			Scr_AddEntity(ent);
+			Scr_Notify(hit, scr_const.touch, 1);
+
+			Scr_AddEntity(hit);
+			Scr_Notify(ent, scr_const.touch, 1);
+		}
+
+		if ( hitTouch )
+		{
+			hitTouch(hit, ent, qtrue);
+		}
+	}
+}
+
+/*
+==============
+ClientImpacts
+==============
+*/
+void ClientImpacts( gentity_t *ent, pmove_t *pm )
+{
+	int i, j;
+	gentity_t   *other;
+	void (*otherTouch)(gentity_t *, gentity_t *, int);
+	void (*entTouch)(gentity_t *, gentity_t *, int);
+
+	entTouch = entityHandlers[ent->handler].touch;
+	for ( i = 0 ; i < pm->numtouch ; i++ )
+	{
+		for ( j = 0 ; j < i ; j++ )
+		{
+			if ( pm->touchents[j] == pm->touchents[i] )
+			{
+				break;
+			}
+		}
+		if ( j != i )
+		{
+			continue;   // duplicated
+		}
+		other = &g_entities[ pm->touchents[i] ];
+
+		if ( Scr_IsSystemActive() )
+		{
+			Scr_AddEntity(other);
+			Scr_Notify(ent, scr_const.touch, 1);
+
+			Scr_AddEntity(ent);
+			Scr_Notify(other, scr_const.touch, 1);
+		}
+		otherTouch = entityHandlers[other->handler].touch;
+
+		if ( otherTouch )
+		{
+			otherTouch(other, ent, qtrue);
+		}
+
+		if ( entTouch )
+		{
+			entTouch(ent, other, qtrue);
+		}
+	}
+}
+
+/*
+==================
+SpectatorClientEndFrame
+==================
+*/
+void SpectatorClientEndFrame( gentity_t *ent )
 {
 	int pArchiveTime;
-	gclient_s *client;
-	clientState_t cstate;
-	playerState_t pstate;
+	gclient_t *client;
+	clientState_t cs;
+	playerState_t ps;
 	int clientNum;
-	int flags;
 
 	client = ent->client;
-	ent->r.svFlags &= ~2u;
-	ent->r.svFlags |= 1u;
-	ent->takedamage = 0;
+	assert(client);
+
+	ent->r.svFlags &= ~SVF_BODY;
+	ent->r.svFlags |= SVF_NOCLIENT;
+
+	ent->takedamage = qfalse;
 	ent->r.contents = 0;
-	client->ps.pm_flags &= ~0x800000u;
+
+	client->ps.pm_flags &= ~PMF_PLAYER;
 	ent->s.eType = ET_INVISIBLE;
+
 	client->ps.viewmodelIndex = 0;
-	client->fGunPitch = 0.0;
-	client->fGunYaw = 0.0;
 
-	if ( client->sess.forceSpectatorClient < 0 )
-	{
-update:
-		if ( client->spectatorClient < 0 && !G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
-			Cmd_FollowCycle_f(ent, 1);
+	client->fGunPitch = 0;
+	client->fGunYaw = 0;
 
-		clientNum = client->spectatorClient;
-
-		if ( clientNum < 0
-		        || (pArchiveTime = client->sess.archiveTime + client->sess.psOffsetTime,
-		            !SV_GetArchivedClientInfo(clientNum, &pArchiveTime, &pstate, &cstate))
-		        || !G_ClientCanSpectateTeam(client, cstate.team) )
-		{
-			StopFollowing(ent);
-			client->ps.pm_flags &= ~0x2000000u;
-
-			if ( G_ClientCanSpectateTeam(client, TEAM_ALLIES)
-			        || G_ClientCanSpectateTeam(client, TEAM_AXIS)
-			        || G_ClientCanSpectateTeam(client, TEAM_FREE) )
-			{
-				client->ps.pm_flags |= 0x1000000u;
-			}
-			else
-			{
-				client->ps.pm_flags &= ~0x1000000u;
-			}
-			return;
-		}
-	}
-	else
+	if ( client->sess.forceSpectatorClient >= 0 )
 	{
 		clientNum = client->sess.forceSpectatorClient;
 		client->spectatorClient = clientNum;
@@ -976,493 +632,1121 @@ update:
 		while ( 1 )
 		{
 			if ( client->sess.archiveTime < 0 )
+			{
 				client->sess.archiveTime = 0;
+			}
 
 			pArchiveTime = client->sess.archiveTime - client->sess.psOffsetTime;
 
-			if ( SV_GetArchivedClientInfo(client->sess.forceSpectatorClient, &pArchiveTime, &pstate, &cstate) )
+			if ( SV_GetArchivedClientInfo(client->sess.forceSpectatorClient, &pArchiveTime, &ps, &cs) )
 			{
-				if ( G_ClientCanSpectateTeam(client, cstate.team) )
-					break;
+				if ( G_ClientCanSpectateTeam(client, cs.team) )
+				{
+					client->ps = ps;
+					HudElem_UpdateClient(client, ent->s.number, HUDELEM_UPDATE_CURRENT);
+
+					//client->ps.eFlags = client->ps.eFlags & 0x1000000 | ps.eFlags & 0xFEFFFFFF; // legacy ?
+
+					client->ps.pm_flags &= ~PMF_PLAYER;
+					client->ps.pm_flags |= PMF_FOLLOW;
+
+					if ( client->sess.forceSpectatorClient >= 0 )
+					{
+						client->ps.pm_flags &= ~PMF_SPECTATOR_FREE;
+						return;
+					}
+
+					client->ps.pm_flags |= PMF_SPECTATOR_FREE;
+
+					if ( G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
+						client->ps.pm_flags |= PMF_SPECTATOR_FOLLOW;
+					else
+						client->ps.pm_flags &= ~PMF_SPECTATOR_FOLLOW;
+
+					return;
+				}
 			}
 
 			if ( !client->sess.archiveTime )
 			{
 				client->sess.forceSpectatorClient = -1;
 				client->spectatorClient = -1;
-				goto update;
+				break;
 			}
 
 			client->sess.archiveTime -= 50;
 		}
 	}
 
-	flags = pstate.eFlags & 0xFFEFFFFF | client->ps.eFlags & 0x100000;
-
-	Com_Memcpy(client, &pstate, sizeof(playerState_t));
-	HudElem_UpdateClient(client, ent->s.number, HUDELEM_UPDATE_CURRENT);
-
-	client->ps.eFlags = flags;
-	client->ps.pm_flags &= ~0x800000u;
-	client->ps.pm_flags |= 0x400000u;
-
-	if ( client->sess.forceSpectatorClient < 0 )
+	if ( client->spectatorClient < 0 && !G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
 	{
-		client->ps.pm_flags |= 0x1000000u;
-
-		if ( G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
-			flags = client->ps.pm_flags | 0x2000000;
-		else
-			flags = client->ps.pm_flags & 0xFDFFFFFF;
-
-		client->ps.pm_flags = flags;
+		Cmd_FollowCycle_f(ent, 1);
 	}
-	else
+
+	clientNum = client->spectatorClient;
+
+	if ( clientNum >= 0 )
 	{
-		client->ps.pm_flags &= 0xFCFFFFFF;
-	}
-}
+		pArchiveTime = client->sess.archiveTime + client->sess.psOffsetTime;
 
-extern dvar_t *g_playerCollisionEjectSpeed;
-int StuckInClient(gentity_s *self)
-{
-	float speed;
-	float ejectSpeed;
-	float *pVel;
-	float *velocity;
-	float fDist;
-	gentity_s *hit;
-	int i;
-	float selfSpeed;
-	float hitSpeed;
-	float vDelta[2];
-	int iPushTime;
-
-#ifdef LIBCOD
-	if (!g_playerEject->current.boolean)
-		return 0;
-#endif
-
-	iPushTime = 300;
-
-	if ( (self->client->ps.pm_flags & 0x800000) == 0 )
-		return 0;
-
-	if ( self->client->sess.sessionState )
-		return 0;
-
-	if ( self->r.contents != 0x2000000 && self->r.contents != 0x4000000 )
-		return 0;
-
-	hit = g_entities;
-
-	for ( i = 0; ; ++i )
-	{
-		if ( i >= level.maxclients )
-			return 0;
-
-		if ( hit->r.inuse
-		        && (hit->client->ps.pm_flags & 0x800000) != 0
-		        && hit->client->sess.sessionState == SESS_STATE_PLAYING
-		        && hit != self
-		        && hit->client
-		        && hit->health > 0
-		        && (hit->r.contents == 0x2000000 || hit->r.contents == 0x4000000)
-		        && hit->r.absmin[0] <= self->r.absmax[0]
-		        && self->r.absmin[0] <= hit->r.absmax[0]
-		        && hit->r.absmin[1] <= self->r.absmax[1]
-		        && self->r.absmin[1] <= hit->r.absmax[1]
-		        && hit->r.absmin[2] <= self->r.absmax[2]
-		        && self->r.absmin[2] <= hit->r.absmax[2] )
+		if ( SV_GetArchivedClientInfo(clientNum, &pArchiveTime, &ps, &cs) )
 		{
-			vDelta[0] = hit->r.currentOrigin[0] - self->r.currentOrigin[0];
-			vDelta[1] = hit->r.currentOrigin[1] - self->r.currentOrigin[1];
-
-			fDist = self->r.maxs[0] + hit->r.maxs[0];
-
-			if ( (float)((float)(vDelta[0] * vDelta[0]) + (float)(vDelta[1] * vDelta[1])) <= (float)(fDist * fDist) )
-				break;
-		}
-
-		++hit;
-	}
-
-	vDelta[0] = hit->r.currentOrigin[0] - self->r.currentOrigin[0];
-	vDelta[1] = hit->r.currentOrigin[1] - self->r.currentOrigin[1];
-
-	vDelta[0] = G_crandom() + vDelta[0];
-	vDelta[1] = G_crandom() + vDelta[1];
-
-	Vec2Normalize(vDelta);
-
-	if ( Vec2Length(hit->client->ps.velocity) <= 0.0 )
-		ejectSpeed = 0.0;
-	else
-		ejectSpeed = (float)g_playerCollisionEjectSpeed->current.integer;
-
-	hitSpeed = ejectSpeed;
-
-	if ( Vec2Length(self->client->ps.velocity) <= 0.0 )
-		speed = 0.0;
-	else
-		speed = (float)g_playerCollisionEjectSpeed->current.integer;
-
-	selfSpeed = speed;
-
-	if ( ejectSpeed < 0.000099999997 && speed < 0.000099999997 )
-	{
-		hitSpeed = (float)hit->client->ps.speed;
-		selfSpeed = (float)self->client->ps.speed;
-	}
-
-	velocity = hit->client->ps.velocity;
-
-	velocity[0] = hitSpeed * vDelta[0];
-	velocity[1] = hitSpeed * vDelta[1];
-
-	hit->client->ps.pm_time = 300;
-	hit->client->ps.pm_flags |= 0x200u;
-
-	pVel = self->client->ps.velocity;
-
-	pVel[0] = -selfSpeed * vDelta[0];
-	pVel[1] = -selfSpeed * vDelta[1];
-
-	self->client->ps.pm_time = 300;
-	self->client->ps.pm_flags |= 0x200u;
-
-	return 1;
-}
-
-unsigned int G_GetNonPVSPlayerInfo(gentity_s *pSelf, float *vPosition, int iLastUpdateEnt)
-{
-	unsigned int index;
-	int iNext;
-	int iNum;
-	int team;
-	gentity_s *pEnt;
-	float fScale;
-	float fScale_4;
-	vec2_t fPos;
-	int iPos;
-	int iPos_4;
-	int num;
-	int iCurrentEnt;
-	int iEntCount;
-	int iBaseEnt;
-
-	team = pSelf->client->sess.state.team;
-
-	if ( team == TEAM_FREE || team == TEAM_SPECTATOR )
-		return 0;
-
-	if ( iLastUpdateEnt == 1023 )
-		iBaseEnt = 0;
-	else
-		iBaseEnt = iLastUpdateEnt + 1;
-
-	for ( iEntCount = 0; ; ++iEntCount )
-	{
-		if ( iEntCount > 63 )
-			return 0;
-
-		iNum = iEntCount + iBaseEnt;
-		iNext = iEntCount + iBaseEnt + (iEntCount + iBaseEnt < 0 ? 0x3F : 0);
-		iCurrentEnt = (iEntCount + iBaseEnt) % 64;
-		pEnt = &g_entities[iCurrentEnt];
-
-		if ( pEnt->r.inuse )
-		{
-			if ( pEnt->client
-			        && pEnt->client->sess.sessionState == SESS_STATE_PLAYING
-			        && pEnt->client->sess.state.team == team
-			        && pSelf != pEnt
-			        && !SV_inSnapshot(vPosition, pEnt->s.number) )
+			if ( G_ClientCanSpectateTeam(client, cs.team) )
 			{
-				break;
-			}
-		}
-	}
+				client->ps = ps;
+				HudElem_UpdateClient(client, ent->s.number, HUDELEM_UPDATE_CURRENT);
 
-	num = pEnt->s.number;
-	Vector2Subtract(pEnt->r.currentOrigin, vPosition, fPos);
+				//client->ps.eFlags = client->ps.eFlags & 0x1000000 | ps.eFlags & 0xFEFFFFFF; // legacy ?
 
-	iPos = (int)(fPos[0] + 0.5);
-	iPos_4 = (int)(fPos[1] + 0.5);
+				client->ps.pm_flags &= ~PMF_PLAYER;
+				client->ps.pm_flags |= PMF_FOLLOW;
 
-	fScale = 1.0;
-	fScale_4 = 1.0;
-
-	if ( iPos <= 1024 )
-	{
-		if ( iPos < -1022 )
-			fScale = -1022.0 / iPos;
-	}
-	else
-	{
-		fScale = 1024.0 / iPos;
-	}
-
-	if ( iPos_4 <= 1024 )
-	{
-		if ( iPos_4 < -1022 )
-			fScale_4 = -1022.0 / iPos_4;
-	}
-	else
-	{
-		fScale_4 = 1024.0 / iPos_4;
-	}
-
-	if ( fScale < 1.0 || fScale_4 < 1.0 )
-	{
-		if ( fScale_4 <= fScale )
-		{
-			if ( fScale > fScale_4 )
-				iPos = (int)(iPos * fScale_4);
-		}
-		else
-		{
-			iPos_4 = (int)(iPos_4 * fScale);
-		}
-	}
-
-	if ( iPos <= 1024 )
-	{
-		if ( iPos < -1022 )
-			iPos = -1022;
-	}
-	else
-	{
-		iPos = 1024;
-	}
-
-	if ( iPos_4 <= 1024 )
-	{
-		if ( iPos_4 < -1022 )
-			iPos_4 = -1022;
-	}
-	else
-	{
-		iPos_4 = 1024;
-	}
-
-	index = num & 0xFFFF803F;
-	num = num & 0xFF00003F | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15);
-
-	return (index | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6)) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15) & 0xFFFFFF | ((unsigned char)(int)(g_entities[iNum - (iNext >> 6 << 6)].r.currentAngles[1] * 0.71111113) << 24);
-}
-
-#if LIBCOD_COMPILE_PLAYER == 1
-int player_g_speed[MAX_CLIENTS] = {0};
-int player_g_gravity[MAX_CLIENTS] = {0};
-#endif
-
-extern dvar_t *g_gravity;
-extern dvar_t *g_speed;
-extern dvar_t *g_debugLocDamage;
-void ClientEndFrame(gentity_s *entity)
-{
-	int flags;
-	byte handler;
-	DObj_s *pDObj;
-	vec3_t angles;
-	vec3_t origin;
-	gclient_s *client;
-	qboolean modelsUpdated;
-	int clientNum;
-	clientInfo_t *ci;
-	vec3_t viewOrigin;
-
-	client = entity->client;
-	entity->handler = 10;
-	client->ps.deltaTime = 0;
-	modelsUpdated = G_UpdateClientInfo(entity);
-
-	if ( client->sess.connected == CON_CONNECTED )
-	{
-		if ( client->sess.sessionState == SESS_STATE_INTERMISSION )
-		{
-			IntermissionClientEndFrame(entity);
-			entity->client->buttonsSinceLastFrame = 0;
-		}
-		else if ( client->sess.sessionState == SESS_STATE_SPECTATOR )
-		{
-			SpectatorClientEndFrame(entity);
-			entity->client->buttonsSinceLastFrame = 0;
-		}
-		else if ( client->ps.clientNum == entity->s.number )
-		{
-			entity->r.svFlags |= 2u;
-			entity->r.svFlags &= ~1u;
-			entity->takedamage = 1;
-			client->ps.pm_flags |= 0x800000u;
-			client->ps.pm_flags &= 0xFCFFFFFF;
-			client->ps.viewmodelIndex = client->sess.viewmodelIndex;
-			G_UpdatePlayerContents(entity);
-			client->dropWeaponTime = 0;
-
-			if ( client->compassPingTime <= level.time )
-				client->ps.eFlags &= ~0x400000u;
-
-			if ( client->noclip )
-			{
-				client->ps.pm_type = PM_NOCLIP;
-			}
-			else if ( client->ufo )
-			{
-				client->ps.pm_type = PM_UFO;
-			}
-			else if ( client->sess.sessionState == SESS_STATE_DEAD )
-			{
-				if ( entity->tagInfo )
-					client->ps.pm_type = PM_DEAD_LINKED;
-				else
-					client->ps.pm_type = PM_DEAD;
-
-				entity->r.svFlags |= 1u;
-				entity->r.svFlags &= ~2u;
-				entity->takedamage = 0;
-			}
-			else
-			{
-				client->ps.pm_type = entity->tagInfo != 0;
-			}
-
-			client->ps.gravity = (int)g_gravity->current.decimal;
-			client->ps.speed = g_speed->current.integer;
-#if LIBCOD_COMPILE_PLAYER == 1
-			int num = client->ps.clientNum;
-			if (player_g_gravity[num] > 0)
-				client->ps.gravity = player_g_gravity[num];
-
-			if (player_g_speed[num] > 0)
-				client->ps.speed = player_g_speed[num];
-#endif
-			client->currentAimSpreadScale = client->ps.aimSpreadScale / 255.0;
-
-			Player_UpdateLookAtEntity(entity);
-			Player_UpdateCursorHints(entity);
-			P_DamageFeedback(entity);
-
-			if ( level.time - client->lastCmdTime <= 1000 )
-				flags = entity->s.eFlags & 0xFFFFFF7F;
-			else
-				flags = entity->s.eFlags | 0x80;
-
-			entity->s.eFlags = flags;
-			client->ps.stats[0] = entity->health;
-
-			Player_ResetLoopSound(entity);
-
-			if ( g_smoothClients->current.boolean )
-				G_PlayerStateToEntityStateExtrapolate(&client->ps, &entity->s, client->ps.commandTime, 1);
-			else
-				BG_PlayerStateToEntityState(&client->ps, &entity->s, 1, 1u);
-
-			if ( entity->health > 0 && StuckInClient(entity) )
-				entity->r.contents = 0x4000000;
-
-			G_GetPlayerViewOrigin(entity, viewOrigin);
-			client->ps.iCompassFriendInfo = G_GetNonPVSPlayerInfo(entity, viewOrigin, client->iLastCompassFriendlyInfoEnt);
-
-			if ( client->ps.iCompassFriendInfo )
-			{
-				client->iLastCompassFriendlyInfoEnt = client->ps.iCompassFriendInfo & 0x3F;
-
-				if ( (g_entities[client->iLastCompassFriendlyInfoEnt].s.eFlags & 0x400000) != 0 )
-					flags = client->ps.eFlags | 0x800000;
-				else
-					flags = client->ps.eFlags & 0xFF7FFFFF;
-
-				client->ps.eFlags = flags;
-			}
-			else
-			{
-				client->iLastCompassFriendlyInfoEnt = 1023;
-			}
-
-			if ( entity->s.eType == ET_PLAYER )
-			{
-				if ( entity->health <= 0 )
-					handler = 11;
-				else
-					handler = 9;
-
-				entity->handler = handler;
-				clientNum = entity->s.clientNum;
-				ci = &level_bgs.clientinfo[clientNum];
-				ci->lerpMoveDir = entity->s.angles2[1];
-				ci->lerpLean = entity->s.leanf;
-				VectorCopy(client->ps.viewangles, ci->playerAngles);
-
-				if ( modelsUpdated )
-					G_SafeDObjFree(entity);
-
-				pDObj = Com_GetServerDObj(entity->s.number);
-				BG_UpdatePlayerDObj(pDObj, &entity->s, ci, entity->attachIgnoreCollision);
-				BG_PlayerAnimation(pDObj, &entity->s, ci);
-
-				if ( (client->ps.pm_flags & 0x800000) != 0 && (client->ps.eFlags & 0x300) != 0 )
-					turret_think_client(&level.gentities[client->ps.viewlocked_entNum]);
-
-				if ( g_debugLocDamage->current.boolean )
+				if ( client->sess.forceSpectatorClient >= 0 )
 				{
-					if ( SV_DObjExists(entity) )
-					{
-						G_DObjCalcPose(entity);
-						SV_XModelDebugBoxes();
-					}
+					client->ps.pm_flags &= ~PMF_SPECTATOR_FREE;
+					return;
 				}
 
-				entity->client->buttonsSinceLastFrame = 0;
+				client->ps.pm_flags |= PMF_SPECTATOR_FREE;
+
+				if ( G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
+					client->ps.pm_flags |= PMF_SPECTATOR_FOLLOW;
+				else
+					client->ps.pm_flags &= ~PMF_SPECTATOR_FOLLOW;
+
+				return;
 			}
-			else
+		}
+	}
+
+	StopFollowing(ent);
+	client->ps.pm_flags &= ~PMF_SPECTATOR_FOLLOW;
+
+	if ( G_ClientCanSpectateTeam(client, TEAM_ALLIES) || G_ClientCanSpectateTeam(client, TEAM_AXIS) || G_ClientCanSpectateTeam(client, TEAM_FREE) )
+		client->ps.pm_flags |= PMF_SPECTATOR_FREE;
+	else
+		client->ps.pm_flags &= ~PMF_SPECTATOR_FREE;
+}
+
+/*
+=================
+SpectatorThink
+=================
+*/
+void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
+{
+	pmove_t pm;
+	gclient_t *client;
+
+	client = ent->client;
+	assert(client);
+
+	client->oldbuttons = client->buttons;
+//----(SA)	added
+	client->buttons = client->sess.cmd.buttons;
+	client->buttonsSinceLastFrame |= client->buttons & ~client->oldbuttons;
+
+	if ( client->sess.forceSpectatorClient < 0 && G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) && client->spectatorClient >= 0 )
+	{
+		// melee button to go freespec
+		if ( (client->buttons & BUTTON_MELEE) != (client->oldbuttons & BUTTON_MELEE) )
+		{
+			// code moved to StopFollowing
+			StopFollowing(ent);
+		}
+	}
+
+	// attack and ads button cycles through spectators
+	if ( ( client->buttons & BUTTON_ATTACK ) && !( client->oldbuttons & BUTTON_ATTACK ) )
+	{
+		Cmd_FollowCycle_f(ent, 1);
+	}
+	else if ( ( client->buttons & BUTTON_ADS ) && !( client->oldbuttons & BUTTON_ADS ) )
+	{
+		Cmd_FollowCycle_f(ent, -1);
+	}
+
+	if ( client->ps.pm_flags & PMF_FOLLOW )
+	{
+		return;
+	}
+
+	client->ps.pm_type = PM_SPECTATOR;
+
+	if ( G_ClientCanSpectateTeam(client, TEAM_NUM_TEAMS) )
+		client->ps.speed = 400;
+	else
+		client->ps.speed = 0;
+
+	// set up for pmove
+	memset( &pm, 0, sizeof( pm ) );
+	pm.ps = &client->ps;
+	pm.cmd = *ucmd;
+	pm.tracemask = ( CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_SKY | CONTENTS_UNKNOWN );   // spectators can fly through bodies
+	pm.handler = ENT_HANDLER_ACTOR_INIT;
+
+	Pmove( &pm ); // JPW NERVE
+
+	// save results of pmove
+	VectorCopy(client->ps.origin, ent->r.currentOrigin);
+
+	SV_UnlinkEntity(ent);
+}
+
+/*
+=================
+ClientInactivityTimer
+
+Returns qfalse if the client is dropped
+=================
+*/
+qboolean ClientInactivityTimer( gclient_t *client )
+{
+	assert(client - level.clients >= 0 && client - level.clients < level.maxclients);
+
+	// OSP - modified
+	if ( !g_inactivity->current.integer )
+	{
+		// give everyone some time, so if the operator sets g_inactivity during
+		// gameplay, everyone isn't kicked
+		client->inactivityTime = level.time + 60000;
+		client->inactivityWarning = qfalse;
+		return qtrue;
+	}
+
+	if ( client->sess.cmd.forwardmove || client->sess.cmd.rightmove || client->sess.cmd.buttons & ( BUTTON_ATTACK | BUTTON_JUMP ) )
+	{
+		client->inactivityTime = level.time + 1000 * g_inactivity->current.integer;
+		client->inactivityWarning = qfalse;
+		return qtrue;
+	}
+
+	if ( client->sess.localClient )
+	{
+		return qtrue;
+	}
+
+	if ( level.time > client->inactivityTime )
+	{
+		SV_GameDropClient(client - level.clients, "GAME_DROPPEDFORINACTIVITY");
+		return qfalse;
+	}
+
+	if ( level.time > client->inactivityTime - 10000 && !client->inactivityWarning )
+	{
+		client->inactivityWarning = qtrue;
+		SV_GameSendServerCommand(client - level.clients, SV_CMD_CAN_IGNORE, va("%c \"GAME_INACTIVEDROPWARNING\"", 99));
+	}
+
+	return qtrue;
+}
+
+/*
+================
+ClientEvents
+
+Events will be passed on to the clients for presentation,
+but any server game effects are handled here
+================
+*/
+void ClientEvents( gentity_t *ent, int oldEventSequence )
+{
+	vec3_t dir;
+	float damage;
+	gclient_t *client;
+	int event;
+	int eventParm;
+	int i;
+
+	client = ent->client;
+	assert(client);
+
+	if ( oldEventSequence < client->ps.eventSequence - MAX_EVENTS )
+	{
+		oldEventSequence = client->ps.eventSequence - MAX_EVENTS;
+	}
+
+	for ( i = oldEventSequence ; i < client->ps.eventSequence ; i++ )
+	{
+		event = client->ps.events[ i & ( MAX_EVENTS - 1 ) ];
+		eventParm = client->ps.eventParms[ i & ( MAX_EVENTS - 1 ) ];
+
+		if ( event >= EV_LANDING_PAIN_DEFAULT && event <= EV_LANDING_PAIN_ASPHALT )
+		{
+			if ( ent->s.eType != ET_PLAYER )
 			{
-				entity->client->buttonsSinceLastFrame = 0;
+				return; // not in the player model
 			}
+
+			if ( eventParm >= 100 )
+				damage = 1.1;
+			else
+				damage = eventParm * 0.0099999998;
+
+			if ( damage )
+			{
+				damage *= client->ps.stats[STAT_MAX_HEALTH];
+				VectorSet(dir, 0, 0, 1);
+				G_Damage(ent, NULL, NULL, NULL, NULL, damage, DFLAGS_NONE, MOD_FALLING, HITLOC_NONE, 0);
+			}
+
+			continue;
+		}
+
+		switch ( event )
+		{
+		case EV_FIRE_WEAPON:
+		case EV_FIRE_WEAPONB:
+		case EV_FIRE_WEAPON_LASTSHOT:
+		case EV_FIRE_WEAPON_MG42:
+			if ( g_antilag->current.boolean )
+				FireWeapon(ent, client->lastServerTime);
+			else
+				FireWeapon(ent, level.time);
+			break;
+		case EV_FIRE_MELEE:
+			FireWeaponMelee(ent);
+			break;
+		case EV_USE_OFFHAND:
+			G_UseOffHand(ent);
+			break;
+		case EV_BINOCULAR_ENTER:
+			Scr_Notify(ent, scr_const.binocular_enter, 0);
+			break;
+		case EV_BINOCULAR_EXIT:
+			Scr_Notify(ent, scr_const.binocular_exit, 0);
+			break;
+		case EV_BINOCULAR_FIRE:
+			Scr_Notify(ent, scr_const.binocular_fire, 0);
+			break;
+		case EV_BINOCULAR_RELEASE:
+			Scr_Notify(ent, scr_const.binocular_release, 0);
+			break;
+		case EV_BINOCULAR_DROP:
+			Scr_Notify(ent, scr_const.binocular_drop, 0);
+			break;
+		case EV_GRENADE_SUICIDE:
+			if ( ent->client && !(ent->flags & ( FL_GODMODE | FL_DEMIGOD ) ) )
+			{
+				ent->health = 0;
+				ent->client->ps.stats[STAT_HEALTH] = 0;
+				player_die(ent, ent, ent, 100000, MOD_SUICIDE, WP_NONE, NULL, HITLOC_NONE, 0);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+/*
+==============
+ClientThink
+
+This will be called once for each client frame, which will
+usually be a couple times for each server frame on fast clients.
+
+If "g_synchronousClients 1" is set, this will be called exactly
+once for each server frame, which makes for smooth demo recording.
+==============
+*/
+void ClientThink_real( gentity_t *ent, usercmd_t *ucmd )
+{
+	// VoroN: removed legacy shellshock code
+	vec3_t vAxis[3];
+	vec3_t vAxis2[3];
+	vec3_t vAxis3[3];
+	WeaponDef *weapDef;
+	vec3_t angles;
+	vec3_t viewangles;
+	weaponState_t ws;
+	viewState_t vs;
+	int msec;
+	int oldEventSequence;
+	pmove_t pm;
+	gclient_t *client;
+
+	assert(ent);
+	client = ent->client;
+	assert(client);
+
+	// don't think if the client is not yet connected (and thus not yet spawned in)
+	if ( client->sess.connected != CON_CONNECTED )
+	{
+		return;
+	}
+
+	// sanity check the command time to prevent speedup cheating
+	if ( ucmd->serverTime > level.time + 200 )
+	{
+		ucmd->serverTime = level.time + 200;
+//		G_Printf("serverTime <<<<<\n" );
+	}
+	if ( ucmd->serverTime < level.time - 1000 )
+	{
+		ucmd->serverTime = level.time - 1000;
+//		G_Printf("serverTime >>>>>\n" );
+	}
+
+	msec = ucmd->serverTime - client->ps.commandTime;
+	// following others may result in bad times, but we still want
+	// to check for follow toggles
+	if ( msec < 1 && client->ps.clientNum == ent - g_entities )
+	{
+		return;
+	}
+	if ( msec > 200 )
+	{
+		msec = 200;
+	}
+
+	// freezeControls func
+	if ( client->bFrozen )
+		client->ps.pm_flags |= PMF_FROZEN;
+	else
+		client->ps.pm_flags &= ~PMF_FROZEN;
+
+	//
+	// check for exiting intermission
+	//
+	if ( client->sess.sessionState == SESS_STATE_INTERMISSION )
+	{
+		ClientIntermissionThink(ent);
+		return;
+	}
+
+	if ( client->sess.sessionState == SESS_STATE_SPECTATOR )
+	{
+		SpectatorThink(ent, ucmd);
+		return;
+	}
+
+	// check for inactivity timer, but never drop the local client of a non-dedicated server
+	// OSP - moved here to allow for spec inactivity checks as well
+	if ( !ClientInactivityTimer( client ) )
+	{
+		return;
+	}
+
+	// set up for pmove
+	oldEventSequence = client->ps.eventSequence;
+
+	memset( &pm, 0, sizeof( pm ) );
+
+	pm.ps = &client->ps;
+	pm.cmd = *ucmd;
+	pm.oldcmd = client->sess.oldcmd;
+
+	if ( client->ps.pm_type >= PM_DEAD )
+		pm.tracemask = MASK_PLAYERSOLID & ~CONTENTS_BODY;
+	else
+		pm.tracemask = MASK_PLAYERSOLID;
+
+	pm.handler = PMOVE_HANDLER_SERVER;
+
+	VectorCopy(client->ps.origin, client->oldOrigin);
+
+	// swap and latch button actions
+	client->oldbuttons = client->buttons;
+	client->buttons = client->sess.cmd.buttons;
+	client->latched_buttons = client->buttons & ~client->oldbuttons;
+	//----(SA)	added
+	client->buttonsSinceLastFrame |= client->latched_buttons;
+
+	// save view state
+	vs.ps = &client->ps;
+	vs.damageTime = client->damageTime;
+	vs.time = level.time;
+	vs.v_dmg_pitch = client->v_dmg_pitch;
+	vs.v_dmg_roll = client->v_dmg_roll;
+	vs.xyspeed = BG_GetSpeed(&client->ps, level.time);
+	vs.frametime = msec * 0.001;
+	vs.fLastIdleFactor = client->fLastIdleFactor;
+	vs.weapIdleTime = &client->weapIdleTime;
+
+	BG_CalculateViewAngles(&vs, angles);
+	VectorAdd(client->ps.viewangles, angles, viewangles);
+
+	weapDef = BG_GetWeaponDef(client->ps.weapon);
+	BG_CalculateWeaponPosition_Sway(&client->ps, client->swayViewAngles, client->swayOffset, client->swayAngles, 1.0, msec);
+
+	// save weapon state
+	ws.ps = vs.ps;
+	ws.xyspeed = vs.xyspeed;
+	ws.frametime = msec * 0.001;
+	VectorCopy(client->vLastMoveAng, ws.vLastMoveAng);
+	ws.fLastIdleFactor = client->fLastIdleFactor;
+	ws.time = vs.time;
+	ws.damageTime = client->damageTime;
+	ws.v_dmg_pitch = client->v_dmg_pitch;
+	ws.v_dmg_roll = client->v_dmg_roll;
+
+	VectorCopy(client->vGunOffset, ws.vGunOffset);
+	VectorCopy(client->vGunSpeed, ws.vGunSpeed);
+	VectorCopy(client->swayAngles, ws.swayAngles);
+
+	ws.weapIdleTime = &client->weapIdleTime;
+	BG_CalculateWeaponAngles(&ws, angles);
+
+	if ( BG_IsAimDownSightWeapon(ws.ps->weapon) && ws.ps->fWeaponPosFrac && !weapDef->adsOverlayReticle )
+	{
+		AnglesToAxis(angles, vAxis);
+		AnglesToAxis(viewangles, vAxis2);
+		MatrixMultiply(vAxis, vAxis2, vAxis3);
+		AxisToAngles(vAxis3, viewangles);
+	}
+	assert(!IS_NAN((viewangles)[0]) && !IS_NAN((viewangles)[1]) && !IS_NAN((viewangles)[2]));
+
+	VectorCopy(ws.vLastMoveAng, client->vLastMoveAng);
+	client->fLastIdleFactor = ws.fLastIdleFactor;
+
+	VectorCopy(ws.vGunOffset, client->vGunOffset);
+	VectorCopy(ws.vGunSpeed, client->vGunSpeed);
+
+	client->fGunPitch = viewangles[PITCH];
+	client->fGunYaw = viewangles[YAW];
+
+	assert(!pm.mantleStarted);
+	Pmove(&pm);
+
+	if ( pm.mantleStarted )
+	{
+		assert(client->ps.pm_flags & PMF_MANTLE);
+		G_AddPlayerMantleBlockage(pm.mantleEndPos, pm.mantleDuration, &pm);
+	}
+
+	// DHM - Nerve :: Set animMovetype to 1 if ducking
+	if ( ent->client->ps.pm_flags & PMF_DUCKED )
+	{
+		ent->s.animMovetype = 1;
+	}
+	else
+	{
+		ent->s.animMovetype = 0;
+	}
+
+	// save results of pmove
+	if ( ent->client->ps.eventSequence != oldEventSequence )
+	{
+		ent->eventTime = level.time;
+		ent->r.eventTime = level.time;
+	}
+
+	// Ridah, fixes jittery zombie movement
+	if ( g_smoothClients->current.boolean )
+		G_PlayerStateToEntityStateExtrapolate(&ent->client->ps, &ent->s, ent->client->ps.commandTime, qtrue);
+	else
+		BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, qtrue, PMOVE_HANDLER_SERVER);
+
+//
+//	// use the precise origin for linking
+//	VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
+//
+//	// use the snapped origin for linking so it matches client predicted versions
+	VectorCopy(ent->s.pos.trBase, ent->r.currentOrigin);
+
+	VectorCopy(pm.mins, ent->r.mins);
+	VectorCopy(pm.maxs, ent->r.maxs);
+
+	// execute client events
+	ClientEvents(ent, oldEventSequence);
+
+	// link entity now, after any personal teleporters have been used
+	SV_LinkEntity(ent);
+	if ( !ent->client->noclip )
+	{
+		G_TouchTriggers(ent);
+	}
+
+// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
+	VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
+
+	VectorClear(ent->r.currentAngles);
+	ent->r.currentAngles[YAW] = ent->client->ps.viewangles[YAW];
+
+	// touch other objects
+	ClientImpacts(ent, &pm);
+
+	// save results of triggers and client events
+	if ( ent->client->ps.eventSequence != oldEventSequence )
+	{
+		ent->eventTime = level.time;
+	}
+
+	// perform once-a-second actions
+	Player_UpdateActivate(ent);
+}
+
+/*
+==============
+ClientEndFrame
+
+Called at the end of each server frame for each connected client
+A fast client will have multiple ClientThink for each ClientEndFrame,
+while a slow client may have multiple ClientEndFrame between ClientThink.
+==============
+*/
+void ClientEndFrame( gentity_t *ent )
+{
+	DObj *obj;
+	vec3_t spawn_angles;
+	vec3_t spawn_origin;
+	gclient_t *client;
+	qboolean bChanged;
+	int clientNum;
+	clientInfo_t *ci;
+	vec3_t vViewPos;
+
+	assert(ent);
+	client = ent->client;
+	assert(client);
+	assert(client->sess.connected != CON_DISCONNECTED);
+
+	ent->handler = ENT_HANDLER_CLIENT_SPECTATOR;
+	client->ps.deltaTime = 0;
+
+	bChanged = G_UpdateClientInfo(ent);
+
+	if ( client->sess.connected != CON_CONNECTED )
+	{
+		ent->client->buttonsSinceLastFrame = 0;
+		return;
+	}
+
+	if ( client->sess.sessionState == SESS_STATE_INTERMISSION )
+	{
+		IntermissionClientEndFrame(ent);
+		ent->client->buttonsSinceLastFrame = 0;
+		return;
+	}
+
+	if ( client->sess.sessionState == SESS_STATE_SPECTATOR )
+	{
+		SpectatorClientEndFrame(ent);
+		ent->client->buttonsSinceLastFrame = 0;
+		return;
+	}
+
+	if ( client->ps.clientNum != ent->s.number )
+	{
+		VectorCopy(client->ps.origin, spawn_origin);
+		VectorSet(spawn_angles, 0, client->ps.viewangles[YAW], 0);
+
+		ClientSpawn(ent, spawn_origin, spawn_angles);
+		ent->client->buttonsSinceLastFrame = 0;
+		return;
+	}
+
+	ent->r.svFlags |= SVF_BODY;
+	ent->r.svFlags &= ~SVF_NOCLIENT;
+
+	ent->takedamage = qtrue;
+
+	client->ps.pm_flags |= PMF_PLAYER;
+	client->ps.pm_flags &= ~(PMF_SPECTATOR_FREE | PMF_SPECTATOR_FOLLOW);
+
+	client->ps.viewmodelIndex = client->sess.viewmodelIndex;
+
+	G_SetClientContents(ent);
+
+	client->dropWeaponTime = 0;
+
+	if ( client->compassPingTime <= level.time )
+	{
+		client->ps.eFlags &= ~EF_TAUNT;
+	}
+
+	if ( client->noclip )
+	{
+		client->ps.pm_type = PM_NOCLIP;
+	}
+	else if ( client->ufo )
+	{
+		client->ps.pm_type = PM_UFO;
+	}
+	else if ( client->sess.sessionState == SESS_STATE_DEAD )
+	{
+		if ( ent->tagInfo )
+		{
+			client->ps.pm_type = PM_DEAD_LINKED;
 		}
 		else
 		{
-			VectorCopy(client->ps.origin, origin);
-			VectorSet(angles, 0.0, client->ps.viewangles[1], 0.0);
-			ClientSpawn(entity, origin, angles);
-			entity->client->buttonsSinceLastFrame = 0;
+			client->ps.pm_type = PM_DEAD;
+		}
+
+		ent->r.svFlags |= SVF_NOCLIENT;
+		ent->r.svFlags &= ~SVF_BODY;
+
+		ent->takedamage = 0;
+	}
+	else if ( ent->tagInfo )
+	{
+		client->ps.pm_type = PM_NORMAL_LINKED;
+	}
+	else
+	{
+		client->ps.pm_type = PM_NORMAL;
+	}
+
+	client->ps.gravity = (int)g_gravity->current.decimal;
+	client->ps.speed = g_speed->current.integer;
+
+#if LIBCOD_COMPILE_PLAYER == 1
+	int num = client->ps.clientNum;
+	extern int player_g_gravity[];
+	if (player_g_gravity[num] > 0)
+		client->ps.gravity = player_g_gravity[num];
+	extern int player_g_speed[];
+	if (player_g_speed[num] > 0)
+		client->ps.speed = player_g_speed[num];
+#endif
+
+	client->currentAimSpreadScale = client->ps.aimSpreadScale / 255;
+
+	Player_UpdateLookAtEntity(ent);
+	Player_UpdateCursorHints(ent);
+
+	// apply all the damage taken this frame
+	P_DamageFeedback(ent);
+
+	// add the EF_CONNECTION flag if we haven't gotten commands recently
+	if ( level.time - ent->client->lastCmdTime > 1000 )
+	{
+		ent->s.eFlags |= EF_CONNECTION;
+	}
+	else
+	{
+		ent->s.eFlags &= ~EF_CONNECTION;
+	}
+
+	ent->client->ps.stats[STAT_HEALTH] = ent->health;   // FIXME: get rid of ent->health...
+	// Gordon: WHY? other ents use it.
+
+	G_SetClientSound( ent );
+
+	// set the latest infor
+
+	// Ridah, fixes jittery zombie movement
+	if ( g_smoothClients->current.boolean )
+		G_PlayerStateToEntityStateExtrapolate(&client->ps, &ent->s, client->ps.commandTime, qtrue);
+	else
+		BG_PlayerStateToEntityState(&client->ps, &ent->s, qtrue, PMOVE_HANDLER_SERVER);
+
+	if ( ent->health > 0 && StuckInClient( ent ) )
+	{
+		//G_DPrintf( "%s is stuck in a client.\n", ent->client->pers.netname );
+		ent->r.contents = CONTENTS_CORPSE;
+	}
+
+	// store the client's current position for antilag traces
+	G_GetPlayerViewOrigin(ent, vViewPos);
+
+	client->ps.iCompassFriendInfo = G_GetNonPVSFriendlyInfo(ent, vViewPos, client->iLastCompassFriendlyInfoEnt);
+	assert(COMPFR_GET_INDEX( client->ps.iCompassFriendInfo ) >= 0 && COMPFR_GET_INDEX( client->ps.iCompassFriendInfo ) < MAX_CLIENTS);
+
+	if ( client->ps.iCompassFriendInfo )
+	{
+		client->iLastCompassFriendlyInfoEnt = COMPFR_GET_INDEX( client->ps.iCompassFriendInfo );
+
+		if ( g_entities[client->iLastCompassFriendlyInfoEnt].s.eFlags & EF_TAUNT )
+		{
+			client->ps.eFlags |= EF_PING;
+		}
+		else
+		{
+			client->ps.eFlags &= ~EF_PING;
 		}
 	}
 	else
 	{
-		entity->client->buttonsSinceLastFrame = 0;
+		client->iLastCompassFriendlyInfoEnt = ENTITYNUM_NONE;
 	}
+
+	if ( ent->s.eType != ET_PLAYER )
+	{
+		ent->client->buttonsSinceLastFrame = 0;
+		return;
+	}
+
+	if ( ent->health > 0 )
+		ent->handler = ENT_HANDLER_CLIENT;
+	else
+		ent->handler = ENT_HANDLER_CLIENT_DEAD;
+
+	clientNum = ent->s.clientNum;
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
+	ci = &level_bgs.clientinfo[clientNum];
+	assert(ci->infoValid);
+
+	ci->lerpMoveDir = ent->s.angles2[YAW];
+	ci->lerpLean = ent->s.leanf;
+
+	VectorCopy(client->ps.viewangles, ci->playerAngles);
+
+	if ( bChanged )
+	{
+		G_SafeDObjFree(ent);
+	}
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	BG_UpdatePlayerDObj(obj, &ent->s, ci, ent->attachIgnoreCollision);
+	BG_PlayerAnimation(obj, &ent->s, ci);
+
+	if ( client->ps.pm_flags & PMF_PLAYER && client->ps.eFlags & EF_TURRET_ACTIVE )
+	{
+		assert(client->ps.clientNum == ent->s.number);
+		assert(client->ps.viewlocked_entNum != ENTITYNUM_NONE);
+		turret_think_client(&level.gentities[client->ps.viewlocked_entNum]);
+	}
+
+	if ( g_debugLocDamage->current.boolean )
+	{
+		if ( SV_DObjExists(ent) )
+		{
+			G_DObjCalcPose(ent);
+			SV_XModelDebugBoxes();
+		}
+	}
+
+	ent->client->buttonsSinceLastFrame = 0;
 }
 
-void G_RunClient(gentity_s *ent)
+/*
+==================
+G_RunClient
+==================
+*/
+void G_RunClient( gentity_t *ent )
 {
+	assert(ent->client);
+	assert(ent->client->sess.connected != CON_DISCONNECTED);
+
 	if ( g_synchronousClients->current.boolean )
 	{
 		ent->client->sess.cmd.serverTime = level.time;
 		ClientThink_real(ent, &ent->client->sess.cmd);
 	}
 
-	if ( !ent->client->noclip )
+	if ( ent->client->noclip )
 	{
-		if ( ent->tagInfo )
-		{
-			if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
-				ent->client->ps.pm_type = PM_DEAD_LINKED;
-			else
-				ent->client->ps.pm_type = PM_NORMAL_LINKED;
+		return;
+	}
 
-			G_SetFixedLink(ent, 2);
-			G_SetOrigin(ent, ent->r.currentOrigin);
-			G_SetAngle(ent, ent->r.currentAngles);
-			ent->s.pos.trType = TR_INTERPOLATE;
-			ent->s.apos.trType = TR_INTERPOLATE;
-			SV_LinkEntity(ent);
-			VectorCopy(ent->r.currentOrigin, ent->client->ps.origin);
-		}
-		else if ( ent->client->ps.pm_type == PM_NORMAL_LINKED || ent->client->ps.pm_type == PM_DEAD_LINKED )
+	// link/unlink func
+	if ( ent->tagInfo )
+	{
+		if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
+			ent->client->ps.pm_type = PM_DEAD_LINKED;
+		else
+			ent->client->ps.pm_type = PM_NORMAL_LINKED;
+
+		G_SetFixedLink(ent, FIXED_LINK_ANGLES_NONE);
+
+		G_SetOrigin(ent, ent->r.currentOrigin);
+		G_SetAngle(ent, ent->r.currentAngles);
+
+		ent->s.pos.trType = TR_INTERPOLATE;
+		ent->s.apos.trType = TR_INTERPOLATE;
+
+		SV_LinkEntity(ent);
+
+		VectorCopy(ent->r.currentOrigin, ent->client->ps.origin);
+	}
+	else if ( ent->client->ps.pm_type == PM_NORMAL_LINKED )
+	{
+		ent->client->ps.pm_type == PM_NORMAL;
+	}
+	else if ( ent->client->ps.pm_type == PM_DEAD_LINKED )
+	{
+		ent->client->ps.pm_type == PM_DEAD;
+	}
+}
+
+/*
+==================
+ClientThink
+
+A new command has arrived from the client
+==================
+*/
+void ClientThink( int clientNum )
+{
+	gentity_t *ent;
+
+	ent = &g_entities[clientNum];
+	assert(ent->client);
+	ent->client->sess.oldcmd = ent->client->sess.cmd;
+	SV_GetUsercmd(clientNum, &ent->client->sess.cmd);
+
+	// mark the time we got info, so we can display the
+	// phone jack if they don't get any for a while
+	ent->client->lastCmdTime = level.time;
+
+	if ( g_synchronousClients->current.boolean )
+	{
+		return;
+	}
+
+	ClientThink_real(ent, &ent->client->sess.cmd);
+}
+
+/*
+========================
+G_PlayerStateToEntityStateExtrapolate
+
+This is done after each set of usercmd_t on the server,
+and after local prediction on the client
+========================
+*/
+void G_PlayerStateToEntityStateExtrapolate( playerState_t *ps, entityState_t *s, int time, qboolean snap )
+{
+	s->pos.trType = TR_LINEAR_STOP;
+	VectorCopy( ps->origin, s->pos.trBase );
+	// set the trDelta for flag direction and linear prediction
+	VectorCopy( ps->velocity, s->pos.trDelta );
+	// set the time for linear prediction
+	s->pos.trTime = time;
+	// set maximum extra polation time
+	s->pos.trDuration = 50; // 1000 / sv_fps (default = 20)
+
+	s->apos.trType = TR_INTERPOLATE;
+	VectorCopy( ps->viewangles, s->apos.trBase );
+
+	s->angles2[YAW] = (float)ps->movementDir;
+	s->eFlags = ps->eFlags;
+// from MP
+	if ( ps->entityEventSequence - ps->eventSequence < 0 )
+	{
+		int seq;
+
+		if ( ps->eventSequence - ps->entityEventSequence > MAX_EVENTS )
 		{
-			--ent->client->ps.pm_type;
+			ps->entityEventSequence = ps->eventSequence - MAX_EVENTS;
+		}
+		seq = ps->entityEventSequence & ( MAX_EVENTS - 1 );
+		s->eventParm = ps->eventParms[ seq ];
+		ps->entityEventSequence++;
+	}
+	else
+	{
+		s->eventParm = 0;
+	}
+// end
+	if ( ps->oldEventSequence - ps->eventSequence > 0 )
+	{
+		ps->oldEventSequence = ps->eventSequence;
+	}
+
+	// Ridah, now using a circular list of events for all entities
+	// add any new events that have been added to the playerState_t
+	// (possibly overwriting entityState_t events)
+	int i, j;
+	for ( i = ps->oldEventSequence; i != ps->eventSequence; i++ )
+	{
+		int event = ps->events[i & ( MAX_EVENTS - 1 )];
+
+		G_PlayerEvent(s->number, event);
+
+		for ( j = 0; singleClientEvents[j] > 0; j++ )
+		{
+			if ( singleClientEvents[j] == event )
+			{
+				break;
+			}
+		}
+
+		if ( singleClientEvents[j] >= 0 )
+		{
+			continue;
+		}
+
+		s->events[s->eventSequence & ( MAX_EVENTS - 1 )] = event;
+		s->eventParms[s->eventSequence & ( MAX_EVENTS - 1 )] = ps->eventParms[i & ( MAX_EVENTS - 1 )];
+		s->eventSequence++;
+	}
+	ps->oldEventSequence = ps->eventSequence;
+
+	s->weapon = ps->weapon;
+	s->groundEntityNum = ps->groundEntityNum;
+
+	if ( ps->pm_flags & ( PMF_FOLLOW | PMF_PLAYER ) ) // JPW NERVE limbo
+		s->eType = ET_PLAYER;
+	else
+		s->eType = ET_INVISIBLE;
+
+	if ( snap )
+	{
+		SnapVector( s->pos.trBase );
+		SnapVector( s->apos.trBase );
+	}
+
+	s->legsAnim = ps->legsAnim;
+	s->torsoAnim = ps->torsoAnim;
+	s->clientNum = ps->clientNum;
+
+	if ( ps->eFlags & EF_TURRET_ACTIVE )
+	{
+		s->otherEntityNum = ps->viewlocked_entNum;
+	}
+
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		s->eFlags |= EF_DEAD;
+	}
+	else
+	{
+		s->eFlags &= ~EF_DEAD;
+	}
+
+	if ( ps->pm_flags & PMF_ADS )
+	{
+		s->eFlags |= EF_AIMDOWNSIGHT;
+	}
+	else
+	{
+		s->eFlags &= ~EF_AIMDOWNSIGHT;
+	}
+
+	s->leanf = ps->leanf;
+
+	if ( PM_GetEffectiveStance(ps) == PM_EFF_STANCE_PRONE )
+	{
+		float fLerpFrac = (ps->commandTime - ps->viewHeightLerpTime) / PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
+
+		if ( fLerpFrac < 0 )
+		{
+			fLerpFrac = 0;
+		}
+		else
+		{
+			if ( fLerpFrac > 1.0 )
+			{
+				fLerpFrac = 1.0;
+			}
+		}
+
+		if ( !ps->viewHeightLerpDown )
+		{
+			fLerpFrac = 1.0 - fLerpFrac;
+		}
+
+		s->fTorsoHeight = ps->fTorsoHeight * fLerpFrac;
+		s->fTorsoPitch = AngleNormalize180(ps->fTorsoPitch) * fLerpFrac;
+		s->fWaistPitch = AngleNormalize180(ps->fWaistPitch) * fLerpFrac;
+	}
+	else
+	{
+		s->fTorsoHeight = 0;
+		s->fTorsoPitch = 0;
+		s->fWaistPitch = 0;
+	}
+}
+
+/*
+==================
+G_UpdateClientInfo
+==================
+*/
+qboolean G_UpdateClientInfo( gentity_t *ent )
+{
+	gclient_t *client;
+	qboolean bChanged;
+	const char *tagName;
+	const char *modelName;
+	clientInfo_t *ci;
+	int i;
+
+	client = ent->client;
+	assert(client);
+	assert(client->sess.connected != CON_DISCONNECTED);
+
+	ci = &level_bgs.clientinfo[ent->s.clientNum];
+	//assert(ci->infoValid);
+	bChanged = qfalse;
+
+	modelName = G_ModelName(ent->model);
+	client->sess.state.modelindex = ent->model;
+
+	if ( strcmp(ci->model, modelName) )
+	{
+		bChanged = qtrue;
+		I_strncpyz(ci->model, modelName, sizeof(ci->model));
+	}
+
+	for ( i = 0; i < 6; i++ )
+	{
+		if ( ent->attachModelNames[i] )
+		{
+			modelName = G_ModelName(ent->attachModelNames[i]);
+			client->sess.state.attachModelIndex[i] = ent->attachModelNames[i];
+
+			if ( strcmp(ci->attachModelNames[i], modelName) )
+			{
+				bChanged = qtrue;
+				I_strncpyz(ci->attachModelNames[i], modelName, sizeof(ci->attachModelNames[i]));
+			}
+
+			assert(ent->attachTagNames[i]);
+			tagName = SL_ConvertToString(ent->attachTagNames[i]);
+			client->sess.state.attachTagIndex[i] = G_TagIndex(tagName);
+
+			if ( strcmp(ci->attachTagNames[i], tagName) )
+			{
+				bChanged = qtrue;
+				I_strncpyz(ci->attachTagNames[i], tagName, sizeof(ci->attachTagNames[i]));
+			}
+		}
+		else
+		{
+			ci->attachModelNames[i][0] = 0;
+			ci->attachTagNames[i][0] = 0;
+
+			client->sess.state.attachModelIndex[i] = 0;
+			client->sess.state.attachTagIndex[i] = 0;
 		}
 	}
+
+	return bChanged;
+}
+
+/*
+==================
+G_AddPlayerMantleBlockage
+==================
+*/
+void G_AddPlayerMantleBlockage( vec3_t endPos, int duration, pmove_t *pm )
+{
+	gentity_s *owner;
+	gentity_s *ent;
+
+#ifdef LIBCOD
+	if ( !g_mantleBlockEnable->current.boolean )
+	{
+		return;
+	}
+#endif
+
+	owner = &g_entities[pm->ps->clientNum];
+
+	ent = G_Spawn();
+
+	ent->parent = owner;
+	ent->r.ownerNum = pm->ps->clientNum;
+	ent->r.contents = CONTENTS_PLAYERCLIP;
+	ent->clipmask = CONTENTS_PLAYERCLIP;
+	ent->r.svFlags = SVF_NOCLIENT | SVF_RADIUS;
+	ent->s.eType = ET_INVISIBLE;
+	ent->handler = ENT_HANDLER_PLAYER_BLOCK;
+
+	VectorCopy(owner->r.mins, ent->r.mins);
+	VectorCopy(owner->r.maxs, ent->r.maxs);
+
+	G_SetOrigin(ent, endPos);
+
+	SV_LinkEntity(ent);
+
+	ent->nextthink = g_mantleBlockTimeBuffer->current.integer + level.time + duration;
 }

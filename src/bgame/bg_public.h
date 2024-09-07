@@ -1320,10 +1320,10 @@ enum proneCheckType_t
 #define PMF_TIME_LAND       0x80000 // pm_time is time before rejump
 #define PMF_LOOKAT_FRIEND	0x100000 // green crosshair
 #define PMF_LOOKAT_ENEMY	0x200000 // red crosshair
-#define PMF_UNKNOWN_400000  0x400000
-#define PMF_UNKNOWN_800000  0x800000
-#define PMF_SPECTATING      0x1000000
-#define PMF_FOLLOW          0x2000000
+#define PMF_FOLLOW          0x400000 // POF_FOLLOW in newer cod's
+#define PMF_PLAYER          0x800000 // POF_PLAYER in newer cod's
+#define PMF_SPECTATOR_FREE  0x1000000
+#define PMF_SPECTATOR_FOLLOW 0x2000000
 #define PMF_DISABLEWEAPON   0x4000000
 
 #define PMF_ALL_TIMES   ( PMF_TIME_SLIDE | PMF_TIME_KNOCKBACK | PMF_TIME_LAND )
@@ -1339,6 +1339,7 @@ enum proneCheckType_t
 #define EF_CROUCH       0x4         //
 #define EF_PRONE        0x8         //
 #define EF_FIRING       0x40
+#define EF_CONNECTION   0x80
 #define EF_TURRET_PRONE 0x100       // See EF_TURRET_ACTIVE
 #define EF_TURRET_DUCK  0x200       // See EF_TURRET_ACTIVE
 #define EF_TURRET_ACTIVE 0x300      // Set on players that use a turret
@@ -1349,7 +1350,8 @@ enum proneCheckType_t
 #define EF_BODY_START   0x80000
 #define EF_VOTED        0x100000    //
 #define EF_TALK         0x200000    //
-#define EF_TAUNT        0x400000    //
+#define EF_TAUNT        0x400000    // pingPlayer func
+#define EF_PING         0x800000    // only for non-pvs ent
 #define EF_BOUNCE       0x1000000   // Missile/grenade/gravity-enabled entity bounce
 
 extern dvar_t *player_view_pitch_up;
@@ -1473,8 +1475,14 @@ enum pmtype_t
 	PM_DEAD_LINKED = 0x7,
 };
 
+enum pmhandler_t
+{
+	PMOVE_HANDLER_CLIENT = 0x0,
+	PMOVE_HANDLER_SERVER = 0x1,
+	PMOVE_HANDLER_COUNT = 0x2,
+};
+
 extern pmoveHandler_t pmoveHandlers[];
-extern int singleClientEvents[];
 
 #define MAX_ITEM_MODELS 2
 #define MAX_ITEM_ICONS 1

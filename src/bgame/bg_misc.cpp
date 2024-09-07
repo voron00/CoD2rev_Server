@@ -118,7 +118,7 @@ and after local prediction on the client
 */
 void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean snap, byte handler )
 {
-	if ( (ps->pm_flags & (PMF_UNKNOWN_400000 | PMF_UNKNOWN_800000) ) ) // JPW NERVE limbo
+	if ( ps->pm_flags & ( PMF_FOLLOW | PMF_PLAYER ) ) // JPW NERVE limbo
 	{
 		s->eType = ET_PLAYER;
 	}

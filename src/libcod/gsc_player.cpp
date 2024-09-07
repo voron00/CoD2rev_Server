@@ -619,6 +619,7 @@ void gsc_player_clearjumpstate(scr_entref_t id)
 	ps->jumpOriginZ = 0;
 }
 
+int player_g_speed[MAX_CLIENTS] = {0};
 void gsc_player_setg_speed(scr_entref_t id)
 {
 	int speed;
@@ -637,8 +638,6 @@ void gsc_player_setg_speed(scr_entref_t id)
 		return;
 	}
 
-	extern int player_g_speed[MAX_CLIENTS];
-
 	if (speed < 0)
 	{
 		stackError("gsc_player_setg_speed() param must be equal or above zero");
@@ -650,6 +649,7 @@ void gsc_player_setg_speed(scr_entref_t id)
 	stackPushBool(qtrue);
 }
 
+int player_g_gravity[MAX_CLIENTS] = {0};
 void gsc_player_setg_gravity(scr_entref_t id)
 {
 	int gravity;
@@ -667,8 +667,6 @@ void gsc_player_setg_gravity(scr_entref_t id)
 		stackPushUndefined();
 		return;
 	}
-
-	extern int player_g_gravity[MAX_CLIENTS];
 
 	if (gravity < 0)
 	{

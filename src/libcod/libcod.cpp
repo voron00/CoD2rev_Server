@@ -11,6 +11,7 @@ dvar_t *sv_downloadMessage;
 dvar_t *sv_cracked;
 dvar_t *sv_kickbots;
 dvar_t *jump_bounceEnable;
+dvar_t *g_mantleBlockEnable;
 
 int codecallback_playercommand = 0;
 int codecallback_userinfochanged = 0;
@@ -36,6 +37,7 @@ void RegisterLibcodDvars()
 	sv_kickbots = Dvar_RegisterBool("sv_kickbots", false, DVAR_CHANGEABLE_RESET);
 
 	jump_bounceEnable = Dvar_RegisterBool("jump_bounceEnable", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	g_mantleBlockEnable = Dvar_RegisterBool("g_mantleBlockEnable", true, DVAR_CHANGEABLE_RESET);
 }
 
 void InitLibcodCallbacks()

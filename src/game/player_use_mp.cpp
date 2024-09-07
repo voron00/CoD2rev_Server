@@ -1,6 +1,73 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+extern dvar_t *g_friendlyNameDist;
+extern dvar_t *g_friendlyfireDist;
+void Player_UpdateLookAtEntity(gentity_s *ent)
+{
+	unsigned char *priorityMap;
+	vec3_t vPos;
+	vec3_t vForward;
+	vec3_t vEnd;
+	vec3_t vOrigin;
+	trace_t trace;
+	gentity_s *lookAtEnt;
+	gclient_s *client;
+	WeaponDef *weaponDef;
+
+	client = ent->client;
+	client->ps.pm_flags &= 0xFFCFFFFF;
+	ent->client->pLookatEnt = 0;
+	G_GetPlayerViewOrigin(ent, vOrigin);
+	G_GetPlayerViewDirection(ent, vForward, 0, 0);
+
+	if ( (client->ps.eFlags & 0x300) != 0 )
+		weaponDef = BG_GetWeaponDef(g_entities[client->ps.viewlocked_entNum].s.weapon);
+	else
+		weaponDef = BG_GetWeaponDef(ent->client->ps.weapon);
+
+	if ( ent->client->ps.weapon && weaponDef->rifleBullet )
+		priorityMap = riflePriorityMap;
+	else
+		priorityMap = bulletPriorityMap;
+
+	VectorMA(vOrigin, 15000.0, vForward, vEnd);
+	lookAtEnt = G_FX_VisibilityTrace(&trace, vOrigin, vEnd, ent->s.number, 578824193, priorityMap, vForward);
+
+	if ( lookAtEnt )
+	{
+		if ( lookAtEnt->classname != scr_const.trigger_lookat
+		        || (ent->client->pLookatEnt = lookAtEnt,
+		            G_Trigger(lookAtEnt, ent),
+		            (lookAtEnt = G_FX_VisibilityTrace(&trace, vOrigin, vEnd, ent->s.number, 41953281, priorityMap, vForward)) != 0) )
+		{
+			if ( lookAtEnt->s.eType == ET_PLAYER && (trace.surfaceFlags & 0x10) == 0 )
+			{
+				VectorSubtract(lookAtEnt->r.currentOrigin, vOrigin, vPos);
+
+				if ( lookAtEnt->client->sess.state.team == ent->client->sess.state.team && ent->client->sess.state.team )
+				{
+					if ( Square(g_friendlyNameDist->current.decimal) > VectorLengthSquared(vPos) && !ent->client->pLookatEnt )
+						ent->client->pLookatEnt = lookAtEnt;
+
+					if ( Square(g_friendlyfireDist->current.decimal) > VectorLengthSquared(vPos) )
+						client->ps.pm_flags |= 0x100000u;
+				}
+				else
+				{
+					if ( Square(weaponDef->enemyCrosshairRange) > VectorLengthSquared(vPos) )
+					{
+						if ( !ent->client->pLookatEnt )
+							ent->client->pLookatEnt = lookAtEnt;
+
+						client->ps.pm_flags |= 0x200000u;
+					}
+				}
+			}
+		}
+	}
+}
+
 bool Player_ActivateCmd(gentity_s *ent)
 {
 	if ( !Scr_IsSystemActive() )

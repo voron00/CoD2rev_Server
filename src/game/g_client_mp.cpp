@@ -1,6 +1,126 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+unsigned int G_GetNonPVSFriendlyInfo(gentity_s *pSelf, float *vPosition, int iLastUpdateEnt)
+{
+	unsigned int index;
+	int iNext;
+	int iNum;
+	int team;
+	gentity_s *pEnt;
+	float fScale;
+	float fScale_4;
+	vec2_t fPos;
+	int iPos;
+	int iPos_4;
+	int num;
+	int iCurrentEnt;
+	int iEntCount;
+	int iBaseEnt;
+
+	team = pSelf->client->sess.state.team;
+
+	if ( team == TEAM_FREE || team == TEAM_SPECTATOR )
+		return 0;
+
+	if ( iLastUpdateEnt == 1023 )
+		iBaseEnt = 0;
+	else
+		iBaseEnt = iLastUpdateEnt + 1;
+
+	for ( iEntCount = 0; ; ++iEntCount )
+	{
+		if ( iEntCount > 63 )
+			return 0;
+
+		iNum = iEntCount + iBaseEnt;
+		iNext = iEntCount + iBaseEnt + (iEntCount + iBaseEnt < 0 ? 0x3F : 0);
+		iCurrentEnt = (iEntCount + iBaseEnt) % 64;
+		pEnt = &g_entities[iCurrentEnt];
+
+		if ( pEnt->r.inuse )
+		{
+			if ( pEnt->client
+			        && pEnt->client->sess.sessionState == SESS_STATE_PLAYING
+			        && pEnt->client->sess.state.team == team
+			        && pSelf != pEnt
+			        && !SV_inSnapshot(vPosition, pEnt->s.number) )
+			{
+				break;
+			}
+		}
+	}
+
+	num = pEnt->s.number;
+	Vector2Subtract(pEnt->r.currentOrigin, vPosition, fPos);
+
+	iPos = (int)(fPos[0] + 0.5);
+	iPos_4 = (int)(fPos[1] + 0.5);
+
+	fScale = 1.0;
+	fScale_4 = 1.0;
+
+	if ( iPos <= 1024 )
+	{
+		if ( iPos < -1022 )
+			fScale = -1022.0 / iPos;
+	}
+	else
+	{
+		fScale = 1024.0 / iPos;
+	}
+
+	if ( iPos_4 <= 1024 )
+	{
+		if ( iPos_4 < -1022 )
+			fScale_4 = -1022.0 / iPos_4;
+	}
+	else
+	{
+		fScale_4 = 1024.0 / iPos_4;
+	}
+
+	if ( fScale < 1.0 || fScale_4 < 1.0 )
+	{
+		if ( fScale_4 <= fScale )
+		{
+			if ( fScale > fScale_4 )
+				iPos = (int)(iPos * fScale_4);
+		}
+		else
+		{
+			iPos_4 = (int)(iPos_4 * fScale);
+		}
+	}
+
+	if ( iPos <= 1024 )
+	{
+		if ( iPos < -1022 )
+			iPos = -1022;
+	}
+	else
+	{
+		iPos = 1024;
+	}
+
+	if ( iPos_4 <= 1024 )
+	{
+		if ( iPos_4 < -1022 )
+			iPos_4 = -1022;
+	}
+	else
+	{
+		iPos_4 = 1024;
+	}
+
+	index = num & 0xFFFF803F;
+	num = num & 0xFF00003F | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15);
+
+	return (index | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6)) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15) & 0xFFFFFF | ((unsigned char)(int)(g_entities[iNum - (iNext >> 6 << 6)].r.currentAngles[1] * 0.71111113) << 24);
+}
+
+
+
 void SetClientViewAngle(gentity_s *ent, const float *angle)
 {
 	float direction;
@@ -414,7 +534,7 @@ void ClientSpawn(gentity_s *ent, const float *spawn_origin, const float *spawn_a
 	ent->clipmask = 42008593;
 	ent->r.svFlags |= 1u;
 	ent->takedamage = 0;
-	G_UpdatePlayerContents(ent);
+	G_SetClientContents(ent);
 	ent->handler = 10;
 	ent->flags = 4096;
 	VectorCopy(playerMins, ent->r.mins);
