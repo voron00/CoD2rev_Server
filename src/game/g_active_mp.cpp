@@ -642,10 +642,10 @@ void SpectatorClientEndFrame( gentity_t *ent )
 			{
 				if ( G_ClientCanSpectateTeam(client, cs.team) )
 				{
+					int oldFlags = client->ps.eFlags & EF_VOTED | ps.eFlags & ~EF_VOTED;
 					client->ps = ps;
 					HudElem_UpdateClient(client, ent->s.number, HUDELEM_UPDATE_CURRENT);
-
-					//client->ps.eFlags = client->ps.eFlags & 0x1000000 | ps.eFlags & 0xFEFFFFFF; // legacy ?
+					client->ps.eFlags = oldFlags;
 
 					client->ps.pm_flags &= ~PMF_PLAYER;
 					client->ps.pm_flags |= PMF_FOLLOW;
@@ -693,10 +693,10 @@ void SpectatorClientEndFrame( gentity_t *ent )
 		{
 			if ( G_ClientCanSpectateTeam(client, cs.team) )
 			{
+				int oldFlags = client->ps.eFlags & EF_VOTED | ps.eFlags & ~EF_VOTED;
 				client->ps = ps;
 				HudElem_UpdateClient(client, ent->s.number, HUDELEM_UPDATE_CURRENT);
-
-				//client->ps.eFlags = client->ps.eFlags & 0x1000000 | ps.eFlags & 0xFEFFFFFF; // legacy ?
+				client->ps.eFlags = oldFlags;
 
 				client->ps.pm_flags &= ~PMF_PLAYER;
 				client->ps.pm_flags |= PMF_FOLLOW;

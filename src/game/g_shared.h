@@ -6,6 +6,8 @@
 #define MAX_HUDELEMS_ARCHIVAL MAX_HUDELEMENTS
 #define MAX_HUDELEMS_CURRENT MAX_HUDELEMENTS
 #define MAX_OBJECTIVES 16
+#define MAX_HEADICONS 16
+#define MAX_STATUS_ICONS 8
 
 #define MAX_WEAPONS         128  // (SA) and yet more!
 
@@ -1163,6 +1165,8 @@ enum cs_index_t
 	CS_VOTE_MAPNAME = 19,
 	CS_VOTE_GAMETYPE = 20,
 	CS_MULTI_MAPWINNER = 22,
+	CS_STATUS_ICONS = 23,
+	CS_HEAD_ICONS = 31,
 };
 
 enum fixed_link_t
@@ -1171,6 +1175,8 @@ enum fixed_link_t
 	FIXED_LINK_ANGLES_YAW_ONLY = 0x1,
 	FIXED_LINK_ANGLES_NONE = 0x2,
 };
+
+#define ENTFIELD_MASK 0xC000
 
 // entity->svFlags
 // the server does not know how to interpret most of the values

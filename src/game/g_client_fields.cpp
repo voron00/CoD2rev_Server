@@ -2,335 +2,487 @@
 #include "../server/server.h"
 #include "g_shared.h"
 
-#define GCF_NONE 0
-#define GCF_NAME( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.state.name
-#define GCF_MAXHEALTH( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.maxHealth
-#define GCF_SCORE( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.score
-#define GCF_DEATHS( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.deaths
-#define GCF_SPECTATORCLIENT( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.forceSpectatorClient
-#define GCF_ARCHIVETIME( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.archiveTime
-#define GCF_PSOFFSETTIME( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.psOffsetTime
-#define GCF_PERS( x ) # x,(intptr_t)&( (gclient_t*)0 )->sess.pers
+// VoroN: A bit more cleaner approach
+#define GCSF_NONE 0
+#define GCSF( x ) (intptr_t)&( (gclient_t*)0 )->x
 
 game_client_field_t g_client_fields[] =
 {
-	{ GCF_NAME( name ), F_LSTRING, ClientScr_ReadOnly, NULL },
-	{ "sessionteam", GCF_NONE, F_STRING, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },
-	{ "sessionstate", GCF_NONE, F_STRING, ClientScr_SetSessionState, ClientScr_GetSessionState },
-	{ GCF_MAXHEALTH( maxhealth ), F_INT, ClientScr_SetMaxHealth, NULL },
-	{ GCF_SCORE( score ), F_INT, ClientScr_SetScore, NULL },
-	{ GCF_DEATHS( deaths ), F_INT, NULL, NULL },
-	{ "statusicon", GCF_NONE, F_STRING, ClientScr_SetStatusIcon, ClientScr_GetStatusIcon },
-	{ "headicon", GCF_NONE, F_STRING, ClientScr_SetHeadIcon, ClientScr_GetHeadIcon },
-	{ "headiconteam", GCF_NONE, F_STRING, ClientScr_SetHeadIconTeam, ClientScr_GetHeadIconTeam },
-	{ GCF_SPECTATORCLIENT( spectatorclient ), F_INT, ClientScr_SetSpectatorClient, NULL },
-	{ GCF_ARCHIVETIME( archivetime ), F_FLOAT, ClientScr_SetArchiveTime, ClientScr_GetArchiveTime },
-	{ GCF_PSOFFSETTIME( psoffsettime ), F_INT, ClientScr_SetPSOffsetTime, ClientScr_GetPSOffsetTime },
-	{ GCF_PERS( pers ), F_OBJECT, ClientScr_ReadOnly, NULL }
+	{ "name", GCSF( sess.state.name ), F_LSTRING, ClientScr_ReadOnly, NULL },
+	{ "sessionteam", GCSF_NONE, F_STRING, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },
+	{ "sessionstate", GCSF_NONE, F_STRING, ClientScr_SetSessionState, ClientScr_GetSessionState },
+	{ "maxhealth", GCSF( sess.maxHealth ), F_INT, ClientScr_SetMaxHealth, NULL },
+	{ "score", GCSF( sess.score ), F_INT, ClientScr_SetScore, NULL },
+	{ "deaths", GCSF( sess.deaths ), F_INT, NULL, NULL },
+	{ "statusicon", GCSF_NONE, F_STRING, ClientScr_SetStatusIcon, ClientScr_GetStatusIcon },
+	{ "headicon", GCSF_NONE, F_STRING, ClientScr_SetHeadIcon, ClientScr_GetHeadIcon },
+	{ "headiconteam", GCSF_NONE, F_STRING, ClientScr_SetHeadIconTeam, ClientScr_GetHeadIconTeam },
+	{ "spectatorclient", GCSF( sess.forceSpectatorClient ), F_INT, ClientScr_SetSpectatorClient, NULL },
+	{ "archivetime", GCSF( sess.archiveTime ), F_FLOAT, ClientScr_SetArchiveTime, ClientScr_GetArchiveTime },
+	{ "psoffsettime", GCSF( sess.psOffsetTime ), F_INT, ClientScr_SetPSOffsetTime, ClientScr_GetPSOffsetTime },
+	{ "pers", GCSF( sess.pers ), F_OBJECT, ClientScr_ReadOnly, NULL },
+	{ NULL, GCSF_NONE, F_INT, NULL, NULL } // field terminator
 };
 
-void ClientScr_ReadOnly(gclient_s *pSelf, const game_client_field_t *pField)
+/*
+===============
+GScr_AddFieldsForClient
+===============
+*/
+void GScr_AddFieldsForClient()
 {
-	Scr_Error(va("player field %s is read-only", pField->name));
+	const game_client_field_t *f;
+
+	for ( f = g_client_fields; f->name; f++ )
+	{
+		assert(!((f - g_client_fields) & ENTFIELD_MASK));
+		assert((f - g_client_fields) == (unsigned short)( f - g_client_fields ));
+
+		Scr_AddClassField(CLASS_NUM_ENTITY, f->name, (unsigned short)(f - g_client_fields) | ENTFIELD_MASK);
+	}
 }
 
-void ClientScr_SetSessionTeam(gclient_s *pSelf, const game_client_field_t *pField)
+/*
+===============
+Scr_SetClientField
+===============
+*/
+void Scr_SetClientField( gclient_t *client, int offset )
 {
-	unsigned short str;
+	const game_client_field_t *f;
 
-	str = Scr_GetConstString(0);
+	assert(client);
+	assert(static_cast<unsigned int>( offset ) < ARRAY_COUNT( g_client_fields ) - 1);
+	assert(offset >= 0);
 
-	if ( str == scr_const.axis )
+	f = &g_client_fields[offset];
+
+	if ( f->setter )
 	{
-		pSelf->sess.state.team = TEAM_AXIS;
-	}
-	else if ( str == scr_const.allies )
-	{
-		pSelf->sess.state.team = TEAM_ALLIES;
-	}
-	else if ( str == scr_const.spectator )
-	{
-		pSelf->sess.state.team = TEAM_SPECTATOR;
-	}
-	else if ( str == scr_const.none )
-	{
-		pSelf->sess.state.team = TEAM_NONE;
+		f->setter(client, f);
 	}
 	else
 	{
-		Scr_Error(va("'%s' is an illegal sessionteam string. Must be allies, axis, none, or spectator.", SL_ConvertToString(str)));
+		assert(f->ofs);
+		Scr_SetGenericField((byte *)client, f->type, f->ofs);
 	}
+}
+
+/*
+===============
+Scr_GetClientField
+===============
+*/
+void Scr_GetClientField( gclient_t *client, int offset )
+{
+	const game_client_field_t *f;
+
+	assert(client);
+	assert(static_cast<unsigned int>( offset ) < ARRAY_COUNT( g_client_fields ) - 1);
+	assert(offset >= 0);
+
+	f = &g_client_fields[offset];
+
+	if ( f->getter )
+	{
+		f->getter(client, f);
+	}
+	else
+	{
+		assert(f->ofs);
+		Scr_GetGenericField((byte *)client, f->type, f->ofs);
+	}
+}
+
+/*
+===============
+ClientScr_SetPSOffsetTime
+===============
+*/
+void ClientScr_SetPSOffsetTime( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+	pSelf->sess.psOffsetTime = Scr_GetInt(0);
+}
+
+/*
+===============
+ClientScr_SetArchiveTime
+===============
+*/
+void ClientScr_SetArchiveTime( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+	pSelf->sess.archiveTime = (int)(Scr_GetFloat(0) * 1000.0);
+}
+
+/*
+===============
+ClientScr_SetSpectatorClient
+===============
+*/
+void ClientScr_SetSpectatorClient( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	int iNewSpectatorClient;
+
+	assert(pSelf);
+	iNewSpectatorClient = Scr_GetInt(0);
+
+	if ( iNewSpectatorClient < -1 || iNewSpectatorClient >= MAX_CLIENTS )
+		Scr_Error("spectatorclient can only be set to -1, or a valid client number");
+
+	pSelf->sess.forceSpectatorClient = iNewSpectatorClient;
+}
+
+/*
+===============
+ClientScr_SetScore
+===============
+*/
+void ClientScr_SetScore( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+	pSelf->sess.score = Scr_GetInt(0);
+	CalculateRanks();
+}
+
+/*
+===============
+ClientScr_SetMaxHealth
+===============
+*/
+void ClientScr_SetMaxHealth( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+	pSelf->sess.maxHealth = Scr_GetInt(0);
+
+	if ( pSelf->sess.maxHealth < 1 )
+		pSelf->sess.maxHealth = 1;
+
+	if ( pSelf->ps.stats[STAT_HEALTH] > pSelf->sess.maxHealth )
+		pSelf->ps.stats[STAT_HEALTH] = pSelf->sess.maxHealth;
+
+	g_entities[pSelf - level.clients].health = pSelf->ps.stats[STAT_HEALTH];
+	pSelf->ps.stats[STAT_MAX_HEALTH] = pSelf->sess.maxHealth;
+}
+
+/*
+===============
+ClientScr_ReadOnly
+===============
+*/
+void ClientScr_ReadOnly( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+	assert(pField);
+	Scr_Error(va("player field %s is read-only", pField->name));
+}
+
+/*
+===============
+ClientScr_SetHeadIconTeam
+===============
+*/
+void ClientScr_SetHeadIconTeam( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	gentity_t *pEnt;
+	unsigned short sTeam;
+
+	assert(pSelf);
+	assert(pSelf - level.clients >= 0 && pSelf - level.clients < level.maxclients);
+
+	pEnt = &g_entities[pSelf - level.clients];
+	sTeam = Scr_GetConstString(0);
+
+	if ( sTeam == scr_const.none )
+	{
+		pEnt->s.iHeadIconTeam = TEAM_FREE;
+	}
+	else if ( sTeam == scr_const.allies )
+	{
+		pEnt->s.iHeadIconTeam = TEAM_ALLIES;
+	}
+	else if ( sTeam == scr_const.axis )
+	{
+		pEnt->s.iHeadIconTeam = TEAM_AXIS;
+	}
+	else if ( sTeam == scr_const.spectator )
+	{
+		pEnt->s.iHeadIconTeam = TEAM_SPECTATOR;
+	}
+	else
+	{
+		Scr_Error(va("'%s' is an illegal head icon team string. Must be none, allies, axis, or spectator.", SL_ConvertToString(sTeam)));
+	}
+}
+
+/*
+===============
+ClientScr_SetSessionState
+===============
+*/
+void ClientScr_SetSessionState( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	unsigned short newState;
+
+	assert(pSelf);
+	assert(pSelf->sess.connected != CON_DISCONNECTED);
+
+	newState = Scr_GetConstString(0);
+
+	if ( newState == scr_const.playing )
+	{
+		pSelf->sess.sessionState = SESS_STATE_PLAYING;
+	}
+	else if ( newState == scr_const.dead )
+	{
+		pSelf->sess.sessionState = SESS_STATE_DEAD;
+	}
+	else if ( newState == scr_const.spectator )
+	{
+		pSelf->sess.sessionState = SESS_STATE_SPECTATOR;
+	}
+	else if ( newState == scr_const.intermission )
+	{
+		pSelf->ps.eFlags ^= EF_TELEPORT_BIT;
+		pSelf->sess.sessionState = SESS_STATE_INTERMISSION;
+	}
+	else
+	{
+		Scr_Error(va("'%s' is an illegal sessionstate string. Must be playing, dead, spectator, or intermission.", SL_ConvertToString(newState)));
+	}
+}
+
+/*
+===============
+ClientScr_SetHeadIcon
+===============
+*/
+void ClientScr_SetHeadIcon( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	gentity_t *pEnt;
+	const char *pszIcon;
+
+	assert(pSelf);
+	assert(pSelf - level.clients >= 0 && pSelf - level.clients < level.maxclients);
+
+	pEnt = &g_entities[pSelf - level.clients];
+	pszIcon = Scr_GetString(0);
+	pEnt->s.iHeadIcon = GScr_GetHeadIconIndex(pszIcon);
+}
+
+/*
+===============
+ClientScr_SetStatusIcon
+===============
+*/
+void ClientScr_SetStatusIcon( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	const char *pszIcon;
+
+	assert(pSelf);
+	pszIcon = Scr_GetString(0);
+	pSelf->sess.statusIcon = GScr_GetStatusIconIndex(pszIcon);
+}
+
+/*
+===============
+ClientScr_SetSessionTeam
+===============
+*/
+void ClientScr_SetSessionTeam( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	unsigned short newTeam;
+
+	assert(pSelf);
+	newTeam = Scr_GetConstString(0);
+
+	if ( newTeam == scr_const.axis )
+	{
+		pSelf->sess.state.team = TEAM_AXIS;
+	}
+	else if ( newTeam == scr_const.allies )
+	{
+		pSelf->sess.state.team = TEAM_ALLIES;
+	}
+	else if ( newTeam == scr_const.spectator )
+	{
+		pSelf->sess.state.team = TEAM_SPECTATOR;
+	}
+	else if ( newTeam == scr_const.none )
+	{
+		pSelf->sess.state.team = TEAM_FREE;
+	}
+	else
+	{
+		Scr_Error(va("'%s' is an illegal sessionteam string. Must be allies, axis, none, or spectator.", SL_ConvertToString(newTeam)));
+	}
+
+	if ( pSelf - level.clients >= level.maxclients )
+		Scr_Error("client is not pointing to the level.clients array");
 
 	ClientUserinfoChanged(pSelf - level.clients);
 	CalculateRanks();
 }
 
-void ClientScr_SetSessionState(gclient_s *pSelf, const game_client_field_t *pField)
+/*
+===============
+ClientScr_GetPSOffsetTime
+===============
+*/
+void ClientScr_GetPSOffsetTime( gclient_t *pSelf, const game_client_field_t *pField )
 {
-	unsigned short str;
-
-	str = Scr_GetConstString(0);
-
-	if ( str == scr_const.playing )
-	{
-		pSelf->sess.sessionState = SESS_STATE_PLAYING;
-	}
-	else if ( str == scr_const.dead )
-	{
-		pSelf->sess.sessionState = SESS_STATE_DEAD;
-	}
-	else if ( str == scr_const.spectator )
-	{
-		pSelf->sess.sessionState = SESS_STATE_SPECTATOR;
-	}
-	else if ( str == scr_const.intermission )
-	{
-		pSelf->ps.eFlags ^= 2u;
-		pSelf->sess.sessionState = SESS_STATE_INTERMISSION;
-	}
-	else
-	{
-		Scr_Error(va("'%s' is an illegal sessionstate string. Must be playing, dead, spectator, or intermission.", SL_ConvertToString(str)));
-	}
-}
-
-void ClientScr_SetMaxHealth(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	pSelf->sess.maxHealth = Scr_GetInt(0);
-
-	if ( pSelf->sess.maxHealth <= 0 )
-		pSelf->sess.maxHealth = 1;
-
-	if ( pSelf->ps.stats[0] > pSelf->sess.maxHealth )
-		pSelf->ps.stats[0] = pSelf->sess.maxHealth;
-
-	g_entities[pSelf - level.clients].health = pSelf->ps.stats[0];
-	pSelf->ps.stats[2] = pSelf->sess.maxHealth;
-}
-
-void ClientScr_SetScore(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	pSelf->sess.score = Scr_GetInt(0);
-	CalculateRanks();
-}
-
-void ClientScr_SetStatusIcon(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	pSelf->sess.statusIcon = GScr_GetStatusIconIndex(Scr_GetString(0));
-}
-
-void ClientScr_SetHeadIcon(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	g_entities[pSelf - level.clients].s.iHeadIcon = GScr_GetHeadIconIndex(Scr_GetString(0));
-}
-
-void ClientScr_SetHeadIconTeam(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	unsigned short str;
-
-	str = Scr_GetConstString(0);
-
-	if ( scr_const.none == str )
-	{
-		g_entities[pSelf - level.clients].s.iHeadIconTeam = 0;
-	}
-	else if ( scr_const.allies == str )
-	{
-		g_entities[pSelf - level.clients].s.iHeadIconTeam = 2;
-	}
-	else if ( scr_const.axis == str )
-	{
-		g_entities[pSelf - level.clients].s.iHeadIconTeam = 1;
-	}
-	else if ( scr_const.spectator == str )
-	{
-		Scr_Error(va("'%s' is an illegal head icon team string. Must be none, allies, axis, or spectator.", SL_ConvertToString(str)));
-	}
-	else
-	{
-		g_entities[pSelf - level.clients].s.iHeadIconTeam = 3;
-	}
-}
-
-void ClientScr_SetSpectatorClient(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	int clientNum;
-
-	clientNum = Scr_GetInt(0);
-
-	if ( clientNum < -1 || clientNum > 63 )
-		Scr_Error("spectatorclient can only be set to -1, or a valid client number");
-
-	pSelf->sess.forceSpectatorClient = clientNum;
-}
-
-void ClientScr_SetArchiveTime(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	pSelf->sess.archiveTime = (int)(Scr_GetFloat(0) * 1000.0);
-}
-
-void ClientScr_SetPSOffsetTime(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	pSelf->sess.psOffsetTime = Scr_GetInt(0);
-}
-
-void ClientScr_GetSessionTeam(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	int team;
-
-	team = pSelf->sess.state.team;
-
-	if ( team == TEAM_AXIS )
-	{
-		Scr_AddConstString(scr_const.axis);
-	}
-	else if ( team > TEAM_AXIS )
-	{
-		if ( team == TEAM_ALLIES )
-		{
-			Scr_AddConstString(scr_const.allies);
-		}
-		else if ( team == TEAM_SPECTATOR )
-		{
-			Scr_AddConstString(scr_const.spectator);
-		}
-	}
-	else if ( team == TEAM_NONE )
-	{
-		Scr_AddConstString(scr_const.none);
-	}
-}
-
-void ClientScr_GetSessionState(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	int sessionState;
-
-	sessionState = pSelf->sess.sessionState;
-
-	if ( sessionState == SESS_STATE_DEAD )
-	{
-		Scr_AddConstString(scr_const.dead);
-	}
-	else if ( sessionState > SESS_STATE_DEAD )
-	{
-		if ( sessionState == SESS_STATE_SPECTATOR )
-		{
-			Scr_AddConstString(scr_const.spectator);
-		}
-		else if ( sessionState == SESS_STATE_INTERMISSION )
-		{
-			Scr_AddConstString(scr_const.intermission);
-		}
-	}
-	else if ( sessionState == SESS_STATE_PLAYING )
-	{
-		Scr_AddConstString(scr_const.playing);
-	}
-}
-
-void ClientScr_GetStatusIcon(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	char string[MAX_STRING_CHARS];
-
-	if ( pSelf->sess.statusIcon )
-	{
-		SV_GetConfigstring(pSelf->sess.statusIcon + 22, string, sizeof(string));
-		Scr_AddString(string);
-	}
-	else
-	{
-		Scr_AddString("");
-	}
-}
-
-void ClientScr_GetHeadIcon(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	int iHeadIcon;
-	char string[MAX_STRING_CHARS];
-
-	iHeadIcon = g_entities[pSelf - level.clients].s.iHeadIcon;
-
-	if ( iHeadIcon )
-	{
-		if ( iHeadIcon < 16 )
-		{
-			SV_GetConfigstring(iHeadIcon + 30, string, sizeof(string));
-			Scr_AddString(string);
-		}
-	}
-	else
-	{
-		Scr_AddString("");
-	}
-}
-
-void ClientScr_GetHeadIconTeam(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	int icon;
-	unsigned int str;
-
-	icon = g_entities[pSelf - level.clients].s.iHeadIconTeam;
-
-	switch ( icon )
-	{
-	case 1:
-		str = scr_const.axis;
-		break;
-
-	case 2:
-		str = scr_const.allies;
-		break;
-
-	case 3:
-		str = scr_const.spectator;
-		break;
-
-	default:
-		str = scr_const.none;
-		break;
-	}
-
-	Scr_AddConstString(str);
-}
-
-void ClientScr_GetArchiveTime(gclient_s *pSelf, const game_client_field_t *pField)
-{
-	Scr_AddFloat((float)pSelf->sess.archiveTime * 0.001);
-}
-
-void ClientScr_GetPSOffsetTime(gclient_s *pSelf, const game_client_field_t *pField)
-{
+	assert(pSelf);
 	Scr_AddInt(pSelf->sess.archiveTime);
 }
 
-void Scr_GetClientField(gclient_s *client, int offset)
+/*
+===============
+ClientScr_GetArchiveTime
+===============
+*/
+void ClientScr_GetArchiveTime( gclient_t *pSelf, const game_client_field_t *pField )
 {
-	game_client_field_t *field;
-
-	field = &g_client_fields[offset];
-
-	if ( field->getter )
-		field->getter(client, field);
-	else
-		Scr_GetGenericField((byte *)client, field->type, field->ofs);
+	assert(pSelf);
+	Scr_AddFloat((float)pSelf->sess.archiveTime * 0.001);
 }
 
-void Scr_SetClientField(gclient_s *client, int offset)
+/*
+===============
+ClientScr_GetHeadIconTeam
+===============
+*/
+void ClientScr_GetHeadIconTeam( gclient_t *pSelf, const game_client_field_t *pField )
 {
-	game_client_field_t *field;
+	int iHeadIcon;
 
-	field = &g_client_fields[offset];
+	assert(pSelf);
+	assert(pSelf - level.clients >= 0 && pSelf - level.clients < level.maxclients);
 
-	if ( field->setter )
-		field->setter(client, field);
-	else
-		Scr_SetGenericField((byte *)client, field->type, field->ofs);
+	iHeadIcon = g_entities[pSelf - level.clients].s.iHeadIconTeam;
+
+	switch ( iHeadIcon )
+	{
+	case TEAM_AXIS:
+		Scr_AddConstString(scr_const.axis);
+		break;
+	case TEAM_ALLIES:
+		Scr_AddConstString(scr_const.allies);
+		break;
+	case TEAM_SPECTATOR:
+		Scr_AddConstString(scr_const.spectator);
+		break;
+	default:
+		Scr_AddConstString(scr_const.none);
+		break;
+	}
 }
 
-void GScr_AddFieldsForClient()
+/*
+===============
+ClientScr_GetHeadIcon
+===============
+*/
+void ClientScr_GetHeadIcon( gclient_t *pSelf, const game_client_field_t *pField )
 {
-	game_client_field_t *i;
+	int iHeadIcon;
+	char szConfigString[MAX_STRING_CHARS];
 
-	for ( i = g_client_fields; i->name; ++i )
-		Scr_AddClassField(0, i->name, (i - g_client_fields) | 0xC000);
+	assert(pSelf);
+	assert(pSelf - level.clients >= 0 && pSelf - level.clients < level.maxclients);
+
+	iHeadIcon = g_entities[pSelf - level.clients].s.iHeadIcon;
+
+	if ( !iHeadIcon )
+	{
+		Scr_AddString("");
+		return;
+	}
+
+	if ( iHeadIcon >= MAX_HEADICONS )
+	{
+		return;
+	}
+
+	SV_GetConfigstring(CS_HEAD_ICONS - 1 + iHeadIcon, szConfigString, sizeof(szConfigString));
+	Scr_AddString(szConfigString);
+}
+
+/*
+===============
+ClientScr_GetStatusIcon
+===============
+*/
+void ClientScr_GetStatusIcon( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	char szConfigString[MAX_STRING_CHARS];
+
+	assert(pSelf);
+	assert(pSelf->sess.statusIcon >= 0 && pSelf->sess.statusIcon <= MAX_STATUS_ICONS);
+
+	if ( !pSelf->sess.statusIcon )
+	{
+		Scr_AddString("");
+		return;
+	}
+
+	SV_GetConfigstring(CS_STATUS_ICONS - 1 + pSelf->sess.statusIcon, szConfigString, sizeof(szConfigString));
+	Scr_AddString(szConfigString);
+}
+
+/*
+===============
+ClientScr_GetSessionState
+===============
+*/
+void ClientScr_GetSessionState( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+	assert(pSelf->sess.connected != CON_DISCONNECTED);
+
+	switch ( pSelf->sess.sessionState )
+	{
+	case SESS_STATE_PLAYING:
+		Scr_AddConstString(scr_const.playing);
+		break;
+	case SESS_STATE_DEAD:
+		Scr_AddConstString(scr_const.dead);
+		break;
+	case SESS_STATE_SPECTATOR:
+		Scr_AddConstString(scr_const.spectator);
+		break;
+	case SESS_STATE_INTERMISSION:
+		Scr_AddConstString(scr_const.intermission);
+		break;
+	default:
+		break;
+	}
+}
+
+/*
+===============
+ClientScr_GetSessionTeam
+===============
+*/
+void ClientScr_GetSessionTeam( gclient_t *pSelf, const game_client_field_t *pField )
+{
+	assert(pSelf);
+
+	switch ( pSelf->sess.state.team )
+	{
+	case TEAM_FREE:
+		Scr_AddConstString(scr_const.none);
+		break;
+	case TEAM_AXIS:
+		Scr_AddConstString(scr_const.axis);
+		break;
+	case TEAM_ALLIES:
+		Scr_AddConstString(scr_const.allies);
+		break;
+	case TEAM_SPECTATOR:
+		Scr_AddConstString(scr_const.spectator);
+		break;
+	default:
+		break;
+	}
 }
