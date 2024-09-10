@@ -790,6 +790,15 @@ void SV_SendMessageToClient( msg_t *msg, client_t *client )
 		return;
 	}
 
+#ifdef LIBCOD
+	// ignore any rate / snapshotMsec calculations when using fast download
+	if ( sv_fastDownload->current.boolean && *client->downloadName && !client->downloadingWWW && !client->clientDownloadingWWW )
+	{
+		client->nextSnapshotTime = svs.time - 1;
+		return;
+	}
+#endif
+
 	// normal rate / snapshotMsec calculation
 	rateMsec = SV_RateMsec( client, compressedSize );
 
@@ -930,6 +939,27 @@ void SV_SendClientMessages( void )
 
 		numclients++;       // NERVE - SMF - net debugging
 
+#ifdef LIBCOD
+		for ( int j = 0; j < MAX_DOWNLOAD_WINDOW; j++ )
+		{
+			if ( !sv_fastDownload->current.boolean || !*c->downloadName || c->downloadingWWW || c->clientDownloadingWWW )
+			{
+				j = MAX_DOWNLOAD_WINDOW;
+			}
+
+			// send additional message fragments if the last message
+			// was too large to send at once
+			while ( c->netchan.unsentFragments )
+			{
+				c->nextSnapshotTime = svs.time + SV_RateMsec( c, c->netchan.unsentLength - c->netchan.unsentFragmentStart );
+				SV_Netchan_TransmitNextFragment(&c->netchan);
+			}
+
+			// generate and send a new message
+			SV_SendClientSnapshot( c );
+		}
+		SV_SendClientVoiceData( c );
+#else
 		// send additional message fragments if the last message
 		// was too large to send at once
 		if ( c->netchan.unsentFragments )
@@ -942,6 +972,7 @@ void SV_SendClientMessages( void )
 		// generate and send a new message
 		SV_SendClientSnapshot( c );
 		SV_SendClientVoiceData( c );
+#endif
 	}
 
 	// NERVE - SMF - net debugging

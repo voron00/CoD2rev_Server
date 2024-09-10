@@ -130,6 +130,7 @@ extern dvar_t *g_playerCollision;
 extern dvar_t *g_playerEject;
 extern dvar_t *sv_allowRcon;
 extern dvar_t *sv_downloadMessage;
+extern dvar_t *sv_fastDownload;
 extern dvar_t *sv_cracked;
 extern dvar_t *sv_kickbots;
 extern dvar_t *jump_bounceEnable;

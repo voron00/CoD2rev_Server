@@ -8,6 +8,7 @@ dvar_t *g_playerCollision;
 dvar_t *g_playerEject;
 dvar_t *sv_allowRcon;
 dvar_t *sv_downloadMessage;
+dvar_t *sv_fastDownload;
 dvar_t *sv_cracked;
 dvar_t *sv_kickbots;
 dvar_t *jump_bounceEnable;
@@ -33,6 +34,7 @@ void RegisterLibcodDvars()
 
 	sv_allowRcon = Dvar_RegisterBool("sv_allowRcon", true, DVAR_CHANGEABLE_RESET);
 	sv_downloadMessage = Dvar_RegisterString("sv_downloadMessage", "", DVAR_CHANGEABLE_RESET);
+	sv_fastDownload = Dvar_RegisterBool("sv_fastDownload", false, DVAR_CHANGEABLE_RESET);
 	sv_cracked = Dvar_RegisterBool("sv_cracked", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	sv_kickbots = Dvar_RegisterBool("sv_kickbots", false, DVAR_CHANGEABLE_RESET);
 

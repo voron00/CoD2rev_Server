@@ -1140,13 +1140,6 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 		}
 	}
 
-#ifdef LIBCOD
-#undef MAX_DOWNLOAD_BLKSIZE
-#define MAX_DOWNLOAD_BLKSIZE 1024
-	cl->rate = 90000;
-	cl->snapshotMsec = 50;
-#endif
-
 	if (!cl->download)
 	{
 		// We open the file here
@@ -1266,8 +1259,12 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 	if (blockspersnap < 0)
 		blockspersnap = 1;
 
+	if (blockspersnap > 7) // 2048 block size * 8 == 16384 is a max msg len, tldr can't send more than 7 blocks.
+		blockspersnap = 7; // fixes crash when client set snaps value too low
+
 #ifdef LIBCOD
-	blockspersnap = 1;
+	if (sv_fastDownload->current.boolean)
+		blockspersnap = 1; // always one block for fast dl
 #endif
 
 	while (blockspersnap--)
@@ -1345,7 +1342,6 @@ void SV_CloseDownload( client_t *cl )
 			cl->downloadBlocks[i] = NULL;
 		}
 	}
-
 }
 
 /*
@@ -2300,7 +2296,7 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	// don't drop as long as previous command was a nextdl, after a dl is done, downloadName is set back to ""
 	// but we still need to read the next message to move to next download or send gamestate
 	// I don't like this hack though, it must have been working fine at some point, suspecting the fix is somewhere else
-	if ( cl->serverId != sv_serverId_value && !*cl->downloadName )
+	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !cl->downloadingWWW && !cl->clientDownloadingWWW )
 	{
 		if ( (cl->serverId & 0xF0) == (sv_serverId_value & 0xF0) )   // TTimo - use a comparison here to catch multiple map_restart
 		{

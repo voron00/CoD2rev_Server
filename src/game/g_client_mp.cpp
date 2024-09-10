@@ -695,7 +695,6 @@ void ClientDisconnect( int clientNum )
 	memset(&client->sess.state, 0, sizeof(client->sess.state));
 
 	CalculateRanks();
-	assert(ent->client == client);
 }
 
 /*
