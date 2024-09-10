@@ -264,8 +264,9 @@ enum statIndex_t
 };
 
 // gentity->flags
-#define FL_GODMODE 0x0000001
-#define FL_DEMIGOD 0x0000002
+#define FL_GODMODE             0x0000001
+#define FL_DEMI_GODMODE        0x0000002
+#define FL_SUPPORTS_LINKTO     0x0001000
 
 typedef struct playerState_s
 {
@@ -1176,6 +1177,9 @@ enum fixed_link_t
 	FIXED_LINK_ANGLES_NONE = 0x2,
 };
 
+inline vec3_t playerMins = { -15.0, -15.0, 0.0 };
+inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
+
 #define ENTFIELD_MASK 0xC000
 
 // entity->svFlags
@@ -1197,6 +1201,7 @@ enum fixed_link_t
 #define DFLAGS_NO_PROTECTION		 16
 #define DFLAGS_PASSTHRU				 32
 
+#define ENT_HANDLER_NULL            0
 #define ENT_HANDLER_ACTOR_INIT      1
 #define ENT_HANDLER_GRENADE         7
 #define ENT_HANDLER_ROCKET          8
@@ -1216,6 +1221,11 @@ extern dvar_t *g_speed;
 extern dvar_t *g_debugLocDamage;
 extern dvar_t *g_synchronousClients;
 extern dvar_t *g_mantleBlockTimeBuffer;
+extern dvar_t *g_inactivity;
+
+extern dvar_t *voice_global;
+extern dvar_t *voice_deadChat;
+extern dvar_t *voice_localEcho;
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
@@ -1454,8 +1464,8 @@ void SpectatorThink(gentity_s *ent, usercmd_s *ucmd);
 void ClientThink_real(gentity_s *ent, usercmd_s *ucmd);
 void ClientThink(int clientNum);
 void G_SetLastServerTime(int clientNum, int lastServerTime);
-void ClientBegin(unsigned int clientNum);
-const char* ClientConnect(unsigned int clientNum, unsigned short scriptPersId);
+void ClientBegin(int clientNum);
+const char* ClientConnect(int clientNum, unsigned short scriptPersId);
 int G_GetClientScore(int clientNum);
 int G_GetSavePersist();
 void G_SetSavePersist(int savepersist);

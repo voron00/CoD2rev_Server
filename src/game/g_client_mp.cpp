@@ -1,189 +1,164 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-unsigned int G_GetNonPVSFriendlyInfo(gentity_s *pSelf, float *vPosition, int iLastUpdateEnt)
+/*
+===============
+G_BroadcastVoice
+===============
+*/
+void G_BroadcastVoice( gentity_t *talker, VoicePacket_t *voicePacket )
 {
-	unsigned int index;
-	int iNext;
-	int iNum;
-	int team;
-	gentity_s *pEnt;
-	float fScale;
-	float fScale_4;
-	vec2_t fPos;
-	int iPos;
-	int iPos_4;
-	int num;
-	int iCurrentEnt;
-	int iEntCount;
-	int iBaseEnt;
+	gentity_t *ent;
+	int otherPlayer;
 
-	team = pSelf->client->sess.state.team;
+	assert(talker);
+	talker->client->lastVoiceTime = level.time;
 
-	if ( team == TEAM_FREE || team == TEAM_SPECTATOR )
-		return 0;
-
-	if ( iLastUpdateEnt == 1023 )
-		iBaseEnt = 0;
-	else
-		iBaseEnt = iLastUpdateEnt + 1;
-
-	for ( iEntCount = 0; ; ++iEntCount )
+	for ( otherPlayer = 0; otherPlayer < MAX_CLIENTS; otherPlayer++ )
 	{
-		if ( iEntCount > 63 )
-			return 0;
+		ent = &g_entities[otherPlayer];
 
-		iNum = iEntCount + iBaseEnt;
-		iNext = iEntCount + iBaseEnt + (iEntCount + iBaseEnt < 0 ? 0x3F : 0);
-		iCurrentEnt = (iEntCount + iBaseEnt) % 64;
-		pEnt = &g_entities[iCurrentEnt];
-
-		if ( pEnt->r.inuse )
+		if ( !ent->r.inuse )
 		{
-			if ( pEnt->client
-			        && pEnt->client->sess.sessionState == SESS_STATE_PLAYING
-			        && pEnt->client->sess.state.team == team
-			        && pSelf != pEnt
-			        && !SV_inSnapshot(vPosition, pEnt->s.number) )
+			continue;
+		}
+
+		if ( ent->client == NULL )
+		{
+			continue;
+		}
+
+		if ( !voice_global->current.boolean )
+		{
+			if ( !OnSameTeam(talker, ent) )
 			{
-				break;
+				if ( talker->client->sess.state.team != TEAM_FREE )
+				{
+					continue;
+				}
 			}
 		}
-	}
 
-	num = pEnt->s.number;
-	Vector2Subtract(pEnt->r.currentOrigin, vPosition, fPos);
-
-	iPos = (int)(fPos[0] + 0.5);
-	iPos_4 = (int)(fPos[1] + 0.5);
-
-	fScale = 1.0;
-	fScale_4 = 1.0;
-
-	if ( iPos <= 1024 )
-	{
-		if ( iPos < -1022 )
-			fScale = -1022.0 / iPos;
-	}
-	else
-	{
-		fScale = 1024.0 / iPos;
-	}
-
-	if ( iPos_4 <= 1024 )
-	{
-		if ( iPos_4 < -1022 )
-			fScale_4 = -1022.0 / iPos_4;
-	}
-	else
-	{
-		fScale_4 = 1024.0 / iPos_4;
-	}
-
-	if ( fScale < 1.0 || fScale_4 < 1.0 )
-	{
-		if ( fScale_4 <= fScale )
+		if ( ent->client->sess.sessionState != talker->client->sess.sessionState )
 		{
-			if ( fScale > fScale_4 )
-				iPos = (int)(iPos * fScale_4);
+			if ( ent->client->sess.sessionState != SESS_STATE_DEAD )
+			{
+				if ( talker->client->sess.sessionState != SESS_STATE_DEAD )
+				{
+					continue;
+				}
+			}
+
+			if ( !voice_deadChat->current.boolean )
+			{
+				continue;
+			}
 		}
-		else
+
+		if ( talker == ent )
 		{
-			iPos_4 = (int)(iPos_4 * fScale);
+			if ( !voice_localEcho->current.boolean )
+			{
+				continue;
+			}
 		}
-	}
 
-	if ( iPos <= 1024 )
-	{
-		if ( iPos < -1022 )
-			iPos = -1022;
-	}
-	else
-	{
-		iPos = 1024;
-	}
+		if ( SV_ClientHasClientMuted(otherPlayer, talker->s.number) )
+		{
+			continue;
+		}
 
-	if ( iPos_4 <= 1024 )
-	{
-		if ( iPos_4 < -1022 )
-			iPos_4 = -1022;
-	}
-	else
-	{
-		iPos_4 = 1024;
-	}
+		if ( !SV_ClientWantsVoiceData(otherPlayer) )
+		{
+			continue;
+		}
 
-	index = num & 0xFFFF803F;
-	num = num & 0xFF00003F | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15);
-
-	return (index | ((((unsigned short)((iPos + 2) / 4) + 255) & 0x1FF) << 6)) & 0x7FFF | ((((unsigned short)((iPos_4 + 2) / 4) + 255) & 0x1FF) << 15) & 0xFFFFFF | ((unsigned char)(int)(g_entities[iNum - (iNext >> 6 << 6)].r.currentAngles[1] * 0.71111113) << 24);
+		SV_QueueVoicePacket(talker->s.number, otherPlayer, voicePacket);
+	}
 }
 
-
-
-void SetClientViewAngle(gentity_s *ent, const float *angle)
+/*
+==================
+SetClientViewAngle
+==================
+*/
+void SetClientViewAngle( gentity_t *ent, const vec3_t angle )
 {
-	float direction;
-	float proneDirection;
-	float torsoPitch;
-	vec3_t angles;
+	float fDelta;
+	vec3_t newAngle;
 	int i;
 
-	VectorCopy(angle, angles);
+	VectorCopy(angle, newAngle);
 
-	if ( (ent->client->ps.pm_flags & 1) != 0 && (ent->client->ps.eFlags & 0x300) == 0 )
+	// prone and turret angles are handled by their own code
+	if ( ent->client->ps.pm_flags & PMF_PRONE && !(ent->client->ps.eFlags & EF_TURRET_ACTIVE) )
 	{
-		AngleDelta(ent->client->ps.proneDirection, angles[1]);
-		angles[1] = AngleNormalize180(angles[1]);
+		// yaw
+		fDelta = AngleDelta(ent->client->ps.proneDirection, newAngle[YAW]);
+		fDelta = AngleNormalize180(fDelta);
 
-		if ( angles[1] > 45.0 || (direction = angles[1], angles[1] < -45.0) )
+		if ( fDelta > 45 || fDelta < -45 )
 		{
-			if ( angles[1] <= 45.0 )
-				angles[1] = angles[1] + 45.0;
+			if ( fDelta > 45 )
+				fDelta -= 45;
 			else
-				angles[1] = angles[1] - 45.0;
+				fDelta += 45;
 
-			ent->client->ps.delta_angles[1] += ANGLE2SHORT(angles[1]);
+			ent->client->ps.delta_angles[YAW] += ANGLE2SHORT(fDelta);
 
-			if ( angles[1] <= 0.0 )
-				proneDirection = ent->client->ps.proneDirection + 45.0;
+			if ( fDelta > 0 )
+				newAngle[YAW] = AngleNormalize360(ent->client->ps.proneDirection - 45);
 			else
-				proneDirection = ent->client->ps.proneDirection - 45.0;
-
-			direction = ANGLE2SHORT(proneDirection) * 0.0054931641;
-			angles[1] = direction;
+				newAngle[YAW] = AngleNormalize360(ent->client->ps.proneDirection + 45);
 		}
 
-		AngleDelta(ent->client->ps.proneTorsoPitch, angles[0]);
+		// pitch
+		fDelta = AngleDelta(ent->client->ps.proneTorsoPitch, newAngle[PITCH]);
+		fDelta = AngleNormalize180(fDelta);
 
-		angles[0] = direction;
-		angles[0] = AngleNormalize180(angles[0]);
-
-		if ( angles[0] > 45.0 || angles[0] < -15.0 )
+		if ( fDelta > 45 || fDelta < -15 )
 		{
-			if ( angles[0] <= 45.0 )
-				angles[0] = angles[0] + 15.0;
+			if ( fDelta > 45 )
+				fDelta -= 15;
 			else
-				angles[0] = angles[0] - 45.0;
+				fDelta += 45;
 
-			ent->client->ps.delta_angles[0] += ANGLE2SHORT(angles[0]);
+			ent->client->ps.delta_angles[PITCH] += ANGLE2SHORT(fDelta);
 
-			if ( angles[0] <= 0.0 )
-				torsoPitch = ent->client->ps.proneTorsoPitch + 15.0;
+			if ( fDelta > 0 )
+				newAngle[PITCH] = AngleNormalize180(ent->client->ps.proneTorsoPitch - 15);
 			else
-				torsoPitch = ent->client->ps.proneTorsoPitch - 45.0;
-
-			angles[0] = AngleNormalize180(torsoPitch);
+				newAngle[PITCH] = AngleNormalize180(ent->client->ps.proneTorsoPitch + 45);
 		}
 	}
 
-	for ( i = 0; i < 3; ++i )
-		ent->client->ps.delta_angles[i] = ANGLE2SHORT(angles[i]) - ent->client->sess.cmd.angles[i];
+	// set the delta angle
+	for ( i = 0; i < 3; i++ )
+	{
+		ent->client->ps.delta_angles[i] = ANGLE2SHORT(newAngle[i]) - ent->client->sess.cmd.angles[i];
+	}
 
-	VectorCopy(angles, ent->r.currentAngles);
+	VectorCopy(newAngle, ent->r.currentAngles);
 	VectorCopy(ent->r.currentAngles, ent->client->ps.viewangles);
 }
 
+/*
+==================
+G_GetPlayerViewDirection
+==================
+*/
+void G_GetPlayerViewDirection( const gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up )
+{
+	assert(ent);
+	assert(ent->client);
+	AngleVectors(ent->client->ps.viewangles, forward, right, up);
+}
+
+/*
+===========
+ClientCheckName
+============
+*/
 static void ClientCleanName( const char *in, char *out, int outSize )
 {
 	int		len, colorlessLen;
@@ -276,302 +251,573 @@ static void ClientCleanName( const char *in, char *out, int outSize )
 	}
 }
 
-void ClientUserinfoChanged(int clientNum)
+/*
+===========
+ClientUserInfoChanged
+
+Called from ClientConnect when the player first connects and
+directly by the server system when the player updates a userinfo variable.
+
+The game can override any of the settings and call trap_SetUserinfo
+if desired.
+============
+*/
+void ClientUserinfoChanged( int clientNum )
 {
-	char userinfo[MAX_STRING_CHARS];
+	char userinfo[MAX_INFO_STRING];
 	char oldname[MAX_STRING_CHARS];
-	const char *value;
 	gclient_t *client;
-	gentity_t *entity;
+	const char *s;
+	gentity_t *ent;
+	clientInfo_t *ci;
 
-	entity = &g_entities[clientNum];
-	client = entity->client;
-	SV_GetUserinfo(clientNum, userinfo, 1024);
-
-	if ( !Info_Validate(userinfo) )
-		strcpy(userinfo, "\\name\\badinfo");
-
-	client->sess.localClient = SV_IsLocalClient(clientNum);
-	value = Info_ValueForKey(userinfo, "cg_predictItems");
-
-	if ( atoi(value) )
-		client->sess.predictItemPickup = 1;
-	else
-		client->sess.predictItemPickup = 0;
-
-	if ( client->sess.connected == CS_CONNECTED && level.manualNameChange )
-	{
-		value = Info_ValueForKey(userinfo, "name");
-		ClientCleanName(value, client->sess.name, 32);
-	}
-	else
-	{
-		I_strncpyz(oldname, client->sess.state.name, 1024);
-		value = Info_ValueForKey(userinfo, "name");
-		ClientCleanName(value, client->sess.state.name, 32);
-		I_strncpyz(client->sess.name, client->sess.state.name, 32);
-	}
-
-	level_bgs.clientinfo[clientNum].clientNum = clientNum;
-	level_bgs.clientinfo[clientNum].team = client->sess.state.team;
-
-	I_strncpyz(level_bgs.clientinfo[clientNum].name, client->sess.state.name, 32);
-}
-
-void G_GetPlayerViewDirection(const gentity_s *ent, float *forward, float *right, float *up)
-{
-	AngleVectors(ent->client->ps.viewangles, forward, right, up);
-}
-
-void G_GetPlayerViewOrigin(gentity_s *ent, float *origin)
-{
-	float speed;
-	float cycle;
-	float hFactor;
-	float vFactor;
-	vec3_t direction;
-	gclient_s *client;
-
+	ent = &g_entities[clientNum];
 	client = ent->client;
 
-	if ( (client->ps.eFlags & 0x300) != 0 )
+	assert(client);
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
+	SV_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+
+	// check for malformed or illegal info strings
+	if ( !Info_Validate( userinfo ) )
 	{
-		if ( !G_DObjGetWorldTagPos(&g_entities[client->ps.viewlocked_entNum], scr_const.tag_player, origin) )
-			Com_Error(ERR_DROP, "G_GetPlayerViewOrigin: Couldn't find [tag_player] on turret");
+		Q_strncpyz( userinfo, "\\name\\badinfo", sizeof( userinfo ) );
+	}
+
+	client->sess.localClient = SV_IsLocalClient(clientNum);
+
+	s = Info_ValueForKey(userinfo, "cg_predictItems");
+	client->sess.predictItemPickup = atoi(s) ? qtrue : qfalse;
+
+	// set name
+	if ( client->sess.connected == CON_CONNECTED && level.manualNameChange )
+	{
+		s = Info_ValueForKey( userinfo, "name" );
+		ClientCleanName( s, client->sess.name, sizeof(client->sess.name) );
 	}
 	else
 	{
-		VectorCopy(client->ps.origin, origin);
-		origin[2] = origin[2] + client->ps.viewHeightCurrent;
-		cycle = BG_GetBobCycle(&client->ps);
-		speed = BG_GetSpeed(&client->ps, level.time);
-		vFactor = BG_GetVerticalBobFactor(&client->ps, cycle, speed, bg_bobMax->current.decimal);
-		origin[2] = origin[2] + vFactor;
-		hFactor = BG_GetHorizontalBobFactor(&client->ps, cycle, speed, bg_bobMax->current.decimal);
-		G_GetPlayerViewDirection(ent, 0, direction, 0);
-		VectorMA(origin, hFactor, direction, origin);
-		AddLeanToPosition(origin, client->ps.viewangles[1], client->ps.leanf, 16.0, 20.0);
-
-		if ( client->ps.origin[2] + 8.0 > origin[2] )
-			origin[2] = client->ps.origin[2] + 8.0;
+		Q_strncpyz( oldname, client->sess.state.name, sizeof( oldname ) );
+		s = Info_ValueForKey( userinfo, "name" );
+		ClientCleanName( s, client->sess.state.name, sizeof(client->sess.state.name) );
+		Q_strncpyz( client->sess.name, client->sess.state.name, sizeof(client->sess.state.name) );
 	}
+
+	ci = &level_bgs.clientinfo[clientNum];
+	assert(ci->infoValid);
+
+	ci->clientNum = clientNum;
+	Q_strncpyz( ci->name, client->sess.state.name, sizeof(client->sess.state.name) );
+	ci->team = client->sess.state.team;
 }
 
-void ClientDisconnect(int clientNum)
+/*
+===========
+G_GetNonPVSFriendlyInfo
+============
+*/
+unsigned int G_GetNonPVSFriendlyInfo( gentity_t *pSelf, vec3_t vPosition, int iLastUpdateEnt )
 {
-	gclient_s *client;
-	int i;
-	gentity_s *ent;
+	int iNext;
+	int iNum;
+	int team;
+	gentity_t *pEnt = NULL;
+	float fScale[2];
+	int iPos[2];
+	vec2_t vTemp;
+	int iCurrentEnt;
+	int iEntCount;
+	int iBaseEnt;
 
-	client = &level.clients[clientNum];
-	ent = &g_entities[clientNum];
+	assert(pSelf);
+	team = pSelf->client->sess.state.team;
 
-	if ( Scr_IsSystemActive() )
+	if ( team == TEAM_FREE || team == TEAM_SPECTATOR )
 	{
-		Scr_AddString("disconnect");
-		Scr_AddString("-1");
-		Scr_Notify(ent, scr_const.menuresponse, 2u);
+		return 0;
 	}
 
-	for ( i = 0; i < level.maxclients; ++i )
+	if ( iLastUpdateEnt == ENTITYNUM_NONE )
+		iBaseEnt = 0;
+	else
+		iBaseEnt = iLastUpdateEnt + 1;
+
+	for ( iEntCount = 0; iEntCount < MAX_GENTITIES; iEntCount++ )
 	{
-		if ( level.clients[i].sess.connected
-		        && level.clients[i].sess.sessionState == SESS_STATE_SPECTATOR
-		        && level.clients[i].spectatorClient == clientNum )
+		if ( iEntCount >= MAX_CLIENTS )
 		{
-			StopFollowing(&g_entities[i]);
+			return 0;
+		}
+
+		iNum = iEntCount + iBaseEnt;
+		iNext = iNum + (iNum < 0 ? MAX_CLIENTS - 1 : 0);
+		iCurrentEnt = iNum % MAX_CLIENTS;
+		pEnt = &g_entities[iCurrentEnt];
+
+		if ( !pEnt->r.inuse )
+		{
+			continue;
+		}
+
+		if ( pEnt->client == NULL )
+		{
+			continue;
+		}
+
+		if ( pEnt->client->sess.sessionState != SESS_STATE_PLAYING )
+		{
+			continue;
+		}
+
+		if ( pEnt->client->sess.state.team != team )
+		{
+			continue;
+		}
+
+		if ( pSelf == pEnt )
+		{
+			continue;
+		}
+
+		if ( SV_inSnapshot(vPosition, pEnt->s.number) )
+		{
+			continue;
+		}
+
+		break;
+	}
+
+	assert(pEnt);
+	Vector2Subtract(pEnt->r.currentOrigin, vPosition, vTemp);
+
+	iPos[0] = (int)(vTemp[0] + 0.5);
+	iPos[1] = (int)(vTemp[1] + 0.5);
+
+	fScale[0] = 1.0;
+	fScale[1] = 1.0;
+
+	if ( iPos[0] > 1024 )
+	{
+		fScale[0] = 1024.0 / iPos[0];
+	}
+	else if ( iPos[0] < -1022 )
+	{
+		fScale[0] = -1022.0 / iPos[0];
+	}
+
+	if ( iPos[1] > 1024 )
+	{
+		fScale[1] = 1024.0 / iPos[1];
+	}
+	else if ( iPos[1] < -1022 )
+	{
+		fScale[1] = -1022.0 / iPos[1];
+	}
+
+	if ( fScale[0] < 1.0 || fScale[1] < 1.0 )
+	{
+		if ( fScale[1] > fScale[0] )
+		{
+			iPos[1] = (int)(iPos[1] * fScale[0]);
+		}
+		else if ( fScale[0] > fScale[1] )
+		{
+			iPos[0] = (int)(iPos[0] * fScale[1]);
 		}
 	}
 
-	HudElem_ClientDisconnect(ent);
+	if ( iPos[0] > 1024 )
+	{
+		iPos[0] = 1024;
+	}
+	else if ( iPos[0] < -1022 )
+	{
+		iPos[0] = -1022;
+	}
 
-	if ( Scr_IsSystemActive() )
-		Scr_PlayerDisconnect(ent);
+	if ( iPos[1] > 1024 )
+	{
+		iPos[1] = 1024;
+	}
+	else if ( iPos[1] < -1022 )
+	{
+		iPos[1] = -1022;
+	}
 
-	G_FreeEntity(ent);
-	client->sess.connected = CS_FREE;
-	memset(&client->sess.state, 0, sizeof(client->sess.state));
-	CalculateRanks();
+	return ((pEnt->s.number & 0xFFFF803F) | ((((unsigned short)((iPos[0] + 2) / 4) + 255) & 0x1FF) << 6)) & 0x7FFF | ((((unsigned short)((iPos[1] + 2) / 4)
+	        + 255) & 0x1FF) << 15) & 0xFFFFFF | ((unsigned char)(int)(g_entities[iNum - (iNext >> 6 << 6)].r.currentAngles[1] * 0.71111113) << 24);
 }
 
-void ClientBegin(unsigned int clientNum)
-{
-	gclient_s *client;
+/*
+===========
+ClientBegin
 
+called when a client has finished connecting, and is ready
+to be placed into the level.  This will happen every level load,
+and on transition between teams, but doesn't happen on respawns
+============
+*/
+void ClientBegin( int clientNum )
+{
+	gclient_t *client;
+
+	assert(clientNum >= 0 && clientNum < level.maxclients);
 	client = &level.clients[clientNum];
-	client->sess.connected = CS_CONNECTED;
+
+	client->sess.connected = CON_CONNECTED;
 	client->ps.pm_type = PM_SPECTATOR;
+
+	// count current clients and rank for scoreboard
 	CalculateRanks();
+
 	Scr_Notify(&g_entities[clientNum], scr_const.begin, 0);
 }
 
-#if LIBCOD_COMPILE_PLAYER == 1
-char proxy_realip[MAX_CLIENTS][16] = {0};
-#endif
-extern dvar_t *g_password;
-const char* ClientConnect(unsigned int clientNum, unsigned short scriptPersId)
+/*
+===========
+ClientConnect
+
+Called when a player begins connecting to the server.
+Called again for every map change or tournement restart.
+
+The session information will be valid after exit.
+
+Return NULL if the client should be allowed, otherwise return
+a string with the reason for denial.
+
+Otherwise, the client will be sent the current gamestate
+and will eventually get to ClientBegin.
+
+firstTime will be qtrue the very first time a client connects
+to the server machine, but qfalse on map changes and tournement
+restarts.
+============
+*/
+const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 {
 	XAnimTree_s *pXAnimTree;
 	clientInfo_t *ci;
 	gentity_t *ent;
 	char userinfo[MAX_INFO_STRING];
 	gclient_t *client;
-	const char *password;
+	const char *value;
 
+	assert(scriptPersId);
+	assert(clientNum >= 0 && clientNum < level.maxclients);
+
+	// they can connect
 	ent = &g_entities[clientNum];
 	client = &level.clients[clientNum];
-	memset(client, 0, sizeof(gclient_s));
+
+	memset( client, 0, sizeof( *client ) );
 
 	ci = &level_bgs.clientinfo[clientNum];
 	pXAnimTree = level_bgs.clientinfo[clientNum].pXAnimTree;
-	memset(ci, 0, sizeof(clientInfo_t));
+
+	memset( ci, 0, sizeof( *ci ) );
 
 	ci->pXAnimTree = pXAnimTree;
 
-	ci->infoValid = 1;
-	ci->nextValid = 1;
+	ci->infoValid = qtrue;
+	ci->nextValid = qtrue;
 
 	client->sess.connected = CON_CONNECTING;
 	client->sess.pers = scriptPersId;
+
+	// force into spectator
 	client->sess.state.team = TEAM_SPECTATOR;
 	client->sess.sessionState = SESS_STATE_SPECTATOR;
+
 	client->spectatorClient = -1;
 	client->sess.forceSpectatorClient = -1;
 
 	G_InitGentity(ent);
 
-	ent->handler = 0;
+	ent->handler = ENT_HANDLER_NULL;
 	ent->client = client;
 
-	client->useHoldEntity = 1023;
+	client->useHoldEntity = ENTITYNUM_NONE;
 	client->sess.state.clientIndex = clientNum;
 	client->ps.clientNum = clientNum;
 
+	// get and distribute relevent paramters
 	ClientUserinfoChanged(clientNum);
 	SV_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
 
-	if ( client->sess.localClient
-	        || (password = Info_ValueForKey(userinfo, "password"), !*g_password->current.string)
-	        || !I_stricmp(g_password->current.string, "none")
-	        || !strcmp(g_password->current.string, password) )
+	// we don't check password for bots and local client
+	// NOTE: local client <-> "ip" "localhost"
+	//   this means this client is not running in our current process
+	if ( !client->sess.localClient )
 	{
-#if LIBCOD_COMPILE_PLAYER == 1
-		char realIP[16];
-		strncpy(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(proxy_realip[clientNum]) - 1);
-
-		if (strlen(realIP) != 0)
+		// check for a password
+		value = Info_ValueForKey( userinfo, "password" );
+		if ( g_password->current.string[0] && Q_stricmp( g_password->current.string, "none" ) && strcmp( g_password->current.string, value ) != 0 )
 		{
-			strncpy(proxy_realip[clientNum], realIP, sizeof(proxy_realip[clientNum]) - 1);
-			Com_DPrintf("realip = %s\n", proxy_realip[clientNum]);
+			G_FreeEntity(ent);
+			return "GAME_INVALIDPASSWORD";
 		}
-#endif
-		Scr_PlayerConnect(ent);
-		CalculateRanks();
-		return NULL;
 	}
-	else
+
+#if LIBCOD_COMPILE_PLAYER == 1 // proxy support
+	extern char proxy_realip[MAX_CLIENTS][16];
+	char realIP[16];
+	strncpy(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(proxy_realip[clientNum]) - 1);
+
+	if (strlen(realIP) != 0)
 	{
-		G_FreeEntity(ent);
-		return "GAME_INVALIDPASSWORD";
+		strncpy(proxy_realip[clientNum], realIP, sizeof(proxy_realip[clientNum]) - 1);
+		Com_DPrintf("realip = %s\n", proxy_realip[clientNum]);
 	}
+#endif
+
+	// don't do the "xxx connected" messages if they were caried over from previous level
+	//		TAT 12/10/2002 - Don't display connected messages in single player
+	Scr_PlayerConnect(ent);
+
+	// count current clients and rank for scoreboard
+	CalculateRanks();
+	assert(client->ps.clientNum == ent->s.number);
 
 	return NULL;
 }
 
-extern dvar_t *voice_global;
-extern dvar_t *voice_deadChat;
-extern dvar_t *voice_localEcho;
-void G_BroadcastVoice(gentity_s *talker, VoicePacket_t *voicePacket)
+
+/*
+===========
+G_GetPlayerViewOrigin
+============
+*/
+void G_GetPlayerViewOrigin( gentity_t *ent, vec3_t origin )
 {
-	gentity_s *ent;
-	int listener;
+	float xyspeed;
+	float fBobCycle;
+	float delta;
+	vec3_t vRight;
+	gclient_t *client;
 
-	talker->client->lastVoiceTime = level.time;
+	client = ent->client;
+	assert(client);
 
-	for ( listener = 0; listener < MAX_CLIENTS; ++listener )
+	if ( client->ps.eFlags & EF_TURRET_ACTIVE )
 	{
-		ent = &g_entities[listener];
-
-		if ( ent->r.inuse
-		        && ent->client
-		        && (voice_global->current.boolean || OnSameTeam(talker, ent) || talker->client->sess.state.team == TEAM_NONE)
-		        && (ent->client->sess.sessionState == talker->client->sess.sessionState
-		            || (ent->client->sess.sessionState == SESS_STATE_DEAD || talker->client->sess.sessionState == SESS_STATE_DEAD)
-		            && voice_deadChat->current.boolean)
-		        && (talker != ent || voice_localEcho->current.boolean)
-		        && !SV_ClientHasClientMuted(listener, talker->s.number)
-		        && SV_ClientWantsVoiceData(listener) )
+		if ( !G_DObjGetWorldTagPos(&g_entities[client->ps.viewlocked_entNum], scr_const.tag_player, origin) )
 		{
-			SV_QueueVoicePacket(talker->s.number, listener, voicePacket);
+			Com_Error(ERR_DROP, "G_GetPlayerViewOrigin: Couldn't find [tag_player] on turret");
 		}
+
+		return;
+	}
+
+	VectorCopy(client->ps.origin, origin);
+	origin[2] = origin[2] + client->ps.viewHeightCurrent;
+
+	fBobCycle = BG_GetBobCycle(&client->ps);
+	xyspeed = BG_GetSpeed(&client->ps, level.time);
+
+	delta = BG_GetVerticalBobFactor(&client->ps, fBobCycle, xyspeed, bg_bobMax->current.decimal);
+	origin[2] = origin[2] + delta;
+
+	delta = BG_GetHorizontalBobFactor(&client->ps, fBobCycle, xyspeed, bg_bobMax->current.decimal);
+	G_GetPlayerViewDirection(ent, 0, vRight, 0);
+	VectorMA(origin, delta, vRight, origin);
+
+	AddLeanToPosition(origin, client->ps.viewangles[1], client->ps.leanf, 16.0, 20.0);
+
+	if ( client->ps.origin[2] + 8.0 > origin[2] )
+	{
+		origin[2] = client->ps.origin[2] + 8.0;
 	}
 }
 
-extern vec3_t playerMins;
-extern vec3_t playerMaxs;
-extern dvar_t *g_inactivity;
-void ClientSpawn(gentity_s *ent, const float *spawn_origin, const float *spawn_angles)
+/*
+===========
+ClientDisconnect
+
+Called when a player drops from the server.
+Will not be called between levels.
+
+This should NOT be called directly by any game logic,
+call trap_DropClient(), which will call this and do
+server system housekeeping.
+============
+*/
+void ClientDisconnect( int clientNum )
 {
-	int spawncount;
-	clientSession_t session;
-	int flags;
+	gclient_t *client;
+	int i;
+	gentity_t *ent;
+
+	assert(clientNum >= 0 && clientNum < level.maxclients);
+	client = &level.clients[clientNum];
+	ent = &g_entities[clientNum];
+	assert(ent->r.inuse);
+
+	if ( Scr_IsSystemActive() )
+	{
+		Scr_AddString("disconnect");
+		Scr_AddString("-1");
+		Scr_Notify(ent, scr_const.menuresponse, 2);
+	}
+
+	// stop any following clients
+	for ( i = 0; i < level.maxclients; i++ )
+	{
+		if ( !level.clients[i].sess.connected )
+		{
+			continue;
+		}
+
+		if ( level.clients[i].sess.sessionState != SESS_STATE_SPECTATOR )
+		{
+			continue;
+		}
+
+		if ( level.clients[i].spectatorClient != clientNum )
+		{
+			continue;
+		}
+
+		StopFollowing(&g_entities[i]);
+	}
+
+	assert(ent->client == client);
+	HudElem_ClientDisconnect(ent);
+
+	if ( Scr_IsSystemActive() )
+	{
+		Scr_PlayerDisconnect(ent);
+	}
+
+	G_FreeEntity(ent);
+	client->sess.connected = CON_DISCONNECTED;
+
+	memset(&client->sess.state, 0, sizeof(client->sess.state));
+
+	CalculateRanks();
+	assert(ent->client == client);
+}
+
+/*
+===========
+ClientSpawn
+
+Called every time a client is placed fresh in the world:
+after the first ClientBegin, and after each respawn
+Initializes all non-persistant parts of playerState
+============
+*/
+void ClientSpawn( gentity_t *ent, const vec3_t spawn_origin, const vec3_t spawn_angles )
+{
+	int savedSpawnCount;
+	clientSession_t savedSess;
+	int iFlags;
 	gclient_s *client;
-	int num;
+	int index;
 
-	num = ent - g_entities;
+	assert(ent);
+
+	index = ent - g_entities;
+	assert(index >= 0 && index < level.maxclients);
+
 	client = ent->client;
+	assert(ent->client == &level.clients[index]);
+	assert(client);
 
-	if ( (client->ps.pm_flags & 0x800000) != 0 && (client->ps.eFlags & 0x300) != 0 )
+	assert(ent->r.inuse);
+
+	if ( client->ps.pm_flags & PMF_PLAYER && client->ps.eFlags & EF_TURRET_ACTIVE )
+	{
+		assert(client->ps.clientNum == ent->s.number);
+		assert(client->ps.viewlocked_entNum != ENTITYNUM_NONE);
+
 		G_ClientStopUsingTurret(&level.gentities[client->ps.viewlocked_entNum]);
+	}
 
 	G_EntUnlink(ent);
 
 	if ( ent->r.linked )
+	{
 		SV_UnlinkEntity(ent);
+	}
 
-	ent->s.groundEntityNum = 1023;
+	// clear entity values
+	ent->s.groundEntityNum = ENTITYNUM_NONE;
 	Scr_SetString(&ent->classname, scr_const.player);
-	ent->clipmask = 42008593;
-	ent->r.svFlags |= 1u;
-	ent->takedamage = 0;
+
+	ent->clipmask = MASK_PLAYERSOLID;
+	ent->r.svFlags |= SVF_NOCLIENT;
+	ent->takedamage = qfalse;
+
 	G_SetClientContents(ent);
-	ent->handler = 10;
-	ent->flags = 4096;
+
+	ent->handler = ENT_HANDLER_CLIENT_SPECTATOR;
+	ent->flags = FL_SUPPORTS_LINKTO;
+
 	VectorCopy(playerMins, ent->r.mins);
 	VectorCopy(playerMaxs, ent->r.maxs);
-	flags = client->ps.eFlags & 0x100002;
-	memcpy(&session, &client->sess, sizeof(session));
-	spawncount = client->ps.stats[5];
-	memset(client, 0, sizeof(gclient_s));
-	memcpy(&client->sess, &session, sizeof(client->sess));
+
+	// clear everything but the persistant data
+	iFlags = client->ps.eFlags & ( EF_TELEPORT_BIT | EF_VOTED );
+
+	savedSess       = client->sess;
+	savedSpawnCount = client->ps.stats[STAT_SPAWN_COUNT];
+
+	memset( client, 0, sizeof( *client ) );
+	client->sess    = savedSess;
+
 	client->spectatorClient = -1;
-	client->useHoldEntity = 1023;
-	client->ps.stats[5] = spawncount + 1;
-	client->ps.stats[2] = client->sess.maxHealth;
-	client->ps.eFlags = flags;
-	client->sess.state.clientIndex = num;
-	client->ps.clientNum = num;
-	client->ps.viewlocked_entNum = 1023;
+	client->useHoldEntity = ENTITYNUM_NONE;
+
+	// increment the spawncount so the client will detect the respawn
+	client->ps.stats[STAT_SPAWN_COUNT] = savedSpawnCount + 1;
+	client->ps.stats[STAT_MAX_HEALTH]  = client->sess.maxHealth;
+
+	client->ps.eFlags = iFlags;
+
+	client->sess.state.clientIndex = index;
+	client->ps.clientNum = index;
+	client->ps.viewlocked_entNum = ENTITYNUM_NONE;
+
+	assert(client - level.clients >= 0 && client - level.clients < level.maxclients);
 	SV_GetUsercmd(client - level.clients, &client->sess.cmd);
-	client->ps.eFlags ^= 2u;
-	VectorCopy(ent->r.mins, client->ps.mins);
-	VectorCopy(ent->r.maxs, client->ps.maxs);
+
+	// toggle the teleport bit so the client knows to not lerp
+	client->ps.eFlags ^= EF_TELEPORT_BIT;
+
+	// Ridah, setup the bounding boxes and viewheights for prediction
+	VectorCopy( ent->r.mins, client->ps.mins );
+	VectorCopy( ent->r.maxs, client->ps.maxs );
+
 	client->ps.viewHeightTarget = 60;
-	client->ps.viewHeightCurrent = 60.0;
+	client->ps.viewHeightCurrent = 60;
 	client->ps.viewHeightLerpTime = 0;
-	client->ps.viewHeightLerpPosAdj = 0.0;
+	client->ps.viewHeightLerpPosAdj = 0;
+
 	G_SetOrigin(ent, spawn_origin);
 	VectorCopy(spawn_origin, client->ps.origin);
-	client->ps.pm_flags |= 0x1000u;
+
+	// the respawned flag will be cleared after the attack and jump keys come up
+	client->ps.pm_flags |= PMF_RESPAWNED;
+
 	SetClientViewAngle(ent, spawn_angles);
+
 	client->inactivityTime = level.time + 1000 * g_inactivity->current.integer;
 	client->buttons = client->sess.cmd.buttons;
-	level.clientIsSpawning = 1;
+
+	level.clientIsSpawning = qtrue;
+
 	client->lastSpawnTime = level.time;
 	client->sess.cmd.serverTime = level.time;
+
 	client->ps.commandTime = level.time - 100;
+
+	// run a client frame to drop exactly to the floor,
+	// initialize animations and other things
 	ClientEndFrame(ent);
 	ClientThink_real(ent, &client->sess.cmd);
-	level.clientIsSpawning = 0;
-	BG_PlayerStateToEntityState(&client->ps, &ent->s, 1, 1u);
+
+	level.clientIsSpawning = qfalse;
+
+	BG_PlayerStateToEntityState(&client->ps, &ent->s, qtrue, PMOVE_HANDLER_SERVER);
 }

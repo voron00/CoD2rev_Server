@@ -235,9 +235,6 @@ const char *modNames[] =
 	"MOD_EXPLOSIVE",
 };
 
-vec3_t playerMins = { -15.0, -15.0, 0.0 };
-vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
-
 gentity_t* GetEntity(scr_entref_t entRef)
 {
 	if ( entRef.classnum == CLASS_NUM_ENTITY )

@@ -926,7 +926,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence )
 			Scr_Notify(ent, scr_const.binocular_drop, 0);
 			break;
 		case EV_GRENADE_SUICIDE:
-			if ( ent->client && !(ent->flags & ( FL_GODMODE | FL_DEMIGOD ) ) )
+			if ( ent->client && !(ent->flags & ( FL_GODMODE | FL_DEMI_GODMODE ) ) )
 			{
 				ent->health = 0;
 				ent->client->ps.stats[STAT_HEALTH] = 0;

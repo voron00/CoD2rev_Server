@@ -342,6 +342,7 @@ void gsc_player_spectatorclient_get(scr_entref_t id)
 		stackPushEntity(&g_entities[entity->client->spectatorClient]);
 }
 
+char proxy_realip[MAX_CLIENTS][16] = {0};
 void gsc_player_getip(scr_entref_t id)
 {
 	if (id.entnum >= MAX_CLIENTS)
@@ -360,7 +361,6 @@ void gsc_player_getip(scr_entref_t id)
 
 	if (strcmp(localip, tmp) == 0)
 	{
-		extern char proxy_realip[MAX_CLIENTS][16];
 		snprintf(tmp, sizeof(tmp), "%s", proxy_realip[id.entnum]);
 	}
 
