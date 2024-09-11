@@ -34,7 +34,6 @@ WIN32_DIR=$(SRC_DIR)/win32
 ZLIB_DIR=$(SRC_DIR)/zlib
 
 # Source dirs
-BOTLIB_DIR=$(SRC_DIR)/botlib
 BGAME_DIR=$(SRC_DIR)/bgame
 GAME_DIR=$(SRC_DIR)/game
 QCOMMON_DIR=$(SRC_DIR)/qcommon
@@ -91,7 +90,6 @@ endif
 TARGET=$(addprefix $(BIN_DIR)/,$(BIN_NAME)$(BIN_EXT))
 
 # C files
-BOTLIB_SOURCES=$(wildcard $(BOTLIB_DIR)/*.cpp)
 BGAME_SOURCES=$(wildcard $(BGAME_DIR)/*.cpp)
 GAME_SOURCES=$(wildcard $(GAME_DIR)/*.cpp)
 QCOMMON_SOURCES=$(wildcard $(QCOMMON_DIR)/*.cpp)
@@ -106,7 +104,6 @@ WIN32_RESOURCES=$(wildcard $(WIN32_DIR)/*.rc)
 ZLIB_SOURCES=$(wildcard $(ZLIB_DIR)/*.c)
 
 # Object files.
-BOTLIB_OBJ=$(patsubst $(BOTLIB_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BOTLIB_SOURCES))
 BGAME_OBJ=$(patsubst $(BGAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(BGAME_SOURCES))
 GAME_OBJ=$(patsubst $(GAME_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(GAME_SOURCES))
 QCOMMON_OBJ=$(patsubst $(QCOMMON_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(QCOMMON_SOURCES))
@@ -129,8 +126,8 @@ ZLIB_OBJ=$(patsubst $(ZLIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(ZLIB_SOURCES))
 # Default rule.
 cod2rev: mkdir $(TARGET)
     $(TARGET): \
-	$(BOTLIB_OBJ) $(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) \
-	$(UNIVERSAL_OBJ) $(XANIM_OBJ) $(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ)
+	$(BGAME_OBJ) $(GAME_OBJ) $(QCOMMON_OBJ) $(SCR_OBJ) $(SERVER_OBJ) $(STRINGED_OBJ) $(UNIVERSAL_OBJ) $(XANIM_OBJ) \
+	$(LINUX_OBJ) $(WIN32_OBJ) $(WIN32_RES_OBJ) $(ZLIB_OBJ) $(LIBCOD_OBJ) $(SQLITE_OBJ)
 	$(CC) $(LFLAGS) -o $@ $^ $(LLIBS)
 
 ifeq ($(OS),Windows_NT)
@@ -147,11 +144,6 @@ endif
 
 # Build C sources
 
-
-# A rule to build botlib source code.
-$(OBJ_DIR)/%.o: $(BOTLIB_DIR)/%.cpp
-	@echo $(CC)  $@
-	@$(CC) -c $(CFLAGS) -o $@ $<
 
 # A rule to build bgame source code.
 $(OBJ_DIR)/%.o: $(BGAME_DIR)/%.cpp

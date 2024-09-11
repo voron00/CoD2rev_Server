@@ -310,6 +310,57 @@ struct TraceExtents
 	vec3_t invDelta;
 };
 
+struct com_parse_mark_t
+{
+	int lines;
+	const char *text;
+	int ungetToken;
+	int backup_lines;
+	const char *backup_text;
+};
+
+struct parseInfo_t
+{
+	char token[MAX_TOKEN_CHARS];
+	int lines;
+	bool ungetToken;
+	bool spaceDelimited;
+	bool keepStringQuotes;
+	bool csv;
+	bool negativeNumbers;
+	bool numbers;
+	const char *errorPrefix;
+	const char *warningPrefix;
+	int backup_lines;
+	const char *backup_text;
+	char parseFile[MAX_QPATH];
+};
+
+#define MAX_PARSE_INFO  16
+
+struct ParseThreadInfo
+{
+	parseInfo_t parseInfo[MAX_PARSE_INFO];
+	int parseInfoNum;
+	const char *tokenPos;
+	const char *prevTokenPos;
+	char line[MAX_TOKEN_CHARS];
+};
+
+void Com_BeginParseSession( const char *filename );
+void Com_EndParseSession( void );
+void Com_UngetToken();
+int Com_GetCurrentParseLine( void );
+char *Com_Parse( const char *( *data_p ) );
+char *Com_ParseOnLine( const char *( *data_p ) );
+void Com_ParseReturnToMark( const char *( *text ), com_parse_mark_t *mark );
+void Com_ParseSetMark( const char *( *text ), com_parse_mark_t *mark );
+void Com_SkipRestOfLine( const char *( *data ) );
+int Com_GetArgCountOnLine( const char *( *data_p ) );
+void Com_SetCSV( qboolean csv );
+void Com_ResetParseSessions();
+const char *Com_GetLastTokenPos();
+
 void CM_CalcTraceEntents(TraceExtents *extents);
 
 short   LittleShort( short l );
