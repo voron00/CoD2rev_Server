@@ -8,6 +8,7 @@
 #define MAX_OBJECTIVES 16
 #define MAX_HEADICONS 16
 #define MAX_STATUS_ICONS 8
+#define MAX_SHELLSHOCKS 16
 
 #define MAX_WEAPONS         128  // (SA) and yet more!
 
@@ -266,6 +267,8 @@ enum statIndex_t
 // gentity->flags
 #define FL_GODMODE             0x0000001
 #define FL_DEMI_GODMODE        0x0000002
+#define FL_NOTARGET            0x0000004
+#define FL_NO_KNOCKBACK        0x0000008
 #define FL_SUPPORTS_LINKTO     0x0001000
 
 typedef struct playerState_s
@@ -1168,6 +1171,24 @@ enum cs_index_t
 	CS_MULTI_MAPWINNER = 22,
 	CS_STATUS_ICONS = 23,
 	CS_HEAD_ICONS = 31,
+	CS_SHELLSHOCKS = 1167,
+};
+
+enum SND_ENVEFFECTPRIO
+{
+	SND_ENVEFFECTPRIO_NONE = 0x0,
+	SND_ENVEFFECTPRIO_LEVEL = 0x1,
+	SND_ENVEFFECTPRIO_SHELLSHOCK = 0x2,
+	SND_ENVEFFECTPRIO_COUNT = 0x3,
+};
+
+enum SND_CHANNELVOLPRIO
+{
+	SND_CHANNELVOLPRIO_NONE = 0x0,
+	SND_CHANNELVOLPRIO_HOLDBREATH = 0x1,
+	SND_CHANNELVOLPRIO_PAIN = 0x2,
+	SND_CHANNELVOLPRIO_SHELLSHOCK = 0x3,
+	SND_CHANNELVOLPRIO_COUNT = 0x4,
 };
 
 enum fixed_link_t
@@ -1211,6 +1232,10 @@ inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 #define ENT_HANDLER_PLAYER_CLONE    12
 #define ENT_HANDLER_PLAYER_BLOCK    19
 
+#define SAY_ALL 0
+#define SAY_TEAM 1
+#define SAY_TELL 2
+
 extern dvar_t *g_password;
 extern dvar_t *g_playerCollisionEjectSpeed;
 extern dvar_t *g_inactivity;
@@ -1222,6 +1247,9 @@ extern dvar_t *g_debugLocDamage;
 extern dvar_t *g_synchronousClients;
 extern dvar_t *g_mantleBlockTimeBuffer;
 extern dvar_t *g_inactivity;
+extern dvar_t *g_voiceChatTalkingDuration;
+extern dvar_t *g_clonePlayerMaxVelocity;
+extern dvar_t *g_knockback;
 
 extern dvar_t *voice_global;
 extern dvar_t *voice_deadChat;
