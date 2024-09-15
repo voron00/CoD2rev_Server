@@ -252,6 +252,8 @@ typedef struct usercmd_s
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define SOLID_BMODEL    0xffffff
 
+#define	MAX_SAY_TEXT	150
+
 #define MAX_TOKENLENGTH     1024
 typedef struct pc_token_s
 {

@@ -1,52 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-unsigned char riflePriorityMap[] =
-{
-	1,
-	9,
-	9,
-	9,
-	8,
-	7,
-	6,
-	6,
-	6,
-	6,
-	5,
-	5,
-	4,
-	4,
-	4,
-	4,
-	3,
-	3,
-	0,
-};
-
-unsigned char bulletPriorityMap[] =
-{
-	1,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	3,
-	0,
-};
-
 int Bullet_GetDamage(const weaponParms *wp, float dist)
 {
 	float damage;

@@ -9,6 +9,7 @@
 #define MAX_HEADICONS 16
 #define MAX_STATUS_ICONS 8
 #define MAX_SHELLSHOCKS 16
+#define MAX_SCRIPT_MENUS 32
 
 #define MAX_WEAPONS         128  // (SA) and yet more!
 
@@ -881,10 +882,8 @@ struct entityHandler_t
 	int splashMethodOfDeath;
 };
 
-extern entityHandler_t entityHandlers[];
-
-extern unsigned char riflePriorityMap[];
-extern unsigned char bulletPriorityMap[];
+inline unsigned char riflePriorityMap[] = { 1,9,9,9,8,7,6,6,6,6,5,5,4,4,4,4,3,3,0 };
+inline unsigned char bulletPriorityMap[] = { 1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0 };
 
 typedef enum
 {
@@ -1172,6 +1171,7 @@ enum cs_index_t
 	CS_STATUS_ICONS = 23,
 	CS_HEAD_ICONS = 31,
 	CS_SHELLSHOCKS = 1167,
+	CS_SCRIPT_MENUS = 1247,
 };
 
 enum SND_ENVEFFECTPRIO
@@ -1250,10 +1250,17 @@ extern dvar_t *g_inactivity;
 extern dvar_t *g_voiceChatTalkingDuration;
 extern dvar_t *g_clonePlayerMaxVelocity;
 extern dvar_t *g_knockback;
+extern dvar_t *g_cheats;
+extern dvar_t *g_oldVoting;
+extern dvar_t *g_allowVote;
+extern dvar_t *g_gametype;
+extern dvar_t *g_deadChat;
 
 extern dvar_t *voice_global;
 extern dvar_t *voice_deadChat;
 extern dvar_t *voice_localEcho;
+
+extern dvar_t *g_dedicated;
 
 void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
@@ -1487,7 +1494,7 @@ void ClientDisconnect(int clientNum);
 int ClientInactivityTimer(gclient_s *client);
 void ClientIntermissionThink(gentity_s *ent);
 qboolean G_ClientCanSpectateTeam(gclient_s *client, int team);
-int Cmd_FollowCycle_f(gentity_s *ent, int dir);
+qboolean Cmd_FollowCycle_f( gentity_t *ent, int dir );
 void SpectatorThink(gentity_s *ent, usercmd_s *ucmd);
 void ClientThink_real(gentity_s *ent, usercmd_s *ucmd);
 void ClientThink(int clientNum);
@@ -1659,6 +1666,29 @@ gentity_s* G_SpawnPlayerClone();
 int G_GetFreePlayerCorpseIndex();
 void G_GetItemClassname(const gitem_s *item, unsigned short *out);
 
+inline entityHandler_t entityHandlers[] =
+{
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, Touch_Multi, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, hurt_use, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, hurt_touch, hurt_use, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, Use_trigger_damage, Pain_trigger_damage, Die_trigger_damage, NULL, 0, 0 },
+	{ NULL, Reached_ScriptMover, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, Reached_ScriptMover, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ G_ExplodeMissile, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, 4 },
+	{ G_ExplodeMissile, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5, 6 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL, player_die, G_PlayerController, 0, 0 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL, player_die, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, G_PlayerController, 0, 0 },
+	{ BodyEnd, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+	{ turret_think_init, NULL, NULL, NULL, turret_use, NULL, NULL, turret_controller, 0, 0 },
+	{ turret_think, NULL, NULL, NULL, turret_use, NULL, NULL, turret_controller, 0, 0 },
+	{ DroppedItemClearOwner, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
+	{ FinishSpawningItem, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
+	{ NULL, NULL, NULL, NULL, use_trigger_use, NULL, NULL, NULL, 0, 0 },
+	{ G_FreeEntity, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
+};
 
 
 void print();

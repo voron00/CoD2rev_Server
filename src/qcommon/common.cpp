@@ -1451,7 +1451,7 @@ Com_InitDvars
 */
 void Com_InitDvars()
 {
-	com_dedicated = Dvar_RegisterInt("dedicated", 2, 1, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET); // changed
+	com_dedicated = Dvar_RegisterInt("dedicated", 2, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, DVAR_CHANGEABLE_RESET);
 	com_developer_script = Dvar_RegisterBool("developer_script", false, DVAR_CHANGEABLE_RESET);

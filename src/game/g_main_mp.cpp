@@ -14,6 +14,7 @@ dvar_t *g_log;
 dvar_t *g_logSync;
 dvar_t *g_password;
 dvar_t *g_banIPs;
+dvar_t *g_dedicated;
 dvar_t *g_speed;
 dvar_t *g_gravity;
 dvar_t *g_knockback;
@@ -62,29 +63,6 @@ dvar_t *g_mantleBlockTimeBuffer;
 dvar_t *g_fixedWeaponSpreads;
 dvar_t *g_dropGrenadeOnDeath;
 
-entityHandler_t entityHandlers[] =
-{
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
-	{ NULL, NULL, NULL, Touch_Multi, NULL, NULL, NULL, NULL, 0, 0 },
-	{ NULL, NULL, NULL, NULL, hurt_use, NULL, NULL, NULL, 0, 0 },
-	{ NULL, NULL, NULL, hurt_touch, hurt_use, NULL, NULL, NULL, 0, 0 },
-	{ NULL, NULL, NULL, NULL, Use_trigger_damage, Pain_trigger_damage, Die_trigger_damage, NULL, 0, 0 },
-	{ NULL, Reached_ScriptMover, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
-	{ NULL, Reached_ScriptMover, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
-	{ G_ExplodeMissile, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, 4 },
-	{ G_ExplodeMissile, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5, 6 },
-	{ NULL, NULL, NULL, NULL, NULL, NULL, player_die, G_PlayerController, 0, 0 },
-	{ NULL, NULL, NULL, NULL, NULL, NULL, player_die, NULL, 0, 0 },
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, G_PlayerController, 0, 0 },
-	{ BodyEnd, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
-	{ turret_think_init, NULL, NULL, NULL, turret_use, NULL, NULL, turret_controller, 0, 0 },
-	{ turret_think, NULL, NULL, NULL, turret_use, NULL, NULL, turret_controller, 0, 0 },
-	{ DroppedItemClearOwner, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
-	{ FinishSpawningItem, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
-	{ NULL, NULL, NULL, Touch_Item_Auto, NULL, NULL, NULL, NULL, 0, 0 },
-	{ NULL, NULL, NULL, NULL, use_trigger_use, NULL, NULL, NULL, 0, 0 },
-	{ G_FreeEntity, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 },
-};
 
 clientState_t* G_GetClientState(int num)
 {
@@ -935,6 +913,9 @@ void G_RegisterDvars()
 	g_logSync = Dvar_RegisterBool("g_logSync", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_password = Dvar_RegisterString("g_password", "", DVAR_CHANGEABLE_RESET);
 	g_banIPs = Dvar_RegisterString("g_banIPs", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+	if ( g_dedicated->current.integer )
+		Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	g_speed = Dvar_RegisterInt("g_speed", 190, 0x80000000, 0x7FFFFFFF, DVAR_CHANGEABLE_RESET);
 	g_gravity = Dvar_RegisterFloat("g_gravity", 800.0, 1.0, 3.4028235e38, DVAR_CHANGEABLE_RESET);
 	g_knockback = Dvar_RegisterFloat("g_knockback", 1000.0, -3.4028235e38, 3.4028235e38, DVAR_CHANGEABLE_RESET);

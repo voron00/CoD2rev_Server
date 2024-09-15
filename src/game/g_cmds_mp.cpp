@@ -3,6 +3,46 @@
 #include "g_shared.h"
 
 /*
+===============
+G_IsPlaying
+===============
+*/
+qboolean G_IsPlaying( gentity_t *ent )
+{
+	assert(ent->client);
+	assert(ent->client->sess.connected != CON_DISCONNECTED);
+
+	return ent->client->sess.sessionState == SESS_STATE_PLAYING;
+}
+
+/*
+==================
+SanitizeString
+
+Remove case and control characters
+==================
+*/
+void SanitizeString( char *in, char *out )
+{
+	while ( *in )
+	{
+		if ( *in == 27 )
+		{
+			in += 2;		// skip color code
+			continue;
+		}
+		if ( *in < 32 )
+		{
+			in++;
+			continue;
+		}
+		*out++ = tolower( *in++ );
+	}
+
+	*out = 0;
+}
+
+/*
 ==================
 ConcatArgs
 ==================
@@ -38,67 +78,107 @@ char *ConcatArgs( int start )
 	return line;
 }
 
-qboolean G_IsPlaying(gentity_s *ent)
+/*
+==================
+Cmd_Where_f
+==================
+*/
+void Cmd_Where_f( gentity_t *ent )
 {
-	return ent->client->sess.sessionState == SESS_STATE_PLAYING;
+	SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, vtos(ent->r.currentOrigin)));
 }
 
-void G_setfog(const char *fogstring)
+/*
+==================
+ClientNumberFromString
+
+Returns a player number for either a number or name string
+Returns -1 if invalid
+==================
+*/
+int ClientNumberFromString( gentity_t *to, char *s )
 {
-	float fTime;
-	float r;
-	float g;
-	float b;
-	float fDensity;
-	float fFar;
-	float fNear;
+	gclient_t	*cl;
+	int			idnum;
+	char		s2[MAX_STRING_CHARS];
+	char		n2[MAX_STRING_CHARS];
 
-	SV_SetConfigstring(CS_FOGVARS, fogstring);
-
-	level.fFogOpaqueDist = 3.4028235e38;
-	level.fFogOpaqueDistSqrd = 3.4028235e38;
-
-	if ( sscanf(fogstring, "%f %f %f %f %f %f %f", &fNear, &fFar, &fDensity, &r, &g, &b, &fTime) == 7 && fDensity >= 1.0 )
+	// numeric values are just slot numbers
+	if (s[0] >= '0' && s[0] <= '9')
 	{
-		level.fFogOpaqueDist = fFar - fNear + fNear;
-		level.fFogOpaqueDistSqrd = level.fFogOpaqueDist * level.fFogOpaqueDist;
-	}
-}
-
-extern dvar_t *g_cheats;
-int CheatsOk(gentity_s *ent)
-{
-	if ( g_cheats->current.boolean )
-	{
-		if ( ent->health > 0 )
+		idnum = atoi( s );
+		if ( idnum < 0 || idnum >= level.maxclients )
 		{
-			return 1;
+			SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_BADCLIENTSLOT\"", 101, idnum));
+			return -1;
 		}
-		else
+
+		cl = &level.clients[idnum];
+		if ( cl->sess.connected != CON_CONNECTED )
 		{
-			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_MUSTBEALIVECOMMAND\"", 101));
-			return 0;
+			SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CLIENTNOTACTIVE\"", 101, idnum));
+			return -1;
+		}
+		return idnum;
+	}
+
+	// check for a name match
+	SanitizeString( s, s2 );
+	for ( idnum=0,cl=level.clients ; idnum < level.maxclients ; idnum++,cl++ )
+	{
+		if ( cl->sess.connected != CON_CONNECTED )
+		{
+			continue;
+		}
+		SanitizeString( cl->sess.state.name, n2 );
+		if ( !strcmp( n2, s2 ) )
+		{
+			return idnum;
 		}
 	}
-	else
-	{
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
-		return 0;
-	}
+
+	SV_GameSendServerCommand( to-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USERNOTONSERVER\"", 101, s));
+	return -1;
 }
 
-void DeathmatchScoreboardMessage(gentity_s *ent)
+/*
+==================
+CheatsOk
+==================
+*/
+qboolean CheatsOk( gentity_t *ent )
 {
+	if ( !g_cheats->current.boolean )
+	{
+		SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+		return qfalse;
+	}
+	if ( ent->health <= 0 )
+	{
+		SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_MUSTBEALIVECOMMAND\"", 101));
+		return qfalse;
+	}
+	return qtrue;
+}
+
+/*
+==================
+DeathmatchScoreboardMessage
+==================
+*/
+void DeathmatchScoreboardMessage( gentity_t *ent )
+{
+	char entry[1024];
+	char string[1400];
 	int ping;
 	int clientNum;
 	int numSorted;
-	gclient_s *client;
-	int len;
+	gclient_t *client;
+	int j;
 	int i;
 	int stringlength;
-	char string[1400];
-	char entry[1024];
 
+	// send the latest information on all clients
 	string[0] = 0;
 	stringlength = 0;
 
@@ -107,16 +187,16 @@ void DeathmatchScoreboardMessage(gentity_s *ent)
 	if ( level.numConnectedClients > MAX_CLIENTS )
 		numSorted = MAX_CLIENTS;
 
-	for ( i = 0; i < numSorted; ++i )
+	for ( i = 0; i < numSorted; i++ )
 	{
 		clientNum = level.sortedClients[i];
 		client = &level.clients[clientNum];
 
-		if ( client->sess.connected == CS_ZOMBIE )
+		if ( client->sess.connected == CON_CONNECTING )
 		{
 			Com_sprintf(
 			    entry,
-			    0x400u,
+			    sizeof(entry),
 			    " %i %i %i %i %i",
 			    level.sortedClients[i],
 			    client->sess.score,
@@ -130,7 +210,7 @@ void DeathmatchScoreboardMessage(gentity_s *ent)
 
 			Com_sprintf(
 			    entry,
-			    0x400u,
+			    sizeof(entry),
 			    " %i %i %i %i %i",
 			    level.sortedClients[i],
 			    client->sess.score,
@@ -139,167 +219,606 @@ void DeathmatchScoreboardMessage(gentity_s *ent)
 			    client->sess.statusIcon);
 		}
 
-		len = strlen(entry);
-
-		if ( stringlength + len > 1024 )
+		j = strlen(entry);
+		if ( stringlength + j > 1024 )
 			break;
-
-		strcpy(&string[stringlength], entry);
-		stringlength += len;
+		strcpy(string + stringlength, entry);
+		stringlength += j;
 	}
 
-	SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c %i %i %i%s", 98, i, level.teamScores[1], level.teamScores[2], string));
+	SV_GameSendServerCommand( ent - g_entities, SV_CMD_RELIABLE, va("%c %i %i %i%s", 98, i,
+	                          level.teamScores[TEAM_AXIS], level.teamScores[TEAM_ALLIES],
+	                          string ) );
 }
 
-void Cmd_Score_f(gentity_s *ent)
+/*
+==================
+Cmd_UFO_f
+==================
+*/
+void Cmd_UFO_f( gentity_t *ent )
 {
-	DeathmatchScoreboardMessage(ent);
-}
+	const char *msg;
 
-void StopFollowing(gentity_s *ent)
-{
-	trace_t trace;
-	vec3_t vMaxs;
-	vec3_t vMins;
-	vec3_t vEnd;
-	vec3_t vUp;
-	vec3_t vForward;
-	vec3_t vPos;
-	vec3_t vAngles;
-	gclient_s *client;
-
-	client = ent->client;
-	client->sess.forceSpectatorClient = -1;
-	client->spectatorClient = -1;
-
-	if ( (client->ps.pm_flags & 0x400000) != 0 )
+	if ( !CheatsOk( ent ) )
 	{
-		G_GetPlayerViewOrigin(ent, vPos);
-		G_GetPlayerViewDirection(ent, vForward, 0, vUp);
-		VectorCopy(client->ps.viewangles, vAngles);
-		vAngles[0] = vAngles[0] + 15.0;
-		VectorMA(vPos, -40.0, vForward, vEnd);
-		VectorMA(vEnd, 10.0, vUp, vEnd);
-		VectorSet(vMins, -8.0, -8.0, -8.0);
-		VectorSet(vMaxs, 8.0, 8.0, 8.0);
-		G_TraceCapsule(&trace, vPos, vMins, vMaxs, vEnd, 1023, 8454161);
-		Vec3Lerp(vPos, vEnd, trace.fraction, vPos);
-		client->ps.clientNum = ent - g_entities;
-		client->ps.eFlags &= 0xFFFFFCFF;
-		client->ps.viewlocked = 0;
-		client->ps.viewlocked_entNum = 1023;
-		client->ps.pm_flags &= 0xFFBFFFBF;
-		client->ps.fWeaponPosFrac = 0.0;
-		G_SetOrigin(ent, vPos);
-		VectorCopy(vPos, client->ps.origin);
-		SetClientViewAngle(ent, vAngles);
-		client->ps.shellshockIndex = 0;
-		client->ps.shellshockTime = 0;
-		client->ps.shellshockDuration = 0;
+		return;
 	}
-}
 
-int Cmd_FollowCycle_f(gentity_s *ent, int dir)
-{
-	clientState_t cstate;
-	playerState_s pstate;
-	int startClientNum;
-	int clientNum;
-
-	if ( dir != 1 && dir != -1 )
-		Com_Error(ERR_DROP, "Cmd_FollowCycle_f: bad dir %i", dir);
-
-	if ( ent->client->sess.sessionState != SESS_STATE_SPECTATOR )
-		return 0;
-
-	if ( ent->client->sess.forceSpectatorClient >= 0 )
-		return 0;
-
-	clientNum = ent->client->spectatorClient;
-
-	if ( clientNum < 0 )
-		clientNum = 0;
-
-	startClientNum = clientNum;
-
-	do
+	if ( ent->client->ufo )
 	{
-		clientNum += dir;
-
-		if ( clientNum >= level.maxclients )
-			clientNum = 0;
-
-		if ( clientNum < 0 )
-			clientNum = level.maxclients - 1;
-
-		if ( SV_GetArchivedClientInfo(clientNum, &ent->client->sess.archiveTime, &pstate, &cstate)
-		        && G_ClientCanSpectateTeam(ent->client, (team_t)cstate.team) )
-		{
-			ent->client->spectatorClient = clientNum;
-			ent->client->sess.sessionState = SESS_STATE_SPECTATOR;
-			return 1;
-		}
-	}
-	while ( clientNum != startClientNum );
-
-	return 0;
-}
-
-void Cmd_PrintEntities_f()
-{
-	if ( g_cheats->current.boolean )
-		G_PrintEntities();
-}
-
-void Cmd_EntityCount_f()
-{
-	if ( g_cheats->current.boolean )
-		Com_Printf("entity count = %i\n", level.num_entities);
-}
-
-void Cmd_SetViewpos_f(gentity_s *ent)
-{
-	int i;
-	char buffer[1024];
-	vec3_t angles;
-	vec3_t origin;
-
-	if ( g_cheats->current.boolean )
-	{
-		if ( SV_Cmd_Argc() == 5 )
-		{
-			VectorClear(angles);
-
-			for ( i = 0; i < 3; ++i )
-			{
-				SV_Cmd_ArgvBuffer(i + 1, buffer, 1024);
-				origin[i] = atof(buffer);
-			}
-
-			SV_Cmd_ArgvBuffer(4, buffer, 1024);
-
-			angles[1] = atof(buffer);
-			origin[2] = origin[2] - ent->client->ps.viewHeightCurrent;
-			TeleportPlayer(ent, origin, angles);
-		}
-		else
-		{
-			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
-		}
+		msg = "GAME_UFOOFF";
 	}
 	else
 	{
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+		msg = "GAME_UFOON";
+	}
+	ent->client->ufo = !ent->client->ufo;
+
+	SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg) );
+}
+
+/*
+==================
+Cmd_Noclip_f
+==================
+*/
+void Cmd_Noclip_f( gentity_t *ent )
+{
+	const char *msg;
+
+	if ( !CheatsOk( ent ) )
+	{
+		return;
+	}
+
+	if ( ent->client->noclip )
+	{
+		msg = "GAME_NOCLIPOFF";
+	}
+	else
+	{
+		msg = "GAME_NOCLIPON";
+	}
+	ent->client->noclip = !ent->client->noclip;
+
+	SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg) );
+}
+
+/*
+==================
+Cmd_Notarget_f
+
+Sets client to notarget
+
+argv(0) notarget
+==================
+*/
+void Cmd_Notarget_f( gentity_t *ent )
+{
+	const char *msg;
+
+	if ( !CheatsOk( ent ) )
+	{
+		return;
+	}
+
+	ent->flags ^= FL_NOTARGET;
+	if (!(ent->flags & FL_NOTARGET) )
+		msg = "GAME_NOTARGETOFF";
+	else
+		msg = "GAME_NOTARGETON";
+
+	SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg) );
+}
+
+/*
+==================
+Cmd_DemiGod_f
+==================
+*/
+void Cmd_DemiGod_f( gentity_t *ent )
+{
+	const char *msg;
+
+	if ( !CheatsOk( ent ) )
+	{
+		return;
+	}
+
+	ent->flags ^= FL_DEMI_GODMODE;
+	if (!(ent->flags & FL_DEMI_GODMODE) )
+		msg = "GAME_DEMI_GODMODE_OFF";
+	else
+		msg = "GAME_DEMI_GODMODE_ON";
+
+	SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg) );
+}
+
+/*
+==================
+Cmd_God_f
+
+Sets client to godmode
+
+argv(0) god
+==================
+*/
+void Cmd_God_f( gentity_t *ent )
+{
+	const char *msg;
+
+	if ( !CheatsOk( ent ) )
+	{
+		return;
+	}
+
+	ent->flags ^= FL_GODMODE;
+	if (!(ent->flags & FL_GODMODE) )
+		msg = "GAME_GODMODE_OFF";
+	else
+		msg = "GAME_GODMODE_ON";
+
+	SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, msg) );
+}
+
+/*
+==================
+Cmd_Take_f
+==================
+*/
+void Cmd_Take_f( gentity_t *ent )
+{
+	char *name;
+	char *amt;
+	int amount;
+	qboolean take_all;
+	int weapIndex;
+
+	if ( !CheatsOk( ent ) )
+	{
+		return;
+	}
+
+	amt = ConcatArgs(2);
+	amount = atoi(amt);
+	name = ConcatArgs(1);
+
+	if ( !name )
+	{
+		return;
+	}
+
+	if ( !name[0] )
+	{
+		return;
+	}
+
+	// take all?
+	take_all = I_stricmp(name, "all") == 0;
+
+	// take health
+	if ( take_all || !I_strnicmp(name, "health", 6) )
+	{
+		if ( amount )
+		{
+			ent->health -= amount;
+
+			if ( ent->health <= 0 )
+			{
+				ent->health = 1;
+			}
+		}
+		else
+		{
+			ent->health = 1;
+		}
+	}
+	// take weapons
+	if ( take_all || !I_stricmp(name, "weapons") )
+	{
+		for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+		{
+			BG_TakePlayerWeapon(&ent->client->ps, weapIndex);
+
+			ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] = 0;
+			ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] = 0;
+		}
+
+		if ( ent->client->ps.weapon )
+		{
+			ent->client->ps.weapon = WP_NONE;
+			G_SelectWeaponIndex(ent - g_entities, ent->client->ps.weapon);
+		}
+	}
+	// take ammo
+	if ( take_all || !I_strnicmp(name, "ammo", 4) )
+	{
+		if ( amount )
+		{
+			if ( ent->client->ps.weapon )
+			{
+				weapIndex = ent->client->ps.weapon;
+				ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] -= amount;
+
+				if ( ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] < 0 )
+				{
+					ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] += ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)];
+					ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] = 0;
+
+					if ( ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] < 0 )
+					{
+						ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] = 0;
+					}
+				}
+			}
+		}
+		else
+		{
+			for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+			{
+				ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] = 0;
+				ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] = 0;
+			}
+		}
+	}
+	// take allammo
+	if ( take_all || !I_strnicmp(name, "allammo", 7) )
+	{
+		if ( amount )
+		{
+			for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+			{
+				ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] -= amount;
+
+				if ( ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] < 0 )
+				{
+					ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] += ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)];
+					ent->client->ps.ammo[BG_AmmoForWeapon(weapIndex)] = 0;
+
+					if ( ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] < 0 )
+					{
+						ent->client->ps.ammoclip[BG_ClipForWeapon(weapIndex)] = 0;
+					}
+				}
+			}
+		}
 	}
 }
 
-void Cmd_GameCommand_f(gentity_s *ent)
+/*
+==================
+Cmd_Score_f
+
+Request current scoreboard information
+==================
+*/
+void Cmd_Score_f( gentity_t *ent )
 {
-	; // VoroN: This is a deprecated feature
+	DeathmatchScoreboardMessage( ent );
 }
 
-extern dvar_t *g_oldVoting;
-void Cmd_Vote_f(gentity_s *ent)
+/*
+==================
+G_setfog
+==================
+*/
+void G_setfog( const char *fogstring )
+{
+	float fTime;
+	float r;
+	float g;
+	float b;
+	float fDensity;
+	float fFar;
+	float fNear;
+
+	SV_SetConfigstring(CS_FOGVARS, fogstring);
+
+	level.fFogOpaqueDist = FLT_MAX;
+	level.fFogOpaqueDistSqrd = FLT_MAX;
+
+	if ( sscanf(fogstring, "%f %f %f %f %f %f %f", &fNear, &fFar, &fDensity, &r, &g, &b, &fTime) != 7 )
+	{
+		return;
+	}
+
+	if ( fDensity < 1.0f )
+	{
+		return;
+	}
+
+	level.fFogOpaqueDist = fFar - fNear + fNear;
+	level.fFogOpaqueDistSqrd = Square(level.fFogOpaqueDist);
+}
+
+/*
+=================
+Cmd_SetViewpos_f
+=================
+*/
+void Cmd_SetViewpos_f( gentity_t *ent )
+{
+	vec3_t		origin, angles;
+	char		buffer[MAX_TOKEN_CHARS];
+	int			i;
+
+	if ( !g_cheats->current.boolean )
+	{
+		SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+		return;
+	}
+	if ( SV_Cmd_Argc() != 5 )
+	{
+		SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101) );
+		return;
+	}
+
+	VectorClear( angles );
+	for ( i = 0 ; i < 3 ; i++ )
+	{
+		SV_Cmd_ArgvBuffer( i + 1, buffer, sizeof( buffer ) );
+		origin[i] = atof( buffer );
+	}
+
+	SV_Cmd_ArgvBuffer( 4, buffer, sizeof( buffer ) );
+	angles[YAW] = atof( buffer );
+	origin[2] -= ent->client->ps.viewHeightCurrent;
+
+	TeleportPlayer( ent, origin, angles );
+}
+
+/*
+=================
+Cmd_Fogswitch_f
+=================
+*/
+void Cmd_Fogswitch_f( void )
+{
+	const char *fogstring;
+
+	fogstring = ConcatArgs(1);
+	G_setfog(fogstring);
+}
+
+/*
+=================
+Cmd_EntityCount_f
+=================
+*/
+void Cmd_EntityCount_f( void )
+{
+	if ( !g_cheats->current.boolean )
+	{
+		return;
+	}
+
+	Com_Printf("entity count = %i\n", level.num_entities);
+}
+
+/*
+=================
+G_SayTo
+=================
+*/
+static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, const char *name, const char *message )
+{
+	if (!other)
+	{
+		return;
+	}
+	if (!other->r.inuse)
+	{
+		return;
+	}
+	if (!other->client)
+	{
+		return;
+	}
+	if ( other->client->sess.connected != CON_CONNECTED )
+	{
+		return;
+	}
+	if ( mode == SAY_TEAM  && !OnSameTeam(ent, other) )
+	{
+		return;
+	}
+	if ( !g_deadChat->current.boolean && !G_IsPlaying(ent) && G_IsPlaying(other) )
+	{
+		return;
+	}
+
+	if ( mode == SAY_TEAM )
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15%s%c%c%s\"", 105, name, 94, color, message));
+	else
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15%s%c%c%s\"", 104, name, 94, color, message));
+}
+
+/*
+=================
+G_Say
+=================
+*/
+void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText )
+{
+	const char *pszTeamColorString;
+	const char *pszTeamString;
+	// don't let text be too long for malicious reasons
+	char text[MAX_SAY_TEXT];
+	char name[128];
+	char teamname[64];
+	char cleanname[64];
+	int color;
+	gentity_t *other;
+	int i;
+
+	if ( mode == SAY_TEAM && ent->client->sess.state.team != TEAM_AXIS )
+		mode = ent->client->sess.state.team == TEAM_ALLIES;
+
+	I_strncpyz(cleanname, ent->client->sess.state.name, sizeof(cleanname));
+	I_CleanStr(cleanname);
+
+	if ( ent->client->sess.state.team == TEAM_AXIS )
+	{
+		pszTeamColorString = "^9";
+	}
+	else if ( ent->client->sess.state.team == TEAM_ALLIES )
+	{
+		pszTeamColorString = "^8";
+	}
+	else
+	{
+		pszTeamColorString = "";
+	}
+
+	if ( ent->client->sess.state.team == TEAM_SPECTATOR )
+	{
+		Com_sprintf(teamname, sizeof(teamname), "\x15(\x14GAME_SPECTATOR\x15)");
+	}
+	else if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
+	{
+		Com_sprintf(teamname, sizeof(teamname), "\x15%s(\x14GAME_DEAD\x15)", pszTeamColorString);
+	}
+	else
+	{
+		Com_sprintf(teamname, sizeof(teamname), "\x15%s", pszTeamColorString);
+	}
+
+	if ( mode == SAY_TEAM )
+	{
+		if ( ent->client->sess.state.team == TEAM_AXIS )
+			pszTeamString = "GAME_AXIS";
+		else
+			pszTeamString = "GAME_ALLIES";
+
+		G_LogPrintf("sayteam;%d;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, cleanname, chatText);
+		Com_sprintf(name, sizeof(name), "%s(\x14%s\x15)%s%s: ", teamname, pszTeamString, cleanname, "^7");
+		color = '5';
+	}
+	else if ( mode == SAY_TELL )
+	{
+		Com_sprintf(name,  sizeof(name), "%s[%s]%s: ", teamname, cleanname, "^7");
+		color = '3';
+	}
+	else
+	{
+		G_LogPrintf("say;%d;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, cleanname, chatText);
+		Com_sprintf(name,  sizeof(name), "%s%s%s: ", teamname, cleanname, "^7");
+		color = '7';
+	}
+
+	I_strncpyz(text, chatText, sizeof(text));
+
+	if ( target )
+	{
+		G_SayTo(ent, target, mode, color, name, text);
+		return;
+	}
+
+	// echo the text to the console
+	if ( g_dedicated->current.integer )
+	{
+		Com_Printf("%s%s\n", name, text);
+	}
+
+	// send it to all the apropriate clients
+	for ( i = 0; i < level.maxclients; i++ )
+	{
+		other = &g_entities[i];
+		G_SayTo(ent, other, mode, color, name, text);
+	}
+}
+
+static const char *gc_orders[] =
+{
+	"GAME_GC_HOLDYOURPOSITION",
+	"GAME_GC_HOLDTHISPOSITION",
+	"GAME_GC_COMEHERE",
+	"GAME_GC_COVERME",
+	"GAME_GC_GUARDLOCATION",
+	"GAME_GC_SEARCHDESTROY",
+	"GAME_GC_REPORT"
+};
+
+/*
+==================
+Cmd_GameCommand_f
+==================
+*/
+void Cmd_GameCommand_f( gentity_t *ent )
+{
+	int		player;
+	int		order;
+	char	str[MAX_TOKEN_CHARS];
+
+	SV_Cmd_ArgvBuffer( 1, str, sizeof( str ) );
+	player = atoi( str );
+	SV_Cmd_ArgvBuffer( 2, str, sizeof( str ) );
+	order = atoi( str );
+
+	if ( player < 0 || player >= MAX_CLIENTS )
+	{
+		return;
+	}
+	if ( order < 0 || order > sizeof(gc_orders)/sizeof(char *)-1 )
+	{
+		return;
+	}
+	G_Say( ent, &g_entities[player], SAY_TELL, gc_orders[order] );
+	G_Say( ent, ent, SAY_TELL, gc_orders[order] );
+}
+
+/*
+==================
+Cmd_MenuResponse_f
+==================
+*/
+void Cmd_MenuResponse_f( gentity_t *pEnt )
+{
+	char szResponse[MAX_TOKEN_CHARS];
+	char szMenuName[MAX_TOKEN_CHARS];
+	char szServerId[MAX_TOKEN_CHARS];
+	int iMenuIndex;
+
+	iMenuIndex = -1;
+
+	if ( SV_Cmd_Argc() == 4 )
+	{
+		SV_Cmd_ArgvBuffer(1, szServerId, sizeof(szServerId));
+
+		if ( atoi(szServerId) != Dvar_GetInt("sv_serverId") )
+		{
+			return;
+		}
+
+		SV_Cmd_ArgvBuffer(2, szMenuName, sizeof(szMenuName));
+		iMenuIndex = atoi(szMenuName);
+
+		if ( iMenuIndex < MAX_SCRIPT_MENUS )
+		{
+			SV_GetConfigstring(iMenuIndex + CS_SCRIPT_MENUS - 1, szMenuName, sizeof(szMenuName));
+		}
+
+		SV_Cmd_ArgvBuffer(3, szResponse, sizeof(szResponse));
+	}
+	else
+	{
+		szMenuName[0] = 0;
+		strcpy(szResponse, "bad");
+	}
+
+	Scr_AddString(szResponse);
+	Scr_AddString(szMenuName);
+
+	Scr_Notify(pEnt, scr_const.menuresponse, 2);
+}
+
+/*
+==================
+Cmd_Vote_f
+==================
+*/
+void Cmd_Vote_f( gentity_t *ent )
 {
 	char msg[64];
 
@@ -307,33 +826,33 @@ void Cmd_Vote_f(gentity_s *ent)
 	{
 		if ( !level.voteTime )
 		{
-			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOVOTEINPROGRESS\"", 101));
+			SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOVOTEINPROGRESS\"", 101) );
 			return;
 		}
 
-		if ( (ent->client->ps.eFlags & 0x100000) != 0 )
+		if ( ent->client->ps.eFlags & EF_VOTED )
 		{
-			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEALREADYCAST\"", 101));
+			SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEALREADYCAST\"", 101) );
 			return;
 		}
 
-		if ( ent->client->sess.state.team == 3 )
+		if ( ent->client->sess.state.team == TEAM_SPECTATOR )
 		{
-			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOSPECTATORVOTE\"", 101));
+			SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_NOSPECTATORVOTE\"", 101) );
 			return;
 		}
 
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTECAST\"", 101));
-		ent->client->ps.eFlags |= 0x100000u;
+		SV_GameSendServerCommand( ent-g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTECAST\"", 101) );
+		ent->client->ps.eFlags |= EF_VOTED;
 	}
 
-	SV_Cmd_ArgvBuffer(1, msg, sizeof(msg));
+	SV_Cmd_ArgvBuffer( 1, msg, sizeof( msg ) );
 
-	if ( msg[0] == 121 || msg[1] == 89 || msg[1] == 49 )
+	if ( msg[0] == 'y' || msg[1] == 'Y' || msg[1] == '1' )
 	{
 		if ( g_oldVoting->current.boolean )
 		{
-			SV_SetConfigstring(CS_VOTE_YES, va("%i", ++level.voteYes));
+			SV_SetConfigstring( CS_VOTE_YES, va("%i", level.voteYes++) );
 		}
 		else
 		{
@@ -342,27 +861,31 @@ void Cmd_Vote_f(gentity_s *ent)
 	}
 	else if ( g_oldVoting->current.boolean )
 	{
-		SV_SetConfigstring(CS_VOTE_NO, va("%i", ++level.voteNo));
+		SV_SetConfigstring( CS_VOTE_NO, va("%i", level.voteNo++) );
 	}
 	else
 	{
 		Scr_PlayerVote(ent, "no");
 	}
+
+	// a majority will be determined in CheckVote, which will also account
+	// for players entering or leaving
 }
 
-extern dvar_t *g_allowVote;
-extern dvar_t *g_gametype;
-void Cmd_CallVote_f(gentity_s *ent)
+/*
+==================
+Cmd_CallVote_f
+==================
+*/
+void Cmd_CallVote_f( gentity_t *ent )
 {
-	char name[64];
-	char arg3[256];
-	char arg2[256];
+	char cleanName[64];
 	char arg1[256];
+	char arg2[256];
+	char arg3[256];
 	dvar_t *mapname;
 	int kicknum;
-	const char *kickType;
 	int i;
-	int j;
 
 	if ( !g_allowVote->current.boolean )
 	{
@@ -396,7 +919,7 @@ void Cmd_CallVote_f(gentity_s *ent)
 	SV_Cmd_ArgvBuffer(2, arg2, sizeof(arg2));
 	SV_Cmd_ArgvBuffer(3, arg3, sizeof(arg3));
 
-	if ( strchr(arg1, 59) || strchr(arg2, 59) || strchr(arg3, 59) )
+	if ( strchr( arg1, ';' ) || strchr( arg2, ';' ) || strchr( arg3, ';' ) )
 	{
 		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDVOTESTRING\"", 101));
 		return;
@@ -408,21 +931,41 @@ void Cmd_CallVote_f(gentity_s *ent)
 		return;
 	}
 
-	if ( I_stricmp(arg1, "map_restart")
-	        && I_stricmp(arg1, "map_rotate")
-	        && I_stricmp(arg1, "typemap")
-	        && I_stricmp(arg1, "map")
-	        && I_stricmp(arg1, "g_gametype")
-	        && I_stricmp(arg1, "kick")
-	        && I_stricmp(arg1, "clientkick")
-	        && I_stricmp(arg1, "tempBanUser")
-	        && I_stricmp(arg1, "tempBanClient") )
+	if ( !Q_stricmp( arg1, "map_restart" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "map_rotate" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "typemap" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "map" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "g_gametype" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "kick" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "clientkick" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "tempBanUser" ) )
+	{
+	}
+	else if ( !Q_stricmp( arg1, "tempBanClient" ) )
+	{
+	}
+	else
 	{
 		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDVOTESTRING\"", 101));
 		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTECOMMANDSARE\x15 map_restart, map_rotate, map <mapname>, g_gametype <typename>, typemap <typename> <mapname>, kick <player>, clientkick <clientnum>, tempBanUser <player>, tempBanClient <clientNum>\"", 101));
 		return;
 	}
 
+	// if there is still a vote to be executed
 	if ( level.voteExecuteTime )
 	{
 		level.voteExecuteTime = 0;
@@ -438,11 +981,13 @@ void Cmd_CallVote_f(gentity_s *ent)
 		}
 
 		if ( !I_stricmp(arg2, g_gametype->current.string) )
+		{
 			arg2[0] = 0;
+		}
 
-		SV_Cmd_ArgvBuffer(3, arg3, 256);
+		SV_Cmd_ArgvBuffer(3, arg3, sizeof(arg3));
 
-		if (strlen(arg3) > MAX_QPATH)
+		if ( strlen(arg3) > MAX_QPATH )
 		{
 			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15Map name is too long\"", 101));
 			return;
@@ -457,7 +1002,9 @@ void Cmd_CallVote_f(gentity_s *ent)
 		mapname = Dvar_RegisterString("mapname", "", DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
 
 		if ( !I_stricmp(arg3, mapname->current.string) )
+		{
 			arg3[0] = 0;
+		}
 
 		if ( !arg2[0] && !arg3[0] )
 		{
@@ -473,25 +1020,19 @@ void Cmd_CallVote_f(gentity_s *ent)
 				Com_sprintf(level.voteString, MAX_STRING_CHARS, "map %s", arg3);
 
 			if ( arg2[0] )
-			{
 				Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_GAMETYPE\x14%s\x15 - \x14GAME_VOTE_MAP\x15%s", Scr_GetGameTypeNameForScript(arg2), arg3);
-			}
 			else
-			{
 				Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_MAP\x15%s", arg3);
-			}
 		}
 		else
 		{
 			Com_sprintf(level.voteString, MAX_STRING_CHARS, "g_gametype %s; map_restart", arg2);
 			Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_GAMETYPE\x14%s", Scr_GetGameTypeNameForScript(arg2));
 		}
-
-		goto start_vote;
 	}
-
-	if ( !I_stricmp(arg1, "g_gametype") )
+	else if ( !I_stricmp(arg1, "g_gametype") )
 	{
+		// special case for g_gametype, check for bad values
 		if ( !Scr_IsValidGameType(arg2) )
 		{
 			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_INVALIDGAMETYPE\"", 101));
@@ -500,29 +1041,22 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 		Com_sprintf(level.voteString, MAX_STRING_CHARS, "%s %s; map_restart", arg1, arg2);
 		Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_GAMETYPE\x14%s", Scr_GetGameTypeNameForScript(arg2));
-
-		goto start_vote;
 	}
-
-	if ( !I_stricmp(arg1, "map_restart") )
+	else if ( !I_stricmp(arg1, "map_restart") )
 	{
 		Com_sprintf(level.voteString, MAX_STRING_CHARS, "fast_restart");
 		Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_MAPRESTART");
-
-		goto start_vote;
 	}
-
-	if ( !I_stricmp(arg1, "map_rotate") )
+	else if ( !I_stricmp(arg1, "map_rotate") )
 	{
 		Com_sprintf(level.voteString, MAX_STRING_CHARS, "%s", arg1);
 		Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_NEXTMAP");
-
-		goto start_vote;
 	}
-
-	if ( !I_stricmp(arg1, "map") )
+	else if ( !I_stricmp(arg1, "map") )
 	{
-		if (strlen(arg2) > MAX_QPATH)
+		// special case for map changes, we want to reset the nextmap setting
+		// this allows a player to change maps, but not upset the map rotation
+		if ( strlen(arg2) > MAX_QPATH )
 		{
 			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15Map name is too long\"", 101));
 			return;
@@ -536,14 +1070,8 @@ void Cmd_CallVote_f(gentity_s *ent)
 
 		Com_sprintf(level.voteString, MAX_STRING_CHARS, "%s %s", arg1, arg2);
 		Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_MAP\x15%s", arg2);
-
-		goto start_vote;
 	}
-
-	if ( !I_stricmp(arg1, "kick")
-	        || !I_stricmp(arg1, "clientkick")
-	        || !I_stricmp(arg1, "tempBanUser")
-	        || !I_stricmp(arg1, "tempBanClient") )
+	else if ( !I_stricmp(arg1, "kick") || !I_stricmp(arg1, "clientkick") || !I_stricmp(arg1, "tempBanUser") || !I_stricmp(arg1, "tempBanClient") )
 	{
 		kicknum = MAX_CLIENTS;
 
@@ -551,12 +1079,10 @@ void Cmd_CallVote_f(gentity_s *ent)
 		{
 			kicknum = atoi(arg2);
 
-			if ( (kicknum || !I_stricmp(arg2, "0"))
-			        && kicknum < MAX_CLIENTS
-			        && level.clients[kicknum].sess.connected == CON_CONNECTED )
+			if ( (kicknum || !I_stricmp(arg2, "0")) && kicknum < MAX_CLIENTS && level.clients[kicknum].sess.connected == CON_CONNECTED )
 			{
-				I_strncpyz(name, level.clients[kicknum].sess.state.name, sizeof(name));
-				I_CleanStr(name);
+				I_strncpyz(cleanName, level.clients[kicknum].sess.state.name, sizeof(cleanName));
+				I_CleanStr(cleanName);
 			}
 			else
 			{
@@ -565,15 +1091,17 @@ void Cmd_CallVote_f(gentity_s *ent)
 		}
 		else
 		{
-			for ( j = 0; j < MAX_CLIENTS; ++j )
+			for ( i = 0; i < MAX_CLIENTS; i++ )
 			{
-				if ( level.clients[j].sess.connected == CON_CONNECTED )
+				if ( level.clients[i].sess.connected == CON_CONNECTED )
 				{
-					I_strncpyz(name, level.clients[j].sess.state.name, sizeof(name));
-					I_CleanStr(name);
+					I_strncpyz(cleanName, level.clients[i].sess.state.name, sizeof(cleanName));
+					I_CleanStr(cleanName);
 
-					if ( !I_stricmp(name, arg2) )
-						kicknum = j;
+					if ( !I_stricmp(cleanName, arg2) )
+					{
+						kicknum = i;
+					}
 				}
 			}
 		}
@@ -584,28 +1112,26 @@ void Cmd_CallVote_f(gentity_s *ent)
 			return;
 		}
 
-		if ( arg1[0] == 116 || arg1[0] == 84 )
-			kickType = "tempBanClient";
+		if ( arg1[0] == 't' || arg1[0] == 'T' )
+			Com_sprintf(level.voteString, MAX_STRING_CHARS, "%s \"%d\"", "tempBanClient", kicknum);
 		else
-			kickType = "clientkick";
+			Com_sprintf(level.voteString, MAX_STRING_CHARS, "%s \"%d\"", "clientkick", kicknum);
 
-		Com_sprintf(level.voteString, MAX_STRING_CHARS, "%s \"%d\"", kickType, kicknum);
 		Com_sprintf(level.voteDisplayString, MAX_STRING_CHARS, "GAME_VOTE_KICK\x15(%i)%s", kicknum, level.clients[kicknum].sess.state.name);
-
-		goto start_vote;
 	}
 
-start_vote:
 	SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_CALLEDAVOTE\x15%s\"", 101, ent->client->sess.state.name));
 
+	// start the voting, the caller autoamtically votes yes
 	level.voteTime = level.time + 30000;
 	level.voteYes = 1;
 	level.voteNo = 0;
 
-	for ( i = 0; i < level.maxclients; ++i )
-		level.clients[i].ps.eFlags &= ~0x100000u;
-
-	ent->client->ps.eFlags |= 0x100000u;
+	for ( i = 0; i < level.maxclients; i++ )
+	{
+		level.clients[i].ps.eFlags &= ~EF_VOTED;
+	}
+	ent->client->ps.eFlags |= EF_VOTED;
 
 	SV_SetConfigstring(CS_VOTE_TIME, va("%i", level.voteTime));
 	SV_SetConfigstring(CS_VOTE_STRING, level.voteDisplayString);
@@ -613,552 +1139,387 @@ start_vote:
 	SV_SetConfigstring(CS_VOTE_NO, va("%i", level.voteNo));
 }
 
-void Cmd_Where_f(gentity_s *ent)
+/*
+=================
+Cmd_Kill_f
+=================
+*/
+void Cmd_Kill_f( gentity_t *ent )
 {
-	if ( g_cheats->current.boolean )
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, vtos(ent->r.currentOrigin)));
-}
+	assert(ent->client);
+	assert(ent->client->sess.connected != CON_DISCONNECTED);
 
-void Cmd_Kill_f(gentity_s *ent)
-{
-	gclient_s *client;
-
-	if ( ent->client->sess.sessionState == SESS_STATE_PLAYING )
+	if ( ent->client->sess.sessionState != SESS_STATE_PLAYING )
 	{
-		ent->flags &= 0xFFFFFFFC;
-		client = ent->client;
-		ent->health = 0;
-		client->ps.stats[0] = 0;
-		player_die(ent, ent, ent, 100000, 12, 0, 0, HITLOC_NONE, 0);
+		return;
 	}
+
+	ent->flags &= ~( FL_GODMODE | FL_DEMI_GODMODE );
+	ent->health = 0;
+	ent->client->ps.stats[STAT_HEALTH] = 0;
+
+	player_die(ent, ent, ent, 100000, MOD_SUICIDE, WP_NONE, NULL, HITLOC_NONE, 0);
 }
 
-void Cmd_UFO_f(gentity_s *ent)
-{
-	const char *enabled;
+/*
+=================
+StopFollowing
 
-	if ( CheatsOk(ent) )
+If the client being followed leaves the game, or you just want to drop
+to free floating spectator mode
+=================
+*/
+void StopFollowing( gentity_t *ent )
+{
+	trace_t trace;
+	vec3_t vMaxs;
+	vec3_t vMins;
+	vec3_t vEnd;
+	vec3_t vUp;
+	vec3_t vForward;
+	vec3_t vPos;
+	vec3_t vAngles;
+	gclient_t *client;
+
+	client = ent->client;
+	assert(client);
+
+	client->sess.forceSpectatorClient = -1;
+	client->spectatorClient = -1;
+
+	if ( !(client->ps.pm_flags & PMF_FOLLOW) )
 	{
-		if ( ent->client->ufo )
-			enabled = "GAME_UFOOFF";
-		else
-			enabled = "GAME_UFOON";
-
-		ent->client->ufo = ent->client->ufo == 0;
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
+		return;
 	}
+
+	G_GetPlayerViewOrigin(ent, vPos);
+	G_GetPlayerViewDirection(ent, vForward, NULL, vUp);
+
+	VectorCopy(client->ps.viewangles, vAngles);
+	vAngles[0] += 15;
+
+	VectorMA(vPos, -40, vForward, vEnd);
+	VectorMA(vEnd, 10, vUp, vEnd);
+
+	VectorSet(vMins, -8, -8, -8);
+	VectorSet(vMaxs, 8, 8, 8);
+
+	G_TraceCapsule(&trace, vPos, vMins, vMaxs, vEnd, ENTITYNUM_NONE, MASK_PLAYERSOLID & ~CONTENTS_BODY);
+	Vec3Lerp(vPos, vEnd, trace.fraction, vPos);
+
+	ent->client->ps.clientNum = ent - g_entities;
+
+	client->ps.eFlags &= ~EF_TURRET_ACTIVE;
+
+	client->ps.viewlocked = 0;
+	client->ps.viewlocked_entNum = ENTITYNUM_NONE;
+
+	client->ps.pm_flags &= ~( PMF_ADS | PMF_FOLLOW );
+	client->ps.fWeaponPosFrac = 0;
+
+	G_SetOrigin(ent, vPos);
+	VectorCopy(vPos, client->ps.origin);
+
+	SetClientViewAngle(ent, vAngles);
+
+	client->ps.shellshockIndex = 0;
+	client->ps.shellshockTime = 0;
+	client->ps.shellshockDuration = 0;
 }
 
-void Cmd_Noclip_f(gentity_s *ent)
+/*
+=================
+Cmd_FollowCycle_f
+=================
+*/
+qboolean Cmd_FollowCycle_f( gentity_t *ent, int dir )
 {
-	const char *enabled;
+	int		clientnum;
+	int		original;
+	clientState_t cs;
+	playerState_t ps;
 
-	if ( CheatsOk(ent) )
+	if ( dir != 1 && dir != -1 )
 	{
-		if ( ent->client->noclip )
-			enabled = "GAME_NOCLIPOFF";
-		else
-			enabled = "GAME_NOCLIPON";
-
-		ent->client->noclip = ent->client->noclip == 0;
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
+		Com_Error( ERR_DROP, "Cmd_FollowCycle_f: bad dir %i", dir );
 	}
-}
 
-void Cmd_Notarget_f(gentity_s *ent)
-{
-	const char *enabled;
-
-	if ( CheatsOk(ent) )
+	if ( ent->client->sess.sessionState != SESS_STATE_SPECTATOR )
 	{
-		ent->flags ^= 4u;
-
-		if ( (ent->flags & 4) != 0 )
-			enabled = va("%c \"%s\"", 101, "GAME_NOTARGETON");
-		else
-			enabled = va("%c \"%s\"", 101, "GAME_NOTARGETOFF");
-
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, enabled);
+		return qfalse;
 	}
-}
 
-void Cmd_DemiGod_f(gentity_s *ent)
-{
-	const char *enabled;
-
-	if ( CheatsOk(ent) )
+	if ( ent->client->sess.forceSpectatorClient >= 0 )
 	{
-		ent->flags ^= 2u;
-
-		if ( (ent->flags & 2) != 0 )
-			enabled = "GAME_DEMI_GODMODE_ON";
-		else
-			enabled = "GAME_DEMI_GODMODE_OFF";
-
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
+		return qfalse;
 	}
-}
 
-void Cmd_God_f(gentity_s *ent)
-{
-	const char *enabled;
-
-	if ( CheatsOk(ent) )
+	clientnum = ent->client->spectatorClient;
+	if ( clientnum < 0 )
+		clientnum = 0;
+	original = clientnum;
+	do
 	{
-		ent->flags ^= 1u;
+		clientnum += dir;
+		if ( clientnum >= level.maxclients )
+		{
+			clientnum = 0;
+		}
+		if ( clientnum < 0 )
+		{
+			clientnum = level.maxclients - 1;
+		}
 
-		if ( (ent->flags & 1) != 0 )
-			enabled = "GAME_GODMODE_ON";
-		else
-			enabled = "GAME_GODMODE_OFF";
+		// can only follow connected clients
+		if ( !SV_GetArchivedClientInfo(clientnum, &ent->client->sess.archiveTime, &ps, &cs) )
+		{
+			continue;
+		}
 
-		SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, enabled));
+		// can't follow another spectator
+		if ( !G_ClientCanSpectateTeam(ent->client, cs.team) )
+		{
+			continue;
+		}
+
+		// this is good, we can use it
+		ent->client->spectatorClient = clientnum;
+		ent->client->sess.sessionState = SESS_STATE_SPECTATOR;
+		return qtrue;
 	}
+	while ( clientnum != original );
+
+	// leave it where it was
+	return qfalse;
 }
 
-void Cmd_Take_f(gentity_s *ent)
+/*
+=================
+Cmd_Give_f
+=================
+*/
+void Cmd_Give_f( gentity_t *ent )
 {
-	gclient_s *client;
-	int ammo;
-	int clip;
-	int amount;
-	int take_all;
-	int weaponIndex;
-	const char *amt;
 	char *name;
-
-	if ( CheatsOk(ent) )
-	{
-		amt = ConcatArgs(2);
-		amount = atoi(amt);
-		name = ConcatArgs(1);
-		if ( name )
-		{
-			if ( *name )
-			{
-				take_all = I_stricmp(name, "all") == 0;
-				if ( !take_all )
-				{
-					if ( I_strnicmp(name, "health", 6) )
-						goto take;
-				}
-				if ( amount )
-				{
-					ent->health -= amount;
-					if ( ent->health <= 0 )
-						ent->health = 1;
-				}
-				else
-				{
-					ent->health = 1;
-				}
-				if ( take_all )
-				{
-take:
-					if ( !take_all && I_stricmp(name, "weapons") )
-						goto ammo;
-					for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
-					{
-						BG_TakePlayerWeapon(&ent->client->ps, weaponIndex);
-						client = ent->client;
-						client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
-						client = ent->client;
-						client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
-					}
-					if ( ent->client->ps.weapon )
-					{
-						ent->client->ps.weapon = 0;
-						G_SelectWeaponIndex(ent - g_entities, 0);
-					}
-					if ( take_all )
-					{
-ammo:
-						if ( !take_all && I_strnicmp(name, "ammo", 4) )
-							goto allammo;
-						if ( amount )
-						{
-							if ( ent->client->ps.weapon )
-							{
-								weaponIndex = ent->client->ps.weapon;
-								client = ent->client;
-								ammo = BG_AmmoForWeapon(weaponIndex);
-								client->ps.ammo[ammo] = ent->client->ps.ammo[ammo] - amount;
-								client = ent->client;
-								if ( client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] < 0 )
-								{
-									client = ent->client;
-									clip = BG_ClipForWeapon(weaponIndex);
-									client = ent->client;
-									client->ps.ammoclip[clip] = client->ps.ammoclip[clip] + client->ps.ammo[BG_AmmoForWeapon(weaponIndex)];
-									client = ent->client;
-									client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
-									client = ent->client;
-									if ( client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] < 0 )
-									{
-										client = ent->client;
-										client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
-									}
-								}
-							}
-						}
-						else
-						{
-							for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
-							{
-								client = ent->client;
-								client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
-								client = ent->client;
-								client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
-							}
-						}
-						if ( take_all )
-						{
-allammo:
-							if ( !I_strnicmp(name, "allammo", 7) && amount )
-							{
-								for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
-								{
-									client = ent->client;
-									ammo = BG_AmmoForWeapon(weaponIndex);
-									client->ps.ammo[ammo] = ent->client->ps.ammo[ammo] - amount;
-									client = ent->client;
-									if ( client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] < 0 )
-									{
-										client = ent->client;
-										clip = BG_ClipForWeapon(weaponIndex);
-										client = ent->client;
-										client->ps.ammoclip[clip] = client->ps.ammoclip[clip] + client->ps.ammo[BG_AmmoForWeapon(weaponIndex)];
-										client = ent->client;
-										client->ps.ammo[BG_AmmoForWeapon(weaponIndex)] = 0;
-										client = ent->client;
-										if ( client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] < 0 )
-										{
-											client = ent->client;
-											client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = 0;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void Cmd_Give_f(gentity_s *ent)
-{
-	int health;
-	int currentWeapon;
+	char *amt;
 	int amount;
-	gentity_s *it_ent;
-	int give_all;
-	int weaponIndex;
-	gitem_s *item;
-	const char *name;
-	char *pickupName;
+	qboolean give_all;
+	int weapIndex;
+	int oldWeapon;
+	gitem_t *it;
+	gentity_t *it_ent;
 
-	if ( CheatsOk(ent) )
+	if ( !CheatsOk( ent ) )
 	{
-		name = ConcatArgs(2);
-		amount = atoi(name);
-		pickupName = ConcatArgs(1);
+		return;
+	}
 
-		if ( pickupName )
+	amt = ConcatArgs(2);
+	amount = atoi(amt);
+	name = ConcatArgs(1);
+
+	if ( !name )
+	{
+		return;
+	}
+
+	if ( !name[0] )
+	{
+		return;
+	}
+
+	// give all?
+	give_all = I_stricmp(name, "all") == 0;
+
+	// give health
+	if ( give_all || !I_strnicmp(name, "health", 6) )
+	{
+		if ( amount )
 		{
-			if ( *pickupName )
+			ent->health += amount;
+		}
+		else
+		{
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
+		}
+	}
+	// give weapons
+	if ( give_all || !I_stricmp(name, "weapons") )
+	{
+		level.initializing = qtrue;
+
+		oldWeapon = ent->client->ps.weaponslots[SLOT_PRIMARYB];
+
+		BG_TakePlayerWeapon(&ent->client->ps, ent->client->ps.weaponslots[SLOT_PRIMARY]);
+		BG_TakePlayerWeapon(&ent->client->ps, ent->client->ps.weaponslots[SLOT_PRIMARYB]);
+
+		for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+		{
+			if ( !BG_DoesWeaponRequireSlot(weapIndex) || weapIndex > oldWeapon && BG_IsAnyEmptyPrimaryWeaponSlot(&ent->client->ps) )
 			{
-				if ( (give_all = I_stricmp(pickupName, "all") == 0) == 0 && I_strnicmp(pickupName, "health", 6)
-				        || (!amount ? (health = ent->client->ps.stats[2]) : (health = ent->health + amount),
-				            ent->health = health,
-				            give_all) )
-				{
-					if ( !give_all && I_stricmp(pickupName, "weapons") )
-						goto ammo;
-					level.initializing = 1;
-					currentWeapon = ent->client->ps.weaponslots[2];
-					BG_TakePlayerWeapon(&ent->client->ps, ent->client->ps.weaponslots[1]);
-					BG_TakePlayerWeapon(&ent->client->ps, ent->client->ps.weaponslots[2]);
-					for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
-					{
-						if ( !BG_DoesWeaponRequireSlot(weaponIndex)
-						        || weaponIndex > currentWeapon && BG_IsAnyEmptyPrimaryWeaponSlot(&ent->client->ps) )
-						{
-							G_GivePlayerWeapon(&ent->client->ps, weaponIndex);
-						}
-					}
-					for ( weaponIndex = 1;
-					        BG_IsAnyEmptyPrimaryWeaponSlot(&ent->client->ps) && weaponIndex <= BG_GetNumWeapons();
-					        ++weaponIndex )
-					{
-						if ( BG_DoesWeaponRequireSlot(weaponIndex) )
-							G_GivePlayerWeapon(&ent->client->ps, weaponIndex);
-					}
-					level.initializing = 0;
-					if ( give_all )
-					{
-ammo:
-						if ( !give_all && I_strnicmp(pickupName, "ammo", 4) )
-							goto allammo;
-						if ( amount )
-						{
-							if ( ent->client->ps.weapon )
-								Add_Ammo(ent, ent->client->ps.weapon, amount, 1);
-						}
-						else
-						{
-							for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); ++weaponIndex )
-								Add_Ammo(ent, weaponIndex, 998, 1);
-						}
-						if ( give_all )
-						{
-allammo:
-							if ( I_strnicmp(pickupName, "allammo", 7) )
-								goto item;
-							if ( !amount )
-								goto item;
-							for ( weaponIndex = 1; weaponIndex <= BG_GetNumWeapons(); Add_Ammo(ent, weaponIndex++, amount, 1) )
-								;
-							if ( give_all )
-							{
-item:
-								if ( !give_all )
-								{
-									item = G_FindItem(pickupName);
-									if ( item )
-									{
-										level.initializing = 1;
-										it_ent = G_Spawn();
-										VectorCopy(ent->r.currentOrigin, it_ent->r.currentOrigin);
-										G_GetItemClassname(item, &it_ent->classname);
-										G_SpawnItem(it_ent, item);
-										it_ent->active = 1;
-										Touch_Item(it_ent, ent, 1);
-										it_ent->active = 0;
-										if ( it_ent->r.inuse )
-											G_FreeEntity(it_ent);
-										level.initializing = 0;
-									}
-								}
-							}
-						}
-					}
-				}
+				G_GivePlayerWeapon(&ent->client->ps, weapIndex);
+			}
+		}
+
+		for ( weapIndex = 1; BG_IsAnyEmptyPrimaryWeaponSlot(&ent->client->ps) && weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+		{
+			if ( BG_DoesWeaponRequireSlot(weapIndex) )
+			{
+				G_GivePlayerWeapon(&ent->client->ps, weapIndex);
+			}
+		}
+
+		level.initializing = qfalse;
+	}
+	// give ammo
+	if ( give_all || !I_strnicmp(name, "ammo", 4) )
+	{
+		if ( amount )
+		{
+			if ( ent->client->ps.weapon )
+			{
+				Add_Ammo(ent, ent->client->ps.weapon, amount, qtrue);
+			}
+		}
+		else
+		{
+			for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+			{
+				Add_Ammo(ent, weapIndex, 998, qtrue);
 			}
 		}
 	}
-}
-
-void Cmd_MenuResponse_f(gentity_s *ent)
-{
-	char szResponse[MAX_STRING_CHARS];
-	char szMenuName[MAX_STRING_CHARS];
-	char szServerId[MAX_STRING_CHARS];
-	unsigned int iMenuIndex;
-
-	iMenuIndex = -1;
-
-	if ( SV_Cmd_Argc() == 4 )
+	// give allammo
+	if ( give_all || !I_strnicmp(name, "allammo", 7) )
 	{
-		SV_Cmd_ArgvBuffer(1, szServerId, sizeof(szServerId));
-
-		if ( atoi(szServerId) != Dvar_GetInt("sv_serverId") )
-			return;
-
-		SV_Cmd_ArgvBuffer(2, szMenuName, sizeof(szMenuName));
-		iMenuIndex = atoi(szMenuName);
-
-		if ( iMenuIndex < 32 )
-			SV_GetConfigstring(iMenuIndex + 1246, szMenuName, sizeof(szMenuName));
-
-		SV_Cmd_ArgvBuffer(3, szResponse, sizeof(szResponse));
-	}
-	else
-	{
-		szMenuName[0] = 0;
-		strcpy(szResponse, "bad");
-	}
-
-	Scr_AddString(szResponse);
-	Scr_AddString(szMenuName);
-	Scr_Notify(ent, scr_const.menuresponse, 2u);
-}
-
-#define SAY_ALL     0
-#define SAY_TEAM    1
-#define SAY_BUDDY   2
-
-extern dvar_t *g_deadChat;
-void G_SayTo(gentity_s *ent, gentity_s *other, int mode, int color, const char *cleanname, const char *message)
-{
-	int type;
-
-	if ( other
-	        && other->r.inuse
-	        && other->client
-	        && other->client->sess.connected == CS_CONNECTED
-	        && (mode != 1 || OnSameTeam(ent, other))
-	        && (g_deadChat->current.boolean || G_IsPlaying(ent) || !G_IsPlaying(other)) )
-	{
-		if ( mode == 1 )
-			type = 105;
-		else
-			type = 104;
-
-		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"\x15%s%c%c%s\"", type, cleanname, 94, color, message));
-	}
-}
-
-void G_Say(gentity_s *ent, gentity_s *target, int mode, const char *chatText)
-{
-	const char *team_color;
-	const char *pszTeamString;
-	char message[128];
-	char teamname[64];
-	char cleanname[128];
-	char name[64];
-	int color;
-	gentity_s *other;
-	int i;
-
-	if ( mode == 1 && ent->client->sess.state.team != TEAM_AXIS && ent->client->sess.state.team != TEAM_ALLIES )
-		mode = 0;
-
-	I_strncpyz(name, ent->client->sess.state.name, sizeof(name));
-	I_CleanStr(name);
-
-	if ( ent->client->sess.state.team == TEAM_AXIS )
-	{
-		team_color = "^9";
-	}
-	else if ( ent->client->sess.state.team == TEAM_ALLIES )
-	{
-		team_color = "^8";
-	}
-	else
-	{
-		team_color = "";
-	}
-
-	if ( ent->client->sess.state.team == TEAM_SPECTATOR )
-	{
-		Com_sprintf(teamname, sizeof(teamname), "\x15(\x14GAME_SPECTATOR\x15)");
-	}
-	else if ( ent->client->sess.sessionState == SESS_STATE_DEAD )
-	{
-		Com_sprintf(teamname, sizeof(teamname), "\x15%s(\x14GAME_DEAD\x15)", team_color);
-	}
-	else
-	{
-		Com_sprintf(teamname, sizeof(teamname), "\x15%s", team_color);
-	}
-
-	if ( mode == 1 )
-	{
-		if ( ent->client->sess.state.team == TEAM_AXIS )
-			pszTeamString = "GAME_AXIS";
-		else
-			pszTeamString = "GAME_ALLIES";
-
-		G_LogPrintf("sayteam;%d;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, name, chatText);
-		Com_sprintf(cleanname, sizeof(cleanname), "%s(\x14%s\x15)%s%s: ", teamname, pszTeamString, name, "^7");
-		color = 53;
-	}
-	else if ( mode == 2 )
-	{
-		Com_sprintf(cleanname,  sizeof(cleanname), "%s[%s]%s: ", teamname, name, "^7");
-		color = 51;
-	}
-	else
-	{
-		G_LogPrintf("say;%d;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, name, chatText);
-		Com_sprintf(cleanname,  sizeof(cleanname), "%s%s%s: ", teamname, name, "^7");
-		color = 55;
-	}
-
-	I_strncpyz(message, chatText, sizeof(message));
-
-	if ( target )
-	{
-		G_SayTo(ent, target, mode, color, cleanname, message);
-	}
-	else
-	{
-		Com_Printf("%s%s\n", cleanname, message);
-
-		for ( i = 0; i < level.maxclients; ++i )
+		if ( amount )
 		{
-			other = &g_entities[i];
-			G_SayTo(ent, other, mode, color, cleanname, message);
+			for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
+			{
+				Add_Ammo(ent, weapIndex, amount, qtrue);
+			}
+		}
+	}
+	// give item
+	if ( !give_all )
+	{
+		it = G_FindItem(name);
+
+		if ( it )
+		{
+			level.initializing = qtrue;
+
+			it_ent = G_Spawn();
+			VectorCopy(ent->r.currentOrigin, it_ent->r.currentOrigin);
+
+			G_GetItemClassname(it, &it_ent->classname);
+			G_SpawnItem(it_ent, it);
+
+			it_ent->active = qtrue;
+			Touch_Item(it_ent, ent, qtrue);
+			it_ent->active = qfalse;
+
+			if ( it_ent->r.inuse )
+			{
+				G_FreeEntity(it_ent);
+			}
+
+			level.initializing = qfalse;
 		}
 	}
 }
 
-void Cmd_Tell_f(gentity_s *ent)
+/*
+=================
+Cmd_PrintEntities_f
+=================
+*/
+void Cmd_PrintEntities_f( void )
+{
+	if ( !g_cheats->current.boolean )
+	{
+		return;
+	}
+
+	G_PrintEntities();
+}
+
+/*
+=================
+Cmd_Tell_f
+=================
+*/
+void Cmd_Tell_f( gentity_s *ent )
 {
 	int target_guid;
-	int player_guid;
-	char target_name[64];
-	char player_name[64];
-	char buffer[1024];
-	char *msg;
-	gentity_s *target;
-	int i;
+	int guid;
+	char target_cleanname[64];
+	char cleanname[64];
+	char arg[MAX_TOKEN_CHARS];
+	char *p;
+	gentity_t *target;
+	int targetNum;
 
-	if ( SV_Cmd_Argc() > 1 )
+	if ( SV_Cmd_Argc() < 2 )
 	{
-		SV_Cmd_ArgvBuffer(1, buffer, sizeof(buffer));
-		i = atoi(buffer);
-
-		if ( i >= 0 && i < level.maxclients )
-		{
-			target = &g_entities[i];
-
-			if ( target )
-			{
-				if ( target->r.inuse )
-				{
-					if ( target->client )
-					{
-						msg = ConcatArgs(2);
-						I_strncpyz(player_name, ent->client->sess.state.name, sizeof(player_name));
-						I_CleanStr(player_name);
-						I_strncpyz(target_name, target->client->sess.state.name, sizeof(target_name));
-						I_CleanStr(target_name);
-						target_guid = SV_GetGuid(target->s.number);
-						player_guid = SV_GetGuid(ent->s.number);
-						G_LogPrintf(
-						    "tell;%d;%d;%s;%d;%d;%s;%s\n",
-						    player_guid,
-						    ent->s.number,
-						    player_name,
-						    target_guid,
-						    target->s.number,
-						    target_name,
-						    msg);
-						G_Say(ent, target, 2, msg);
-						G_Say(ent, ent, 2, msg);
-					}
-				}
-			}
-		}
+		return;
 	}
+
+	SV_Cmd_ArgvBuffer(1, arg, sizeof(arg));
+
+	targetNum = atoi( arg );
+	if ( targetNum < 0 || targetNum >= level.maxclients )
+	{
+		return;
+	}
+
+	target = &g_entities[targetNum];
+	if ( !target || !target->r.inuse || !target->client )
+	{
+		return;
+	}
+
+	p = ConcatArgs(2);
+
+	I_strncpyz(cleanname, ent->client->sess.state.name, sizeof(cleanname));
+	I_CleanStr(cleanname);
+
+	I_strncpyz(target_cleanname, target->client->sess.state.name, sizeof(target_cleanname));
+	I_CleanStr(target_cleanname);
+
+	target_guid = SV_GetGuid(target->s.number);
+	guid = SV_GetGuid(ent->s.number);
+
+	G_LogPrintf("tell;%d;%d;%s;%d;%d;%s;%s\n", guid, ent->s.number, cleanname, target_guid, target->s.number, target_cleanname, p);
+
+	G_Say(ent, target, SAY_TELL, p);
+	G_Say(ent, ent, SAY_TELL, p);
 }
 
-void Cmd_Say_f(gentity_s *ent, int mode, int arg0)
+/*
+==================
+Cmd_Say_f
+==================
+*/
+static void Cmd_Say_f( gentity_t *ent, int mode, qboolean arg0 )
 {
-	const char *msg;
+	char *p;
 
-	if ( SV_Cmd_Argc() > 1 || arg0 )
+	if ( SV_Cmd_Argc() < 2 && !arg0 )
 	{
-		if ( arg0 )
-			msg = ConcatArgs(0);
-		else
-			msg = ConcatArgs(1);
-
-		G_Say(ent, 0, mode, msg);
+		return;
 	}
+
+	if (arg0)
+	{
+		p = ConcatArgs( 0 );
+	}
+	else
+	{
+		p = ConcatArgs( 1 );
+	}
+
+	G_Say( ent, NULL, mode, p );
 }
 
 /*
@@ -1204,8 +1565,11 @@ void ClientCommand( int clientNum )
 		return;
 	}
 
+	// ignore all other commands when at intermission
 	if ( ent->client->ps.pm_type == PM_INTERMISSION )
+	{
 		return;
+	}
 
 	if ( Q_stricmp( cmd, "mr" ) == 0 )
 	{

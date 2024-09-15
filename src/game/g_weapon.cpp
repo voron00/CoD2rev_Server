@@ -256,7 +256,6 @@ void FireWeapon(gentity_s *ent, int gametime)
 	}
 }
 
-extern unsigned char bulletPriorityMap[];
 bool Melee_Trace(gentity_s *ent, weaponParms *wp, int damage, float range, float width, float height, trace_t *traceResult, float *hitOrigin)
 {
 	float widthScale;
