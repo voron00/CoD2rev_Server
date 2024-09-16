@@ -54,7 +54,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 	if ( wp->weapDef->rifleBullet )
 	{
 		meansOfDeath = MOD_RIFLE_BULLET;
-		dflags = DFLAGS_PASSTHRU;
+		dflags = DAMAGE_PASSTHRU;
 	}
 	else
 	{
@@ -62,7 +62,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 	}
 
 	if ( wp->weapDef->armorPiercing )
-		dflags |= DFLAGS_NO_ARMOR;
+		dflags |= DAMAGE_NO_ARMOR;
 
 	if ( wp->weapDef->rifleBullet )
 		G_LocationalTrace(&trace, start, end, inflictor->s.number, 41953329, riflePriorityMap);
@@ -135,7 +135,7 @@ void Bullet_Fire_Extended(const gentity_s *inflictor, gentity_s *attacker, float
 
 			if ( hitEnt->client )
 			{
-				if ( (dflags & DFLAGS_PASSTHRU) != 0 && (Dvar_GetInt("scr_friendlyfire") || !OnSameTeam(hitEnt, attacker)) )
+				if ( (dflags & DAMAGE_PASSTHRU) != 0 && (Dvar_GetInt("scr_friendlyfire") || !OnSameTeam(hitEnt, attacker)) )
 				{
 					Bullet_Fire_Extended(hitEnt, attacker, origin, end, dmgScale * 0.5, resursion + 1, wp, weaponEnt, gameTime);
 				}

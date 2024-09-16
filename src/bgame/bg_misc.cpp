@@ -1083,16 +1083,6 @@ qboolean BG_PlayerTouchesItem( const playerState_t *ps, const entityState_t *ite
 }
 
 /*
-============
-BG_StringCopy
-============
-*/
-void BG_StringCopy( unsigned char *member, const char *keyValue )
-{
-	strcpy((char *)member, keyValue);
-}
-
-/*
 ================
 BG_CreateRotationMatrix
 ================

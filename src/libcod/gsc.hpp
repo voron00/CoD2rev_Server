@@ -135,6 +135,8 @@ extern dvar_t *sv_cracked;
 extern dvar_t *sv_kickbots;
 extern dvar_t *jump_bounceEnable;
 extern dvar_t *g_mantleBlockEnable;
+extern dvar_t *g_fixedWeaponSpreads;
+extern dvar_t *g_dropGrenadeOnDeath;
 
 void RegisterLibcodDvars();
 int hook_findMap(const char *qpath, void **buffer);

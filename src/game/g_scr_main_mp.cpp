@@ -216,25 +216,6 @@ scr_method_t methods[] =
 	{ "releaseclaimedtrigger", GScr_ReleaseClaimedTrigger, 0, },
 };
 
-const char *modNames[] =
-{
-	"MOD_UNKNOWN",
-	"MOD_PISTOL_BULLET",
-	"MOD_RIFLE_BULLET",
-	"MOD_GRENADE",
-	"MOD_GRENADE_SPLASH",
-	"MOD_PROJECTILE",
-	"MOD_PROJECTILE_SPLASH",
-	"MOD_MELEE",
-	"MOD_HEAD_SHOT",
-	"MOD_CRUSH",
-	"MOD_TELEFRAG",
-	"MOD_FALLING",
-	"MOD_SUICIDE",
-	"MOD_TRIGGER_HURT",
-	"MOD_EXPLOSIVE",
-};
-
 gentity_t* GetEntity(scr_entref_t entRef)
 {
 	if ( entRef.classnum == CLASS_NUM_ENTITY )
@@ -2759,19 +2740,7 @@ void GScr_WorldEntNumber()
 	Scr_AddInt(1022);
 }
 
-int G_IndexForMeansOfDeath(const char *name)
-{
-	int i;
 
-	for ( i = 0; i < ARRAY_COUNT(modNames); ++i )
-	{
-		if ( !I_stricmp(name, modNames[i]) )
-			return i;
-	}
-
-	Com_Printf("Unknown means of death string '%s'\n", name);
-	return 0;
-}
 
 int GScr_GetScriptMenuIndex(const char *pszMenu)
 {

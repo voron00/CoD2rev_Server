@@ -759,55 +759,55 @@ BG_LoadWeaponDefInternal
 */
 WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name )
 {
-#define SOURCE_FILE_NAME "WEAPONFILE"
-	int sourceLen;
+#define IDENT "WEAPONFILE"
+	int n;
 	fileHandle_t f;
 	WeaponDef *weapDef;
 	char szBuffer[8192];
-	char outputName[MAX_QPATH];
+	char fileName[MAX_QPATH];
 	int len;
 
-	sourceLen = strlen(SOURCE_FILE_NAME);
+	n = strlen(IDENT);
 	weapDef = (WeaponDef *)Hunk_AllocLowInternal(sizeof(WeaponDef));
 
 	InitWeaponDef(weapDef);
-	Com_sprintf(outputName, sizeof(outputName), "weapons/%s/%s", folder, name);
+	Com_sprintf(fileName, sizeof(fileName), "weapons/%s/%s", folder, name);
 
-	len = FS_FOpenFileByMode(outputName, &f, FS_READ);
+	len = FS_FOpenFileByMode(fileName, &f, FS_READ);
 
 	if ( len < 0 )
 	{
-		Com_Printf("^3WARNING: Could not load weapon file '%s'\n", outputName);
+		Com_Printf("^3WARNING: Could not load weapon file '%s'\n", fileName);
 		return NULL;
 	}
 
-	FS_Read(szBuffer, sourceLen, f);
-	szBuffer[sourceLen] = 0;
+	FS_Read(szBuffer, n, f);
+	szBuffer[n] = 0;
 
-	if ( strncmp(szBuffer, SOURCE_FILE_NAME, sourceLen) )
+	if ( strncmp(szBuffer, IDENT, n) )
 	{
-		Com_Printf("^3WARNING: \"%s\" does not appear to be a weapon file\n", outputName);
+		Com_Printf("^3WARNING: \"%s\" does not appear to be a weapon file\n", fileName);
 		FS_FCloseFile(f);
 		return NULL;
 	}
 
-	if ( len - sourceLen >= sizeof(szBuffer) )
+	if ( len - n >= sizeof(szBuffer) )
 	{
-		Com_Printf("^3WARNING: \"%s\" Is too long of a weapon file to parse\n", outputName);
+		Com_Printf("^3WARNING: \"%s\" Is too long of a weapon file to parse\n", fileName);
 		FS_FCloseFile(f);
 		return NULL;
 	}
 
 	memset(szBuffer, 0, sizeof(szBuffer));
 
-	FS_Read(szBuffer, len - sourceLen, f);
-	szBuffer[len - sourceLen] = 0;
+	FS_Read(szBuffer, len - n, f);
+	szBuffer[len - n] = 0;
 
 	FS_FCloseFile(f);
 
 	if ( !Info_Validate(szBuffer) )
 	{
-		Com_Printf("^3WARNING: \"%s\" is not a valid weapon file\n", outputName);
+		Com_Printf("^3WARNING: \"%s\" is not a valid weapon file\n", fileName);
 		return NULL;
 	}
 

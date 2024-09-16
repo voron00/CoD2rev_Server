@@ -1654,7 +1654,6 @@ void BG_RotatePoint( vec3_t point, const vec3_t matrix[3] );
 
 void Jump_ApplySlowdown(playerState_s *ps);
 void Mantle_ClearHint(playerState_s *ps);
-void BG_StringCopy(unsigned char *member, const char *keyValue);
 bool BG_IsWeaponValid( const playerState_t *ps, int weaponIndex );
 bool PM_IsAdsAllowed(playerState_s *ps, pml_t *pml);
 int BG_SetupWeaponDef(WeaponDef *weapDef, int (*regWeap)(int));

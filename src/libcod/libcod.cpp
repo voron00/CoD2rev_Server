@@ -13,6 +13,8 @@ dvar_t *sv_cracked;
 dvar_t *sv_kickbots;
 dvar_t *jump_bounceEnable;
 dvar_t *g_mantleBlockEnable;
+dvar_t *g_fixedWeaponSpreads;
+dvar_t *g_dropGrenadeOnDeath;
 
 int codecallback_playercommand = 0;
 int codecallback_userinfochanged = 0;
@@ -40,6 +42,9 @@ void RegisterLibcodDvars()
 
 	jump_bounceEnable = Dvar_RegisterBool("jump_bounceEnable", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	g_mantleBlockEnable = Dvar_RegisterBool("g_mantleBlockEnable", true, DVAR_CHANGEABLE_RESET);
+
+	g_fixedWeaponSpreads = Dvar_RegisterBool("g_fixedWeaponSpreads", false, DVAR_CHANGEABLE_RESET);
+	g_dropGrenadeOnDeath = Dvar_RegisterBool("g_dropGrenadeOnDeath", true, DVAR_CHANGEABLE_RESET);
 }
 
 void InitLibcodCallbacks()

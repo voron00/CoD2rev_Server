@@ -265,13 +265,6 @@ enum statIndex_t
 	MAX_STATS = 0x6,
 };
 
-// gentity->flags
-#define FL_GODMODE             0x0000001
-#define FL_DEMI_GODMODE        0x0000002
-#define FL_NOTARGET            0x0000004
-#define FL_NO_KNOCKBACK        0x0000008
-#define FL_SUPPORTS_LINKTO     0x0001000
-
 typedef struct playerState_s
 {
 	int commandTime;
@@ -1198,6 +1191,8 @@ enum fixed_link_t
 	FIXED_LINK_ANGLES_NONE = 0x2,
 };
 
+extern const char *modNames[];
+
 inline vec3_t playerMins = { -15.0, -15.0, 0.0 };
 inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 
@@ -1214,13 +1209,20 @@ inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 #define SVF_RADIUS    0x00000020 // trigger_radius and few other things
 #define SVF_DISK      0x00000040 // trigger_disk and few other things
 
-#define DFLAGS_NONE		     		 0
-#define DFLAGS_RADIUS				 1
-#define DFLAGS_NO_ARMOR				 2
-#define DFLAGS_NO_KNOCKBACK			 4
-#define DFLAGS_NO_TEAM_PROTECTION	 8
-#define DFLAGS_NO_PROTECTION		 16
-#define DFLAGS_PASSTHRU				 32
+// damage flags
+#define DAMAGE_RADIUS               0x00000001  // damage was indirect
+#define DAMAGE_NO_ARMOR             0x00000002  // Gordon: do less knockback
+#define DAMAGE_NO_KNOCKBACK         0x00000004  // do not affect velocity, just view angles
+#define DAMAGE_NO_TEAM_PROTECTION   0x00000008  // armor, shields, invulnerability, and godmode have no effect
+#define DAMAGE_NO_PROTECTION        0x00000010  // armor, shields, invulnerability, and godmode have no effect
+#define DAMAGE_PASSTHRU             0x00000020  // distance falloff
+
+// gentity->flags
+#define FL_GODMODE             0x0000001
+#define FL_DEMI_GODMODE        0x0000002
+#define FL_NOTARGET            0x0000004
+#define FL_NO_KNOCKBACK        0x0000008
+#define FL_SUPPORTS_LINKTO     0x0001000
 
 #define ENT_HANDLER_NULL            0
 #define ENT_HANDLER_ACTOR_INIT      1
@@ -1255,6 +1257,7 @@ extern dvar_t *g_oldVoting;
 extern dvar_t *g_allowVote;
 extern dvar_t *g_gametype;
 extern dvar_t *g_deadChat;
+extern dvar_t *g_debugDamage;
 
 extern dvar_t *voice_global;
 extern dvar_t *voice_deadChat;
@@ -1341,7 +1344,7 @@ void G_GrenadeTouchTriggerDamage(gentity_s *pActivator, float *vStart, float *vE
 
 void FireWeaponMelee(gentity_s *ent);
 void G_UseOffHand(gentity_s *ent);
-int G_RadiusDamage(float *origin, gentity_s *inflictor, gentity_s *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_s *ignore, int mod);
+int G_RadiusDamage(const float *origin, gentity_s *inflictor, gentity_s *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_s *ignore, int mod);
 void G_RunItem(gentity_s *ent);
 void G_SetFixedLink(gentity_s *ent, int eAngles);
 void G_RunClient(gentity_s *ent);

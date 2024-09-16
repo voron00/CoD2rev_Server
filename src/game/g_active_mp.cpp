@@ -887,7 +887,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence )
 			{
 				damage *= client->ps.stats[STAT_MAX_HEALTH];
 				VectorSet(dir, 0, 0, 1);
-				G_Damage(ent, NULL, NULL, NULL, NULL, damage, DFLAGS_NONE, MOD_FALLING, HITLOC_NONE, 0);
+				G_Damage(ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING, HITLOC_NONE, 0);
 			}
 
 			continue;

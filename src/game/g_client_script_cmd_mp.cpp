@@ -2566,7 +2566,7 @@ static void ApplyKnockBack( gentity_t *pSelf, int damage, vec3_t localdir, int d
 		return;
 	}
 
-	if ( dflags & DFLAGS_NO_KNOCKBACK )
+	if ( dflags & DAMAGE_NO_KNOCKBACK )
 	{
 		return;
 	}
