@@ -485,6 +485,16 @@ inline int const FloatSign(const float x)
 
 /*
 ==============
+FloatSign
+==============
+*/
+inline int const FastCeil(const float x)
+{
+	return (int)ceil(x);
+}
+
+/*
+==============
 I_rsqrt
 ==============
 */

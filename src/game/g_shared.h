@@ -679,7 +679,7 @@ enum fieldtype_t
 
 typedef struct game_hudelem_s
 {
-	hudelem_s elem;
+	hudelem_t elem;
 	int clientNum;
 	int team;
 	int archived;
@@ -1265,7 +1265,6 @@ extern dvar_t *voice_localEcho;
 
 extern dvar_t *g_dedicated;
 
-void HudElem_SetEnumString(game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount);
 void HudElem_SetFontScale(game_hudelem_t *hud, int offset);
 void HudElem_SetFont(game_hudelem_t *hud, int offset);
 void HudElem_SetAlignX(game_hudelem_t *hud, int offset);
@@ -1286,7 +1285,7 @@ void HudElem_GetColor(game_hudelem_t *hud, int offset);
 void HudElem_GetAlpha(game_hudelem_t *hud, int offset);
 void HudElem_ClearTypeSettings(game_hudelem_t *hud);
 void HudElem_SetDefaults(game_hudelem_t *hud);
-void HudElem_UpdateClient(gclient_s *client, int clientNum, byte which);
+void HudElem_UpdateClient(gclient_s *client, int clientNum, int which);
 void HudElem_DestroyAll();
 void HudElem_ClientDisconnect(gentity_t *ent);
 void HudElem_Free(game_hudelem_t *hud);

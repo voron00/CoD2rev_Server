@@ -2,26 +2,24 @@
 #include "../server/server.h"
 #include "g_shared.h"
 
-// VoroN: A bit more cleaner approach
-#define GCSF_NONE 0
-#define GCSF( x ) (intptr_t)&( (gclient_t*)0 )->x
+#define GCOFS( x ) (intptr_t)&( (gclient_t*)0 )->x
 
 game_client_field_t g_client_fields[] =
 {
-	{ "name", GCSF( sess.state.name ), F_LSTRING, ClientScr_ReadOnly, NULL },
-	{ "sessionteam", GCSF_NONE, F_STRING, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },
-	{ "sessionstate", GCSF_NONE, F_STRING, ClientScr_SetSessionState, ClientScr_GetSessionState },
-	{ "maxhealth", GCSF( sess.maxHealth ), F_INT, ClientScr_SetMaxHealth, NULL },
-	{ "score", GCSF( sess.score ), F_INT, ClientScr_SetScore, NULL },
-	{ "deaths", GCSF( sess.deaths ), F_INT, NULL, NULL },
-	{ "statusicon", GCSF_NONE, F_STRING, ClientScr_SetStatusIcon, ClientScr_GetStatusIcon },
-	{ "headicon", GCSF_NONE, F_STRING, ClientScr_SetHeadIcon, ClientScr_GetHeadIcon },
-	{ "headiconteam", GCSF_NONE, F_STRING, ClientScr_SetHeadIconTeam, ClientScr_GetHeadIconTeam },
-	{ "spectatorclient", GCSF( sess.forceSpectatorClient ), F_INT, ClientScr_SetSpectatorClient, NULL },
-	{ "archivetime", GCSF( sess.archiveTime ), F_FLOAT, ClientScr_SetArchiveTime, ClientScr_GetArchiveTime },
-	{ "psoffsettime", GCSF( sess.psOffsetTime ), F_INT, ClientScr_SetPSOffsetTime, ClientScr_GetPSOffsetTime },
-	{ "pers", GCSF( sess.pers ), F_OBJECT, ClientScr_ReadOnly, NULL },
-	{ NULL, GCSF_NONE, F_INT, NULL, NULL } // field terminator
+	{ "name", GCOFS( sess.state.name ), F_LSTRING, ClientScr_ReadOnly, NULL },
+	{ "sessionteam", 0, F_STRING, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },
+	{ "sessionstate", 0, F_STRING, ClientScr_SetSessionState, ClientScr_GetSessionState },
+	{ "maxhealth", GCOFS( sess.maxHealth ), F_INT, ClientScr_SetMaxHealth, NULL },
+	{ "score", GCOFS( sess.score ), F_INT, ClientScr_SetScore, NULL },
+	{ "deaths", GCOFS( sess.deaths ), F_INT, NULL, NULL },
+	{ "statusicon", 0, F_STRING, ClientScr_SetStatusIcon, ClientScr_GetStatusIcon },
+	{ "headicon", 0, F_STRING, ClientScr_SetHeadIcon, ClientScr_GetHeadIcon },
+	{ "headiconteam", 0, F_STRING, ClientScr_SetHeadIconTeam, ClientScr_GetHeadIconTeam },
+	{ "spectatorclient", GCOFS( sess.forceSpectatorClient ), F_INT, ClientScr_SetSpectatorClient, NULL },
+	{ "archivetime", GCOFS( sess.archiveTime ), F_FLOAT, ClientScr_SetArchiveTime, ClientScr_GetArchiveTime },
+	{ "psoffsettime", GCOFS( sess.psOffsetTime ), F_INT, ClientScr_SetPSOffsetTime, ClientScr_GetPSOffsetTime },
+	{ "pers", GCOFS( sess.pers ), F_OBJECT, ClientScr_ReadOnly, NULL },
+	{ NULL, 0, F_INT, NULL, NULL } // field terminator
 };
 
 /*
