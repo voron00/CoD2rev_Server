@@ -890,6 +890,7 @@ void gsc_player_isbot(scr_entref_t id)
 	stackPushBool(client->bIsTestClient);
 }
 
+int player_disableitempickup[MAX_CLIENTS] = {0};
 void gsc_player_disableitempickup(scr_entref_t id)
 {
 	if (id.entnum >= MAX_CLIENTS)
@@ -899,7 +900,6 @@ void gsc_player_disableitempickup(scr_entref_t id)
 		return;
 	}
 
-	extern int player_disableitempickup[MAX_CLIENTS];
 	player_disableitempickup[id.entnum] = 1;
 	stackPushBool(qtrue);
 }
@@ -913,7 +913,6 @@ void gsc_player_enableitempickup(scr_entref_t id)
 		return;
 	}
 
-	extern int player_disableitempickup[MAX_CLIENTS];
 	player_disableitempickup[id.entnum] = 0;
 	stackPushBool(qtrue);
 }

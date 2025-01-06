@@ -498,15 +498,15 @@ qboolean Netchan_TransmitNextFragment( netchan_t *chan )
 	}
 
 #ifdef LIBCOD
-	if (chan->protocol < 118)
-		MSG_WriteShort( &send, chan->unsentFragmentStart );
-	else
+	if (chan->protocol == 118)
 		MSG_WriteLong( &send, chan->unsentFragmentStart );
+	else
+		MSG_WriteShort( &send, chan->unsentFragmentStart );
 #else
-#if PROTOCOL_VERSION < 118
-	MSG_WriteShort( &send, chan->unsentFragmentStart );
-#else
+#if PROTOCOL_VERSION == 118
 	MSG_WriteLong( &send, chan->unsentFragmentStart );
+#else
+	MSG_WriteShort( &send, chan->unsentFragmentStart );
 #endif
 #endif
 

@@ -187,7 +187,7 @@ void SV_ArchiveSnapshot()
 				if ( GetFollowPlayerState(clientNum, &ps) )
 				{
 					MSG_WriteBit1(&msg);
-					MSG_WriteDeltaPlayerstate(&msg, &cachedClient2->ps, &ps);
+					MSG_WriteDeltaPlayerstate(&msg, &cachedClient2->ps, &ps, clientNum);
 				}
 				else
 				{
@@ -216,7 +216,7 @@ void SV_ArchiveSnapshot()
 				if ( GetFollowPlayerState(clientNum, &ps) )
 				{
 					MSG_WriteBit1(&msg);
-					MSG_WriteDeltaPlayerstate(&msg, NULL, &ps);
+					MSG_WriteDeltaPlayerstate(&msg, NULL, &ps, clientNum);
 				}
 				else
 				{
@@ -361,7 +361,7 @@ void SV_ArchiveSnapshot()
 		if ( cachedClient2->playerStateExists )
 		{
 			MSG_WriteBit1(&msg);
-			MSG_WriteDeltaPlayerstate(&msg, NULL, &cachedClient2->ps);
+			MSG_WriteDeltaPlayerstate(&msg, NULL, &cachedClient2->ps, i);
 		}
 		else
 		{
@@ -1563,7 +1563,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 			if ( cachedClient->playerStateExists )
 			{
-				MSG_ReadDeltaPlayerstate(&msg, NULL, &cachedClient->ps);
+				MSG_ReadDeltaPlayerstate(&msg, NULL, &cachedClient->ps, newnum);
 			}
 
 			svs.nextCachedSnapshotClients++;
@@ -1699,7 +1699,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 			if ( cachedClient->playerStateExists )
 			{
-				MSG_ReadDeltaPlayerstate(&msg, &oldCachedClient->ps, &cachedClient->ps);
+				MSG_ReadDeltaPlayerstate(&msg, &oldCachedClient->ps, &cachedClient->ps, newnum);
 			}
 
 			svs.nextCachedSnapshotClients++;
@@ -1737,7 +1737,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 			if ( cachedClient->playerStateExists )
 			{
-				MSG_ReadDeltaPlayerstate(&msg, NULL, &cachedClient->ps);
+				MSG_ReadDeltaPlayerstate(&msg, NULL, &cachedClient->ps, newnum);
 			}
 
 			svs.nextCachedSnapshotClients++;
@@ -1870,14 +1870,14 @@ void SV_WriteSnapshotToClient( client_t *client, msg_t *msg )
 	// delta encode the playerstate
 	if ( oldframe )
 	{
-		MSG_WriteDeltaPlayerstate( msg, &oldframe->ps, &frame->ps );
+		MSG_WriteDeltaPlayerstate( msg, &oldframe->ps, &frame->ps, client - svs.clients );
 		from_num_clients = oldframe->num_clients;
 		from_first_client = oldframe->first_client;
 		SV_EmitPacketEntities( client - svs.clients, oldframe->num_entities, oldframe->first_entity, frame->num_entities, frame->first_entity, msg );
 	}
 	else
 	{
-		MSG_WriteDeltaPlayerstate( msg, NULL, &frame->ps );
+		MSG_WriteDeltaPlayerstate( msg, NULL, &frame->ps, client - svs.clients );
 		from_num_clients = 0;
 		from_first_client = 0;
 		SV_EmitPacketEntities( client - svs.clients, 0, 0, frame->num_entities, frame->first_entity, msg );

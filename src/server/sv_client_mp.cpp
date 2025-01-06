@@ -623,7 +623,7 @@ void SV_DirectConnect( netadr_t from )
 	version = atoi( Info_ValueForKey( userinfo, "protocol" ) );
 
 #if PROTOCOL_VERSION == 115 and defined LIBCOD
-	if ( version < 115 || version > 118)
+	if ( version < 115 || version > 119)
 #else
 	if ( version != PROTOCOL_VERSION )
 #endif
@@ -1673,7 +1673,11 @@ void SV_SendClientGameState( client_t *client )
 		{
 			MSG_WriteByte( &msg, svc_configstring );
 			MSG_WriteShort( &msg, start );
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+			MSG_WriteBigString( &msg, SV_ModifyConfigstringIwdChkSum( client, start ) );
+#else
 			MSG_WriteBigString( &msg, sv.configstrings[start] );
+#endif
 		}
 	}
 
@@ -1754,6 +1758,14 @@ static void SV_VerifyIwds_f( client_t *cl )
 	int nServerChkSum[1024];
 	const char *pPaks, *pArg;
 	qboolean bGood = qtrue;
+
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+	if ( cl->netchan.protocol == 119 )
+	{
+		cl->pureAuthentic = 1;
+		return;
+	}
+#endif
 
 	bGood = qtrue;
 	nChkSum1 = nChkSum2 = 0;

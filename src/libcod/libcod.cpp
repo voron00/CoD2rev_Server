@@ -110,7 +110,7 @@ void manymaps_prepare(const char *mapname, int read)
 
 	Com_sprintf(map_check, MAX_OSPATH, "%s/%s.iwd", library_path, mapname);
 
-#if PROTOCOL_VERSION < 117
+#if PROTOCOL_VERSION == 115
 	const char *stock_maps[] = { "mp_breakout", "mp_brecourt", "mp_burgundy", "mp_carentan", "mp_dawnville", "mp_decoy", "mp_downtown", "mp_farmhouse", "mp_leningrad", "mp_matmata", "mp_railyard", "mp_toujane", "mp_trainstation" };
 #else
 	const char *stock_maps[] = { "mp_breakout", "mp_brecourt", "mp_burgundy", "mp_carentan", "mp_dawnville", "mp_decoy", "mp_downtown", "mp_farmhouse", "mp_leningrad", "mp_matmata", "mp_railyard", "mp_toujane", "mp_trainstation", "mp_rhine", "mp_harbor" };
@@ -787,6 +787,35 @@ void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 			velOut[2] = lengthScale * newZ;
 		}
 	}
+}
+
+const char *SV_ModifyConfigstringIwdChkSum( client_t *client, int index )
+{
+	char tmp[MAX_STRING_CHARS];
+	static char info[MAX_STRING_CHARS];
+
+	if ( index == CS_SYSTEMINFO && client->netchan.protocol == 119 )
+	{
+		strcpy(tmp, sv.configstrings[index]);
+
+		char *part = strtok(tmp, " ");
+
+		while(part != NULL)
+		{
+			if ( strcmp(part, "1053665859") == 0 ) // iw_06.iwd
+				I_strncat( info, sizeof( info ), va( "%s ", "-141992458" ) );
+			else if ( strcmp(part, "1046874969") == 0 ) // iw_07.iwd
+				I_strncat( info, sizeof( info ), va( "%s ", "840608716" ) );
+			else
+				I_strncat( info, sizeof( info ), va( "%s ", part ) );
+
+			part = strtok(NULL, " ");
+		}
+
+		return info;
+	}
+
+	return sv.configstrings[index];
 }
 
 #endif

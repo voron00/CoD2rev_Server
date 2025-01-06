@@ -1182,13 +1182,10 @@ void DroppedItemClearOwner(gentity_s *pSelf)
 	pSelf->s.clientNum = 1022;
 }
 
-#if LIBCOD_COMPILE_PLAYER == 1
-int player_disableitempickup[MAX_CLIENTS] = {0};
-#endif
-
 void Touch_Item_Auto(gentity_s *ent, gentity_s *other, int touched)
 {
 #if LIBCOD_COMPILE_PLAYER == 1
+	extern int player_disableitempickup[];
 	if (player_disableitempickup[other->s.number])
 		return;
 #endif

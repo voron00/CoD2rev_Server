@@ -231,10 +231,10 @@ typedef void (*xcommand_t)(void);
 
 // max length of a message, which may
 // be fragmented into multiple packets
-#if PROTOCOL_VERSION < 118
-#define MAX_MSGLEN					0x4000
-#else
+#if PROTOCOL_VERSION == 118
 #define MAX_MSGLEN					0x20000
+#else
+#define MAX_MSGLEN					0x4000
 #endif
 
 #define MAX_SNAPSHOT_MSG_LEN		0x20000
@@ -355,8 +355,8 @@ void MSG_ReadDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEnt
 void MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int number);
 void MSG_WriteDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count);
 void MSG_ReadDeltaHudElems(msg_t *msg, hudelem_t *from, hudelem_t *to, int count);
-void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to);
-void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to);
+void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to, int number);
+void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to, int number);
 void MSG_WriteDeltaFields( msg_t *msg, byte *from, byte *to, int lastChanged, int numFields, const NetField *stateFields );
 void MSG_ReadDeltaFields( msg_t *msg, byte *from, byte *to, int numFields, const NetField *stateFields );
 

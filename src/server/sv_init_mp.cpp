@@ -326,7 +326,7 @@ void SV_SetConfigstring( unsigned int index, const char *val )
 
 	if ( index >= MAX_CONFIGSTRINGS )
 	{
-		Com_Error (ERR_DROP, "SV_SetConfigstring: bad index %i\n", index);
+		Com_Error( ERR_DROP, "SV_SetConfigstring: bad index %i\n", index );
 	}
 
 	if ( !val )

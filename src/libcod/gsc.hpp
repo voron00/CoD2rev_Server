@@ -153,5 +153,6 @@ const char* NET_AdrToStringNoPort( netadr_t a );
 
 void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
 void SV_AddLibcodCommands();
+const char *SV_ModifyConfigstringIwdChkSum( client_t *client, int index );
 
 #endif

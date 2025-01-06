@@ -1465,7 +1465,7 @@ void MSG_WriteValueNoXor( msg_t *msg, int value, int bits )
 MSG_WriteDeltaPlayerstate
 ==============
 */
-void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to )
+void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to, int number )
 {
 	int *fromF, *toF;
 	netField_t *field;
@@ -1550,8 +1550,17 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 
 	// stats
 	int statsbits = 0;
+	int numstatsbits = MAX_STATS;
 
-	for ( i = 0; i < MAX_STATS; ++i )
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+	client_t *client = &svs.clients[number];
+	assert(client);
+	int protocol = client->netchan.protocol;
+	if ( protocol == 119 )
+		numstatsbits -= 1;
+#endif
+
+	for ( i = 0; i < numstatsbits; i++ )
 	{
 		if ( to->stats[i] != from->stats[i] )
 		{
@@ -1562,7 +1571,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 	if ( statsbits )
 	{
 		MSG_WriteBit1( msg ); // changed
-		MSG_WriteBits( msg, statsbits, MAX_STATS );
+		MSG_WriteBits( msg, statsbits, numstatsbits );
 
 		if ( statsbits & ( 1 << STAT_HEALTH ) )
 			MSG_WriteShort( msg, to->stats[STAT_HEALTH] );
@@ -1574,10 +1583,20 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 			MSG_WriteShort( msg, to->stats[STAT_MAX_HEALTH] );
 
 		if ( statsbits & ( 1 << STAT_IDENT_CLIENT_NUM ) )
-			MSG_WriteBits( msg, to->stats[STAT_IDENT_CLIENT_NUM], MAX_STATS );
+			MSG_WriteBits( msg, to->stats[STAT_IDENT_CLIENT_NUM], CLIENTNUM_BITS );
 
+#if PROTOCOL_VERSION != 119
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+		if ( protocol != 119 )
+		{
+			if ( statsbits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
+				MSG_WriteShort( msg, to->stats[STAT_IDENT_CLIENT_HEALTH] );
+		}
+#else
 		if ( statsbits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
 			MSG_WriteShort( msg, to->stats[STAT_IDENT_CLIENT_HEALTH] );
+#endif
+#endif
 
 		if ( statsbits & ( 1 << STAT_SPAWN_COUNT ) )
 			MSG_WriteByte( msg, to->stats[STAT_SPAWN_COUNT] );
@@ -2086,7 +2105,7 @@ void MSG_WriteDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, q
 MSG_ReadDeltaPlayerstate
 ==============
 */
-void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to )
+void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to, int number )
 {
 	int *fromF, *toF;
 	int i, j, lc;
@@ -2178,11 +2197,20 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 	}
 
 	// read the arrays
+	int numstatsbits = MAX_STATS;
+
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+	client_t *client = &svs.clients[number];
+	assert(client);
+	int protocol = client->netchan.protocol;
+	if ( protocol == 119 )
+		numstatsbits -= 1;
+#endif
 
 	if ( MSG_ReadBit(msg) )  // one general bit tells if any of this infrequently changing stuff has changed
 	{
 		// parse stats
-		bits = MSG_ReadBits(msg, MAX_STATS);
+		bits = MSG_ReadBits(msg, numstatsbits);
 
 		if ( bits & ( 1 << STAT_HEALTH ) )
 			to->stats[STAT_HEALTH] = MSG_ReadShort(msg);
@@ -2194,10 +2222,20 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 			to->stats[STAT_MAX_HEALTH] = MSG_ReadShort(msg);
 
 		if ( bits & ( 1 << STAT_IDENT_CLIENT_NUM ) )
-			to->stats[STAT_IDENT_CLIENT_NUM] = MSG_ReadBits(msg, MAX_STATS);
+			to->stats[STAT_IDENT_CLIENT_NUM] = MSG_ReadBits(msg, CLIENTNUM_BITS);
 
+#if PROTOCOL_VERSION != 119
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+		if ( protocol != 119 )
+		{
+			if ( bits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
+				to->stats[STAT_IDENT_CLIENT_HEALTH] = MSG_ReadShort(msg);
+		}
+#else
 		if ( bits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
 			to->stats[STAT_IDENT_CLIENT_HEALTH] = MSG_ReadShort(msg);
+#endif
+#endif
 
 		if ( bits & ( 1 << STAT_SPAWN_COUNT ) )
 			to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
