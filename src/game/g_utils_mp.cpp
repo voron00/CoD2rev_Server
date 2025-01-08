@@ -5,6 +5,19 @@
 
 XModel* cached_models[MAX_MODELS];
 
+int G_GetPlayerCorpseIndex(gentity_s *ent)
+{
+	int i;
+
+	for ( i = 0; i < 8; ++i )
+	{
+		if ( g_scr_data.playerCorpseInfo[i].entnum == ent->s.number )
+			return i;
+	}
+
+	return 0;
+}
+
 const char* G_ModelName(int modelIndex)
 {
 	return SV_GetConfigstringConst(modelIndex + 334);
@@ -361,6 +374,11 @@ void G_FreeEntityRefs(gentity_s *ent)
 		if ( level.droppedWeaponCue[k] == ent )
 			level.droppedWeaponCue[k] = 0;
 	}
+}
+
+void G_CorpseFree(gentity_s *ent)
+{
+	g_scr_data.playerCorpseInfo[G_GetPlayerCorpseIndex(ent)].entnum = -1;
 }
 
 void G_FreeEntity(gentity_s *ent)

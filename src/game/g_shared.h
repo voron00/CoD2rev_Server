@@ -10,6 +10,8 @@
 #define MAX_STATUS_ICONS 8
 #define MAX_SHELLSHOCKS 16
 #define MAX_SCRIPT_MENUS 32
+#define MAX_HINTSTRINGS 32
+#define MAX_CLIENT_CORPSES 8
 
 #define MAX_WEAPONS         128  // (SA) and yet more!
 
@@ -256,13 +258,15 @@ typedef struct
 
 enum statIndex_t
 {
-	STAT_HEALTH = 0x0,
-	STAT_DEAD_YAW = 0x1,
-	STAT_MAX_HEALTH = 0x2,
-	STAT_IDENT_CLIENT_NUM = 0x3,
-	STAT_IDENT_CLIENT_HEALTH = 0x4,
-	STAT_SPAWN_COUNT = 0x5,
-	MAX_STATS = 0x6,
+	STAT_HEALTH,
+	STAT_DEAD_YAW,
+	STAT_MAX_HEALTH,
+	STAT_IDENT_CLIENT_NUM,
+#if PROTOCOL_VERSION != 119
+	STAT_IDENT_CLIENT_HEALTH,
+#endif
+	STAT_SPAWN_COUNT,
+	MAX_STATS
 };
 
 typedef struct playerState_s
@@ -449,7 +453,7 @@ struct gclient_s
 	int lastSpawnTime;
 };
 #if defined(__i386__)
-static_assert((sizeof(gclient_t) == 0x28A4), "ERROR: gclient_t size is invalid!");
+static_assert((sizeof(gclient_t) == 0x28A4 || sizeof(gclient_t) == 0x28A0), "ERROR: gclient_t size is invalid!");
 #endif
 
 extern gclient_t g_clients[];
@@ -1198,6 +1202,9 @@ inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 
 #define ENTFIELD_MASK 0xC000
 
+//#define	ITEM_RADIUS			15		// item sizes are needed for client side pickup detection
+#define ITEM_RADIUS     1 // Rafael changed the radius so that the items would fit in the 3 new containers
+
 // entity->svFlags
 // the server does not know how to interpret most of the values
 // in entityStates (level eType), so the game must explicitly flag
@@ -1222,17 +1229,21 @@ inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 #define FL_DEMI_GODMODE        0x0000002
 #define FL_NOTARGET            0x0000004
 #define FL_NO_KNOCKBACK        0x0000008
+#define FL_DROPPED_ITEM        0x0000010
 #define FL_SUPPORTS_LINKTO     0x0001000
 
-#define ENT_HANDLER_NULL            0
-#define ENT_HANDLER_ACTOR_INIT      1
-#define ENT_HANDLER_GRENADE         7
-#define ENT_HANDLER_ROCKET          8
-#define ENT_HANDLER_CLIENT          9
-#define ENT_HANDLER_CLIENT_SPECTATOR 10
-#define ENT_HANDLER_CLIENT_DEAD     11
-#define ENT_HANDLER_PLAYER_CLONE    12
-#define ENT_HANDLER_PLAYER_BLOCK    19
+#define ENT_HANDLER_NULL              0
+#define ENT_HANDLER_ACTOR_INIT        1
+#define ENT_HANDLER_GRENADE           7
+#define ENT_HANDLER_ROCKET            8
+#define ENT_HANDLER_CLIENT            9
+#define ENT_HANDLER_CLIENT_SPECTATOR  10
+#define ENT_HANDLER_CLIENT_DEAD       11
+#define ENT_HANDLER_PLAYER_CLONE      12
+#define ENT_HANDLER_DROPPED_ITEM      15
+#define ENT_HANDLER_ITEM_INIT         16
+#define ENT_HANDLER_ITEM              17
+#define ENT_HANDLER_PLAYER_BLOCK      19
 
 #define SAY_ALL 0
 #define SAY_TEAM 1
@@ -1258,6 +1269,11 @@ extern dvar_t *g_allowVote;
 extern dvar_t *g_gametype;
 extern dvar_t *g_deadChat;
 extern dvar_t *g_debugDamage;
+extern dvar_t *g_dropUpSpeedBase;
+extern dvar_t *g_dropForwardSpeed;
+extern dvar_t *g_dropUpSpeedRand;
+extern dvar_t *g_maxDroppedWeapons;
+extern dvar_t *g_weaponAmmoPools;
 
 extern dvar_t *voice_global;
 extern dvar_t *voice_deadChat;
@@ -1390,8 +1406,8 @@ const char *vtosf( const vec3_t v );
 
 void G_LogPrintf( const char *fmt, ... );
 
-int IsItemRegistered(unsigned int iItemIndex);
-void RegisterItem(unsigned int index, int global);
+int IsItemRegistered(int iItemIndex);
+void RegisterItem( int iItemIndex, qboolean bUpdateCS );
 void SaveRegisteredItems();
 void SaveRegisteredWeapons();
 void ClearRegisteredItems();
@@ -1545,6 +1561,16 @@ void G_RunCorpse(gentity_s *ent);
 void G_SetModel(gentity_s *ent, const char *modelName);
 void G_SetConstString(unsigned short *to, const char *from);
 void G_setfog(const char *fogstring);
+
+void G_OrientItemToGround(gentity_t *ent, trace_t *trace);
+int G_ItemClipMask(gentity_t *ent);
+int G_GetPlayerCorpseIndex(gentity_s *ent);
+void G_GetAnimDeltaForCorpse(gentity_s *ent, corpseInfo_t *ci, float *originChange);
+void G_BounceCorpse(gentity_s *ent, corpseInfo_t *corpseInfo, trace_t *trace, float *endpos);
+void G_RunCorpseAnimate(gentity_s *ent);
+int Pickup_Weapon(gentity_t *ent, gentity_t *other, int *pickupEvent, int touched);
+int Pickup_Health(gentity_t *ent, gentity_t *other);
+int Pickup_Ammo(gentity_t *ent, gentity_t *other);
 
 void Player_UpdateActivate(gentity_s *ent);
 void LookAtKiller(gentity_s *self, gentity_s *inflictor, gentity_s *attacker);

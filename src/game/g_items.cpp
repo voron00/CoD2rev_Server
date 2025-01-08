@@ -1,73 +1,236 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-int itemRegistered[1024];
+/*
+ * name:		g_items.c
+ *
+ * desc:		Items are any object that a player can touch to gain some effect.
+ *				Pickup will return the number of seconds until they should respawn.
+ *				all items should pop when dropped in lava or slime.
+ *				Respawnable items don't actually go away when picked up, they are
+ *				just made invisible and untouchable.  This allows them to ride
+ *				movers and respawn apropriately.
+ *
+*/
 
-int IsItemRegistered(unsigned int iItemIndex)
+static int itemRegistered[MAX_GENTITIES];
+
+/*
+==================
+IsItemRegistered
+==================
+*/
+int IsItemRegistered( int iItemIndex )
 {
+	assert((iItemIndex >= 0) && (iItemIndex < MAX_WEAPONS));
 	return itemRegistered[iItemIndex];
 }
 
-void RegisterItem(unsigned int index, int global)
+/*
+==================
+ClearRegisteredItems
+==================
+*/
+void ClearRegisteredItems()
 {
-	const char *name;
+	memset(itemRegistered, 0, sizeof(itemRegistered));
+	itemRegistered[0] = qtrue;
+}
 
-	if ( !itemRegistered[index] )
+/*
+==================
+DroppedItemClearOwner
+==================
+*/
+void DroppedItemClearOwner( gentity_t *pSelf )
+{
+	pSelf->s.clientNum = ENTITYNUM_WORLD;
+}
+
+/*
+==============
+Fill_Clip
+	push reserve ammo into available space in the clip
+==============
+*/
+void Fill_Clip( playerState_t *ps, int weapon )
+{
+	int iClipIndex;
+	int iAmmoIndex;
+	int ammomove;
+	int inclip;
+
+	iAmmoIndex = BG_AmmoForWeapon(weapon);
+	iClipIndex = BG_ClipForWeapon(weapon);
+
+	if ( weapon <= 0 || weapon > BG_GetNumWeapons() )
 	{
-		if ( !level.initializing )
-		{
-			name = bg_itemlist[index].pickup_name;
+		return;
+	}
 
-			if ( !name || !*name )
-				name = "<<unknown>>";
+	inclip = ps->ammoclip[iClipIndex];
+	ammomove = BG_GetAmmoClipSize(iClipIndex) - inclip;
 
-			Scr_Error(va("game tried to register the item '%s' after initialization finished\n", name));
-		}
+	if ( ammomove > ps->ammo[iAmmoIndex] )
+	{
+		ammomove = ps->ammo[iAmmoIndex];
+	}
 
-		itemRegistered[index] = 1;
-
-		if ( bg_itemlist[index].world_model[0] )
-			G_ModelIndex(bg_itemlist[index].world_model[0]);
-
-		if ( bg_itemlist[index].world_model[1] )
-			G_ModelIndex(bg_itemlist[index].world_model[1]);
-
-		if ( global )
-			level.bRegisterItems = 1;
+	if ( ammomove )
+	{
+		ps->ammo[iAmmoIndex] -= ammomove;
+		ps->ammoclip[iClipIndex] += ammomove;
 	}
 }
 
+/*
+==============
+Add_Ammo
+	Try to always add ammo here unless you have specific needs
+	(like the AI "infinite ammo" where they get below 900 and force back up to 999)
+
+	fillClip will push the ammo straight through into the clip and leave the rest in reserve
+==============
+*/
+//----(SA)	modified
+// xkan, 10/25/2002 - modified to return whether any ammo was added.
+int Add_Ammo( gentity_t *ent, int weaponIndex, int count, qboolean fillClip )
+{
+	int oldClip;
+	int oldAmmo;
+	qboolean clipOnly = qfalse;
+	int clipweap;
+	int ammoweap;
+
+	assert(ent);
+	assert(ent->client);
+
+	ammoweap = BG_AmmoForWeapon(weaponIndex);
+	clipweap = BG_ClipForWeapon(weaponIndex);
+
+	oldAmmo = ent->client->ps.ammo[ammoweap];
+	oldClip = ent->client->ps.ammoclip[clipweap];
+
+	ent->client->ps.ammo[ammoweap] = oldAmmo + count;
+
+	if ( BG_WeaponIsClipOnly(weaponIndex) )
+	{
+		G_GivePlayerWeapon(&ent->client->ps, weaponIndex);
+		clipOnly = qtrue;
+	}
+
+	if ( fillClip || clipOnly )
+	{
+		Fill_Clip(&ent->client->ps, weaponIndex);
+	}
+
+	if ( clipOnly )
+	{
+		ent->client->ps.ammo[ammoweap] = 0;
+	}
+	else
+	{
+		if ( ent->client->ps.ammo[ammoweap] > BG_GetAmmoTypeMax(ammoweap) )
+		{
+			ent->client->ps.ammo[ammoweap] = BG_GetAmmoTypeMax(ammoweap);
+		}
+	}
+
+	if ( ent->client->ps.ammoclip[clipweap] > BG_GetAmmoClipSize(clipweap) )
+	{
+		ent->client->ps.ammoclip[clipweap] = BG_GetAmmoClipSize(clipweap);
+	}
+
+	if ( BG_GetWeaponDef(weaponIndex)->sharedAmmoCapIndex < 0 )
+	{
+		return ent->client->ps.ammoclip[clipweap] - oldClip + ent->client->ps.ammo[ammoweap] - oldAmmo;
+	}
+
+	count = BG_GetMaxPickupableAmmo(&ent->client->ps, weaponIndex);
+
+	if ( count >= 0 )
+	{
+		return ent->client->ps.ammoclip[clipweap] - oldClip + ent->client->ps.ammo[ammoweap] - oldAmmo;
+	}
+
+	if ( !BG_WeaponIsClipOnly(weaponIndex) )
+	{
+		ent->client->ps.ammo[ammoweap] += count;
+
+		if ( ent->client->ps.ammo[ammoweap] < 0 )
+		{
+			ent->client->ps.ammo[ammoweap] = 0;
+		}
+
+		return ent->client->ps.ammoclip[clipweap] - oldClip + ent->client->ps.ammo[ammoweap] - oldAmmo;
+	}
+
+	ent->client->ps.ammoclip[clipweap] += count;
+
+	if ( ent->client->ps.ammoclip[clipweap] > 0 )
+	{
+		return ent->client->ps.ammoclip[clipweap] - oldClip + ent->client->ps.ammo[ammoweap] - oldAmmo;
+	}
+
+	ent->client->ps.ammoclip[clipweap] = 0;
+	BG_TakePlayerWeapon(&ent->client->ps, weaponIndex);
+
+	return 0;
+}
+
+/*
+==================
+G_GetItemClassname
+==================
+*/
+void G_GetItemClassname( const gitem_t *item, unsigned short *out )
+{
+	char classname[MAX_OSPATH];
+	WeaponDef *weapDef;
+	int index;
+
+	index = item - bg_itemlist;
+
+	if ( index > BG_GetNumWeapons() )
+	{
+		G_SetConstString(out, item->classname);
+		return;
+	}
+
+	weapDef = BG_GetWeaponDef(index);
+	Com_sprintf(classname, sizeof(classname), "weapon_%s", weapDef->szInternalName);
+	G_SetConstString(out, classname);
+}
+
+/*
+==================
+SaveRegisteredItems
+==================
+*/
 void SaveRegisteredItems()
 {
-	char last_non_zero_char;
-	char *ptr;
-	int bits;
-	int digit;
-	int n;
-	int weapIdx;
-	char string[256];
+	char string[MAX_OSPATH];
+	int bits = 0;
+	int n = 0;
+	int digit = 0;
+	int last_non_zero_char = 0;
 
 	level.bRegisterItems = 0;
 
-	n = 0;
-	digit = 0;
-	bits = 0;
-
-	for ( weapIdx = 0; weapIdx < 131; ++weapIdx )
+	for ( int itemIdx = 0; itemIdx < bg_numItems; itemIdx++ )
 	{
-		if ( itemRegistered[weapIdx] )
-			digit += 1 << bits;
-
-		if ( ++bits == 4 )
+		if ( itemRegistered[itemIdx] )
 		{
-			ptr = &string[n++];
+			digit += 1 << bits;
+		}
 
-			if ( digit > 9 )
-				last_non_zero_char = digit + 87;
-			else
-				last_non_zero_char = digit + 48;
+		bits++;
 
-			*ptr = last_non_zero_char;
+		if ( bits == 4 )
+		{
+			string[n] = digit + (digit < '\n' ? '0' : 'W');
+			n++;
+			last_non_zero_char = n;
 
 			digit = 0;
 			bits = 0;
@@ -76,75 +239,1056 @@ void SaveRegisteredItems()
 
 	if ( bits )
 	{
-		ptr = &string[n++];
-
-		if ( digit > 9 )
-			last_non_zero_char = digit + 87;
-		else
-			last_non_zero_char = digit + 48;
-
-		*ptr = last_non_zero_char;
+		string[n] = digit + (digit < '\n' ? '0' : 'W');
+		n++;
+		last_non_zero_char = n;
 	}
 
-	string[n] = 0;
+	string[last_non_zero_char] = 0;
 	SV_SetConfigstring(CS_ITEMS, string);
 }
 
+/*
+==================
+SaveRegisteredWeapons
+==================
+*/
 void SaveRegisteredWeapons()
 {
-	WeaponDef *weaponDef;
-	int weapon;
-	char string[8192];
+	WeaponDef *weapDef;
+	int weapIndex;
+	char string[BIG_INFO_STRING];
 
 	level.registerWeapons = 0;
+
 	string[0] = 0;
-	weaponDef = 0;
+	weapDef = NULL;
 
-	for ( weapon = 1; weapon <= BG_GetNumWeapons(); ++weapon )
+	for ( weapIndex = 1; weapIndex <= BG_GetNumWeapons(); weapIndex++ )
 	{
-		if ( weaponDef )
-			I_strncat(string, 8192, " ");
+		if ( weapDef )
+		{
+			I_strncat(string, sizeof(string), " ");
+		}
 
-		weaponDef = BG_GetWeaponDef(weapon);
-		I_strncat(string, 8192, weaponDef->szInternalName);
+		weapDef = BG_GetWeaponDef(weapIndex);
+		I_strncat(string, sizeof(string), weapDef->szInternalName);
 	}
 
 	SV_SetConfigstring(CS_WEAPONS, string);
 }
 
-extern dvar_t *g_maxDroppedWeapons;
-int GetFreeDropCueIdx()
+/*
+==================
+RegisterItem
+==================
+*/
+void RegisterItem( int iItemIndex, qboolean bUpdateCS )
+{
+	const char *name;
+
+	if ( itemRegistered[iItemIndex] )
+	{
+		return;
+	}
+
+	if ( !level.initializing )
+	{
+		name = bg_itemlist[iItemIndex].pickup_name;
+
+		if ( !name || !name[0] )
+		{
+			name = "<<unknown>>";
+		}
+
+		Scr_Error(va("game tried to register the item '%s' after initialization finished\n", name));
+	}
+
+	itemRegistered[iItemIndex] = qtrue;
+
+	if ( bg_itemlist[iItemIndex].world_model[0] )
+	{
+		G_ModelIndex(bg_itemlist[iItemIndex].world_model[0]);
+	}
+
+	if ( bg_itemlist[iItemIndex].world_model[1] )
+	{
+		G_ModelIndex(bg_itemlist[iItemIndex].world_model[1]);
+	}
+
+	if ( bUpdateCS )
+	{
+		level.bRegisterItems = qtrue;
+	}
+}
+
+/*
+==================
+G_RegisterWeapon
+==================
+*/
+int G_RegisterWeapon( int weapIndex )
+{
+	WeaponDef *weapDef;
+	int modelIndex;
+
+	assert(!itemRegistered[weapIndex]);
+	itemRegistered[weapIndex] = qtrue;
+
+	level.bRegisterItems = qtrue;
+	level.registerWeapons = qtrue;
+
+	weapDef = BG_GetWeaponDef(weapIndex);
+
+	if ( weapDef->useHintString[0] && !G_GetHintStringIndex(&weapDef->useHintStringIndex, weapDef->useHintString) )
+	{
+		Com_Error(ERR_DROP, "Too many different hintstring values on weapons. Max allowed is %i different strings", MAX_HINTSTRINGS);
+	}
+
+	if ( weapDef->dropHintString[0] && !G_GetHintStringIndex(&weapDef->dropHintStringIndex, weapDef->dropHintString) )
+	{
+		Com_Error(ERR_DROP, "Too many different hintstring values on weapons. Max allowed is %i different strings", MAX_HINTSTRINGS);
+	}
+
+	modelIndex = G_ModelIndex(weapDef->worldModel);
+
+	if ( modelIndex && G_XModelBad(modelIndex) )
+	{
+		G_OverrideModel(modelIndex, "xmodel/defaultweapon");
+	}
+
+	return G_ModelIndex(weapDef->projectileModel);
+}
+
+/*
+============
+G_SpawnItem
+
+Sets the clipping size and plants the object on the floor.
+
+Items can't be immediately dropped to floor, because they might
+be on an entity that hasn't spawned yet.
+============
+*/
+void G_SpawnItem( gentity_t *ent, const gitem_t *item )
+{
+	RegisterItem(item - bg_itemlist, qfalse);
+
+	ent->item.index = item - bg_itemlist;
+	G_SetModel(ent, item->world_model[0]);
+
+	if ( item->giType == IT_WEAPON )
+	{
+		VectorSet(ent->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
+		VectorSet(ent->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+	}
+	else
+	{
+		VectorSet(ent->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, 0);
+		VectorSet(ent->r.maxs, ITEM_RADIUS, ITEM_RADIUS, 2 * ITEM_RADIUS);
+	}
+
+	ent->r.contents = CONTENTS_LAVA | CONTENTS_UNKNOWNCLIP | CONTENTS_TELEPORTER | CONTENTS_JUMPPAD | CONTENTS_CLUSTERPORTAL | CONTENTS_DONOTENTER_LARGE | CONTENTS_TRIGGER;
+
+	if ( item->giType != IT_AMMO )
+	{
+		ent->r.contents |= CONTENTS_DONOTENTER;
+	}
+
+	ent->s.eType = ET_ITEM;
+	ent->s.index = ent->item.index;
+
+	G_DObjUpdate(ent);
+
+	ent->s.clientNum = ENTITYNUM_WORLD;
+	ent->flags |= FL_SUPPORTS_LINKTO;
+
+	if ( level.spawnVars.spawnVarsValid )
+	{
+		G_SetAngle(ent, ent->r.currentAngles);
+		// some movers spawn on the second frame, so delay item
+		// spawns until the third frame so they can ride trains
+		ent->nextthink = level.time + FRAMETIME;
+		ent->handler = ENT_HANDLER_ITEM_INIT;
+		return;
+	}
+
+	ent->handler = ENT_HANDLER_ITEM;
+
+	if ( !(ent->spawnflags & 1) )
+	{
+		ent->s.groundEntityNum = ENTITYNUM_NONE;
+
+		if ( item->giType == IT_WEAPON )
+		{
+			ent->r.currentAngles[2] = ent->r.currentAngles[2] + 90;
+		}
+	}
+
+	G_SetAngle(ent, ent->r.currentAngles);
+	G_SetOrigin(ent, ent->r.currentOrigin);
+
+	SV_LinkEntity(ent);
+}
+
+/*
+================
+Drop_Item
+
+Spawns an item and tosses it forward
+================
+*/
+gentity_t* Drop_Item( gentity_t *ent, const gitem_t *item, float angle, qboolean novelocity )
+{
+	vec3_t vPos;
+	vec3_t angles;
+	vec3_t velocity;
+
+	VectorCopy(ent->r.currentAngles, angles);
+	angles[YAW] += angle;
+	angles[PITCH] = 0;  // always forward
+	angles[ROLL] = 0;
+
+	if ( novelocity )
+	{
+		VectorClear( velocity );
+	}
+	else
+	{
+		AngleVectors( angles, velocity, NULL, NULL );
+		VectorScale( velocity, g_dropForwardSpeed->current.decimal, velocity );
+		velocity[2] += G_crandom() * g_dropUpSpeedRand->current.decimal + g_dropUpSpeedBase->current.decimal;
+	}
+
+	VectorCopy( ent->r.currentOrigin, vPos );
+	vPos[2] += ( ent->r.maxs[2] - ent->r.mins[2] ) * 0.5;
+
+	return LaunchItem( item, vPos, velocity, ent->s.number );
+}
+
+/*
+================
+G_RunItem
+================
+*/
+void G_RunItem( gentity_t *ent )
+{
+	vec3_t delta;
+	vec3_t endpos;
+	int mask;
+	int contents;
+	trace_t trace;
+	vec3_t origin;
+
+	assert(ent->s.eType != ET_PLAYER_CORPSE);
+
+	// if groundentity has been set to -1, it may have been pushed off an edge
+	if ( ent->s.groundEntityNum == ENTITYNUM_NONE || level.gentities[ent->s.groundEntityNum].s.pos.trType != TR_STATIONARY )
+	{
+		if ( ent->s.pos.trType != TR_GRAVITY && !(ent->spawnflags & 1) )
+		{
+			ent->s.pos.trType = TR_GRAVITY;
+			ent->s.pos.trTime = level.time;
+
+			VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
+			VectorClear(ent->s.pos.trDelta);
+		}
+	}
+
+	if ( ent->s.pos.trType == TR_STATIONARY || ent->s.pos.trType == TR_GRAVITY_PAUSED || ent->tagInfo ) //----(SA)
+	{
+		// check think function
+		G_RunThink( ent );
+		return;
+	}
+
+	assert(!IS_NAN((ent->s.pos.trBase)[0]) && !IS_NAN((ent->s.pos.trBase)[1]) && !IS_NAN((ent->s.pos.trBase)[2]));
+	assert(!IS_NAN((ent->s.pos.trDelta)[0]) && !IS_NAN((ent->s.pos.trDelta)[1]) && !IS_NAN((ent->s.pos.trDelta)[2]));
+
+	// get current position
+	BG_EvaluateTrajectory(&ent->s.pos, level.time + 50, origin);
+	assert(!IS_NAN((origin)[0]) && !IS_NAN((origin)[1]) && !IS_NAN((origin)[2]));
+
+	// trace a line from the previous position to the current position
+	mask = G_ItemClipMask(ent);
+	assert(!( ent->r.contents & mask ));
+
+	if ( Vec3DistanceSq(ent->r.currentOrigin, origin) < 0.1 )
+	{
+		origin[2] -= 1.0;
+	}
+
+	G_TraceCapsule(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, mask);
+
+	if ( trace.fraction < 1.0 )
+	{
+		Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
+
+		if ( !trace.startsolid && trace.fraction < 0.0099999998 && trace.normal[2] < 0.5 )
+		{
+			VectorSubtract(origin, ent->r.currentOrigin, delta);
+			VectorMA(origin, 1.0 - DotProduct(delta, trace.normal), trace.normal, origin);
+
+			G_TraceCapsule(&trace, endpos, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, mask);
+
+			Vec3Lerp(endpos, origin, trace.fraction, endpos);
+		}
+
+		ent->s.pos.trType = TR_LINEAR_STOP;
+		ent->s.pos.trTime = level.time;
+		ent->s.pos.trDuration = 50;
+
+		VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
+		VectorSubtract(endpos, ent->r.currentOrigin, ent->s.pos.trDelta);
+
+		VectorScale(ent->s.pos.trDelta, 20, ent->s.pos.trDelta);
+		VectorCopy(endpos, ent->r.currentOrigin);
+	}
+	else
+	{
+		VectorCopy(origin, ent->r.currentOrigin);
+	}
+
+	SV_LinkEntity(ent); // FIXME: avoid this for stationary?
+
+	// check think function
+	G_RunThink(ent);
+
+	if ( !ent->r.inuse )
+	{
+		return;
+	}
+
+	if ( trace.fraction >= 0.0099999998 )
+	{
+		return;
+	}
+
+	if ( trace.normal[2] <= 0 )
+	{
+		G_FreeEntity(ent);
+		return;
+	}
+
+	// if it is in a nodrop volume, remove it
+	contents = SV_PointContents(ent->r.currentOrigin, -1, CONTENTS_NODROP);
+
+	if ( contents )
+	{
+		G_FreeEntity(ent);
+		return;
+	}
+
+	G_OrientItemToGround(ent, &trace);
+	G_SetOrigin(ent, endpos);
+
+	ent->s.groundEntityNum = trace.entityNum;
+
+	SV_LinkEntity(ent);
+}
+
+/*
+================
+G_RunCorpseMove
+================
+*/
+void G_RunCorpseMove( gentity_t *ent )
+{
+#define DROP_CHECK_TRACE_START_HEIGHT 64
+	bool haveDelta;
+	vec3_t left;
+	vec3_t right;
+	vec3_t forward;
+	vec3_t deltaChange;
+	corpseInfo_t *corpseInfo;
+	int corpseIndex;
+	vec3_t start;
+	vec3_t endpos;
+	int mask;
+	int contents;
+	trace_t trace;
+	vec3_t origin;
+
+	assert(ent->s.eType == ET_PLAYER_CORPSE);
+
+	corpseIndex = G_GetPlayerCorpseIndex(ent);
+	corpseInfo = &g_scr_data.playerCorpseInfo[corpseIndex];
+
+	G_GetAnimDeltaForCorpse(ent, corpseInfo, deltaChange);
+	haveDelta = 0;
+
+	if ( !corpseInfo->falling )
+	{
+		haveDelta = VectorLengthSquared(deltaChange) > 1.0;
+	}
+
+	if ( !corpseInfo->falling && !haveDelta )
+	{
+		return;
+	}
+
+	// get current position
+	BG_EvaluateTrajectory(&ent->s.pos, level.time, origin);
+
+	if ( haveDelta )
+	{
+		AngleVectors(ent->r.currentAngles, forward, right, NULL);
+		VectorScale(right, -1.0, left);
+
+		Vec3Normalize(forward);
+		Vec3Normalize(left);
+
+		VectorMA(origin, deltaChange[0], forward, origin);
+		VectorMA(origin, deltaChange[1], left, origin);
+	}
+
+	// trace a line from the previous position to the current position
+	assert(ent->clipmask);
+	mask = ent->clipmask;
+	assert(!( ent->r.contents & mask ));
+	G_TraceCapsule(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, mask);
+
+	Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
+	VectorCopy(endpos, ent->r.currentOrigin);
+
+	if ( trace.startsolid )
+	{
+		trace.fraction = 0;
+	}
+
+	SV_LinkEntity(ent); // FIXME: avoid this for stationary?
+
+	// check think function
+	G_RunThink(ent);
+
+	if ( !ent->r.inuse )
+	{
+		return;
+	}
+
+	if ( trace.fraction == 1 )
+	{
+		if ( corpseInfo->falling || !haveDelta )
+		{
+			return;
+		}
+
+		ent->s.pos.trType = TR_INTERPOLATE;
+		VectorCopy(endpos, ent->s.pos.trBase);
+
+		ent->s.pos.trTime = 0;
+		ent->s.pos.trDuration = 0;
+
+		VectorClear(ent->s.pos.trDelta);
+		origin[2] -= 1.0;
+
+		if ( !G_TraceCapsuleComplete(ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, mask) )
+		{
+			return;
+		}
+
+		corpseInfo->falling = qtrue;
+		ent->s.pos.trType = TR_GRAVITY;
+
+		VectorCopy(endpos, ent->s.pos.trBase);
+		VectorClear(ent->s.pos.trDelta);
+
+		VectorMA(ent->s.pos.trDelta, deltaChange[0], forward, ent->s.pos.trDelta);
+		VectorMA(ent->s.pos.trDelta, deltaChange[1], left, ent->s.pos.trDelta);
+
+		ent->s.pos.trTime = level.time;
+		ent->s.pos.trDuration = 0;
+
+		return;
+	}
+
+	// if it is in a nodrop volume, remove it
+	contents = SV_PointContents(ent->r.currentOrigin, -1, CONTENTS_NODROP);
+
+	if ( contents )
+	{
+		G_FreeEntity(ent);
+		return;
+	}
+
+	if ( !corpseInfo->falling )
+	{
+		return;
+	}
+
+	if ( trace.allsolid )
+	{
+		VectorCopy(ent->r.currentOrigin, start);
+		start[2] += DROP_CHECK_TRACE_START_HEIGHT;
+
+		G_TraceCapsule(&trace, start, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, ent->r.ownerNum, mask & ~( CONTENTS_PLAYERCLIP ));
+
+		if ( !trace.allsolid )
+		{
+			Vec3Lerp(start, ent->r.currentOrigin, trace.fraction, endpos);
+			VectorCopy(endpos, ent->r.currentOrigin);
+		}
+	}
+
+	G_BounceCorpse(ent, corpseInfo, &trace, endpos);
+}
+
+/*
+================
+FinishSpawningItem
+
+Traces down to find where an item should rest, instead of letting them
+free fall from their spawn points
+================
+*/
+void FinishSpawningItem( gentity_t *ent )
+{
+	vec3_t vAxis[3];
+	vec3_t vAngles;
+	int mask;
+	vec3_t endpos;
+	vec3_t start;
+	gitem_t *item;
+	vec3_t maxs;
+	vec3_t mins;
+	vec3_t end;
+	trace_t tr;
+
+	ent->handler = ENT_HANDLER_ITEM;
+
+	if ( ent->spawnflags & 1 )  // suspended
+	{
+		G_SetOrigin(ent, ent->r.currentOrigin);
+	}
+	else
+	{
+		item = &bg_itemlist[ent->item.index];
+
+		if ( item->giType == IT_WEAPON )
+		{
+			VectorSet(mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
+			VectorSet(maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
+		}
+		else
+		{
+			// Rafael
+			// had to modify this so that items would spawn in shelves
+			VectorSet(mins, -ITEM_RADIUS, -ITEM_RADIUS, 0);
+			VectorSet(maxs, ITEM_RADIUS, ITEM_RADIUS, 2 * ITEM_RADIUS);
+		}
+
+		mask = G_ItemClipMask(ent);
+
+		VectorCopy(ent->r.currentOrigin, start);
+		VectorSet(end, ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2] - 4096);
+
+		G_TraceCapsule(&tr, start, mins, maxs, end, ent->s.number, mask);
+
+		if ( tr.startsolid )
+		{
+			VectorCopy(ent->r.currentOrigin, start);
+			start[2] -= 15;
+			VectorSet(end, ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2] - 4096);
+
+			G_TraceCapsule(&tr, start, mins, maxs, end, ent->s.number, mask);
+		}
+
+		if ( tr.startsolid )
+		{
+			Com_Printf("FinishSpawningItem: %s startsolid at %s\n", SL_ConvertToString(ent->classname), vtos(ent->r.currentOrigin));
+			G_FreeEntity(ent);
+			return;
+		}
+
+		ent->s.groundEntityNum = tr.entityNum;
+		Vec3Lerp(start, end, tr.fraction, endpos);
+
+		G_SetOrigin(ent, endpos);
+
+		if ( tr.fraction < 1.0 )
+		{
+			VectorCopy(tr.normal, vAxis[2]);
+			AngleVectors(ent->r.currentAngles, vAxis[0], NULL, NULL);
+
+			Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
+			Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
+
+			AxisToAngles(vAxis, vAngles);
+
+			if ( bg_itemlist[ent->s.index].giType == IT_WEAPON )
+			{
+				vAngles[2] += 90;
+			}
+
+			//----(SA) moved this up so it happens for suspended items too (and made it a function)
+			G_SetAngle(ent, vAngles);
+		}
+	}
+
+	SV_LinkEntity( ent );
+}
+
+/*
+==============
+Drop_Weapon
+==============
+*/
+gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
+{
+	int mask;
+	trace_t trace;
+	vec3_t vCenter;
+	vec3_t vAngles;
+	float tagMat[4][3];
+	vec3_t velocity;
+	int iMin;
+	int iMax;
+	gitem_t *weapItem;
+	gentity_t *itemEnt;
+	int clipIndex;
+	int ammoIndex;
+	int iDropClip;
+	int iDropAmmo;
+
+	weapItem = &bg_itemlist[iWeaponIndex];
+
+	if ( ent->client && !Com_BitCheck(ent->client->ps.weapons, iWeaponIndex) )
+	{
+		BG_TakePlayerWeapon(&ent->client->ps, iWeaponIndex);
+		return NULL;
+	}
+
+	ammoIndex = BG_AmmoForWeapon(iWeaponIndex);
+	clipIndex = BG_ClipForWeapon(iWeaponIndex);
+
+	if ( BG_GetWeaponDef(iWeaponIndex)->clipOnly && !ent->client->ps.ammoclip[clipIndex] )
+	{
+		BG_TakePlayerWeapon(&ent->client->ps, iWeaponIndex);
+		return NULL;
+	}
+
+	itemEnt = Drop_Item(ent, weapItem, 0, qfalse);
+
+	if ( ent->client )
+	{
+		iDropAmmo = ent->client->ps.ammo[ammoIndex];
+		ent->client->ps.ammo[ammoIndex] = 0;
+
+		iDropClip = ent->client->ps.ammoclip[clipIndex];
+		ent->client->ps.ammoclip[clipIndex] = 0;
+
+		BG_TakePlayerWeapon(&ent->client->ps, iWeaponIndex);
+	}
+	else
+	{
+		iMax = BG_GetWeaponDef(iWeaponIndex)->dropAmmoMax;
+		iMin = BG_GetWeaponDef(iWeaponIndex)->dropAmmoMin;
+
+		if ( iMax < iMin )
+		{
+			iMax = iMin;
+			iMin = iMax;
+		}
+
+		if ( iMax || iMin )
+		{
+			if ( iMax < 0 )
+			{
+				iDropAmmo = 0;
+				iDropClip = 0;
+			}
+			else
+			{
+				if ( iMax == iMin )
+					iDropAmmo = iMin;
+				else
+					iDropAmmo = rand() % (iMax - iMin) + iMin;
+
+				if ( iDropAmmo <= 0 )
+				{
+					iDropAmmo = 0;
+					iDropClip = 0;
+				}
+				else
+				{
+					if ( BG_GetAmmoClipSize(clipIndex) )
+						iDropClip = rand() % BG_GetAmmoClipSize(clipIndex);
+					else
+						iDropClip = 0;
+
+					if ( iDropClip < iDropAmmo )
+					{
+						iDropAmmo -= iDropClip;
+					}
+					else
+					{
+						iDropClip = iDropAmmo;
+						iDropAmmo = 0;
+					}
+				}
+			}
+		}
+		else
+		{
+			iDropAmmo = Q_rint(BG_GetAmmoClipSize(clipIndex) - 1 * ((G_random() + 1.0) * 0.5)) + 1;
+			iDropClip = Q_rint((G_random() * 0.5 + 0.25) * iDropAmmo);
+			iDropAmmo -= iDropClip;
+		}
+	}
+
+	itemEnt->count = iDropAmmo;
+	itemEnt->item.clipAmmoCount = iDropClip;
+
+	if ( !itemEnt->count )
+	{
+		itemEnt->count = -1;
+	}
+
+	if ( !itemEnt->item.clipAmmoCount )
+	{
+		itemEnt->item.clipAmmoCount = -1;
+	}
+
+	if ( !iDropAmmo && !iDropClip )
+	{
+		itemEnt->r.contents &= ~CONTENTS_DONOTENTER;
+	}
+
+	if ( tag )
+	{
+		if ( G_DObjGetWorldTagMatrix(ent, tag, tagMat) )
+		{
+			Vec3Avg(ent->r.mins, ent->r.maxs, vCenter);
+			VectorAdd(vCenter, ent->r.currentOrigin, vCenter);
+
+			mask = G_ItemClipMask(itemEnt);
+
+			G_TraceCapsule(&trace, vCenter, itemEnt->r.mins, itemEnt->r.maxs, tagMat[3], ent->s.number, mask);
+
+			Vec3Lerp(vCenter, tagMat[3], trace.fraction, itemEnt->s.pos.trBase);
+			VectorCopy(itemEnt->s.pos.trBase, itemEnt->r.currentOrigin);
+
+			itemEnt->s.pos.trTime = level.time;
+
+			AxisToAngles(tagMat, vAngles);
+		}
+		else
+		{
+			VectorCopy(ent->r.currentAngles, vAngles);
+		}
+
+		vAngles[2] += 90;
+		G_SetAngle(itemEnt, ent->r.currentAngles);
+
+		VectorSet(velocity, G_crandom() * 50, G_crandom() * 40, G_crandom() * 60);
+
+		itemEnt->s.apos.trType = TR_LINEAR;
+		itemEnt->s.apos.trTime = level.time;
+
+		VectorCopy(velocity, itemEnt->s.apos.trDelta);
+	}
+
+	return itemEnt;
+}
+
+/*
+==============
+G_RunCorpse
+==============
+*/
+void G_RunCorpse( gentity_t *ent )
+{
+	G_RunCorpseMove(ent);
+	G_RunCorpseAnimate(ent);
+	G_RunThink(ent);
+}
+
+/*
+===============
+Touch_Item
+===============
+*/
+void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
+{
+	WeaponDef *weapDef;
+	gitem_t *item;
+	char cleanname[64];
+	int respawn;
+	int makenoise = EV_ITEM_PICKUP;
+
+	// only activated items can be picked up
+	if ( !ent->active )
+	{
+		return;
+	}
+	else
+	{
+		// need to set active to false if player is maxed out
+		ent->active = qfalse;
+	}
+
+	if ( !other->client )
+	{
+		return;
+	}
+
+	if ( other->health <= 0 )
+	{
+		return;     // dead people can't pickup
+	}
+
+	if ( level.clientIsSpawning )
+	{
+		return;
+	}
+
+	item = &bg_itemlist[ent->item.index];
+
+	// the same pickup rules are used for client side and server side
+	if ( !BG_CanItemBeGrabbed(&ent->s, &other->client->ps, touched) )
+	{
+		if ( !touched && ent->s.clientNum != other->s.number && item->giType == IT_WEAPON )
+		{
+			if ( Com_BitCheck(other->client->ps.weapons, item->giTag) )
+			{
+				weapDef = BG_GetWeaponDef(item->giTag);
+				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weapDef->displayName));
+			}
+			else if ( BG_GetWeaponDef(item->giTag)->weaponSlot - 1 <= 1 )
+			{
+				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
+			}
+		}
+
+		return;
+	}
+
+	I_strncpyz(cleanname, other->client->sess.state.name, sizeof(cleanname));
+	I_CleanStr(cleanname);
+
+	if ( item->giType == IT_WEAPON )
+	{
+		weapDef = BG_GetWeaponDef(item->giTag);
+		G_LogPrintf("Weapon;%d;%d;%s;%s\n", SV_GetGuid(other->s.number), other->s.number, cleanname, weapDef->szInternalName);
+	}
+	else
+	{
+		G_LogPrintf("Item;%d;%d;%s;%s\n", SV_GetGuid(other->s.number), other->s.number, cleanname, item->classname);
+	}
+
+	// call the item-specific pickup function
+	switch ( item->giType )
+	{
+	case IT_WEAPON:
+		respawn = Pickup_Weapon( ent, other, &makenoise, touched );
+		break;
+	case IT_HEALTH:
+		respawn = Pickup_Health( ent, other );
+		break;
+	case IT_AMMO:
+		respawn = Pickup_Ammo( ent, other );
+		break;
+	default:
+		return;
+	}
+
+	if ( !respawn )
+	{
+		return;
+	}
+
+	// play sounds
+	if ( other->client->sess.predictItemPickup )
+	{
+		G_AddPredictableEvent(other, makenoise, ent->s.index);
+	}
+	else
+	{
+		G_AddEvent(other, makenoise, ent->s.index);
+	}
+
+	G_FreeEntity(ent);
+}
+
+/*
+==============
+Touch_Item_Auto
+	if other->client->pers.autoActivate == PICKUP_ACTIVATE	(0), he will pick up items only when using +activate
+	if other->client->pers.autoActivate == PICKUP_TOUCH		(1), he will pickup items when touched
+	if other->client->pers.autoActivate == PICKUP_FORCE		(2), he will pickup the next item when touched (and reset to PICKUP_ACTIVATE when done)
+==============
+*/
+void Touch_Item_Auto( gentity_t *ent, gentity_t *other, qboolean bTouched )
+{
+#if LIBCOD_COMPILE_PLAYER == 1
+	extern int player_disableitempickup[MAX_CLIENTS];
+	if (player_disableitempickup[other->s.number])
+		return;
+#endif
+	ent->active = qtrue;
+	Touch_Item(ent, other, bTouched);
+}
+
+/*
+===============
+G_ItemClipMask
+===============
+*/
+int G_ItemClipMask( gentity_t *ent )
+{
+	assert(ent);
+
+	if ( ent->clipmask )
+	{
+		return ent->clipmask;
+	}
+
+	return CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MISSILECLIP | CONTENTS_ITEMCLIP;
+}
+
+/*
+===============
+G_OrientItemToGround
+===============
+*/
+void G_OrientItemToGround( gentity_t *ent, trace_t *trace )
+{
+	vec3_t vAngles;
+	vec3_t vAxis[3];
+
+	VectorCopy(trace->normal, vAxis[2]);
+	AngleVectors(ent->r.currentAngles, vAxis[0], NULL, NULL);
+
+	Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
+	Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
+
+	AxisToAngles(vAxis, vAngles);
+
+	if ( bg_itemlist[ent->s.index].giType == IT_WEAPON )
+	{
+		vAngles[2] += 90;
+	}
+
+	G_SetAngle(ent, vAngles);
+}
+
+/*
+===============
+G_GetAnimDeltaForCorpse
+===============
+*/
+void G_GetAnimDeltaForCorpse( gentity_t *ent, corpseInfo_t *ci, vec3_t originChange )
+{
+	vec3_t rot;
+
+	XAnimCalcDelta(ci->tree, 0, rot, originChange, true);
+}
+
+/*
+===============
+G_BounceCorpse
+===============
+*/
+void G_BounceCorpse( gentity_t *ent, corpseInfo_t *corpseInfo, trace_t *trace, vec3_t endpos )
+{
+	vec3_t vAngles;
+	vec3_t vAxis[3];
+
+	VectorClear(ent->s.pos.trDelta);
+
+	if ( !trace->allsolid && trace->normal[2] <= 0 )
+	{
+		assert(ent->s.pos.trType == TR_GRAVITY);
+		VectorAdd(ent->r.currentOrigin, trace->normal, ent->r.currentOrigin);
+		VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
+		ent->s.pos.trTime = level.time;
+		return;
+	}
+
+	corpseInfo->falling = qfalse;
+
+	ent->s.pos.trType = TR_INTERPOLATE;
+	VectorCopy(endpos, ent->s.pos.trBase);
+
+	ent->s.pos.trTime = 0;
+	ent->s.pos.trDuration = 0;
+
+	VectorClear(ent->s.pos.trDelta);
+	ent->s.groundEntityNum = trace->entityNum;
+
+	if ( trace->allsolid )
+	{
+		G_SetAngle(ent, ent->r.currentAngles);
+	}
+	else
+	{
+		VectorCopy(trace->normal, vAxis[2]);
+		AngleVectors(ent->r.currentAngles, vAxis[0], NULL, NULL);
+		Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
+		Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
+		AxisToAngles(vAxis, vAngles);
+		G_SetAngle(ent, vAngles);
+	}
+
+	SV_LinkEntity(ent);
+}
+
+/*
+===============
+RegisterWeaponRumbles
+===============
+*/
+void RegisterWeaponRumbles( WeaponDef *weapDef )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+}
+
+/*
+===============
+GetFreeCueSpot
+===============
+*/
+int GetFreeCueSpot()
 {
 	int maxDroppedWeapon;
-	gentity_s *ent;
-	float fBestDistSqrd;
+	gentity_t *ent;
+	float fBestDistSqrd = -1.0;
 	float fClientDistSqrd;
 	float fDistSqrd;
-	int iBest;
-	int j;
-	int i;
+	int iBest = 0;
+	int i, j;
 
-	iBest = 0;
-	fBestDistSqrd = -1.0;
 	maxDroppedWeapon = g_maxDroppedWeapons->current.integer;
+	assert(maxDroppedWeapon >= 1 && maxDroppedWeapon <= 32);
 
-	for ( i = 0; i < maxDroppedWeapon; ++i )
+	for ( i = 0; i < maxDroppedWeapon; i++ )
 	{
 		ent = level.droppedWeaponCue[i];
 
 		if ( !ent )
+		{
 			return i;
+		}
 
 		fDistSqrd = 9.9999803e11;
 
-		for ( j = 0; j < level.maxclients; ++j )
+		for ( j = 0; j < level.maxclients; j++ )
 		{
-			if ( level.clients[j].sess.connected == CON_CONNECTED && level.clients[j].sess.sessionState == SESS_STATE_PLAYING )
+			if ( level.clients[j].sess.connected != CON_CONNECTED )
 			{
-				fClientDistSqrd = Vec3DistanceSq(g_entities[j].r.currentOrigin, ent->r.currentOrigin);
+				continue;
+			}
 
-				if ( fDistSqrd > fClientDistSqrd )
-					fDistSqrd = fClientDistSqrd;
+			if ( level.clients[j].sess.sessionState != SESS_STATE_PLAYING )
+			{
+				continue;
+			}
+
+			fClientDistSqrd = Vec3DistanceSq(g_entities[j].r.currentOrigin, ent->r.currentOrigin);
+
+			if ( fDistSqrd > fClientDistSqrd )
+			{
+				fDistSqrd = fClientDistSqrd;
 			}
 		}
 
@@ -155,1137 +1299,511 @@ int GetFreeDropCueIdx()
 		}
 	}
 
-	G_FreeEntity(level.droppedWeaponCue[iBest]);
-	level.droppedWeaponCue[iBest] = 0;
+	ent = level.droppedWeaponCue[iBest];
+	assert(ent);
+
+	G_FreeEntity(ent);
+	level.droppedWeaponCue[iBest] = NULL;
 
 	return iBest;
 }
 
-void G_GetItemClassname(const gitem_s *item, unsigned short *out)
+/*
+===============
+G_RunCorpseAnimate
+===============
+*/
+void G_RunCorpseAnimate( gentity_t *ent )
 {
-	char classname[256];
-	WeaponDef *weaponDef;
-	int index;
+	int corpseIndex;
+	corpseInfo_t *corpseInfo;
+	DObj *obj;
 
-	index = item - bg_itemlist;
+	corpseIndex = G_GetPlayerCorpseIndex(ent);
+	assert(corpseIndex >= 0);
+	assert(corpseIndex < MAX_CLIENT_CORPSES);
 
-	if ( index > BG_GetNumWeapons() )
+	corpseInfo = &g_scr_data.playerCorpseInfo[corpseIndex];
+	obj = Com_GetServerDObj(ent->s.number);
+
+	BG_UpdatePlayerDObj(obj, &ent->s, &corpseInfo->ci, qfalse);
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( obj )
 	{
-		G_SetConstString(out, item->classname);
-	}
-	else
-	{
-		weaponDef = BG_GetWeaponDef(index);
-		Com_sprintf(classname, 0x100u, "weapon_%s", weaponDef->szInternalName);
-		G_SetConstString(out, classname);
+		BG_PlayerAnimation(obj, &ent->s, &corpseInfo->ci);
 	}
 }
 
-gentity_s* LaunchItem(const gitem_s *item, float *origin, float *angles, int ownerNum)
+/*
+================
+LaunchItem
+
+Spawns an item and tosses it forward
+================
+*/
+gentity_t* LaunchItem( const gitem_t *item, vec3_t origin, vec3_t angles, int ownerNum )
 {
-	gentity_s *ent;
+	gentity_t *dropped;
 	int itemIndex;
+	int dropIdx;
+
+	assert(item);
+	assert(!IS_NAN((origin)[0]) && !IS_NAN((origin)[1]) && !IS_NAN((origin)[2]));
 
 	itemIndex = item - bg_itemlist;
-	RegisterItem(itemIndex, 1);
-	ent = G_Spawn();
-	level.droppedWeaponCue[GetFreeDropCueIdx()] = ent;
-	ent->s.eType = ET_ITEM;
-	ent->s.index = itemIndex;
-	G_GetItemClassname(item, &ent->classname);
-	ent->item.index = itemIndex;
+	RegisterItem(itemIndex, qtrue);
+
+	dropped = G_Spawn();
+
+	dropIdx = GetFreeCueSpot();
+	level.droppedWeaponCue[dropIdx] = dropped;
+
+	dropped->s.eType = ET_ITEM;
+	dropped->s.index = itemIndex;
+
+	G_GetItemClassname(item, &dropped->classname);
+	dropped->item.index = itemIndex;
 
 	if ( item->giType == IT_WEAPON )
 	{
-		VectorSet(ent->r.mins, -1.0, -1.0, -1.0);
-		VectorSet(ent->r.maxs, 1.0, 1.0, 1.0);
+		VectorSet( dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS );            //----(SA)	so items sit on the ground
+		VectorSet( dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS );  //----(SA)	so items sit on the ground
 	}
 	else
 	{
-		VectorSet(ent->r.mins, -1.0, -1.0, 0.0);
-		VectorSet(ent->r.maxs, 1.0, 1.0, 2.0);
+		VectorSet( dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, 0 );            //----(SA)	so items sit on the ground
+		VectorSet( dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, 2 * ITEM_RADIUS );  //----(SA)	so items sit on the ground
 	}
 
-	ent->r.contents = 1079771400;
+	dropped->r.contents = CONTENTS_LAVA | CONTENTS_UNKNOWNCLIP | CONTENTS_TELEPORTER |
+	                      CONTENTS_JUMPPAD | CONTENTS_CLUSTERPORTAL | CONTENTS_DONOTENTER_LARGE |
+	                      CONTENTS_TRIGGER; // NERVE - SMF - fix for items falling through grates
 
 	if ( item->giType != IT_AMMO )
-		ent->r.contents |= 0x200000u;
+	{
+		dropped->r.contents |= CONTENTS_DONOTENTER;
+	}
 
-	ent->s.clientNum = ownerNum;
-	G_SetModel(ent, item->world_model[0]);
-	G_DObjUpdate(ent);
-	ent->handler = 15;
-	G_SetOrigin(ent, origin);
-	ent->s.pos.trType = TR_GRAVITY;
-	ent->s.pos.trTime = level.time;
-	VectorCopy(angles, ent->s.pos.trDelta);
-	ent->nextthink = level.time + 1000;
-	ent->flags = 16;
-	SV_LinkEntity(ent);
+	dropped->s.clientNum = ownerNum;
 
-	return ent;
+	G_SetModel(dropped, item->world_model[0]);
+	G_DObjUpdate(dropped);
+
+	dropped->handler = ENT_HANDLER_DROPPED_ITEM;
+
+	G_SetOrigin(dropped, origin);
+
+	dropped->s.pos.trType = TR_GRAVITY;
+	dropped->s.pos.trTime = level.time;
+
+	VectorCopy(angles, dropped->s.pos.trDelta);
+
+	dropped->nextthink = level.time + 1000;
+	dropped->flags = FL_DROPPED_ITEM;
+
+	SV_LinkEntity(dropped);
+
+	return dropped;
 }
 
-extern dvar_t *g_dropUpSpeedBase;
-extern dvar_t *g_dropForwardSpeed;
-extern dvar_t *g_dropUpSpeedRand;
-gentity_s* Drop_Item(gentity_s *ent, const gitem_s *item, float angle, int novelocity)
+/*
+================
+Pickup_Health
+================
+*/
+qboolean Pickup_Health( gentity_t *ent, gentity_t *other )
 {
-	vec3_t vPos;
-	vec3_t angles;
-	vec3_t velocity;
-
-	VectorCopy(ent->r.currentAngles, angles);
-
-	angles[1] = angles[1] + angle;
-	angles[0] = 0.0;
-	angles[2] = 0.0;
-
-	if ( novelocity )
-	{
-		VectorClear(velocity);
-	}
-	else
-	{
-		AngleVectors(angles, velocity, 0, 0);
-		VectorScale(velocity, g_dropForwardSpeed->current.decimal, velocity);
-		velocity[2] = G_crandom() * g_dropUpSpeedRand->current.decimal + g_dropUpSpeedBase->current.decimal + velocity[2];
-	}
-
-	VectorCopy(ent->r.currentOrigin, vPos);
-	vPos[2] = (ent->r.maxs[2] - ent->r.mins[2]) * 0.5 + vPos[2];
-
-	return LaunchItem(item, vPos, velocity, ent->s.number);
-}
-
-int G_ItemClipMask(gentity_s *ent)
-{
-	int clipmask;
-
-	clipmask = ent->clipmask;
-
-	if ( !clipmask )
-		return 1169;
-
-	return clipmask;
-}
-
-gentity_s* Drop_Weapon(gentity_s *entity, int weapon, unsigned int tag)
-{
-	int clipmask;
-	float randomAmmo;
-	float randomClip;
-	float randomx;
-	float randomy;
-	float randomz;
-	int randomCount;
-	int ammoMin;
-	float randomTemp;
-	trace_t trace;
-	vec3_t vCenter;
-	vec3_t angles;
-	float tagMat[4][3];
-	vec3_t delta;
-	int dropAmmoMin;
-	int dropAmmoMax;
-	int clipSize;
-	gitem_s *item;
-	gentity_s *ent;
-	int weaponIndex;
-	int ammoIndex;
-	int clipIndex;
-	int clientAmmoCount;
-
-	item = &bg_itemlist[weapon];
-
-	if ( entity->client && !Com_BitCheck(entity->client->ps.weapons, weapon)
-	        || (ammoIndex = BG_AmmoForWeapon(weapon), weaponIndex = BG_ClipForWeapon(weapon), BG_GetWeaponDef(weapon)->clipOnly)
-	        && !entity->client->ps.ammoclip[weaponIndex] )
-	{
-		BG_TakePlayerWeapon(&entity->client->ps, weapon);
-		return 0;
-	}
-	else
-	{
-		ent = Drop_Item(entity, item, 0.0, 0);
-
-		if ( entity->client )
-		{
-			clientAmmoCount = entity->client->ps.ammo[ammoIndex];
-			entity->client->ps.ammo[ammoIndex] = 0;
-			clipIndex = entity->client->ps.ammoclip[weaponIndex];
-			entity->client->ps.ammoclip[weaponIndex] = 0;
-			BG_TakePlayerWeapon(&entity->client->ps, weapon);
-		}
-		else
-		{
-			dropAmmoMax = BG_GetWeaponDef(weapon)->dropAmmoMax;
-			dropAmmoMin = BG_GetWeaponDef(weapon)->dropAmmoMin;
-
-			if ( dropAmmoMax < dropAmmoMin )
-			{
-				dropAmmoMax = dropAmmoMin;
-				dropAmmoMin = BG_GetWeaponDef(weapon)->dropAmmoMax;
-			}
-
-			if ( dropAmmoMax || dropAmmoMin )
-			{
-				if ( dropAmmoMax >= 0 )
-				{
-					if ( dropAmmoMax == dropAmmoMin )
-						ammoMin = dropAmmoMin;
-					else
-						ammoMin = rand() % (dropAmmoMax - dropAmmoMin) + dropAmmoMin;
-
-					clientAmmoCount = ammoMin;
-
-					if ( ammoMin > 0 )
-					{
-						clipSize = BG_GetAmmoClipSize(weaponIndex);
-
-						if ( clipSize )
-							randomCount = rand() % clipSize;
-						else
-							randomCount = 0;
-
-						clipIndex = randomCount;
-
-						if ( randomCount < clientAmmoCount )
-						{
-							clientAmmoCount -= clipIndex;
-						}
-						else
-						{
-							clipIndex = clientAmmoCount;
-							clientAmmoCount = 0;
-						}
-					}
-					else
-					{
-						clientAmmoCount = 0;
-						clipIndex = 0;
-					}
-				}
-				else
-				{
-					clientAmmoCount = 0;
-					clipIndex = 0;
-				}
-			}
-			else
-			{
-				randomTemp = (G_random() + 1.0) * 0.5;
-				randomAmmo = (float)(BG_GetAmmoClipSize(weaponIndex) - 1) * randomTemp;
-				clientAmmoCount = Q_rint(randomAmmo) + 1;
-				randomClip = (G_random() * 0.5 + 0.25) * (float)clientAmmoCount;
-				clipIndex = Q_rint(randomClip);
-				clientAmmoCount -= clipIndex;
-			}
-		}
-
-		ent->count = clientAmmoCount;
-		ent->item.clipAmmoCount = clipIndex;
-
-		if ( !ent->count )
-			ent->count = -1;
-
-		if ( !ent->item.clipAmmoCount )
-			ent->item.clipAmmoCount = -1;
-
-		if ( !clientAmmoCount && !clipIndex )
-			ent->r.contents &= ~0x200000u;
-
-		if ( tag )
-		{
-			if ( G_DObjGetWorldTagMatrix(entity, tag, tagMat) )
-			{
-				vCenter[0] = (float)(ent->r.mins[0] + ent->r.maxs[0]) * 0.5;
-				vCenter[1] = (float)(ent->r.mins[1] + ent->r.maxs[1]) * 0.5;
-				vCenter[2] = (float)(ent->r.mins[2] + ent->r.maxs[2]) * 0.5;
-				VectorAdd(vCenter, entity->r.currentOrigin, vCenter);
-				clipmask = G_ItemClipMask(ent);
-				G_TraceCapsule(&trace, vCenter, ent->r.mins, ent->r.maxs, tagMat[3], entity->s.number, clipmask);
-				Vec3Lerp(vCenter, tagMat[3], trace.fraction, ent->s.pos.trBase);
-				VectorCopy(ent->s.pos.trBase, ent->r.currentOrigin);
-				ent->s.pos.trTime = level.time;
-				AxisToAngles(tagMat, angles);
-			}
-			else
-			{
-				VectorCopy(entity->r.currentAngles, angles);
-			}
-
-			angles[2] = angles[2] + 90.0;
-			G_SetAngle(ent, entity->r.currentAngles);
-			randomz = G_crandom() * 60.0;
-			randomy = G_crandom() * 40.0;
-			randomx = G_crandom() * 50.0;
-			VectorSet(delta, randomx, randomy, randomz);
-			ent->s.apos.trType = TR_LINEAR;
-			ent->s.apos.trTime = level.time;
-			VectorCopy(delta, ent->s.apos.trDelta);
-		}
-
-		return ent;
-	}
-}
-
-void ClearRegisteredItems()
-{
-	memset(itemRegistered, 0, sizeof(itemRegistered));
-	itemRegistered[0] = 1;
-}
-
-int G_RegisterWeapon(int weapIndex)
-{
-	WeaponDef *weaponDef;
-	unsigned int modelIndex;
-
-	itemRegistered[weapIndex] = 1;
-	level.bRegisterItems = 1;
-	level.registerWeapons = 1;
-	weaponDef = BG_GetWeaponDef(weapIndex);
-
-	if ( *weaponDef->useHintString && !G_GetHintStringIndex(&weaponDef->useHintStringIndex, weaponDef->useHintString) )
-		Com_Error(ERR_DROP, "Too many different hintstring values on weapons. Max allowed is %i different strings", 32);
-
-	if ( *weaponDef->dropHintString && !G_GetHintStringIndex(&weaponDef->dropHintStringIndex, weaponDef->dropHintString) )
-		Com_Error(ERR_DROP, "Too many different hintstring values on weapons. Max allowed is %i different strings", 32);
-
-	modelIndex = G_ModelIndex(weaponDef->worldModel);
-
-	if ( modelIndex && G_XModelBad(modelIndex) )
-		G_OverrideModel(modelIndex, "xmodel/defaultweapon");
-
-	return G_ModelIndex(weaponDef->projectileModel);
-}
-
-gitem_s* G_GetItemForClassname(const char *name)
-{
-	int i;
-	int weapon;
-
-	if ( !strncmp(name, "weapon_", 7) && (weapon = G_GetWeaponIndexForName(name + 7)) != 0 )
-	{
-		BG_GetWeaponDef(weapon);
-		return BG_FindItemForWeapon(weapon);
-	}
-	else
-	{
-		for ( i = 129; i < 131; ++i )
-		{
-			if ( !strcmp(bg_itemlist[i].classname, name) )
-				return &bg_itemlist[i];
-		}
-
-		return 0;
-	}
-}
-
-gitem_s* G_FindItem(const char *pickupName)
-{
-	int i;
-	int iIndex;
-
-	for ( i = 129; i < 131; ++i )
-	{
-		if ( !I_stricmp(bg_itemlist[i].pickup_name, pickupName)
-		        || !I_stricmp(bg_itemlist[i].classname, pickupName) )
-		{
-			return &bg_itemlist[i];
-		}
-	}
-
-	iIndex = G_GetWeaponIndexForName(pickupName);
-
-	if ( iIndex )
-		return &bg_itemlist[iIndex];
-	else
-		return 0;
-}
-
-void G_SpawnItem(gentity_s *ent, const gitem_s *item)
-{
-	RegisterItem(item - bg_itemlist, 0);
-	ent->item.index = item - bg_itemlist;
-	G_SetModel(ent, item->world_model[0]);
-
-	if ( item->giType == IT_WEAPON )
-	{
-		VectorSet(ent->r.mins, -1.0, -1.0, -1.0);
-		VectorSet(ent->r.maxs, 1.0, 1.0, 1.0);
-	}
-	else
-	{
-		VectorSet(ent->r.mins, -1.0, -1.0, 0.0);
-		VectorSet(ent->r.maxs, 1.0, 1.0, 2.0);
-	}
-
-	ent->r.contents = 1079771400;
-
-	if ( item->giType != IT_AMMO )
-		ent->r.contents |= 0x200000u;
-
-	ent->s.eType = ET_ITEM;
-	ent->s.index = ent->item.index;
-	G_DObjUpdate(ent);
-	ent->s.clientNum = 1022;
-	ent->flags |= 0x1000u;
-
-	if ( level.spawnVars.spawnVarsValid )
-	{
-		G_SetAngle(ent, ent->r.currentAngles);
-		ent->nextthink = level.time + 100;
-		ent->handler = 16;
-	}
-	else
-	{
-		ent->handler = 17;
-
-		if ( ((LOBYTE(ent->spawnflags) ^ 1) & 1) != 0 )
-		{
-			ent->s.groundEntityNum = 1023;
-
-			if ( item->giType == IT_WEAPON )
-				ent->r.currentAngles[2] = ent->r.currentAngles[2] + 90.0;
-		}
-
-		G_SetAngle(ent, ent->r.currentAngles);
-		G_SetOrigin(ent, ent->r.currentOrigin);
-		SV_LinkEntity(ent);
-	}
-}
-
-void Fill_Clip(playerState_s *ps, int weapon)
-{
-	int weaponIndex;
-	int iAmmoIndex;
-	int ammomove;
-	int inclip;
-
-	iAmmoIndex = BG_AmmoForWeapon(weapon);
-	weaponIndex = BG_ClipForWeapon(weapon);
-
-	if ( weapon > 0 && weapon <= BG_GetNumWeapons() )
-	{
-		inclip = ps->ammoclip[weaponIndex];
-		ammomove = BG_GetAmmoClipSize(weaponIndex) - inclip;
-
-		if ( ammomove > ps->ammo[iAmmoIndex] )
-			ammomove = ps->ammo[iAmmoIndex];
-
-		if ( ammomove )
-		{
-			ps->ammo[iAmmoIndex] -= ammomove;
-			ps->ammoclip[weaponIndex] += ammomove;
-		}
-	}
-}
-
-int Add_Ammo(gentity_s *pSelf, int weaponIndex, int count, int fillClip)
-{
-	int clip;
-	int ammo;
-	int clipOnly;
-	int oldClip;
-	int oldAmmo;
-	int ammoCount;
-
-	oldAmmo = BG_AmmoForWeapon(weaponIndex);
-	oldClip = BG_ClipForWeapon(weaponIndex);
-	clipOnly = 0;
-	ammo = pSelf->client->ps.ammo[oldAmmo];
-	clip = pSelf->client->ps.ammoclip[oldClip];
-	pSelf->client->ps.ammo[oldAmmo] = ammo + count;
-
-	if ( BG_WeaponIsClipOnly(weaponIndex) )
-	{
-		G_GivePlayerWeapon(&pSelf->client->ps, weaponIndex);
-		clipOnly = 1;
-	}
-
-	if ( fillClip || clipOnly )
-		Fill_Clip(&pSelf->client->ps, weaponIndex);
-
-	if ( clipOnly )
-	{
-		pSelf->client->ps.ammo[oldAmmo] = 0;
-	}
-	else
-	{
-		if ( pSelf->client->ps.ammo[oldAmmo] > BG_GetAmmoTypeMax(oldAmmo) )
-		{
-			pSelf->client->ps.ammo[oldAmmo] = BG_GetAmmoTypeMax(oldAmmo);
-		}
-	}
-
-	if ( pSelf->client->ps.ammoclip[oldClip] > BG_GetAmmoClipSize(oldClip) )
-	{
-		pSelf->client->ps.ammoclip[oldClip] = BG_GetAmmoClipSize(oldClip);
-	}
-
-	if ( BG_GetWeaponDef(weaponIndex)->sharedAmmoCapIndex < 0 )
-		return pSelf->client->ps.ammoclip[oldClip] - clip + pSelf->client->ps.ammo[oldAmmo] - ammo;
-
-	ammoCount = BG_GetMaxPickupableAmmo(&pSelf->client->ps, weaponIndex);
-
-	if ( ammoCount >= 0 )
-		return pSelf->client->ps.ammoclip[oldClip] - clip + pSelf->client->ps.ammo[oldAmmo] - ammo;
-
-	if ( !BG_WeaponIsClipOnly(weaponIndex) )
-	{
-		pSelf->client->ps.ammo[oldAmmo] += ammoCount;
-
-		if ( pSelf->client->ps.ammo[oldAmmo] < 0 )
-			pSelf->client->ps.ammo[oldAmmo] = 0;
-
-		return pSelf->client->ps.ammoclip[oldClip] - clip + pSelf->client->ps.ammo[oldAmmo] - ammo;
-	}
-
-	pSelf->client->ps.ammoclip[oldClip] += ammoCount;
-
-	if ( pSelf->client->ps.ammoclip[oldClip] > 0 )
-		return pSelf->client->ps.ammoclip[oldClip] - clip + pSelf->client->ps.ammo[oldAmmo] - ammo;
-
-	pSelf->client->ps.ammoclip[oldClip] = 0;
-	BG_TakePlayerWeapon(&pSelf->client->ps, weaponIndex);
-
-	return 0;
-}
-
-qboolean Pickup_Ammo(gentity_s *ent, gentity_s *other)
-{
-	char *pickupMsg;
-	WeaponDef *weaponDef;
-	char *pickupCmd;
-	gitem_s *item;
-	int count;
-
-	item = &bg_itemlist[ent->item.index];
-
-	if ( ent->count )
-		count = ent->count;
-	else
-		count = item->quantity;
-
-	if ( !Add_Ammo(other, item->giTag, count, 0) )
-		return 0;
-
-	if ( BG_WeaponIsClipOnly(item->giTag) )
-	{
-		weaponDef = BG_GetWeaponDef(item->giTag);
-		pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->displayName);
-	}
-	else
-	{
-		weaponDef = BG_GetWeaponDef(item->giTag);
-		pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->displayName);
-	}
-
-	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupMsg);
-	Scr_AddEntity(other);
-	Scr_Notify(ent, scr_const.trigger, 1u);
-
-	if ( BG_GetWeaponDef(item->giTag)->offhandClass )
-		pickupCmd = va("%c \"%i\"", 73, 4);
-	else
-		pickupCmd = va("%c \"%i\"", 73, 1);
-
-	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupCmd);
-	return 1;
-}
-
-int Pickup_Health(gentity_s *ent, gentity_s *other)
-{
-	int healthScale;
-	int healthToRestore;
-	int maxHealthScale;
-	gitem_s *item;
-	int oldHealth;
+	gitem_t *item;
 	int max;
-	int newHealth;
+	int quantity;
+	int oldHealth;
 
 	item = &bg_itemlist[ent->item.index];
+	assert(item);
 
-	if ( item->quantity == 5 || item->quantity == 100 )
-		newHealth = 2 * other->client->ps.stats[2];
+	// small and mega healths will go over the max
+	if ( item->quantity != 5 && item->quantity != 100 )
+	{
+		max = other->client->ps.stats[STAT_MAX_HEALTH];
+	}
 	else
-		newHealth = other->client->ps.stats[2];
+	{
+		max = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+	}
 
 	if ( ent->count )
-		max = ent->count;
+	{
+		quantity = ent->count;
+	}
 	else
-		max = item->quantity;
+	{
+		quantity = item->quantity;
+	}
 
 	oldHealth = other->health;
-	other->health = oldHealth + (int)((float)max * (float)other->client->ps.stats[2] * 0.0099999998);
+	other->health += quantity * other->client->ps.stats[STAT_MAX_HEALTH] * 0.0099999998;
 
-	if ( other->health <= newHealth )
+	if ( other->health > max )
 	{
-		maxHealthScale = (int)((float)(100 * other->health) / (float)other->client->ps.stats[2]);
-
-		if ( maxHealthScale > 0 )
-		{
-			if ( maxHealthScale > 100 )
-				maxHealthScale = 100;
-		}
-		else
-		{
-			maxHealthScale = 1;
-		}
-
-		healthScale = (int)((float)(100 * oldHealth) / (float)other->client->ps.stats[2]);
-
-		if ( healthScale <= 0 )
-			healthScale = 1;
-
-		healthToRestore = max + healthScale;
-
-		if ( healthToRestore > 100 )
-			healthToRestore = 100;
-
-		if ( maxHealthScale != healthToRestore )
-			other->health = other->client->ps.stats[2] * healthToRestore / 100;
+		other->health = max;
 	}
 	else
 	{
-		other->health = newHealth;
+		int current;
+		int old;
+		int max;
+
+		current = 100 * other->health / other->client->ps.stats[STAT_MAX_HEALTH];
+
+		if ( current <= 0 )
+		{
+			current = 1;
+		}
+		else if ( current > 100 )
+		{
+			current = 100;
+		}
+
+		old = 100 * oldHealth / other->client->ps.stats[STAT_MAX_HEALTH];
+
+		if ( old <= 0 )
+		{
+			old = 1;
+		}
+
+		max = quantity + old;
+
+		if ( max > 100 )
+		{
+			max = 100;
+		}
+
+		if ( current != max )
+		{
+			other->health = other->client->ps.stats[STAT_MAX_HEALTH] * max / 100;
+		}
 	}
 
-	other->client->ps.stats[0] = other->health;
+	other->client->ps.stats[STAT_HEALTH] = other->health;
 
-	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 102, max));
+	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 102, quantity));
 	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 0));
 
 	Scr_AddEntity(other);
-	Scr_Notify(ent, scr_const.trigger, 1u);
+	Scr_Notify(ent, scr_const.trigger, 1);
 
-	return 1;
+	return qtrue;
 }
 
-void G_SelectWeaponIndex(int clientnum, int iWeaponIndex)
+/*
+==============
+Pickup_Ammo
+==============
+*/
+qboolean Pickup_Ammo( gentity_t *ent, gentity_t *other )
 {
-	SV_GameSendServerCommand(clientnum, SV_CMD_RELIABLE, va("%c %i", 97, iWeaponIndex));
+	gitem_t *item;
+	int quantity;
+	WeaponDef *weapDef;
+
+	item = &bg_itemlist[ent->item.index];
+	assert(item);
+
+	// added some ammo pickups, so I'll use ent->item->quantity if no ent->count
+	if ( ent->count )
+	{
+		quantity = ent->count;
+	}
+	else
+	{
+		quantity = item->quantity;
+	}
+
+	if ( !Add_Ammo(other, item->giTag, quantity, qfalse) )
+	{
+		return qfalse;
+	}
+
+	if ( BG_WeaponIsClipOnly(item->giTag) )
+	{
+		weapDef = BG_GetWeaponDef(item->giTag);
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weapDef->displayName));
+	}
+	else
+	{
+		weapDef = BG_GetWeaponDef(item->giTag);
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weapDef->displayName));
+	}
+
+	Scr_AddEntity(other);
+	Scr_Notify(ent, scr_const.trigger, 1);
+
+	if ( BG_GetWeaponDef(item->giTag)->offhandClass )
+	{
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 4));
+	}
+	else
+	{
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 1));
+	}
+
+	return qtrue;
 }
 
-extern dvar_t *g_weaponAmmoPools;
-int Pickup_Weapon(gentity_s *ent, gentity_s *other, int *pickupEvent, int touched)
+/*
+==============
+Pickup_Weapon
+==============
+*/
+qboolean Pickup_Weapon( gentity_t *ent, gentity_t *other, int *pickupEvent, qboolean touched )
 {
-	int clipForRandom;
-	int otherAmmoIndex;
-	int ammoIndex;
-	int clipIndex;
-	int clipForWeapon;
-	int otherClipForWeapon;
-	bool hasWeapon;
-	WeaponDef *debugWeaponDef;
-	WeaponDef *weaponStackDef;
-	char *pickupMsg;
-	int newClipForWeapon;
-	int newClipForWeapon2;
-	int newClipForWeapon3;
-	gclient_s *client;
-	char *pickupCmd;
-	float randomClipSize;
-	int dropAmmoRandom;
-	float tempRandom;
-	int currentClip;
-	int currentAmmo;
-	int dropAmmoMax;
-	int i;
-	int dropAmmoMin;
-	int currentSlot;
-	WeaponDef *weaponDef;
-	gentity_s *weaponEnt;
-	int newAmmoCount;
-	int weaponIndex;
-	int bHasWeapon;
-	int clipAmmoCount;
-	int weaponModel;
-	int oldAmmoCount;
+	int quantity;
+	int clipAmmo;
+	int ammoAvailable;
+	int ammoTaken;
+	bool alreadyHave;
 
-	weaponEnt = 0;
-	weaponIndex = bg_itemlist[ent->item.index].giTag;
-	weaponDef = BG_GetWeaponDef(weaponIndex);
+	gentity_t *droppedEnt = NULL;
+	int weapIdx = bg_itemlist[ent->item.index].giTag;
+	WeaponDef *weapDef = BG_GetWeaponDef(weapIdx);
 
-	if ( ent->count >= 0 )
+	if ( ent->count < 0 )
+	{
+		quantity = 0;
+	}
+	else
 	{
 		if ( !ent->count )
 		{
-			dropAmmoMax = weaponDef->dropAmmoMax;
-			dropAmmoMin = weaponDef->dropAmmoMin;
-			if ( dropAmmoMax < dropAmmoMin )
+			int max = weapDef->dropAmmoMax;
+			int min = weapDef->dropAmmoMin;
+
+			if ( max < min )
 			{
-				dropAmmoMax = weaponDef->dropAmmoMin;
-				dropAmmoMin = weaponDef->dropAmmoMax;
+				max = weapDef->dropAmmoMin;
+				min = weapDef->dropAmmoMax;
 			}
-			if ( dropAmmoMax || dropAmmoMin )
+
+			if ( max || min )
 			{
-				if ( dropAmmoMax >= 0 )
-				{
-					if ( dropAmmoMax == dropAmmoMin )
-						dropAmmoRandom = dropAmmoMin;
-					else
-						dropAmmoRandom = rand() % (dropAmmoMax - dropAmmoMin) + dropAmmoMin;
-					ent->count = dropAmmoRandom;
-					if ( ent->count <= 0 )
-						ent->count = 0;
-				}
-				else
+				if ( max < 0 )
 				{
 					ent->count = 0;
 				}
+				else
+				{
+					if ( max == min )
+						ent->count = min;
+					else
+						ent->count = rand() % (max - min) + min;
+
+					if ( ent->count <= 0 )
+					{
+						ent->count = 0;
+					}
+				}
 			}
 			else
 			{
-				tempRandom = (G_random() + 1.0) * 0.5;
-				clipForRandom = BG_ClipForWeapon(weaponIndex);
-				randomClipSize = (float)(BG_GetAmmoClipSize(clipForRandom) - 1) * tempRandom;
-				ent->count = Q_rint(randomClipSize) + 1;
+				ent->count = Q_rint(BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx)) - 1 * (G_random() + 1.0) * 0.5) + 1;
 			}
 		}
-		otherAmmoIndex = BG_AmmoForWeapon(weaponIndex);
-		if ( ent->count > BG_GetAmmoTypeMax(otherAmmoIndex) )
+
+		if ( ent->count > BG_GetAmmoTypeMax(BG_AmmoForWeapon(weapIdx)) )
 		{
-			ammoIndex = BG_AmmoForWeapon(weaponIndex);
-			ent->count = BG_GetAmmoTypeMax(ammoIndex);
+			ent->count = BG_GetAmmoTypeMax(BG_AmmoForWeapon(weapIdx));
 		}
-		weaponModel = ent->count;
+
+		quantity = ent->count;
+	}
+
+	if ( ent->item.clipAmmoCount < 0 )
+	{
+		clipAmmo = 0;
 	}
 	else
-	{
-		weaponModel = 0;
-	}
-	if ( ent->item.clipAmmoCount >= 0 )
 	{
 		if ( !ent->item.clipAmmoCount )
 		{
-			if ( ent->count >= 0 )
-			{
-				clipIndex = BG_ClipForWeapon(weaponIndex);
-				ent->item.clipAmmoCount = BG_GetAmmoClipSize(clipIndex);
-				if ( ent->item.clipAmmoCount > ent->count )
-					ent->item.clipAmmoCount = ent->count;
-				ent->count -= ent->item.clipAmmoCount;
-				weaponModel = ent->count;
-			}
-			else
+			if ( ent->count < 0 )
 			{
 				ent->item.clipAmmoCount = 0;
 			}
+			else
+			{
+				ent->item.clipAmmoCount = BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx));
+
+				if ( ent->item.clipAmmoCount > ent->count )
+				{
+					ent->item.clipAmmoCount = ent->count;
+				}
+
+				ent->count -= ent->item.clipAmmoCount;
+				quantity = ent->count;
+			}
 		}
-		clipForWeapon = BG_ClipForWeapon(weaponIndex);
-		if ( ent->item.clipAmmoCount > BG_GetAmmoClipSize(clipForWeapon) )
+
+		if ( ent->item.clipAmmoCount > BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx)) )
 		{
-			otherClipForWeapon = BG_ClipForWeapon(weaponIndex);
-			ent->item.clipAmmoCount = BG_GetAmmoClipSize(otherClipForWeapon);
+			ent->item.clipAmmoCount = BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx));
 		}
-		clipAmmoCount = ent->item.clipAmmoCount;
+
+		clipAmmo = ent->item.clipAmmoCount;
 	}
-	else
+
+	// check if player already had the weapon
+	alreadyHave = Com_BitCheck(other->client->ps.weapons, weapIdx);
+
+	if ( !alreadyHave )
 	{
-		clipAmmoCount = 0;
-	}
-	hasWeapon = Com_BitCheck(other->client->ps.weapons, weaponIndex);
-	bHasWeapon = hasWeapon;
-	if ( !hasWeapon )
-	{
-		if ( BG_DoesWeaponNeedSlot(weaponIndex) )
+		if ( BG_DoesWeaponNeedSlot(weapIdx) )
 		{
 			if ( other->client->ps.weapon )
 			{
 				if ( !Com_BitCheck(other->client->ps.weapons, other->client->ps.weapon) )
-					return 0;
-				if ( !BG_IsPlayerWeaponInSlot(&other->client->ps, other->client->ps.weapon, 1) )
 				{
-					debugWeaponDef = BG_GetWeaponDef(other->client->ps.weapon);
-					if ( !BG_GetStackSlotForWeapon(&other->client->ps, other->client->ps.weapon, debugWeaponDef->weaponSlot)
-					        && !BG_GetEmptySlotForWeapon(&other->client->ps, weaponIndex) )
+					return qfalse;
+				}
+
+				if ( !BG_IsPlayerWeaponInSlot(&other->client->ps, other->client->ps.weapon, qtrue) )
+				{
+					if ( BG_GetStackSlotForWeapon(&other->client->ps, other->client->ps.weapon, BG_GetWeaponDef(other->client->ps.weapon)->weaponSlot) == SLOT_NONE && !BG_GetEmptySlotForWeapon(&other->client->ps, weapIdx) )
 					{
 						Com_Printf("WARNING: cannot swap out a debug weapon (can result from too many weapons given to the player)\n");
-						return 0;
+						return qfalse;
 					}
 				}
 			}
-			if ( !BG_GetEmptySlotForWeapon(&other->client->ps, weaponIndex) )
+
+			if ( !BG_GetEmptySlotForWeapon(&other->client->ps, weapIdx) )
 			{
-				weaponStackDef = BG_GetWeaponDef(other->client->ps.weapon);
-				if ( !BG_GetStackSlotForWeapon(&other->client->ps, weaponIndex, weaponStackDef->weaponSlot) )
+				if ( BG_GetStackSlotForWeapon(&other->client->ps, weapIdx, BG_GetWeaponDef(other->client->ps.weapon)->weaponSlot) == SLOT_NONE )
 				{
-					if ( weaponDef->weaponSlot == BG_GetWeaponDef(other->client->ps.weapon)->weaponSlot )
+					if ( weapDef->weaponSlot == BG_GetWeaponDef(other->client->ps.weapon)->weaponSlot )
 					{
-						weaponEnt = Drop_Weapon(other, other->client->ps.weapon, 0);
+						droppedEnt = Drop_Weapon(other, other->client->ps.weapon, 0);
 					}
 					else
 					{
-						for ( i = 1; i <= 2; ++i )
+						int slot;
+
+						for ( slot = SLOT_PRIMARY; slot < SLOT_COUNT; slot++ )
 						{
-							currentSlot = other->client->ps.weaponslots[i];
-							currentAmmo = BG_AmmoForWeapon(weaponIndex);
-							currentClip = BG_ClipForWeapon(weaponIndex);
-							if ( !other->client->ps.ammo[currentAmmo] && !other->client->ps.ammoclip[currentClip] )
+							if ( !other->client->ps.ammo[BG_AmmoForWeapon(weapIdx)] && !other->client->ps.ammoclip[BG_ClipForWeapon(weapIdx)] )
 							{
-								weaponEnt = Drop_Weapon(other, currentSlot, 0);
+								droppedEnt = Drop_Weapon(other, other->client->ps.weaponslots[slot], 0);
 								break;
 							}
 						}
-						if ( i > 2 )
+
+						if ( slot > SLOT_PRIMARYB )
 						{
 							SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
-							return 0;
+							return qfalse;
 						}
 					}
-					if ( !weaponEnt )
-						return 0;
-					weaponEnt->spawnflags = ent->spawnflags;
-					weaponEnt->s.groundEntityNum = ent->s.groundEntityNum;
-					G_SetOrigin(weaponEnt, ent->r.currentOrigin);
-					G_SetAngle(weaponEnt, ent->r.currentAngles);
-					SV_LinkEntity(weaponEnt);
+
+					if ( !droppedEnt )
+					{
+						return qfalse;
+					}
+
+					droppedEnt->spawnflags = ent->spawnflags;
+					droppedEnt->s.groundEntityNum = ent->s.groundEntityNum;
+
+					G_SetOrigin(droppedEnt, ent->r.currentOrigin);
+					G_SetAngle(droppedEnt, ent->r.currentAngles);
+
+					SV_LinkEntity(droppedEnt);
 				}
 			}
-			G_GivePlayerWeapon(&other->client->ps, weaponIndex);
+
+			G_GivePlayerWeapon(&other->client->ps, weapIdx);
+
 			if ( !touched )
-				G_SelectWeaponIndex(other - g_entities, weaponIndex);
+			{
+				G_SelectWeaponIndex(other - g_entities, weapIdx);
+			}
 		}
 		else
 		{
-			G_GivePlayerWeapon(&other->client->ps, weaponIndex);
+			G_GivePlayerWeapon(&other->client->ps, weapIdx);
 		}
 	}
-	if ( bHasWeapon )
+
+	if ( alreadyHave )
 	{
 		*pickupEvent = EV_AMMO_PICKUP;
-		oldAmmoCount = clipAmmoCount + weaponModel;
-		newAmmoCount = Add_Ammo(other, weaponIndex, oldAmmoCount, 0);
-		if ( newAmmoCount )
+
+		ammoAvailable = clipAmmo + quantity;
+		ammoTaken = Add_Ammo(other, weapIdx, ammoAvailable, qfalse);
+
+		if ( ammoTaken )
 		{
-			if ( BG_WeaponIsClipOnly(weaponIndex) )
-				pickupMsg = va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weaponDef->displayName);
+			if ( BG_WeaponIsClipOnly(weapIdx) )
+			{
+				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 102, weapDef->displayName));
+			}
 			else
-				pickupMsg = va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weaponDef->displayName);
-			SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupMsg);
+			{
+				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_AMMO\x14%s\"", 102, weapDef->displayName));
+			}
 		}
-		if ( newAmmoCount != oldAmmoCount )
+
+		if ( ammoTaken != ammoAvailable )
 		{
-			ent->count -= newAmmoCount;
+			ent->count -= ammoTaken;
+
 			if ( ent->count <= 0 )
 			{
 				ent->item.clipAmmoCount += ent->count;
 				ent->count = -1;
+
 				if ( ent->item.clipAmmoCount <= 0 )
+				{
 					ent->item.clipAmmoCount = -1;
+				}
 			}
+
 			if ( (ent->count > 0 || ent->item.clipAmmoCount > 0) && g_weaponAmmoPools->current.boolean )
-				return 0;
+			{
+				return qfalse;
+			}
 		}
 	}
 	else
 	{
-		if ( clipAmmoCount >= 0 )
+		if ( clipAmmo >= 0 )
 		{
-			newClipForWeapon = BG_ClipForWeapon(weaponIndex);
-			if ( clipAmmoCount > BG_GetAmmoClipSize(newClipForWeapon) )
+			if ( clipAmmo > BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx)) )
 			{
-				newClipForWeapon2 = BG_ClipForWeapon(weaponIndex);
-				weaponModel += clipAmmoCount - BG_GetAmmoClipSize(newClipForWeapon2);
-				newClipForWeapon3 = BG_ClipForWeapon(weaponIndex);
-				clipAmmoCount = BG_GetAmmoClipSize(newClipForWeapon3);
+				quantity += clipAmmo - BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx));
+				clipAmmo = BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx));
 			}
-			client = other->client;
-			client->ps.ammoclip[BG_ClipForWeapon(weaponIndex)] = clipAmmoCount;
+
+			other->client->ps.ammoclip[BG_ClipForWeapon(weapIdx)] = clipAmmo;
 		}
-		Add_Ammo(other, weaponIndex, weaponModel, clipAmmoCount == -1);
+
+		Add_Ammo(other, weapIdx, quantity, clipAmmo == -1);
 	}
-	if ( weaponEnt )
-		Scr_AddEntity(weaponEnt);
+
+	if ( droppedEnt )
+		Scr_AddEntity(droppedEnt);
 	else
 		Scr_AddUndefined();
+
 	Scr_AddEntity(other);
-	Scr_Notify(ent, scr_const.trigger, 2u);
-	if ( weaponDef->offhandClass )
-		pickupCmd = va("%c \"%i\"", 73, 4);
-	else
-		pickupCmd = va("%c \"%i\"", 73, 1);
-	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, pickupCmd);
-	return 1;
-}
+	Scr_Notify(ent, scr_const.trigger, 2);
 
-void Touch_Item(gentity_s *ent, gentity_s *other, int touched)
-{
-	WeaponDef *weaponDef;
-	int guid;
-	int giType;
-	gitem_s *item;
-	char cleanname[64];
-	int pickupEvent;
-	qboolean pickedUp;
-
-	pickupEvent = EV_ITEM_PICKUP;
-
-	if ( ent->active )
+	if ( weapDef->offhandClass )
 	{
-		ent->active = 0;
-
-		if ( other->client )
-		{
-			if ( other->health > 0 && !level.clientIsSpawning )
-			{
-				item = &bg_itemlist[ent->item.index];
-
-				if ( BG_CanItemBeGrabbed(&ent->s, &other->client->ps, touched) )
-				{
-					I_strncpyz(cleanname, other->client->sess.state.name, sizeof(cleanname));
-					I_CleanStr(cleanname);
-
-					if ( item->giType == IT_WEAPON )
-					{
-						weaponDef = BG_GetWeaponDef(item->giTag);
-						guid = SV_GetGuid(other->s.number);
-						G_LogPrintf("Weapon;%d;%d;%s;%s\n", guid, other->s.number, cleanname, weaponDef->szInternalName);
-					}
-					else
-					{
-						guid = SV_GetGuid(other->s.number);
-						G_LogPrintf("Item;%d;%d;%s;%s\n", guid, other->s.number, cleanname, item->classname);
-					}
-
-					giType = item->giType;
-
-					if ( giType == IT_AMMO )
-					{
-						pickedUp = Pickup_Ammo(ent, other);
-					}
-					else if ( giType > IT_AMMO )
-					{
-						if ( giType != IT_HEALTH )
-							return;
-
-						pickedUp = Pickup_Health(ent, other);
-					}
-					else
-					{
-						if ( giType != IT_WEAPON )
-							return;
-
-						pickedUp = Pickup_Weapon(ent, other, &pickupEvent, touched);
-					}
-
-					if ( pickedUp )
-					{
-						if ( other->client->sess.predictItemPickup )
-							G_AddPredictableEvent(other, pickupEvent, ent->s.index);
-						else
-							G_AddEvent(other, pickupEvent, ent->s.index);
-
-						G_FreeEntity(ent);
-					}
-				}
-				else if ( !touched && ent->s.clientNum != other->s.number && item->giType == IT_WEAPON )
-				{
-					if ( Com_BitCheck(other->client->ps.weapons, item->giTag) )
-					{
-						weaponDef = BG_GetWeaponDef(item->giTag);
-						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, weaponDef->displayName));
-					}
-					else if ( (unsigned int)(BG_GetWeaponDef(item->giTag)->weaponSlot - 1) <= 1 )
-					{
-						SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
-					}
-				}
-			}
-		}
-	}
-}
-
-void FinishSpawningItem(gentity_s *ent)
-{
-	float positionZ;
-	float vAxis[3][3];
-	vec3_t angles;
-	int contentmask;
-	vec3_t endpos;
-	vec3_t start;
-	gitem_s *item;
-	vec3_t maxs;
-	vec3_t mins;
-	vec3_t end;
-	trace_t trace;
-
-	ent->handler = 17;
-
-	if ( (ent->spawnflags & 1) != 0 )
-	{
-		G_SetOrigin(ent, ent->r.currentOrigin);
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 4));
 	}
 	else
 	{
-		item = &bg_itemlist[ent->item.index];
-
-		if ( item->giType == IT_WEAPON )
-		{
-			VectorSet(mins, -1.0, -1.0, -1.0);
-			VectorSet(maxs, 1.0, 1.0, 1.0);
-		}
-		else
-		{
-			VectorSet(mins, -1.0, -1.0, 0.0);
-			VectorSet(maxs, 1.0, 1.0, 2.0);
-		}
-
-		contentmask = G_ItemClipMask(ent);
-		VectorCopy(ent->r.currentOrigin, start);
-		positionZ = ent->r.currentOrigin[2] - 4096.0;
-		VectorSet(end, ent->r.currentOrigin[0], ent->r.currentOrigin[1], positionZ);
-		G_TraceCapsule(&trace, start, mins, maxs, end, ent->s.number, contentmask);
-
-		if ( trace.startsolid )
-		{
-			VectorCopy(ent->r.currentOrigin, start);
-			start[2] = start[2] - 15.0;
-			positionZ = ent->r.currentOrigin[2] - 4096.0;
-			VectorSet(end, ent->r.currentOrigin[0], ent->r.currentOrigin[1], positionZ);
-			G_TraceCapsule(&trace, start, mins, maxs, end, ent->s.number, contentmask);
-		}
-
-		if ( trace.startsolid )
-		{
-			Com_Printf("FinishSpawningItem: %s startsolid at %s\n", SL_ConvertToString(ent->classname), vtos(ent->r.currentOrigin));
-			G_FreeEntity(ent);
-			return;
-		}
-
-		ent->s.groundEntityNum = trace.entityNum;
-		Vec3Lerp(start, end, trace.fraction, endpos);
-		G_SetOrigin(ent, endpos);
-
-		if ( trace.fraction < 1.0 )
-		{
-			VectorCopy(trace.normal, vAxis[2]);
-			AngleVectors(ent->r.currentAngles, vAxis[0], 0, 0);
-			Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
-			Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
-			AxisToAngles(vAxis, angles);
-
-			if ( bg_itemlist[ent->s.index].giType == IT_WEAPON )
-				angles[2] = angles[2] + 90.0;
-
-			G_SetAngle(ent, angles);
-		}
+		SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 73, 1));
 	}
 
-	SV_LinkEntity(ent);
-}
-
-void DroppedItemClearOwner(gentity_s *pSelf)
-{
-	pSelf->s.clientNum = 1022;
-}
-
-void Touch_Item_Auto(gentity_s *ent, gentity_s *other, int touched)
-{
-#if LIBCOD_COMPILE_PLAYER == 1
-	extern int player_disableitempickup[];
-	if (player_disableitempickup[other->s.number])
-		return;
-#endif
-	ent->active = 1;
-	Touch_Item(ent, other, touched);
-}
-
-void G_OrientItemToGround(gentity_s *ent, trace_t *trace)
-{
-	vec3_t vAngles;
-	float vAxis[3][3];
-
-	VectorCopy(trace->normal, vAxis[2]);
-	AngleVectors(ent->r.currentAngles, vAxis[0], 0, 0);
-	Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
-	Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
-	AxisToAngles(vAxis, vAngles);
-
-	if ( bg_itemlist[ent->s.index].giType == IT_WEAPON )
-		vAngles[2] = vAngles[2] + 90.0;
-
-	G_SetAngle(ent, vAngles);
-}
-
-void G_RunItem(gentity_s *ent)
-{
-	vec3_t delta;
-	float vLenSq;
-	vec3_t endpos;
-	int contentmask;
-	int contents;
-	trace_t trace;
-	vec3_t origin;
-
-	if ( (ent->s.groundEntityNum == 1023 || level.gentities[ent->s.groundEntityNum].s.pos.trType)
-	        && ent->s.pos.trType != TR_GRAVITY
-	        && ((LOBYTE(ent->spawnflags) ^ 1) & 1) != 0 )
-	{
-		ent->s.pos.trType = TR_GRAVITY;
-		ent->s.pos.trTime = level.time;
-		VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
-		VectorClear(ent->s.pos.trDelta);
-	}
-
-	if ( ent->s.pos.trType == TR_STATIONARY || ent->s.pos.trType == TR_GRAVITY_PAUSED || ent->tagInfo )
-	{
-		G_RunThink(ent);
-	}
-	else
-	{
-		BG_EvaluateTrajectory(&ent->s.pos, level.time + 50, origin);
-		contentmask = G_ItemClipMask(ent);
-
-		if ( Vec3DistanceSq(ent->r.currentOrigin, origin) < 0.1 )
-			origin[2] = origin[2] - 1.0;
-
-		G_TraceCapsule(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, contentmask);
-
-		if ( trace.fraction >= 1.0 )
-		{
-			VectorCopy(origin, ent->r.currentOrigin);
-		}
-		else
-		{
-			Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
-
-			if ( !trace.startsolid && trace.fraction < 0.0099999998 && trace.normal[2] < 0.5 )
-			{
-				VectorSubtract(origin, ent->r.currentOrigin, delta);
-				vLenSq = 1.0 - DotProduct(delta, trace.normal);
-				VectorMA(origin, vLenSq, trace.normal, origin);
-				G_TraceCapsule(&trace, endpos, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, contentmask);
-				Vec3Lerp(endpos, origin, trace.fraction, endpos);
-			}
-
-			ent->s.pos.trType = TR_LINEAR_STOP;
-			ent->s.pos.trTime = level.time;
-			ent->s.pos.trDuration = 50;
-			VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
-			VectorSubtract(endpos, ent->r.currentOrigin, ent->s.pos.trDelta);
-			VectorScale(ent->s.pos.trDelta, 20.0, ent->s.pos.trDelta);
-			VectorCopy(endpos, ent->r.currentOrigin);
-		}
-
-		SV_LinkEntity(ent);
-		G_RunThink(ent);
-
-		if ( ent->r.inuse && trace.fraction < 0.0099999998 )
-		{
-			if ( trace.normal[2] <= 0.0 || (contents = SV_PointContents(ent->r.currentOrigin, -1, 0x80000000)) != 0 )
-			{
-				G_FreeEntity(ent);
-			}
-			else
-			{
-				G_OrientItemToGround(ent, &trace);
-				G_SetOrigin(ent, endpos);
-				ent->s.groundEntityNum = trace.entityNum;
-				SV_LinkEntity(ent);
-			}
-		}
-	}
+	return qtrue;
 }

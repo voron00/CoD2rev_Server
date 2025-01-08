@@ -465,7 +465,19 @@ inline void FastSinCos(const float value, float *pSin, float *pCos)
 
 /*
 ==============
-FastSinCos
+Vec3Avg
+==============
+*/
+inline void Vec3Avg(const vec3_t a, const vec3_t b, vec3_t sum)
+{
+	sum[0] = (a[0] + b[0]) * 0.5;
+	sum[1] = (a[1] + b[1]) * 0.5;
+	sum[2] = (a[2] + b[2]) * 0.5;
+}
+
+/*
+==============
+FloatIsNegative
 ==============
 */
 inline int const FloatIsNegative(const float x)
@@ -485,7 +497,7 @@ inline int const FloatSign(const float x)
 
 /*
 ==============
-FloatSign
+FastCeil
 ==============
 */
 inline int const FastCeil(const float x)

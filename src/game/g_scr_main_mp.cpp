@@ -423,7 +423,7 @@ void Scr_SetHealth(gentity_s *ent, int offset)
 	if ( ent->client )
 	{
 		ent->health = health;
-		ent->client->ps.stats[0] = health;
+		ent->client->ps.stats[STAT_HEALTH] = health;
 	}
 	else
 	{

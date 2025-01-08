@@ -1560,8 +1560,24 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 		numstatsbits -= 1;
 #endif
 
-	for ( i = 0; i < numstatsbits; i++ )
+	for ( i = 0; i < MAX_STATS; i++ )
 	{
+#if PROTOCOL_VERSION == 115 and defined LIBCOD
+		if ( protocol == 119 )
+		{
+			if ( i == STAT_IDENT_CLIENT_HEALTH )
+			{
+				// Skipping STAT_IDENT_CLIENT_HEALTH
+				i++;
+
+				// Adjust bit index for STAT_SPAWN_COUNT
+				if ( to->stats[i] != from->stats[i] )
+					statsbits |= 1 << ( i - 1 );
+
+				break;
+			}
+		}
+#endif
 		if ( to->stats[i] != from->stats[i] )
 		{
 			statsbits |= 1 << i;
@@ -1587,19 +1603,30 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 
 #if PROTOCOL_VERSION != 119
 #if PROTOCOL_VERSION == 115 and defined LIBCOD
-		if ( protocol != 119 )
+		if ( protocol == 119 )
+		{
+			if ( statsbits & ( 1 << STAT_SPAWN_COUNT - 1 ) )
+				MSG_WriteByte( msg, to->stats[STAT_SPAWN_COUNT] );
+		}
+		else
 		{
 			if ( statsbits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
 				MSG_WriteShort( msg, to->stats[STAT_IDENT_CLIENT_HEALTH] );
+
+			if ( statsbits & ( 1 << STAT_SPAWN_COUNT ) )
+				MSG_WriteByte( msg, to->stats[STAT_SPAWN_COUNT] );
 		}
 #else
 		if ( statsbits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
 			MSG_WriteShort( msg, to->stats[STAT_IDENT_CLIENT_HEALTH] );
-#endif
-#endif
 
 		if ( statsbits & ( 1 << STAT_SPAWN_COUNT ) )
 			MSG_WriteByte( msg, to->stats[STAT_SPAWN_COUNT] );
+#endif
+#else
+		if ( statsbits & ( 1 << STAT_SPAWN_COUNT ) )
+			MSG_WriteByte( msg, to->stats[STAT_SPAWN_COUNT] );
+#endif
 	}
 	else
 	{
@@ -2226,19 +2253,30 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 
 #if PROTOCOL_VERSION != 119
 #if PROTOCOL_VERSION == 115 and defined LIBCOD
-		if ( protocol != 119 )
+		if ( protocol == 119 )
+		{
+			if ( bits & ( 1 << STAT_SPAWN_COUNT - 1 ) )
+				to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
+		}
+		else
 		{
 			if ( bits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
 				to->stats[STAT_IDENT_CLIENT_HEALTH] = MSG_ReadShort(msg);
+
+			if ( bits & ( 1 << STAT_SPAWN_COUNT ) )
+				to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
 		}
 #else
 		if ( bits & ( 1 << STAT_IDENT_CLIENT_HEALTH ) )
 			to->stats[STAT_IDENT_CLIENT_HEALTH] = MSG_ReadShort(msg);
-#endif
-#endif
 
 		if ( bits & ( 1 << STAT_SPAWN_COUNT ) )
 			to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
+#endif
+#else
+		if ( bits & ( 1 << STAT_SPAWN_COUNT ) )
+			to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
+#endif
 	}
 
 //----(SA)	I split this into two groups using shorts so it wouldn't have

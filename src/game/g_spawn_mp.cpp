@@ -45,6 +45,28 @@ spawn_t spawns[] =
 	{ "script_struct", G_FreeEntity },
 };
 
+gitem_t* G_GetItemForClassname(const char *name)
+{
+	int i;
+	int weapon;
+
+	if ( !strncmp(name, "weapon_", 7) && (weapon = G_GetWeaponIndexForName(name + 7)) != 0 )
+	{
+		BG_GetWeaponDef(weapon);
+		return BG_FindItemForWeapon(weapon);
+	}
+	else
+	{
+		for ( i = 129; i < 131; ++i )
+		{
+			if ( !strcmp(bg_itemlist[i].classname, name) )
+				return &bg_itemlist[i];
+		}
+
+		return 0;
+	}
+}
+
 void GScr_AddFieldsForEntity()
 {
 	game_entity_field_t *i;

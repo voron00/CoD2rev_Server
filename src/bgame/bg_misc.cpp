@@ -47,6 +47,33 @@ dvar_t *player_dmgtimer_stumbleTime;
 dvar_t *player_dmgtimer_flinchTime;
 
 /*
+===============
+G_FindItem
+===============
+*/
+gitem_t* G_FindItem( const char *pickupName )
+{
+	int iIndex;
+
+	for ( iIndex = bg_numWeaponItems; iIndex < bg_numItems; iIndex++ )
+	{
+		if ( !I_stricmp(bg_itemlist[iIndex].pickup_name, pickupName) || !I_stricmp(bg_itemlist[iIndex].classname, pickupName) )
+		{
+			return &bg_itemlist[iIndex];
+		}
+	}
+
+	iIndex = G_GetWeaponIndexForName(pickupName);
+
+	if ( iIndex )
+	{
+		return &bg_itemlist[iIndex];
+	}
+
+	return NULL;
+}
+
+/*
 ==================
 BG_LerpHudColors
 ==================

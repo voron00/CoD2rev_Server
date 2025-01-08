@@ -53,8 +53,10 @@ void TeamplayInfoMessage(gentity_s *ent)
 	{
 		if ( ent->client->sess.state.team == TEAM_FREE )
 		{
-			ent->client->ps.stats[3] = -1;
-			ent->client->ps.stats[4] = 0;
+			ent->client->ps.stats[STAT_IDENT_CLIENT_NUM] = -1;
+#if PROTOCOL_VERSION != 119
+			ent->client->ps.stats[STAT_IDENT_CLIENT_HEALTH] = 0;
+#endif
 			return;
 		}
 
@@ -78,8 +80,10 @@ void TeamplayInfoMessage(gentity_s *ent)
 		ident_health = 0;
 	}
 
-	ent->client->ps.stats[3] = ident_num;
-	ent->client->ps.stats[4] = ident_health;
+	ent->client->ps.stats[STAT_IDENT_CLIENT_NUM] = ident_num;
+#if PROTOCOL_VERSION != 119
+	ent->client->ps.stats[STAT_IDENT_CLIENT_HEALTH] = ident_health;
+#endif
 }
 
 void CheckTeamStatus()

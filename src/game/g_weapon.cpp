@@ -10,6 +10,11 @@ vec2_t traceOffsets[] =
 	{ -1.000000, -1.000000},
 };
 
+void G_SelectWeaponIndex(int clientnum, int iWeaponIndex)
+{
+	SV_GameSendServerCommand(clientnum, SV_CMD_RELIABLE, va("%c %i", 97, iWeaponIndex));
+}
+
 qboolean LogAccuracyHit(gentity_s *target, gentity_s *attacker)
 {
 	if ( !target->takedamage )

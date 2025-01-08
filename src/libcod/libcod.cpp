@@ -791,11 +791,13 @@ void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut)
 
 const char *SV_ModifyConfigstringIwdChkSum( client_t *client, int index )
 {
-	char tmp[MAX_STRING_CHARS];
-	static char info[MAX_STRING_CHARS];
-
 	if ( index == CS_SYSTEMINFO && client->netchan.protocol == 119 )
 	{
+		char tmp[MAX_STRING_CHARS];
+		static char info[MAX_STRING_CHARS];
+
+		memset( info, 0, sizeof( info ) );
+
 		strcpy(tmp, sv.configstrings[index]);
 
 		char *part = strtok(tmp, " ");
