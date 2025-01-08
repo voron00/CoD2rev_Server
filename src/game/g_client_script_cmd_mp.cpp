@@ -1508,7 +1508,11 @@ void PlayerCmd_IsTalking( scr_entref_t entref )
 	}
 
 	elapsedTime = level.time - pSelf->client->lastVoiceTime;
-	Scr_AddBool( (unsigned)elapsedTime >= g_voiceChatTalkingDuration->current.integer );
+
+	if ( elapsedTime < 0 || elapsedTime >= g_voiceChatTalkingDuration->current.integer )
+		Scr_AddBool(false);
+	else
+		Scr_AddBool(true);
 }
 
 /*
