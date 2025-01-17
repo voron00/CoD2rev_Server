@@ -580,7 +580,7 @@ struct gentity_s
 	int freeAfterEvent;
 	int unlinkAfterEvent;
 	int clipmask;
-	int framenum;
+	int processedFrame;
 	gentity_s *parent;
 	int nextthink;
 	int health;
@@ -1230,7 +1230,9 @@ inline vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 #define FL_NOTARGET            0x0000004
 #define FL_NO_KNOCKBACK        0x0000008
 #define FL_DROPPED_ITEM        0x0000010
+#define FL_NODRAW              0x0000800
 #define FL_SUPPORTS_LINKTO     0x0001000
+#define FL_NO_AUTO_ANIM_UPDATE 0x0002000
 
 #define ENT_HANDLER_NULL              0
 #define ENT_HANDLER_ACTOR_INIT        1
@@ -1420,7 +1422,6 @@ void ExitLevel();
 int Add_Ammo(gentity_s *pSelf, int weaponIndex, int count, int fillClip);
 void G_AddPredictableEvent(gentity_s *ent, int event, int eventParm);
 void Touch_Item(gentity_s *ent, gentity_s *other, int touched);
-void G_UpdateTeamScoresForIntermission();
 void CheckTeamStatus();
 int G_DObjUpdateServerTime(gentity_s *ent, int bNotify);
 void G_RunFrame(int time);
@@ -1483,7 +1484,6 @@ int G_TraceCapsuleComplete(const float *start, const float *mins, const float *m
 void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap);
 int G_LocationalTracePassed(const float *start, const float *end, int passEntityNum, int contentmask);
 void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask);
-gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap, float *forwardAngles);
 void G_Trigger(gentity_s *self, gentity_s *other);
 void Player_UpdateLookAtEntity(gentity_s *ent);
 void Player_UpdateCursorHints(gentity_s *ent);
@@ -1587,6 +1587,8 @@ int G_SpawnString(const char *key, const char *defaultString, const char **out);
 
 void G_PlaySoundAlias(gentity_s *ent, byte alias);
 qboolean G_IsPlaying(gentity_s *ent);
+void G_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle);
+void G_LoadAnimTreeInstances();
 
 void G_InitTurrets();
 void G_SpawnTurret(gentity_s *ent, const char *weaponName);

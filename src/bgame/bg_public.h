@@ -1338,6 +1338,7 @@ enum proneCheckType_t
 #define EF_TELEPORT_BIT 0x2         // Toggled every time the origin abruptly changes
 #define EF_CROUCH       0x4         //
 #define EF_PRONE        0x8         //
+#define EF_NODRAW       0x20
 #define EF_FIRING       0x40
 #define EF_CONNECTION   0x80
 #define EF_TURRET_PRONE 0x100       // See EF_TURRET_ACTIVE
@@ -1345,6 +1346,7 @@ enum proneCheckType_t
 #define EF_TURRET_ACTIVE 0x300      // Set on players that use a turret
 #define EF_MANTLE       0x4000      //
 #define EF_TAGCONNECT   0x8000      // Connected to another entity via tag
+#define EF_UNKNOWN      0x10000     //
 #define EF_DEAD         0x20000     //
 #define EF_AIMDOWNSIGHT 0x40000     //
 #define EF_BODY_START   0x80000

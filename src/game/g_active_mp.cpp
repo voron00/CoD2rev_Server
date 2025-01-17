@@ -419,7 +419,7 @@ void G_PlayerController( gentity_t *self, int *partBits )
 	DObj *obj;
 	clientInfo_t *ci;
 
-	assert(self->s.clientNum >= 0 && self->s.clientNum <= MAX_CLIENTS);
+	assert(self->s.clientNum >= 0 && self->s.clientNum < MAX_CLIENTS);
 
 	ci = &level_bgs.clientinfo[self->s.clientNum];
 	assert(ci->infoValid);

@@ -13,11 +13,6 @@ void *Hunk_AllocXAnimPrecache(int size)
 	return Hunk_AllocAlignInternal(size, 4);
 }
 
-void *Hunk_AllocXAnimServer(int size)
-{
-	return Hunk_AllocLowInternal(size);
-}
-
 void *Hunk_AllocXAnimTreePrecache(int size)
 {
 	return Hunk_AllocAlignInternal(size, 4);

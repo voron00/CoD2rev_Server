@@ -334,7 +334,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
 
 	if ( iWeapon && attacker->client != NULL && attacker->client->ps.eFlags & EF_TURRET_ACTIVE )
 	{
-		assert(self->client->ps.viewlocked_entNum != ENTITYNUM_NONE);
+		assert(attacker->client->ps.viewlocked_entNum != ENTITYNUM_NONE);
 		gentity_t *turret = &g_entities[attacker->s.otherEntityNum];
 
 		if ( turret->s.eType == ET_TURRET )

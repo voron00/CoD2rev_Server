@@ -570,7 +570,6 @@ XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex);
 void XAnimFreeInfo(XAnimTree_s *tree, unsigned int infoIndex);
 unsigned int XAnimGetAnimTreeSize(const XAnim_s *anims);
 const char* XAnimGetAnimName(const XAnim_s *anims, unsigned int animIndex);
-void *Hunk_AllocXAnimServer(int size);
 float XAnimGetTime(const XAnimTree_s *tree, unsigned int animIndex);
 XAnim_s* XAnimGetAnims(const XAnimTree_s *tree);
 const char* XAnimGetAnimTreeDebugName(const XAnim_s *anims);

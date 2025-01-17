@@ -60,72 +60,42 @@ dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
 dvar_t *g_mantleBlockTimeBuffer;
 
-clientState_t* G_GetClientState(int num)
+/*
+==================
+G_UpdateObjectiveToClients
+==================
+*/
+void G_UpdateObjectiveToClients()
 {
-	return &level.clients[num].sess.state;
-}
+	objective_t *obj;
+	gclient_t *client;
+	gentity_t *ent;
+	int clientNum, objNum;
 
-int G_GetClientArchiveTime(int clientindex)
-{
-	return level.clients[clientindex].sess.archiveTime;
-}
-
-void G_SetClientArchiveTime(int clindex, int time)
-{
-	level.clients[clindex].sess.archiveTime = time;
-}
-
-int G_GetClientScore(int clientNum)
-{
-	return level.clients[clientNum].sess.score;
-}
-
-void Scr_LocalizationError(int iParm, const char *pszErrorMessage)
-{
-	Com_Error(ERR_LOCALIZATION, pszErrorMessage);
-}
-
-void ExitLevel()
-{
-	int i;
-	int j;
-
-	Cbuf_ExecuteText(EXEC_APPEND, "map_rotate\n");
-
-	level.teamScores[1] = 0;
-	level.teamScores[2] = 0;
-
-	for ( i = 0; i < g_maxclients->current.integer; ++i )
+	for ( clientNum = 0; clientNum < level.maxclients; clientNum++ )
 	{
-		if ( level.clients[i].sess.connected == CON_CONNECTED )
-			level.clients[i].sess.score = 0;
-	}
+		ent = &level.gentities[clientNum];
 
-	for ( j = 0; j < g_maxclients->current.integer; ++j )
-	{
-		if ( level.clients[j].sess.connected == CON_CONNECTED )
-			level.clients[j].sess.connected = CON_CONNECTING;
-	}
+		if ( !ent->r.inuse )
+		{
+			continue;
+		}
 
-	G_LogPrintf("ExitLevel: executed\n");
-}
+		assert(ent->client);
+		client = ent->client;
 
-void G_RunThink(gentity_s *ent)
-{
-	void (*think)(struct gentity_s *);
-	int thinktime;
+		for ( objNum = 0; objNum < MAX_OBJECTIVES; objNum++ )
+		{
+			obj = &level.objectives[objNum];
 
-	thinktime = ent->nextthink;
+			if ( obj->state == OBJST_EMPTY || ( obj->teamNum != TEAM_NONE && obj->teamNum != client->sess.state.team ) )
+			{
+				client->ps.objective[objNum].state = OBJST_EMPTY;
+				continue;
+			}
 
-	if ( thinktime > 0 && thinktime <= level.time )
-	{
-		ent->nextthink = 0;
-		think = entityHandlers[ent->handler].think;
-
-		if ( !think )
-			Com_Error(ERR_DROP, "NULL ent->think");
-
-		think(ent);
+			client->ps.objective[objNum] = *obj;
+		}
 	}
 }
 
@@ -138,134 +108,210 @@ Print to the logfile with a time stamp if it is open
 void G_LogPrintf( const char *fmt, ... )
 {
 	va_list argptr;
-	char string[1024];
-	int min, tens, sec, l;
-
-	sec = level.time / 1000;
-
-	min = sec / 60;
-	sec -= min * 60;
-	tens = sec / 10;
-	sec -= tens * 10;
-
-	Com_sprintf( string, sizeof( string ), "%i:%i%i ", min, tens, sec );
-
-	l = strlen( string );
+	char string[MAX_STRING_CHARS];
+	char string2[MAX_STRING_CHARS];
 
 	va_start( argptr, fmt );
-	Q_vsnprintf( string + l, sizeof( string ) - l, fmt, argptr );
-	va_end( argptr );
 
 	if ( !level.logFile )
 	{
+		va_end( argptr );
 		return;
 	}
+
+	Q_vsnprintf( string2, sizeof( string2 ), fmt, argptr );
+
+	Com_sprintf( string,
+	             sizeof( string ),
+	             "%3i:%i%i %s",
+	             level.time / 1000 / 60,
+	             level.time / 1000 % 60 / 10,
+	             level.time / 1000 % 60 % 10,
+	             string2 );
+
+	va_end( argptr );
 
 	FS_Write( string, strlen( string ), level.logFile );
 }
 
-void G_TraceCapsule(trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask)
+/*
+=================
+G_GetClientState
+=================
+*/
+clientState_t* G_GetClientState( int clientNum )
 {
-	SV_Trace(results, start, mins, maxs, end, passEntityNum, contentmask, 0, 0, 0);
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+	return &level.clients[clientNum].sess.state;
 }
 
-int G_TraceCapsuleComplete(const float *start, const float *mins, const float *maxs, const float *end, int passEntityNum, int contentmask)
+/*
+=================
+G_SetClientArchiveTime
+=================
+*/
+void G_SetClientArchiveTime( int clientNum, int iTime )
 {
-	return SV_TracePassed(start, mins, maxs, end, passEntityNum, 1023, contentmask, 0, 0);
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+	level.clients[clientNum].sess.archiveTime = iTime;
 }
 
-void G_LocationalTrace(trace_t *results, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap)
+/*
+=================
+G_GetClientArchiveTime
+=================
+*/
+int G_GetClientArchiveTime( int clientNum )
 {
-	SV_Trace(results, start, vec3_origin, vec3_origin, end, passentitynum, contentmask, 1, priorityMap, 1);
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+	return level.clients[clientNum].sess.archiveTime;
 }
 
-int G_LocationalTracePassed(const float *start, const float *end, int passEntityNum, int contentmask)
+/*
+=================
+G_GetClientScore
+=================
+*/
+int G_GetClientScore( int clientNum )
 {
-	return SV_TracePassed(start, vec3_origin, vec3_origin, end, passEntityNum, 1023, contentmask, 1, 1);
+	assert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+	return level.clients[clientNum].sess.score;
 }
 
-void G_SightTrace(int *hitNum, const float *start, const float *end, int passEntityNum, int contentmask)
+/*
+=================
+G_GetFogOpaqueDistSqrd
+=================
+*/
+float G_GetFogOpaqueDistSqrd()
 {
-	SV_SightTrace(hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, 1023, contentmask);
+	return level.fFogOpaqueDistSqrd;
 }
 
-gentity_s* G_FX_VisibilityTrace(trace_t *trace, const float *start, const float *end, int passentitynum, int contentmask, unsigned char *priorityMap, float *forwardAngles)
+/*
+=================
+G_SetSavePersist
+=================
+*/
+void G_SetSavePersist( int savepersist )
 {
-#ifndef DEDICATED
-	float dist;
-	float visible;
-	vec3_t endPos;
-#endif
-
-	G_LocationalTrace(trace, start, end, passentitynum, contentmask, priorityMap);
-
-	if ( trace->entityNum > 1021 )
-		return 0;
-
-#ifdef DEDICATED
-	return &g_entities[trace->entityNum];
-#else
-	dist = trace->fraction * 15000.0;
-	VectorMA(start, dist, forwardAngles, endPos);
-
-	visible = SV_FX_GetVisibility(start, endPos);
-
-	if ( visible >= 0.2 )
-		return &g_entities[trace->entityNum];
-	else
-		return 0;
-#endif
+	level.savePersist = savepersist;
 }
 
-static signed int SortRanks(const void *num1, const void *num2)
+/*
+=================
+G_GetSavePersist
+=================
+*/
+int G_GetSavePersist()
 {
-	gclient_t *client1;
-	gclient_t *client2;
+	return level.savePersist;
+}
 
-	client2 = &level.clients[*(int *)num1];
-	client1 = &level.clients[*(int *)num2];
+/*
+=================
+G_UpdateHudElemsToClients
+=================
+*/
+void G_UpdateHudElemsToClients( void )
+{
+	gentity_t *ent;
+	int clientNum;
 
-	if ( client2->sess.connected == CON_CONNECTING )
-		return 1;
-
-	if ( client1->sess.connected == CON_CONNECTING )
-		return -1;
-
-	if ( client2->sess.state.team == TEAM_SPECTATOR && client1->sess.state.team == TEAM_SPECTATOR )
+	for ( clientNum = 0; clientNum < level.maxclients; clientNum++ )
 	{
-		if ( client2 >= client1 )
-			return client2 > client1;
-		else
-			return -1;
-	}
-	else if ( client2->sess.state.team == TEAM_SPECTATOR )
-	{
-		return 1;
-	}
-	else if ( client1->sess.state.team == TEAM_SPECTATOR )
-	{
-		return -1;
-	}
-	else if ( client2->sess.score <= client1->sess.score )
-	{
-		if ( client2->sess.score >= client1->sess.score )
+		ent = &level.gentities[clientNum];
+
+		if ( !ent->r.inuse )
 		{
-			if ( client2->sess.deaths >= client1->sess.deaths )
-				return client2->sess.deaths > client1->sess.deaths;
-			else
-				return -1;
+			continue;
 		}
-		else
+
+		assert(ent->client);
+		HudElem_UpdateClient(ent->client, ent->s.number, HUDELEM_UPDATE_ARCHIVAL_AND_CURRENT);
+	}
+}
+
+/*
+========================================================================
+
+PLAYER COUNTING / SCORE SORTING
+
+========================================================================
+*/
+
+/*
+=============
+SortRanks
+=============
+*/
+static signed int SortRanks( const void *a, const void *b )
+{
+	gclient_t *ca, *cb;
+
+	ca = &level.clients[*(int *)a];
+	cb = &level.clients[*(int *)b];
+
+	// connecting clients
+	if ( ca->sess.connected == CON_CONNECTING )
+	{
+		return 1;
+	}
+	if ( cb->sess.connected == CON_CONNECTING )
+	{
+		return -1;
+	}
+	// then spectators
+	if ( ca->sess.state.team == TEAM_SPECTATOR && cb->sess.state.team == TEAM_SPECTATOR )
+	{
+		if ( ca < cb)
+		{
+			return -1;
+		}
+		if ( ca > cb )
 		{
 			return 1;
 		}
+		return 0;
 	}
-	else
+	if ( ca->sess.state.team == TEAM_SPECTATOR )
+	{
+		return 1;
+	}
+	if ( cb->sess.state.team == TEAM_SPECTATOR )
 	{
 		return -1;
 	}
+	// then sort by score
+	if ( ca->sess.score > cb->sess.score )
+	{
+		return -1;
+	}
+	if ( ca->sess.score < cb->sess.score )
+	{
+		return 1;
+	}
+	// then sort by deaths (cod2)
+	if ( ca->sess.deaths < cb->sess.deaths )
+	{
+		return -1;
+	}
+	if ( ca->sess.deaths > cb->sess.deaths )
+	{
+		return 1;
+	}
+	return 0;
 }
 
+/*
+============
+CalculateRanks
+
+Recalculates the score ranks of all players
+This will be called on every client connect, begin, disconnect, death,
+and team change.
+============
+*/
 void CalculateRanks()
 {
 	int i;
@@ -275,586 +321,259 @@ void CalculateRanks()
 
 	for ( i = 0; i < level.maxclients; ++i )
 	{
-		if ( level.clients[i].sess.connected )
+		if ( level.clients[i].sess.connected == CON_DISCONNECTED )
 		{
-			level.sortedClients[level.numConnectedClients++] = i;
-
-			if ( level.clients[i].sess.state.team != TEAM_SPECTATOR && level.clients[i].sess.connected == CON_CONNECTED )
-				++level.numVotingClients;
+			continue;
 		}
+
+		level.sortedClients[level.numConnectedClients] = i;
+		level.numConnectedClients++;
+
+		if ( level.clients[i].sess.state.team == TEAM_SPECTATOR )
+		{
+			continue;
+		}
+
+		if ( level.clients[i].sess.connected != CON_CONNECTED )
+		{
+			continue;
+		}
+
+		level.numVotingClients++;
 	}
 
-	qsort(level.sortedClients, level.numConnectedClients, sizeof(intptr_t), SortRanks);
-	level.bUpdateScoresForIntermission = 1;
+	qsort( level.sortedClients, level.numConnectedClients,
+	       sizeof( level.sortedClients[0] ), SortRanks );
+
+	level.bUpdateScoresForIntermission = qtrue;
 }
 
-float G_GetFogOpaqueDistSqrd()
+/*
+=============
+G_AddDebugString
+=============
+*/
+void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText )
 {
-	return level.fFogOpaqueDistSqrd;
+	UNIMPLEMENTED(__FUNCTION__);
 }
 
-int G_GetSavePersist()
-{
-	return level.savePersist;
-}
+/*
+========================================================================
 
-void G_SetSavePersist(int savepersist)
-{
-	level.savePersist = savepersist;
-}
+MAP CHANGING
 
-void G_RunFrameForEntity(gentity_s *ent)
-{
-	int flags;
+========================================================================
+*/
 
-	if ( ent->framenum != level.framenum )
+/*
+========================
+SendScoreboardMessageToAllIntermissionClients
+
+Do this at BeginIntermission time and whenever ranks are recalculated
+due to enters/exits/forced team changes
+========================
+*/
+static void SendScoreboardMessageToAllIntermissionClients( void )
+{
+	int clientNum;
+
+	if ( !level.bUpdateScoresForIntermission )
 	{
-		ent->framenum = level.framenum;
-
-		if ( !ent->client )
-		{
-			if ( (ent->flags & 0x800) != 0 )
-				flags = ent->s.eFlags | 0x20;
-			else
-				flags = ent->s.eFlags & 0xFFFFFFDF;
-
-			ent->s.eFlags = flags;
-		}
-
-		if ( ent->s.eFlags == 0x10000 && level.time > ent->s.time2 )
-		{
-			G_FreeEntity(ent);
-			return;
-		}
-
-		if ( level.time - ent->eventTime > 300 )
-		{
-			if ( ent->freeAfterEvent )
-			{
-				G_FreeEntity(ent);
-				return;
-			}
-
-			if ( ent->unlinkAfterEvent )
-			{
-				ent->unlinkAfterEvent = 0;
-				SV_UnlinkEntity(ent);
-			}
-		}
-
-		if ( !ent->freeAfterEvent )
-		{
-			switch ( ent->s.eType )
-			{
-			case ET_MISSILE:
-				G_RunMissile(ent);
-				return;
-
-			case ET_ITEM:
-				if ( ent->tagInfo )
-				{
-					G_GeneralLink(ent);
-					G_RunThink(ent);
-					return;
-				}
-				G_RunItem(ent);
-				return;
-
-			case ET_PLAYER_CORPSE:
-				G_RunCorpse(ent);
-				return;
-			}
-
-			if ( ent->physicsObject )
-			{
-				G_RunItem(ent);
-				return;
-			}
-
-			if ( ent->s.eType == ET_SCRIPTMOVER )
-			{
-				G_RunMover(ent);
-			}
-			else if ( ent->client )
-			{
-				G_RunClient(ent);
-			}
-			else
-			{
-				if ( ent->s.eType == ET_GENERAL )
-				{
-					if ( ent->tagInfo )
-						G_GeneralLink(ent);
-				}
-
-				G_RunThink(ent);
-			}
-		}
+		return;
 	}
-}
 
-void DebugDumpAnims()
-{
-	if ( g_dumpAnims->current.integer >= 0 )
+	for ( clientNum = 0; clientNum < level.maxclients; clientNum++ )
 	{
-		Com_Printf("server:\n");
-		SV_DObjDisplayAnim(&level.gentities[g_dumpAnims->current.integer]);
+		if ( level.clients[clientNum].sess.connected != CON_CONNECTED )
+		{
+			continue;
+		}
+
+		if (  level.clients[clientNum].ps.pm_type != PM_INTERMISSION )
+		{
+			continue;
+		}
+
+		DeathmatchScoreboardMessage(&g_entities[clientNum]);
 	}
+
+	level.bUpdateScoresForIntermission = qfalse;
 }
 
+/*
+=============
+ExitLevel
+
+When the intermission has been exited, the server is either killed
+or moved to a new level based on the "nextmap" cvar
+
+=============
+*/
+void ExitLevel( void )
+{
+	int i;
+
+	Cbuf_ExecuteText(EXEC_APPEND, "map_rotate\n");
+
+	// reset all the scores so we don't enter the intermission again
+	level.teamScores[TEAM_AXIS] = 0;
+	level.teamScores[TEAM_ALLIES] = 0;
+
+	for ( i = 0; i < g_maxclients->current.integer; i++ )
+	{
+		if ( level.clients[i].sess.connected != CON_CONNECTED )
+		{
+			continue;
+		}
+		level.clients[i].sess.score = 0;
+	}
+
+	// change all client states to connecting, so the early players into the
+	// next level will know the others aren't done reconnecting
+	for ( i = 0; i < g_maxclients->current.integer; i++ )
+	{
+		if ( level.clients[i].sess.connected != CON_CONNECTED )
+		{
+			continue;
+		}
+		level.clients[i].sess.connected = CON_CONNECTING;
+	}
+
+	G_LogPrintf("ExitLevel: executed\n");
+}
+
+/*
+=============
+G_RunThink
+
+Runs thinking code for this frame if necessary
+=============
+*/
+void G_RunThink( gentity_t *ent )
+{
+	void (*think)(gentity_t *);
+	int thinktime;
+
+	thinktime = ent->nextthink;
+	if ( thinktime <= 0 )
+	{
+		return;
+	}
+	if ( thinktime > level.time )
+	{
+		return;
+	}
+
+	ent->nextthink = 0;
+	think = entityHandlers[ent->handler].think;
+
+	if ( !think )
+	{
+		Com_Error(ERR_DROP, "NULL ent->think");
+	}
+
+	think(ent);
+}
+
+/*
+==================
+CheckVote
+==================
+*/
 void CheckVote()
 {
-	int passCount;
-
-	if ( level.voteExecuteTime )
+	if ( level.voteExecuteTime && level.voteExecuteTime < level.time )
 	{
-		if ( level.voteExecuteTime < level.time )
-		{
-			level.voteExecuteTime = 0;
-			Cbuf_ExecuteText(EXEC_APPEND, va("%s\n", level.voteString));
-		}
+		level.voteExecuteTime = 0;
+		Cbuf_ExecuteText( EXEC_APPEND, va("%s\n", level.voteString ) );
 	}
-
-	if ( level.voteTime )
+	if ( !level.voteTime )
 	{
-		if ( level.time - level.voteTime < 0 )
-		{
-			passCount = level.numVotingClients / 2 + 1;
-
-			if ( level.voteYes >= passCount )
-				goto pass;
-
-			if ( level.voteNo <= level.numVotingClients - passCount )
-				return;
-		}
-		else
-		{
-			if ( level.voteYes > (int)(ceil(
-			                               (level.numVotingClients - (level.voteYes + level.voteNo))
-			                               * g_voteAbstainWeight->current.decimal)
-			                           + level.voteNo) )
-			{
-pass:
-				SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101));
-				level.voteExecuteTime = level.time + 3000;
-fail:
-				level.voteTime = 0;
-				SV_SetConfigstring(CS_VOTE_TIME, "");
-				return;
-			}
-		}
-
-		SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101));
-		goto fail;
+		return;
 	}
-}
-
-void G_UpdateHudElemsToClients()
-{
-	int i;
-
-	for ( i = 0; i < level.maxclients; ++i )
+	if ( level.time - level.voteTime >= 0 )
 	{
-		if ( level.gentities[i].r.inuse )
-			HudElem_UpdateClient(level.gentities[i].client, level.gentities[i].s.number, HUDELEM_UPDATE_ARCHIVAL_AND_CURRENT);
-	}
-}
-
-void G_UpdateObjectiveToClients()
-{
-	objective_t *objective;
-	int team;
-	gclient_s *client;
-	int j;
-	gentity_s *ent;
-	int i;
-
-	for ( i = 0; i < level.maxclients; ++i )
-	{
-		ent = &level.gentities[i];
-
-		if ( ent->r.inuse )
-		{
-			client = ent->client;
-			team = client->sess.state.team;
-
-			for ( j = 0; j < MAX_OBJECTIVES; ++j )
-			{
-				if ( level.objectives[j].state && (!level.objectives[j].teamNum || level.objectives[j].teamNum == team) )
-				{
-					objective = &client->ps.objective[j];
-					objective->state = level.objectives[j].state;
-					objective->origin[0] = level.objectives[j].origin[0];
-					objective->origin[1] = level.objectives[j].origin[1];
-					objective->origin[2] = level.objectives[j].origin[2];
-					objective->entNum = level.objectives[j].entNum;
-					objective->teamNum = level.objectives[j].teamNum;
-					objective->icon = level.objectives[j].icon;
-				}
-				else
-				{
-					client->ps.objective[j].state = OBJST_EMPTY;
-				}
-			}
-		}
-	}
-}
-
-void G_XAnimUpdateEnt(gentity_s *ent)
-{
-	while ( ent->r.inuse && (ent->flags & 0x2000) == 0 && G_DObjUpdateServerTime(ent, 1) )
-		Scr_RunCurrentThreads();
-}
-
-void G_RunFrame(int time)
-{
-	float nextFrameTime;
-	byte entIndex[1024];
-	int entnum;
-	trigger_info_t *trigger_info;
-	gentity_s *other;
-	gentity_s *ent;
-	int bMoreTriggered;
-	int index;
-	int i;
-
-	++level.framenum;
-	level.previousTime = level.time;
-	level.time = time;
-	level.frameTime = time - level.previousTime;
-	level_bgs.time = time;
-	level_bgs.latestSnapshotTime = time;
-	level_bgs.frametime = time - level.previousTime;
-	ent = g_entities;
-	i = 0;
-
-	while ( i < level.num_entities )
-	{
-		if ( ent->r.inuse )
-		{
-			nextFrameTime = (float)level.frameTime * 0.001;
-			SV_DObjInitServerTime(ent, nextFrameTime);
-		}
-
-		++i;
-		++ent;
-	}
-
-	memset(entIndex, 0, sizeof(entIndex));
-	index = 0;
-
-	Com_Memcpy(level.currentTriggerList, level.pendingTriggerList, sizeof(trigger_info_t) * level.pendingTriggerListSize);
-
-	level.currentTriggerListSize = level.pendingTriggerListSize;
-	level.pendingTriggerListSize = 0;
-
-	do
-	{
-		bMoreTriggered = 0;
-		++index;
-
-		for ( i = 0; i < level.currentTriggerListSize; ++i )
-		{
-			trigger_info = &level.currentTriggerList[i];
-			entnum = trigger_info->entnum;
-			ent = &g_entities[entnum];
-
-			if ( ent->useCount == trigger_info->useCount )
-			{
-				other = &g_entities[trigger_info->otherEntnum];
-
-				if ( other->useCount == trigger_info->otherUseCount )
-				{
-					if ( entIndex[entnum] == index )
-					{
-						bMoreTriggered = 1;
-						continue;
-					}
-
-					entIndex[entnum] = index;
-					Scr_AddEntity(other);
-					Scr_Notify(ent, scr_const.trigger, 1u);
-				}
-			}
-
-			--level.currentTriggerListSize;
-			--i;
-
-			Com_Memcpy(trigger_info, &level.currentTriggerList[level.currentTriggerListSize], sizeof(trigger_info_t));
-		}
-
-		Scr_RunCurrentThreads();
-	}
-	while ( bMoreTriggered );
-
-	ent = g_entities;
-	i = 0;
-
-	while ( i < level.num_entities )
-	{
-		G_XAnimUpdateEnt(ent);
-		++i;
-		++ent;
-	}
-
-	Scr_IncTime();
-	ent = g_entities;
-	level.currentEntityThink = 0;
-
-	while ( level.currentEntityThink < level.num_entities )
-	{
-		if ( ent->r.inuse )
-		{
-			if ( ent->tagInfo )
-				G_RunFrameForEntity(ent->tagInfo->parent);
-
-			G_RunFrameForEntity(ent);
-		}
-
-		++level.currentEntityThink;
-		++ent;
-	}
-
-	level.currentEntityThink = -1;
-
-	G_UpdateObjectiveToClients();
-	G_UpdateHudElemsToClients();
-
-	ent = g_entities;
-	i = 0;
-
-	while ( i < level.maxclients )
-	{
-		if ( ent->r.inuse )
-			ClientEndFrame(ent);
-
-		++i;
-		++ent;
-	}
-
-	CheckTeamStatus();
-
-	if ( g_oldVoting->current.boolean )
-		CheckVote();
-
-	G_UpdateTeamScoresForIntermission();
-
-	if ( g_listEntity->current.boolean )
-	{
-		for ( i = 0; i < 1024; ++i )
-		{
-			Com_Printf("%4i: %s\n", i, SL_ConvertToString(g_entities[i].classname));
-		}
-
-		Dvar_SetBool(g_listEntity, 0);
-	}
-
-	if ( level.registerWeapons )
-		SaveRegisteredWeapons();
-
-	if ( level.bRegisterItems )
-		SaveRegisteredItems();
-
-	DebugDumpAnims();
-}
-
-void G_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle)
-{
-	Com_ServerDObjCreate(dobjModels, numModels, tree, handle);
-}
-
-void G_LoadAnimTreeInstances()
-{
-	XAnim_s *anims;
-	int i;
-	int j;
-
-	anims = level_bgs.animData.generic_human.tree.anims;
-
-	for ( i = 0; i < 64; ++i )
-		level_bgs.clientinfo[i].pXAnimTree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
-
-	for ( j = 0; j < 8; ++j )
-		g_scr_data.playerCorpseInfo[j].tree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
-}
-
-void G_InitGame(int levelTime, int randomSeed, int restart, int registerDvars)
-{
-	char infostring[1024];
-	char configstring[1024];
-	int i;
-	int j;
-
-	Com_Printf("------- Game Initialization -------\n");
-	Com_Printf("gamename: %s\n", GAMEVERSION);
-	Com_Printf("gamedate: %s\n", __DATE__);
-
-	Swap_Init();
-	memset(&level, 0, sizeof(level));
-
-	level.initializing = 1;
-	level.time = levelTime;
-	level.startTime = levelTime;
-	level.currentEntityThink = -1;
-
-	srand(randomSeed);
-	Rand_Init(randomSeed);
-
-	G_SetupWeaponDef();
-
-	if ( !restart || !registerDvars )
-		G_RegisterDvars();
-
-	G_ProcessIPBans();
-
-	level_bgs.GetXModel = SV_XModelGet;
-	level_bgs.CreateDObj = G_CreateDObj;
-	level_bgs.SafeDObjFree = Com_SafeServerDObjFree;
-	level_bgs.AllocXAnim = Hunk_AllocXAnimServer;
-	level_bgs.anim_user = 1;
-
-	if ( *g_log->current.string )
-	{
-		if ( g_logSync->current.boolean )
-			FS_FOpenFileByMode(g_log->current.string, &level.logFile, FS_APPEND_SYNC);
-		else
-			FS_FOpenFileByMode(g_log->current.string, &level.logFile, FS_APPEND);
-
-		if ( level.logFile )
-		{
-			SV_GetServerinfo(infostring, 1024);
-			G_LogPrintf("------------------------------------------------------------\n");
-			G_LogPrintf("InitGame: %s\n", infostring);
-		}
-		else
-		{
-			Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.string);
-		}
+		SV_GameSendServerCommand( -1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101) );
 	}
 	else
 	{
-		Com_Printf("Not logging to disk.\n");
+		// ATVI Q3 1.32 Patch #9, WNF
+		int passCount = level.numVotingClients / 2 + 1;
+		if ( level.voteYes >= passCount )
+		{
+			// execute the command, then remove the vote
+			SV_GameSendServerCommand( -1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101) );
+			level.voteExecuteTime = level.time + 3000;
+		}
+		else if ( level.voteNo > level.numVotingClients - passCount )
+		{
+			// same behavior as a timeout
+			SV_GameSendServerCommand( -1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101) );
+		}
+		else if ( level.voteYes > ceil( level.numVotingClients - ( level.voteYes + level.voteNo ) * g_voteAbstainWeight->current.decimal ) + level.voteNo )
+		{
+			// execute the command, then remove the vote
+			SV_GameSendServerCommand( -1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101) );
+			level.voteExecuteTime = level.time + 3000;
+		}
+		else
+		{
+			// still waiting for a majority
+			return;
+		}
 	}
-
-	for ( i = 0; i < 1; ++i )
-	{
-		level.openScriptIOFileHandles[i] = -1;
-		level.openScriptIOFileBuffers[i] = 0;
-
-		memset(level.currentScriptIOLineMark, 0, sizeof(com_parse_mark_t));
-	}
-
-	Mantle_CreateAnims(Hunk_AllocXAnimServer);
-
-	if ( !restart )
-	{
-		memset(&level_bgs.animData.animScriptData, 0, sizeof(animScriptData_t));
-		level_bgs.animData.animScriptData.soundAlias = Com_FindSoundAlias;
-		level_bgs.animData.animScriptData.playSoundAlias = G_AnimScriptSound;
-		GScr_LoadScripts();
-		BG_LoadAnim();
-		G_LoadAnimTreeInstances();
-	}
-
-	GScr_LoadConsts();
-
-	SV_GetConfigstring(CS_MULTI_MAPWINNER, configstring, 1024);
-	Info_SetValueForKey(configstring, "winner", "0");
-	SV_SetConfigstring(CS_MULTI_MAPWINNER, configstring);
-
-	memset(g_entities, 0, sizeof(g_entities));
-	level.gentities = g_entities;
-
-	level.maxclients = g_maxclients->current.integer;
-	memset(g_clients, 0, sizeof(g_clients));
-	level.clients = g_clients;
-
-	for ( j = 0; j < level.maxclients; ++j )
-		g_entities[j].client = &level.clients[j];
-
-	level.num_entities = 72;
-	level.firstFreeEnt = 0;
-	level.lastFreeEnt = 0;
-
-	SV_LocateGameData(level.gentities, level.num_entities, sizeof(gentity_s), &level.clients->ps, sizeof(gclient_s));
-
-	G_ParseHitLocDmgTable();
-	G_InitTurrets();
-	G_SpawnEntitiesFromString();
-	G_setfog("0");
-	G_InitObjectives();
-	Scr_FreeEntityList();
-
-	Com_Printf("-----------------------------------\n");
-
-	Scr_InitSystem();
-	Scr_SetLoading(1);
-	Scr_AllocGameVariable();
-	G_LoadStructs();
-	Scr_LoadGameType();
-	Scr_LoadLevel();
-	Scr_StartupGameType();
-
-	for ( j = 0; j < 8; ++j )
-		g_scr_data.playerCorpseInfo[j].entnum = -1;
-
-	level.initializing = 0;
-
-	SaveRegisteredWeapons();
-	SaveRegisteredItems();
+	level.voteTime = 0;
+	SV_SetConfigstring( CS_VOTE_TIME, "" );
 }
 
-void G_FreeEntities()
+/*
+==================
+Hunk_AllocXAnimServer
+==================
+*/
+void *Hunk_AllocXAnimServer( int size )
 {
-	gentity_s *ent;
+	return Hunk_AllocLowInternal(size);
+}
+
+/*
+==================
+G_FreeEntities
+==================
+*/
+void G_FreeEntities( void )
+{
+	gentity_t *e;
 	int i;
 
-	ent = g_entities;
-
-	for ( i = 0; i < level.num_entities; ++i )
+	for ( e = g_entities, i = 0; i < level.num_entities; i++, e++ )
 	{
-		if ( ent->r.inuse )
-			G_FreeEntity(ent);
+		if ( !e->r.inuse )
+		{
+			continue;
+		}
 
-		++ent;
+		G_FreeEntity(e);
 	}
 
-	if ( g_entities[1022].r.inuse )
-		G_FreeEntity(&g_entities[1022]);
+	if ( g_entities[ENTITYNUM_WORLD].r.inuse )
+	{
+		G_FreeEntity(&g_entities[ENTITYNUM_WORLD]);
+	}
 
 	level.num_entities = 0;
 	level.firstFreeEnt = 0;
 	level.lastFreeEnt = 0;
 }
 
-void G_FreeAnimTreeInstances()
+/*
+=================
+G_ShutdownGame
+=================
+*/
+void G_ShutdownGame( qboolean freeScripts )
 {
-	int i;
-	int j;
-
-	for ( i = 0; i < 64; ++i )
-	{
-		if ( level_bgs.clientinfo[i].pXAnimTree )
-		{
-			XAnimFreeTree(level_bgs.clientinfo[i].pXAnimTree, 0);
-			level_bgs.clientinfo[i].pXAnimTree = 0;
-		}
-	}
-
-	for ( j = 0; j < 8; ++j )
-	{
-		if ( g_scr_data.playerCorpseInfo[j].tree )
-		{
-			XAnimFreeTree(g_scr_data.playerCorpseInfo[j].tree, 0);
-			g_scr_data.playerCorpseInfo[j].tree = 0;
-		}
-	}
-}
-
-void G_ShutdownGame(int freeScripts)
-{
-	int i;
-
 	Com_Printf("==== ShutdownGame ====\n");
 
 	if ( level.logFile )
@@ -869,9 +588,11 @@ void G_ShutdownGame(int freeScripts)
 	HudElem_DestroyAll();
 
 	if ( Scr_IsSystemActive() && !level.savePersist )
+	{
 		SV_FreeClientScriptPers();
+	}
 
-	Scr_ShutdownSystem(1u, level.savePersist == 0);
+	Scr_ShutdownSystem(1, level.savePersist == qfalse);
 
 	if ( freeScripts )
 	{
@@ -882,79 +603,727 @@ void G_ShutdownGame(int freeScripts)
 		Hunk_ClearLow(0);
 	}
 
-	for ( i = 0; i <= 0; ++i )
+	for ( int i = 0; i < 1; i++ )
 	{
 		if ( level.openScriptIOFileBuffers[i] )
-			Z_FreeInternal(level.openScriptIOFileBuffers[i]);
+		{
+			Z_Free(level.openScriptIOFileBuffers[i]);
+		}
 
-		level.openScriptIOFileBuffers[i] = 0;
+		level.openScriptIOFileBuffers[i] = NULL;
 
 		if ( level.openScriptIOFileHandles[i] >= 0 )
+		{
 			FS_FCloseFile(level.openScriptIOFileHandles[i]);
+		}
 
 		level.openScriptIOFileHandles[i] = -1;
 	}
 }
 
+/*
+=================
+DebugDumpAnims
+=================
+*/
+void DebugDumpAnims()
+{
+	if ( g_dumpAnims->current.integer < 0 )
+	{
+		return;
+	}
+
+	Com_Printf("server:\n");
+	SV_DObjDisplayAnim(&level.gentities[g_dumpAnims->current.integer]);
+}
+
+/*
+=================
+G_SightTrace
+=================
+*/
+void G_SightTrace( int *hitNum, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask )
+{
+	SV_SightTrace( hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, ENTITYNUM_NONE, contentmask );
+}
+
+/*
+=================
+G_SightTrace
+=================
+*/
+int G_LocationalTracePassed( const vec3_t start, const vec3_t end, int passEntityNum, int contentmask )
+{
+	return SV_TracePassed( start, vec3_origin, vec3_origin, end, passEntityNum, ENTITYNUM_NONE, contentmask, qtrue, qtrue );
+}
+
+/*
+=================
+G_LocationalTrace
+=================
+*/
+void G_LocationalTrace( trace_t *results, const vec3_t start, const vec3_t end, int passentitynum, int contentmask, unsigned char *priorityMap )
+{
+	SV_Trace( results, start, vec3_origin, vec3_origin, end, passentitynum, contentmask, qtrue, priorityMap, qtrue );
+}
+
+/*
+=================
+G_TraceCapsuleComplete
+=================
+*/
+int G_TraceCapsuleComplete( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask )
+{
+	return SV_TracePassed( start, mins, maxs, end, passEntityNum, ENTITYNUM_NONE, contentmask, qfalse, qfalse );
+}
+
+/*
+=================
+G_TraceCapsule
+=================
+*/
+void G_TraceCapsule( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask )
+{
+	SV_Trace( results, start, mins, maxs, end, passEntityNum, contentmask, qfalse, NULL, qfalse );
+}
+
+/*
+=================
+G_XAnimUpdateEnt
+=================
+*/
+void G_XAnimUpdateEnt( gentity_t *ent )
+{
+	while ( 1 )
+	{
+		if ( !ent->r.inuse )
+		{
+			break;
+		}
+
+		if ( ent->flags & FL_NO_AUTO_ANIM_UPDATE )
+		{
+			break;
+		}
+
+		if ( !G_DObjUpdateServerTime( ent, qtrue ) )
+		{
+			break;
+		}
+
+		Scr_RunCurrentThreads();
+	}
+}
+
+/*
+================
+G_RunFrame
+
+Advances the non-player objects in the world
+================
+*/
+void G_RunFrame( int levelTime )
+{
+	byte entIndex[MAX_GENTITIES];
+	int entnum;
+	trigger_info_t *trigger_info;
+	gentity_t *other;
+	gentity_t *ent;
+	qboolean bMoreTriggered;
+	int index;
+	int i;
+
+	level.framenum++;
+	level.previousTime = level.time;
+	level.time = levelTime;
+	level.frameTime = levelTime - level.previousTime;
+
+	level_bgs.time = levelTime;
+	level_bgs.latestSnapshotTime = levelTime;
+	level_bgs.frametime = levelTime - level.previousTime;
+
+	assert(level.frameTime >= 0);
+
+	for ( ent = g_entities, i = 0; i < level.num_entities; i++, ent++ )
+	{
+		if ( !ent->r.inuse )
+		{
+			continue;
+		}
+
+		SV_DObjInitServerTime(ent, level.frameTime * 0.001);
+	}
+
+	memset(entIndex, 0, sizeof(entIndex));
+	index = 0;
+	assert(level.currentTriggerListSize == 0);
+	Com_Memcpy(level.currentTriggerList, level.pendingTriggerList, sizeof(level.pendingTriggerList[0]) * level.pendingTriggerListSize);
+
+	level.currentTriggerListSize = level.pendingTriggerListSize;
+	level.pendingTriggerListSize = 0;
+
+	do
+	{
+		bMoreTriggered = qfalse;
+		index++;
+
+		for ( i = 0; i < level.currentTriggerListSize; i++ )
+		{
+			trigger_info = &level.currentTriggerList[i];
+			entnum = trigger_info->entnum;
+			ent = &g_entities[entnum];
+
+			if ( ent->useCount == trigger_info->useCount )
+			{
+				assert(ent->r.inuse);
+				other = &g_entities[trigger_info->otherEntnum];
+
+				if ( other->useCount == trigger_info->otherUseCount )
+				{
+					assert(other->r.inuse);
+					if ( entIndex[entnum] == index )
+					{
+						bMoreTriggered = qtrue;
+						continue;
+					}
+
+					entIndex[entnum] = index;
+
+					Scr_AddEntity(other);
+					Scr_Notify(ent, scr_const.trigger, 1);
+				}
+			}
+
+			--level.currentTriggerListSize;
+			--i;
+
+			Com_Memcpy(trigger_info, &level.currentTriggerList[level.currentTriggerListSize], sizeof(level.currentTriggerList[0]));
+		}
+
+		Scr_RunCurrentThreads();
+	}
+	while ( bMoreTriggered );
+	assert(level.currentTriggerListSize == 0);
+
+	for ( ent = g_entities, i = 0; i < level.num_entities; i++, ent++ )
+	{
+		G_XAnimUpdateEnt(ent);
+	}
+
+	Scr_IncTime();
+
+	//
+	// go through all allocated objects
+	//
+	assert(level.currentEntityThink == -1);
+	for ( ent = g_entities, level.currentEntityThink = 0; level.currentEntityThink < level.num_entities; level.currentEntityThink++, ent++ )
+	{
+		if ( !ent->r.inuse )
+		{
+			continue;
+		}
+
+		if ( ent->tagInfo )
+		{
+			G_RunFrameForEntity(ent->tagInfo->parent);
+		}
+
+		G_RunFrameForEntity(ent);
+	}
+
+	level.currentEntityThink = -1;
+
+	G_UpdateObjectiveToClients();
+	G_UpdateHudElemsToClients();
+
+	// perform final fixups on the players
+	for ( ent = g_entities,i=0 ; i < level.maxclients ; i++, ent++ )
+	{
+		if ( !ent->r.inuse )
+		{
+			continue;
+		}
+		assert(i >= 0 && i < MAX_CLIENTS);
+		assert(level_bgs.clientinfo[i].infoValid);
+		assert(ent->client - level.clients == i);
+		ClientEndFrame( ent );
+	}
+
+	// update to team status?
+	CheckTeamStatus();
+
+	// check team votes
+	if ( g_oldVoting->current.boolean )
+	{
+		CheckVote();
+	}
+
+	SendScoreboardMessageToAllIntermissionClients();
+
+	if ( g_listEntity->current.boolean )
+	{
+		for ( i = 0; i < MAX_GENTITIES; i++ )
+		{
+			Com_Printf("%4i: %s\n", i, SL_ConvertToString(g_entities[i].classname));
+		}
+
+		Dvar_SetBool(g_listEntity, false);
+	}
+
+	if ( level.registerWeapons )
+	{
+		SaveRegisteredWeapons();
+	}
+
+	if ( level.bRegisterItems )
+	{
+		SaveRegisteredItems();
+	}
+
+	DebugDumpAnims();
+}
+
+/*
+============
+G_InitGame
+============
+*/
+void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
+{
+	int i;
+	char cs[MAX_INFO_STRING];
+
+	Com_Printf("------- Game Initialization -------\n");
+	Com_Printf("gamename: %s\n", GAMEVERSION);
+	Com_Printf("gamedate: %s\n", __DATE__);
+
+	Swap_Init();
+
+	memset(&level, 0, sizeof(level));
+
+	level.initializing = qtrue;
+	level.time = levelTime;
+	level.startTime = levelTime;
+	level.currentEntityThink = -1;
+
+	srand( randomSeed );
+	Rand_Init( randomSeed );
+
+	G_SetupWeaponDef();
+
+	if ( !restart || !savepersist )
+	{
+		G_RegisterDvars();
+	}
+
+	G_ProcessIPBans();
+
+	level_bgs.GetXModel = SV_XModelGet;
+	level_bgs.CreateDObj = G_CreateDObj;
+	level_bgs.SafeDObjFree = Com_SafeServerDObjFree;
+	level_bgs.AllocXAnim = Hunk_AllocXAnimServer;
+	level_bgs.anim_user = 1;
+
+	if ( g_log->current.string[0] )
+	{
+		if ( g_logSync->current.boolean )
+		{
+			FS_FOpenFileByMode(g_log->current.string, &level.logFile, FS_APPEND_SYNC);
+		}
+		else
+		{
+			FS_FOpenFileByMode(g_log->current.string, &level.logFile, FS_APPEND);
+		}
+
+		if ( level.logFile )
+		{
+			SV_GetServerinfo(cs, sizeof(cs));
+			G_LogPrintf("------------------------------------------------------------\n");
+			G_LogPrintf("InitGame: %s\n", cs);
+		}
+		else
+		{
+			Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.string);
+		}
+	}
+	else
+	{
+		Com_Printf("Not logging to disk.\n");
+	}
+
+	for ( i = 0; i < 1; i++ )
+	{
+		level.openScriptIOFileHandles[i] = -1;
+		level.openScriptIOFileBuffers[i] = NULL;
+
+		Com_Memset(level.currentScriptIOLineMark, 0, sizeof(level.currentScriptIOLineMark[0]));
+	}
+
+	Mantle_CreateAnims(Hunk_AllocXAnimServer);
+
+	if ( !restart )
+	{
+		// RF, init the anim scripting
+		Com_Memset(&level_bgs.animData.animScriptData, 0, sizeof(level_bgs.animData.animScriptData));
+		level_bgs.animData.animScriptData.soundAlias = Com_FindSoundAlias;
+		level_bgs.animData.animScriptData.playSoundAlias = G_AnimScriptSound;
+		GScr_LoadScripts();
+		BG_LoadAnim();
+		G_LoadAnimTreeInstances();
+	}
+
+	GScr_LoadConsts();
+
+	// DHM - Nerve :: GT_WOLF checks the current value of
+	SV_GetConfigstring(CS_MULTI_MAPWINNER, cs, sizeof(cs));
+	Info_SetValueForKey(cs, "winner", "0");
+	SV_SetConfigstring(CS_MULTI_MAPWINNER, cs);
+
+	// initialize all entities for this game
+	memset( g_entities, 0, MAX_GENTITIES * sizeof( g_entities[0] ) );
+	level.gentities = g_entities;
+
+	// initialize all clients for this game
+	level.maxclients = g_maxclients->current.integer;
+	memset( g_clients, 0, MAX_CLIENTS * sizeof( g_clients[0] ) );
+	level.clients = g_clients;
+
+	// set client fields on player ents
+	for ( i = 0 ; i < level.maxclients ; i++ )
+	{
+		g_entities[i].client = level.clients + i;
+	}
+
+	// always leave room for the max number of clients,
+	// even if they aren't all used, so numbers inside that
+	// range are NEVER anything but clients
+	level.num_entities = MAX_CLIENTS + MAX_CLIENT_CORPSES;
+
+	level.firstFreeEnt = 0;
+	level.lastFreeEnt = 0;
+
+	// let the server system know where the entites are
+	SV_LocateGameData( level.gentities, level.num_entities, sizeof( gentity_t ),
+	                   &level.clients[0].ps, sizeof( level.clients[0] ) );
+
+	G_ParseHitLocDmgTable();
+
+	G_InitTurrets();
+
+	G_SpawnEntitiesFromString();
+
+	G_setfog("0");
+
+	G_InitObjectives();
+
+	Scr_FreeEntityList();
+
+	Com_Printf("-----------------------------------\n");
+
+	Scr_InitSystem();
+
+	Scr_SetLoading(true);
+
+	Scr_AllocGameVariable();
+
+	G_LoadStructs();
+
+	Scr_LoadGameType();
+
+	Scr_LoadLevel();
+
+	Scr_StartupGameType();
+
+	for ( i = 0; i < MAX_CLIENT_CORPSES; i++ )
+	{
+		g_scr_data.playerCorpseInfo[i].entnum = -1;
+	}
+
+	level.initializing = qfalse;
+
+	SaveRegisteredWeapons();
+	SaveRegisteredItems();
+}
+
+/*
+============
+G_FreeAnimTreeInstances
+============
+*/
+void G_FreeAnimTreeInstances( void )
+{
+	int i;
+
+	for ( i = 0; i < MAX_CLIENTS; i++ )
+	{
+		if ( level_bgs.clientinfo[i].pXAnimTree == NULL )
+		{
+			continue;
+		}
+
+		XAnimFreeTree(level_bgs.clientinfo[i].pXAnimTree, NULL);
+		level_bgs.clientinfo[i].pXAnimTree = NULL;
+	}
+
+	for ( i = 0; i < MAX_CLIENT_CORPSES; i++ )
+	{
+		if ( g_scr_data.playerCorpseInfo[i].tree == NULL )
+		{
+			continue;
+		}
+
+		XAnimFreeTree(g_scr_data.playerCorpseInfo[i].tree, NULL);
+		g_scr_data.playerCorpseInfo[i].tree = NULL;
+	}
+}
+
+/*
+============
+G_LoadAnimTreeInstances
+============
+*/
+void G_LoadAnimTreeInstances( void )
+{
+	int i;
+	XAnim *anims;
+
+	anims = level_bgs.animData.generic_human.tree.anims;
+	assert(anims);
+
+	for ( i = 0; i < MAX_CLIENTS; i++ )
+	{
+		level_bgs.clientinfo[i].pXAnimTree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
+	}
+
+	for ( i = 0; i < MAX_CLIENT_CORPSES; i++ )
+	{
+		g_scr_data.playerCorpseInfo[i].tree = XAnimCreateTree(anims, Hunk_AllocXAnimServer);
+	}
+}
+
+/*
+============
+G_CreateDObj
+============
+*/
+void G_CreateDObj( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree *tree, int handle )
+{
+	Com_ServerDObjCreate(dobjModels, numModels, tree, handle);
+}
+
+/*
+============
+G_RunFrameForEntity
+============
+*/
+void G_RunFrameForEntity( gentity_t *ent )
+{
+	assert(ent->r.inuse);
+
+	if ( ent->processedFrame == level.framenum )
+	{
+		return;
+	}
+
+	ent->processedFrame = level.framenum;
+
+	// check EF_NODRAW status for non-clients
+	if ( !ent->client )
+	{
+		if ( ent->flags & FL_NODRAW )
+		{
+			ent->s.eFlags |= EF_NODRAW;
+		}
+		else
+		{
+			ent->s.eFlags &= ~EF_NODRAW;
+		}
+	}
+
+	//assert(ent->r.maxs[0] >= ent->r.mins[0]);
+	//assert(ent->r.maxs[1] >= ent->r.mins[2]);
+	//assert(ent->r.maxs[2] >= ent->r.mins[2]);
+
+	// clear events that are too old
+	if ( ent->s.eFlags == EF_UNKNOWN )
+	{
+		if ( level.time > ent->s.time2 )
+		{
+			G_FreeEntity(ent);
+			return;
+		}
+	}
+	if ( level.time - ent->eventTime > 300 )
+	{
+		if ( ent->freeAfterEvent )
+		{
+			// tempEntities or dropped items completely go away after their event
+			G_FreeEntity( ent );
+			return;
+		}
+		if ( ent->unlinkAfterEvent )
+		{
+			// items that will respawn will hide themselves after their pickup event
+			ent->unlinkAfterEvent = qfalse;
+			SV_UnlinkEntity( ent );
+		}
+	}
+
+	// temporary entities don't think
+	if ( ent->freeAfterEvent )
+	{
+		return;
+	}
+
+	if ( ent->s.eType == ET_MISSILE )
+	{
+		G_RunMissile(ent);
+		return;
+	}
+
+	if ( ent->s.eType == ET_ITEM )
+	{
+		if ( ent->tagInfo )
+		{
+			G_GeneralLink(ent);
+			G_RunThink(ent);
+			return;
+		}
+
+		G_RunItem(ent);
+		return;
+	}
+
+	if ( ent->s.eType == ET_PLAYER_CORPSE )
+	{
+		G_RunCorpse(ent);
+		return;
+	}
+
+	if ( ent->physicsObject )
+	{
+		G_RunItem(ent);
+		return;
+	}
+
+	if ( ent->s.eType == ET_SCRIPTMOVER )
+	{
+		G_RunMover(ent);
+		return;
+	}
+
+	if ( ent->client )
+	{
+		G_RunClient(ent);
+		return;
+	}
+
+	if ( ent->s.eType == ET_GENERAL )
+	{
+		if ( ent->tagInfo )
+		{
+			G_GeneralLink(ent);
+		}
+	}
+
+	G_RunThink( ent );
+}
+
+/*
+=================
+G_RegisterDvars
+=================
+*/
 void G_RegisterDvars()
 {
-	g_cheats = Dvar_RegisterBool("sv_cheats", 0, DVAR_CHANGEABLE_RESET);
+	// don't override the cheat state set by the system
+	g_cheats = Dvar_RegisterBool("sv_cheats", false, DVAR_CHANGEABLE_RESET);
+
+	// noset vars
 	Dvar_RegisterString("gamename", GAMEVERSION, DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	Dvar_RegisterString("gamedate", __DATE__, DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	Dvar_RegisterString("sv_mapname", "", DVAR_SERVERINFO | DVAR_ROM | DVAR_CHANGEABLE_RESET);
+
+	// latched vars
 	g_gametype = Dvar_RegisterString("g_gametype", "dm", DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
-	g_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 64, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
-	g_synchronousClients = Dvar_RegisterBool("g_synchronousClients", 0, DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
+	g_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, MAX_CLIENTS, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+
+	// JPW NERVE multiplayer stuffs
+	g_synchronousClients = Dvar_RegisterBool("g_synchronousClients", false, DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET);
 	g_log = Dvar_RegisterString("g_log", "games_mp.log", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_logSync = Dvar_RegisterBool("g_logSync", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_logSync = Dvar_RegisterBool("g_logSync", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_password = Dvar_RegisterString("g_password", "", DVAR_CHANGEABLE_RESET);
 	g_banIPs = Dvar_RegisterString("g_banIPs", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+
 	if ( g_dedicated->current.integer )
+	{
 		Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
-	g_speed = Dvar_RegisterInt("g_speed", 190, 0x80000000, 0x7FFFFFFF, DVAR_CHANGEABLE_RESET);
-	g_gravity = Dvar_RegisterFloat("g_gravity", 800.0, 1.0, 3.4028235e38, DVAR_CHANGEABLE_RESET);
-	g_knockback = Dvar_RegisterFloat("g_knockback", 1000.0, -3.4028235e38, 3.4028235e38, DVAR_CHANGEABLE_RESET);
-	g_weaponAmmoPools = Dvar_RegisterBool("g_weaponAmmoPools", 0, DVAR_CHANGEABLE_RESET);
+	}
+
+	g_speed = Dvar_RegisterInt("g_speed", 190, INT_MIN, INT_MAX, DVAR_CHANGEABLE_RESET);
+	g_gravity = Dvar_RegisterFloat("g_gravity", DEFAULT_GRAVITY, 1, FLT_MAX, DVAR_CHANGEABLE_RESET);
+	g_knockback = Dvar_RegisterFloat("g_knockback", 1000, -FLT_MAX, FLT_MAX, DVAR_CHANGEABLE_RESET);
+
+	g_weaponAmmoPools = Dvar_RegisterBool("g_weaponAmmoPools", false, DVAR_CHANGEABLE_RESET);
 	g_maxDroppedWeapons = Dvar_RegisterInt("g_maxDroppedWeapons", 16, 1, 32, DVAR_CHANGEABLE_RESET);
-	g_inactivity = Dvar_RegisterInt("g_inactivity", 0, 0, 0x7FFFFFFF, DVAR_CHANGEABLE_RESET);
-	g_debugDamage = Dvar_RegisterBool("g_debugDamage", 0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
+	g_inactivity = Dvar_RegisterInt("g_inactivity", 0, 0, INT_MAX, DVAR_CHANGEABLE_RESET);
+
+	g_debugDamage = Dvar_RegisterBool("g_debugDamage", false, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	g_debugBullets = Dvar_RegisterInt("g_debugBullets", 0, -3, 6, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
 	g_motd = Dvar_RegisterString("g_motd", "", DVAR_CHANGEABLE_RESET);
+
 	g_playerCollisionEjectSpeed = Dvar_RegisterInt("g_playerCollisionEjectSpeed", 25, 0, 32000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_dropForwardSpeed = Dvar_RegisterFloat("g_dropForwardSpeed", 10.0, 0.0, 1000.0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_dropUpSpeedBase = Dvar_RegisterFloat("g_dropUpSpeedBase", 10.0, 0.0, 1000.0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_dropUpSpeedRand = Dvar_RegisterFloat("g_dropUpSpeedRand", 5.0, 0.0, 1000.0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_clonePlayerMaxVelocity = Dvar_RegisterFloat("g_clonePlayerMaxVelocity", 80.0, 0.0, 3.4028235e38, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	voice_global = Dvar_RegisterBool("voice_global", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	voice_localEcho = Dvar_RegisterBool("voice_localEcho", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	voice_deadChat = Dvar_RegisterBool("voice_deadChat", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_allowVote = Dvar_RegisterBool("g_allowVote", 1, DVAR_CHANGEABLE_RESET);
-	g_listEntity = Dvar_RegisterBool("g_listEntity", 0, DVAR_CHANGEABLE_RESET);
-	g_deadChat = Dvar_RegisterBool("g_deadChat", 0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_dropForwardSpeed = Dvar_RegisterFloat("g_dropForwardSpeed", 10, 0, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_dropUpSpeedBase = Dvar_RegisterFloat("g_dropUpSpeedBase", 10, 0, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_dropUpSpeedRand = Dvar_RegisterFloat("g_dropUpSpeedRand", 5, 0, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_clonePlayerMaxVelocity = Dvar_RegisterFloat("g_clonePlayerMaxVelocity", 80, 0, FLT_MAX, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+
+	voice_global = Dvar_RegisterBool("voice_global", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	voice_localEcho = Dvar_RegisterBool("voice_localEcho", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	voice_deadChat = Dvar_RegisterBool("voice_deadChat", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+
+	g_allowVote = Dvar_RegisterBool("g_allowVote", true, DVAR_CHANGEABLE_RESET);
+	g_listEntity = Dvar_RegisterBool("g_listEntity", false, DVAR_CHANGEABLE_RESET);
+
+	g_deadChat = Dvar_RegisterBool("g_deadChat", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_voiceChatTalkingDuration = Dvar_RegisterInt("g_voiceChatTalkingDuration", 500, 0, 10000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+
 	g_ScoresBanner_Allies = Dvar_RegisterString("g_ScoresBanner_Allies", "mpflag_american", DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	g_ScoresBanner_Axis = Dvar_RegisterString("g_ScoresBanner_Axis", "mpflag_german", DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	g_ScoresBanner_None = Dvar_RegisterString("g_ScoresBanner_None", "mpflag_none", DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	g_ScoresBanner_Spectators = Dvar_RegisterString("g_ScoresBanner_Spectators", "mpflag_spectator", DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+
 	g_TeamName_Allies = Dvar_RegisterString("g_TeamName_Allies", "GAME_ALLIES", DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	g_TeamName_Axis = Dvar_RegisterString("g_TeamName_Axis", "GAME_AXIS", DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+
 	g_TeamColor_Allies = Dvar_RegisterColor("g_TeamColor_Allies", 0.5, 0.5, 1.0, 1.0, DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	g_TeamColor_Axis = Dvar_RegisterColor("g_TeamColor_Axis", 1.0, 0.5, 0.5, 1.0, DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	g_smoothClients = Dvar_RegisterBool("g_smoothClients", 1, DVAR_CHANGEABLE_RESET);
-	g_antilag = Dvar_RegisterBool("g_antilag", 1, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
-	g_oldVoting = Dvar_RegisterBool("g_oldVoting", 1, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_voteAbstainWeight = Dvar_RegisterFloat("g_voteAbstainWeight", 0.5, 0.0, 1.0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
-	g_no_script_spam = Dvar_RegisterBool("g_no_script_spam", 0, DVAR_CHANGEABLE_RESET);
-	g_debugLocDamage = Dvar_RegisterBool("g_debugLocDamage", 0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	g_friendlyfireDist = Dvar_RegisterFloat("g_friendlyfireDist", 256.0, 0.0, 15000.0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	g_friendlyNameDist = Dvar_RegisterFloat("g_friendlyNameDist", 15000.0, 0.0, 15000.0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	player_meleeRange = Dvar_RegisterFloat("player_meleeRange", 64.0, 0.0, 1000.0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	player_meleeWidth = Dvar_RegisterFloat("player_meleeWidth", 10.0, 0.0, 1000.0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	player_meleeHeight = Dvar_RegisterFloat("player_meleeHeight", 10.0, 0.0, 1000.0, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	g_dumpAnims = Dvar_RegisterInt("g_dumpAnims", -1, -1, 1023, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	g_useholdtime = Dvar_RegisterInt("g_useholdtime", 0, 0, 0x7FFFFFFF, DVAR_CHANGEABLE_RESET);
+
+	g_smoothClients = Dvar_RegisterBool("g_smoothClients", true, DVAR_CHANGEABLE_RESET);
+	g_antilag = Dvar_RegisterBool("g_antilag", true, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+
+	g_oldVoting = Dvar_RegisterBool("g_oldVoting", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	g_voteAbstainWeight = Dvar_RegisterFloat("g_voteAbstainWeight", 0.5, 0, 1.0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+
+	g_no_script_spam = Dvar_RegisterBool("g_no_script_spam", false, DVAR_CHANGEABLE_RESET);
+	g_debugLocDamage = Dvar_RegisterBool("g_debugLocDamage", false, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
+	g_friendlyfireDist = Dvar_RegisterFloat("g_friendlyfireDist", 256, 0, 15000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	g_friendlyNameDist = Dvar_RegisterFloat("g_friendlyNameDist", 15000, 0, 15000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
+	player_meleeRange = Dvar_RegisterFloat("player_meleeRange", 64, 0, 1000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	player_meleeWidth = Dvar_RegisterFloat("player_meleeWidth", 10, 0, 1000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+	player_meleeHeight = Dvar_RegisterFloat("player_meleeHeight", 10, 0, 1000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
+	g_dumpAnims = Dvar_RegisterInt("g_dumpAnims", -1, -1, ENTITYNUM_NONE, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
+	g_useholdtime = Dvar_RegisterInt("g_useholdtime", 0, 0, INT_MAX, DVAR_CHANGEABLE_RESET);
 	g_useholdspawndelay = Dvar_RegisterInt("g_useholdspawndelay", 1, 0, 10, DVAR_ARCHIVE | DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
 	g_mantleBlockTimeBuffer = Dvar_RegisterInt("g_mantleBlockTimeBuffer", 500, 0, 60000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
+
 	BG_RegisterDvars();
 }

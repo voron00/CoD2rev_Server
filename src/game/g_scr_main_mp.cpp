@@ -216,6 +216,11 @@ scr_method_t methods[] =
 	{ "releaseclaimedtrigger", GScr_ReleaseClaimedTrigger, 0, },
 };
 
+void Scr_LocalizationError(int iParm, const char *pszErrorMessage)
+{
+	Com_Error(ERR_LOCALIZATION, pszErrorMessage);
+}
+
 gentity_t* GetEntity(scr_entref_t entRef)
 {
 	if ( entRef.classnum == CLASS_NUM_ENTITY )

@@ -14,22 +14,6 @@ qboolean OnSameTeam(gentity_s *ent1, gentity_s *ent2)
 	return 0;
 }
 
-void G_UpdateTeamScoresForIntermission()
-{
-	int i;
-
-	if ( level.bUpdateScoresForIntermission )
-	{
-		for ( i = 0; i < level.maxclients; ++i )
-		{
-			if ( level.clients[i].sess.connected == CON_CONNECTED && level.clients[i].ps.pm_type == PM_INTERMISSION )
-				DeathmatchScoreboardMessage(&g_entities[i]);
-		}
-
-		level.bUpdateScoresForIntermission = 0;
-	}
-}
-
 void TeamplayInfoMessage(gentity_s *ent)
 {
 	trace_t trace;
