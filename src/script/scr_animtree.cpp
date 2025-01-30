@@ -518,7 +518,7 @@ bool Scr_LoadAnimTreeInternal(const char *filename, unsigned int parentNode, uns
 	char *buffer;
 	char extFilename[64];
 
-	sprintf(extFilename, "animtrees/%s.atr", filename);
+	snprintf(extFilename, sizeof(extFilename), "animtrees/%s.atr", filename);
 	sourceBuf = scrParserPub.sourceBuf;
 	buffer = Scr_AddSourceBuffer(0, extFilename, 0, 1);
 
