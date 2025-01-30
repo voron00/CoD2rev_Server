@@ -3131,7 +3131,7 @@ void Scr_AddFields(const char *path, const char *extension)
 
 	for ( i = 0; i < numfields; ++i )
 	{
-		sprintf(s, "%s/%s", path, fields[i]);
+		snprintf(s, sizeof(s), "%s/%s", path, fields[i]);
 		Scr_AddFieldsForFile(s);
 	}
 

@@ -71,7 +71,7 @@ bool G_ParseWeaponAccurayGraphInternal(WeaponDef *weaponDef, const char *dirName
 	if ( !graphName[0] )
 		return 1;
 
-	sprintf(src, "accuracy/%s/%s", dirName, graphName);
+	snprintf(src, sizeof(src), "accuracy/%s/%s", dirName, graphName);
 	len = FS_FOpenFileByMode(src, &f, FS_READ);
 
 	if ( len >= 0 )

@@ -1002,7 +1002,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 		}
 		else
 		{
-			sprintf(ret, "error\n%s", r);
+			snprintf(ret, sizeof(ret), "error\n%s", r);
 			NET_OutOfBandPrint(NS_SERVER, svs.challenges[i].adr, ret);
 		}
 
@@ -1579,8 +1579,9 @@ gentity_t *SV_AddTestClient()
 		return NULL;
 	}
 
-	sprintf(
+	snprintf(
 	    userinfo,
+		sizeof(userinfo),
 	    "connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\"
 	    "bot%d\\password\\%s\\protocol\\%d\"",
 	    botport,

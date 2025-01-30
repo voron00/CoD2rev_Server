@@ -791,7 +791,7 @@ static void HudElem_SetEnumString( game_hudelem_t *hud, const game_hudelem_field
 		}
 	}
 
-	sprintf(errormsg, "\"%s\" is not a valid value for hudelem field \"%s\"\nShould be one of:", selectedName, f->name);
+	snprintf(errormsg, sizeof(errormsg), "\"%s\" is not a valid value for hudelem field \"%s\"\nShould be one of:", selectedName, f->name);
 
 	for ( nameIndex = 0; nameIndex < nameCount; nameIndex++ )
 	{
