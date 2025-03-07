@@ -1941,8 +1941,9 @@ int yyparse()
 	/* Number of tokens to shift before error messages enabled.  */
 	int yyerrorstatus;
 
+#define YYINITDEPTH 200 + sizeof(stype_t)
 	/* The semantic value stack.  */
-	stype_t yyvsa[200]; // YYINITDEPTH
+	stype_t yyvsa[YYINITDEPTH];
 	stype_t *yyvsp;
 	stype_t *yyvs;
 
@@ -1954,7 +1955,7 @@ int yyparse()
 	to reallocate them elsewhere.  */
 
 	/* The state stack.  */
-	short yyssa[200]; // YYINITDEPTH
+	short yyssa[YYINITDEPTH];
 	short *yyss;
 	short *yyssp;
 
@@ -1981,7 +1982,7 @@ int yyparse()
 	yytoken = 0;
 	yyss = yyssa;
 	yyvs = yyvsa;
-	yystacksize = 200; // YYINITDEPTH
+	yystacksize = YYINITDEPTH;
 
 	// YYDPRINTF ((stderr, "Starting parse\n"));
 
