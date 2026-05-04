@@ -185,7 +185,7 @@ void G_ParseHitLocDmgTable()
 		g_fHitLocDamageMult[i] = 1.0f;
 
 		pFieldList[i].szName = g_HitLocNames[i];
-		pFieldList[i].iOffset = i * sizeof( intptr_t );
+		pFieldList[i].iOffset = i * sizeof( g_fHitLocDamageMult[0] );
 		pFieldList[i].iFieldType = CSPFT_FLOAT;
 
 		g_HitLocConstNames[i] = Scr_AllocString(g_HitLocNames[i]);

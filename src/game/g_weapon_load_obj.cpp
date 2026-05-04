@@ -173,8 +173,8 @@ bool G_ParseWeaponAccurayGraphs( WeaponDef *weaponDef )
 
 		if ( accuracyGraphKnotCount > 0 )
 		{
-			weaponDef->accuracyGraphKnots[weaponType] = (float (*)[2])Hunk_AllocLowAlignInternal( sizeof( weaponDef->accuracyGraphKnots ) * accuracyGraphKnotCount, 4 );
-			memcpy(weaponDef->accuracyGraphKnots[weaponType], accuracyGraphKnots, sizeof( weaponDef->accuracyGraphKnots ) * accuracyGraphKnotCount);
+			weaponDef->accuracyGraphKnots[weaponType] = (float (*)[2])Hunk_AllocLowAlignInternal( sizeof( accuracyGraphKnots[0] ) * accuracyGraphKnotCount, 4 );
+			memcpy(weaponDef->accuracyGraphKnots[weaponType], accuracyGraphKnots, sizeof( accuracyGraphKnots[0] ) * accuracyGraphKnotCount);
 			weaponDef->accuracyGraphKnotCount[weaponType] = accuracyGraphKnotCount;
 		}
 	}

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include <math.h>
 
 #include "com_math.h"
@@ -28,12 +30,16 @@
 #ifdef NDEBUG
 #ifdef _M_IX86
 #define	CPUSTRING	"win-x86"
+#elif defined _M_X64
+#define	CPUSTRING	"win-x64"
 #elif defined _M_ALPHA
 #define	CPUSTRING	"win-AXP"
 #endif
 #else
 #ifdef _M_IX86
 #define	CPUSTRING	"win-x86"
+#elif defined _M_X64
+#define	CPUSTRING	"win-x64"
 #elif defined _M_ALPHA
 #define	CPUSTRING	"win-AXP"
 #endif
@@ -110,6 +116,8 @@
 
 #ifdef __i386__
 #define	CPUSTRING	"linux-i386"
+#elif defined __x86_64__
+#define	CPUSTRING	"linux-x64"
 #elif defined __axp__
 #define	CPUSTRING	"linux-alpha"
 #else
@@ -451,7 +459,7 @@ struct infoParm_t
 struct cspField_t
 {
 	const char *szName;
-	int iOffset;
+	ptrdiff_t iOffset;
 	int iFieldType;
 };
 

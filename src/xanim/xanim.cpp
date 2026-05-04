@@ -20,7 +20,7 @@ void *Hunk_AllocXAnimTreePrecache(int size)
 
 int XAnimTreeSize(int size)
 {
-	return 5 * size + 9;
+	return offsetof(XAnimTree_s, infoArray) + sizeof(uint16_t) * size * 2 + sizeof(byte) * (size + 1);
 }
 
 void XAnimFreeTree(XAnimTree_s *tree, void (*Free)(void *, int))
@@ -80,8 +80,10 @@ XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int))
 	char *dest;
 	XAnim_s *newAnim;
 
-	newAnim = (XAnim_s *)Alloc(sizeof(XAnimEntry) * size + sizeof(XAnimTree_s));
+	newAnim = (XAnim_s *)Alloc(offsetof(XAnim_s, entries) + sizeof(XAnimEntry) * size);
 	newAnim->size = size;
+	newAnim->debugName = 0;
+	newAnim->debugAnimNames = 0;
 
 	if ( g_anim_developer )
 	{
@@ -89,7 +91,7 @@ XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int))
 		dest = (char *)Z_MallocInternal(len + 1);
 		strcpy(dest, debugName);
 		newAnim->debugName = dest;
-		newAnim->debugAnimNames = (const char **)Z_MallocInternal(sizeof(intptr_t) * size);
+		newAnim->debugAnimNames = (const char **)Z_MallocInternal(sizeof(*newAnim->debugAnimNames) * size);
 	}
 
 	if ( Hunk_DataOnHunk(newAnim) )

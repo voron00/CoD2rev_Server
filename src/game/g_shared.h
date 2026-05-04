@@ -499,7 +499,7 @@ struct gclient_s
 static_assert((sizeof(gclient_t) == 0x28A4 || sizeof(gclient_t) == 0x28A0), "ERROR: gclient_t size is invalid!");
 #endif
 
-#define CFOFS( x ) ( (intptr_t)&( ( (gclient_t *)0 )->x ) )
+#define CFOFS( x ) offsetof( gclient_t, x )
 extern gclient_t g_clients[];
 
 struct turretInfo_s
@@ -651,7 +651,7 @@ struct gentity_s
 static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
 #endif
 
-#define FOFS( x ) ( (intptr_t)&( ( (gentity_t *)0 )->x ) )
+#define FOFS( x ) offsetof( gentity_t, x )
 extern gentity_t g_entities[];
 
 typedef struct
@@ -737,13 +737,13 @@ typedef struct game_hudelem_s
 	int archived;
 } game_hudelem_t;
 
-#define HEOFS( x ) ( (intptr_t)&( ( (game_hudelem_t *)0 )->x ) )
+#define HEOFS( x ) offsetof( game_hudelem_t, x )
 extern game_hudelem_t g_hudelems[];
 
 typedef struct game_hudelem_field_s
 {
 	const char *name;
-	int ofs;
+	ptrdiff_t ofs;
 	int type;
 	int size;
 	byte shift;
@@ -754,7 +754,7 @@ typedef struct game_hudelem_field_s
 typedef struct game_entity_field_s
 {
 	const char *name;
-	int ofs;
+	ptrdiff_t ofs;
 	int type;
 	void (*callback)(gentity_s *, int);
 } game_entity_field_t;
@@ -762,7 +762,7 @@ typedef struct game_entity_field_s
 typedef struct game_client_field_s
 {
 	const char *name;
-	int ofs;
+	ptrdiff_t ofs;
 	int type;
 	void (*setter)(gclient_s *, const game_client_field_s *);
 	void (*getter)(gclient_s *, const game_client_field_s *);

@@ -1300,7 +1300,7 @@ void MSG_Init( msg_t *buf, byte *data, int length )
 }
 
 // using the stringizing operator to save typing...
-#define PSF( x ) # x,(intptr_t)&( (playerState_t*)0 )->x
+#define PSF( x ) # x,offsetof( playerState_t, x )
 
 netField_t playerStateFields[] =
 {
@@ -1412,7 +1412,7 @@ netField_t playerStateFields[] =
 };
 
 // using the stringizing operator to save typing...
-#define OBJF( x ) # x,(intptr_t)&( (objective_t*)0 )->x
+#define OBJF( x ) # x,offsetof( objective_t, x )
 
 netField_t objectiveFields[] =
 {
@@ -1920,7 +1920,7 @@ void MSG_WriteBigString( msg_t *sb, const char *s )
 }
 
 // using the stringizing operator to save typing...
-#define CSF( x ) # x,(intptr_t)&( (clientState_t*)0 )->x
+#define CSF( x ) # x,offsetof( clientState_t, x )
 
 netField_t clientStateFields[] =
 {
@@ -1967,7 +1967,7 @@ void MSG_WriteDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, q
 }
 
 // using the stringizing operator to save typing...
-#define AEF( x ) # x,(intptr_t)&( (archivedEntity_t*)0 )->x
+#define AEF( x ) # x,offsetof( archivedEntity_t, x )
 
 netField_t archivedEntityFields[] =
 {
@@ -2052,7 +2052,7 @@ void MSG_WriteDeltaArchivedEntity( msg_t *msg, archivedEntity_t *from, archivedE
 }
 
 // using the stringizing operator to save typing...
-#define ESF( x ) # x,(intptr_t)&( (entityState_t*)0 )->x
+#define ESF( x ) # x,offsetof( entityState_t, x )
 
 netField_t entityStateFields[] =
 {
@@ -2499,7 +2499,7 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 }
 
 // using the stringizing operator to save typing...
-#define HEF( x ) # x,(intptr_t)&( (hudelem_t*)0 )->x
+#define HEF( x ) # x,offsetof( hudelem_t, x )
 
 netField_t hudElemFields[] =
 {

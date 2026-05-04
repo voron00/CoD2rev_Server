@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 
 /* GLOBAL.H - RSAREF types and constants */
 
+#include <stdint.h>
 #include <string.h>
 
 /* POINTER defines a generic pointer type */
@@ -37,7 +38,7 @@ typedef unsigned char *POINTER;
 typedef unsigned short int UINT2;
 
 /* UINT4 defines a four byte word */
-typedef unsigned long int UINT4;
+typedef uint32_t UINT4;
 
 
 /* MD4.H - header file for MD4C.C */

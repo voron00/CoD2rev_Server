@@ -456,7 +456,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	int i, len;
 	long hash;
 	int fs_numHeaderLongs;
-	intptr_t        *fs_headerLongs;
+	unsigned int    *fs_headerLongs;
 	char            *namePtr;
 
 	fs_numHeaderLongs = 0;
@@ -486,7 +486,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 
 	buildBuffer = (fileInIwd_t *)Z_Malloc( ( gi.number_entry * sizeof( fileInIwd_t ) ) + len );
 	namePtr = ( (char *) buildBuffer ) + gi.number_entry * sizeof( fileInIwd_t );
-	fs_headerLongs = (intptr_t *)Z_Malloc( gi.number_entry * sizeof( intptr_t ) );
+	fs_headerLongs = (unsigned int *)Z_Malloc( gi.number_entry * sizeof( unsigned int ) );
 
 	// get the hash table size from the number of files in the zip
 	// because lots of custom iwd files have less than 32 or 64 files
@@ -543,8 +543,8 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		unzGoToNextFile( uf );
 	}
 
-	iwd->checksum = Com_BlockChecksum( fs_headerLongs, sizeof( intptr_t ) * fs_numHeaderLongs );
-	iwd->pure_checksum = Com_BlockChecksumKey( fs_headerLongs, sizeof( intptr_t ) * fs_numHeaderLongs, LittleLong( fs_checksumFeed ) );
+	iwd->checksum = Com_BlockChecksum( fs_headerLongs, sizeof( unsigned int ) * fs_numHeaderLongs );
+	iwd->pure_checksum = Com_BlockChecksumKey( fs_headerLongs, sizeof( unsigned int ) * fs_numHeaderLongs, LittleLong( fs_checksumFeed ) );
 	iwd->checksum = LittleLong( iwd->checksum );
 	iwd->pure_checksum = LittleLong( iwd->pure_checksum );
 

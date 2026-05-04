@@ -1453,7 +1453,7 @@ unsigned int Scr_EvalArrayIndex( unsigned int parentId, VariableValue *index )
 	case VAR_INTEGER:
 		if ( IsValidArrayIndex(index->u.pointerValue) )
 			return GetArrayVariable(parentId, index->u.pointerValue);
-		Scr_Error(va("array index %d out of range", index->u.pointerValue));
+		Scr_Error(va("array index %d out of range", static_cast<int>(index->u.pointerValue)));
 		return 0;
 
 	case VAR_STRING:
@@ -3288,7 +3288,7 @@ void ClearArray( unsigned int parentId, VariableValue *value )
 		if ( IsValidArrayIndex(value->u.pointerValue) )
 			SafeRemoveArrayVariable(varValue.u.pointerValue, value->u.stringValue);
 		else
-			Scr_Error(va("array index %d out of range", value->u.pointerValue));
+			Scr_Error(va("array index %d out of range", static_cast<int>(value->u.pointerValue)));
 		break;
 
 	case VAR_STRING:

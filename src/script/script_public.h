@@ -75,7 +75,7 @@ union VariableUnion
 	unsigned int stringValue;
 	const float *vectorValue;
 	const char *codePosValue;
-	unsigned int pointerValue;
+	uintptr_t pointerValue;
 	VariableStackBuffer *stackValue;
 	unsigned int entityOffset;
 };
@@ -968,7 +968,7 @@ void Scr_AddBool(bool value);
 void Scr_AddInt(int value);
 void Scr_AddFloat(float value);
 void Scr_AddAnim(scr_anim_s value);
-void Scr_AddObject(unsigned int id);
+void Scr_AddObject(uintptr_t id);
 void Scr_AddEntityNum(int entnum, int classnum);
 void Scr_AddString(const char *value);
 void Scr_AddIString(const char *value);
@@ -1268,8 +1268,8 @@ void Scr_PrecacheAnimTrees(void *(*Alloc)(int), int user);
 scr_animtree_t Scr_FindAnimTree( const char *filename );
 
 qboolean Scr_IsInScriptMemory(const char *pos);
-void Scr_GetGenericField( byte *b, int type, int ofs );
-void Scr_SetGenericField(byte *data, int fieldtype, int offset);
+void Scr_GetGenericField( byte *b, int type, ptrdiff_t ofs );
+void Scr_SetGenericField(byte *data, int fieldtype, ptrdiff_t offset);
 unsigned int SL_TransferToCanonicalString(unsigned int index);
 unsigned int SL_GetCanonicalString(const char *str);
 

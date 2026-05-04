@@ -7,6 +7,23 @@
 scrCompilePub_t scrCompilePub;
 scrCompileGlob_t scrCompileGlob;
 
+static const size_t CODEPOS_OPERAND_SIZE = sizeof(uint32_t);
+static const size_t SWITCH_CASE_ENTRY_SIZE = sizeof(unsigned int) + CODEPOS_OPERAND_SIZE;
+
+static uint32_t Scr_CodePosToOffset(const char *pos)
+{
+	uintptr_t rawPos = (uintptr_t)pos;
+
+	if ( rawPos == FUNC_SCOPE_LOCAL || rawPos == FUNC_SCOPE_FAR )
+		return (uint32_t)rawPos;
+
+	assert(scrVarPub.programBuffer);
+	assert(pos >= scrVarPub.programBuffer);
+	assert(pos - scrVarPub.programBuffer <= UINT32_MAX);
+
+	return (uint32_t)(pos - scrVarPub.programBuffer);
+}
+
 /*
 ============
 AddRefToValue
@@ -51,12 +68,12 @@ CompareCaseInfo
 */
 int CompareCaseInfo( const void *elem1, const void *elem2 )
 {
-	if ( *(intptr_t *)elem1 > *(intptr_t *)elem2 )
+	if ( *(const unsigned int *)elem1 > *(const unsigned int *)elem2 )
 	{
 		return -1;
 	}
 
-	return *(intptr_t *)elem1 < *(intptr_t *)elem2;
+	return *(const unsigned int *)elem1 < *(const unsigned int *)elem2;
 }
 
 /*
@@ -64,12 +81,27 @@ int CompareCaseInfo( const void *elem1, const void *elem2 )
 GetExpressionCount
 ============
 */
+sval_u* GetExpressionListHead( sval_u exprlist )
+{
+	if ( !exprlist.node || exprlist.node[0].type == ENUM_NOP )
+	{
+		return NULL;
+	}
+
+	if ( exprlist.node && exprlist.node[0].type == ENUM_expression_list )
+	{
+		return exprlist.node[1].node;
+	}
+
+	return exprlist.node[0].node;
+}
+
 int GetExpressionCount( sval_u exprlist )
 {
 	sval_u *node;
 	int expr_count = 0;
 
-	for ( node = exprlist.node[0].node; node; node = node[1].node )
+	for ( node = GetExpressionListHead( exprlist ); node; node = node[1].node )
 	{
 		expr_count++;
 	}
@@ -362,17 +394,19 @@ GetSingleParameter
 */
 sval_u* GetSingleParameter( sval_u exprlist )
 {
-	if ( exprlist.node[0].node == NULL )
+	sval_u *node = GetExpressionListHead( exprlist );
+
+	if ( node == NULL )
 	{
 		return NULL;
 	}
 
-	if ( exprlist.node[0].node[1].node != NULL )
+	if ( node[1].node != NULL )
 	{
 		return NULL;
 	}
 
-	return exprlist.node[0].node;
+	return node;
 }
 
 /*
@@ -385,7 +419,7 @@ int EmitExpressionList( sval_u exprlist, scr_block_s *block )
 	sval_u *node;
 	int expr_count = 0;
 
-	for ( node = exprlist.node[0].node; node; node = node[1].node )
+	for ( node = GetExpressionListHead( exprlist ); node; node = node[1].node )
 	{
 		EmitExpression(node[0].node[0], block);
 		expr_count++;
@@ -639,7 +673,7 @@ void AddExpressionListOpcodePos( sval_u exprlist )
 		return;
 	}
 
-	for ( sval_u *node = exprlist.node[0].node; node; node = node[1].node )
+	for ( sval_u *node = GetExpressionListHead( exprlist ); node; node = node[1].node )
 	{
 		AddOpcodePos( node[0].node[1].sourcePosValue, SOURCE_TYPE_NONE );
 	}
@@ -763,7 +797,7 @@ void ConnectContinueStatements()
 
 	for ( ContinueStatementInfo *statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
 	{
-		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
+		*(unsigned int *)statement->codePos = codePos - statement->nextCodePos;
 	}
 }
 
@@ -779,7 +813,7 @@ void ConnectBreakStatements()
 
 	for ( BreakStatementInfo *statement = scrCompileGlob.currentBreakStatement; statement; statement = statement->next )
 	{
-		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
+		*(unsigned int *)statement->codePos = codePos - statement->nextCodePos;
 	}
 }
 
@@ -1131,8 +1165,8 @@ EmitCodepos
 */
 void EmitCodepos( const char *pos )
 {
-	scrCompileGlob.codePos = (byte *)TempMallocAlign( sizeof( const char * ) );
-	*(const char **)scrCompileGlob.codePos = pos;
+	scrCompileGlob.codePos = (byte *)TempMallocAlign( CODEPOS_OPERAND_SIZE );
+	*(uint32_t *)scrCompileGlob.codePos = Scr_CodePosToOffset(pos);
 }
 
 /*
@@ -1188,6 +1222,29 @@ void EmitInteger( int value )
 {
 	scrCompileGlob.codePos = (byte *)TempMallocAlign( sizeof( int ) );
 	*(int *)scrCompileGlob.codePos = value;
+}
+
+/*
+============
+EmitUnsigned
+============
+*/
+void EmitUnsigned( unsigned int value )
+{
+	scrCompileGlob.codePos = (byte *)TempMallocAlign( sizeof( unsigned int ) );
+	*(unsigned int *)scrCompileGlob.codePos = value;
+}
+
+void EmitUnsignedUnaligned( unsigned int value )
+{
+	scrCompileGlob.codePos = (byte *)TempMalloc( sizeof( unsigned int ) );
+	*(unsigned int *)scrCompileGlob.codePos = value;
+}
+
+void EmitCodeposUnaligned( const char *pos )
+{
+	scrCompileGlob.codePos = (byte *)TempMalloc( CODEPOS_OPERAND_SIZE );
+	*(uint32_t *)scrCompileGlob.codePos = Scr_CodePosToOffset(pos);
 }
 
 /*
@@ -1515,7 +1572,7 @@ void EmitGetInteger( int value, sval_u sourcePos )
 
 	EmitOpcode(OP_GetInteger, 1, CALL_NONE);
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
-	EmitCodepos((const char *)value);
+	EmitInteger(value);
 }
 
 /*
@@ -2030,7 +2087,7 @@ void EmitPostScriptThreadPointer( sval_u expr, int param_count, bool bMethod, sv
 		EmitOpcode(OP_ScriptThreadCallPointer, -param_count, CALL_THREAD);
 
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
-	EmitCodepos((const char *)param_count);
+	EmitUnsigned(param_count);
 }
 
 /*
@@ -2552,7 +2609,7 @@ void EmitContinueStatement( sval_u sourcePos, scr_block_s *block )
 	EmitOpcode(OP_jump, 0, CALL_NONE);
 	AddOpcodePos(sourcePos.stringValue, SOURCE_TYPE_BREAKPOINT);
 
-	EmitCodepos(0);
+	EmitUnsigned(0);
 
 	newContinueStatement = (ContinueStatementInfo *)Hunk_AllocateTempMemoryHighInternal( sizeof( *newContinueStatement ) );
 	newContinueStatement->codePos = (char *)scrCompileGlob.codePos;
@@ -2586,7 +2643,7 @@ void EmitBreakStatement( sval_u sourcePos, scr_block_s *block )
 	EmitOpcode(OP_jump, 0, CALL_NONE);
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
 
-	EmitCodepos(0);
+	EmitUnsigned(0);
 
 	newBreakStatement = (BreakStatementInfo *)Hunk_AllocateTempMemoryHighInternal( sizeof( *newBreakStatement ) );
 	newBreakStatement->codePos = (char *)scrCompileGlob.codePos;
@@ -2771,7 +2828,7 @@ unsigned int SpecifyThreadPosition( unsigned int posId, unsigned int name, unsig
 	if ( pos.type == VAR_UNDEFINED )
 	{
 		pos.type = type;
-		pos.u.intValue = 0;
+		pos.u.codePosValue = NULL;
 
 		SetNewVariableValue(id, &pos);
 		return id;
@@ -2828,12 +2885,12 @@ void LinkThread( unsigned int threadCountId, VariableValue *pos, bool allowFarCa
 			CompileError2(value->codePosValue, "unknown function");
 		}
 
-		if ( !allowFarCall && *(intptr_t *)value->codePosValue == FUNC_SCOPE_FAR )
+		if ( !allowFarCall && *(uint32_t *)value->codePosValue == FUNC_SCOPE_FAR )
 		{
 			CompileError2(value->codePosValue, "unknown function");
 		}
 
-		*(const char **)value->codePosValue = pos->u.codePosValue;
+		*(uint32_t *)value->codePosValue = Scr_CodePosToOffset(pos->u.codePosValue);
 	}
 }
 
@@ -3039,8 +3096,8 @@ void EmitObject( sval_u expr, sval_u sourcePos )
 
 		EmitOpcode(OP_object, 1, CALL_NONE);
 
-		EmitCodepos((const char *)classnum);
-		EmitCodepos((const char *)entnum);
+		EmitUnsigned(classnum);
+		EmitUnsigned(entnum);
 	}
 }
 
@@ -3363,7 +3420,7 @@ bool EmitOrEvalPrimitiveExpressionList( sval_u exprlist, sval_u sourcePos, Varia
 
 	if ( expr_count == 1 )
 	{
-		return EmitOrEvalExpression(exprlist.node[0].node[0].node[0], constValue, block);
+		return EmitOrEvalExpression(GetExpressionListHead( exprlist )[0].node[0], constValue, block);
 	}
 
 	if ( expr_count != 3 )
@@ -3374,7 +3431,7 @@ bool EmitOrEvalPrimitiveExpressionList( sval_u exprlist, sval_u sourcePos, Varia
 
 	success = true;
 
-	for ( node = exprlist.node[0].node; node; node = node[1].node )
+	for ( node = GetExpressionListHead( exprlist ); node; node = node[1].node )
 	{
 		if ( success )
 		{
@@ -3422,7 +3479,7 @@ bool EvalPrimitiveExpressionList( sval_u exprlist, sval_u sourcePos, VariableCom
 
 	if ( expr_count == 1 )
 	{
-		return EvalExpression(exprlist.node[0].node[0].node[0], constValue);
+		return EvalExpression(GetExpressionListHead( exprlist )[0].node[0], constValue);
 	}
 
 	if ( expr_count != 3 )
@@ -3430,7 +3487,7 @@ bool EvalPrimitiveExpressionList( sval_u exprlist, sval_u sourcePos, VariableCom
 		return false;
 	}
 
-	for ( i = 0, node = exprlist.node[0].node; node; node = node[1].node, i++ )
+	for ( i = 0, node = GetExpressionListHead( exprlist ); node; node = node[1].node, i++ )
 	{
 		if ( !EvalExpression(node[0].node[0], &constValue2[i]) )
 		{
@@ -3499,7 +3556,7 @@ void EmitPostScriptThread( sval_u func, int param_count, bool bMethod, sval_u so
 
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT | SOURCE_TYPE_CALL);
 	EmitFunction(func, sourcePos);
-	EmitCodepos((const char *)param_count);
+	EmitUnsigned(param_count);
 }
 
 /*
@@ -3539,7 +3596,7 @@ void EmitAnimation( sval_u anim, sval_u sourcePos )
 {
 	EmitOpcode(OP_GetAnimation, 1, CALL_NONE);
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
-	EmitCodepos((const char *)0xFFFFFFFF);
+	EmitUnsigned(0xFFFFFFFF);
 
 	Scr_EmitAnimation((char *)scrCompileGlob.codePos, anim.stringValue, sourcePos.sourcePosValue);
 	Scr_CompileRemoveRefToString(anim.stringValue);
@@ -5009,7 +5066,7 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 
 	EmitExpression(expr, block);
 	EmitOpcode(OP_switch, -1, CALL_NONE);
-	EmitCodepos(0);
+	EmitUnsigned(0);
 
 	pos1 = (const char *)scrCompileGlob.codePos;
 	nextPos1 = TempMalloc(0);
@@ -5030,26 +5087,26 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 	EmitShort(0);
 
 	pos2 = (const char *)scrCompileGlob.codePos;
-	*(intptr_t *)pos1 = scrCompileGlob.codePos - (byte *)nextPos1;
+	*(unsigned int *)pos1 = scrCompileGlob.codePos - (byte *)nextPos1;
 	pos3 = TempMallocAlignStrict(0);
 
 	for ( num = 0, caseStatement = scrCompileGlob.currentCaseStatement; caseStatement; caseStatement = caseStatement->next, num++ )
 	{
-		EmitCodepos((const char *)caseStatement->name);
-		EmitCodepos(caseStatement->codePos);
+		EmitUnsignedUnaligned(caseStatement->name);
+		EmitCodeposUnaligned(caseStatement->codePos);
 	}
 
 	*(unsigned short *)pos2 = num;
-	qsort(pos3, num, 8, CompareCaseInfo);
+	qsort(pos3, num, SWITCH_CASE_ENTRY_SIZE, CompareCaseInfo);
 
 	// FIXME: This is bad!!
 	while ( num > 1 )
 	{
-		if ( *(intptr_t *)pos3 == *((intptr_t *)pos3 + 2) )
+		if ( *(unsigned int *)pos3 == *(unsigned int *)(pos3 + SWITCH_CASE_ENTRY_SIZE) )
 		{
 			for ( caseStatement = scrCompileGlob.currentCaseStatement; caseStatement; caseStatement = caseStatement->next )
 			{
-				if ( caseStatement->name == *(intptr_t *)pos3 )
+				if ( caseStatement->name == *(unsigned int *)pos3 )
 				{
 					CompileError(caseStatement->sourcePos, "duplicate case expression");
 					return;
@@ -5058,7 +5115,7 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 		}
 
 		--num;
-		pos3 += 8;
+		pos3 += SWITCH_CASE_ENTRY_SIZE;
 	}
 
 	ConnectBreakStatements();
@@ -5102,7 +5159,7 @@ void EmitNotifyStatement( sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u 
 	expr_count = 0;
 	start_node = NULL;
 
-	for ( node = exprlist.node[0].node; node; node = node[1].node )
+	for ( node = GetExpressionListHead( exprlist ); node; node = node[1].node )
 	{
 		start_node = node;
 		EmitExpression(node[0].node[0], block);
@@ -5238,7 +5295,7 @@ void EmitIfElseStatement( sval_u expr, sval_u stmt1, sval_u stmt2, sval_u source
 	if ( lastStatement )
 	{
 		EmitEnd();
-		EmitCodepos(0);
+		EmitUnsigned(0);
 		AddOpcodePos(endSourcePos, SOURCE_TYPE_BREAKPOINT);
 
 		pos2 = NULL;
@@ -5248,7 +5305,7 @@ void EmitIfElseStatement( sval_u expr, sval_u stmt1, sval_u stmt2, sval_u source
 	{
 		EmitOpcode(OP_jump, 0, CALL_NONE);
 		AddOpcodePos(elseSourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
-		EmitCodepos(0);
+		EmitUnsigned(0);
 
 		pos2 = (const char *)scrCompileGlob.codePos;
 		nextPos2 = TempMalloc(0);
@@ -5274,7 +5331,7 @@ void EmitIfElseStatement( sval_u expr, sval_u stmt1, sval_u stmt2, sval_u source
 	if ( !lastStatement )
 	{
 		offset = TempMallocAlignStrict(0) - nextPos2;
-		*(intptr_t *)pos2 = offset;
+		*(unsigned int *)pos2 = offset;
 	}
 
 	Scr_InitFromChildBlocks(childBlocks, childCount, block);

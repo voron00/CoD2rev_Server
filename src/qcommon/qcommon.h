@@ -299,7 +299,7 @@ typedef struct
 typedef struct NetField
 {
 	const char *name;
-	int offset;
+	ptrdiff_t offset;
 	int bits;
 } netField_t;
 
