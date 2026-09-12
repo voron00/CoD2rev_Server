@@ -103,13 +103,13 @@ void CM_LoadStaticModels()
 			if ( token[0] == '}' )
 				break;
 
-			strcpy(key, token);
+			I_strncpyz(key, token, sizeof(key));
 			token = Com_Parse(&ptr);
 
 			if ( !ptr )
 				break;
 
-			strcpy(value, token);
+			I_strncpyz(value, token, sizeof(value));
 
 			if ( !strcasecmp(key, "classname") )
 			{
@@ -118,7 +118,7 @@ void CM_LoadStaticModels()
 			}
 			else if ( !strcasecmp(key, "model") )
 			{
-				strcpy(modelName, value);
+				I_strncpyz(modelName, value, sizeof(modelName));
 			}
 		}
 
@@ -161,13 +161,13 @@ void CM_LoadStaticModels()
 			if ( token[0] == '}' )
 				break;
 
-			strcpy(key, token);
+			I_strncpyz(key, token, sizeof(key));
 			token = Com_Parse(&ptr);
 
 			if ( !ptr )
 				break;
 
-			strcpy(value, token);
+			I_strncpyz(value, token, sizeof(value));
 
 			if ( !strcasecmp(key, "classname") )
 			{
@@ -176,7 +176,7 @@ void CM_LoadStaticModels()
 			}
 			else if ( !strcasecmp(key, "model") )
 			{
-				strcpy(modelName, value);
+				I_strncpyz(modelName, value, sizeof(modelName));
 			}
 			else if ( !strcasecmp(key, "origin") )
 			{
