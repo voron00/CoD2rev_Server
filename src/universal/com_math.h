@@ -38,6 +38,8 @@ extern vec4_t vec4_origin;
 
 #define SnapVector( v ) {v[0] = ( (int)( v[0] ) ); v[1] = ( (int)( v[1] ) ); v[2] = ( (int)( v[2] ) );}
 
+#define lerp(a, b, t) ((a) + (t) * ((b) - (a)))
+
 float Q_fabs( float f );
 int Q_rint( float in );
 float Q_acos( float c );
@@ -583,7 +585,6 @@ void AddPointToBounds(const vec3_t v, vec3_t mins, vec3_t maxs);
 void AddPointToBounds2D(const vec2_t v, vec2_t mins, vec2_t maxs);
 byte DirToByte(const vec3_t dir);
 void ByteToDir(const int b, vec3_t dir);
-float lerp(float from, float to, float t);
 void Rand_Init(int seed);
 float flrand(float min, float max);
 int irand(int min, int max);

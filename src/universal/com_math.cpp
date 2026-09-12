@@ -1105,11 +1105,6 @@ void ByteToDir(const int b, vec3_t dir)
 	}
 }
 
-float lerp(float from, float to, float t)
-{
-	return (to - from) * t + from;
-}
-
 static unsigned int holdrand;
 
 void Rand_Init(int seed)
