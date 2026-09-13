@@ -633,6 +633,32 @@ int Scr_GetInt( unsigned int index )
 
 /*
 ==============
+Scr_GetInt64
+==============
+*/
+long int Scr_GetInt64( unsigned int index )
+{
+	VariableValue *value;
+
+	if ( index >= scrVmPub.outparamcount )
+	{
+		Scr_Error(va("parameter %d does not exist", index + 1));
+		return 0;
+	}
+
+	value = Scr_GetStackValue(index);
+
+	if ( value->type != VAR_INT64 )
+	{
+		scrVarPub.error_index = index + 1;
+		Scr_Error(va("type %s is not an int64", var_typename[value->type]));
+	}
+
+	return value->u.int64Value;
+}
+
+/*
+==============
 Scr_ObjectError
 ==============
 */
@@ -1495,6 +1521,19 @@ void Scr_AddInt( int value )
 
 	scrVmPub.top->type = VAR_INTEGER;
 	scrVmPub.top->u.intValue = value;
+}
+
+/*
+==============
+Scr_AddInt64
+==============
+*/
+void Scr_AddInt64( long int value )
+{
+	IncInParam();
+
+	scrVmPub.top->type = VAR_INT64;
+	scrVmPub.top->u.int64Value = value;
 }
 
 /*

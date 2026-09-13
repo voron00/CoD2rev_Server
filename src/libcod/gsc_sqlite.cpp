@@ -218,10 +218,10 @@ void gsc_async_sqlite_initialize()
 
 void gsc_async_sqlite_create_query()
 {
-	int db;
+	long int db;
 	const char *query;
 
-	if ( ! stackGetParams("is", &db, &query))
+	if ( ! stackGetParams("ls", &db, &query))
 	{
 		stackError("gsc_async_sqlite_create_query() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -323,10 +323,10 @@ void gsc_async_sqlite_create_query()
 
 void gsc_async_sqlite_create_query_nosave()
 {
-	int db;
+	long int db;
 	const char *query;
 
-	if ( ! stackGetParams("is", &db, &query))
+	if ( ! stackGetParams("ls", &db, &query))
 	{
 		stackError("gsc_async_sqlite_create_query_nosave() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -428,10 +428,10 @@ void gsc_async_sqlite_create_query_nosave()
 
 void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 {
-	int db;
+	long int db;
 	const char *query;
 
-	if ( ! stackGetParams("is", &db, &query))
+	if ( ! stackGetParams("ls", &db, &query))
 	{
 		stackError("gsc_async_sqlite_create_entity_query() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -533,10 +533,10 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 
 void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 {
-	int db;
+	long int db;
 	const char *query;
 
-	if ( ! stackGetParams("is", &db, &query))
+	if ( ! stackGetParams("ls", &db, &query))
 	{
 		stackError("gsc_async_sqlite_create_entity_query_nosave() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -845,15 +845,15 @@ void gsc_sqlite_open()
 	else
 		first_sqlite_db_store = newstore;
 
-	stackPushInt((intptr_t)db);
+	stackPushInt64((intptr_t)db);
 }
 
 void gsc_sqlite_query()
 {
-	int db;
+	long int db;
 	const char *query;
 
-	if ( ! stackGetParams("is", &db, &query))
+	if ( ! stackGetParams("ls", &db, &query))
 	{
 		stackError("gsc_sqlite_query() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -910,9 +910,9 @@ void gsc_sqlite_query()
 
 void gsc_sqlite_close()
 {
-	int db;
+	long int db;
 
-	if ( ! stackGetParams("i", &db))
+	if ( ! stackGetParams("l", &db))
 	{
 		stackError("gsc_sqlite_close() argument is undefined or has a wrong type");
 		stackPushUndefined();

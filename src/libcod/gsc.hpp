@@ -65,34 +65,36 @@
 #include "extra/includes.hpp"
 #endif
 
-#define STACK_UNDEFINED 0
-#define STACK_OBJECT 1
-#define STACK_STRING 2
-#define STACK_LOCALIZED_STRING 3
-#define STACK_VECTOR 4
-#define STACK_FLOAT 5
-#define STACK_INT 6
-#define STACK_CODEPOS 7
-#define STACK_PRECODEPOS 8
-#define STACK_FUNCTION 9
-#define STACK_STACK 10
-#define STACK_ANIMATION 11
-#define STACK_DEVELOPER_CODEPOS 12
-#define STACK_INCLUDE_CODEPOS 13
-#define STACK_THREAD_LIST 14
-#define STACK_THREAD_1 15
-#define STACK_THREAD_2 16
-#define STACK_THREAD_3 17
-#define STACK_THREAD_4 18
-#define STACK_STRUCT 19
-#define STACK_REMOVED_ENTITY 20
-#define STACK_ENTITY 21
-#define STACK_ARRAY 22
-#define STACK_REMOVED_THREAD 23
+#define STACK_UNDEFINED VAR_UNDEFINED
+#define STACK_OBJECT VAR_POINTER
+#define STACK_STRING VAR_STRING
+#define STACK_LOCALIZED_STRING VAR_ISTRING
+#define STACK_VECTOR VAR_VECTOR
+#define STACK_FLOAT VAR_FLOAT
+#define STACK_INT VAR_INTEGER
+#define STACK_INT64 VAR_INT64
+#define STACK_CODEPOS VAR_CODEPOS
+#define STACK_PRECODEPOS VAR_PRECODEPOS
+#define STACK_FUNCTION VAR_FUNCTION
+#define STACK_STACK VAR_STACK
+#define STACK_ANIMATION VAR_ANIMATION
+#define STACK_DEVELOPER_CODEPOS VAR_DEVELOPER_CODEPOS
+#define STACK_INCLUDE_CODEPOS VAR_INCLUDE_CODEPOS
+#define STACK_THREAD_LIST VAR_THREAD_LIST
+#define STACK_THREAD_1 VAR_THREAD
+#define STACK_THREAD_2 VAR_NOTIFY_THREAD
+#define STACK_THREAD_3 VAR_TIME_THREAD
+#define STACK_THREAD_4 VAR_CHILD_THREAD
+#define STACK_STRUCT VAR_OBJECT
+#define STACK_REMOVED_ENTITY VAR_DEAD_ENTITY
+#define STACK_ENTITY VAR_ENTITY
+#define STACK_ARRAY VAR_ARRAY
+#define STACK_REMOVED_THREAD VAR_DEAD_THREAD
 
 #define stackPushUndefined Scr_AddUndefined
 #define stackPushBool Scr_AddBool
 #define stackPushInt Scr_AddInt
+#define stackPushInt64 Scr_AddInt64
 #define stackPushFloat Scr_AddFloat
 #define stackPushString Scr_AddString
 #define stackPushVector Scr_AddVector
@@ -112,6 +114,7 @@ int stackGetParams(const char *params, ...);
 void stackError(const char *format, ...);
 
 int stackGetParamInt(int param, int *value);
+int stackGetParamInt64(int param, long int *value);
 int stackGetParamFunction(int param, int *value);
 int stackGetParamString(int param, const char **value);
 int stackGetParamConstString(int param, unsigned int *value);

@@ -68,6 +68,7 @@ struct VariableStackBuffer
 union VariableUnion
 {
 	int intValue;
+	long int int64Value;
 	float floatValue;
 	unsigned int stringValue;
 	const float *vectorValue;
@@ -209,6 +210,7 @@ enum var_type_t
 	VAR_VECTOR,
 	VAR_FLOAT,
 	VAR_INTEGER,
+	VAR_INT64,
 	VAR_CODEPOS,
 	VAR_PRECODEPOS,
 	VAR_FUNCTION,
@@ -893,6 +895,7 @@ inline const char *var_typename[] =
 	"vector",
 	"float",
 	"int",
+	"int64",
 	"codepos",
 	"precodepos",
 	"function",
@@ -921,6 +924,7 @@ unsigned int Scr_GetNumParam();
 void Scr_AddUndefined();
 void Scr_AddBool(bool value);
 void Scr_AddInt(int value);
+void Scr_AddInt64(long int value);
 void Scr_AddFloat(float value);
 void Scr_AddAnim(scr_anim_s value);
 void Scr_AddObject(uintptr_t id);
@@ -937,6 +941,7 @@ scr_entref_t Scr_GetEntityRef( unsigned int index );
 unsigned short Scr_ExecEntThreadNum(int entnum, int classnum, int handle, unsigned int paramcount);
 void Scr_FreeThread(unsigned short handle);
 int Scr_GetInt(unsigned int index);
+long int Scr_GetInt64(unsigned int index);
 float Scr_GetFloat(unsigned int index);
 unsigned int Scr_GetConstString(unsigned int index);
 unsigned int Scr_GetConstStringIncludeNull(unsigned int index);

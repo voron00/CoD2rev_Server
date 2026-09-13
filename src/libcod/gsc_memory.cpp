@@ -18,9 +18,9 @@ void gsc_memory_malloc()
 
 void gsc_memory_free()
 {
-	int memory;
+	long int memory;
 
-	if ( ! stackGetParams("i", &memory))
+	if ( ! stackGetParams("l", &memory))
 	{
 		stackError("gsc_memory_free() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -33,38 +33,40 @@ void gsc_memory_free()
 
 void gsc_memory_int_get()
 {
-	int memory;
+	long int memory;
 
-	if ( ! stackGetParams("i", &memory))
+	if ( ! stackGetParams("l", &memory))
 	{
 		stackError("gsc_memory_int_get() argument is undefined or has a wrong type");
 		stackPushUndefined();
 		return;
 	}
 
-	stackPushInt(*(int*)memory);
+	stackPushInt64(*(int*)memory);
 }
 
 void gsc_memory_int_set()
 {
-	int memory, value;
+	long int memory;
+	int value;
 
-	if ( ! stackGetParams("ii", &memory, &value))
+	if ( ! stackGetParams("li", &memory, &value))
 	{
 		stackError("gsc_memory_int_set() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
 		return;
 	}
 
-	*(int*)memory = value;
+	*(long int*)memory = value;
 	stackPushInt(1);
 }
 
 void gsc_memory_memset()
 {
-	int memory, value, bytes;
+	long int memory;
+	int value, bytes;
 
-	if ( ! stackGetParams("iii", &memory, &value, &bytes))
+	if ( ! stackGetParams("lii", &memory, &value, &bytes))
 	{
 		stackError("gsc_memory_memset() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -78,15 +80,15 @@ void gsc_memory_memset()
 #include <vector>
 struct binarybuffer
 {
-	int address;
+	long int address;
 	int pos;
 	std::vector<char *> *strings;
 };
 
 void gsc_binarybuffer_new()
 {
-	int address;
-	if ( ! stackGetParams("i", &address))
+	long int address;
+	if ( ! stackGetParams("l", &address))
 	{
 		stackError("gsc_binarybuffer_new() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -96,7 +98,7 @@ void gsc_binarybuffer_new()
 	bb->address = address;
 	bb->pos = 0;
 	bb->strings = new std::vector<char *>();
-	stackPushInt((intptr_t)bb);
+	stackPushInt64((long int)bb);
 }
 
 void gsc_binarybuffer_free()
@@ -146,7 +148,7 @@ void gsc_binarybuffer_write()
 		int tmp_int;
 		stackGetParamInt(2, &tmp_int);
 		*(int *)(bb->address + bb->pos) = tmp_int;
-		bb->pos += 4;
+		bb->pos += sizeof(int);
 		break;
 	}
 	case 'f':
@@ -154,7 +156,7 @@ void gsc_binarybuffer_write()
 		float tmp_float;
 		stackGetParamFloat(2, &tmp_float);
 		*(float *)(bb->address + bb->pos) = tmp_float;
-		bb->pos += 4;
+		bb->pos += sizeof(float);
 		break;
 	}
 	case 'd':
@@ -162,7 +164,7 @@ void gsc_binarybuffer_write()
 		float tmp_float;
 		stackGetParamFloat(2, &tmp_float);
 		*(double *)(bb->address + bb->pos) = (double)tmp_float;
-		bb->pos += 8;
+		bb->pos += sizeof(vec2_t);
 		break;
 	}
 	case 's':
@@ -173,7 +175,7 @@ void gsc_binarybuffer_write()
 		strcpy(copy, tmp_str);
 		bb->strings->push_back(copy);
 		*(char **)(bb->address + bb->pos) = copy;
-		bb->pos += 4;
+		bb->pos += sizeof(const char *);
 		break;
 	}
 	case 'c':
@@ -181,7 +183,7 @@ void gsc_binarybuffer_write()
 		const char *tmp_str;
 		stackGetParamString(2, &tmp_str);
 		*(char *)(bb->address + bb->pos) = tmp_str[0];
-		bb->pos += 1;
+		bb->pos += sizeof(char);
 		break;
 	}
 	case 'v':
@@ -191,7 +193,7 @@ void gsc_binarybuffer_write()
 		*(float *)(bb->address + bb->pos + 0) = tmp_vector[0];
 		*(float *)(bb->address + bb->pos + 4) = tmp_vector[1];
 		*(float *)(bb->address + bb->pos + 8) = tmp_vector[2];
-		bb->pos += 12;
+		bb->pos += sizeof(vec3_t);
 		break;
 	}
 	}
@@ -214,7 +216,7 @@ void gsc_binarybuffer_read()
 	{
 		int tmp_int;
 		tmp_int = *(int *)(bb->address + bb->pos);
-		bb->pos += 4;
+		bb->pos += sizeof(int);
 		stackPushInt(tmp_int);
 		return;
 	}
@@ -222,7 +224,7 @@ void gsc_binarybuffer_read()
 	{
 		float tmp_float;
 		tmp_float = *(float *)(bb->address + bb->pos);
-		bb->pos += 4;
+		bb->pos += sizeof(float);
 		stackPushFloat(tmp_float);
 		return;
 	}
@@ -230,7 +232,7 @@ void gsc_binarybuffer_read()
 	{
 		float tmp_float;
 		tmp_float = (float)*(double *)(bb->address + bb->pos);
-		bb->pos += 8;
+		bb->pos += sizeof(vec2_t);
 		stackPushFloat(tmp_float);
 		return;
 	}
@@ -238,7 +240,7 @@ void gsc_binarybuffer_read()
 	{
 		char *tmp_str;
 		tmp_str = *(char **)(bb->address + bb->pos);
-		bb->pos += 4;
+		bb->pos += sizeof(char *);
 		stackPushString(tmp_str);
 		return;
 	}
@@ -247,7 +249,7 @@ void gsc_binarybuffer_read()
 		char tmp_str[2];
 		tmp_str[0] = *(char *)(bb->address + bb->pos);
 		tmp_str[1] = '\0';
-		bb->pos += 1;
+		bb->pos += sizeof(char);
 		stackPushString(tmp_str);
 		return;
 	}
@@ -255,7 +257,7 @@ void gsc_binarybuffer_read()
 	{
 		float *tmp_vector;
 		tmp_vector = (float *)(bb->address + bb->pos + 0);
-		bb->pos += 12;
+		bb->pos += sizeof(vec3_t);
 		stackPushVector(tmp_vector);
 		return;
 	}

@@ -550,14 +550,14 @@ void gsc_utils_fopen()
 		return;
 	}
 
-	stackPushInt((intptr_t)file);
+	stackPushInt64((intptr_t)file);
 }
 
 void gsc_utils_fread()
 {
 	FILE *file;
 
-	if ( ! stackGetParams("i", &file))
+	if ( ! stackGetParams("l", &file))
 	{
 		stackError("gsc_utils_fread() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -589,7 +589,7 @@ void gsc_utils_fwrite()
 	FILE *file;
 	const char *buffer;
 
-	if ( ! stackGetParams("is", &file, &buffer))
+	if ( ! stackGetParams("ls", &file, &buffer))
 	{
 		stackError("gsc_utils_fwrite() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -610,7 +610,7 @@ void gsc_utils_fclose()
 {
 	FILE *file;
 
-	if ( ! stackGetParams("i", &file))
+	if ( ! stackGetParams("l", &file))
 	{
 		stackError("gsc_utils_fclose() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -631,7 +631,7 @@ void gsc_utils_fsize()
 {
 	FILE *file;
 
-	if ( ! stackGetParams("i", &file))
+	if ( ! stackGetParams("l", &file))
 	{
 		stackError("gsc_utils_fsize() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -655,7 +655,7 @@ void gsc_utils_ftime()
 {
 	FILE *file;
 
-	if ( ! stackGetParams("i", &file))
+	if ( ! stackGetParams("l", &file))
 	{
 		stackError("gsc_utils_ftime() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -921,9 +921,9 @@ void gsc_utils_remove_file()
 void gsc_utils_remotecommand()
 {
 	const char *sFrom;
-	int pointerMsg;
+	long int pointerMsg;
 
-	if (!stackGetParams("si", &sFrom, &pointerMsg))
+	if (!stackGetParams("sl", &sFrom, &pointerMsg))
 	{
 		stackError("gsc_utils_remotecommand() one or more arguments is undefined or has a wrong type");
 		return;

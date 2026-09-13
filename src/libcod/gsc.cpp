@@ -12,76 +12,79 @@ const char *stackGetParamTypeAsString(int param)
 
 	switch (var->type)
 	{
-	case 0:
+	case STACK_UNDEFINED:
 		return "UNDEFINED";
 
-	case 1:
+	case STACK_OBJECT:
 		return "OBJECT";
 
-	case 2:
+	case STACK_STRING:
 		return "STRING";
 
-	case 3:
+	case STACK_LOCALIZED_STRING:
 		return "LOCALIZED_STRING";
 
-	case 4:
+	case STACK_VECTOR:
 		return "VECTOR";
 
-	case 5:
+	case STACK_FLOAT:
 		return "FLOAT";
 
-	case 6:
+	case STACK_INT:
 		return "INT";
 
-	case 7:
+	case STACK_INT64:
+		return "INT64";
+
+	case STACK_CODEPOS:
 		return "CODEPOS";
 
-	case 8:
+	case STACK_PRECODEPOS:
 		return "PRECODEPOS";
 
-	case 9:
+	case STACK_FUNCTION:
 		return "FUNCTION";
 
-	case 10:
+	case STACK_STACK:
 		return "STACK";
 
-	case 11:
+	case STACK_ANIMATION:
 		return "ANIMATION";
 
-	case 12:
+	case STACK_DEVELOPER_CODEPOS:
 		return "DEVELOPER_CODEPOS";
 
-	case 13:
+	case STACK_INCLUDE_CODEPOS:
 		return "INCLUDE_CODEPOS";
 
-	case 14:
+	case STACK_THREAD_LIST:
 		return "THREAD_LIST";
 
-	case 15:
+	case STACK_THREAD_1:
 		return "THREAD_1";
 
-	case 16:
+	case STACK_THREAD_2:
 		return "THREAD_2";
 
-	case 17:
+	case STACK_THREAD_3:
 		return "THREAD_3";
 
-	case 18:
+	case STACK_THREAD_4:
 		return "THREAD_4";
 
-	case 19:
+	case STACK_STRUCT:
 		return "STRUCT";
 
-	case 20:
+	case STACK_REMOVED_ENTITY:
 		return "REMOVED_ENTITY";
 
-	case 21:
+	case STACK_ENTITY:
 		return "ENTITY";
 
-	case 22:
+	case STACK_ARRAY:
 		return "ARRAY";
 
-	case 23:
+	case STACK_REMOVED_THREAD:
 		return "REMOVED_THREAD";
 
 	default:
@@ -404,6 +407,17 @@ int stackGetParams(const char *params, ...)
 			break;
 		}
 
+		case 'l':
+		{
+			long int *tmp = va_arg(args, long int *);
+			if ( ! stackGetParamInt64(i, tmp))
+			{
+				Com_DPrintf("\nstackGetParams() Param %i is not an int64\n", i);
+				errors++;
+			}
+			break;
+		}
+
 		case 'v':
 		{
 			float *tmp = va_arg(args, float *);
@@ -473,10 +487,44 @@ int stackGetParamInt(int param, int *value)
 		return 1;
 	}
 
+	if (var->type == STACK_INT64)
+	{
+		*value = var->u.int64Value;
+		return 1;
+	}
+
 	if (var->type != STACK_INT)
 		return 0;
 
 	*value = var->u.intValue;
+
+	return 1;
+}
+
+int stackGetParamInt64(int param, long int *value)
+{
+	if (param >= Scr_GetNumParam())
+		return 0;
+
+	VariableValue *var;
+	var = Scr_GetValue(param);
+
+	if (var->type == STACK_FLOAT)
+	{
+		*value = var->u.floatValue;
+		return 1;
+	}
+
+	if (var->type == STACK_INT)
+	{
+		*value = var->u.intValue;
+		return 1;
+	}
+
+	if (var->type != STACK_INT64)
+		return 0;
+
+	*value = var->u.int64Value;
 
 	return 1;
 }
