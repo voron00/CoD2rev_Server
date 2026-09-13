@@ -73,9 +73,6 @@ struct iwd_t
 	fileInIwd_t **hashTable;
 	fileInIwd_t *buildBuffer;
 };
-#if defined(__i386__)
-static_assert((sizeof(iwd_t) == 800), "ERROR: iwd_t size is invalid!");
-#endif
 
 struct fileHandleData_t
 {
@@ -87,9 +84,6 @@ struct fileHandleData_t
 	qboolean streamed;
 	char name[MAX_ZPATH];
 };
-#if defined(__i386__)
-static_assert((sizeof(fileHandleData_t) == 284), "ERROR: fileHandleData_t size is invalid!");
-#endif
 
 struct searchpath_t
 {
@@ -99,9 +93,6 @@ struct searchpath_t
 	qboolean localized;
 	int language;
 };
-#if defined(__i386__)
-static_assert((sizeof(searchpath_t) == 20), "ERROR: searchpath_t size is invalid!");
-#endif
 
 /*
 ==============

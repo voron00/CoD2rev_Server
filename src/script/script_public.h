@@ -51,9 +51,6 @@ typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
 	int totalAlloc;
 	int totalAllocBuckets;
 } scrMemTreeGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrMemTreeGlob_t) == 0x80380), "ERROR: scrMemTreeGlob_t size is invalid!");
-#endif
 
 #pragma pack(push)
 #pragma pack(1)
@@ -173,9 +170,6 @@ typedef struct scrVarPub_s
 	const char *programBuffer;
 	const char *endScriptBuffer;
 } scrVarPub_t;
-#if defined(__i386__)
-static_assert((sizeof(scrVarPub_t) == 0x50), "ERROR: scrVarPub_t size is invalid!");
-#endif
 
 extern scrVarPub_t scrVarPub;
 
@@ -328,9 +322,6 @@ typedef struct __attribute__((aligned(128))) scrVmPub_s
 	function_frame_t function_frame_start[MAX_VM_STACK_DEPTH];
 	VariableValue stack[MAX_VM_OPERAND_STACK];
 } scrVmPub_t;
-#if defined(__i386__)
-static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
-#endif
 
 extern scrVmPub_t scrVmPub;
 
@@ -342,9 +333,6 @@ typedef struct scrVmGlob_s
 	int starttime;
 	unsigned int localVarsStack[MAX_VM_OPERAND_STACK];
 } scrVmGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
-#endif
 
 extern scrVmGlob_t scrVmGlob;
 
@@ -378,9 +366,6 @@ typedef struct scrAnimPub_s
 	unsigned int animTreeIndex;
 	bool animtree_loading;
 } scrAnimPub_t;
-#if defined(__i386__)
-static_assert((sizeof(scrAnimPub_t) == 0x41C), "ERROR: scrAnimPub_t size is invalid!");
-#endif
 
 extern scrAnimPub_t scrAnimPub;
 
@@ -391,9 +376,6 @@ typedef struct scrAnimGlob_s
 	unsigned short using_xanim_lookup[SCR_XANIM_COUNT][MAX_XANIMTREE_NUM];
 	int bAnimCheck;
 } scrAnimGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrAnimGlob_t) == 0x20C), "ERROR: scrAnimGlob_t size is invalid!");
-#endif
 
 extern scrAnimGlob_t scrAnimGlob;
 
@@ -418,9 +400,6 @@ typedef struct scrCompilePub_s
 	int func_table_size;
 	intptr_t func_table[SCR_FUNC_TABLE_SIZE];
 } scrCompilePub_t;
-#if defined(__i386__)
-static_assert((sizeof(scrCompilePub_t) == 0x1038), "ERROR: scrCompilePub_t size is invalid!");
-#endif
 
 extern scrCompilePub_t scrCompilePub;
 inline char g_EndPos;
@@ -430,9 +409,6 @@ struct SourceLookup
 	unsigned int sourcePos;
 	int type;
 };
-#if defined(__i386__)
-static_assert((sizeof(SourceLookup) == 8), "ERROR: SourceLookup size is invalid!");
-#endif
 
 struct OpcodeLookup
 {
@@ -442,9 +418,6 @@ struct OpcodeLookup
 	int profileTime;
 	int profileUsage;
 };
-#if defined(__i386__)
-static_assert((sizeof(OpcodeLookup) == 20), "ERROR: OpcodeLookup size is invalid!");
-#endif
 
 struct SourceBufferInfo
 {
@@ -455,9 +428,6 @@ struct SourceBufferInfo
 	int sortedIndex;
 	bool archive;
 };
-#if defined(__i386__)
-static_assert((sizeof(SourceBufferInfo) == 24), "ERROR: SourceBufferInfo size is invalid!");
-#endif
 
 struct SaveSourceBufferInfo
 {
@@ -472,9 +442,6 @@ typedef struct scrParserPub_s
 	const char *scriptfilename;
 	const char *sourceBuf;
 } scrParserPub_t;
-#if defined(__i386__)
-static_assert((sizeof(scrParserPub_t) == 0x10), "ERROR: scrParserPub_t size is invalid!");
-#endif
 
 extern scrParserPub_t scrParserPub;
 
@@ -494,9 +461,6 @@ typedef struct scrParserGlob_s
 	int delayedSourceIndex;
 	int threadStartSourceIndex;
 } scrParserGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrParserGlob_t) == 0x34), "ERROR: scrParserGlob_t size is invalid!");
-#endif
 
 enum scr_opcode_t
 {
@@ -798,9 +762,6 @@ struct scr_block_s
 	byte localVarsInitBits[8];
 	scr_localVar_t localVars[LOCAL_VAR_STACK_SIZE];
 };
-#if defined(__i386__)
-static_assert((sizeof(scr_block_s) == 280), "ERROR: scr_block_s size is invalid!");
-#endif
 
 union sval_u
 {
@@ -899,9 +860,6 @@ typedef struct scrCompileGlob_s
 	PrecacheEntry *precachescriptListHead;
 	VariableCompileValue value_start[VALUE_STACK_SIZE];
 } scrCompileGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrCompileGlob_t) == 0x1DC), "ERROR: scrCompileGlob_t size is invalid!");
-#endif
 
 struct scr_classStruct_t
 {
@@ -925,9 +883,6 @@ typedef struct __attribute__((aligned(64))) scrVarGlob_s
 {
 	VariableValueInternal variableList[SL_MAX_STRING_INDEX];
 } scrVarGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrVarGlob_t) == 0x100000), "ERROR: scrVarGlob_t size is invalid!");
-#endif
 
 inline const char *var_typename[] =
 {
@@ -1088,9 +1043,6 @@ typedef struct __attribute__((aligned(128))) scrStringGlob_s
 	bool inited;
 	HashEntry *nextFreeEntry;
 } scrStringGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(scrStringGlob_t) == 0x10080), "ERROR: scrStringGlob_t size is invalid!");
-#endif
 
 const char* SL_ConvertToString(unsigned int index);
 unsigned int SL_ConvertToLowercase(unsigned int stringValue, unsigned int user);

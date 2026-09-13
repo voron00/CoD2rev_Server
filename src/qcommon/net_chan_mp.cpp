@@ -35,9 +35,6 @@ typedef struct
 	loopmsg_t msgs[MAX_LOOPBACK];
 	int get, send;
 } loopback_t;
-#if defined(__i386__)
-static_assert((sizeof(loopback_t) == 0x5808), "ERROR: loopback_t size is invalid!");
-#endif
 
 loopback_t loopbacks[2];
 

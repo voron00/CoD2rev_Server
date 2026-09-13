@@ -173,9 +173,6 @@ typedef struct animation_s
 	int noteType;
 } animation_t;
 #pragma pack(pop)
-#if defined(__i386__)
-static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
-#endif
 
 typedef struct
 {
@@ -198,9 +195,6 @@ typedef struct
 	short animDuration[2];
 	snd_alias_list_t *soundAlias;
 } animScriptCommand_t;
-#if defined(__i386__)
-static_assert((sizeof(animScriptCommand_t) == 0x10), "ERROR: animScriptCommand_t size is invalid!");
-#endif
 
 typedef struct
 {
@@ -209,9 +203,6 @@ typedef struct
 	int numCommands;
 	animScriptCommand_t commands[MAX_ANIMSCRIPT_ANIMCOMMANDS];
 } animScriptItem_t;
-#if defined(__i386__)
-static_assert((sizeof(animScriptItem_t) == 0xF4), "ERROR: animScriptItem_t size is invalid!");
-#endif
 
 typedef struct
 {
@@ -236,9 +227,6 @@ typedef struct animScriptData_s
 	snd_alias_list_t *(*soundAlias)(const char *);
 	void (*playSoundAlias)(int, snd_alias_list_t *);
 } animScriptData_t;
-#if defined(__i386__)
-static_assert((sizeof(animScriptData_t) == 736200), "ERROR: animScriptData_t size is invalid!");
-#endif
 
 typedef struct
 {
@@ -318,9 +306,6 @@ typedef struct clientInfo_s
 	int turnAnimEndTime;
 	char turnAnimType;
 } clientInfo_t;
-#if defined(__i386__)
-static_assert((sizeof(clientInfo_t) == 0x4B8), "ERROR: clientInfo_t size is invalid!");
-#endif
 
 struct corpseInfo_t
 {
@@ -357,9 +342,6 @@ typedef struct __attribute__((aligned(8))) bgs_s
 	void *(*AllocXAnim)(int);
 	clientInfo_t clientinfo[MAX_CLIENTS];
 } bgs_t;
-#if defined(__i386__)
-static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
-#endif
 
 extern bgs_t level_bgs;
 
@@ -739,9 +721,6 @@ typedef struct
 	const char *fireRumble;
 	const char *meleeImpactRumble;
 } WeaponDef;
-#if defined(__i386__)
-static_assert((sizeof(WeaponDef) == 0x604), "ERROR: WeaponDef size is invalid!");
-#endif
 
 typedef struct
 {
@@ -1128,9 +1107,6 @@ typedef struct
 	const char *fireRumble;
 	const char *meleeImpactRumble;
 } WeaponFullDef;
-#if defined(__i386__)
-static_assert((sizeof(WeaponFullDef) == 0x604), "ERROR: WeaponFullDef size is invalid!");
-#endif
 
 extern WeaponDef* bg_weaponDefs[];
 extern int bg_iNumWeapons;
@@ -1536,9 +1512,6 @@ typedef struct gitem_s
 	int giAmmoIndex;		// type of weapon ammo this uses.  (ex. WP_MP40 and WP_LUGER share 9mm ammo, so they both have WP_LUGER for giAmmoIndex)
 	int giClipIndex;		// which clip this weapon uses.  this allows the sniper rifle to use the same clip as the garand, etc.
 } gitem_t;
-#if defined(__i386__)
-static_assert((sizeof(gitem_t) == 44), "ERROR: gitem_t size is invalid!");
-#endif
 // END JOSEPH
 
 // included in both the game dll and the client

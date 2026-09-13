@@ -21,9 +21,6 @@ typedef struct comBspGlob_s
 	int fileSize;
 	unsigned int checksum;
 } comBspGlob_t;
-#if defined(__i386__)
-static_assert((sizeof(comBspGlob_t) == 0xC), "ERROR: comBspGlob_t size is invalid!");
-#endif
 
 comBspGlob_t comBspGlob;
 

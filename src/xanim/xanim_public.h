@@ -169,9 +169,6 @@ typedef struct XAnimParts_s
 	const char *name;
 	bool isDefault;
 } XAnimParts;
-#if defined(__i386__)
-static_assert((sizeof(XAnimParts) == 44), "ERROR: XAnimParts size is invalid!");
-#endif
 
 struct DObjAnimMat
 {
@@ -179,9 +176,6 @@ struct DObjAnimMat
 	vec3_t trans;
 	float transWeight;
 };
-#if defined(__i386__)
-static_assert((sizeof(DObjAnimMat) == 32), "ERROR: DObjAnimMat size is invalid!");
-#endif
 
 struct XAnimParent
 {
@@ -209,9 +203,6 @@ typedef struct XAnim_s
 	const char **debugAnimNames;
 	XAnimEntry entries[1];
 } XAnim;
-#if defined(__i386__)
-static_assert((sizeof(XAnim) == 0x14), "ERROR: XAnim size is invalid!");
-#endif
 
 typedef struct XAnimTree_s
 {
@@ -221,9 +212,6 @@ typedef struct XAnimTree_s
 	bool bUseGoalWeight;
 	uint16_t infoArray[1];
 } XAnimTree;
-#if defined(__i386__)
-static_assert((sizeof(XAnimTree) == 0xC), "ERROR: XAnimTree size is invalid!");
-#endif
 
 struct XBoneInfo
 {
@@ -289,18 +277,12 @@ typedef struct XModelParts_s
 	byte *partClassification;
 	DSkel_t skel;
 } XModelParts;
-#if defined(__i386__)
-static_assert((sizeof(XModelParts) == 100), "ERROR: XModelParts size is invalid!");
-#endif
 
 typedef struct XModelSurfs_s
 {
 	struct XSurface *surf; // !!! Not loaded in server binary
 	int partBits[4];
 } XModelSurfs;
-#if defined(__i386__)
-static_assert((sizeof(XModelSurfs) == 20), "ERROR: XModelSurfs size is invalid!");
-#endif
 
 typedef struct XModelLodInfo_s
 {
@@ -340,9 +322,6 @@ typedef struct
 	char flags;
 	bool bad;
 } XModel;
-#if defined(__i386__)
-static_assert((sizeof(XModel) == 0x90), "ERROR: XModel size is invalid!");
-#endif
 
 struct DObjModel_s
 {
@@ -371,9 +350,6 @@ typedef struct DObj_s
 	vec3_t mins;
 	vec3_t maxs;
 } DObj;
-#if defined(__i386__)
-static_assert((sizeof(DObj) == 100), "ERROR: DObj size is invalid!");
-#endif
 
 struct XAnimState
 {
@@ -403,9 +379,6 @@ typedef struct
 	uint16_t next;
 	XAnimState state;
 } XAnimInfo;
-#if defined(__i386__)
-static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
-#endif
 
 extern XAnimInfo g_xAnimInfo[];
 

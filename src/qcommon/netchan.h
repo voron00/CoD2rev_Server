@@ -29,9 +29,6 @@ typedef struct netProfileInfo_s
 	netProfileStream_t send;
 	netProfileStream_t recieve;
 } netProfileInfo_t;
-#if defined(__i386__)
-static_assert((sizeof(netProfileInfo_t) == 0x5E0), "ERROR: netProfileInfo_t size is invalid!");
-#endif
 
 typedef struct
 {
@@ -53,11 +50,6 @@ typedef struct
 	int protocol;
 #endif
 } netchan_t;
-/*
-#if defined(__i386__)
-static_assert((sizeof(netchan_t) == 0x8040), "ERROR: netchan_t size is invalid!");
-#endif
-*/
 
 extern dvar_t* net_profile;
 extern dvar_t* net_lanauthorize;

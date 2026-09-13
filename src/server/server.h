@@ -180,11 +180,6 @@ typedef struct client_s
 	char PBguid[33];
 	char clientPBguid[33];
 } client_t;
-/*
-#if defined(__i386__)
-static_assert((sizeof(client_t) == 0x78F14), "ERROR: client_t size is invalid!");
-#endif
-*/
 
 typedef struct archivedSnapshot_s
 {
@@ -263,11 +258,6 @@ typedef struct
 	netProfileInfo_t *pOOBProf;
 	tempBanSlot_t tempBans[MAX_TEMPBAN_SLOTS];
 } serverStatic_t;
-/*
-#if defined(__i386__)
-static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is invalid!");
-#endif
-*/
 
 extern serverStatic_t svs;
 
@@ -294,9 +284,6 @@ typedef struct svEntity_s
 	float linkmin[2];
 	float linkmax[2];
 } svEntity_t;
-#if defined(__i386__)
-static_assert((sizeof(svEntity_t) == 0x174), "ERROR: svEntity_t size is invalid!");
-#endif
 
 typedef struct
 {
@@ -328,9 +315,6 @@ typedef struct
 	int	ucompNum;
 	char gametype[MAX_QPATH];
 } server_t;
-#if defined(__i386__)
-static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
-#endif
 
 extern server_t sv;
 

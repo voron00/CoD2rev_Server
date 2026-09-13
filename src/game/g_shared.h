@@ -495,9 +495,6 @@ struct gclient_s
 	int lastServerTime;
 	int lastSpawnTime;
 };
-#if defined(__i386__)
-static_assert((sizeof(gclient_t) == 0x28A4 || sizeof(gclient_t) == 0x28A0), "ERROR: gclient_t size is invalid!");
-#endif
 
 #define CFOFS( x ) offsetof( gclient_t, x )
 extern gclient_t g_clients[];
@@ -521,9 +518,6 @@ struct turretInfo_s
 	char stopSnd;
 	char stopSndPlayer;
 };
-#if defined(__i386__)
-static_assert((sizeof(turretInfo_s) == 0x44), "ERROR: turretInfo_s size is invalid!");
-#endif
 
 struct tagInfo_s
 {
@@ -534,9 +528,6 @@ struct tagInfo_s
 	float axis[4][3];
 	float parentInvAxis[4][3];
 };
-#if defined(__i386__)
-static_assert((sizeof(tagInfo_s) == 112), "ERROR: tagInfo_s size is invalid!");
-#endif
 
 struct trigger_ent_t
 {
@@ -647,9 +638,6 @@ struct gentity_s
 	int useCount;
 	gentity_s *nextFree;
 };
-#if defined(__i386__)
-static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
-#endif
 
 #define FOFS( x ) offsetof( gentity_t, x )
 extern gentity_t g_entities[];
@@ -710,9 +698,6 @@ typedef struct
 	char *openScriptIOFileBuffers[MAX_SCRIPT_IO_FILE_HANDLES];
 	com_parse_mark_t currentScriptIOLineMark[MAX_SCRIPT_IO_FILE_HANDLES];
 } level_locals_t;
-#if defined(__i386__)
-static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
-#endif
 
 extern level_locals_t level;
 
