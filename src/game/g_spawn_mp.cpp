@@ -40,6 +40,7 @@ spawn_t spawns[] =
 	{ "script_model", SP_script_model },
 	{ "script_origin", SP_script_origin },
 	{ "script_struct", G_FreeEntity },
+	{ 0, 0 }
 };
 
 #define NUMSPAWNS   ( sizeof( spawns ) / sizeof( spawn_t ) )
