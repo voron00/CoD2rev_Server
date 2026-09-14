@@ -235,7 +235,12 @@ void XModelLoadCollData(const unsigned char **pos, XModel *model, void *(*AllocC
 	}
 }
 
-bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelConfig *config)
+/*
+================
+XModelLoadConfigFile
+================
+*/
+bool XModelLoadConfigFile( const char *name, const unsigned char **pos, XModelConfig *config )
 {
 	short version;
 	int i;
@@ -245,7 +250,7 @@ bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelCon
 	if ( version != XMODEL_VERSION )
 	{
 		Com_Printf("^1ERROR: xmodel '%s' out of date (version %d, expecting %d).\n", name, version, XMODEL_VERSION);
-		return 0;
+		return false;
 	}
 
 	config->flags = *(*pos)++;
@@ -257,7 +262,7 @@ bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelCon
 	config->maxs[1] = XAnim_ReadFloat(pos);
 	config->maxs[2] = XAnim_ReadFloat(pos);
 
-	for ( i = 0; i < 4; ++i )
+	for ( i = 0; i < 4; i++ )
 	{
 		config->entries[i].dist = XAnim_ReadFloat(pos);
 		strcpy(config->entries[i].filename, (const char *)*pos);
@@ -265,31 +270,24 @@ bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelCon
 	}
 
 	config->collLod = XAnim_ReadInt(pos);
-	return 1;
+	return true;
 }
 
-XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
+/*
+================
+XModelLoadFile
+================
+*/
+XModel *XModelLoadFile( const char *name, void *(*Alloc)(int), void *(*AllocColl)(int) )
 {
-	unsigned short **surfNames;
-	size_t len;
-	unsigned short *surfName;
-	int fileSize;
-	int usage;
-	XBoneInfo *bones;
-	vec3_t radius;
-	float *offset;
-	float *maxs;
-	float *mins;
-	int numBones;
-	const char *s;
+	int fileSize, allocSize, i, j;
+	XBoneInfo *boneInfo;
 	byte *buf;
 	char filename[64];
-	int j;
-	int i;
 	int nameLenTotal;
 	char *dest;
 	const unsigned char *pos;
-	int nameLen[4];
+	int lodStringLens[4];
 	XModel *model;
 	XModelConfig config;
 
@@ -301,13 +299,14 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 
 	fileSize = FS_ReadFile(filename, (void **)&buf);
 
-	if ( fileSize <= 0 )
+	if ( fileSize < 0 )
 	{
+		assert(!buf);
 		Com_Printf("^1ERROR: xmodel '%s' not found\n", name);
 		return 0;
 	}
 
-	if ( !fileSize )
+	if ( fileSize == 0 )
 	{
 		Com_Printf("^1ERROR: xmodel '%s' has 0 length\n", name);
 		FS_FreeFile(buf);
@@ -325,10 +324,10 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 
 	nameLenTotal = 0;
 
-	for ( i = 0; i < 4; ++i )
+	for ( i = 0; i < 4; i++ )
 	{
-		nameLen[i] = I_strlen(config.entries[i].filename) + 1;
-		nameLenTotal += nameLen[i];
+		lodStringLens[i] = I_strlen(config.entries[i].filename) + 1;
+		nameLenTotal += lodStringLens[i];
 	}
 
 	model = (XModel *)Alloc(nameLenTotal + sizeof(XModel));
@@ -339,27 +338,26 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	dest = (char *)&model[1];
 	model->numLods = 0;
 
-	for ( i = 0; i < 4; ++i )
+	for ( i = 0; i < 4; i++ )
 	{
 		strcpy(dest, config.entries[i].filename);
 		model->lodInfo[i].filename = dest;
 
-		if ( dest[0] )
+		if ( *dest )
 		{
-			++model->numLods;
+			model->numLods++;
 			model->lodInfo[i].numsurfs = XAnim_ReadShort(&pos);
-			usage = sizeof(short) * model->lodInfo[i].numsurfs;
-			surfNames = &model->lodInfo[i].surfNames;
-			surfNames[0] = (unsigned short *)Alloc(usage);
-			model->memUsage += usage;
 
-			for ( j = 0; j < model->lodInfo[i].numsurfs; ++j )
+			allocSize = sizeof(short) * model->lodInfo[i].numsurfs;
+
+			model->lodInfo[i].surfNames = (unsigned short *)Alloc(allocSize);
+			model->memUsage += allocSize;
+
+			for ( j = 0; j < model->lodInfo[i].numsurfs; j++ )
 			{
-				s = (const char *)pos;
-				len = strlen((const char *)pos);
-				pos += len + 1;
-				surfName = model->lodInfo[i].surfNames;
-				surfName[j] = SL_GetString_(s, 0);
+				const char *s = (const char *)pos;
+				pos += strlen((const char *)pos) + 1;
+				model->lodInfo[i].surfNames[j] = SL_GetString_(s, 0);
 			}
 		}
 		else
@@ -367,10 +365,11 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 			model->lodInfo[i].surfNames = 0;
 		}
 
-		model->lodInfo[i].dist = config.mins[257 * i - 772];
-		dest += nameLen[i];
+		model->lodInfo[i].dist = config.entries[i].dist;
+		dest += lodStringLens[i];
 	}
 
+	assert(model->numLods);
 	model->parts = XModelPartsLoadFile(model, model->lodInfo[0].filename, Alloc);
 
 	if ( !model->parts )
@@ -380,40 +379,38 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		return 0;
 	}
 
-	numBones = model->parts->numBones;
-	bones = (XBoneInfo *)Alloc(sizeof(XBoneInfo) * numBones);
-	model->memUsage += sizeof(XBoneInfo) * numBones;
+	boneInfo = (XBoneInfo *)Alloc(sizeof(XBoneInfo) * model->parts->numBones);
+	model->memUsage += sizeof(XBoneInfo) * model->parts->numBones;
 
-	for ( i = 0; i < numBones; ++i )
+	for ( i = 0; i < model->parts->numBones; i++ )
 	{
-		mins = bones[i].bounds[0];
+		boneInfo[i].bounds[0][0] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[0][1] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[0][2] = XAnim_ReadFloat(&pos);
 
-		mins[0] = XAnim_ReadFloat(&pos);
-		mins[1] = XAnim_ReadFloat(&pos);
-		mins[2] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[1][0] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[1][1] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[1][2] = XAnim_ReadFloat(&pos);
 
-		maxs = bones[i].bounds[1];
+		boneInfo[i].offset[0] = (boneInfo[i].bounds[0][0] + boneInfo[i].bounds[1][0]) * 0.5;
+		boneInfo[i].offset[1] = (boneInfo[i].bounds[0][1] + boneInfo[i].bounds[1][1]) * 0.5;
+		boneInfo[i].offset[2] = (boneInfo[i].bounds[0][2] + boneInfo[i].bounds[1][2]) * 0.5;
 
-		maxs[0] = XAnim_ReadFloat(&pos);
-		maxs[1] = XAnim_ReadFloat(&pos);
-		maxs[2] = XAnim_ReadFloat(&pos);
-
-		offset = bones[i].offset;
-
-		offset[0] = (mins[0] + maxs[0]) * 0.5;
-		offset[1] = (mins[1] + maxs[1]) * 0.5;
-		offset[2] = (mins[2] + maxs[2]) * 0.5;
-
-		VectorSubtract(maxs, offset, radius);
-
-		bones[i].radiusSquared = VectorLengthSquared(radius);
+		vec3_t r;
+		VectorSubtract(boneInfo[i].bounds[1], boneInfo[i].offset, r);
+		boneInfo[i].radiusSquared = VectorLengthSquared(r);
 	}
 
-	model->boneInfo = bones;
+	model->boneInfo = boneInfo;
+
 	FS_FreeFile(buf);
+
 	VectorCopy(config.mins, model->mins);
 	VectorCopy(config.maxs, model->maxs);
+
 	model->collLod = config.collLod;
+	assert(model->collLod < model->numLods);
+
 	model->flags = config.flags;
 
 	return model;
