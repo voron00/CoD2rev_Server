@@ -1,9 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-
 scrCompilePub_t scrCompilePub;
 scrCompileGlob_t scrCompileGlob;
 
@@ -5847,5 +5844,3 @@ void EmitThreadList( sval_u val )
 
 	assert(!scrCompileGlob.in_developer_thread);
 }
-
-#pragma GCC pop_options

@@ -1,9 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-
 typedef struct
 {
 	FILE *yy_input_file;
@@ -3117,5 +3114,3 @@ void ScriptParse( sval_u *parseData, unsigned char user )
 
 	*parseData = yaccResult;
 }
-
-#pragma GCC pop_options
