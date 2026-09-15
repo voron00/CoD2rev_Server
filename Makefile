@@ -3,7 +3,7 @@ CC = gcc
 WINDRES=windres
 
 CFLAGS=-m32
-LFLAGS=-m32 -ldl
+LFLAGS=-m32 -no-pie -ldl
 
 ifeq ($(OS),Windows_NT)
 LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
