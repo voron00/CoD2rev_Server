@@ -697,7 +697,7 @@ int CM_SightTraceThroughBrush( traceWork_t *tw, cbrush_t *brush )
 		assert(!IS_NAN((side->plane->normal)[0]) && !IS_NAN((side->plane->normal)[1]) && !IS_NAN((side->plane->normal)[2]));
 		assert(!IS_NAN(tw->offsetZ));
 
-		dist = side->plane->normal[3] + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
+		dist = side->plane->dist + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
 
 		assert(!IS_NAN(dist));
 
@@ -1205,7 +1205,7 @@ void CM_TestBoxInBrush( traceWork_t *tw, cbrush_t *brush, trace_t *trace )
 		assert(!IS_NAN(tw->offsetZ));
 
 		// adjust the plane distance apropriately for mins/maxs
-		dist = side->plane->normal[3] + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
+		dist = side->plane->dist + tw->radius + I_fabs(side->plane->normal[2] * tw->offsetZ);
 		assert(!IS_NAN(dist));
 
 		d1 = DotProduct(tw->extents.start, side->plane->normal) - dist;
