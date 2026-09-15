@@ -42,7 +42,7 @@ static bool G_ParseAIWeaponAccurayGraphFile( const char *buffer, const char *fil
 			break;
 		}
 
-		(*knots)[2 * knotCountIndex] = atof(token);
+		knots[knotCountIndex][0] = atof(token);
 		token = Com_Parse(&buffer);
 
 		if ( !token[0] )
@@ -55,7 +55,7 @@ static bool G_ParseAIWeaponAccurayGraphFile( const char *buffer, const char *fil
 			break;
 		}
 
-		(*knots)[2 * knotCountIndex + 1] = atof(token);
+		knots[knotCountIndex][1] = atof(token);
 		knotCountIndex++;
 
 		if ( knotCountIndex >= 16 )
