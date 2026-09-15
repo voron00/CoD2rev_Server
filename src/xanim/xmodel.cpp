@@ -332,7 +332,7 @@ XModelParts* XModelCreateDefaultParts()
 
 XModelSurfs* setDefaultSurface()
 {
-	defaultSurface.surf = NULL;
+	defaultSurface.surfs = NULL;
 	return &defaultSurface;
 }
 

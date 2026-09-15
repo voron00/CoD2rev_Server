@@ -278,9 +278,53 @@ typedef struct XModelParts_s
 	DSkel_t skel;
 } XModelParts;
 
+struct XBlendLoadInfo
+{
+	unsigned short boneOffset;
+	unsigned short boneWeight;
+};
+
+struct XVertexInfo_s
+{
+	float normal[3];
+	unsigned char color[4];
+	float binormal[3];
+	float texCoordX;
+	float tangent[3];
+	float texCoordY;
+	float offset[3];
+	unsigned char numWeights;
+	unsigned char pad;
+	short boneOffset;
+};
+
+struct XVertexBuffer
+{
+	XVertexInfo_s v;
+	XBlendLoadInfo w[1];
+};
+
+struct XRigidSurface
+{
+	XVertexBuffer *vb;
+};
+
+struct XSurface_s
+{
+	unsigned char tileMode;
+	unsigned char vertListCount;
+	unsigned short vertCount;
+	unsigned short triCount;
+	unsigned short boneOffset;
+	unsigned short *triIndices;
+	struct GfxPackedVertex *verts;
+	XRigidSurface surfRigid;
+	struct IDirect3DIndexBuffer9 *indexBuffer;
+};
+
 typedef struct XModelSurfs_s
 {
-	struct XSurface *surf; // !!! Not loaded in server binary
+	XSurface_s *surfs;
 	int partBits[4];
 } XModelSurfs;
 
@@ -331,7 +375,14 @@ struct DObjModel_s
 };
 
 #define DOBJ_MAX_SUBMODELS 8
-#define DOBJ_PART_BITS 4
+#define HIGH_BIT 1 << 31
+
+enum
+{
+	DOBJ_MAX_PARTS = 0x80,
+	DOBJ_MAX_PART_BITS = 0x4,
+	MAX_LODS = 0x4,
+};
 
 typedef struct DObj_s
 {

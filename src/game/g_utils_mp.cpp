@@ -1088,7 +1088,7 @@ G_DObjCalcBone
 */
 void G_DObjCalcBone( gentity_t *ent, int boneIndex )
 {
-	int partBits[DOBJ_PART_BITS];
+	int partBits[DOBJ_MAX_PART_BITS];
 	void (*controller)(gentity_t *, int *);
 
 	if ( SV_DObjCreateSkelForBone(ent, boneIndex) )
@@ -1116,7 +1116,7 @@ G_DObjCalcPose
 */
 void G_DObjCalcPose( gentity_t *ent )
 {
-	int partBits[DOBJ_PART_BITS];
+	int partBits[DOBJ_MAX_PART_BITS];
 	void (*controller)(gentity_t *, int *);
 
 	memset(partBits, UCHAR_MAX, sizeof(partBits));
