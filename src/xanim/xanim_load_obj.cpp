@@ -345,7 +345,7 @@ XAnimParts* XAnimLoadFile( const char *name, void *(*Alloc)(int) )
 	for ( i = 0; i < numBones; i++ )
 	{
 		count = strlen((const char *)pos) + 1;
-		*boneNames = SL_GetStringOfLen((const char *)pos, 0, count);
+		boneNames[i] = SL_GetStringOfLen((const char *)pos, 0, count);
 		pos += count;
 	}
 
