@@ -94,7 +94,12 @@ Com_GetParseThreadInfo
 */
 ParseThreadInfo *Com_GetParseThreadInfo()
 {
-	return q_parse;
+	if ( Sys_IsMainThread() )
+	{
+		return &q_parse[0];
+	}
+
+	return NULL;
 }
 
 /*
@@ -359,6 +364,19 @@ void Com_InitParseInfo( parseInfo_t *pi )
 	pi->warningPrefix = "";
 	pi->backup_lines = 0;
 	pi->backup_text = 0;
+}
+
+/*
+==============
+Com_InitParse
+==============
+*/
+void Com_InitParse()
+{
+	for ( int i = 0; i < NUMTHREADS; i++ )
+	{
+		Com_InitParseInfo( q_parse[i].parseInfo );
+	}
 }
 
 /*

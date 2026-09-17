@@ -348,6 +348,7 @@ struct ParseThreadInfo
 	char line[MAX_TOKEN_CHARS];
 };
 
+void Com_InitParse();
 void Com_BeginParseSession( const char *filename );
 void Com_EndParseSession( void );
 void Com_UngetToken();

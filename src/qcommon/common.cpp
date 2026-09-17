@@ -1284,6 +1284,7 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 	Cbuf_Execute();
 	Com_StartupVariable(0);
 	Com_InitHunkMemory();
+	Com_InitParse();
 	dvar_modifiedFlags &= ~DVAR_ARCHIVE;
 	com_codeTimeScale = 1.0;
 	if ( com_developer->current.integer )
