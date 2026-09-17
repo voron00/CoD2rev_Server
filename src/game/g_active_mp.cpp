@@ -1457,11 +1457,11 @@ void G_RunClient( gentity_t *ent )
 	}
 	else if ( ent->client->ps.pm_type == PM_NORMAL_LINKED )
 	{
-		ent->client->ps.pm_type == PM_NORMAL;
+		ent->client->ps.pm_type = PM_NORMAL;
 	}
 	else if ( ent->client->ps.pm_type == PM_DEAD_LINKED )
 	{
-		ent->client->ps.pm_type == PM_DEAD;
+		ent->client->ps.pm_type = PM_DEAD;
 	}
 }
 
