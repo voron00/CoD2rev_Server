@@ -258,18 +258,21 @@ CM_AddStaticModelToNode
 static void CM_AddStaticModelToNode( cStaticModel_t *staticModel, unsigned short childNodeIndex )
 {
 	unsigned short modelnum;
-	cStaticModel_t *prevStaticModel;
+	unsigned short *prevStaticModel;
 
 	modelnum = staticModel - cm.staticModelList;
+	prevStaticModel = &cm_world.sectors[childNodeIndex].contents.staticModels;
 
-	for ( prevStaticModel = (cStaticModel_t *)&cm_world.sectors[childNodeIndex].contents.staticModels ; ; prevStaticModel = &cm.staticModelList[prevStaticModel->writable.nextModelInWorldSector - 1] )
+	while ( 1 )
 	{
-		if ( (unsigned short)(prevStaticModel->writable.nextModelInWorldSector - 1) > modelnum )
+		if ( (unsigned short)(*prevStaticModel - 1) > modelnum )
 		{
-			staticModel->writable.nextModelInWorldSector = prevStaticModel->writable.nextModelInWorldSector;
-			prevStaticModel->writable.nextModelInWorldSector = modelnum + 1;
+			staticModel->writable.nextModelInWorldSector = *prevStaticModel;
+			*prevStaticModel = modelnum + 1;
 			break;
 		}
+
+		prevStaticModel = &cm.staticModelList[*prevStaticModel - 1].writable.nextModelInWorldSector;
 	}
 }
 
@@ -281,11 +284,12 @@ CM_AddEntityToNode
 static void CM_AddEntityToNode( svEntity_t *ent, unsigned short childNodeIndex )
 {
 	unsigned short entnum;
-	uint16_t *prevEnt;
+	unsigned short *prevEnt;
 
 	entnum = ent - sv.svEntities;
+	prevEnt = &cm_world.sectors[childNodeIndex].contents.entities;
 
-	for ( prevEnt = &cm_world.sectors[childNodeIndex].contents.entities ; ; prevEnt = &sv.svEntities[*prevEnt - 1].nextEntityInWorldSector )
+	while ( 1 )
 	{
 		if ( (unsigned short)(*prevEnt - 1) > entnum )
 		{
@@ -294,6 +298,8 @@ static void CM_AddEntityToNode( svEntity_t *ent, unsigned short childNodeIndex )
 			*prevEnt = entnum + 1;
 			break;
 		}
+
+		prevEnt = &sv.svEntities[*prevEnt - 1].nextEntityInWorldSector;
 	}
 }
 
