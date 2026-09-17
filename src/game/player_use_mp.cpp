@@ -228,7 +228,7 @@ void Player_UpdateCursorHints( gentity_t *ent )
 					continue;
 				}
 
-				if ( traceEnt->s.hintType != HINT_NONE && traceEnt->s.hintString != -1 )
+				if ( traceEnt->s.hintType != HINT_NONE && traceEnt->s.hintString != 255 )
 				{
 					hintString = traceEnt->s.hintString;
 				}
