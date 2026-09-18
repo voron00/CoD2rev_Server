@@ -54,7 +54,7 @@ struct qfile_us
 
 struct fileInIwd_t
 {
-	unsigned long pos;
+	ZPOS64_T pos;
 	char *name;
 	fileInIwd_t *next;
 };

@@ -234,7 +234,7 @@ static int FS_filelength( fileHandle_t f )
 
 	if (fsh[f].zipFile)
 	{
-		return ((unz_s*)fsh[f].handleFiles.file.z)->cur_file_info.uncompressed_size;
+		return ((unz_file_info64*)fsh[f].handleFiles.file.z)->uncompressed_size;
 	}
 
 	h = FS_FileForHandle( f );
@@ -450,19 +450,19 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	iwd_t          *iwd;
 	unzFile uf;
 	int err;
-	unz_global_info gi;
+	unz_global_info64 gi;
 	char filename_inzip[MAX_ZPATH];
-	unz_file_info file_info;
+	unz_file_info64 file_info;
 	int i, len;
 	long hash;
 	int fs_numHeaderLongs;
-	unsigned int    *fs_headerLongs;
-	char            *namePtr;
+	int *fs_headerLongs;
+	char *namePtr;
 
 	fs_numHeaderLongs = 0;
 
-	uf = unzOpen( zipfile );
-	err = unzGetGlobalInfo( uf,&gi );
+	uf = unzOpen64( zipfile );
+	err = unzGetGlobalInfo64( uf,&gi );
 
 	if ( err != UNZ_OK )
 	{
@@ -475,7 +475,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	unzGoToFirstFile( uf );
 	for ( i = 0; i < gi.number_entry; i++ )
 	{
-		err = unzGetCurrentFileInfo( uf, &file_info, filename_inzip, sizeof( filename_inzip ), NULL, 0, NULL, 0 );
+		err = unzGetCurrentFileInfo64( uf, &file_info, filename_inzip, sizeof( filename_inzip ), NULL, 0, NULL, 0 );
 		if ( err != UNZ_OK )
 		{
 			break;
@@ -484,9 +484,9 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		unzGoToNextFile( uf );
 	}
 
-	buildBuffer = (fileInIwd_t *)Z_Malloc( ( gi.number_entry * sizeof( fileInIwd_t ) ) + len );
-	namePtr = ( (char *) buildBuffer ) + gi.number_entry * sizeof( fileInIwd_t );
-	fs_headerLongs = (unsigned int *)Z_Malloc( gi.number_entry * sizeof( unsigned int ) );
+	buildBuffer = ( fileInIwd_t *) Z_Malloc( (gi.number_entry * sizeof( fileInIwd_t )) + len );
+	namePtr = ((char *) buildBuffer) + gi.number_entry * sizeof( fileInIwd_t );
+	fs_headerLongs = ( int *) Z_Malloc( ( gi.number_entry + 1 ) * sizeof( int ) );
 
 	// get the hash table size from the number of files in the zip
 	// because lots of custom iwd files have less than 32 or 64 files
@@ -498,7 +498,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		}
 	}
 
-	iwd = (iwd_t *)Z_Malloc( sizeof( iwd_t ) * sizeof( intptr_t ) + i * sizeof( fileInIwd_t * ) );
+	iwd = (iwd_t *)Z_Malloc( sizeof( iwd_t ) + i * sizeof( fileInIwd_t *) );
 	iwd->hashSize = i;
 	iwd->hashTable = ( fileInIwd_t ** )( ( (char *) iwd ) + sizeof( iwd_t ) );
 	for ( i = 0; i < iwd->hashSize; i++ )
@@ -521,7 +521,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 
 	for ( i = 0; i < gi.number_entry; i++ )
 	{
-		err = unzGetCurrentFileInfo( uf, &file_info, filename_inzip, sizeof( filename_inzip ), NULL, 0, NULL, 0 );
+		err = unzGetCurrentFileInfo64( uf, &file_info, filename_inzip, sizeof( filename_inzip ), NULL, 0, NULL, 0 );
 		if ( err != UNZ_OK )
 		{
 			break;
@@ -536,15 +536,15 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		strcpy( buildBuffer[i].name, filename_inzip );
 		namePtr += strlen( filename_inzip ) + 1;
 		// store the file position in the zip
-		unzGetCurrentFileInfoPosition( uf, &buildBuffer[i].pos );
+		buildBuffer[i].pos = unzGetOffset64( uf );
 		//
 		buildBuffer[i].next = iwd->hashTable[hash];
 		iwd->hashTable[hash] = &buildBuffer[i];
 		unzGoToNextFile( uf );
 	}
 
-	iwd->checksum = Com_BlockChecksum( fs_headerLongs, sizeof( unsigned int ) * fs_numHeaderLongs );
-	iwd->pure_checksum = Com_BlockChecksumKey( fs_headerLongs, sizeof( unsigned int ) * fs_numHeaderLongs, LittleLong( fs_checksumFeed ) );
+	iwd->checksum = Com_BlockChecksum( fs_headerLongs, sizeof( *fs_headerLongs ) * fs_numHeaderLongs );
+	iwd->pure_checksum = Com_BlockChecksumKey( fs_headerLongs, sizeof( *fs_headerLongs ) * fs_numHeaderLongs, LittleLong( fs_checksumFeed ) );
 	iwd->checksum = LittleLong( iwd->checksum );
 	iwd->pure_checksum = LittleLong( iwd->pure_checksum );
 
@@ -808,7 +808,7 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 		}
 	}
 
-	qsort(sorted, numfiles, sizeof(intptr_t), iwdsort);
+	qsort(sorted, numfiles, sizeof(char *), iwdsort);
 
 	languagesListed = 0;
 
@@ -1018,8 +1018,8 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 	char sanitizedName[MAX_OSPATH];
 	const char *extension;
 	directory_t* dir;
-	unz_s* zfi;
-	file_in_zip_read_info_s* ziptemp;
+	unz64_s* zfi;
+	file_in_zip64_read_info_s* ziptemp;
 	char netpath[MAX_OSPATH];
 	bool wasSkipped = false;
 	searchpath_t* search;
@@ -1118,7 +1118,7 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 					if ( uniqueFILE )
 					{
 						// open a new file on the pakfile
-						fsh[*file].handleFiles.file.z = unzReOpen( iwd->iwdFilename, iwd->handle );
+						fsh[*file].handleFiles.file.z = unzOpen( iwd->iwdFilename );
 						if ( fsh[*file].handleFiles.file.z == NULL )
 						{
 							Com_Error( ERR_FATAL, "Couldn't reopen %s", iwd->iwdFilename );
@@ -1131,14 +1131,14 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 
 					I_strncpyz(fsh[*file].name, sanitizedName, sizeof(fsh[*file].name));
 					fsh[*file].zipFile = qtrue;
-					zfi = (unz_s*)fsh[*file].handleFiles.file.z;
+					zfi = (unz64_s*)fsh[*file].handleFiles.file.z;
 					// in case the file was new
 					filetemp = (FILE *)zfi->filestream;
 					ziptemp = zfi->pfile_in_zip_read;
 					// set the file position in the zip file (also sets the current file info)
-					unzSetCurrentFileInfoPosition(iwd->handle, iwdFile->pos);
+					unzSetOffset64(iwd->handle, iwdFile->pos);
 					// copy the file info into the unzip structure
-					Com_Memcpy(zfi, iwd->handle, sizeof(unz_s));
+					Com_Memcpy(zfi, iwd->handle, sizeof(unz64_s));
 					// we copy this back into the structure
 					zfi->filestream = filetemp;
 					zfi->pfile_in_zip_read = ziptemp;
@@ -1264,7 +1264,7 @@ int FS_Seek(int f, int offset, int origin)
 	if (offset == 0 && origin == 2)
 	{
 		// set the file position in the zip file (also sets the current file info)
-		unzSetCurrentFileInfoPosition(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
+		unzSetOffset64(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
 		return unzOpenCurrentFile(fsh[f].handleFiles.file.z);
 	}
 
@@ -1273,7 +1273,7 @@ int FS_Seek(int f, int offset, int origin)
 		return 0;
 	}
 
-	iZipPos = unztell(fsh[f].handleFiles.file.z);
+	iZipPos = unztell64(fsh[f].handleFiles.file.z);
 
 	switch (origin)
 	{
@@ -1284,7 +1284,7 @@ int FS_Seek(int f, int offset, int origin)
 		}
 		else
 		{
-			unzSetCurrentFileInfoPosition(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
+			unzSetOffset64(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
 			unzOpenCurrentFile(fsh[f].handleFiles.file.z);
 			iZipOffset = offset + iZipPos;
 		}
@@ -1301,7 +1301,7 @@ int FS_Seek(int f, int offset, int origin)
 		}
 		else
 		{
-			unzSetCurrentFileInfoPosition(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
+			unzSetOffset64(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
 			unzOpenCurrentFile(fsh[f].handleFiles.file.z);
 			iZipOffset = offset + FS_filelength(f);
 		}
@@ -1317,7 +1317,7 @@ int FS_Seek(int f, int offset, int origin)
 		}
 		else
 		{
-			unzSetCurrentFileInfoPosition(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
+			unzSetOffset64(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
 			unzOpenCurrentFile(fsh[f].handleFiles.file.z);
 			iZipOffset = offset;
 		}
@@ -1843,7 +1843,7 @@ static void FS_SortFileList( char **filelist, int numfiles )
 	int i, j, k, numsortedfiles;
 	char **sortedlist;
 
-	sortedlist = (char **)Z_Malloc( ( numfiles + sizeof(intptr_t) ) * sizeof( *sortedlist ) );
+	sortedlist = (char **) Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ) );
 	sortedlist[0] = NULL;
 	numsortedfiles = 0;
 	for ( i = 0; i < numfiles; i++ )
@@ -2079,7 +2079,7 @@ static char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, c
 		return NULL;
 	}
 
-	listCopy = (char **)Z_Malloc( ( nfiles + sizeof(intptr_t) ) * sizeof( *listCopy ) );
+	listCopy = (char **) Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ) );
 	for ( i = 0 ; i < nfiles ; i++ )
 	{
 		listCopy[i] = list[i];
@@ -2130,7 +2130,7 @@ static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2
 	totalLength += Sys_CountFileList( list2 );
 
 	/* Create new list. */
-	dst = cat = (char **)Z_Malloc( ( totalLength + sizeof(intptr_t) ) * sizeof( char* ) );
+	dst = cat = (char **) Z_Malloc( ( totalLength + 1 ) * sizeof( char* ) );
 
 	/* Copy over lists. */
 	if ( list0 )
