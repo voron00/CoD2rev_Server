@@ -13,7 +13,7 @@ void gsc_memory_malloc()
 		return;
 	}
 
-	stackPushInt((intptr_t)malloc(bytes));
+	stackPushInt64((intptr_t)malloc(bytes));
 }
 
 void gsc_memory_free()
@@ -104,7 +104,7 @@ void gsc_binarybuffer_new()
 void gsc_binarybuffer_free()
 {
 	struct binarybuffer *bb;
-	if ( ! stackGetParams("i", &bb))
+	if ( ! stackGetParams("l", &bb))
 	{
 		stackError("gsc_binarybuffer_free() argument is undefined or has a wrong type");
 		stackPushUndefined();
@@ -121,7 +121,7 @@ void gsc_binarybuffer_seek()
 {
 	struct binarybuffer *bb;
 	int pos;
-	if ( ! stackGetParams("ii", &bb, &pos))
+	if ( ! stackGetParams("li", &bb, &pos))
 	{
 		stackError("gsc_binarybuffer_seek() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -135,7 +135,7 @@ void gsc_binarybuffer_write()
 {
 	struct binarybuffer *bb;
 	const char *type;
-	if ( ! stackGetParams("is", &bb, &type))
+	if ( ! stackGetParams("ls", &bb, &type))
 	{
 		stackError("gsc_binarybuffer_write() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
@@ -204,7 +204,7 @@ void gsc_binarybuffer_read()
 {
 	struct binarybuffer *bb;
 	const char *type;
-	if ( ! stackGetParams("is", &bb, &type))
+	if ( ! stackGetParams("ls", &bb, &type))
 	{
 		stackError("gsc_binarybuffer_read() one or more arguments is undefined or has a wrong type");
 		stackPushUndefined();
