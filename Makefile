@@ -2,7 +2,7 @@
 CC = gcc
 WINDRES=windres
 
-CFLAGS=-m32
+CFLAGS=-m32 -fno-pie
 LFLAGS=-m32 -no-pie -ldl
 
 ifeq ($(OS),Windows_NT)
