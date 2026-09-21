@@ -412,6 +412,8 @@ HudElem_ClearTypeSettings
 */
 void HudElem_ClearTypeSettings( game_hudelem_t *hud )
 {
+	assert(hud);
+
 	hud->elem.width = 0;
 	hud->elem.height = 0;
 	hud->elem.materialIndex = 0;
