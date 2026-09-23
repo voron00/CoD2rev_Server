@@ -1118,7 +1118,7 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 					if ( uniqueFILE )
 					{
 						// open a new file on the pakfile
-						fsh[*file].handleFiles.file.z = unzOpen( iwd->iwdFilename );
+						fsh[*file].handleFiles.file.z = unzOpen64( iwd->iwdFilename );
 						if ( fsh[*file].handleFiles.file.z == NULL )
 						{
 							Com_Error( ERR_FATAL, "Couldn't reopen %s", iwd->iwdFilename );
