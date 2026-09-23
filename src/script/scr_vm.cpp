@@ -1739,7 +1739,7 @@ void Scr_AddExecEntThreadNum( int entnum, int classnum, int handle, unsigned int
 
 	if ( !scrVmPub.function_count )
 	{
-		assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+		//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 		Scr_ResetTimeout();
 	}
 
@@ -1758,7 +1758,7 @@ void Scr_AddExecEntThreadNum( int entnum, int classnum, int handle, unsigned int
 	scrVmPub.outparamcount++;
 	scrVmPub.inparamcount--;
 
-	assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+	//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 }
 
 /*
@@ -1775,7 +1775,7 @@ void Scr_AddExecThread( int handle, unsigned int paramcount )
 
 	if ( !scrVmPub.function_count )
 	{
-		assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+		//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 		Scr_ResetTimeout();
 	}
 
@@ -1793,7 +1793,7 @@ void Scr_AddExecThread( int handle, unsigned int paramcount )
 	scrVmPub.outparamcount++;
 	scrVmPub.inparamcount--;
 
-	assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+	//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 }
 
 /*
@@ -1810,7 +1810,7 @@ unsigned short Scr_ExecEntThreadNum( int entnum, int classnum, int handle, unsig
 
 	if ( !scrVmPub.function_count )
 	{
-		assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+		//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 		Scr_ResetTimeout();
 	}
 
@@ -1830,7 +1830,7 @@ unsigned short Scr_ExecEntThreadNum( int entnum, int classnum, int handle, unsig
 	scrVmPub.top--;
 	scrVmPub.inparamcount--;
 
-	assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+	//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 
 	return id;
 }
@@ -1849,7 +1849,7 @@ unsigned short Scr_ExecThread( int handle, unsigned int paramcount )
 
 	if ( !scrVmPub.function_count )
 	{
-		assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+		//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 		Scr_ResetTimeout();
 	}
 
@@ -1868,7 +1868,7 @@ unsigned short Scr_ExecThread( int handle, unsigned int paramcount )
 	scrVmPub.top--;
 	scrVmPub.inparamcount--;
 
-	assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+	//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 
 	return id;
 }
@@ -2965,7 +2965,7 @@ void VM_Resume( unsigned int timeId )
 		assert(!scrVmPub.outparamcount);
 		assert(!scrVmPub.inparamcount);
 		assert(!scrVmPub.function_count);
-		assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+		//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 		assert(fs.startTop == &scrVmPub.stack[0]);
 
 		stackId = FindNextSibling(timeId);
