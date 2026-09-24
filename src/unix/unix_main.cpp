@@ -1262,7 +1262,7 @@ int main ( int argc, char* argv[] )
   // merge the command line, this is kinda silly
   for (len = 1, i = 1; i < argc; i++)
     len += strlen(argv[i]) + 1;
-  cmdline = (char *)malloc(len);
+  cmdline = (char *)Z_Malloc(len);
   *cmdline = 0;
   for (i = 1; i < argc; i++)
   {

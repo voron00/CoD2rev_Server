@@ -23,12 +23,12 @@ unsigned char g_parse_user;
 sval_u g_dummyVal;
 int yy_init = 0;
 yy_buffer_state* yy_current_buffer;
-int yy_start;
+int yy_start = 0;
 int yy_n_chars;
 char *yy_c_buf_p;
 char *yytext;
-FILE *yyin = 0;
-FILE *yyout = 0;
+FILE *yyin = NULL;
+FILE *yyout = NULL;
 char yy_hold_char;
 char ch_buf[YY_BUF_SIZE];
 sval_u yaccResult;
@@ -1191,7 +1191,7 @@ yy_flex_alloc
 */
 void *yy_flex_alloc( unsigned int size )
 {
-	return (void *) malloc( size );
+	return (void *) Z_Malloc( size );
 }
 
 /*
@@ -3093,6 +3093,7 @@ ScriptParse
 void ScriptParse( sval_u *parseData, unsigned char user )
 {
 	yy_buffer_state buffer_state;
+	memset(&buffer_state, 0, sizeof(buffer_state));
 
 	g_out_pos = -1;
 	g_sourcePos = 0;
