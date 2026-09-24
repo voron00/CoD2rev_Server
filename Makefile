@@ -3,12 +3,12 @@ CC = gcc
 WINDRES=windres
 
 CFLAGS=-m32 -fno-pie
-LFLAGS=-m32 -no-pie -ldl
+LFLAGS=-m32 -no-pie
 
 ifeq ($(OS),Windows_NT)
 LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
 else
-LLIBS=-lm -lpthread -lstdc++
+LLIBS=-lm -lpthread -lstdc++ -ldl
 endif
 
 # Setup binary names.
