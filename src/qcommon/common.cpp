@@ -1069,6 +1069,7 @@ int Com_EventLoop( void )
 	byte		bufData[MAX_MSGLEN];
 	msg_t		buf;
 
+	memset( bufData, 0, sizeof( bufData ) );
 	MSG_Init( &buf, bufData, sizeof( bufData ) );
 
 	while ( 1 )
