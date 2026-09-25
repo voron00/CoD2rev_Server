@@ -2750,9 +2750,9 @@ void MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, unsigned int number,
 		return;
 	}
 
-	if ( !MSG_ReadBit(msg) )
+	if ( MSG_ReadBit(msg) == 0 )
 	{
-		Com_Memcpy(to, from, ( numFields + sizeof( from ) ) * sizeof( from ));
+		Com_Memcpy(to, from, ( numFields + 1 ) * sizeof( int32_t ));
 		return;
 	}
 
