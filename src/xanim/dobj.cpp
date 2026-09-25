@@ -3,58 +3,88 @@
 
 unsigned int g_empty;
 
-void DObjSkelClear( DObj_s *obj )
+/*
+================
+DObjSkelClear
+================
+*/
+void DObjSkelClear( DObj *obj )
 {
 	obj->timeStamp = 0;
 	obj->skel = 0;
 }
 
-void DObjCreateDuplicateParts(DObj_s *obj)
+/*
+================
+DObjCreateDuplicateParts
+================
+*/
+void DObjCreateDuplicateParts( DObj *obj )
 {
-	static int duplicatePartBits[5];
+	int duplicatePartBits[64]; // needs larger stack???
 	int index;
 	bool bRootMeld;
-	int len;
 	byte *duplicateParts;
 	unsigned short *name;
 	int boneIter;
 	int localBoneIndex;
 	int boneIndex;
 	XModel *model;
-	int numBones;
-	int boneCount;
 
-	duplicateParts = (byte *)&duplicatePartBits[4];
+	assert(!obj->duplicateParts);
+	assert(obj->numModels > 0);
+	assert(obj->numBones <= DOBJ_MAX_PARTS);
+
+	duplicateParts = (byte *)&duplicatePartBits[DOBJ_MAX_PART_BITS];
 	memset(duplicatePartBits, 0, sizeof(duplicatePartBits));
-	len = 0;
-	numBones = obj->models[0]->parts->numBones;
-	boneCount = 1;
 
-	while ( boneCount < obj->numModels )
+	int len = 0;
+	int boneCount = obj->models[0]->parts->numBones;
+	int currNumModels = 1;
+
+	while ( currNumModels < obj->numModels )
 	{
-		model = obj->models[boneCount];
+		model = obj->models[currNumModels];
 
-		if ( obj->modelParents[boneCount] == 0xFF )
+		if ( obj->modelParents[currNumModels] == NO_BONEINDEX )
 		{
 			name = model->parts->hierarchy->names;
 			boneIter = model->parts->numBones;
+
+			assert(boneIter);
+			assert(boneIter < DOBJ_MAX_PARTS);
+
 			bRootMeld = 0;
 			boneIndex = -1;
 
-			for ( localBoneIndex = 0; localBoneIndex < boneIter; ++localBoneIndex )
+			for ( localBoneIndex = 0; localBoneIndex < boneIter; localBoneIndex++ )
 			{
 				boneIndex = DObjGetBoneIndex(obj, name[localBoneIndex]);
+				assert(boneIndex >= 0);
 
-				if ( boneIndex != numBones + localBoneIndex )
+				if ( boneIndex != boneCount + localBoneIndex )
 				{
 					if ( !localBoneIndex )
+					{
 						bRootMeld = 1;
+					}
 
-					index = numBones + localBoneIndex;
-					duplicateParts[len] = numBones + localBoneIndex + 1;
+					assert(boneCount + localBoneIndex + 1 < 256);
+					assert(boneIndex + 1 < 256);
+					assert(boneIndex < boneCount + localBoneIndex);
+
+					index = boneCount + localBoneIndex;
+
+					duplicateParts[len] = boneCount + localBoneIndex + 1;
 					duplicatePartBits[index >> 5] |= 1 << (index & 0x1F);
-					duplicateParts[++len] = boneIndex + 1;
-					++len;
+
+					assert(duplicateParts[len]);
+					len++;
+
+					duplicateParts[len] = boneIndex + 1;
+					assert(duplicateParts[len]);
+
+					len++;
 				}
 			}
 
@@ -68,9 +98,12 @@ void DObjCreateDuplicateParts(DObj_s *obj)
 			}
 		}
 
-		++boneCount;
-		numBones += model->parts->numBones;
+		currNumModels++;
+		boneCount += model->parts->numBones;
 	}
+
+	assert(boneCount < DOBJ_MAX_PARTS);
+	assert(g_empty);
 
 	if ( len )
 	{

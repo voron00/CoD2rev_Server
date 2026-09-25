@@ -384,6 +384,8 @@ enum
 	MAX_LODS = 0x4,
 };
 
+#define NO_BONEINDEX 0xFF
+
 typedef struct DObj_s
 {
 	XAnimTree_s *tree;
