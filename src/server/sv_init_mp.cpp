@@ -235,11 +235,11 @@ void SV_EnableArchivedSnapshot( qboolean bEnable )
 		return;
 	}
 
-	svs.cachedSnapshotEntities = (archivedEntity_s *)Z_MallocInternal(sizeof(archivedEntity_s) * CACHED_SNAPSHOT_ENTITY_SIZE);
-	svs.cachedSnapshotClients = (cachedClient_s *)Z_MallocInternal(sizeof(cachedClient_s) * CACHED_SNAPSHOT_CLIENT_SIZE);
-	svs.archivedSnapshotFrames = (archivedSnapshot_s *)Z_MallocInternal(sizeof(archivedSnapshot_s) * NUM_ARCHIVED_FRAMES);
-	svs.archivedSnapshotBuffer = (byte *)Z_MallocInternal(ARCHIVED_SNAPSHOT_BUFFER_SIZE);
-	svs.cachedSnapshotFrames = (cachedSnapshot_s *)Z_MallocInternal(sizeof(cachedSnapshot_s) * NUM_CACHED_FRAMES);
+	svs.cachedSnapshotEntities = (archivedEntity_s *)Z_Malloc(sizeof(*svs.cachedSnapshotEntities) * CACHED_SNAPSHOT_ENTITY_SIZE);
+	svs.cachedSnapshotClients = (cachedClient_s *)Z_Malloc(sizeof(*svs.cachedSnapshotClients) * CACHED_SNAPSHOT_CLIENT_SIZE);
+	svs.archivedSnapshotFrames = (archivedSnapshot_s *)Z_Malloc(sizeof(*svs.archivedSnapshotFrames) * NUM_ARCHIVED_FRAMES);
+	svs.archivedSnapshotBuffer = (byte *)Z_Malloc(ARCHIVED_SNAPSHOT_BUFFER_SIZE);
+	svs.cachedSnapshotFrames = (cachedSnapshot_s *)Z_Malloc(sizeof(*svs.cachedSnapshotFrames) * NUM_CACHED_FRAMES);
 }
 
 /*
