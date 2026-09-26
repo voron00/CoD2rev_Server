@@ -1097,11 +1097,6 @@ void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
 		return;
 	}
 
-	if ( !ent->r.inuse )
-	{
-		return;
-	}
-
 	// play sounds
 	if ( other->client->sess.predictItemPickup )
 	{
