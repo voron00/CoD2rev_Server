@@ -820,14 +820,7 @@ void gsc_utils_sqrtInv()
 		return;
 	}
 
-	// http://www.beyond3d.com/content/articles/8/
-	float xhalf = 0.5f*x;
-	int i = *(int*)&x;
-	i = 0x5f3759df - (i>>1);
-	x = *(float*)&i;
-	x = x*(1.5f - xhalf*x*x);
-
-	stackPushFloat(x);
+	stackPushFloat(Q_rsqrt(x));
 }
 
 void gsc_make_localized_string()
