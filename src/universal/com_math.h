@@ -456,6 +456,16 @@ inline float I_sqrt(const float value)
 
 /*
 ==============
+I_rsqrt
+==============
+*/
+inline float I_rsqrt(const float value)
+{
+	return 1.0f / sqrtf(value);
+}
+
+/*
+==============
 FastSinCos
 ==============
 */
@@ -509,10 +519,10 @@ inline int const FastCeil(const float x)
 
 /*
 ==============
-I_rsqrt
+Q_rsqrt
 ==============
 */
-inline float I_rsqrt(const float number)
+inline float Q_rsqrt(const float number)
 {
 	long i;
 	float x2, y;
