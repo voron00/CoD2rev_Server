@@ -66,7 +66,13 @@ byte* Com_ValidateBspLumpData(int type, int offset, int length, int elemSize, in
 {
 	if ( length )
 	{
-		if ( type != LUMP_ENTITIES && length + offset > comBspGlob.fileSize )
+		if ( type == LUMP_ENTITIES && length + offset > comBspGlob.fileSize )
+		{
+			*count = ( length / elemSize ) + ( comBspGlob.fileSize - ( length + offset ) );
+			return (byte*)comBspGlob.header + offset;
+		}
+
+		if ( length + offset > comBspGlob.fileSize )
 		{
 			Com_Error(ERR_DROP, "CM_LoadMap: lump %i extends past end of file", type);
 		}
