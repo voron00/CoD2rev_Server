@@ -1,6 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
+#define DOBJ_PARTBITS_STRING_LEN DOBJ_MAX_PART_BITS * sizeof(int32_t)
 unsigned int g_empty;
 
 /*
@@ -21,14 +22,12 @@ DObjCreateDuplicateParts
 */
 void DObjCreateDuplicateParts( DObj *obj )
 {
-	int duplicatePartBits[64]; // needs larger stack???
+	int duplicatePartBits[DOBJ_MAX_PARTS];
 	int index;
 	bool bRootMeld;
 	byte *duplicateParts;
 	unsigned short *name;
-	int boneIter;
-	int localBoneIndex;
-	int boneIndex;
+	int boneIndex, currNumModels, localBoneIndex, boneIter, boneCount, len;
 	XModel *model;
 
 	assert(!obj->duplicateParts);
@@ -36,13 +35,12 @@ void DObjCreateDuplicateParts( DObj *obj )
 	assert(obj->numBones <= DOBJ_MAX_PARTS);
 
 	duplicateParts = (byte *)&duplicatePartBits[DOBJ_MAX_PART_BITS];
-	memset(duplicatePartBits, 0, sizeof(duplicatePartBits));
+	memset(duplicatePartBits, 0, DOBJ_PARTBITS_STRING_LEN);
 
-	int len = 0;
-	int boneCount = obj->models[0]->parts->numBones;
-	int currNumModels = 1;
+	len = 0;
+	boneCount = obj->models[0]->parts->numBones;
 
-	while ( currNumModels < obj->numModels )
+	for ( currNumModels = 1; currNumModels < obj->numModels; currNumModels++ )
 	{
 		model = obj->models[currNumModels];
 
@@ -54,7 +52,7 @@ void DObjCreateDuplicateParts( DObj *obj )
 			assert(boneIter);
 			assert(boneIter < DOBJ_MAX_PARTS);
 
-			bRootMeld = 0;
+			bRootMeld = false;
 			boneIndex = -1;
 
 			for ( localBoneIndex = 0; localBoneIndex < boneIter; localBoneIndex++ )
@@ -66,7 +64,7 @@ void DObjCreateDuplicateParts( DObj *obj )
 				{
 					if ( !localBoneIndex )
 					{
-						bRootMeld = 1;
+						bRootMeld = true;
 					}
 
 					assert(boneCount + localBoneIndex + 1 < 256);
@@ -98,7 +96,6 @@ void DObjCreateDuplicateParts( DObj *obj )
 			}
 		}
 
-		currNumModels++;
 		boneCount += model->parts->numBones;
 	}
 
@@ -108,7 +105,7 @@ void DObjCreateDuplicateParts( DObj *obj )
 	if ( len )
 	{
 		duplicateParts[len] = 0;
-		obj->duplicateParts = SL_GetStringOfLen((const char *)duplicatePartBits, 0, len + 17);
+		obj->duplicateParts = SL_GetStringOfLen((const char *)duplicatePartBits, 0, len + DOBJ_PARTBITS_STRING_LEN + 1);
 	}
 	else
 	{
@@ -930,47 +927,72 @@ setmodel:
 	DObjSetBounds(obj);
 }
 
-void DObjFree(DObj *obj)
+/*
+================
+DObjFree
+================
+*/
+void DObjFree( DObj *obj )
 {
-	const char *string;
-	size_t len;
+	assert(obj);
 
 	if ( obj->tree )
 	{
 		obj->animToModel = 0;
+
+		assert(obj->tree->anims);
 		obj->tree = 0;
 	}
 
-	if ( obj->duplicateParts )
-	{
-		if ( obj->duplicateParts != g_empty )
-		{
-			string = SL_ConvertToString(obj->duplicateParts);
-			len = I_strlen((string + 16));
-			SL_RemoveRefToStringOfLen(obj->duplicateParts, len + 17);
-		}
+	assert(g_empty);
 
-		obj->duplicateParts = 0;
+	if ( !obj->duplicateParts )
+	{
+		return;
 	}
+
+	if ( obj->duplicateParts != g_empty )
+	{
+		SL_RemoveRefToStringOfLen( obj->duplicateParts, I_strlen( ( SL_ConvertToString( obj->duplicateParts ) + DOBJ_PARTBITS_STRING_LEN ) ) + DOBJ_PARTBITS_STRING_LEN + 1 );
+	}
+
+	obj->duplicateParts = 0;
 }
 
+/*
+================
+DObjInit
+================
+*/
 void DObjInit()
 {
-	int duplicatePartBits[5];
+	int duplicatePartBits[DOBJ_MAX_PART_BITS + 1];
 
 	memset(duplicatePartBits, 0, sizeof(duplicatePartBits));
-	g_empty = SL_GetStringOfLen((const char *)duplicatePartBits, 0, 17);
+	g_empty = SL_GetStringOfLen((const char *)duplicatePartBits, 0, DOBJ_PARTBITS_STRING_LEN + 1);
 }
 
+/*
+================
+DObjShutdown
+================
+*/
 void DObjShutdown()
 {
-	if ( g_empty )
+	if ( !g_empty )
 	{
-		SL_RemoveRefToStringOfLen(g_empty, 17);
-		g_empty = 0;
+		return;
 	}
+
+	SL_RemoveRefToStringOfLen(g_empty, DOBJ_PARTBITS_STRING_LEN + 1);
+	g_empty = 0;
 }
 
+/*
+================
+DObjAbort
+================
+*/
 void DObjAbort()
 {
 	g_empty = 0;
