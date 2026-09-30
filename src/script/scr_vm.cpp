@@ -1830,7 +1830,7 @@ unsigned short Scr_ExecEntThreadNum( int entnum, int classnum, int handle, unsig
 	scrVmPub.top--;
 	scrVmPub.inparamcount--;
 
-	//assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
+	assert(scrVmPub.localVars == scrVmGlob.localVarsStack - 1);
 
 	return id;
 }

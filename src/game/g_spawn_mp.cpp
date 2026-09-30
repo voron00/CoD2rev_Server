@@ -284,31 +284,6 @@ void Scr_SetGenericField( byte *b, int type, ptrdiff_t ofs )
 
 /*
 ===============
-isValidEnt
-===============
-*/
-static bool isValidEnt( gentity_t *ent )
-{
-	if ( !ent )
-	{
-		return false;
-	}
-
-	if ( ent->s.number != ent - g_entities )
-	{
-		return false;
-	}
-
-	if ( !ent->r.inuse )
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/*
-===============
 Scr_FreeHudElem
 ===============
 */
@@ -329,10 +304,9 @@ Scr_FreeEntity
 */
 void Scr_FreeEntity( gentity_t *ent )
 {
-	if ( !isValidEnt( ent ) )
-	{
-		return;
-	}
+	assert(ent);
+	assert(ent->s.number == ent - g_entities);
+	assert(ent->r.inuse);
 
 	Scr_FreeEntityConstStrings(ent);
 	Scr_FreeEntityNum(ent->s.number, CLASS_NUM_ENTITY);
@@ -449,10 +423,9 @@ Scr_AddEntity
 */
 void Scr_AddEntity( gentity_t *ent )
 {
-	if ( !isValidEnt( ent ) )
-	{
-		return;
-	}
+	assert(ent);
+	assert(ent->s.number == ent - g_entities);
+	assert(ent->r.inuse);
 
 	Scr_AddEntityNum(ent->s.number, CLASS_NUM_ENTITY);
 }
@@ -828,10 +801,9 @@ Scr_Notify
 */
 void Scr_Notify( gentity_t *ent, unsigned short stringValue, unsigned int paramcount )
 {
-	if ( !isValidEnt( ent ) )
-	{
-		return;
-	}
+	assert(ent);
+	assert(ent->s.number == ent - g_entities);
+	assert(ent->r.inuse);
 
 	Scr_NotifyNum(ent->s.number, CLASS_NUM_ENTITY, stringValue, paramcount);
 }
