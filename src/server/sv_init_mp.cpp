@@ -717,10 +717,6 @@ void SV_Shutdown( const char *finalmsg )
 		SV_FreeClients(); // RF, avoid trying to allocate large chunk on a fragmented zone
 	}
 
-#if LIBCOD_COMPILE_SQLITE == 1
-	free_sqlite_db_stores_and_tasks();
-#endif
-
 	SV_FreeArchivedSnapshot();
 	memset(&svs, 0, sizeof(svs));
 
@@ -830,10 +826,6 @@ void SV_SpawnServer( char *server )
 	client_t *cl;
 	int checksum;
 	int i;
-
-#if LIBCOD_COMPILE_SQLITE == 1
-	free_sqlite_db_stores_and_tasks();
-#endif
 
 	Scr_ParseGameTypeList();
 	SV_SetGametype();

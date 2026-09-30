@@ -155,7 +155,6 @@ scr_function_t scriptFunctions[] =
 	{"sqlite_escape_string", gsc_sqlite_escape_string, 0},
 	{"sqlite_databases_count", gsc_sqlite_databases_count, 0},
 	{"sqlite_tasks_count", gsc_sqlite_tasks_count, 0},
-	{"async_sqlite_initialize", gsc_async_sqlite_initialize, 0},
 	{"async_sqlite_create_query", gsc_async_sqlite_create_query, 0},
 	{"async_sqlite_create_query_nosave", gsc_async_sqlite_create_query_nosave, 0},
 	{"async_sqlite_checkdone", gsc_async_sqlite_checkdone, 0},
@@ -370,15 +369,15 @@ int stackGetParamType(int param)
 
 void stackError(const char *format, ...)
 {
-	char errorMessage[COD2_MAX_STRINGLENGTH];
+	static char errorMessage[COD2_MAX_STRINGLENGTH];
+	memset(errorMessage, 0, sizeof(errorMessage));
 	va_list va;
 
 	va_start(va, format);
 	Q_vsnprintf(errorMessage, sizeof(errorMessage), format, va);
 	va_end(va);
 
-	errorMessage[COD2_MAX_STRINGLENGTH - 1] = '\0';
-
+	errorMessage[sizeof(errorMessage) - 1] = '\0';
 	Scr_Error(errorMessage);
 }
 

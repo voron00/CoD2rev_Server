@@ -8,7 +8,7 @@
 #define MAX_SQLITE_ROWS 128
 #define MAX_SQLITE_ROW_LENGTH 256
 #define MAX_SQLITE_TASKS 512
-#define MAX_SQLITE_DB_STORES 64
+#define MAX_SQLITE_DB_STORES 128
 
 #define SQLITE_TIMEOUT 4000
 
@@ -21,11 +21,20 @@ enum
 	OBJECT_VALUE
 };
 
+struct sqlite_db_store
+{
+	sqlite_db_store *prev;
+	sqlite_db_store *next;
+	sqlite3 *db;
+	unsigned int levelId;
+	bool closed;
+};
+
 struct async_sqlite_task
 {
 	async_sqlite_task *prev;
 	async_sqlite_task *next;
-	sqlite3 *db;
+	sqlite_db_store *store;
 	sqlite3_stmt *statement;
 	char query[COD2_MAX_STRINGLENGTH];
 	char row[MAX_SQLITE_FIELDS][MAX_SQLITE_ROWS][MAX_SQLITE_ROW_LENGTH];
@@ -37,6 +46,7 @@ struct async_sqlite_task
 	bool save;
 	bool error;
 	bool remove;
+	unsigned int levelId;
 	char errorMessage[COD2_MAX_STRINGLENGTH];
 	bool hasargument;
 	int valueType;
@@ -49,75 +59,14 @@ struct async_sqlite_task
 	gentity_t *gentity;
 };
 
-struct sqlite_db_store
-{
-	sqlite_db_store *prev;
-	sqlite_db_store *next;
-	sqlite3 *db;
-};
-
 async_sqlite_task *first_async_sqlite_task = NULL;
 sqlite_db_store *first_sqlite_db_store = NULL;
-int async_sqlite_initialized = 0;
-
-void free_sqlite_db_stores_and_tasks()
-{
-	Sys_EnterCriticalSection(CRITSECT_SQLITE);
-
-	async_sqlite_task *current = first_async_sqlite_task;
-
-	while (current != NULL)
-	{
-		async_sqlite_task *task = current;
-		current = current->next;
-
-		if (task->statement != NULL)
-		{
-			sqlite3_finalize(task->statement);
-			task->statement = NULL;
-		}
-
-		if (task->next != NULL)
-			task->next->prev = task->prev;
-
-		if (task->prev != NULL)
-			task->prev->next = task->next;
-		else
-			first_async_sqlite_task = task->next;
-
-		delete task;
-	}
-
-	sqlite_db_store *current_store = first_sqlite_db_store;
-
-	while (current_store != NULL)
-	{
-		sqlite_db_store *store = current_store;
-		current_store = current_store->next;
-
-		if (store->db != NULL)
-			sqlite3_close(store->db);
-
-		if (store->next != NULL)
-			store->next->prev = store->prev;
-
-		if (store->prev != NULL)
-			store->prev->next = store->next;
-		else
-			first_sqlite_db_store = store->next;
-
-		delete store;
-	}
-
-	Sys_LeaveCriticalSection(CRITSECT_SQLITE);
-}
 
 void *async_sqlite_query_handler(void*)
 {
 	while(1)
 	{
 		Sys_EnterCriticalSection(CRITSECT_SQLITE);
-
 		async_sqlite_task *current = first_async_sqlite_task;
 
 		while (current != NULL)
@@ -125,14 +74,38 @@ void *async_sqlite_query_handler(void*)
 			async_sqlite_task *task = current;
 			current = current->next;
 
+			if (task->store == NULL)
+			{
+				task->remove = true;
+				continue;
+			}
+
+			if (task->store->closed)
+			{
+				task->remove = true;
+				continue;
+			}
+
+			if (!Scr_IsSystemActive())
+			{
+				task->remove = true;
+				continue;
+			}
+
+			if (scrVarPub.levelId != task->store->levelId)
+			{
+				task->remove = true;
+				continue;
+			}
+
 			if (!task->done)
 			{
-				task->result = sqlite3_prepare_v2(task->db, task->query, COD2_MAX_STRINGLENGTH, &task->statement, 0);
+				task->result = sqlite3_prepare_v2(task->store->db, task->query, COD2_MAX_STRINGLENGTH, &task->statement, 0);
 
 				if (task->result != SQLITE_OK)
 				{
 					task->error = true;
-					strncpy(task->errorMessage, sqlite3_errmsg(task->db), COD2_MAX_STRINGLENGTH - 1);
+					strncpy(task->errorMessage, sqlite3_errmsg(task->store->db), COD2_MAX_STRINGLENGTH - 1);
 					task->errorMessage[COD2_MAX_STRINGLENGTH - 1] = '\0';
 				}
 
@@ -174,7 +147,7 @@ void *async_sqlite_query_handler(void*)
 						else
 						{
 							task->error = true;
-							strncpy(task->errorMessage, sqlite3_errmsg(task->db), COD2_MAX_STRINGLENGTH - 1);
+							strncpy(task->errorMessage, sqlite3_errmsg(task->store->db), COD2_MAX_STRINGLENGTH - 1);
 							task->errorMessage[COD2_MAX_STRINGLENGTH - 1] = '\0';
 							break;
 						}
@@ -194,26 +167,23 @@ void *async_sqlite_query_handler(void*)
 		}
 
 		Sys_LeaveCriticalSection(CRITSECT_SQLITE);
-
 		Sys_SleepMSec(50);
 	}
 
 	return NULL;
 }
 
-void gsc_async_sqlite_initialize()
+bool async_sqlite_query_initialized = false;
+void async_sqlite_query_initialize()
 {
 	threadid_t tinfo;
 
-	if (!async_sqlite_initialized)
-	{
-		Sys_CreateNewThread(async_sqlite_query_handler, &tinfo, NULL);
-		async_sqlite_initialized = 1;
-	}
-	else
-		Com_DPrintf("gsc_async_sqlite_initialize() async handler already initialized.\n");
+	if (async_sqlite_query_initialized)
+		return;
 
-	stackPushInt(async_sqlite_initialized);
+	Sys_CreateNewThread(async_sqlite_query_handler, &tinfo, NULL);
+	async_sqlite_query_initialized = true;
+	Com_Printf("async_sqlite_query_initialize() thread initialized.\n");
 }
 
 void gsc_async_sqlite_create_query()
@@ -228,15 +198,32 @@ void gsc_async_sqlite_create_query()
 		return;
 	}
 
-	if (!async_sqlite_initialized)
+	sqlite_db_store *store = first_sqlite_db_store;
+
+	while (store != NULL)
 	{
-		stackError("gsc_async_sqlite_create_query() async handler has not been initialized");
+		if (store->db == (sqlite3 *)db)
+			break;
+
+		store = store->next;
+	}
+
+	if (store == NULL)
+	{
+		stackError("gsc_async_sqlite_create_query() failed to assign db store to task");
 		stackPushUndefined();
 		return;
 	}
 
-	async_sqlite_task *current = first_async_sqlite_task;
+	if (store->closed)
+	{
+		stackError("gsc_async_sqlite_create_query() database is already closed");
+		stackPushUndefined();
+		return;
+	}
 
+	async_sqlite_query_initialize();
+	async_sqlite_task *current = first_async_sqlite_task;
 	int task_count = 0;
 
 	while (current != NULL && current->next != NULL)
@@ -256,8 +243,7 @@ void gsc_async_sqlite_create_query()
 
 	newtask->prev = current;
 	newtask->next = NULL;
-
-	newtask->db = (sqlite3 *)db;
+	newtask->store = store;
 
 	strncpy(newtask->query, query, COD2_MAX_STRINGLENGTH - 1);
 	newtask->query[COD2_MAX_STRINGLENGTH - 1] = '\0';
@@ -273,6 +259,7 @@ void gsc_async_sqlite_create_query()
 	newtask->save = true;
 	newtask->error = false;
 	newtask->remove = false;
+	newtask->levelId = scrVarPub.levelId;
 	newtask->hasargument = true;
 	newtask->hasentity = false;
 	newtask->gentity = NULL;
@@ -333,15 +320,32 @@ void gsc_async_sqlite_create_query_nosave()
 		return;
 	}
 
-	if (!async_sqlite_initialized)
+	sqlite_db_store *store = first_sqlite_db_store;
+
+	while (store != NULL)
 	{
-		stackError("gsc_async_sqlite_create_query_nosave() async handler has not been initialized");
+		if (store->db == (sqlite3 *)db)
+			break;
+
+		store = store->next;
+	}
+
+	if (store == NULL)
+	{
+		stackError("gsc_async_sqlite_create_query_nosave() failed to assign db store to task");
 		stackPushUndefined();
 		return;
 	}
 
-	async_sqlite_task *current = first_async_sqlite_task;
+	if (store->closed)
+	{
+		stackError("gsc_async_sqlite_create_query_nosave() database is already closed");
+		stackPushUndefined();
+		return;
+	}
 
+	async_sqlite_query_initialize();
+	async_sqlite_task *current = first_async_sqlite_task;
 	int task_count = 0;
 
 	while (current != NULL && current->next != NULL)
@@ -361,8 +365,7 @@ void gsc_async_sqlite_create_query_nosave()
 
 	newtask->prev = current;
 	newtask->next = NULL;
-
-	newtask->db = (sqlite3 *)db;
+	newtask->store = store;
 
 	strncpy(newtask->query, query, COD2_MAX_STRINGLENGTH - 1);
 	newtask->query[COD2_MAX_STRINGLENGTH - 1] = '\0';
@@ -378,6 +381,7 @@ void gsc_async_sqlite_create_query_nosave()
 	newtask->save = false;
 	newtask->error = false;
 	newtask->remove = false;
+	newtask->levelId = scrVarPub.levelId;
 	newtask->hasargument = true;
 	newtask->hasentity = false;
 	newtask->gentity = NULL;
@@ -438,15 +442,32 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 		return;
 	}
 
-	if (!async_sqlite_initialized)
+	sqlite_db_store *store = first_sqlite_db_store;
+
+	while (store != NULL)
 	{
-		stackError("gsc_async_sqlite_create_entity_query() async handler has not been initialized");
+		if (store->db == (sqlite3 *)db)
+			break;
+
+		store = store->next;
+	}
+
+	if (store == NULL)
+	{
+		stackError("gsc_async_sqlite_create_entity_query() failed to assign db store to task");
 		stackPushUndefined();
 		return;
 	}
 
-	async_sqlite_task *current = first_async_sqlite_task;
+	if (store->closed)
+	{
+		stackError("gsc_async_sqlite_create_entity_query() database is already closed");
+		stackPushUndefined();
+		return;
+	}
 
+	async_sqlite_query_initialize();
+	async_sqlite_task *current = first_async_sqlite_task;
 	int task_count = 0;
 
 	while (current != NULL && current->next != NULL)
@@ -466,8 +487,7 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 
 	newtask->prev = current;
 	newtask->next = NULL;
-
-	newtask->db = (sqlite3 *)db;
+	newtask->store = store;
 
 	strncpy(newtask->query, query, COD2_MAX_STRINGLENGTH - 1);
 	newtask->query[COD2_MAX_STRINGLENGTH - 1] = '\0';
@@ -483,6 +503,7 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 	newtask->save = true;
 	newtask->error = false;
 	newtask->remove = false;
+	newtask->levelId = scrVarPub.levelId;
 	newtask->hasargument = true;
 	newtask->hasentity = true;
 	newtask->gentity = &g_entities[entid.entnum];
@@ -543,15 +564,32 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 		return;
 	}
 
-	if (!async_sqlite_initialized)
+	sqlite_db_store *store = first_sqlite_db_store;
+
+	while (store != NULL)
 	{
-		stackError("gsc_async_sqlite_create_entity_query_nosave() async handler has not been initialized");
+		if (store->db == (sqlite3 *)db)
+			break;
+
+		store = store->next;
+	}
+
+	if (store == NULL)
+	{
+		stackError("gsc_async_sqlite_create_entity_query_nosave() failed to assign db store to task");
 		stackPushUndefined();
 		return;
 	}
 
-	async_sqlite_task *current = first_async_sqlite_task;
+	if (store->closed)
+	{
+		stackError("gsc_async_sqlite_create_entity_query_nosave() database is already closed");
+		stackPushUndefined();
+		return;
+	}
 
+	async_sqlite_query_initialize();
+	async_sqlite_task *current = first_async_sqlite_task;
 	int task_count = 0;
 
 	while (current != NULL && current->next != NULL)
@@ -571,8 +609,7 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 
 	newtask->prev = current;
 	newtask->next = NULL;
-
-	newtask->db = (sqlite3 *)db;
+	newtask->store = store;
 
 	strncpy(newtask->query, query, COD2_MAX_STRINGLENGTH - 1);
 	newtask->query[COD2_MAX_STRINGLENGTH - 1] = '\0';
@@ -588,6 +625,7 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 	newtask->save = false;
 	newtask->error = false;
 	newtask->remove = false;
+	newtask->levelId = scrVarPub.levelId;
 	newtask->hasargument = true;
 	newtask->hasentity = true;
 	newtask->gentity = &g_entities[entid.entnum];
@@ -638,6 +676,7 @@ void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 
 void gsc_async_sqlite_checkdone()
 {
+	async_sqlite_query_initialize();
 	async_sqlite_task *current = first_async_sqlite_task;
 
 	while (current != NULL)
@@ -651,7 +690,8 @@ void gsc_async_sqlite_checkdone()
 			{
 				if (!task->error)
 				{
-					if (task->save && task->callback)
+					//push to cod
+					if (Scr_IsSystemActive() && task->save && task->callback && (scrVarPub.levelId == task->levelId))
 					{
 						if (task->hasentity)
 						{
@@ -783,6 +823,50 @@ void gsc_async_sqlite_checkdone()
 	}
 }
 
+void sqlite_db_store_cleanup()
+{
+	Sys_EnterCriticalSection(CRITSECT_SQLITE);
+	sqlite_db_store *current_store = first_sqlite_db_store;
+
+	while (current_store != NULL)
+	{
+		sqlite_db_store *store = current_store;
+		current_store = current_store->next;
+
+		if (store->closed || scrVarPub.levelId != store->levelId)
+		{
+			async_sqlite_task *current_task = first_async_sqlite_task;
+
+			while (current_task != NULL)
+			{
+				async_sqlite_task *task = current_task;
+				current_task = current_task->next;
+
+				if (task->store == store)
+					task->store = NULL;
+			}
+
+			if ( store->db != NULL )
+			{
+				sqlite3_close(store->db);
+				store->db = NULL;
+			}
+
+			if (store->next != NULL)
+				store->next->prev = store->prev;
+
+			if (store->prev != NULL)
+				store->prev->next = store->next;
+			else
+				first_sqlite_db_store = store->next;
+
+			delete store;
+		}
+	}
+
+	Sys_LeaveCriticalSection(CRITSECT_SQLITE);
+}
+
 void gsc_sqlite_open()
 {
 	const char *database;
@@ -794,8 +878,8 @@ void gsc_sqlite_open()
 		return;
 	}
 
+	sqlite_db_store_cleanup();
 	sqlite3 *db;
-
 	int rc = sqlite3_open(database, &db);
 
 	if (rc != SQLITE_OK)
@@ -816,7 +900,6 @@ void gsc_sqlite_open()
 	}
 
 	sqlite_db_store *current = first_sqlite_db_store;
-
 	int store_count = 0;
 
 	while (current != NULL && current->next != NULL)
@@ -837,8 +920,9 @@ void gsc_sqlite_open()
 
 	newstore->prev = current;
 	newstore->next = NULL;
-
+	newstore->levelId = scrVarPub.levelId;
 	newstore->db = db;
+	newstore->closed = false;
 
 	if (current != NULL)
 		current->next = newstore;
@@ -856,6 +940,30 @@ void gsc_sqlite_query()
 	if ( ! stackGetParams("ls", &db, &query))
 	{
 		stackError("gsc_sqlite_query() one or more arguments is undefined or has a wrong type");
+		stackPushUndefined();
+		return;
+	}
+
+	sqlite_db_store *store = first_sqlite_db_store;
+
+	while (store != NULL)
+	{
+		if (store->db == (sqlite3 *)db)
+			break;
+
+		store = store->next;
+	}
+
+	if (store == NULL)
+	{
+		stackError("gsc_sqlite_query() failed to assign db store");
+		stackPushUndefined();
+		return;
+	}
+
+	if (store->closed)
+	{
+		stackError("gsc_sqlite_query() database is already closed");
 		stackPushUndefined();
 		return;
 	}
@@ -919,41 +1027,18 @@ void gsc_sqlite_close()
 		return;
 	}
 
-	int rc = sqlite3_close((sqlite3 *)db);
+	sqlite_db_store *store = first_sqlite_db_store;
 
-	if (rc != SQLITE_OK)
+	while (store != NULL)
 	{
-		stackError("gsc_sqlite_close() cannot close database: %s", sqlite3_errmsg((sqlite3 *)db));
-		stackPushUndefined();
-		return;
-	}
-
-	Sys_EnterCriticalSection(CRITSECT_SQLITE);
-
-	sqlite_db_store *current = first_sqlite_db_store;
-
-	while (current != NULL)
-	{
-		sqlite_db_store *store = current;
-		current = current->next;
-
 		if (store->db == (sqlite3 *)db)
-		{
-			if (store->next != NULL)
-				store->next->prev = store->prev;
+			store->closed = true;
 
-			if (store->prev != NULL)
-				store->prev->next = store->next;
-			else
-				first_sqlite_db_store = store->next;
-
-			delete store;
-		}
+		store = store->next;
 	}
 
+	sqlite_db_store_cleanup();
 	stackPushBool(qtrue);
-
-	Sys_LeaveCriticalSection(CRITSECT_SQLITE);
 }
 
 void gsc_sqlite_escape_string()
@@ -975,13 +1060,12 @@ void gsc_sqlite_escape_string()
 
 void gsc_sqlite_databases_count()
 {
-	sqlite_db_store *current = first_sqlite_db_store;
-
+	sqlite_db_store *store = first_sqlite_db_store;
 	int store_count = 0;
 
-	while (current != NULL)
+	while (store != NULL)
 	{
-		current = current->next;
+		store = store->next;
 		store_count++;
 	}
 
@@ -990,8 +1074,8 @@ void gsc_sqlite_databases_count()
 
 void gsc_sqlite_tasks_count()
 {
+	async_sqlite_query_initialize();
 	async_sqlite_task *current = first_async_sqlite_task;
-
 	int task_count = 0;
 
 	while (current != NULL)

@@ -11,14 +11,12 @@ void gsc_sqlite_escape_string();
 void gsc_sqlite_databases_count();
 void gsc_sqlite_tasks_count();
 
-void gsc_async_sqlite_initialize();
 void gsc_async_sqlite_create_query();
 void gsc_async_sqlite_create_query_nosave();
-void gsc_async_sqlite_checkdone();
 
 void gsc_async_sqlite_create_entity_query(scr_entref_t entid);
 void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid);
 
-void free_sqlite_db_stores_and_tasks();
+void gsc_async_sqlite_checkdone();
 
 #endif

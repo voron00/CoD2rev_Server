@@ -52,10 +52,6 @@ static void SV_MapRestart( qboolean fast_restart )
 	if ( com_frameTime == sv.start_frameTime )
 		return;
 
-#if LIBCOD_COMPILE_SQLITE == 1
-	free_sqlite_db_stores_and_tasks();
-#endif
-
 	Dvar_ResetScriptInfo();
 	SV_InitArchivedSnapshot();
 
