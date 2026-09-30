@@ -2,8 +2,8 @@
 CC = gcc
 WINDRES=windres
 
-CFLAGS=-m32 -fno-pie
-LFLAGS=-m32 -no-pie
+CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -DNDEBUG
+LFLAGS=-no-pie
 
 ifeq ($(OS),Windows_NT)
 LLIBS=-static -mwindows -lstdc++ -lws2_32 -lwinmm
