@@ -100,7 +100,7 @@ void gsc_utils_printf()
 				case STACK_INT64:
 					long int tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
-					num += sprintf(&(result[num]), "%d", tmp_int64);
+					num += sprintf(&(result[num]), "%ld", tmp_int64);
 					break;
 				}
 
@@ -175,7 +175,7 @@ void gsc_utils_sprintf()
 				case STACK_INT64:
 					long int tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
-					num += sprintf(&(result[num]), "%d", tmp_int64);
+					num += sprintf(&(result[num]), "%ld", tmp_int64);
 					break;
 				}
 
