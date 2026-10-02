@@ -1232,18 +1232,6 @@ void EmitUnsigned( unsigned int value )
 	*(unsigned int *)scrCompileGlob.codePos = value;
 }
 
-void EmitUnsignedUnaligned( unsigned int value )
-{
-	scrCompileGlob.codePos = (byte *)TempMalloc( sizeof( unsigned int ) );
-	*(unsigned int *)scrCompileGlob.codePos = value;
-}
-
-void EmitCodeposUnaligned( const char *pos )
-{
-	scrCompileGlob.codePos = (byte *)TempMalloc( CODEPOS_OPERAND_SIZE );
-	*(uint32_t *)scrCompileGlob.codePos = Scr_CodePosToOffset(pos);
-}
-
 /*
 ============
 EmitCanonicalString
@@ -2898,8 +2886,7 @@ EmitFunction
 */
 void EmitFunction(sval_u func, sval_u sourcePos)
 {
-	unsigned int threadId, valueId, filename, fileId, posId, countId;
-	int scope;
+	unsigned int threadId, valueId, filename, fileId, posId, countId, scope;
 	VariableValue value, pos, count;
 	bool bExists;
 
@@ -2989,7 +2976,7 @@ void EmitFunction(sval_u func, sval_u sourcePos)
 		}
 	}
 
-	EmitCodepos((const char *)scope);
+	EmitUnsigned(scope);
 
 	countId = GetVariable(threadId, 0);
 	count = Scr_EvalVariable(countId);
@@ -5089,8 +5076,8 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 
 	for ( num = 0, caseStatement = scrCompileGlob.currentCaseStatement; caseStatement; caseStatement = caseStatement->next, num++ )
 	{
-		EmitUnsignedUnaligned(caseStatement->name);
-		EmitCodeposUnaligned(caseStatement->codePos);
+		EmitUnsigned(caseStatement->name);
+		EmitCodepos(caseStatement->codePos);
 	}
 
 	*(unsigned short *)pos2 = num;
