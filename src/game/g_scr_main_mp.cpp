@@ -3436,6 +3436,9 @@ void GScr_CastInt()
 	case VAR_INTEGER:
 		Scr_AddInt( Scr_GetInt(0) );
 		return;
+	case VAR_INT64:
+		Scr_AddInt( Scr_GetInt64(0) );
+		return;
 	}
 
 	Scr_ParamError(0, va("cannot cast %s to int", Scr_GetTypeName(0)));

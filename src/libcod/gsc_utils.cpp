@@ -96,6 +96,12 @@ void gsc_utils_printf()
 					stackGetParamInt(param, &tmp_int);
 					num += sprintf(&(result[num]), "%d", tmp_int);
 					break;
+
+				case STACK_INT64:
+					long int tmp_int64;
+					stackGetParamInt64(param, &tmp_int64);
+					num += sprintf(&(result[num]), "%d", tmp_int64);
+					break;
 				}
 
 				param++;
@@ -164,6 +170,12 @@ void gsc_utils_sprintf()
 					int tmp_int;
 					stackGetParamInt(param, &tmp_int);
 					num += sprintf(&(result[num]), "%d", tmp_int);
+					break;
+
+				case STACK_INT64:
+					long int tmp_int64;
+					stackGetParamInt64(param, &tmp_int64);
+					num += sprintf(&(result[num]), "%d", tmp_int64);
 					break;
 				}
 
@@ -456,6 +468,12 @@ void gsc_utils_float()
 		int asinteger;
 		stackGetParamInt(0, &asinteger);
 		stackPushFloat( float(asinteger) );
+		return;
+
+	case STACK_INT64:
+		long int asinteger64;
+		stackGetParamInt64(0, &asinteger64);
+		stackPushFloat( float(asinteger64) );
 		return;
 
 	default:

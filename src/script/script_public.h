@@ -1063,7 +1063,7 @@ unsigned int SL_FindLowercaseString(const char *upperstring);
 unsigned int SL_FindString(const char *string);
 unsigned int SL_GetString_(const char *str, unsigned int user);
 unsigned int SL_GetString(const char *str, unsigned int user);
-unsigned int SL_GetStringForInt(int i);
+unsigned int SL_GetStringForInt(long int i);
 unsigned int SL_GetStringForFloat(float f);
 unsigned int SL_GetStringForVector(const float *v);
 int SL_GetStringLen(unsigned int stringValue);

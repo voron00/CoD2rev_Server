@@ -1680,6 +1680,11 @@ bool Scr_CastString( VariableValue *value )
 		value->u.stringValue = SL_GetStringForInt(value->u.intValue);
 		return true;
 
+	case VAR_INT64:
+		value->type = VAR_STRING;
+		value->u.stringValue = SL_GetStringForInt(value->u.int64Value);
+		return true;
+
 	case VAR_FLOAT:
 		value->type = VAR_STRING;
 		value->u.stringValue = SL_GetStringForFloat(value->u.floatValue);
@@ -1715,6 +1720,10 @@ void Scr_CastBool( VariableValue *value )
 		value->u.intValue = value->u.intValue != 0;
 		break;
 
+	case VAR_INT64:
+		value->u.int64Value = value->u.int64Value != 0;
+		break;
+
 	case VAR_FLOAT:
 		value->type = VAR_INTEGER;
 		value->u.intValue = value->u.floatValue != 0;
@@ -1744,6 +1753,12 @@ void Scr_EvalBoolComplement( VariableValue *value )
 		return;
 	}
 
+	if ( value->type == VAR_INT64 )
+	{
+		value->u.int64Value = ~value->u.int64Value;
+		return;
+	}
+
 	type = value->type;
 	RemoveRefToValue(value);
 	value->type = VAR_UNDEFINED;
@@ -1762,6 +1777,13 @@ void Scr_EvalBoolNot( VariableValue *value )
 	if ( value->type == VAR_INTEGER )
 	{
 		value->u.intValue = value->u.intValue == 0;
+		return;
+	}
+
+	if ( value->type == VAR_INT64 )
+	{
+		value->u.int64Value = value->u.int64Value == 0;
+		return;
 	}
 }
 
@@ -1885,6 +1907,7 @@ void Scr_CastVector( VariableValue *value )
 			break;
 
 		case VAR_INTEGER:
+		case VAR_INT64:
 			vec[2 - i] = (float)value[i].u.intValue;
 			break;
 
@@ -1919,6 +1942,7 @@ void Scr_CastDebugString( VariableValue *value )
 	case VAR_VECTOR:
 	case VAR_FLOAT:
 	case VAR_INTEGER:
+	case VAR_INT64:
 		Scr_CastString(value);
 		return;
 
@@ -2567,6 +2591,10 @@ void Scr_EvalMultiply( VariableValue *value1, VariableValue *value2 )
 		value1->u.intValue *= value2->u.intValue;
 		break;
 
+	case VAR_INT64:
+		value1->u.int64Value *= value2->u.int64Value;
+		break;
+
 	default:
 		Scr_UnmatchingTypesError(value1, value2);
 		break;
@@ -2606,6 +2634,10 @@ void Scr_EvalMinus( VariableValue *value1, VariableValue *value2 )
 
 	case VAR_INTEGER:
 		value1->u.intValue -= value2->u.intValue;
+		break;
+
+	case VAR_INT64:
+		value1->u.int64Value -= value2->u.int64Value;
 		break;
 
 	default:
@@ -2682,6 +2714,10 @@ void Scr_EvalPlus( VariableValue *value1, VariableValue *value2 )
 		value1->u.intValue += value2->u.intValue;
 		break;
 
+	case VAR_INT64:
+		value1->u.int64Value += value2->u.int64Value;
+		break;
+
 	default:
 		Scr_UnmatchingTypesError(value1, value2);
 		break;
@@ -2709,6 +2745,10 @@ void Scr_EvalGreater( VariableValue *value1, VariableValue *value2 )
 		value1->u.intValue = value1->u.intValue > value2->u.intValue;
 		break;
 
+	case VAR_INT64:
+		value1->u.int64Value = value1->u.int64Value > value2->u.int64Value;
+		break;
+
 	default:
 		Scr_UnmatchingTypesError(value1, value2);
 		break;
@@ -2734,6 +2774,10 @@ void Scr_EvalLess(VariableValue *value1, VariableValue *value2)
 
 	case VAR_INTEGER:
 		value1->u.intValue = value1->u.intValue < value2->u.intValue;
+		break;
+
+	case VAR_INT64:
+		value1->u.int64Value = value1->u.int64Value < value2->u.int64Value;
 		break;
 
 	default:
@@ -2808,6 +2852,10 @@ void Scr_EvalEquality( VariableValue *value1, VariableValue *value2 )
 
 	case VAR_INTEGER:
 		value1->u.intValue = value1->u.intValue == value2->u.intValue;
+		break;
+
+	case VAR_INT64:
+		value1->u.int64Value = value1->u.int64Value == value2->u.int64Value;
 		break;
 
 	case VAR_FUNCTION:
@@ -4657,6 +4705,11 @@ void Scr_CastWeakerStringPair( VariableValue *value1, VariableValue *value2 )
 				value2->type = VAR_STRING;
 				value2->u.intValue = SL_GetStringForInt(value2->u.intValue);
 				return;
+
+			case VAR_INT64:
+				value2->type = VAR_STRING;
+				value2->u.int64Value = SL_GetStringForInt(value2->u.int64Value);
+				return;
 			}
 			return;
 
@@ -4693,6 +4746,11 @@ void Scr_CastWeakerStringPair( VariableValue *value1, VariableValue *value2 )
 			case VAR_INTEGER:
 				value1->type = VAR_STRING;
 				value1->u.intValue = SL_GetStringForInt(value1->u.intValue);
+				return;
+
+			case VAR_INT64:
+				value1->type = VAR_STRING;
+				value1->u.int64Value = SL_GetStringForInt(value1->u.int64Value);
 				return;
 			}
 			return;
