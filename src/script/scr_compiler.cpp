@@ -4,23 +4,6 @@
 scrCompilePub_t scrCompilePub;
 scrCompileGlob_t scrCompileGlob;
 
-static const size_t CODEPOS_OPERAND_SIZE = sizeof(uint32_t);
-static const size_t SWITCH_CASE_ENTRY_SIZE = sizeof(unsigned int) + CODEPOS_OPERAND_SIZE;
-
-static uint32_t Scr_CodePosToOffset(const char *pos)
-{
-	uintptr_t rawPos = (uintptr_t)pos;
-
-	if ( rawPos == FUNC_SCOPE_LOCAL || rawPos == FUNC_SCOPE_FAR )
-		return (uint32_t)rawPos;
-
-	assert(scrVarPub.programBuffer);
-	assert(pos >= scrVarPub.programBuffer);
-	assert(pos - scrVarPub.programBuffer <= UINT32_MAX);
-
-	return (uint32_t)(pos - scrVarPub.programBuffer);
-}
-
 /*
 ============
 AddRefToValue
@@ -54,7 +37,7 @@ void Scr_CompileShutdown()
 	{
 		entry = scrCompileGlob.precachescriptListHead;
 		scrCompileGlob.precachescriptListHead = scrCompileGlob.precachescriptListHead->next;
-		Z_FreeInternal(entry);
+		Z_Free(entry);
 	}
 }
 
@@ -1162,8 +1145,8 @@ EmitCodepos
 */
 void EmitCodepos( const char *pos )
 {
-	scrCompileGlob.codePos = (byte *)TempMallocAlign( CODEPOS_OPERAND_SIZE );
-	*(uint32_t *)scrCompileGlob.codePos = Scr_CodePosToOffset(pos);
+	scrCompileGlob.codePos = (byte *)TempMallocAlign( sizeof(uint32_t) );
+	*(uint32_t *)scrCompileGlob.codePos = pos - scrVarPub.programBuffer;
 }
 
 /*
@@ -2875,7 +2858,7 @@ void LinkThread( unsigned int threadCountId, VariableValue *pos, bool allowFarCa
 			CompileError2(value->codePosValue, "unknown function");
 		}
 
-		*(uint32_t *)value->codePosValue = Scr_CodePosToOffset(pos->u.codePosValue);
+		*(uint32_t *)value->codePosValue = pos->u.codePosValue - scrVarPub.programBuffer;
 	}
 }
 
@@ -5083,7 +5066,6 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 	*(unsigned short *)pos2 = num;
 	qsort(pos3, num, SWITCH_CASE_ENTRY_SIZE, CompareCaseInfo);
 
-	// FIXME: This is bad!!
 	while ( num > 1 )
 	{
 		if ( *(unsigned int *)pos3 == *(unsigned int *)(pos3 + SWITCH_CASE_ENTRY_SIZE) )
@@ -5098,7 +5080,7 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 			}
 		}
 
-		--num;
+		num--;
 		pos3 += SWITCH_CASE_ENTRY_SIZE;
 	}
 

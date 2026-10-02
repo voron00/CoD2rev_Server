@@ -4831,7 +4831,7 @@ loop_dec_top:
 
 		case OP_endswitch:
 			gCaseCount = Scr_ReadUnsignedShort(&pos);
-			pos += gCaseCount * (sizeof(unsigned int) + sizeof(uint32_t));
+			pos += gCaseCount * SWITCH_CASE_ENTRY_SIZE;
 			continue;
 
 		case OP_vector:
