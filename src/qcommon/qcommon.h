@@ -303,6 +303,8 @@ typedef struct NetField
 	int bits;
 } netField_t;
 
+typedef void *(*Alloc_t)(int);
+
 #ifdef _WIN32
 #include <windows.h>
 #else

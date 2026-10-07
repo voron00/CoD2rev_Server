@@ -348,6 +348,11 @@ typedef struct XModelCollSurf_s
 	int surfFlags;
 } XModelCollSurf;
 
+struct trXSkin_t
+{
+	struct Material **materialHandles;
+};
+
 typedef struct
 {
 	XModelParts_s *parts;
@@ -360,7 +365,7 @@ typedef struct
 	vec3_t maxs;
 	short numLods;
 	short collLod;
-	struct Material *xskins; // !!! Not loaded in server binary
+	trXSkin_t xskins; // !!! Not loaded in server binary
 	int memUsage;
 	const char *name;
 	char flags;
@@ -547,7 +552,7 @@ void DObjDisplayAnim(DObj_s *obj);
 int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify);
 void DObjInitServerTime(DObj_s *obj, float dtime);
 
-qboolean XModelBad(XModel *model);
+bool XModelBad( const XModel *model );
 XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int));
 int XModelGetNumLods(const XModel *model);
 int XModelGetFlags(const XModel *model);

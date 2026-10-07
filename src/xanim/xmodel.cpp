@@ -1,252 +1,624 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
-qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs)
+/*
+===============
+LocalMatrixTransformVector
+===============
+*/
+void LocalMatrixTransformVector( const vec3_t in1, const vec3_t in2[3], vec3_t out )
 {
-	vec3_t bounds;
-	vec3_t out;
-	vec3_t in;
-	int j;
-	int k;
-	int i;
-	XModelCollSurf *surf;
+	out[ 0 ] = ( in1[ 0 ] * in2[ 0 ][ 0 ] ) + ( in1[ 1 ] * in2[ 1 ][ 0 ] ) + ( in1[ 2 ] * in2[ 2 ][ 0 ] );
+	out[ 1 ] = ( in1[ 0 ] * in2[ 0 ][ 1 ] ) + ( in1[ 1 ] * in2[ 1 ][ 1 ] ) + ( in1[ 2 ] * in2[ 2 ][ 1 ] );
+	out[ 2 ] = ( in1[ 0 ] * in2[ 0 ][ 2 ] ) + ( in1[ 1 ] * in2[ 1 ][ 2 ] ) + ( in1[ 2 ] * in2[ 2 ][ 2 ] );
+}
 
-	if ( !model->numCollSurfs )
-		return 0;
+/*
+===============
+LocalMatrixTransposeTransformVector
+===============
+*/
+void LocalMatrixTransposeTransformVector( const vec3_t in1, const vec3_t in2[3], vec3_t out )
+{
+	out[ 0 ] = in1[ 0 ] * in2[ 0 ][ 0 ] + in1[ 1 ] * in2[ 0 ][ 1 ] + in1[ 2 ] * in2[ 0 ][ 2 ];
+	out[ 1 ] = in1[ 0 ] * in2[ 1 ][ 0 ] + in1[ 1 ] * in2[ 1 ][ 1 ] + in1[ 2 ] * in2[ 1 ][ 2 ];
+	out[ 2 ] = in1[ 0 ] * in2[ 2 ][ 0 ] + in1[ 1 ] * in2[ 2 ][ 1 ] + in1[ 2 ] * in2[ 2 ][ 2 ];
+}
 
-	VectorSet(mins, 3.4028235e38, 3.4028235e38, 3.4028235e38);
-	VectorSet(maxs, -3.4028235e38, -3.4028235e38, -3.4028235e38);
+/*
+===============
+Com_ValidXModelName
+===============
+*/
+bool Com_ValidXModelName( const char *name )
+{
+	return !I_strnicmp(name, "xmodel", 6) && name[6] == '/';
+}
 
-	for ( i = 0; i < model->numCollSurfs; ++i )
+/*
+===============
+XModelGetMemUsage
+===============
+*/
+int XModelGetMemUsage( const XModel *model )
+{
+	return model->memUsage;
+}
+
+/*
+===============
+XModelGetSkins
+===============
+*/
+const trXSkin_t* XModelGetSkins( const XModel *model )
+{
+	assert(model);
+	return &model->xskins;
+}
+
+/*
+===============
+XModelGetCollisionLod
+===============
+*/
+int XModelGetCollisionLod( const XModel *model )
+{
+	assert(model);
+	return model->collLod;
+}
+
+/*
+===============
+XModelGetContents
+===============
+*/
+int XModelGetContents( const XModel *model )
+{
+	assert(model);
+	return model->contents;
+}
+
+/*
+===============
+XModelGetLodName
+===============
+*/
+const char *XModelGetLodName( const XModel *model, int lod )
+{
+	return model->lodInfo[lod].filename;
+}
+
+/*
+===============
+XModelGetBoneIndex
+===============
+*/
+int XModelGetBoneIndex( const XModel *model, unsigned int name )
+{
+	int numBones, localBoneIndex;
+	unsigned short *boneNames;
+
+	assert(model);
+
+	boneNames = model->parts->hierarchy->names;
+	numBones  = model->parts->numBones;
+
+	assert(numBones < DOBJ_MAX_PARTS);
+
+	for ( localBoneIndex = numBones - 1; ; localBoneIndex-- )
 	{
-		surf = &model->collSurfs[i];
-
-		for ( j = 0; j < 8; ++j )
+		if ( localBoneIndex < 0 )
 		{
-			if ( (j & 1) != 0 )
-				bounds[0] = surf->mins[0];
-			else
-				bounds[0] = surf->maxs[0];
+			break;
+		}
 
-			in[0] = bounds[0];
-
-			if ( (j & 2) != 0 )
-				bounds[1] = surf->mins[1];
-			else
-				bounds[1] = surf->maxs[1];
-
-			in[1] = bounds[1];
-
-			if ( (j & 4) != 0 )
-				bounds[2] = surf->mins[2];
-			else
-				bounds[2] = surf->maxs[2];
-
-			in[2] = bounds[2];
-
-			MatrixTransformVector(in, axis, out);
-
-			for ( k = 0; k < 3; ++k )
-			{
-				if ( mins[k] > out[k] )
-					mins[k] = out[k];
-
-				if ( out[k] > maxs[k] )
-					maxs[k] = out[k];
-			}
+		if ( name == boneNames[localBoneIndex] )
+		{
+			break;
 		}
 	}
 
-	return 1;
+	assert((unsigned)localBoneIndex < DOBJ_MAX_PARTS);
+	return localBoneIndex;
 }
 
-int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask)
+/*
+===============
+XModelBoneNames
+===============
+*/
+unsigned short* XModelBoneNames( XModel *model )
 {
-	float dot;
-	float axis[3][3];
-	vec3_t normal;
-	int j;
-	int i;
-	float t;
-	float s;
-	float dist;
-	float fraction;
-	float endDist;
-	float startDist;
-	vec3_t hit;
-	vec3_t boneVec;
-	XModelCollTri_s *tri;
-	XModelCollSurf_s *surf;
-	int boneIndex;
-	TraceExtents boneExtents;
-	vec3_t endDelta;
-	vec3_t startDelta;
-	DObjAnimMat *Mat;
-	int numBones;
-	int boneIdx;
-
-	boneIndex = -1;
-	numBones = XModelNumBones(model);
-
-	for ( i = 0; i < model->numCollSurfs; ++i )
-	{
-		surf = &model->collSurfs[i];
-
-		if ( (surf->contents & contentmask) != 0 )
-		{
-			boneIdx = surf->boneIdx;
-			Mat = &pose[boneIdx];
-			VectorSubtract(localStart, Mat->trans, startDelta);
-			VectorSubtract(localEnd, Mat->trans, endDelta);
-			ConvertQuatToMat(Mat, axis);
-			MatrixTransposeTransformVector(startDelta, axis, boneExtents.start);
-			MatrixTransposeTransformVector(endDelta, axis, boneExtents.end);
-			CM_CalcTraceEntents(&boneExtents);
-
-			if ( !CM_TraceBox(&boneExtents, surf->mins, surf->maxs, results->fraction) )
-			{
-				VectorSubtract(boneExtents.end, boneExtents.start, boneVec);
-
-				for ( j = 0; j < surf->numCollTris; ++j )
-				{
-					tri = &surf->collTris[j];
-					dot = DotProduct(boneExtents.end, tri->plane);
-					startDist = dot - tri->plane[3];
-
-					if ( startDist < 0.0 )
-					{
-						dot = DotProduct(boneExtents.start, tri->plane);
-						endDist = dot - tri->plane[3];
-
-						if ( endDist > 0.0 )
-						{
-							fraction = (endDist - 0.125) / (endDist - startDist);
-							fraction = I_fmax(fraction, 0.0);
-
-							if ( fraction < results->fraction )
-							{
-								dist = endDist / (endDist - startDist);
-								VectorMA(boneExtents.start, dist, boneVec, hit);
-								dot = DotProduct(hit, tri->svec);
-								s = dot - tri->svec[3];
-
-								if ( s >= -0.001 && s <= 1.001 )
-								{
-									dot = DotProduct(hit, tri->tvec);
-									t = dot - tri->tvec[3];
-
-									if ( t >= -0.001 && s + t <= 1.001 )
-									{
-										boneIndex = boneIdx;
-										results->startsolid = 0;
-										results->allsolid = 0;
-										results->fraction = fraction;
-										results->surfaceFlags = surf->surfFlags;
-										results->contents = surf->contents;
-										VectorCopy(tri->plane, results->normal);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if ( boneIndex < 0 )
-		return -1;
-
-	Mat = &pose[boneIndex];
-	ConvertQuatToMat(Mat, axis);
-	MatrixTransformVector(results->normal, axis, normal);
-	VectorCopy(normal, results->normal);
-
-	return boneIndex;
+	assert(model);
+	return model->parts->hierarchy->names;
 }
 
-qboolean XModelBad(XModel *model)
+/*
+===============
+XModelSetOptimize
+===============
+*/
+void XModelSetOptimize( int )
 {
-	return model->bad;
+	UNIMPLEMENTED(__FUNCTION__);
 }
 
-void XModelGetBounds(const XModel *model, float *mins, float *maxs)
+/*
+===============
+XModelGetBounds
+===============
+*/
+void XModelGetBounds( const XModel *model, vec3_t mins, vec3_t maxs )
 {
 	VectorCopy(model->mins, mins);
 	VectorCopy(model->maxs, maxs);
 }
 
-void XModelPartsFree(XModelParts *modelParts)
+/*
+===============
+XModelBad
+===============
+*/
+bool XModelBad( const XModel *model )
 {
-	int numBones;
-	int i;
-	unsigned short *name;
-
-	name = modelParts->hierarchy->names;
-	numBones = modelParts->numBones;
-
-	for ( i = 0; i < numBones; ++i )
-		SL_RemoveRefToString(name[i]);
+	return model->bad;
 }
 
-void XModelFree(XModel *model)
+/*
+===============
+XModelTraceLine
+===============
+*/
+int XModelTraceLine( const XModel *model, trace_t *results, DObjAnimMat *pose, const vec3_t localStart, const vec3_t localEnd, int contentmask )
 {
-	int j;
-	int i;
+	float axis[3][3];
+	int i, j, partIndex, numBones, boneIdx;
+	float s, t, frac, hitFrac, startDist, endDist;
+	vec3_t hit, boneVec, normal;
+	XModelCollTri_s *ctri;
+	XModelCollSurf_s *csurf;
+	TraceExtents boneExtents;
+	vec3_t startDelta, endDelta;
+	DObjAnimMat *Mat;
 
-	if ( !XModelBad(model) )
+	partIndex = -1;
+	numBones = XModelNumBones(model);
+
+	for ( i = 0; i < model->numCollSurfs; i++ )
 	{
-		for ( i = 0; i < 4; ++i )
-		{
-			if ( model->lodInfo[i].surfNames )
-			{
-				for ( j = 0; j < model->lodInfo[i].numsurfs; ++j )
-					SL_RemoveRefToString(model->lodInfo[i].surfNames[j]);
+		csurf = &model->collSurfs[i];
 
-				model->lodInfo[i].surfNames = 0;
-			}
+		if ( !( csurf->contents & contentmask ) )
+		{
+			continue;
 		}
+
+		boneIdx = csurf->boneIdx;
+		Mat = &pose[boneIdx];
+		assert(Mat);
+
+		VectorSubtract(localStart, Mat->trans, startDelta);
+		VectorSubtract(localEnd, Mat->trans, endDelta);
+
+		ConvertQuatToMat(Mat, axis);
+
+		LocalMatrixTransposeTransformVector(startDelta, axis, boneExtents.start);
+		LocalMatrixTransposeTransformVector(endDelta, axis, boneExtents.end);
+
+		CM_CalcTraceEntents(&boneExtents);
+
+		if ( CM_TraceBox(&boneExtents, csurf->mins, csurf->maxs, results->fraction) )
+		{
+			continue;
+		}
+
+		VectorSubtract(boneExtents.end, boneExtents.start, boneVec);
+
+		for ( j = 0; j < csurf->numCollTris; j++ )
+		{
+			ctri = &csurf->collTris[j];
+
+			endDist = DotProduct(boneExtents.end, ctri->plane) - ctri->plane[3];
+
+			if ( endDist >= 0 )
+			{
+				continue;
+			}
+
+			startDist = DotProduct(boneExtents.start, ctri->plane) - ctri->plane[3];
+
+			if ( startDist <= 0 )
+			{
+				continue;
+			}
+
+			frac = I_fmax( ( startDist - SURFACE_CLIP_EPSILON ) / ( startDist - endDist ), 0.0f );
+
+			if ( frac >= results->fraction )
+			{
+				continue;
+			}
+
+			hitFrac = startDist / (startDist - endDist);
+			VectorMA(boneExtents.start, hitFrac, boneVec, hit);
+
+			s = DotProduct(hit, ctri->svec) - ctri->svec[3];
+
+			if ( s < -0.001f || s > 1.001f )
+			{
+				continue;
+			}
+
+			t = DotProduct(hit, ctri->tvec) - ctri->tvec[3];
+
+			if ( t < -0.001f || t > 1.001f )
+			{
+				continue;
+			}
+
+			partIndex = boneIdx;
+
+			results->startsolid = qfalse;
+			results->allsolid = qfalse;
+
+			results->fraction = frac;
+			assert(results->fraction >= 0 && results->fraction <= 1.0f);
+
+			results->surfaceFlags = csurf->surfFlags;
+			results->contents = csurf->contents;
+
+			VectorCopy(ctri->plane, results->normal);
+		}
+	}
+
+	if ( partIndex < 0 )
+	{
+		return -1;
+	}
+
+	Mat = &pose[partIndex];
+	assert(Mat);
+
+	ConvertQuatToMat(Mat, axis);
+
+	LocalMatrixTransformVector(results->normal, axis, normal);
+	VectorCopy(normal, results->normal);
+
+	return partIndex;
+}
+
+
+/*
+===============
+XModelFree
+===============
+*/
+void XModelFree( XModel *model )
+{
+	assert(model);
+
+	if ( XModelBad(model) )
+	{
+		return;
+	}
+
+	for ( int i = 0; i < MAX_LODS; i++ )
+	{
+		if ( !model->lodInfo[i].surfNames )
+		{
+			continue;
+		}
+
+		for ( int j = 0; j < model->lodInfo[i].numsurfs; j++ )
+		{
+			SL_RemoveRefToString(model->lodInfo[i].surfNames[j]);
+		}
+
+		model->lodInfo[i].surfNames = 0;
 	}
 }
 
-XModelParts* XModelPartsFindData(const char *partName)
+/*
+===============
+XModelPartsFree
+===============
+*/
+void XModelPartsFree( XModelParts *modelParts )
 {
-	return (XModelParts *)Hunk_FindDataForFile(FILEDATA_XMODELPARTS, partName);
+	unsigned short *boneNames;
+	int numBones;
+
+	assert(modelParts);
+
+	boneNames = modelParts->hierarchy->names;
+	numBones = modelParts->numBones;
+
+	for ( int i = 0; i < numBones; i++ )
+	{
+		SL_RemoveRefToString(boneNames[i]);
+	}
 }
 
-void XModelPartsSetData(const char *partName, XModelParts *parts, void *(*Alloc)(int))
+/*
+===============
+XModelFindExisting
+===============
+*/
+XModel* XModelFindExisting( const char *model )
 {
-	Hunk_SetDataForFile(FILEDATA_XMODELPARTS, partName, parts, Alloc);
+	return (XModel *)Hunk_FindDataForFile( FILEDATA_XMODEL, model );
 }
 
-XModelSurfs* XModelSurfsFindData(const char *surfName)
+/*
+===============
+XModelSetData
+===============
+*/
+const char* XModelSetData( const char *modelName, XModel *model, Alloc_t Alloc )
 {
-	return (XModelSurfs *)Hunk_FindDataForFile(FILEDATA_XMODELSURFS, surfName);
+	return Hunk_SetDataForFile( FILEDATA_XMODEL, modelName, model, Alloc );
 }
 
-void XModelSurfsSetData(const char *surfName, XModelSurfs *surface, void *(*Alloc)(int))
+struct XModelDefault
 {
-	Hunk_SetDataForFile(FILEDATA_XMODELSURFS, surfName, surface, Alloc);
+	unsigned short boneNames[1];
+	XBoneHierarchy hierarchy;
+	XModelParts modelParts;
+	XModelSurfs modelSurf;
+	XBoneInfo boneInfo;
+	unsigned char partClassification[1];
+	unsigned short surfNames[1];
+};
+
+XModelDefault g_default;
+
+/*
+===============
+XModelCreateDefaultParts
+===============
+*/
+XModelParts_s *XModelCreateDefaultParts()
+{
+	g_default.hierarchy.names = g_default.boneNames;
+	g_default.modelParts.hierarchy = &g_default.hierarchy;
+
+	g_default.modelParts.quats = 0;
+	g_default.modelParts.trans = 0;
+
+	g_default.modelParts.numBones = 1;
+	g_default.modelParts.numRootBones = 1;
+
+	g_default.modelParts.partClassification = g_default.partClassification;
+	g_default.partClassification[0] = 0;
+
+	g_default.boneNames[0] = 0;
+
+	return &g_default.modelParts;
 }
 
-XModel* XModelFindData(const char *model)
+/*
+===============
+XModelCreateDefaultSurface
+===============
+*/
+XModelSurfs_s *XModelCreateDefaultSurface()
 {
-	return (XModel *)Hunk_FindDataForFile(FILEDATA_XMODEL, model);
+	g_default.modelSurf.surfs = 0;
+	return &g_default.modelSurf;
 }
 
-const char* XModelSetData(const char *modelName, XModel *model, void *(*Alloc)(int))
+/*
+===============
+XModelMakeDefault
+===============
+*/
+void XModelMakeDefault( XModel *model )
 {
-	return Hunk_SetDataForFile(FILEDATA_XMODEL, modelName, model, Alloc);
+	model->bad = true;
+	model->parts = XModelCreateDefaultParts();
+
+	for ( int i = 0; i < MAX_LODS; i++ )
+	{
+		model->lodInfo[i].surfs = 0;
+		model->lodInfo[i].filename = "";
+		model->lodInfo[i].dist = 0;
+		model->lodInfo[i].numsurfs = 1;
+		model->lodInfo[i].surfNames = g_default.surfNames;
+
+		g_default.surfNames[0] = 0;
+	}
+
+	model->lodInfo->surfs = XModelCreateDefaultSurface();
+	model->numLods = 1;
+	model->collLod = 0;
+
+	model->name = "DEFAULT";
+
+	g_default.boneInfo.bounds[0][0] = -16;
+	g_default.boneInfo.bounds[0][1] = -16;
+	g_default.boneInfo.bounds[0][2] = -16;
+
+	g_default.boneInfo.bounds[1][0] = 16;
+	g_default.boneInfo.bounds[1][1] = 16;
+	g_default.boneInfo.bounds[1][2] = 16;
+
+	model->boneInfo = &g_default.boneInfo;
 }
 
-XModelParts* XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)(int))
-{
-	XModelParts *parts;
 
-	parts = XModelPartsFindData(name);
+/*
+===============
+XModelCreateDefault
+===============
+*/
+XModel* XModelCreateDefault( Alloc_t Alloc )
+{
+	XModel *model = (XModel *)Alloc( sizeof( XModel ) );
+	XModelMakeDefault(model);
+
+	return model;
+}
+
+/*
+===============
+XModelDefaultModel
+===============
+*/
+XModel* XModelDefaultModel( const char *name, Alloc_t Alloc )
+{
+	XModel *model = XModelCreateDefault(Alloc);
+	XModelSetData(name, model, Alloc);
+
+	return model;
+}
+
+/*
+===============
+XModelSurfsSupported
+===============
+*/
+bool XModelHasSurfs()
+{
+	return false; // not supported in server binary
+}
+
+/*
+===============
+R_XModelSurfsLoadFile
+===============
+*/
+XModelSurfs_s* R_XModelSurfsLoadFile()
+{
+	return NULL; // not supported in server binary
+}
+
+/*
+===============
+XModelPartsFindData
+===============
+*/
+XModelParts* XModelPartsFindData( const char *name )
+{
+	return (XModelParts *)Hunk_FindDataForFile( FILEDATA_XMODELPARTS, name );
+}
+
+/*
+===============
+XModelPartsSetData
+===============
+*/
+void XModelPartsSetData( const char *partName, XModelParts *modelParts, Alloc_t Alloc )
+{
+	Hunk_SetDataForFile( FILEDATA_XMODELPARTS, partName, modelParts, Alloc );
+}
+
+/*
+===============
+XModelSurfsFindData
+===============
+*/
+XModelSurfs* XModelSurfsFindData( const char *surfName )
+{
+	return (XModelSurfs *)Hunk_FindDataForFile( FILEDATA_XMODELSURFS, surfName );
+}
+
+/*
+===============
+XModelSurfsSetData
+===============
+*/
+void XModelSurfsSetData( const char *surfName, XModelSurfs *modelSurfs, Alloc_t Alloc )
+{
+	Hunk_SetDataForFile( FILEDATA_XMODELSURFS, surfName, modelSurfs, Alloc );
+}
+
+/*
+===============
+XModelSurfsPrecache
+===============
+*/
+XModelSurfs_s* XModelSurfsPrecache( XModel *model, const char *surfName, Alloc_t Alloc )
+{
+	XModelSurfs_s *modelSurfs = XModelSurfsFindData(surfName);
+
+	if ( modelSurfs )
+	{
+		return modelSurfs;
+	}
+
+	modelSurfs = R_XModelSurfsLoadFile();
+
+	if ( modelSurfs )
+	{
+		XModelSurfsSetData( surfName, modelSurfs, *Alloc );
+		return modelSurfs;
+	}
+
+	Com_Printf("ERROR: Cannot find 'xmodelsurfs '%s'.\n", surfName);
+	return NULL;
+}
+
+/*
+===============
+XModelSurfsLoad
+===============
+*/
+bool XModelSurfsLoad( XModel *model, Alloc_t Alloc )
+{
+	for ( int i = 0; i < MAX_LODS && *model->lodInfo[i].filename; i++ )
+	{
+		model->lodInfo[i].surfs = XModelSurfsPrecache( model, model->lodInfo[i].filename, Alloc );
+
+		if ( !model->lodInfo[i].surfs )
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+===============
+XModelLoad
+===============
+*/
+XModel* XModelLoad( const char *name, Alloc_t Alloc, Alloc_t AllocColl )
+{
+	XModel *model = XModelLoadFile(name, Alloc, AllocColl);
+
+	if ( !model )
+	{
+		return NULL;
+	}
+
+	if ( !XModelHasSurfs() )
+	{
+		return model;
+	}
+
+	if ( XModelSurfsLoad(model, Alloc) )
+	{
+		return model;
+	}
+
+	XModelFree(model);
+	return NULL;
+}
+
+/*
+===============
+XModelPartsPrecache
+===============
+*/
+XModelParts* XModelPartsPrecache( XModel *model, const char *name, Alloc_t Alloc )
+{
+	XModelParts *parts = XModelPartsFindData(name);
 
 	if ( parts )
+	{
 		return parts;
+	}
 
 	parts = XModelPartsLoadFile(model, name, Alloc);
 
@@ -255,169 +627,33 @@ XModelParts* XModelPartsPrecache(XModel *model, const char *name, void *(*Alloc)
 		XModelPartsSetData(name, parts, Alloc);
 		return parts;
 	}
-	else
-	{
-		Com_Printf("^1ERROR: Cannot find xmodelparts '%s'.\n", name);
-		return NULL;
-	}
-}
 
-XModelSurfs* XModelReadSurfaces()
-{
-	UNIMPLEMENTED(__FUNCTION__);
+	Com_Printf("ERROR: Cannot find xmodelparts '%s'.\n", name);
 	return NULL;
 }
 
-XModelSurfs* XModelSurfsPrecache(XModel *model, const char *name, void *(*Alloc)(int))
+/*
+===============
+XModelPrecache
+===============
+*/
+XModel* XModelPrecache( const char *name, Alloc_t Alloc, Alloc_t AllocColl )
 {
-	XModelSurfs *surface;
-
-	surface = XModelSurfsFindData(name);
-
-	if ( surface )
-		return surface;
-
-	surface = XModelReadSurfaces();
-
-	if ( surface )
-	{
-		XModelSurfsSetData(name, surface, Alloc);
-		return surface;
-	}
-	else
-	{
-		Com_Printf("^1ERROR: Cannot find 'xmodelsurfs '%s'.\n", name);
-		return NULL;
-	}
-}
-
-bool XModelSurfsLoad(XModel *model, void *(*Alloc)(int))
-{
-	int i;
-
-	for ( i = 0; i < 4 && *model->lodInfo[i].filename; ++i )
-	{
-		model->lodInfo[i].surfs = XModelSurfsPrecache(model, model->lodInfo[i].filename, Alloc);
-
-		if ( !model->lodInfo[i].surfs )
-			return false;
-	}
-
-	return true;
-}
-
-XModel defaultModel;
-XModelParts defaultModelPart;
-XBoneInfo defaultBoneInfo;
-XModelSurfs defaultSurface;
-XBoneHierarchy defaultHierarchy;
-unsigned short defaultBoneNames[2];
-unsigned short defaultSurfnames;
-byte defaultpartClassification;
-
-XModelParts* XModelCreateDefaultParts()
-{
-	defaultHierarchy.names = defaultBoneNames;
-	defaultModelPart.hierarchy = &defaultHierarchy;
-	defaultModelPart.quats = 0;
-	defaultModelPart.trans = 0;
-	defaultModelPart.numBones = 1;
-	defaultModelPart.numRootBones = 1;
-	defaultModelPart.partClassification = &defaultpartClassification;
-	defaultpartClassification = 0;
-	defaultBoneNames[0] = 0;
-
-	return &defaultModelPart;
-}
-
-XModelSurfs* setDefaultSurface()
-{
-	defaultSurface.surfs = NULL;
-	return &defaultSurface;
-}
-
-XModel* XModelMakeDefault(const char *name, void *(*Alloc)(int))
-{
-	XModel *model;
-	int i;
-
-	model = (XModel *)Alloc(sizeof(XModel));
-
-	model->bad = 1;
-	model->parts = XModelCreateDefaultParts();
-
-	for ( i = 0; i < 4; ++i )
-	{
-		model->lodInfo[i].surfs = 0;
-		model->lodInfo[i].filename = "";
-		model->lodInfo[i].dist = 0.0;
-		model->lodInfo[i].numsurfs = 1;
-		model->lodInfo[i].surfNames = &defaultSurfnames;
-		defaultSurfnames = 0;
-	}
-
-	model->lodInfo[0].surfs = setDefaultSurface();
-	model->numLods = 1;
-	model->collLod = 0;
-	model->name = "DEFAULT";
-
-	defaultBoneInfo.bounds[0][0] = -16.0;
-	defaultBoneInfo.bounds[0][1] = -16.0;
-	defaultBoneInfo.bounds[0][2] = -16.0;
-	defaultBoneInfo.bounds[1][0] = 16.0;
-	defaultBoneInfo.bounds[1][1] = 16.0;
-	defaultBoneInfo.bounds[1][2] = 16.0;
-
-	model->boneInfo = &defaultBoneInfo;
-
-	XModelSetData(name, model, Alloc);
-
-	return model;
-}
-
-bool XModelSurfsSupported()
-{
-#ifdef DEDICATED
-	return false;
-#endif
-	return true;
-}
-
-XModel* XModelLoad(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
-{
-	XModel *model;
-
-	model = XModelLoadFile(name, Alloc, AllocColl);
-
-	if ( !model )
-		return NULL;
-
-	if ( !XModelSurfsSupported() || XModelSurfsLoad(model, Alloc) )
-		return model;
-
-	XModelFree(model);
-	return NULL;
-}
-
-XModel* XModelPrecache(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
-{
-	XModel *model;
-
-	model = XModelFindData(name);
-
-	if ( model )
-		return model;
-
-	model = XModelLoad(name, Alloc, AllocColl);
+	XModel *model = XModelFindExisting(name);
 
 	if ( model )
 	{
-		model->name = XModelSetData(name, model, Alloc);
 		return model;
 	}
-	else
+
+	model = XModelLoad( name, Alloc, AllocColl );
+
+	if ( model )
 	{
-		Com_Printf("^1ERROR: Cannot find xmodel '%s'.\n", name);
-		return XModelMakeDefault(name, Alloc);
+		model->name = XModelSetData( name, model, Alloc );
+		return model;
 	}
+
+	Com_Printf("ERROR: Cannot find xmodel '%s'.\n", name);
+	return XModelDefaultModel(name, Alloc);
 }

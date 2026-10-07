@@ -1166,11 +1166,6 @@ char I_CleanChar(char character)
 	}
 }
 
-bool Com_ValidXModelName(const char *name)
-{
-	return !I_strnicmp(name, "xmodel", 6) && name[6] == 47;
-}
-
 qboolean Info_Validate( const char *s )
 {
 	if ( strchr( s, '\"' ) )
