@@ -485,6 +485,14 @@ struct DObjTrace_s
 	unsigned short partGroup;
 };
 
+struct TestLod
+{
+	bool enabled;
+	float dist;
+};
+
+extern TestLod g_testLods[];
+
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, DObj *obj, unsigned int entnum);
 void DObjGetBounds(const DObj_s *obj, float *mins, float *maxs);
 void DObjInit();
@@ -567,7 +575,10 @@ void XAnimShutdown();
 
 unsigned short* XModelBoneNames(XModel *model);
 int XModelGetContents(const XModel *model);
-DObjAnimMat* XModelGetBasePose(const XModel *model);
+DObjAnimMat* XModelGetBasePose( const XModel *model );
+
+int XModelGetLodForDist(const XModel *model, float dist );
+float XModelGetLodOutDist( const XModel *model );
 
 XAnim* Scr_GetAnims(int index);
 int Scr_CreateAnimationTree(unsigned int parentNode, unsigned int names, XAnim_s *anims, unsigned int childIndex, const char *parentName, unsigned int parentIndex, unsigned int filename, int treeIndex);
@@ -619,10 +630,11 @@ int DObjHasContents(DObj_s *obj, int contentmask);
 void DObjGeomTraceline( DObj *obj, const vec3_t localStart, const vec3_t localEnd, int contentmask, DObjTrace_s *results );
 void DObjDumpInfo(const DObj_s *obj);
 
-int XAnim_ReadShort(const unsigned char **pos);
-int XAnim_ReadUnsignedShort(const unsigned char **pos);
-int XAnim_ReadInt(const unsigned char **pos);
-float XAnim_ReadFloat(const unsigned char **pos);
+unsigned char ConsumeByte (const unsigned char **pos);
+short ConsumeShort(const unsigned char **pos);
+unsigned short ConsumeUShort(const unsigned char **pos);
+int ConsumeInt(const unsigned char **pos);
+float ConsumeFloat(const unsigned char **pos);
 void ConsumeQuat(const unsigned char **pos, short *out);
 void QuatMultiplyEquals(const float *in, float *inout);
 void QuatMultiplyReverseEquals(float *in, float *inout);
@@ -631,3 +643,4 @@ void LocalInvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *
 void DObjCalcTransWeight(DObjAnimMat *Mat);
 void DObjSkelClear( DObj_s *obj );
 void DObjComputeBounds( DObj *obj );
+void NormalizeQuatTrans( DObjAnimMat *mat );

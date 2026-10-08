@@ -574,8 +574,22 @@ DObjGetLodOutDist
 */
 float DObjGetLodOutDist( const DObj *obj )
 {
-	UNIMPLEMENTED(__FUNCTION__);
-	return 0;
+	float dist, maxDist;
+	int i;
+
+	maxDist = 0;
+
+	for ( i = 0; i < obj->numModels; i++ )
+	{
+		dist = XModelGetLodOutDist(obj->models[i]);
+
+		if ( dist > maxDist )
+		{
+			maxDist = dist;
+		}
+	}
+
+	return maxDist;
 }
 
 /*
@@ -585,8 +599,7 @@ DObjGetLodForDist
 */
 int DObjGetLodForDist( const DObj *obj, int modelIndex, float dist )
 {
-	UNIMPLEMENTED(__FUNCTION__);
-	return 0;
+	 return XModelGetLodForDist( obj->models[modelIndex], dist );
 }
 
 /*

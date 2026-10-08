@@ -25,18 +25,21 @@ extern vec4_t vec4_origin;
 #define YAW                 1       // left / right
 #define ROLL                2       // fall over
 
-#define DEG2RAD( a ) ( ( ( a ) * M_PI ) / 180.0F )
+#define DEG2RAD( a ) ( ( ( a ) * M_PI ) / 180.0f )
 #define RAD2DEG( a ) ( ( ( a ) * 180.0f ) / M_PI )
 
-#define DEG_TO_RAD      0.017453292519943295
-#define HALF_DEG_TO_RAD 0.008726646259971648
-#define HALF_PI         1.5707963267948966
-#define PI              3.141592653589793
-#define QUARTER_PI      0.7853981633974483
-#define RAD_TO_DEG      57.29577951308232
-#define SQUARED_PI      9.869604401089358
-#define THREE_PI_HALVES 4.71238898038469
-#define TWO_PI          6.283185307179586
+#define DEG_TO_RAD      ( M_PI / 180.0f )
+#define HALF_DEG_TO_RAD ( M_PI / 360.0f )
+#define HALF_PI         ( M_PI_2 )
+#define PI              ( M_PI )
+#define QUARTER_PI      ( M_PI_4 )
+#define RAD_TO_DEG      ( 180.0f / M_PI )
+#define SQUARED_PI      ( M_PI * M_PI )
+#define THREE_PI_HALVES ( 1.5f * M_PI )
+#define TWO_PI          ( 2.0f * M_PI )
+
+/* Converts from rand() to range 0-1 ie: 1/(2^15-1) */
+#define RANDSCALE       ( 1.0f / 32768.0f )
 
 #define Square( x ) ( ( x ) * ( x ) )
 
@@ -46,6 +49,8 @@ extern vec4_t vec4_origin;
 #define SnapVector( v ) {v[0] = ( (int)( v[0] ) ); v[1] = ( (int)( v[1] ) ); v[2] = ( (int)( v[2] ) );}
 
 #define lerp(a, b, t) ((a) + (t) * ((b) - (a)))
+
+#define MAX_SHORT_PRODUCT_SQUARE ( Square ( SHRT_MAX ) )
 
 float Q_fabs( float f );
 int Q_rint( float in );
@@ -550,6 +555,7 @@ int VectorCompare(const vec3_t v1, const vec3_t v2);
 int Vector2Compare(const vec2_t v1, const vec2_t v2);
 int Vector4Compare(const vec4_t v1, const vec4_t v2);
 vec_t VectorLength( const vec3_t v );
+#define Vec3Length VectorLength
 vec_t Vec2Length( const vec2_t v );
 vec_t VectorLengthSquared( const vec3_t v );
 vec_t Vec4LengthSq( const vec4_t v);

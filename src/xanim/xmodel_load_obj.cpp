@@ -1,57 +1,55 @@
 #include "../qcommon/qcommon.h"
 
-qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs)
+/*
+================
+XModelGetStaticBounds
+================
+*/
+int XModelGetStaticBounds( const XModel *model, vec3_t axis[3], vec3_t mins, vec3_t maxs )
 {
-	vec3_t bounds;
-	vec3_t out;
-	vec3_t in;
-	int j;
-	int k;
-	int i;
-	XModelCollSurf *surf;
+	int i, j, k;
+	vec3_t rotated, corner;
+	XModelCollSurf *csurf;
 
 	if ( !model->numCollSurfs )
-		return 0;
-
-	VectorSet(mins, 3.4028235e38, 3.4028235e38, 3.4028235e38);
-	VectorSet(maxs, -3.4028235e38, -3.4028235e38, -3.4028235e38);
-
-	for ( i = 0; i < model->numCollSurfs; ++i )
 	{
-		surf = &model->collSurfs[i];
+		assert(!model->contents);
+		return 0;
+	}
 
-		for ( j = 0; j < 8; ++j )
+	VectorSet(mins, FLT_MAX, FLT_MAX, FLT_MAX);
+	VectorSet(maxs, -FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+	for ( i = 0; i < model->numCollSurfs; i++ )
+	{
+		csurf = &model->collSurfs[i];
+
+		for ( j = 0; j < 8; j++ )
 		{
-			if ( (j & 1) != 0 )
-				bounds[0] = surf->mins[0];
+			if ( j & 1 )
+				corner[0] = csurf->mins[0];
 			else
-				bounds[0] = surf->maxs[0];
+				corner[0] = csurf->maxs[0];
 
-			in[0] = bounds[0];
-
-			if ( (j & 2) != 0 )
-				bounds[1] = surf->mins[1];
+			if ( j & 2 )
+				corner[1] = csurf->mins[1];
 			else
-				bounds[1] = surf->maxs[1];
+				corner[1] = csurf->maxs[1];
 
-			in[1] = bounds[1];
-
-			if ( (j & 4) != 0 )
-				bounds[2] = surf->mins[2];
+			if ( j & 4 )
+				corner[2] = csurf->mins[2];
 			else
-				bounds[2] = surf->maxs[2];
+				corner[2] = csurf->maxs[2];
 
-			in[2] = bounds[2];
+			MatrixTransformVector(corner, axis, rotated);
 
-			MatrixTransformVector(in, axis, out);
-
-			for ( k = 0; k < 3; ++k )
+			for ( k = 0; k < 3; k++ )
 			{
-				if ( mins[k] > out[k] )
-					mins[k] = out[k];
+				if ( mins[k] > rotated[k] )
+					mins[k] = rotated[k];
 
-				if ( out[k] > maxs[k] )
-					maxs[k] = out[k];
+				if ( rotated[k] > maxs[k] )
+					maxs[k] = rotated[k];
 			}
 		}
 	}
@@ -59,7 +57,12 @@ qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *min
 	return 1;
 }
 
-void XModelCalcBasePose(XModelParts_s *modelParts)
+/*
+================
+XModelCalcBasePose
+================
+*/
+void XModelCalcBasePose( XModelParts *modelParts )
 {
 	vec4_t tempQuat;
 	unsigned char *parentList;
@@ -67,138 +70,134 @@ void XModelCalcBasePose(XModelParts_s *modelParts)
 	int numBones;
 	float *trans;
 	short *quats;
-	int numRootBones;
-	float vLenSq;
+	int i;
 
 	parentList = modelParts->hierarchy->parentList;
 	numBones = modelParts->numBones;
+
 	quats = modelParts->quats;
 	trans = modelParts->trans;
-	quatTrans = &modelParts->skel.Mat;
-	numRootBones = modelParts->numRootBones;
 
-	while ( numRootBones )
+	for ( quatTrans = &modelParts->skel.Mat, i = modelParts->numRootBones; i; i--, quatTrans++ )
 	{
 		VectorClear(quatTrans->quat);
-		quatTrans->quat[3] = 1.0;
+		quatTrans->quat[3] = 1.0f;
+
 		VectorClear(quatTrans->trans);
-		quatTrans->transWeight = 2.0;
-		--numRootBones;
-		++quatTrans;
+		quatTrans->transWeight = 2.0f;
 	}
 
-	numRootBones = numBones - modelParts->numRootBones;
-
-	while ( numRootBones )
+	for ( i = numBones - modelParts->numRootBones; i; i--, quats += 4, trans += 3, quatTrans++, parentList++ )
 	{
-		tempQuat[0] = (float)quats[0] * 0.000030518509;
-		tempQuat[1] = (float)quats[1] * 0.000030518509;
-		tempQuat[2] = (float)quats[2] * 0.000030518509;
-		tempQuat[3] = (float)quats[3] * 0.000030518509;
+		tempQuat[0] = quats[0] * RANDSCALE;
+		tempQuat[1] = quats[1] * RANDSCALE;
+		tempQuat[2] = quats[2] * RANDSCALE;
+		tempQuat[3] = quats[3] * RANDSCALE;
 
 		QuatMultiply(tempQuat, quatTrans[-*parentList].quat, quatTrans->quat);
-		vLenSq = Vec4LengthSq(quatTrans->quat);
-
-		if ( vLenSq == 0.0 )
-		{
-			quatTrans->quat[3] = 1.0;
-			quatTrans->transWeight = 2.0;
-		}
-		else
-		{
-			quatTrans->transWeight = 2.0 / vLenSq;
-		}
-
+		NormalizeQuatTrans(quatTrans);
 		MatrixTransformVectorQuatTrans(trans, &quatTrans[-*parentList], quatTrans->trans);
-		--numRootBones;
-		quats += 4;
-		trans += 3;
-		++quatTrans;
-		++parentList;
 	}
 
-	memset(&modelParts->skel, 255, 0x10u);
-	memset(modelParts->skel.partBits.skel, 255, sizeof(modelParts->skel.partBits.skel));
+	memset(modelParts->skel.partBits.anim, NO_BONEINDEX, sizeof(modelParts->skel.partBits.anim));
+	memset(modelParts->skel.partBits.skel, NO_BONEINDEX, sizeof(modelParts->skel.partBits.skel));
 }
 
-XModelParts_s *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int))
+/*
+================
+XModelPartsLoadFile
+================
+*/
+XModelParts_s *XModelPartsLoadFile( XModel *model, const char *name, Alloc_t Alloc )
 {
-	int fileSize;
 	short *quats;
-	short version;
-	unsigned int len;
 	float *trans;
-	int boneIter;
-	int num;
-	short numChildBones;
-	short numRootBones;
-	short numBones;
+	int i, fileSize, numBones, size;
+	short numRootBones, numChildBones;
 	byte *parentList;
 	unsigned short *boneNames;
 	XBoneHierarchy *boneHiearchy;
 	const unsigned char *pos;
 	byte *buf;
-	char filename[64];
+	char filename[MAX_QPATH];
 	XModelParts_s *modelParts;
 
 	if ( Com_sprintf(filename, sizeof(filename), "xmodelparts/%s", name) <= 0 )
 	{
-		Com_Printf("^1ERROR: filename '%s' too long\n", filename);
-		return 0;
+		Com_Printf("ERROR: filename '%s' too long\n", filename);
+		return NULL;
 	}
 
 	fileSize = FS_ReadFile(filename, (void **)&buf);
 
-	if ( fileSize <= 0 )
+	if ( fileSize < 0 )
 	{
-		Com_Printf("^1ERROR: xmodelparts '%s' not found\n", name);
-		return 0;
+		assert(!buf);
+		Com_Printf("ERROR: xmodelparts '%s' not found\n", name);
+
+		return NULL;
 	}
 
-	if ( !fileSize )
+	if ( fileSize == 0 )
 	{
-		Com_Printf("^1ERROR: xmodelparts '%s' has 0 length\n", name);
+		Com_Printf("ERROR: xmodelparts '%s' has 0 length\n", name);
 		FS_FreeFile(buf);
-		return 0;
+
+		return NULL;
 	}
 
+	assert(buf);
 	pos = buf;
-	version = XAnim_ReadShort(&pos);
+
+	short version = ConsumeShort(&pos);
 
 	if ( version != XMODEL_VERSION )
 	{
 		FS_FreeFile(buf);
-		Com_Printf("^1ERROR: xmodelparts '%s' out of date (version %d, expecting %d).\n", name, version, XMODEL_VERSION);
-		return 0;
+		Com_Printf("ERROR: xmodelparts '%s' out of date (version %d, expecting %d).\n", name, version, XMODEL_VERSION);
+
+		return NULL;
 	}
 
-	numChildBones = XAnim_ReadShort(&pos);
-	numRootBones = XAnim_ReadShort(&pos);
-	numBones = numRootBones + numChildBones;
-	boneNames = (unsigned short *)Alloc(sizeof(short) * (short)(numRootBones + numChildBones));
-	model->memUsage += sizeof(short) * (short)(numRootBones + numChildBones);
+	numChildBones = ConsumeShort(&pos);
+	numRootBones = ConsumeShort(&pos);
 
-	if ( (short)(numRootBones + numChildBones) >= 127 )
+	numBones = numRootBones + numChildBones;
+	size = numBones * sizeof(short);
+
+	boneNames = (unsigned short *)Alloc( size );
+	model->memUsage += size;
+
+	if ( numBones > DOBJ_MAX_PARTS - 1 )
 	{
 		FS_FreeFile(buf);
-		Com_Printf("^1ERROR: xmodel '%s' has more than %d bones\n", name, 127);
-		return 0;
+		Com_Printf("ERROR: xmodel '%s' has more than %d bones\n", name, DOBJ_MAX_PARTS - 1);
+
+		return NULL;
 	}
 
-	boneHiearchy = (XBoneHierarchy *)Alloc(numChildBones + sizeof(XBoneHierarchy) - 1);
-	model->memUsage += numChildBones + sizeof(XBoneHierarchy) - 1;
+	size = numChildBones + sizeof(XBoneHierarchy) - 1;
+	boneHiearchy = (XBoneHierarchy *)Alloc( size );
+	model->memUsage += size;
+
 	boneHiearchy->names = boneNames;
 	parentList = boneHiearchy->parentList;
-	modelParts = (XModelParts_s *)Alloc(sizeof(DSkel_t) * numBones + (sizeof(XModelParts_s) - sizeof(DSkel_t)));
-	model->memUsage += sizeof(DSkel_t) * numBones + sizeof(XModelParts_s) - sizeof(DSkel_t);
+
+	size = sizeof(DObjAnimMat) * numBones + sizeof(XModelParts_s) - sizeof(DObjAnimMat);
+	modelParts = (XModelParts_s *)Alloc( size );
+	model->memUsage += size;
+
 	modelParts->hierarchy = boneHiearchy;
 
 	if ( numChildBones )
 	{
-		modelParts->quats = (short *)Alloc(8 * numChildBones);
-		model->memUsage += 8 * numChildBones;
-		modelParts->trans = (float *)Alloc(16 * numChildBones);
-		model->memUsage += 16 * numChildBones;
+		size = numChildBones * 8;
+		modelParts->quats = (short *)Alloc( size );
+		model->memUsage += size;
+
+		size = numChildBones * 16;
+		modelParts->trans = (float *)Alloc(size);
+		model->memUsage += size;
 	}
 	else
 	{
@@ -206,91 +205,119 @@ XModelParts_s *XModelPartsLoadFile(XModel *model, const char *name, void *(*Allo
 		modelParts->trans = 0;
 	}
 
-	modelParts->partClassification = (byte *)Alloc(numBones);
+	size = numBones;
+	modelParts->partClassification = (byte *)Alloc( size );
 	model->memUsage += numBones;
+
 	modelParts->numBones = numBones;
+	assert(modelParts->numBones == numBones);
+
 	modelParts->numRootBones = numRootBones;
+	assert(modelParts->numRootBones == numRootBones);
+
 	quats = modelParts->quats;
 	trans = modelParts->trans;
-	boneIter = numRootBones;
 
-	while ( boneIter < numBones )
+	for ( i = numRootBones; i < numBones; i++, quats += 4, trans += 3, parentList++ )
 	{
-		*parentList = boneIter - *pos++;
-		trans[0] = XAnim_ReadFloat(&pos);
-		trans[1] = XAnim_ReadFloat(&pos);
-		trans[2] = XAnim_ReadFloat(&pos);
+		int index = ConsumeByte(&pos);
+		assert(index < i);
+
+		*parentList = i - index;
+		assert(i - index == *parentList);
+
+		trans[0] = ConsumeFloat(&pos);
+		trans[1] = ConsumeFloat(&pos);
+		trans[2] = ConsumeFloat(&pos);
+
 		ConsumeQuat(&pos, quats);
-		++boneIter;
-		quats += 4;
-		trans += 3;
-		++parentList;
 	}
 
-	for ( num = 0; num < numBones; ++num )
+	for ( i = 0; i < numBones; i++ )
 	{
-		len = I_strlen((char *)pos) + 1;
-		boneNames[num] = SL_GetStringOfLen((const char *)pos, 0, len);
+		int len = I_strlen((char *)pos) + 1;
+		boneNames[i] = SL_GetStringOfLen((const char *)pos, 0, len);
 		pos += len;
 	}
 
 	memcpy(modelParts->partClassification, pos, numBones);
 	pos += numBones;
+
 	FS_FreeFile(buf);
+
 	XModelCalcBasePose(modelParts);
 
 	return modelParts;
 }
 
-void XModelLoadCollData(const unsigned char **pos, XModel *model, void *(*AllocColl)(int), const char *name)
+/*
+================
+XModelLoadCollData
+================
+*/
+void XModelLoadCollData( const unsigned char **pos, XModel *model, Alloc_t AllocColl, const char *name )
 {
-	int j;
-	int i;
-	float *plane;
+	int i, j;
+	XModelCollTri_s *tri;
 	XModelCollSurf_s *surf;
 
-	model->numCollSurfs = XAnim_ReadInt(pos);
+	assert(!model->contents);
+	model->numCollSurfs = ConsumeInt(pos);
 
-	if ( model->numCollSurfs )
+	if ( !model->numCollSurfs )
 	{
-		model->collSurfs = (XModelCollSurf_s *)AllocColl(sizeof(XModelCollSurf_s) * model->numCollSurfs);
+		return;
+	}
 
-		for ( i = 0; i < model->numCollSurfs; ++i )
+	model->collSurfs = (XModelCollSurf_s *)AllocColl(sizeof(XModelCollSurf_s) * model->numCollSurfs);
+
+	for ( i = 0; i < model->numCollSurfs; i++ )
+	{
+		surf = &model->collSurfs[i];
+
+		int numCollTris = surf->numCollTris = ConsumeInt(pos);
+		assert(numCollTris);
+
+		surf->numCollTris = numCollTris;
+		surf->collTris = (XModelCollTri_s *)AllocColl(sizeof(XModelCollTri_s) * numCollTris);
+
+		for ( j = 0; j < numCollTris; j++ )
 		{
-			surf = &model->collSurfs[i];
-			surf->numCollTris = XAnim_ReadInt(pos);
-			surf->collTris = (XModelCollTri_s *)AllocColl(sizeof(XModelCollTri_s) * surf->numCollTris);
+			tri = &surf->collTris[j];
 
-			for ( j = 0; j < surf->numCollTris; ++j )
-			{
-				plane = surf->collTris[j].plane;
+			tri->plane[0] = ConsumeFloat(pos);
+			tri->plane[1] = ConsumeFloat(pos);
+			tri->plane[2] = ConsumeFloat(pos);
+			tri->plane[3] = ConsumeFloat(pos);
 
-				plane[0] = XAnim_ReadFloat(pos);
-				plane[1] = XAnim_ReadFloat(pos);
-				plane[2] = XAnim_ReadFloat(pos);
-				plane[3] = XAnim_ReadFloat(pos);
-				plane[4] = XAnim_ReadFloat(pos);
-				plane[5] = XAnim_ReadFloat(pos);
-				plane[6] = XAnim_ReadFloat(pos);
-				plane[7] = XAnim_ReadFloat(pos);
-				plane[8] = XAnim_ReadFloat(pos);
-				plane[9] = XAnim_ReadFloat(pos);
-				plane[10] = XAnim_ReadFloat(pos);
-				plane[11] = XAnim_ReadFloat(pos);
-			}
+			assert(I_fabs( Vec3Length( tri->plane ) - 1.0f ) < 0.01f);
 
-			surf->mins[0] = XAnim_ReadFloat(pos) - 0.001;
-			surf->mins[1] = XAnim_ReadFloat(pos) - 0.001;
-			surf->mins[2] = XAnim_ReadFloat(pos) - 0.001;
-			surf->maxs[0] = XAnim_ReadFloat(pos) + 0.001;
-			surf->maxs[1] = XAnim_ReadFloat(pos) + 0.001;
-			surf->maxs[2] = XAnim_ReadFloat(pos) + 0.001;
-			surf->boneIdx = XAnim_ReadInt(pos);
-			surf->contents = XAnim_ReadInt(pos) & 0xDFFFFFFB;
-			surf->surfFlags = XAnim_ReadInt(pos);
+			tri->svec[0] = ConsumeFloat(pos);
+			tri->svec[1] = ConsumeFloat(pos);
+			tri->svec[2] = ConsumeFloat(pos);
+			tri->svec[3] = ConsumeFloat(pos);
 
-			model->contents |= surf->contents;
+			tri->tvec[0] = ConsumeFloat(pos);
+			tri->tvec[1] = ConsumeFloat(pos);
+			tri->tvec[2] = ConsumeFloat(pos);
+			tri->tvec[3] = ConsumeFloat(pos);
 		}
+
+		surf->mins[0] = ConsumeFloat(pos) - 0.001;
+		surf->mins[1] = ConsumeFloat(pos) - 0.001;
+		surf->mins[2] = ConsumeFloat(pos) - 0.001;
+
+		surf->maxs[0] = ConsumeFloat(pos) + 0.001;
+		surf->maxs[1] = ConsumeFloat(pos) + 0.001;
+		surf->maxs[2] = ConsumeFloat(pos) + 0.001;
+
+		surf->boneIdx = ConsumeInt(pos);
+
+		surf->contents = ConsumeInt(pos) & ~( CONTENTS_TRANSLUCENT | CONTENTS_NONCOLLIDING );
+		assert(!surf->contents || (surf->boneIdx >= 0));
+
+		surf->surfFlags = ConsumeInt(pos);
+		model->contents |= surf->contents;
 	}
 }
 
@@ -301,34 +328,36 @@ XModelLoadConfigFile
 */
 bool XModelLoadConfigFile( const char *name, const unsigned char **pos, XModelConfig *config )
 {
-	short version;
 	int i;
 
-	version = XAnim_ReadShort(pos);
+	short version = ConsumeShort(pos);
 
 	if ( version != XMODEL_VERSION )
 	{
-		Com_Printf("^1ERROR: xmodel '%s' out of date (version %d, expecting %d).\n", name, version, XMODEL_VERSION);
+		Com_Printf("ERROR: xmodel '%s' out of date (version %d, expecting %d).\n", name, version, XMODEL_VERSION);
 		return false;
 	}
 
-	config->flags = *(*pos)++;
+	config->flags = ConsumeByte(pos);
 
-	config->mins[0] = XAnim_ReadFloat(pos);
-	config->mins[1] = XAnim_ReadFloat(pos);
-	config->mins[2] = XAnim_ReadFloat(pos);
-	config->maxs[0] = XAnim_ReadFloat(pos);
-	config->maxs[1] = XAnim_ReadFloat(pos);
-	config->maxs[2] = XAnim_ReadFloat(pos);
+	config->mins[0] = ConsumeFloat(pos);
+	config->mins[1] = ConsumeFloat(pos);
+	config->mins[2] = ConsumeFloat(pos);
 
-	for ( i = 0; i < 4; i++ )
+	config->maxs[0] = ConsumeFloat(pos);
+	config->maxs[1] = ConsumeFloat(pos);
+	config->maxs[2] = ConsumeFloat(pos);
+
+	for ( i = 0; i < MAX_LODS; i++ )
 	{
-		config->entries[i].dist = XAnim_ReadFloat(pos);
+		config->entries[i].dist = ConsumeFloat(pos);
+
 		strcpy(config->entries[i].filename, (const char *)*pos);
 		*pos += strlen((const char *)*pos) + 1;
 	}
 
-	config->collLod = XAnim_ReadInt(pos);
+	config->collLod = ConsumeInt(pos);
+
 	return true;
 }
 
@@ -337,67 +366,69 @@ bool XModelLoadConfigFile( const char *name, const unsigned char **pos, XModelCo
 XModelLoadFile
 ================
 */
-XModel *XModelLoadFile( const char *name, void *(*Alloc)(int), void *(*AllocColl)(int) )
+XModel *XModelLoadFile( const char *name, Alloc_t Alloc, Alloc_t AllocColl )
 {
-	int fileSize, allocSize, i, j;
+	int i, j;
 	XBoneInfo *boneInfo;
 	byte *buf;
-	char filename[64];
-	int nameLenTotal;
+	char filename[MAX_QPATH];
 	char *dest;
 	const unsigned char *pos;
-	int lodStringLens[4];
+	int lodStringLens[MAX_LODS];
 	XModel *model;
 	XModelConfig config;
 
 	if ( Com_sprintf(filename, sizeof(filename), "xmodel/%s", name) <= 0 )
 	{
-		Com_Printf("^1ERROR: filename '%s' too long\n", filename);
-		return 0;
+		Com_Printf("ERROR: filename '%s' too long\n", filename);
+		return NULL;
 	}
 
-	fileSize = FS_ReadFile(filename, (void **)&buf);
+	int fileSize = FS_ReadFile(filename, (void **)&buf);
 
 	if ( fileSize < 0 )
 	{
 		assert(!buf);
-		Com_Printf("^1ERROR: xmodel '%s' not found\n", name);
-		return 0;
+		Com_Printf("ERROR: xmodel '%s' not found\n", name);
+
+		return NULL;
 	}
 
 	if ( fileSize == 0 )
 	{
-		Com_Printf("^1ERROR: xmodel '%s' has 0 length\n", name);
+		Com_Printf("ERROR: xmodel '%s' has 0 length\n", name);
 		FS_FreeFile(buf);
-		return 0;
+
+		return NULL;
 	}
 
 	pos = buf;
 
 	if ( !XModelLoadConfigFile(name, &pos, &config) )
 	{
-		Com_Printf("^1ERROR: xmodel '%s' has no config\n", name);
+		Com_Printf("ERROR: xmodel '%s' has no config\n", name);
 		FS_FreeFile(buf);
-		return 0;
+
+		return NULL;
 	}
 
-	nameLenTotal = 0;
+	int totalLen = 0;
 
-	for ( i = 0; i < 4; i++ )
+	for ( i = 0; i < MAX_LODS; i++ )
 	{
 		lodStringLens[i] = I_strlen(config.entries[i].filename) + 1;
-		nameLenTotal += lodStringLens[i];
+		totalLen += lodStringLens[i];
 	}
 
-	model = (XModel *)Alloc(nameLenTotal + sizeof(XModel));
-	model->memUsage = nameLenTotal + sizeof(XModel);
+	model = (XModel *)Alloc(totalLen + sizeof(XModel));
+	model->memUsage = totalLen + sizeof(XModel);
 
-	XModelLoadCollData(&pos, model, (void *(*)(int))AllocColl, name);
+	XModelLoadCollData( &pos, model, AllocColl, name );
 
 	dest = (char *)&model[1];
 	model->numLods = 0;
 
-	for ( i = 0; i < 4; i++ )
+	for ( i = 0; i < MAX_LODS; i++ )
 	{
 		strcpy(dest, config.entries[i].filename);
 		model->lodInfo[i].filename = dest;
@@ -405,9 +436,9 @@ XModel *XModelLoadFile( const char *name, void *(*Alloc)(int), void *(*AllocColl
 		if ( *dest )
 		{
 			model->numLods++;
-			model->lodInfo[i].numsurfs = XAnim_ReadShort(&pos);
+			model->lodInfo[i].numsurfs = ConsumeShort(&pos);
 
-			allocSize = sizeof(short) * model->lodInfo[i].numsurfs;
+			int allocSize = sizeof(short) * model->lodInfo[i].numsurfs;
 
 			model->lodInfo[i].surfNames = (unsigned short *)Alloc(allocSize);
 			model->memUsage += allocSize;
@@ -429,27 +460,30 @@ XModel *XModelLoadFile( const char *name, void *(*Alloc)(int), void *(*AllocColl
 	}
 
 	assert(model->numLods);
-	model->parts = XModelPartsLoadFile(model, model->lodInfo[0].filename, Alloc);
+	model->parts = XModelPartsPrecache( model, model->lodInfo[0].filename, Alloc );
 
 	if ( !model->parts )
 	{
 		FS_FreeFile(buf);
 		XModelFree(model);
-		return 0;
+
+		return NULL;
 	}
 
-	boneInfo = (XBoneInfo *)Alloc(sizeof(XBoneInfo) * model->parts->numBones);
-	model->memUsage += sizeof(XBoneInfo) * model->parts->numBones;
+	int numBones = model->parts->numBones;
 
-	for ( i = 0; i < model->parts->numBones; i++ )
+	boneInfo = (XBoneInfo *)Alloc(sizeof(XBoneInfo) * numBones);
+	model->memUsage += sizeof(XBoneInfo) * numBones;
+
+	for ( i = 0; i < numBones; i++ )
 	{
-		boneInfo[i].bounds[0][0] = XAnim_ReadFloat(&pos);
-		boneInfo[i].bounds[0][1] = XAnim_ReadFloat(&pos);
-		boneInfo[i].bounds[0][2] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[0][0] = ConsumeFloat(&pos);
+		boneInfo[i].bounds[0][1] = ConsumeFloat(&pos);
+		boneInfo[i].bounds[0][2] = ConsumeFloat(&pos);
 
-		boneInfo[i].bounds[1][0] = XAnim_ReadFloat(&pos);
-		boneInfo[i].bounds[1][1] = XAnim_ReadFloat(&pos);
-		boneInfo[i].bounds[1][2] = XAnim_ReadFloat(&pos);
+		boneInfo[i].bounds[1][0] = ConsumeFloat(&pos);
+		boneInfo[i].bounds[1][1] = ConsumeFloat(&pos);
+		boneInfo[i].bounds[1][2] = ConsumeFloat(&pos);
 
 		boneInfo[i].offset[0] = (boneInfo[i].bounds[0][0] + boneInfo[i].bounds[1][0]) * 0.5;
 		boneInfo[i].offset[1] = (boneInfo[i].bounds[0][1] + boneInfo[i].bounds[1][1]) * 0.5;
