@@ -304,6 +304,7 @@ typedef struct NetField
 } netField_t;
 
 typedef void *(*Alloc_t)(int);
+typedef void (*Free_t)(void *, int);
 
 #ifdef _WIN32
 #include <windows.h>

@@ -1,7 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
-#define DOBJ_PARTBITS_STRING_LEN DOBJ_MAX_PART_BITS * sizeof(int32_t)
 unsigned int g_empty;
 
 /*
@@ -543,7 +542,7 @@ int DObjSkelIsBoneUpToDate( DObj *obj, int boneIndex )
 	assert(obj);
 	assert(obj->skel);
 
-	return (obj->skel->partBits.skel[boneIndex >> 5] >> (boneIndex & 0x1F)) & 1;
+	return testBit( obj->skel->partBits.skel, boneIndex );
 }
 
 /*
@@ -1624,12 +1623,12 @@ DObjGetHierarchyBits
 void DObjGetHierarchyBits( DObj *obj, int boneIndex, int *partBits )
 {
 	const int *duplicatePartBits;
-	int startIndex[8];
+	int startIndex[DOBJ_MAX_SUBMODELS];
 	const unsigned char *pos;
 	byte *parentList;
 	const unsigned char *duplicateParts;
 	XModelParts_s *parts;
-	int i, numModels, newBoneIndex, localBoneIndex, bit, highBoneIndex;
+	int i, numModels, newBoneIndex, localBoneIndex;
 
 	assert(obj);
 	assert(boneIndex < (unsigned)obj->numBones);
@@ -1669,13 +1668,9 @@ void DObjGetHierarchyBits( DObj *obj, int boneIndex, int *partBits )
 				while ( 1 )
 				{
 					assert(localBoneIndex >= 0);
+					setBit(partBits, boneIndex);
 
-					bit = 1 << (boneIndex & 0x1F);
-					highBoneIndex = boneIndex >> 5;
-
-					partBits[highBoneIndex] |= bit;
-
-					if ( (bit & duplicatePartBits[highBoneIndex]) )
+					if ( testBit( duplicatePartBits, boneIndex ) )
 					{
 						for ( pos = duplicateParts; ; pos += 2 )
 						{

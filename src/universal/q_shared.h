@@ -468,6 +468,10 @@ enum csParseFieldType_t
 	CSPFT_NUM_BASE_FIELD_TYPES = 0x8,
 };
 
+#define  testBit(array, bitNum)   ((((array)[(bitNum) >> 5]) >> ((bitNum) & 31)) & 1)
+#define   setBit(array, bitNum)     ((array)[(bitNum) >> 5] |= 1 << ((bitNum) & 31))
+#define resetBit(array, bitNum)     ((array)[(bitNum) >> 5] &= ~(1 << ((bitNum) & 31)))
+
 const char* Com_SurfaceTypeToName(int iTypeIndex);
 
 char *va(const char *format, ...);

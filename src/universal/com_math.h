@@ -301,6 +301,19 @@ inline void Vector2Clear(vec2_t v)
 
 /*
 ==============
+Vector4Clear
+==============
+*/
+inline void Vector4Clear(vec4_t v)
+{
+	v[0] = 0;
+	v[1] = 0;
+	v[2] = 0;
+	v[3] = 0;
+}
+
+/*
+==============
 VectorSet
 ==============
 */

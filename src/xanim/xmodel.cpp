@@ -118,7 +118,7 @@ int XModelGetBoneIndex( const XModel *model, unsigned int name )
 		}
 	}
 
-	assert((unsigned)localBoneIndex < DOBJ_MAX_PARTS);
+	assert((unsigned)localBoneIndex < DOBJ_MAX_PARTS || (signed)localBoneIndex == -1); // tag_origin?
 	return localBoneIndex;
 }
 

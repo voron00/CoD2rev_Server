@@ -40,6 +40,18 @@ enum XAssetType
 	ASSET_TYPE_COUNT = 0x20,
 };
 
+#define DOBJ_MAX_SUBMODELS 8
+
+enum
+{
+	DOBJ_MAX_PARTS = 0x80,
+	DOBJ_MAX_PART_BITS = 0x4,
+	MAX_LODS = 0x4,
+};
+
+#define LOW_BIT 1
+#define HIGH_BIT 1 << 31
+
 union XAnimDynamicIndices
 {
 	byte _1[1];
@@ -204,6 +216,7 @@ typedef struct XAnim_s
 	XAnimEntry entries[1];
 } XAnim;
 
+#pragma pack(push, 1)
 typedef struct XAnimTree_s
 {
 	XAnim_s *anims;
@@ -212,6 +225,7 @@ typedef struct XAnimTree_s
 	bool bUseGoalWeight;
 	uint16_t infoArray[1];
 } XAnimTree;
+#pragma pack(pop)
 
 struct XBoneInfo
 {
@@ -222,8 +236,8 @@ struct XBoneInfo
 
 struct XAnimToXModel
 {
-	int partBits[4];
-	byte boneIndex[128];
+	int partBits[DOBJ_MAX_PART_BITS];
+	byte boneIndex[DOBJ_MAX_PARTS];
 };
 
 struct XModelCollTri_s
@@ -235,9 +249,9 @@ struct XModelCollTri_s
 
 struct DSkelPartBits_s
 {
-	int anim[4];
-	int control[4];
-	int skel[4];
+	int anim[DOBJ_MAX_PART_BITS];
+	int control[DOBJ_MAX_PART_BITS];
+	int skel[DOBJ_MAX_PART_BITS];
 };
 
 struct DSkel_t
@@ -325,7 +339,7 @@ struct XSurface_s
 typedef struct XModelSurfs_s
 {
 	XSurface_s *surfs;
-	int partBits[4];
+	int partBits[DOBJ_MAX_PART_BITS];
 } XModelSurfs;
 
 typedef struct XModelLodInfo_s
@@ -356,7 +370,7 @@ struct trXSkin_t
 typedef struct
 {
 	XModelParts_s *parts;
-	XModelLodInfo_s lodInfo[4];
+	XModelLodInfo_s lodInfo[MAX_LODS];
 	XModelCollSurf_s *collSurfs;
 	int numCollSurfs;
 	int contents;
@@ -379,17 +393,27 @@ struct DObjModel_s
 	qboolean ignoreCollision;
 };
 
-#define DOBJ_MAX_SUBMODELS 8
-#define HIGH_BIT 1 << 31
-
-enum
+enum XAnimFlags
 {
-	DOBJ_MAX_PARTS = 0x80,
-	DOBJ_MAX_PART_BITS = 0x4,
-	MAX_LODS = 0x4,
+	XANIM_LOOP_SYNC_TIME = 0x1,
+	XANIM_NONLOOP_SYNC_TIME = 0x2,
+	XANIM_SYNC_ROOT = 0x4,
+	XANIM_COMPLETE = 0x8,
+	XANIM_ADDITIVE = 0x10,
+	XANIM_CLIENT = 0x20,
+	XANIM_SEPARATE = 0x40,
+	XANIM_FORCELOAD = 0x80,
 };
 
+#define WEIGHT_EPSILON 0.001f
+
 #define NO_BONEINDEX 0xFF
+#define UNDEFINED_BONEINDEX DOBJ_MAX_PARTS - 1
+
+#define DOBJ_PARTBITS_STRING_LEN DOBJ_MAX_PART_BITS * sizeof( int32_t )
+
+#define testQuatBit(array, bitNum) ((((array)[(bitNum) >> 3]) >> ((bitNum) & 7)) & 1)
+#define WEIGHTSCALE_EPSILON ( 1.0f / ( 1ULL << 30 ) )
 
 struct DSurface_s
 {
@@ -446,10 +470,10 @@ typedef struct
 
 extern XAnimInfo g_xAnimInfo[];
 
-struct XAnimClientNotify
+struct XAnimNotify_s
 {
 	const char *name;
-	unsigned int notifyName;
+	unsigned int type;
 	float timeFrac;
 };
 
@@ -460,18 +484,20 @@ struct XAnimSimpleRotPos
 	float pos[3];
 };
 
+#define MAX_CALC_ANIM_BUFFER 512
+
 struct XAnimCalcAnimInfo
 {
-	DObjAnimMat rotTransArray[512];
-	int animPartBits[4];
-	int ignorePartBits[4];
+	DObjAnimMat rotTransArray[MAX_CALC_ANIM_BUFFER];
+	int animPartBits[DOBJ_MAX_PART_BITS];
+	int ignorePartBits[DOBJ_MAX_PART_BITS];
 };
 
 #pragma pack(push, 1)
-struct XAnimDeltaInfo
+struct XAnimTimeInfo
 {
-	bool hasTime;
-	bool hasWeight;
+	bool childHasTimeForParent;
+	bool parentHasWeightForChild;
 	XAnimEntry *entry;
 };
 #pragma pack(pop)
@@ -553,6 +579,39 @@ void XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float w
 void XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight);
 void XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float factor);
 void XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans);
+void XAnimCalcAbsDeltaParts(const XAnimParts_s *parts, const float weightScale, float time, XAnimSimpleRotPos *rotPos);
+void XAnimCalcRelDeltaParts(const XAnimParts_s *parts, float weightScale, float time1, float time2, XAnimSimpleRotPos *rotPos, int quatIndex);
+void XAnimClearServerNotify(XAnimInfo *info);
+void XAnimClearTreeWeights(XAnimTree_s *tree, unsigned int index);
+void XAnimSetupSyncNodes_r(XAnim_s *anims, unsigned int animIndex);
+void XAnimClearGoalWeightKnobInternal(XAnimTree_s *tree, unsigned int infoIndex, float goalWeight, float goalTime);
+void XAnimEnsureGoalWeightParent(XAnimTree_s *tree, unsigned int infoIndex, float goalTime);
+void XAnim_GetTimeIndexCompressed( const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac );
+void XAnim_GetTimeIndexCompressed( const XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac );
+void TransformToQuatRefFrame( const vec2_t rot, vec3_t trans );
+void XAnim_SetTime( float fTime, int frameCount, XAnimTime *animTime );
+void XAnim_CalcPosDeltaDuring_unsigned_short_( XAnimDeltaPart *animDelta, const float fTime, int frameCount, vec3_t posDelta );
+void XAnim_CalcPosDeltaDuring_unsigned_char_( XAnimDeltaPart *animDelta, const float fTime, int frameCount, vec3_t posDelta );
+void XAnimClearData( const DObj *obj, DObjAnimMat *rotTransArray, XAnimCalcAnimInfo *info );
+void XAnim_CalcPosEnd( const XAnimPartTrans *trans, float scale, vec3_t posDelta );
+void XAnim_CalcRotEnd( const XAnimPartQuat *quat, float scale, vec4_t rotDelta );
+void XAnim_CalcSimpleRotEnd( const XAnimPartQuat *quat, float scale, vec2_t rotDelta );
+void XAnim_CalcPosDuring_unsigned_short_( const XAnimTime *animTime, const XAnimPartTrans *trans, float weightScale, vec3_t posDelta );
+void XAnim_CalcRotDuring_unsigned_short_( const XAnimTime *animTime, const XAnimPartQuat *quat, float weightScale, vec4_t rotDelta );
+void XAnim_CalcSimpleRotDuring_unsigned_short_( const XAnimTime *animTime, const XAnimPartQuat *quat, float weightScale, vec2_t rotDelta );
+void XAnim_CalcPosDuring_unsigned_char_( const XAnimTime *animTime, const XAnimPartTrans *trans, float weightScale, vec3_t posDelta );
+void XAnim_CalcRotDuring_unsigned_char_( const XAnimTime *animTime, const XAnimPartQuat *quat, float weightScale, vec4_t rotDelta );
+void XAnim_CalcSimpleRotDuring_unsigned_char_(const XAnimTime *animTime, const XAnimPartQuat *quat, float weightScale, vec2_t rotDelta );
+void XAnim_CalcRotDeltaDuringInternal_unsigned_short_( const XAnimDeltaPartQuat *quat, const float fTime, int frameCount, vec2_t rotDelta );
+void XAnim_CalcRotDeltaDuringInternal_unsigned_char_( const XAnimDeltaPartQuat *quat, const float fTime, int frameCount, vec2_t rotDelta );
+void XAnimCalcParts_unsigned_short_( const XAnimParts *parts, const unsigned char *animToModel, float fTime, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
+void XAnimCalcParts_unsigned_char_( const XAnimParts *parts, const unsigned char *animToModel, float fTime, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
+void XAnim_CalcRotDeltaDuring_unsigned_short_( XAnimDeltaPart *animDelta, const float fTime, int frameCount, vec2_t rotDelta );
+void XAnim_CalcRotDeltaDuring_unsigned_char_( XAnimDeltaPart *animDelta, const float fTime, int frameCount, vec2_t rotDelta );
+void XAnimCloneAnimInfo( const XAnimInfo *from, XAnimInfo *to );
+void XAnim_CalcPosDeltaEntire( const XAnimDeltaPart *animDelta, vec3_t posDelta );
+void XAnim_CalcRotDeltaEntire( const XAnimDeltaPart *animDelta, vec2_t rotDelta );
+void XAnimCalcNonLoopEnd( const XAnimParts_s *parts, const unsigned char *animToModel, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
 
 unsigned int XAnimSetModel(const XAnimEntry *animEntry, XModel *const *model, int numModels);
 
@@ -605,7 +664,6 @@ void XAnimClearTreeGoalWeights(XAnimTree_s *tree, unsigned int animIndex, float 
 void XAnimClearTreeGoalWeightsStrict(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
 int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex);
 unsigned int XAnimGetChildAt(const XAnim_s *anim, unsigned int animIndex, unsigned int childIndex);
-void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bool update, XAnimState *state, float dtime);
 void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
 void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *syncState, float dtime, bool parentHasWeight, bool *childHasTimeForParent1, bool *childHasTimeForParent2);
 int XAnimSetGoalWeightInternal(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, bool useGoalWeight, unsigned int notifyName, unsigned int notifyType);
@@ -625,6 +683,21 @@ float XAnimGetTime(const XAnimTree_s *tree, unsigned int animIndex);
 XAnim_s* XAnimGetAnims(const XAnimTree_s *tree);
 const char* XAnimGetAnimTreeDebugName(const XAnim_s *anims);
 bool XAnimNotetrackExists(const XAnim_s *anims, unsigned int animIndex, unsigned int name);
+bool XAnimIsDefault( XAnimParts *parts );
+XAnimParts* XAnimLoadDefaultAnim(XAnimParts *animParts, void *(*Alloc)(int));
+const char* XAnimSetData(const char *modelName, XAnimParts *anim, void *(*Alloc)(int));
+
+float ShortLerpAsVec( short from, short to, float frac );
+void Short2LerpAsVec2( const short from[2], const short to[2], float frac, vec2_t out );
+void Vec2MadShort2Lerp( const vec2_t from, float scale, const short to1[2], const short to2[2], float frac, vec2_t out );
+void Vec4MadShort4Lerp( const vec4_t from, float scale, const short to1[4], const short to2[4], float frac, vec4_t out );
+void Vec2MadShort2( const vec2_t from, float frac, const short to[2], vec2_t out );
+void Vec4MadShort4( const vec4_t from, float frac, const short to[4], vec4_t out );
+void Short4ScaleAsVec4( short from[4], float scale, vec4_t to );
+float FloatLerp( float a, float to, float t );
+void Vec3MadVec3Lerp( const vec3_t from, float scale, const vec3_t to1, const vec3_t to2, float frac, vec3_t out );
+void Short2CopyAsVec2( const short from[2], vec2_t to );
+XAnimInfo* GetAnimInfo( int infoIndex );
 
 int DObjHasContents(DObj_s *obj, int contentmask);
 void DObjGeomTraceline( DObj *obj, const vec3_t localStart, const vec3_t localEnd, int contentmask, DObjTrace_s *results );
@@ -644,3 +717,6 @@ void DObjCalcTransWeight(DObjAnimMat *Mat);
 void DObjSkelClear( DObj_s *obj );
 void DObjComputeBounds( DObj *obj );
 void NormalizeQuatTrans( DObjAnimMat *mat );
+
+void *Hunk_AllocXAnimPrecache(int size);
+void *Hunk_AllocXAnimTreePrecache(int size);
