@@ -759,7 +759,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 				VectorMA(trace->normal, offset[1], edge->axis[1], trace->normal);
 				Vec3Normalize(trace->normal);
 
-				if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+				if ( tri->plane[2] >= WALKABLE_NORMAL_Z && trace->normal[2] >= 0.0 && trace->normal[2] < WALKABLE_NORMAL_Z && sphereStart[2] > endpos[2] )
 				{
 					VectorCopy(tri->plane, trace->normal);
 				}
@@ -803,7 +803,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 			VectorScale(edge->axis[0], start[0], trace->normal);
 			VectorMA(trace->normal, start[1], edge->axis[1], trace->normal);
 
-			if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+			if ( tri->plane[2] >= WALKABLE_NORMAL_Z && trace->normal[2] >= 0.0 && trace->normal[2] < WALKABLE_NORMAL_Z && sphereStart[2] > endpos[2] )
 			{
 				VectorCopy(tri->plane, trace->normal);
 			}
@@ -842,7 +842,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 				hitFrac = 1.0 / I_sqrt(offsetLenSq);
 				VectorScale(hitDelta, hitFrac, trace->normal);
 
-				if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+				if ( tri->plane[2] >= WALKABLE_NORMAL_Z && trace->normal[2] >= 0.0 && trace->normal[2] < WALKABLE_NORMAL_Z && sphereStart[2] > endpos[2] )
 				{
 					VectorCopy(tri->plane, trace->normal);
 				}
@@ -875,7 +875,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 			VectorMA(hitDelta, hitFrac, tw->delta, trace->normal);
 			VectorScale(trace->normal, 1.0 / radius, trace->normal);
 
-			if ( tri->plane[2] >= 0.69999999 && trace->normal[2] >= 0.0 && trace->normal[2] < 0.69999999 && sphereStart[2] > endpos[2] )
+			if ( tri->plane[2] >= WALKABLE_NORMAL_Z && trace->normal[2] >= 0.0 && trace->normal[2] < WALKABLE_NORMAL_Z && sphereStart[2] > endpos[2] )
 			{
 				VectorCopy(tri->plane, trace->normal);
 			}

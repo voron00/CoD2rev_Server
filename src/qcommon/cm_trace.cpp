@@ -1433,7 +1433,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 		diff = t2 - t1;
 		absDiff = I_fabs(diff);
 
-		if ( absDiff > 0.00000047683716 )
+		if ( absDiff > CORDIC_SHIFT_21_F )
 		{
 			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
 			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
@@ -1672,7 +1672,7 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 		diff = t2 - t1;
 		absDiff = I_fabs(diff);
 
-		if ( absDiff > 0.00000047683716 )
+		if ( absDiff > CORDIC_SHIFT_21_F )
 		{
 			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
 			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
@@ -2048,7 +2048,7 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 		diff = t2 - t1;
 		absDiff = I_fabs(diff);
 
-		if ( absDiff > 0.00000047683716 )
+		if ( absDiff > CORDIC_SHIFT_21_F )
 		{
 			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
 			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);
@@ -2207,7 +2207,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 		diff = t2 - t1;
 		absDiff = I_fabs(diff);
 
-		if ( absDiff > 0.00000047683716 )
+		if ( absDiff > CORDIC_SHIFT_21_F )
 		{
 			frac2 = (I_fsel(diff, -t1, t1) - offset) * (1.0 / absDiff);
 			frac = (I_fsel(diff, -t1, t1) + offset) * (1.0 / absDiff);

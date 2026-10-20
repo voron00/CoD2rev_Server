@@ -28,6 +28,10 @@
 
 #define PlaneTypeForNormal( x ) ( x[0] == 1.0 ? PLANE_X : ( x[1] == 1.0 ? PLANE_Y : ( x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL ) ) )
 
+#define WALKABLE_NORMAL_Z 0.7f
+
+#define CORDIC_SHIFT_21_F (0x1p-21f)
+
 enum LumpType
 {
 	LUMP_MATERIALS,

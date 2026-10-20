@@ -625,7 +625,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 		}
 	}
 
-	if ( bOnGround && vGroundNormal && vGroundNormal[2] < 0.69999999 )
+	if ( bOnGround && vGroundNormal && vGroundNormal[2] < MIN_WALK_NORMAL )
 	{
 		return qfalse;
 	}
@@ -659,7 +659,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 			return qfalse;
 		}
 
-		if ( fFirstTraceDist * 0.69999999 + 48.0 > fWaistDistance )
+		if ( fFirstTraceDist * MIN_WALK_NORMAL + 48.0 > fWaistDistance )
 		{
 			bFirstTraceHit = qfalse;
 			vForward[2] = vForward[2] + 22.0;
@@ -674,7 +674,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 				bFirstTraceHit = qtrue;
 				fWaistDistance = trace.fraction * dist + 6.0;
 
-				if ( fFirstTraceDist * 0.69999999 + 48.0 > fWaistDistance )
+				if ( fFirstTraceDist * MIN_WALK_NORMAL + 48.0 > fWaistDistance )
 				{
 					return qfalse;
 				}
@@ -705,7 +705,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 		goto fail;
 	}
 
-	if ( trace.normal[2] < 0.69999999 )
+	if ( trace.normal[2] < MIN_WALK_NORMAL )
 	{
 		return qfalse;
 	}
@@ -766,7 +766,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 		goto fail;
 	}
 
-	if ( trace.normal[2] < 0.69999999 )
+	if ( trace.normal[2] < MIN_WALK_NORMAL )
 	{
 		return qfalse;
 	}

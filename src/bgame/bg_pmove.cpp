@@ -587,7 +587,7 @@ void PM_UpdatePronePitch( pmove_t *pm, pml_t *pml )
 	}
 	else
 	{
-		if ( pml->groundPlane && pml->groundTrace.normal[2] < 0.69999999 )
+		if ( pml->groundPlane && pml->groundTrace.normal[2] < MIN_WALK_NORMAL )
 		{
 			BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 0, ps);
 		}

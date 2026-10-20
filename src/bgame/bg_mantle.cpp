@@ -642,7 +642,7 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 		return false;
 	}
 
-	if ( trace.normal[2] < 0.69999999 )
+	if ( trace.normal[2] < MIN_WALK_NORMAL )
 	{
 		Mantle_DebugPrint("Mantle Failed: Ledge is too steep");
 		return false;
