@@ -157,7 +157,7 @@ typedef int	clipHandle_t;
 #define	KEYCATCH_CGAME
 
 #define Q_COLOR_ESCAPE	'^'
-#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE )
+#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE && *((p)+1) >= '0' && *((p)+1) <= '9' )
 
 // the game guarantees that no string from the network will ever
 // exceed MAX_STRING_CHARS
@@ -320,6 +320,18 @@ struct com_parse_mark_t
 	const char *backup_text;
 };
 
+typedef struct qtime_s {
+	int tm_sec;     /* seconds after the minute - [0,59] */
+	int tm_min;     /* minutes after the hour - [0,59] */
+	int tm_hour;    /* hours since midnight - [0,23] */
+	int tm_mday;    /* day of the month - [1,31] */
+	int tm_mon;     /* months since January - [0,11] */
+	int tm_year;    /* years since 1900 */
+	int tm_wday;    /* days since Sunday - [0,6] */
+	int tm_yday;    /* days since January 1 - [0,365] */
+	int tm_isdst;   /* daylight savings time flag */
+} qtime_t;
+
 struct parseInfo_t
 {
 	char token[MAX_TOKEN_CHARS];
@@ -378,9 +390,9 @@ float   BigFloat( float l );
 void Swap_Init( void );
 
 int I_isprint( int c );
-int I_islower( int c );
-int I_isupper( int c );
-int I_isalpha( int c );
+bool I_islower( int c );
+bool I_isupper( int c );
+bool I_isalpha( int c );
 int I_isalphanum( int c );
 qboolean I_isanumber( const char *s );
 qboolean I_isintegral( float f );
@@ -392,27 +404,27 @@ int I_stricmp( const char *s1, const char *s2 );
 char *I_strlwr( char *s1 );
 char *I_strupr( char *s1 );
 void I_strncat( char *dest, int size, const char *src );
+int I_strcmp( const char *s0, const char *s1 );
 
-int Com_sprintf(char *dest, size_t size, const char *format, ...);
+int Com_sprintf(char *dest, int size, const char *fmt, ...);
 
 float GetLeanFraction(const float fFrac);
-float UnGetLeanFraction(const float fFrac);
+float UnGetLeanFraction(float fFrac);
 
 void Com_DefaultExtension( char *path, int maxSize, const char *extension );
-const char *Com_StringContains( const char *str1, const char *str2, int casesensitive);
-int Com_Filter( const char *filter, const char *name, int casesensitive);
-int Com_FilterPath(const char *filter, const char *name, int casesensitive);
+const char *Com_StringContains( const char *str1, const char *str2, int (*)(const char *, const char *) );
+bool Com_Filter( const char *filter, const char *name, int casesensitive);
+bool Com_FilterPath(const char *filter, const char *name, int casesensitive);
 qboolean isFloat(const char* string, int size);
 qboolean isInteger(const char* string, int size);
 qboolean isVector(const char* string, int size, int dim);
 qboolean strToVect(const char* string, float *vect, int dim);
-char ColorIndex(unsigned char c);
+unsigned char ColorIndex( unsigned char c );
 const char *Com_GetFilenameSubString(const char *pathname);
 const char *Com_GetExtensionSubString(const char *filename);
 void Com_StripExtension(const char *in, char *out);
 char *I_CleanStr(char *string);
 
-#define I_strcmp strcmp
 #define I_strcpy strcpy
 #define I_strlen strlen
 

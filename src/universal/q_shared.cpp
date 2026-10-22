@@ -1,5 +1,338 @@
 #include "../qcommon/qcommon.h"
 
+/*
+==============
+IntAsFloat
+==============
+*/
+float IntAsFloat( int value )
+{
+	return (float)value;
+}
+
+/*
+==============
+Info_Validate
+==============
+*/
+qboolean Info_Validate( const char *s )
+{
+	if ( strchr( s, '\"' ) )
+	{
+		return qfalse;
+	}
+
+	if ( strchr( s, ';' ) )
+	{
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+/*
+==============
+Info_RemoveKey
+==============
+*/
+void Info_RemoveKey( char *s, const char *key )
+{
+	char	*start;
+	char	pkey[MAX_INFO_KEY];
+	char	value[MAX_INFO_VALUE];
+	char	*o;
+
+	if ( strlen( s ) >= MAX_INFO_STRING )
+	{
+		Com_Error( ERR_DROP, "Info_RemoveKey: oversize infostring" );
+	}
+
+	if (strchr (key, '\\'))
+	{
+		return;
+	}
+
+	while (1)
+	{
+		start = s;
+		if (*s == '\\')
+			s++;
+		o = pkey;
+		while (*s != '\\')
+		{
+			if (!*s)
+				return;
+			*o++ = *s++;
+		}
+		*o = 0;
+		s++;
+
+		o = value;
+		while (*s != '\\' && *s)
+		{
+			if (!*s)
+				return;
+			*o++ = *s++;
+		}
+		*o = 0;
+
+		if (!strcmp (key, pkey) )
+		{
+			memmove (start, s, strlen(s) + 1);	// remove this part
+			return;
+		}
+
+		if (!*s)
+			return;
+	}
+
+}
+
+/*
+==============
+Info_NextPair
+==============
+*/
+void Info_NextPair( const char **head, char *key, char *value )
+{
+	char	*o;
+	const char	*s;
+
+	s = *head;
+
+	if ( *s == '\\' )
+	{
+		s++;
+	}
+	key[0] = 0;
+	value[0] = 0;
+
+	o = key;
+	while ( *s != '\\' )
+	{
+		if ( !*s )
+		{
+			*o = 0;
+			*head = s;
+			return;
+		}
+		*o++ = *s++;
+	}
+	*o = 0;
+	s++;
+
+	o = value;
+	while ( *s != '\\' && *s )
+	{
+		*o++ = *s++;
+	}
+	*o = 0;
+
+	*head = s;
+}
+
+/*
+==============
+ConvertWcharToChar
+==============
+*/
+void ConvertWcharToChar( const wchar_t* in, char* out, int outLength )
+{
+	if (outLength == 0)
+		return;
+
+	for (int i = 0; i < outLength - 1 && *in; i++)
+		*out++ = char(*in++);
+
+	*out = 0;
+}
+
+/*
+==============
+Com_sprintf
+==============
+*/
+int Com_sprintf( char *dest, int size, const char *fmt, ... )
+{
+	int result;
+	va_list va;
+
+	va_start(va, fmt);
+	result = I_vsnprintf(dest, size, fmt, va);
+	va_end(va);
+
+	dest[size - 1] = '\0';
+
+	return result;
+}
+
+/*
+==============
+I_CleanChar
+==============
+*/
+char I_CleanChar( char character )
+{
+	if ( (unsigned char)character == 146 )
+	{
+		return 39;
+	}
+
+	return character;
+}
+
+/*
+==============
+I_CleanStr
+==============
+*/
+char *I_CleanStr( char *string )
+{
+	char*	d;
+	char*	s;
+	char	c;
+
+	s = string;
+	d = string;
+	while ((c = *s) != 0 )
+	{
+		if ( Q_IsColorString( s ) )
+		{
+			s++;
+		}
+		else if ( c >= 0x20 && c <= 0x7E )
+		{
+			*d++ = c;
+		}
+		s++;
+	}
+	*d = '\0';
+
+	return string;
+}
+
+/*
+==============
+I_DrawStrlen
+==============
+*/
+int I_DrawStrlen( const char *str )
+{
+	const char *s = str;
+	int count = 0;
+
+	while ( *s )
+	{
+		if ( Q_IsColorString( s ) )
+		{
+			s++;
+			s++;
+		}
+		else
+		{
+			count++;
+			s++;
+		}
+	}
+
+	return count;
+}
+
+/*
+==============
+I_strncpyz
+==============
+*/
+void I_strncpyz( char *dest, const char *src, int destsize )
+{
+	assert(src);
+	assert(dest);
+	assert(destsize >= 1);
+
+	strncpy(dest, src, destsize - 1);
+	dest[destsize - 1] = '\0';
+}
+
+/*
+==============
+I_isdigit
+==============
+*/
+bool I_isdigit( int c )
+{
+	return c >= '0' && c <= '9';
+}
+
+/*
+==============
+I_isalpha
+==============
+*/
+bool I_isalpha( int c )
+{
+	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+		return ( true );
+	return ( false );
+}
+
+/*
+==============
+I_isupper
+==============
+*/
+bool I_isupper( int c )
+{
+	if (c >= 'A' && c <= 'Z')
+		return ( true );
+	return ( false );
+}
+
+/*
+==============
+I_islower
+==============
+*/
+bool I_islower( int c )
+{
+	if (c >= 'a' && c <= 'z')
+		return ( true );
+	return ( false );
+}
+
+/*
+==============
+I_isprint
+==============
+*/
+int I_isprint( int c )
+{
+	if ( c >= 0x20 && c <= 0x7E )
+		return ( true );
+	return ( false );
+}
+
+/*
+==============
+FloatWriteSwap
+==============
+*/
+int FloatWriteSwap( float f )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return 0;
+}
+
+/*
+==============
+FloatReadSwap
+==============
+*/
+float FloatReadSwap( int n )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return 0.0f;
+}
+
 // can't just use function pointers, or dll linkage can
 // mess up when qcommon is included in multiple places
 static short ( *_BigShort )( short l ) = NULL;
@@ -83,7 +416,7 @@ int LongNoSwap( int l )
 	return l;
 }
 
-int64_t Long64Swap (int64_t i)
+int64_t Long64Swap(int64_t i)
 {
 	byte b1, b2, b3, b4,b5,b6,b7,b8;
 
@@ -125,251 +458,42 @@ float FloatNoSwap( float f )
 	return f;
 }
 
-void Swap_Init( void )
+/*
+==============
+LittleFloatWrite_Util
+==============
+*/
+int LittleFloatWrite_Util( float f )
 {
-	byte swaptest[2] = {1,0};
-
-	if ( *(short *)swaptest == 1 )
-	{
-		_BigShort = ShortSwap;
-		_LittleShort = ShortNoSwap;
-		_BigLong = LongSwap;
-		_LittleLong = LongNoSwap;
-		_BigLong64 = Long64Swap;
-		_LittleLong64 = Long64NoSwap;
-		_BigFloat = FloatSwap;
-		_LittleFloat = FloatNoSwap;
-	}
-	else
-	{
-		_BigShort = ShortNoSwap;
-		_LittleShort = ShortSwap;
-		_BigLong = LongNoSwap;
-		_LittleLong = LongSwap;
-		_BigLong64 = Long64NoSwap;
-		_LittleLong64 = Long64Swap;
-		_BigFloat = FloatNoSwap;
-		_LittleFloat = FloatSwap;
-	}
-}
-
-int I_isprint( int c )
-{
-	if ( c >= 0x20 && c <= 0x7E )
-		return ( 1 );
-	return ( 0 );
-}
-
-int I_islower( int c )
-{
-	if (c >= 'a' && c <= 'z')
-		return ( 1 );
-	return ( 0 );
-}
-
-int I_isupper( int c )
-{
-	if (c >= 'A' && c <= 'Z')
-		return ( 1 );
-	return ( 0 );
-}
-
-int I_isalpha( int c )
-{
-	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-		return ( 1 );
-	return ( 0 );
-}
-
-int I_isalphanum( int c )
-{
-	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
-		return ( 1 );
-	return ( 0 );
-}
-
-qboolean I_isanumber( const char *s )
-{
-	char *p;
-
-	if( *s == '\0' )
-		return qfalse;
-
-	strtod( s, &p );
-
-	return *p == '\0';
-}
-
-qboolean I_isintegral( float f )
-{
-	return (int)f == f;
-}
-
-qboolean I_isprintstring( char* s )
-{
-	char* a = s;
-	while( *a )
-	{
-		if ( *a < 0x20 || *a > 0x7E ) return 0;
-		a++;
-	}
-	return 1;
-}
-
-void I_strncpyz( char *dest, const char *src, int destsize )
-{
-	strncpy( dest, src, destsize-1 );
-	dest[destsize-1] = 0;
-}
-
-int I_strnicmp(const char *s0, const char *s1, int n)
-{
-	int c1;
-	int c0;
-
-	assert(s0);
-	assert(s1);
-
-	if (!s0 || !s1)
-	{
-		return s1 - s0;
-	}
-
-	do
-	{
-		c0 = *s0++;
-		c1 = *s1++;
-
-		if (!n--)
-		{
-			return 0;       // strings are equal until end point
-		}
-
-		if (c0 != c1)
-		{
-			if (I_isupper(c0))
-			{
-				c0 += 32;
-			}
-			if (I_isupper(c1))
-			{
-				c1 += 32;
-			}
-			if (c0 != c1)
-			{
-				return c0 < c1 ? -1 : 1;
-			}
-		}
-	}
-	while (c0);
-
+	UNIMPLEMENTED(__FUNCTION__);
 	return 0;
 }
 
-int I_strncmp(const char *s0, const char *s1, int n)
+/*
+==============
+LittleFloatRead_Util
+==============
+*/
+float LittleFloatRead_Util( int n )
 {
-	int c1;
-	int c0;
-
-	assert(s0);
-	assert(s1);
-
-	if (!s0 || !s1)
-	{
-		return s1 - s0;
-	}
-
-	do
-	{
-		c0 = *s0++;
-		c1 = *s1++;
-
-		if (!--n)       // strings are equal until end point
-		{
-			return 0;
-		}
-		if (c0 != c1)
-		{
-			return c0 < c1 ? -1 : 1;
-		}
-	}
-	while (c0);
-
-	return 0;      // strings are equal
+	UNIMPLEMENTED(__FUNCTION__);
+	return 0.0f;
 }
 
-int I_stricmp(const char *s0, const char *s1)
-{
-	assert(s0);
-	assert(s1);
-	return I_strnicmp(s0, s1, 0x7FFFFFFF);
-}
-
-char *I_strlwr(char *s)
-{
-	char* iter;
-
-	for (iter = s; *iter; ++iter)
-	{
-		if (I_isupper(*iter))
-		{
-			*iter += 32;
-		}
-	}
-	return s;
-}
-
-char *I_strupr(char *s)
-{
-	char* iter;
-
-	for (iter = s; *iter; ++iter)
-	{
-		if (I_islower(*iter))
-		{
-			*iter -= 32;
-		}
-	}
-	return s;
-}
-
-void I_strncat( char *dest, int size, const char *src )
-{
-	int		l1;
-
-	l1 = strlen( dest );
-
-	if ( l1 >= size )
-	{
-		Com_Error( ERR_FATAL, "I_strncat: already overflowed" );
-	}
-
-	I_strncpyz( dest + l1, src, size - l1 );
-}
-
-int Com_sprintf(char *dest, size_t size, const char *format, ...)
-{
-	int result;
-	va_list va;
-
-	va_start(va, format);
-	result = I_vsnprintf(dest, size, format, va);
-	va_end(va);
-
-	dest[size - 1] = '\0';
-
-	return result;
-}
-
+/*
+==============
+Com_DefaultExtension
+==============
+*/
 void Com_DefaultExtension( char *path, int maxSize, const char *extension )
 {
 	char oldPath[MAX_QPATH];
 	char    *src;
 
-//
-// if path doesn't have a .EXT, append extension
-// (extension should include the .)
-//
+	//
+	// if path doesn't have a .EXT, append extension
+	// (extension should include the .)
+	//
 	src = path + strlen( path ) - 1;
 
 	while ( *src != '/' && src != path )
@@ -385,341 +509,16 @@ void Com_DefaultExtension( char *path, int maxSize, const char *extension )
 	Com_sprintf( path, maxSize, "%s%s", oldPath, extension );
 }
 
-const char *Com_StringContains( const char *str1, const char *str2, int casesensitive)
-{
-	int len, i, j;
-
-	len = strlen(str1) - strlen(str2);
-	for (i = 0; i <= len; i++, str1++)
-	{
-		for (j = 0; str2[j]; j++)
-		{
-			if (casesensitive)
-			{
-				if (str1[j] != str2[j])
-				{
-					break;
-				}
-			}
-			else
-			{
-				if (toupper(str1[j]) != toupper(str2[j]))
-				{
-					break;
-				}
-			}
-		}
-		if (!str2[j])
-		{
-			return str1;
-		}
-	}
-	return NULL;
-}
-
-int Com_Filter( const char *filter, const char *name, int casesensitive)
-{
-	char buf[MAX_TOKEN_CHARS];
-	const char *ptr;
-	int i, found;
-
-	while(*filter)
-	{
-		if (*filter == '*')
-		{
-			filter++;
-			for (i = 0; *filter; i++)
-			{
-				if (*filter == '*' || *filter == '?') break;
-				buf[i] = *filter;
-				filter++;
-			}
-			buf[i] = '\0';
-			if (strlen(buf))
-			{
-				ptr = Com_StringContains(name, buf, casesensitive);
-				if (!ptr) return qfalse;
-				name = ptr + strlen(buf);
-			}
-		}
-		else if (*filter == '?')
-		{
-			filter++;
-			name++;
-		}
-		else if (*filter == '[' && *(filter+1) == '[')
-		{
-			filter++;
-		}
-		else if (*filter == '[')
-		{
-			filter++;
-			found = qfalse;
-			while(*filter && !found)
-			{
-				if (*filter == ']' && *(filter+1) != ']') break;
-				if (*(filter+1) == '-' && *(filter+2) && (*(filter+2) != ']' || *(filter+3) == ']'))
-				{
-					if (casesensitive)
-					{
-						if (*name >= *filter && *name <= *(filter+2)) found = qtrue;
-					}
-					else
-					{
-						if (toupper(*name) >= toupper(*filter) &&
-						        toupper(*name) <= toupper(*(filter+2))) found = qtrue;
-					}
-					filter += 3;
-				}
-				else
-				{
-					if (casesensitive)
-					{
-						if (*filter == *name) found = qtrue;
-					}
-					else
-					{
-						if (toupper(*filter) == toupper(*name)) found = qtrue;
-					}
-					filter++;
-				}
-			}
-			if (!found) return qfalse;
-			while(*filter)
-			{
-				if (*filter == ']' && *(filter+1) != ']') break;
-				filter++;
-			}
-			filter++;
-			name++;
-		}
-		else
-		{
-			if (casesensitive)
-			{
-				if (*filter != *name) return qfalse;
-			}
-			else
-			{
-				if (toupper(*filter) != toupper(*name)) return qfalse;
-			}
-			filter++;
-			name++;
-		}
-	}
-	return qtrue;
-}
-
-int Com_FilterPath(const char *filter, const char *name, int casesensitive)
-{
-	int i;
-	char new_filter[MAX_QPATH];
-	char new_name[MAX_QPATH];
-
-	for (i = 0; i < MAX_QPATH-1 && filter[i]; i++)
-	{
-		if ( filter[i] == '\\' || filter[i] == ':' )
-		{
-			new_filter[i] = '/';
-		}
-		else
-		{
-			new_filter[i] = filter[i];
-		}
-	}
-	new_filter[i] = '\0';
-	for (i = 0; i < MAX_QPATH-1 && name[i]; i++)
-	{
-		if ( name[i] == '\\' || name[i] == ':' )
-		{
-			new_name[i] = '/';
-		}
-		else
-		{
-			new_name[i] = name[i];
-		}
-	}
-	new_name[i] = '\0';
-	return Com_Filter(new_filter, new_name, casesensitive);
-}
-
-qboolean isFloat(const char* string, int size)
-{
-	const char* ptr;
-	int i;
-	qboolean dot = qfalse;
-	qboolean sign = qfalse;
-	qboolean whitespaceended = qfalse;
-
-	if(size == 0) //If we have given a length compare the whole string
-		size = 0x10000;
-
-	for(i = 0, ptr = string; i < size && *ptr != '\0' && *ptr != '\n'; i++, ptr++)
-	{
-
-		if(*ptr == ' ')
-		{
-			if(whitespaceended == qfalse)
-				continue;
-			else
-				return qtrue;
-		}
-		whitespaceended = qtrue;
-
-		if(*ptr == '-' && sign ==0)
-		{
-			sign = qtrue;
-			continue;
-		}
-		if(*ptr == '.' && dot == 0)
-		{
-			dot = qtrue;
-			continue;
-		}
-		if(*ptr < '0' || *ptr > '9') return qfalse;
-	}
-	return qtrue;
-}
-
-qboolean isInteger(const char* string, int size)
-{
-	const char* ptr;
-	int i;
-	qboolean sign = qfalse;
-	qboolean whitespaceended = qfalse;
-
-	if(size == 0) //If we have given a length compare the whole string
-		size = 0x10000;
-
-	for(i = 0, ptr = string; i < size && *ptr != '\0' && *ptr != '\n' && *ptr != '\r'; i++, ptr++)
-	{
-
-		if(*ptr == ' ')
-		{
-			if(whitespaceended == qfalse)
-				continue;
-			else
-				return qtrue;
-		}
-		whitespaceended = qtrue;
-
-		if(*ptr == '-' && sign ==0)
-		{
-			sign = qtrue;
-			continue;
-		}
-		if(*ptr < '0' || *ptr > '9')
-		{
-			return qfalse;
-		}
-	}
-	return qtrue;
-}
-
-qboolean isVector(const char* string, int size, int dim)
-{
-	const char* ptr;
-	int i;
-
-	if(size == 0) //If we have given a length compare the whole string
-		size = 0x10000;
-
-	for(i = 0, ptr = string; i < size && *ptr != '\0' && *ptr != '\n' && dim > 0; i++, ptr++)
-	{
-
-		if(*ptr == ' ')
-		{
-			continue;
-		}
-		dim = dim -1;
-
-		if(isFloat(ptr, size -i) == qfalse)
-			return qfalse;
-
-		while(*ptr != ' ' && *ptr != '\0' && *ptr != '\n' && i < size)
-		{
-			ptr++;
-			i++;
-		}
-
-		if(*ptr != ' ')
-		{
-			break;
-		}
-
-	}
-	if(dim != 0)
-		return qfalse;
-
-	return qtrue;
-}
-
-qboolean strToVect(const char* string, float *vect, int dim)
-{
-	const char* ptr;
-	int i;
-
-	for(ptr = string, i = 0; *ptr != '\0' && *ptr != '\n' && i < dim; ptr++)
-	{
-
-		if(*ptr == ' ')
-		{
-			continue;
-		}
-
-		vect[i] = atof(ptr);
-
-		i++;
-
-		while(*ptr != ' ' && *ptr != '\0' && *ptr != '\n')
-		{
-			ptr++;
-		}
-
-
-		if(*ptr != ' ')
-		{
-			break;
-		}
-
-	}
-	if(i != dim)
-		return qfalse;
-
-	return qtrue;
-}
-
-char ColorIndex(unsigned char c)
-{
-	if ((int)(c - 48) >= 17)
-	{
-		return 7;
-	}
-	else
-	{
-		return c - 48;
-	}
-}
-
-const char *Com_GetFilenameSubString(const char *pathname)
-{
-	const char* last;
-
-	last = pathname;
-	while (*pathname)
-	{
-		if (*pathname == '/' || *pathname == '\\')
-		{
-			last = pathname + 1;
-		}
-		++pathname;
-	}
-	return last;
-}
-
-const char *Com_GetExtensionSubString(const char *filename)
+/*
+==============
+Com_GetExtensionSubString
+==============
+*/
+const char *Com_GetExtensionSubString( const char *filename )
 {
 	const char* substr;
+
+	assert(filename);
 
 	substr = NULL;
 	while (*filename)
@@ -741,7 +540,250 @@ const char *Com_GetExtensionSubString(const char *filename)
 	return substr;
 }
 
-void Com_StripExtension(const char *in, char *out)
+/*
+============
+Com_SkipPath
+============
+*/
+char *Com_SkipPath( char *pathname )
+{
+	char	*last;
+
+	last = pathname;
+	while (*pathname)
+	{
+		if (*pathname=='/')
+			last = pathname+1;
+		pathname++;
+	}
+	return last;
+}
+
+/*
+============
+ColorIndex
+============
+*/
+unsigned char ColorIndex( unsigned char c )
+{
+	if ( (unsigned char)( c - 48 ) < 10 )
+	{
+		return c - 48;
+	}
+
+	return 7;
+}
+
+/*
+============
+UnGetLeanFraction
+============
+*/
+float UnGetLeanFraction( float fFrac )
+{
+	return 1.0f - I_sqrt( 1.0f - fFrac );
+}
+
+/*
+============
+Info_SetValueForKey
+============
+*/
+void Info_SetValueForKey( char *s, const char *key, const char *value )
+{
+	int i, j;
+	char c;
+	char cleanValue[MAX_INFO_STRING];
+	char newi[MAX_INFO_STRING];
+
+	assert(value);
+	if (strlen(s) >= MAX_INFO_STRING)
+	{
+		Com_Printf("Info_SetValueForKey: oversize infostring");
+		return;
+	}
+
+	j = 0;
+	for (i = 0; i < MAX_INFO_STRING - 1; ++i)
+	{
+		c = value[i];
+		if (!c)
+		{
+			break;
+		}
+		if (c != '\\' && c != ';' && c != '\"')
+		{
+			assert(j < MAX_INFO_STRING);
+			cleanValue[j++] = c;
+		}
+	}
+
+	assert(j < MAX_INFO_STRING);
+	cleanValue[j] = 0;
+	if (strchr(key, '\\'))
+	{
+		Com_Printf("Can\'t use keys with a \\\nkey: '%s'\nvalue: '%s'", key, value);
+		return;
+	}
+
+	if (strchr(key, ';'))
+	{
+		Com_Printf("Can\'t use keys with a semicolon\nkey: '%s'\nvalue: '%s'", key, value);
+		return;
+	}
+
+	if (strchr(key, '\"'))
+	{
+		Com_Printf("Can\'t use keys with a \"\nkey: '%s'\nvalue: '%s'", key, value);
+		return;
+	}
+
+	Info_RemoveKey(s, key);
+	if (!cleanValue[0])
+	{
+		return;
+	}
+
+	if (Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, cleanValue) <= 0)
+	{
+		Com_Printf("Info buffer length exceeded, not including key/value pair inresponse\n");
+		return;
+	}
+
+	if (strlen(newi) + strlen(s) > MAX_INFO_STRING)
+	{
+		Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n", key, value, s);
+		return;
+	}
+
+	strcat(s, newi);
+}
+
+va_info_t va_info[NUMTHREADS];
+jmp_buf g_com_error[NUMTHREADS];
+TraceThreadInfo g_traceThreadInfo[NUMTHREADS];
+
+/*
+============
+Com_InitThreadData
+============
+*/
+void Com_InitThreadData( int threadContext )
+{
+	Sys_SetValue(THREAD_VALUE_VA, &va_info[threadContext]);
+	Sys_SetValue(THREAD_VALUE_COM_ERROR, &g_com_error[threadContext]);
+	Sys_SetValue(THREAD_VALUE_TRACE, &g_traceThreadInfo[threadContext]);
+}
+
+/*
+============
+I_strncat
+============
+*/
+void I_strncat( char *dest, int size, const char *src )
+{
+	int l1;
+
+	assert(size != sizeof( char * ));
+	l1 = I_strlen( dest );
+
+	if ( l1 >= size )
+	{
+		Com_Error( ERR_FATAL, "I_strncat: already overflowed" );
+	}
+
+	I_strncpyz( dest + l1, src, size - l1 );
+}
+
+/*
+============
+I_strupr
+============
+*/
+char *I_strupr( char *s )
+{
+	char* iter;
+
+	for (iter = s; *iter; ++iter)
+	{
+		if (I_islower(*iter))
+		{
+			*iter -= ' ';
+		}
+	}
+	return s;
+}
+
+/*
+============
+I_strlwr
+============
+*/
+char *I_strlwr( char *s )
+{
+	char* iter;
+
+	for (iter = s; *iter; ++iter)
+	{
+		if (I_isupper(*iter))
+		{
+			*iter += ' ';
+		}
+	}
+	return s;
+}
+
+/*
+============
+I_isalnum
+============
+*/
+bool I_isalnum( int c )
+{
+	return I_isalpha( c ) || I_isdigit( c );
+}
+
+/*
+============
+FloatWriteNoSwap
+============
+*/
+int FloatWriteNoSwap( float f )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return 0;
+}
+
+/*
+============
+FloatReadNoSwap
+============
+*/
+float FloatReadNoSwap( int n )
+{
+	UNIMPLEMENTED(__FUNCTION__);
+	return 0.0f;
+}
+
+/*
+============
+Com_StripFilename
+============
+*/
+void Com_StripFilename( const char *in, char *out )
+{
+	char *end;
+	I_strncpyz( out, in, strlen( in ) + 1 );
+	end = Com_SkipPath( out );
+	*end = 0;
+}
+
+/*
+============
+Com_StripExtension
+============
+*/
+void Com_StripExtension( const char *in, char *out )
 {
 	const char* extension;
 
@@ -753,25 +795,31 @@ void Com_StripExtension(const char *in, char *out)
 	*out = 0;
 }
 
-char *va(const char *format, ...)
+/*
+============
+I_isforfilename
+============
+*/
+bool I_isforfilename( int c )
 {
-	struct va_info_t *info;
-	int index;
-	va_list va;
-
-	info = (va_info_t*)Sys_GetValue(THREAD_VALUE_VA);
-	index = info->index;
-	info->index = (info->index + 1) % MAX_VASTRINGS;
-
-	va_start(va, format);
-	I_vsnprintf(info->va_string[index], sizeof(info->va_string[0]), format, va);
-	va_end(va);
-
-	info->va_string[index][MAX_STRING_CHARS - 1] = 0;
-
-	return info->va_string[index];
+	return I_isalnum(c) || c == 95 || c == 45;
 }
 
+/*
+============
+GetLeanFraction
+============
+*/
+float GetLeanFraction( const float fFrac )
+{
+	return ( 2.0f - I_fabs( fFrac ) ) * fFrac;
+}
+
+/*
+============
+Info_ValueForKey
+============
+*/
 const char *Info_ValueForKey( const char *s, const char *key )
 {
 	char	pkey[BIG_INFO_KEY];
@@ -824,97 +872,114 @@ const char *Info_ValueForKey( const char *s, const char *key )
 	return "";
 }
 
-void Info_NextPair( const char **head, char *key, char *value )
+/*
+============
+AddLeanToPosition
+============
+*/
+void AddLeanToPosition( vec3_t position, float fViewYaw, float fLeanFrac, float fViewRoll, float fLeanDist )
 {
-	char	*o;
-	const char	*s;
+	vec3_t vRight, vAng;
+	float fLean;
 
-	s = *head;
-
-	if ( *s == '\\' )
-	{
-		s++;
-	}
-	key[0] = 0;
-	value[0] = 0;
-
-	o = key;
-	while ( *s != '\\' )
-	{
-		if ( !*s )
-		{
-			*o = 0;
-			*head = s;
-			return;
-		}
-		*o++ = *s++;
-	}
-	*o = 0;
-	s++;
-
-	o = value;
-	while ( *s != '\\' && *s )
-	{
-		*o++ = *s++;
-	}
-	*o = 0;
-
-	*head = s;
-}
-
-void Info_RemoveKey( char *s, const char *key )
-{
-	char	*start;
-	char	pkey[MAX_INFO_KEY];
-	char	value[MAX_INFO_VALUE];
-	char	*o;
-
-	if ( strlen( s ) >= MAX_INFO_STRING )
-	{
-		Com_Error( ERR_DROP, "Info_RemoveKey: oversize infostring" );
-	}
-
-	if (strchr (key, '\\'))
+	if ( fLeanFrac == 0.0f )
 	{
 		return;
 	}
 
-	while (1)
-	{
-		start = s;
-		if (*s == '\\')
-			s++;
-		o = pkey;
-		while (*s != '\\')
-		{
-			if (!*s)
-				return;
-			*o++ = *s++;
-		}
-		*o = 0;
-		s++;
+	fLean = GetLeanFraction(fLeanFrac);
 
-		o = value;
-		while (*s != '\\' && *s)
-		{
-			if (!*s)
-				return;
-			*o++ = *s++;
-		}
-		*o = 0;
+	VectorSet(vAng, 0.0f, fViewYaw, fLean * fViewRoll);
+	AngleVectors(vAng, 0, vRight, 0);
 
-		if (!strcmp (key, pkey) )
-		{
-			memmove (start, s, strlen(s) + 1);	// remove this part
-			return;
-		}
-
-		if (!*s)
-			return;
-	}
-
+	fLean *= fLeanDist;
+	VectorMA(position, fLean, vRight, position);
 }
 
+/*
+============
+ParseConfigStringToStruct
+============
+*/
+int ParseConfigStringToStruct( unsigned char *pStruct, const cspField_t *pFieldList,
+                               int iNumFields, const char *pszBuffer, int iMaxFieldTypes,
+                               int (*parseSpecialFieldType)(unsigned char *, const char *, const int),
+                               void (*parseStrCpy)(unsigned char *, const char *) )
+{
+	const char *pszKeyValue;
+	int iField;
+
+	for ( iField = 0; iField < iNumFields; iField++, pFieldList++ )
+	{
+		pszKeyValue = Info_ValueForKey( pszBuffer, pFieldList->szName );
+
+		if ( !*pszKeyValue )
+		{
+			continue;
+		}
+
+		if ( pFieldList->iFieldType < CSPFT_NUM_BASE_FIELD_TYPES )
+		{
+			switch ( pFieldList->iFieldType )
+			{
+			case CSPFT_STRING:
+				parseStrCpy(&pStruct[pFieldList->iOffset], pszKeyValue);
+				break;
+
+			case CSPFT_STRING_MAX_STRING_CHARS:
+				I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_STRING_CHARS);
+				break;
+
+			case CSPFT_STRING_MAX_QPATH:
+				I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_QPATH);
+				break;
+
+			case CSPFT_STRING_MAX_OSPATH:
+				I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_OSPATH);
+				break;
+
+			case CSPFT_INT:
+				*(int *)&pStruct[pFieldList->iOffset] = atoi(pszKeyValue);
+				break;
+
+			case CSPFT_QBOOLEAN:
+				*(qboolean *)&pStruct[pFieldList->iOffset] = atoi(pszKeyValue) != 0;
+				break;
+
+			case CSPFT_FLOAT:
+				*(float *)&pStruct[pFieldList->iOffset] = atof(pszKeyValue);
+				break;
+
+			case CSPFT_MILLISECONDS:
+				*(int *)&pStruct[pFieldList->iOffset] = (int)(atof(pszKeyValue) * 1000.0f);
+				break;
+
+			default:
+				break;
+			}
+		}
+		else
+		{
+			if ( iMaxFieldTypes <= 0 || pFieldList->iFieldType >= iMaxFieldTypes )
+			{
+				Com_Error( ERR_DROP, "Bad field type %i", pFieldList->iFieldType );
+			}
+
+			if ( !parseSpecialFieldType( pStruct, pszKeyValue, pFieldList->iFieldType ) )
+			{
+				return 0;
+			}
+		}
+	}
+
+	return iField == iNumFields;
+}
+
+/*
+============
+Info_RemoveKey_Big
+============
+*/
 void Info_RemoveKey_Big( char *s, const char *key )
 {
 	char	*start;
@@ -965,90 +1030,42 @@ void Info_RemoveKey_Big( char *s, const char *key )
 		if (!*s)
 			return;
 	}
-
 }
 
-void Info_SetValueForKey(char *s, const char *key, const char *value)
+/*
+============
+Com_AssembleFilepath
+============
+*/
+void Com_AssembleFilepath( const char *folder, const char *name, const char *extension, char *path, int maxCharCount )
 {
-	int j;
-	char c;
-	char cleanValue[MAX_INFO_STRING];
-	int len;
-	char newi[MAX_INFO_STRING];
-	int i;
+	int folderLen, nameLen, extLen;
 
-	assert(value);
-	if (strlen(s) >= MAX_INFO_STRING)
+	folderLen = strlen(folder);
+	nameLen = strlen(name);
+	extLen = strlen(extension) + 1;
+
+	if (folderLen + nameLen + extLen - 1 >= maxCharCount)
 	{
-		Com_Printf("Info_SetValueForKey: oversize infostring");
-		return;
+		Com_Error( ERR_DROP, "filepath '%s%s%s' is longer than %i characters", folder, name, extension, maxCharCount - 1 );
 	}
 
-	j = 0;
-	for (i = 0; i < MAX_INFO_STRING - 1; ++i)
-	{
-		c = value[i];
-		if (!c)
-		{
-			break;
-		}
-		if (c != '\\' && c != ';' && c != '\"')
-		{
-			assert(j < MAX_INFO_STRING);
-			cleanValue[j++] = c;
-		}
-	}
-
-	assert(j < MAX_INFO_STRING);
-	cleanValue[j] = 0;
-	if (strchr(key, '\\'))
-	{
-		Com_Printf("Can\'t use keys with a \\\nkey: '%s'\nvalue: '%s'", key, value);
-		return;
-	}
-
-	if (strchr(key, ';'))
-	{
-		Com_Printf("Can\'t use keys with a semicolon\nkey: '%s'\nvalue: '%s'", key, value);
-		return;
-	}
-
-	if (strchr(key, '\"'))
-	{
-		Com_Printf("Can\'t use keys with a \"\nkey: '%s'\nvalue: '%s'", key, value);
-		return;
-	}
-
-	Info_RemoveKey(s, key);
-	if (!cleanValue[0])
-	{
-		return;
-	}
-
-	len = Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, cleanValue);
-	if (len <= 0)
-	{
-		Com_Printf("Info buffer length exceeded, not including key/value pair inresponse\n");
-		return;
-	}
-
-	if (strlen(newi) + strlen(s) > MAX_INFO_STRING)
-	{
-		Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n", key, value, s);
-		return;
-	}
-
-	strcat(s, newi);
+	memmove(path, folder, folderLen);
+	memmove(path + folderLen, name, nameLen);
+	memmove(path + folderLen + nameLen, extension, extLen);
 }
 
-void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
+/*
+============
+Info_SetValueForKey_Big
+============
+*/
+void Info_SetValueForKey_Big( char *s, const char *key, const char *value )
 {
-	int j;
+	int i, j;
 	char c;
 	char cleanValue[BIG_INFO_STRING];
-	int len;
 	char newi[BIG_INFO_STRING];
-	int i;
 
 	assert(value);
 	if (strlen(s) >= BIG_INFO_STRING)
@@ -1099,8 +1116,7 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 		return;
 	}
 
-	len = Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, cleanValue);
-	if (len <= 0)
+	if (Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, cleanValue) <= 0)
 	{
 		Com_Printf("Info buffer length exceeded, not including key/value pair in response\n");
 		return;
@@ -1116,69 +1132,173 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 	strcat(s, newi);
 }
 
-char *I_CleanStr(char *string)
+/*
+================
+Swap_Init
+================
+*/
+void Swap_Init( void )
 {
-	char* d;
-	char c;
-	char* s;
-	int keep_cleaning;
+	byte swaptest[2] = {1,0};
 
-	do
+// set the byte swapping variables in a portable manner
+	if ( *(short *)swaptest == 1 )
 	{
-		s = string;
-		d = string;
-		keep_cleaning = 0;
-
-		while (1)
-		{
-			c = *s;
-			if (!*s)
-			{
-				break;
-			}
-			if (s && *s == '^' && s[1] && s[1] != '^' && s[1] >= '0' && s[1] <= '@')
-			{
-				++s;
-				keep_cleaning = 1;
-			}
-			else if (c >= 0x20 && c != 0x7F)
-			{
-				*d++ = c;
-			}
-			++s;
-		}
-		*d = '\0';
-	}
-	while (keep_cleaning);
-
-	return string;
-}
-
-char I_CleanChar(char character)
-{
-	if ((unsigned char)character == 146)
-	{
-		return 39;
+		_BigShort = ShortSwap;
+		_LittleShort = ShortNoSwap;
+		_BigLong = LongSwap;
+		_LittleLong = LongNoSwap;
+		_BigLong64 = Long64Swap;
+		_LittleLong64 = Long64NoSwap;
+		_BigFloat = FloatSwap;
+		_LittleFloat = FloatNoSwap;
 	}
 	else
 	{
-		return character;
+		_BigShort = ShortNoSwap;
+		_LittleShort = ShortSwap;
+		_BigLong = LongNoSwap;
+		_LittleLong = LongSwap;
+		_BigLong64 = Long64NoSwap;
+		_LittleLong64 = Long64Swap;
+		_BigFloat = FloatNoSwap;
+		_LittleFloat = FloatSwap;
 	}
 }
 
-qboolean Info_Validate( const char *s )
+/*
+================
+I_strnicmp
+================
+*/
+int I_strnicmp( const char *s0, const char *s1, int n )
 {
-	if ( strchr( s, '\"' ) )
-	{
-		return qfalse;
-	}
+	int c1;
+	int c0;
 
-	if ( strchr( s, ';' ) )
-	{
-		return qfalse;
-	}
+	assert(s0);
+	assert(s1);
 
-	return qtrue;
+	do
+	{
+		c0 = *s0++;
+		c1 = *s1++;
+
+		if ( --n == -1 )
+		{
+			return 0;       // strings are equal until end point
+		}
+
+		if ( c0 != c1 )
+		{
+			if ( I_islower(c0) )
+			{
+				c0 -= ' ';
+			}
+			if ( I_islower(c1) )
+			{
+				c1 -= ' ';
+			}
+			if ( c0 != c1 )
+			{
+				return c0 < c1 ? -1 : 1;
+			}
+		}
+	}
+	while ( c0 );
+
+	return 0;       // strings are equal
+}
+
+/*
+================
+I_strncmp
+================
+*/
+int I_strncmp( const char *s0, const char *s1, int n )
+{
+	int c1;
+	int c0;
+
+	assert(s0);
+	assert(s1);
+
+	do
+	{
+		c0 = *s0++;
+		c1 = *s1++;
+
+		if ( --n == -1 )
+		{
+			return 0;       // strings are equal until end point
+		}
+
+		if ( c0 != c1 )
+		{
+			return c0 < c1 ? -1 : 1;
+		}
+	}
+	while ( c0 );
+
+	return 0;       // strings are equal
+}
+
+/*
+================
+I_strcmp
+================
+*/
+int I_strcmp( const char *s0, const char *s1 )
+{
+	assert(s0);
+	assert(s1);
+
+	return I_strncmp(s0, s1, INT_MAX);
+}
+
+/*
+================
+I_stricmp
+================
+*/
+int I_stricmp( const char *s0, const char *s1 )
+{
+	assert(s0);
+	assert(s1);
+
+	return I_strnicmp(s0, s1, INT_MAX);
+}
+
+/*
+================
+va
+================
+*/
+char *va( const char *format, ... )
+{
+	va_info_t *info;
+	int index, len;
+	va_list va;
+
+	info = (va_info_t*)Sys_GetValue(THREAD_VALUE_VA);
+
+	index = info->index;
+	info->index = (info->index + 1) % MAX_VASTRINGS;
+
+	va_start(va, format);
+	len = I_vsnprintf(info->va_string[index], sizeof(info->va_string[0]), format, va);
+	va_end(va);
+
+	info->va_string[index][MAX_STRING_CHARS - 1] = 0;
+
+#if 0
+	if ( len >= MAX_STRING_CHARS )
+	{
+		Com_Error(ERR_DROP, "Attempted to overrun string in call to va()");
+	}
+#endif
+
+	return info->va_string[index];
 }
 
 /*
@@ -1217,167 +1337,53 @@ void Com_BitClear( int array[], int bitNum )
 	array[bitNum >> 5] &= ~(1 << (bitNum & 31));
 }
 
-float GetLeanFraction(const float fFrac)
+/*
+==================
+SetConfigString
+==================
+*/
+void SetConfigString( char **ppszConfigString, const char *pszKeyValue )
 {
-	return (2.0f - I_fabs(fFrac)) * fFrac;
-}
-
-float UnGetLeanFraction(const float fFrac)
-{
-	return 1.0f - sqrtf(1.0f - fFrac);
-}
-
-void AddLeanToPosition(float *position, float fViewYaw, float fLeanFrac, float fViewRoll, float fLeanDist)
-{
-	float fLean;
-	vec3_t vRight;
-	vec3_t vAng;
-
-	if ( fLeanFrac != 0.0 )
-	{
-		fLean = GetLeanFraction(fLeanFrac);
-		vAng[0] = 0.0;
-		vAng[1] = fViewYaw;
-		vAng[2] = fLean * fViewRoll;
-		AngleVectors(vAng, 0, vRight, 0);
-		fLean = fLean * fLeanDist;
-		position[0] = (float)(fLean * vRight[0]) + position[0];
-		position[1] = (float)(fLean * vRight[1]) + position[1];
-		position[2] = (float)(fLean * vRight[2]) + position[2];
-	}
-}
-
-void SetConfigString(char **ppszConfigString, const char *pszKeyValue)
-{
-	size_t len;
 	char *dest;
 
-	if ( *pszKeyValue )
-	{
-		len = strlen(pszKeyValue);
-		dest = (char *)Hunk_AllocLowAlignInternal(len + 1, 1);
-		strcpy(dest, pszKeyValue);
-		*ppszConfigString = dest;
-	}
-	else
+	if ( !*pszKeyValue )
 	{
 		*ppszConfigString = "";
-	}
-}
-
-void SetConfigString2(unsigned char *pMember, const char *pszKeyValue)
-{
-	SetConfigString((char **)pMember, pszKeyValue);
-}
-
-qboolean ParseConfigStringToStruct(unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes, int (*parseSpecialFieldType)(unsigned char *, const char *, const int), void (*parseStrCpy)(unsigned char *, const char *))
-{
-	const char *pszKeyValue;
-	int iField;
-
-	for ( iField = 0; iField < iNumFields; ++iField )
-	{
-		pszKeyValue = Info_ValueForKey(pszBuffer, pFieldList->szName);
-
-		if ( *pszKeyValue )
-		{
-			if ( pFieldList->iFieldType >= CSPFT_NUM_BASE_FIELD_TYPES )
-			{
-				if ( iMaxFieldTypes <= 0 || pFieldList->iFieldType >= iMaxFieldTypes )
-					Com_Error(ERR_DROP, "Bad field type %i", pFieldList->iFieldType);
-
-				if ( !parseSpecialFieldType(pStruct, pszKeyValue, pFieldList->iFieldType) )
-					return 0;
-			}
-			else
-			{
-				switch ( pFieldList->iFieldType )
-				{
-				case CSPFT_STRING:
-					parseStrCpy(&pStruct[pFieldList->iOffset], pszKeyValue);
-					break;
-
-				case CSPFT_STRING_MAX_STRING_CHARS:
-					I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_STRING_CHARS);
-					break;
-
-				case CSPFT_STRING_MAX_QPATH:
-					I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_QPATH);
-					break;
-
-				case CSPFT_STRING_MAX_OSPATH:
-					I_strncpyz((char *)&pStruct[pFieldList->iOffset], pszKeyValue, MAX_OSPATH);
-					break;
-
-				case CSPFT_INT:
-					*(int *)&pStruct[pFieldList->iOffset] = atoi(pszKeyValue);
-					break;
-
-				case CSPFT_QBOOLEAN:
-					*(qboolean *)&pStruct[pFieldList->iOffset] = atoi(pszKeyValue) != 0;
-					break;
-
-				case CSPFT_FLOAT:
-					*(float *)&pStruct[pFieldList->iOffset] = atof(pszKeyValue);
-					break;
-
-				case CSPFT_MILLISECONDS:
-					*(int *)&pStruct[pFieldList->iOffset] = (int)(atof(pszKeyValue) * 1000.0);
-					break;
-
-				default:
-					break;
-				}
-			}
-		}
-
-		++pFieldList;
+		return;
 	}
 
-	return iField == iNumFields;
+	dest = (char *)Hunk_AllocLowAlignInternal( strlen( pszKeyValue ) + 1, 1 );
+	strcpy( dest, pszKeyValue );
+
+	*ppszConfigString = dest;
 }
 
-int I_DrawStrlen(const char *str)
+/*
+==================
+SetConfigString2
+==================
+*/
+void SetConfigString2( unsigned char *pMember, const char *pszKeyValue )
 {
-	const char* s;
-	int count;
-
-	s = str;
-	count = 0;
-
-	while (*s)
-	{
-		if (s && *s == '^' && s[1] && s[1] != '^' && s[1] >= '0' && s[1] <= '@')
-		{
-			s += 2;
-		}
-		else
-		{
-			++count;
-			++s;
-		}
-	}
-
-	return count;
+	SetConfigString( (char **)pMember, pszKeyValue );
 }
 
-va_info_t va_info[NUMTHREADS];
-jmp_buf g_com_error[NUMTHREADS];
-TraceThreadInfo g_traceThreadInfo[NUMTHREADS];
-
-void Com_InitThreadData(int threadContext)
-{
-	Sys_SetValue(THREAD_VALUE_VA, &va_info[threadContext]);
-	Sys_SetValue(THREAD_VALUE_COM_ERROR, &g_com_error[threadContext]);
-	Sys_SetValue(THREAD_VALUE_TRACE, &g_traceThreadInfo[threadContext]);
-}
-
+/*
+==================
+Sys_UnimplementedFunctionInternal
+==================
+*/
 void Sys_UnimplementedFunctionInternal(const char *function)
 {
-	Com_Printf("FUNCTION NOT IMPLEMENTED!!! (%s)\n", function);
+	Com_Printf( "FUNCTION NOT IMPLEMENTED!!! (%s)\n", function );
 }
 
-snd_alias_list_t* Com_FindSoundAlias(const char *name)
+/*
+==================
+Com_FindSoundAlias
+==================
+*/
+snd_alias_list_t* Com_FindSoundAlias( const char *name )
 {
 	return NULL; // Not supported
 }
