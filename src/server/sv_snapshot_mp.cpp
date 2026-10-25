@@ -942,19 +942,32 @@ void SV_SendClientMessages( void )
 
 #ifdef LIBCOD
 		extern int client_challenge_ping[MAX_CLIENTS];
-		for ( int j = 0; j < MAX_DOWNLOAD_WINDOW; j++ )
+		qboolean bFastDl = sv_fastDownload->current.boolean && *c->downloadName && !c->downloadingWWW && !c->clientDownloadingWWW && client_challenge_ping[i] <= 100;
+		if ( bFastDl )
 		{
-			if ( !sv_fastDownload->current.boolean || !*c->downloadName || c->downloadingWWW || c->clientDownloadingWWW || client_challenge_ping[i] > 100 )
+			for ( int j = 0; j < MAX_DOWNLOAD_WINDOW; j++ )
 			{
-				j = 99999;
-			}
+				// send additional message fragments if the last message
+				// was too large to send at once
+				while ( c->netchan.unsentFragments )
+				{
+					c->nextSnapshotTime = svs.time + SV_RateMsec( c, c->netchan.unsentLength - c->netchan.unsentFragmentStart );
+					SV_Netchan_TransmitNextFragment(&c->netchan);
+				}
 
+				// generate and send a new message
+				SV_SendClientSnapshot( c );
+			}
+		}
+		else
+		{
 			// send additional message fragments if the last message
 			// was too large to send at once
-			while ( c->netchan.unsentFragments )
+			if ( c->netchan.unsentFragments )
 			{
 				c->nextSnapshotTime = svs.time + SV_RateMsec( c, c->netchan.unsentLength - c->netchan.unsentFragmentStart );
 				SV_Netchan_TransmitNextFragment(&c->netchan);
+				continue;
 			}
 
 			// generate and send a new message
