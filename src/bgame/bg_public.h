@@ -1271,7 +1271,7 @@ enum EffectiveStance
 
 #define PRONE_FEET_DIST_TURNED 45
 
-#define MIN_WALK_NORMAL 0.69999999
+#define MIN_WALK_NORMAL 0.7f
 
 #define STEPSIZE        18
 #define STEPSIZE_PRONE  10
@@ -1552,7 +1552,7 @@ animScriptItem_t *BG_FirstValidItem( int client, animScript_t *script );
 int BG_IsAimDownSightWeapon(int weapon);
 int BG_GetViewmodelWeaponIndex(const playerState_s *ps);
 WeaponDef* BG_GetWeaponDef(int weaponIndex);
-void BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
+void BG_CalculateWeaponPosition_Sway(playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
 
 float BG_GetVerticalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);
 float BG_GetHorizontalBobFactor(const struct playerState_s *ps, float cycle, float speed, float maxAmp);

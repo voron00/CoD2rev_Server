@@ -604,7 +604,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 	hitDist = DotProduct(sphereStart, tri->plane) - tri->plane[3];
 	startDist = hitDist - scaledPlaneDist;
 
-	if ( startDist <= 0.000099999997 )
+	if ( startDist <= SIZE_EPSILON )
 	{
 		return;
 	}

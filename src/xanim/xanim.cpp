@@ -3790,7 +3790,7 @@ void XAnimUpdateOldTime( XAnimTree *tree, unsigned int infoIndex, XAnimState *sy
 	{
 		state->weight = (state->goalWeight - state->weight) * dtime / state->goalTime + state->weight;
 
-		if ( state->weight < 0.0000010000001f )
+		if ( state->weight < FLT_EPSILON )
 		{
 			state->weight = state->goalWeight * WEIGHT_EPSILON;
 		}

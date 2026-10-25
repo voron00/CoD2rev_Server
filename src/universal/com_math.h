@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math.h"
+#include <limits.h>
 
 typedef unsigned char byte;
 
@@ -38,6 +38,9 @@ extern vec4_t vec4_origin;
 #define THREE_PI_HALVES ( 1.5f * M_PI )
 #define TWO_PI          ( 2.0f * M_PI )
 
+#define NUMVERTEXNORMALS 162
+extern vec3_t bytedirs[NUMVERTEXNORMALS];
+
 /* Converts from rand() to range 0-1 ie: 1/(2^15-1) */
 #define RANDSCALE       ( 1.0f / 32768.0f )
 
@@ -52,16 +55,169 @@ extern vec4_t vec4_origin;
 
 #define MAX_SHORT_PRODUCT_SQUARE ( Square ( SHRT_MAX ) )
 
-float Q_fabs( float f );
-int Q_rint( float in );
+#define VEC_EPSILON         0.001f
+#define NORMALIZE_EPSILON   0.002f
+#define SIZE_EPSILON        0.0001f
+
 float Q_acos( float c );
+
+/*
+==============
+Q_fabs
+==============
+*/
+inline float Q_fabs( float f )
+{
+	int tmp = ( *(int*)&f ) & 0x7FFFFFFF;
+	return *(float*)&tmp;
+}
+
+/*
+==============
+Q_rint
+==============
+*/
+inline int Q_rint( float in )
+{
+	return floor( in + 0.5 );
+}
+
+/*
+==============
+I_sqrt
+==============
+*/
+inline float I_sqrt( const float value )
+{
+	return sqrtf( value );
+}
+
+/*
+==============
+I_rsqrt
+==============
+*/
+inline float I_rsqrt( const float value )
+{
+	return 1.0f / sqrtf( value );
+}
+
+/*
+==============
+FastSinCosDouble
+==============
+*/
+inline void FastSinCosDouble( double x, double *s, double *c )
+{
+	*s = sin(x);
+	*c = cos(x);
+}
+
+/*
+==============
+Vec4Length
+==============
+*/
+inline float Vec4Length( const vec4_t v )
+{
+	return I_sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
+}
+
+/*
+==============
+Vec4LengthSq
+==============
+*/
+inline float Vec4LengthSq( const vec4_t v )
+{
+	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
+}
+
+/*
+==============
+VectorCompare
+==============
+*/
+inline bool VectorCompare( const vec3_t v1, const vec3_t v2 )
+{
+	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2])
+		return false;
+
+	return true;
+}
+
+/*
+==============
+Vector2Compare
+==============
+*/
+inline bool Vector2Compare( const vec2_t v1, const vec2_t v2 )
+{
+	if (v1[0] != v2[0] || v1[1] != v2[1])
+		return false;
+
+	return true;
+}
+
+/*
+==============
+Vector4Compare
+==============
+*/
+inline bool Vector4Compare( const vec4_t v1, const vec4_t v2 )
+{
+	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2] || v1[3] != v2[3])
+		return false;
+
+	return true;
+}
+
+/*
+==============
+VectorLength
+==============
+*/
+inline float VectorLength( const vec3_t v )
+{
+	return I_sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+}
+
+/*
+==============
+Vec2Length
+==============
+*/
+inline float Vec2Length( const vec2_t v )
+{
+	return I_sqrt( v[0] * v[0] + v[1] * v[1] );
+}
+
+/*
+==============
+VectorLengthSquared
+==============
+*/
+inline float VectorLengthSquared( const vec3_t v )
+{
+	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+}
+
+/*
+==============
+Vec2LengthSq
+==============
+*/
+inline float Vec2LengthSq( const vec2_t v )
+{
+	return ( v[0] * v[0] + v[1] * v[1] );
+}
 
 /*
 ==============
 DotProduct
 ==============
 */
-inline float DotProduct(const vec3_t a, const vec3_t b)
+inline float DotProduct( const vec3_t a, const vec3_t b )
 {
 	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
@@ -71,7 +227,7 @@ inline float DotProduct(const vec3_t a, const vec3_t b)
 Dot2Product
 ==============
 */
-inline float Dot2Product(const vec2_t a, const vec2_t b)
+inline float Dot2Product( const vec2_t a, const vec2_t b )
 {
 	return a[0] * b[0] + a[1] * b[1];
 }
@@ -81,7 +237,7 @@ inline float Dot2Product(const vec2_t a, const vec2_t b)
 DotProduct4
 ==============
 */
-inline float DotProduct4(const vec4_t a, const vec4_t b)
+inline float DotProduct4( const vec4_t a, const vec4_t b )
 {
 	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
 }
@@ -91,7 +247,7 @@ inline float DotProduct4(const vec4_t a, const vec4_t b)
 VectorSubtract
 ==============
 */
-inline void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
+inline void VectorSubtract( const vec3_t a, const vec3_t b, vec3_t c )
 {
 	c[0] = a[0] - b[0];
 	c[1] = a[1] - b[1];
@@ -103,7 +259,7 @@ inline void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
 Vector2Subtract
 ==============
 */
-inline void Vector2Subtract(const vec2_t a, const vec2_t b, vec2_t c)
+inline void Vector2Subtract( const vec2_t a, const vec2_t b, vec2_t c )
 {
 	c[0] = a[0] - b[0];
 	c[1] = a[1] - b[1];
@@ -114,7 +270,7 @@ inline void Vector2Subtract(const vec2_t a, const vec2_t b, vec2_t c)
 VectorSubtract4
 ==============
 */
-inline void VectorSubtract4(const vec4_t a, const vec4_t b, vec4_t c)
+inline void VectorSubtract4( const vec4_t a, const vec4_t b, vec4_t c )
 {
 	c[0] = a[0] - b[0];
 	c[1] = a[1] - b[1];
@@ -127,7 +283,7 @@ inline void VectorSubtract4(const vec4_t a, const vec4_t b, vec4_t c)
 VectorAdd
 ==============
 */
-inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
+inline void VectorAdd( const vec3_t a, const vec3_t b, vec3_t c )
 {
 	c[0] = a[0] + b[0];
 	c[1] = a[1] + b[1];
@@ -139,7 +295,7 @@ inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
 Vector2Add
 ==============
 */
-inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
+inline void Vector2Add( const vec2_t a, const vec2_t b, vec2_t c )
 {
 	c[0] = a[0] + b[0];
 	c[1] = a[1] + b[1];
@@ -150,7 +306,7 @@ inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
 VectorAdd4
 ==============
 */
-inline void VectorAdd4(const vec4_t a, const vec4_t b, vec4_t c)
+inline void VectorAdd4( const vec4_t a, const vec4_t b, vec4_t c )
 {
 	c[0] = a[0] + b[0];
 	c[1] = a[1] + b[1];
@@ -163,7 +319,7 @@ inline void VectorAdd4(const vec4_t a, const vec4_t b, vec4_t c)
 VectorCopy
 ==============
 */
-inline void VectorCopy(const vec3_t a, vec3_t b)
+inline void VectorCopy( const vec3_t a, vec3_t b )
 {
 	b[0] = a[0];
 	b[1] = a[1];
@@ -175,7 +331,7 @@ inline void VectorCopy(const vec3_t a, vec3_t b)
 Vector2Copy
 ==============
 */
-inline void Vector2Copy(const vec2_t a, vec2_t b)
+inline void Vector2Copy( const vec2_t a, vec2_t b )
 {
 	b[0] = a[0];
 	b[1] = a[1];
@@ -186,7 +342,7 @@ inline void Vector2Copy(const vec2_t a, vec2_t b)
 VectorCopy4
 ==============
 */
-inline void VectorCopy4(const vec4_t a, vec4_t b)
+inline void VectorCopy4( const vec4_t a, vec4_t b )
 {
 	b[0] = a[0];
 	b[1] = a[1];
@@ -199,7 +355,7 @@ inline void VectorCopy4(const vec4_t a, vec4_t b)
 Vec2Multiply
 ==============
 */
-inline float Vec2Multiply(const vec2_t v)
+inline float Vec2Multiply( const vec2_t v )
 {
 	return v[0] * v[0] + v[1] * v[1];
 }
@@ -209,7 +365,7 @@ inline float Vec2Multiply(const vec2_t v)
 VectorScale
 ==============
 */
-inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+inline void VectorScale( const vec3_t v, const float s, vec3_t o )
 {
 	o[0] = s * v[0];
 	o[1] = s * v[1];
@@ -221,7 +377,7 @@ inline void VectorScale(const vec3_t v, const float s, vec3_t o)
 Vec2Scale
 ==============
 */
-inline void Vec2Scale(const vec2_t v, const float s, vec2_t o)
+inline void Vec2Scale( const vec2_t v, const float s, vec2_t o )
 {
 	o[0] = s * v[0];
 	o[1] = s * v[1];
@@ -232,7 +388,7 @@ inline void Vec2Scale(const vec2_t v, const float s, vec2_t o)
 VectorScale4
 ==============
 */
-inline void VectorScale4(const vec4_t v, const float s, vec4_t o)
+inline void VectorScale4( const vec4_t v, const float s, vec4_t o )
 {
 	o[0] = s * v[0];
 	o[1] = s * v[1];
@@ -245,7 +401,7 @@ inline void VectorScale4(const vec4_t v, const float s, vec4_t o)
 VectorMA
 ==============
 */
-inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
+inline void VectorMA( const vec3_t v, const float s, const vec3_t b, vec3_t o )
 {
 	o[0] = s * b[0] + v[0];
 	o[1] = s * b[1] + v[1];
@@ -257,7 +413,7 @@ inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
 VectorMA2
 ==============
 */
-inline void VectorMA2(const vec2_t v, const float s, const vec2_t b, vec2_t o)
+inline void VectorMA2( const vec2_t v, const float s, const vec2_t b, vec2_t o )
 {
 	o[0] = s * b[0] + v[0];
 	o[1] = s * b[1] + v[1];
@@ -268,7 +424,7 @@ inline void VectorMA2(const vec2_t v, const float s, const vec2_t b, vec2_t o)
 VectorMA4
 ==============
 */
-inline void VectorMA4(const vec4_t v, const float s, const vec4_t b, vec4_t o)
+inline void VectorMA4( const vec4_t v, const float s, const vec4_t b, vec4_t o )
 {
 	o[0] = s * b[0] + v[0];
 	o[1] = s * b[1] + v[1];
@@ -281,7 +437,7 @@ inline void VectorMA4(const vec4_t v, const float s, const vec4_t b, vec4_t o)
 VectorClear
 ==============
 */
-inline void VectorClear(vec3_t v)
+inline void VectorClear( vec3_t v )
 {
 	v[0] = 0;
 	v[1] = 0;
@@ -293,7 +449,7 @@ inline void VectorClear(vec3_t v)
 Vector2Clear
 ==============
 */
-inline void Vector2Clear(vec2_t v)
+inline void Vector2Clear( vec2_t v )
 {
 	v[0] = 0;
 	v[1] = 0;
@@ -304,7 +460,7 @@ inline void Vector2Clear(vec2_t v)
 Vector4Clear
 ==============
 */
-inline void Vector4Clear(vec4_t v)
+inline void Vector4Clear( vec4_t v )
 {
 	v[0] = 0;
 	v[1] = 0;
@@ -317,7 +473,7 @@ inline void Vector4Clear(vec4_t v)
 VectorSet
 ==============
 */
-inline void VectorSet(vec3_t v, const float x, const float y, const float z)
+inline void VectorSet( vec3_t v, const float x, const float y, const float z )
 {
 	v[0] = x;
 	v[1] = y;
@@ -326,10 +482,22 @@ inline void VectorSet(vec3_t v, const float x, const float y, const float z)
 
 /*
 ==============
+VectorInverse
+==============
+*/
+inline void VectorInverse( vec3_t v )
+{
+	v[0] = -v[0];
+	v[1] = -v[1];
+	v[2] = -v[2];
+}
+
+/*
+==============
 VectorNegate
 ==============
 */
-inline void VectorNegate(const vec3_t a, vec3_t b)
+inline void VectorNegate( const vec3_t a, vec3_t b )
 {
 	b[0] = -a[0];
 	b[1] = -a[1];
@@ -341,9 +509,9 @@ inline void VectorNegate(const vec3_t a, vec3_t b)
 I_fsel
 ==============
 */
-inline float I_fsel(const float x, const float y, const float z)
+inline float I_fsel( const float x, const float y, const float z )
 {
-	if ( x < 0.0 )
+	if ( x < 0.0f )
 	{
 		return z;
 	}
@@ -356,11 +524,11 @@ inline float I_fsel(const float x, const float y, const float z)
 I_fmax
 ==============
 */
-inline float I_fmax(const float x, const float y)
+inline float I_fmax( const float x, const float y )
 {
 	float z = x - y;
 
-	return I_fsel(z, x, y);
+	return I_fsel( z, x, y );
 }
 
 /*
@@ -368,11 +536,11 @@ inline float I_fmax(const float x, const float y)
 I_fmin
 ==============
 */
-inline float I_fmin(const float x, const float y)
+inline float I_fmin( const float x, const float y )
 {
 	float z = y - x;
 
-	return I_fsel(z, x, y);
+	return I_fsel( z, x, y );
 }
 
 /*
@@ -380,9 +548,9 @@ inline float I_fmin(const float x, const float y)
 I_fclamp
 ==============
 */
-inline float I_fclamp(const float val, const float min, const float max)
+inline float I_fclamp( const float val, const float min, const float max )
 {
-	return I_fmax(min, I_fmin(val, max));
+	return I_fmax( min, I_fmin( val, max ) );
 }
 
 /*
@@ -390,9 +558,9 @@ inline float I_fclamp(const float val, const float min, const float max)
 I_sel
 ==============
 */
-inline int I_sel(const int x, const int y, const int z)
+inline int I_sel( const int x, const int y, const int z )
 {
-	if ( x < 0.0 )
+	if ( x < 0.0f )
 	{
 		return z;
 	}
@@ -405,11 +573,11 @@ inline int I_sel(const int x, const int y, const int z)
 I_max
 ==============
 */
-inline int I_max(const int x, const int y)
+inline int I_max( const int x, const int y )
 {
 	int z = x - y;
 
-	return I_sel(z, x, y);
+	return I_sel( z, x, y );
 }
 
 /*
@@ -417,11 +585,11 @@ inline int I_max(const int x, const int y)
 I_min
 ==============
 */
-inline int I_min(const int x, const int y)
+inline int I_min( const int x, const int y )
 {
 	int z = y - x;
 
-	return I_sel(z, x, y);
+	return I_sel( z, x, y );
 }
 
 /*
@@ -429,9 +597,9 @@ inline int I_min(const int x, const int y)
 I_clamp
 ==============
 */
-inline int I_clamp(const int val, const int min, const int max)
+inline int I_clamp( const int val, const int min, const int max )
 {
-	return I_max(min, I_min(val, max));
+	return I_max (min, I_min( val, max ) );
 }
 
 /*
@@ -441,12 +609,12 @@ I_sgn
 */
 inline float I_sgn(const float x)
 {
-	if ( x < 0.0 )
+	if ( x < 0.0f )
 	{
-		return -1.0;
+		return -1.0f;
 	}
 
-	return 1.0;
+	return 1.0f;
 }
 
 /*
@@ -454,9 +622,9 @@ inline float I_sgn(const float x)
 I_side
 ==============
 */
-inline int I_side(const float x)
+inline int I_side( const float x )
 {
-	return x >= 0.0;
+	return x >= 0.0f;
 }
 
 /*
@@ -464,29 +632,9 @@ inline int I_side(const float x)
 I_fabs
 ==============
 */
-inline float I_fabs(const float value)
+inline float I_fabs( const float value )
 {
-	return fabs(value);
-}
-
-/*
-==============
-I_sqrt
-==============
-*/
-inline float I_sqrt(const float value)
-{
-	return sqrt(value);
-}
-
-/*
-==============
-I_rsqrt
-==============
-*/
-inline float I_rsqrt(const float value)
-{
-	return 1.0f / sqrtf(value);
+	return fabs( value );
 }
 
 /*
@@ -494,10 +642,10 @@ inline float I_rsqrt(const float value)
 FastSinCos
 ==============
 */
-inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos( float x, float *s, float *c )
 {
-	*pSin = sin(value);
-	*pCos = cos(value);
+	*s = sinf(x);
+	*c = cosf(x);
 }
 
 /*
@@ -505,11 +653,39 @@ inline void FastSinCos(const float value, float *pSin, float *pCos)
 Vec3Avg
 ==============
 */
-inline void Vec3Avg(const vec3_t a, const vec3_t b, vec3_t sum)
+inline void Vec3Avg( const vec3_t a, const vec3_t b, vec3_t sum )
 {
-	sum[0] = (a[0] + b[0]) * 0.5;
-	sum[1] = (a[1] + b[1]) * 0.5;
-	sum[2] = (a[2] + b[2]) * 0.5;
+	sum[0] = (a[0] + b[0]) * 0.5f;
+	sum[1] = (a[1] + b[1]) * 0.5f;
+	sum[2] = (a[2] + b[2]) * 0.5f;
+}
+
+/*
+==============
+Vec3IsNormalized
+==============
+*/
+inline bool Vec3IsNormalized( const vec3_t v )
+{
+	if ( I_fabs( VectorLengthSquared( v ) - 1.0f ) < NORMALIZE_EPSILON )
+	{
+		return true;
+	}
+	return false;
+}
+
+/*
+==============
+Vec4IsNormalized
+==============
+*/
+inline bool Vec4IsNormalized( const vec4_t v )
+{
+	if ( I_fabs( Vec4LengthSq( v ) - 1.0f ) < NORMALIZE_EPSILON )
+	{
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -517,7 +693,7 @@ inline void Vec3Avg(const vec3_t a, const vec3_t b, vec3_t sum)
 FloatIsNegative
 ==============
 */
-inline int const FloatIsNegative(const float x)
+inline int const FloatIsNegative( const float x )
 {
 	return x < 0.0f;
 }
@@ -527,9 +703,9 @@ inline int const FloatIsNegative(const float x)
 FloatSign
 ==============
 */
-inline int const FloatSign(const float x)
+inline int const FloatSign( const float x )
 {
-	return -2 * FloatIsNegative(x) + 1;
+	return -2 * FloatIsNegative( x ) + 1;
 }
 
 /*
@@ -537,9 +713,9 @@ inline int const FloatSign(const float x)
 FastCeil
 ==============
 */
-inline int const FastCeil(const float x)
+inline int const FastCeil( const float x )
 {
-	return (int)ceil(x);
+	return ceil( x );
 }
 
 /*
@@ -547,7 +723,7 @@ inline int const FastCeil(const float x)
 Q_rsqrt
 ==============
 */
-inline float Q_rsqrt(const float number)
+inline float Q_rsqrt( const float number )
 {
 	long i;
 	float x2, y;
@@ -564,16 +740,8 @@ inline float Q_rsqrt(const float number)
 	return y;
 }
 
-int VectorCompare(const vec3_t v1, const vec3_t v2);
-int Vector2Compare(const vec2_t v1, const vec2_t v2);
-int Vector4Compare(const vec4_t v1, const vec4_t v2);
-vec_t VectorLength( const vec3_t v );
 #define Vec3Length VectorLength
-vec_t Vec2Length( const vec2_t v );
-vec_t VectorLengthSquared( const vec3_t v );
-vec_t Vec4LengthSq( const vec4_t v);
-vec_t Vec2LengthSq( const vec2_t v );
-void VectorInverse( vec3_t v );
+
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
 void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
 void MatrixTransposeTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
@@ -591,7 +759,7 @@ void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross);
 float AngleNormalize360( float angle );
 float AngleNormalize180( float angle );
 float AngleDelta( float angle1, float angle2 );
-int BoxOnPlaneSide( vec3_t emins, vec3_t emaxs, struct cplane_s *p );
+int BoxOnPlaneSide( vec3_t emins, vec3_t emaxs, const struct cplane_s *p );
 float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 float RadiusFromBounds2D( const vec2_t mins, const vec2_t maxs );
 void SnapAngles(vec3_t angles);
@@ -599,7 +767,7 @@ void vectoangles( const vec3_t value1, vec3_t angles );
 void AxisToAngles( vec3_t axis[3], vec3_t angles );
 float AngleMod( float a );
 float AngleSubtract( float a1, float a2 );
-vec_t vectosignedyaw(vec3_t vec);
+vec_t vectosignedyaw(const vec3_t vec);
 int BoxDistSqrdExceeds(const vec3_t absmin, const vec3_t absmax, const vec3_t org, float fogOpaqueDistSqrd);
 float Vec3Distance(const vec3_t v1, const vec3_t v2);
 float Vec3DistanceSq(const vec3_t v1, const vec3_t v2);
@@ -619,8 +787,8 @@ void ShrinkBoundsToHeight(vec3_t mins, vec3_t maxs);
 void ClearBounds( vec3_t mins, vec3_t maxs );
 void AddPointToBounds(const vec3_t v, vec3_t mins, vec3_t maxs);
 void AddPointToBounds2D(const vec2_t v, vec2_t mins, vec2_t maxs);
-byte DirToByte(const vec3_t dir);
-void ByteToDir(const int b, vec3_t dir);
+byte DirToByte( vec3_t dir );
+void ByteToDir( int b, vec3_t dir );
 void Rand_Init(int seed);
 float flrand(float min, float max);
 int irand(int min, int max);
@@ -634,7 +802,7 @@ void ProjectPointOnPlane(const vec3_t p, const vec3_t normal, vec3_t dst);
 void RoundFloatArray(vec3_t x, vec3_t y);
 void TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] );
 void RotatePoint( vec3_t point, const vec3_t matrix[3] );
-void AnglesSubtract(const vec3_t v1, const vec3_t v2, vec3_t v3);
+void AnglesSubtract( vec3_t v1, vec3_t v2, vec3_t v3 );
 float Vec2DistanceSq(const vec2_t v1, const vec2_t v2);
 float Vec2Distance(const vec2_t v1, const vec2_t v2);
 void CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );

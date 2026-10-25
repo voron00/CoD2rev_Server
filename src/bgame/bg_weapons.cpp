@@ -1328,7 +1328,7 @@ void PM_UpdateAimDownSightFlag( pmove_t *pm, pml_t *pml )
 BG_CalculateWeaponPosition_Sway
 ===============
 */
-void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAngles, vec3_t swayOffset, vec3_t swayAngles, float ssSwayScale, int frametime )
+void BG_CalculateWeaponPosition_Sway( playerState_t *ps, vec3_t swayViewAngles, vec3_t swayOffset, vec3_t swayAngles, float ssSwayScale, int frametime )
 {
 	int weapon;
 	float dt;

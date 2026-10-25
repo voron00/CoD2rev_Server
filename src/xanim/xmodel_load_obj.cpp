@@ -303,13 +303,13 @@ void XModelLoadCollData( const unsigned char **pos, XModel *model, Alloc_t Alloc
 			tri->tvec[3] = ConsumeFloat(pos);
 		}
 
-		surf->mins[0] = ConsumeFloat(pos) - 0.001;
-		surf->mins[1] = ConsumeFloat(pos) - 0.001;
-		surf->mins[2] = ConsumeFloat(pos) - 0.001;
+		surf->mins[0] = ConsumeFloat(pos) - WEIGHT_EPSILON;
+		surf->mins[1] = ConsumeFloat(pos) - WEIGHT_EPSILON;
+		surf->mins[2] = ConsumeFloat(pos) - WEIGHT_EPSILON;
 
-		surf->maxs[0] = ConsumeFloat(pos) + 0.001;
-		surf->maxs[1] = ConsumeFloat(pos) + 0.001;
-		surf->maxs[2] = ConsumeFloat(pos) + 0.001;
+		surf->maxs[0] = ConsumeFloat(pos) + WEIGHT_EPSILON;
+		surf->maxs[1] = ConsumeFloat(pos) + WEIGHT_EPSILON;
+		surf->maxs[2] = ConsumeFloat(pos) + WEIGHT_EPSILON;
 
 		surf->boneIdx = ConsumeInt(pos);
 

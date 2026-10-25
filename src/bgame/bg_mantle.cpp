@@ -582,7 +582,7 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 	VectorNegate(trace->normal, mantleDir);
 	mantleDir[2] = 0;
 
-	if ( Vec3Normalize(mantleDir) < 0.000099999997 )
+	if ( Vec3Normalize(mantleDir) < SIZE_EPSILON )
 	{
 		Mantle_DebugPrint("Mantle Failed: Mantle surface has vertical normal");
 		return false;

@@ -14,6 +14,7 @@
 
 #define RADIUS_EPSILON 1.0f
 #define TRACE_EPSILON 0.001f
+#define TRACE_NORMAL_EPSILON 0.003f
 
 // keep 1/8 unit away to keep the position valid before network snapping
 // and to avoid various numeric issues

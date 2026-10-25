@@ -264,7 +264,7 @@ qboolean StuckInClient( gentity_t *self )
 	else
 		selfSpeed = 0;
 
-	if ( hitSpeed < 0.000099999997 && selfSpeed < 0.000099999997 )
+	if ( hitSpeed < SIZE_EPSILON && selfSpeed < SIZE_EPSILON )
 	{
 		hitSpeed = (float)hit->client->ps.speed;
 		selfSpeed = (float)self->client->ps.speed;
