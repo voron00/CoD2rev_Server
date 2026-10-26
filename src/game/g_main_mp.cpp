@@ -751,7 +751,7 @@ void G_RunFrame( int levelTime )
 			continue;
 		}
 
-		SV_DObjInitServerTime(ent, level.frameTime * 0.001);
+		SV_DObjInitServerTime(ent, level.frameTime * 0.001f);
 	}
 
 	memset(entIndex, 0, sizeof(entIndex));

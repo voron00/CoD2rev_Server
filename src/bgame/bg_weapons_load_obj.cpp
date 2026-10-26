@@ -678,14 +678,14 @@ BG_SetupTransitionTimes
 static void BG_SetupTransitionTimes( WeaponDef *weapDef )
 {
 	if ( weapDef->adsTransInTime > 0 )
-		weapDef->OOPosAnimLength[0] = 1.0 / weapDef->adsTransInTime;
+		weapDef->OOPosAnimLength[0] = 1.0f / weapDef->adsTransInTime;
 	else
-		weapDef->OOPosAnimLength[0] = 0.0033333334;
+		weapDef->OOPosAnimLength[0] = ( 1.0f / 300.0f );
 
 	if ( weapDef->adsTransOutTime > 0 )
-		weapDef->OOPosAnimLength[1] = 1.0 / weapDef->adsTransOutTime;
+		weapDef->OOPosAnimLength[1] = 1.0f / weapDef->adsTransOutTime;
 	else
-		weapDef->OOPosAnimLength[1] = 0.0020000001;
+		weapDef->OOPosAnimLength[1] = 0.002f;
 }
 
 /*
@@ -695,10 +695,10 @@ BG_CheckWeaponDamageRanges
 */
 static void BG_CheckWeaponDamageRanges( WeaponDef *weapDef )
 {
-	if ( weapDef->maxDamageRange <= 0.0 )
+	if ( weapDef->maxDamageRange <= 0 )
 		weapDef->maxDamageRange = 999999.0;
 
-	if ( weapDef->minDamageRange <= 0.0 )
+	if ( weapDef->minDamageRange <= 0 )
 		weapDef->minDamageRange = 999999.12;
 }
 
@@ -821,9 +821,9 @@ WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name )
 	BG_SetupTransitionTimes(weapDef);
 	BG_CheckWeaponDamageRanges(weapDef);
 
-	if ( weapDef->enemyCrosshairRange > 15000.0 )
+	if ( weapDef->enemyCrosshairRange > 15000.0f )
 	{
-		Com_Error(ERR_DROP, "Enemy crosshair ranges should be less than %f ", 15000.0);
+		Com_Error(ERR_DROP, "Enemy crosshair ranges should be less than %f ", 15000.0f);
 	}
 
 	if ( weapDef->weaponType == WEAPTYPE_PROJECTILE )

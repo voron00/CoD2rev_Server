@@ -412,7 +412,7 @@ void PM_ClipVelocity( const vec3_t in, const vec3_t normal, vec3_t out )
 	float change;
 
 	backoff = DotProduct(in, normal);
-	change = backoff - I_fabs(backoff) * 0.001;
+	change = backoff - I_fabs(backoff) * 0.001f;
 
 	VectorMA(in, -change, normal, out);
 }
@@ -777,8 +777,8 @@ void PM_UpdateViewAngles_ProneYawClamp( playerState_t *ps, float delta, qboolean
 
 	if ( deltaYaw1 * deltaYaw2 > 0 )
 	{
-		ps->viewangles[YAW] = AngleNormalize360Accurate(ps->viewangles[YAW] + (deltaYaw1 * 0.98000002));
-		ps->delta_angles[YAW] += ANGLE2SHORT(deltaYaw1 * 0.98000002);
+		ps->viewangles[YAW] = AngleNormalize360Accurate(ps->viewangles[YAW] + (deltaYaw1 * 0.98f));
+		ps->delta_angles[YAW] += ANGLE2SHORT(deltaYaw1 * 0.98f);
 	}
 }
 
@@ -829,16 +829,16 @@ void PM_UpdateViewAngles_Prone( playerState_t *ps, float msec, usercmd_t *cmd, b
 
 	if ( delta > bg_prone_yawcap->current.decimal - 5.0 || -(bg_prone_yawcap->current.decimal - 5.0) > delta || (cmd->forwardmove || cmd->rightmove) && delta != 0 )
 	{
-		if ( msec * 55.0 * 0.001 > I_fabs(delta) )
+		if ( msec * 55 * 0.001f > I_fabs(delta) )
 		{
 			newProneYaw = ps->viewangles[YAW];
 		}
 		else
 		{
 			if ( delta > 0 )
-				newProneYaw = ps->proneDirection - msec * 55.0 * 0.001;
+				newProneYaw = ps->proneDirection - msec * 55 * 0.001f;
 			else
-				newProneYaw = msec * 55.0 * 0.001 + ps->proneDirection;
+				newProneYaw = msec * 55 * 0.001f + ps->proneDirection;
 		}
 
 		bRetry = qtrue;
@@ -1546,11 +1546,11 @@ static float PM_CmdScale( playerState_t *ps, usercmd_t *cmd )
 	}
 
 	total = I_sqrt( Square(cmd->forwardmove) + Square(cmd->rightmove) );
-	scale = (float)ps->speed * max / ( 127.0 * total );
+	scale = (float)ps->speed * max / ( 127 * total );
 
 	if ( ps->pm_flags & PMF_ADS_WALK || ps->leanf != 0 )
 	{
-		scale *= 0.40000001;
+		scale *= 0.4f;
 	}
 
 	if ( ps->pm_type == PM_NOCLIP )
@@ -1613,10 +1613,10 @@ void PM_FoliageSounds( pmove_t *pm )
 		return;
 	}
 
-	VectorScale(pm->mins, 0.75, mins);
-	VectorScale(pm->maxs, 0.75, maxs);
+	VectorScale(pm->mins, 0.75f, mins);
+	VectorScale(pm->maxs, 0.75f, maxs);
 
-	maxs[2] = pm->maxs[2] * 0.89999998;
+	maxs[2] = pm->maxs[2] * 0.9f;
 
 	PM_playerTrace(pm, &trace, ps->origin, mins, maxs, ps->origin, ps->clientNum, CONTENTS_FOILAGE);
 
@@ -1790,11 +1790,11 @@ static float PM_MoveScale( playerState_t *ps, float fmove, float rmove, float um
 	}
 
 	total = I_sqrt( Square(fmove) + Square(rmove) + Square(umove) );
-	scale = (float)ps->speed * max / ( 127.0 * total );
+	scale = (float)ps->speed * max / ( 127 * total );
 
 	if ( ps->pm_flags & PMF_ADS_WALK || ps->leanf != 0 )
 	{
-		scale *= 0.40000001;
+		scale *= 0.4f;
 	}
 
 	if ( ps->pm_type == PM_NOCLIP )
@@ -1858,7 +1858,7 @@ static void PM_Friction( playerState_t *ps, pml_t *pml )
 
 			if ( ps->pm_flags & PMF_TIME_SLIDE )
 			{
-				control *= 0.30000001;
+				control *= 0.3f;
 			}
 			else if ( ps->pm_flags & PMF_TIME_LAND )
 			{
@@ -2091,7 +2091,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 		if ( ps->pm_flags & PMF_LADDER ) // on ladder
 		{
 			float fLadderSpeed;
-			float fMaxSpeed = (0.5 * 1.5) * 127.0;
+			float fMaxSpeed = (0.5 * 1.5) * 127;
 
 			if ( pm->cmd.serverTime - ps->jumpTime < 300 )
 			{
@@ -2101,9 +2101,9 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 			fLadderSpeed = ps->velocity[2];
 
 			if ( !(ps->pm_flags & PMF_ADS_WALK) && ps->leanf == 0 )
-				bobmove = (fLadderSpeed / (fMaxSpeed * 1.0)) * 0.44999999;
+				bobmove = (fLadderSpeed / (fMaxSpeed * 1.0)) * 0.45f;
 			else
-				bobmove = (fLadderSpeed / (fMaxSpeed * 0.40000001)) * 0.34999999;
+				bobmove = (fLadderSpeed / (fMaxSpeed * 0.4f)) * 0.35f;
 
 			if ( fLadderSpeed >= 0.0 )
 				BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBUP, qtrue);
@@ -2278,7 +2278,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 
 	if ( iswalking )
 	{
-		scale *= 0.40000001;
+		scale *= 0.4f;
 	}
 
 	lerpFrac = PM_GetViewHeightLerp(pm, CROUCH_VIEWHEIGHT, PRONE_VIEWHEIGHT);
@@ -2291,27 +2291,27 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 		{
 			if ( iStance == PM_EFF_STANCE_PRONE )
 			{
-				scale *= 0.15000001;
+				scale *= 0.15f;
 			}
 			else if ( iStance == PM_EFF_STANCE_CROUCH )
 			{
-				scale *= 0.64999998;
+				scale *= 0.65f;
 			}
 		}
 		else
 		{
-			scale *= (lerpFrac * 0.64999998 + (1.0 - lerpFrac) * 0.15000001);
+			scale *= (lerpFrac * 0.65f + (1.0f - lerpFrac) * 0.15f);
 		}
 	}
 	else
 	{
-		scale *= (lerpFrac * 0.15000001 + (1.0 - lerpFrac) * 0.64999998);
+		scale *= (lerpFrac * 0.15f + (1.0f - lerpFrac) * 0.65f);
 	}
 
 	if ( iStance == PM_EFF_STANCE_PRONE )
 	{
 		if ( iswalking )
-			bobmove = pm->xyspeed / scale * 0.23999999;
+			bobmove = pm->xyspeed / scale * 0.24f;
 		else
 			bobmove = pm->xyspeed / scale * 0.25;
 
@@ -2323,9 +2323,9 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	else if ( iStance == PM_EFF_STANCE_CROUCH )
 	{
 		if ( iswalking )
-			bobmove = pm->xyspeed / scale * 0.315;
+			bobmove = pm->xyspeed / scale * 0.315f;
 		else
-			bobmove = pm->xyspeed / scale * 0.34;
+			bobmove = pm->xyspeed / scale * 0.34f;
 
 		if ( !(ps->pm_flags & PMF_BACKWARDS_RUN) )
 		{
@@ -2374,7 +2374,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	{
 		if ( iswalking )
 		{
-			bobmove = pm->xyspeed / scale * 0.30500001;
+			bobmove = pm->xyspeed / scale * 0.305f;
 
 			if ( ps->damageTimer > stumble_end_time )
 				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_FORWARD, qtrue);
@@ -2383,7 +2383,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 		}
 		else
 		{
-			bobmove = pm->xyspeed / scale * 0.33500001;
+			bobmove = pm->xyspeed / scale * 0.335f;
 
 			if ( ps->damageTimer > stumble_end_time )
 				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_FORWARD, qtrue);
@@ -2393,7 +2393,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	}
 	else if ( iswalking )
 	{
-		bobmove = pm->xyspeed / scale * 0.32499999;
+		bobmove = pm->xyspeed / scale * 0.325f;
 
 		if ( ps->damageTimer > stumble_end_time )
 			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_BACKWARD, qtrue);
@@ -2402,7 +2402,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	}
 	else
 	{
-		bobmove = pm->xyspeed / scale * 0.36000001;
+		bobmove = pm->xyspeed / scale * 0.36f;
 
 		if ( ps->damageTimer > stumble_end_time )
 			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_BACKWARD, qtrue);
@@ -2493,7 +2493,7 @@ static void PM_GroundTraceMissed( pmove_t *pm, pml_t *pml )
 		}
 		else
 		{
-			pml->almostGroundPlane = trace.fraction < 0.015625;
+			pml->almostGroundPlane = trace.fraction < 0.015625f;
 		}
 	}
 	else
@@ -2545,11 +2545,11 @@ static float PM_CmdScale_Walk( pmove_t *pm, usercmd_t *cmd )
 		return 0;
 	}
 
-	scale = (float)ps->speed * max / ( 127.0 * total );
+	scale = (float)ps->speed * max / ( 127 * total );
 
 	if ( ps->pm_flags & PMF_ADS_WALK || ps->leanf != 0 )
 	{
-		scale *= 0.40000001;
+		scale *= 0.4f;
 	}
 
 	if ( ps->pm_type == PM_NOCLIP )
@@ -2573,21 +2573,21 @@ static float PM_CmdScale_Walk( pmove_t *pm, usercmd_t *cmd )
 			{
 				if ( iStance == PM_EFF_STANCE_PRONE )
 				{
-					scale *= 0.15000001;
+					scale *= 0.15f;
 				}
 				else if ( iStance == PM_EFF_STANCE_CROUCH )
 				{
-					scale *= 0.64999998;
+					scale *= 0.65f;
 				}
 			}
 			else
 			{
-				scale *= (lerpFrac * 0.64999998 + (1.0 - lerpFrac) * 0.15000001);
+				scale *= (lerpFrac * 0.65f + (1.0 - lerpFrac) * 0.15f);
 			}
 		}
 		else
 		{
-			scale *= (lerpFrac * 0.15000001 + (1.0 - lerpFrac) * 0.64999998);
+			scale *= (lerpFrac * 0.15f + (1.0 - lerpFrac) * 0.65f);
 		}
 	}
 
@@ -2598,7 +2598,7 @@ static float PM_CmdScale_Walk( pmove_t *pm, usercmd_t *cmd )
 
 	if ( cmd->buttons & BUTTON_ADS_LEGACY )
 	{
-		scale *= 0.40000001;
+		scale *= 0.4f;
 	}
 
 	return scale;
@@ -2734,7 +2734,7 @@ void PM_ViewHeightAdjust( pmove_t *pm, pml_t *pml )
 				ps->viewHeightCurrent = PM_ViewHeightTableLerp(iLerpFrac, viewLerp_CrouchStand, &fNewPosOfs);
 			}
 
-			if ( I_fabs(ps->viewHeightLerpPosAdj - fNewPosOfs) > 0.050000001 )
+			if ( I_fabs(ps->viewHeightLerpPosAdj - fNewPosOfs) > 0.05f )
 			{
 				VectorCopy(ps->velocity, vel);
 				scale = fNewPosOfs - ps->viewHeightLerpPosAdj;
@@ -2798,7 +2798,7 @@ void PM_ViewHeightAdjust( pmove_t *pm, pml_t *pml )
 			else
 			{
 				iLerpTime = PM_GetViewHeightLerpTime(ps, ps->viewHeightLerpTarget, ps->viewHeightLerpDown);
-				ps->viewHeightLerpTime = pm->cmd.serverTime - iLerpFrac * 0.0099999998 * iLerpTime;
+				ps->viewHeightLerpTime = pm->cmd.serverTime - iLerpFrac * 0.01f * iLerpTime;
 
 				if ( ps->viewHeightLerpTarget == PRONE_VIEWHEIGHT )
 				{
@@ -3241,7 +3241,7 @@ static void PM_CrashLand( playerState_t *ps, pml_t *pml )
 	{
 		if ( damage >= 100 || pml->groundTrace.surfaceFlags & SURF_SLICK )
 		{
-			VectorScale(ps->velocity, 0.67000002, ps->velocity);
+			VectorScale(ps->velocity, 0.67f, ps->velocity);
 		}
 		else
 		{
@@ -3261,7 +3261,7 @@ static void PM_CrashLand( playerState_t *ps, pml_t *pml )
 				if ( stunTime >= 1500 )
 					fSpeedMult = 0.2;
 				else
-					fSpeedMult = 0.5 - ((stunTime - 500.0) / 1000.0) * 0.30000001;
+					fSpeedMult = 0.5 - ((stunTime - 500.0) / 1000.0) * 0.3f;
 			}
 
 			ps->pm_time = stunTime;
@@ -3288,7 +3288,7 @@ static void PM_CrashLand( playerState_t *ps, pml_t *pml )
 		}
 		else
 		{
-			VectorScale(ps->velocity, 0.67000002, ps->velocity);
+			VectorScale(ps->velocity, 0.67f, ps->velocity);
 			BG_AddPredictableEventToPlayerstate(PM_HardLandingForSurface(pml), viewDip, ps);
 		}
 	}
@@ -3341,7 +3341,7 @@ void PM_GroundTrace( pmove_t *pm, pml_t *pml )
 
 	if ( trace.startsolid )
 	{
-		start[2] = ps->origin[2] - 0.001;
+		start[2] = ps->origin[2] - 0.001f;
 		PM_playerTrace(pm, &trace, start, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
 
 		if ( trace.startsolid )
@@ -3464,7 +3464,7 @@ float PM_PlayerInertia( playerState_t *ps, float accelspeed, const vec3_t wishdi
 		return accelspeed;
 	}
 
-	if ( Vec2LengthSq(ps->oldVelocity) < 0.0001 )
+	if ( Vec2LengthSq(ps->oldVelocity) < 0.0001f )
 	{
 		return accelspeed;
 	}
@@ -4244,7 +4244,7 @@ void PmoveSingle( pmove_t *pm )
 	// save old velocity for crashlanding
 	VectorCopy(ps->velocity, pml.previous_velocity);
 
-	pml.frametime = pml.msec * 0.001;
+	pml.frametime = pml.msec * 0.001f;
 
 	PM_AdjustAimSpreadScale(pm, &pml);
 

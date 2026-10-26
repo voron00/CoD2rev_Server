@@ -206,7 +206,7 @@ void Mantle_Move( pmove_t *pm, playerState_t *ps, pml_t *pml )
 
 	VectorSubtract(trans, prevTrans, trans);
 	VectorAdd(trans, ps->origin, ps->origin);
-	VectorScale(trans, 1.0 / (deltaTime * 0.001), ps->velocity);
+	VectorScale(trans, 1.0 / (deltaTime * 0.001f), ps->velocity);
 
 	if ( mstate->timer != mantleLength )
 	{

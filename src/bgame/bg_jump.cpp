@@ -8,6 +8,7 @@ dvar_t *jump_ladderPushVel;
 dvar_t *jump_spreadAdd;
 
 #define JUMP_LAND_SLOWDOWN_TIME 1800
+#define JUMP_FRICTION_TIME      1.5f * ( 1.0f / 1700.0f ) + 1.0f
 
 /*
 ==================
@@ -93,7 +94,7 @@ void Jump_ClampVelocity( playerState_t *ps, const vec3_t origin )
 
 	heightDiff = ps->jumpOriginZ + jump_height->current.decimal - ps->origin[2];
 
-	if ( heightDiff < 0.1 )
+	if ( heightDiff < 0.1f )
 	{
 		ps->velocity[2] = 0;
 		return;
@@ -118,15 +119,15 @@ float Jump_ReduceFriction( playerState_t *ps )
 
 	if ( !jump_slowdownEnable->current.boolean )
 	{
-		return 1.0;
+		return 1.0f;
 	}
 
 	if ( ps->pm_time >= JUMP_LAND_SLOWDOWN_TIME - FRAMETIME )
 	{
-		return 2.5;
+		return 2.5f;
 	}
 
-	return ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+	return ps->pm_time * JUMP_FRICTION_TIME;
 }
 
 /*
@@ -141,15 +142,15 @@ float Jump_GetLandFactor( playerState_t *ps )
 
 	if ( !jump_slowdownEnable->current.boolean )
 	{
-		return 1.0;
+		return 1.0f;
 	}
 
 	if ( ps->pm_time >= JUMP_LAND_SLOWDOWN_TIME - FRAMETIME )
 	{
-		return 2.5;
+		return 2.5f;
 	}
 
-	return ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+	return ps->pm_time * JUMP_FRICTION_TIME;
 }
 
 /*
@@ -164,15 +165,15 @@ float Jump_GetSlowdownFriction( playerState_t *ps )
 
 	if ( !jump_slowdownEnable->current.boolean )
 	{
-		return 1.0;
+		return 1.0f;
 	}
 
 	if ( ps->pm_time >= JUMP_LAND_SLOWDOWN_TIME - FRAMETIME )
 	{
-		return 2.5;
+		return 2.5f;
 	}
 
-	return ps->pm_time * 1.5 * 0.00058823527 + 1.0;
+	return ps->pm_time * JUMP_FRICTION_TIME;
 }
 
 /*
@@ -186,32 +187,32 @@ void Jump_ApplySlowdown( playerState_t *ps )
 
 	if ( !jump_slowdownEnable->current.boolean )
 	{
-		VectorScale(ps->velocity, 1.0, ps->velocity);
+		VectorScale(ps->velocity, 1.0f, ps->velocity);
 		return;
 	}
 
 	if ( ps->pm_time > JUMP_LAND_SLOWDOWN_TIME )
 	{
 		Jump_ClearState(ps);
-		VectorScale(ps->velocity, 0.64999998, ps->velocity);
+		VectorScale(ps->velocity, 0.65f, ps->velocity);
 		return;
 	}
 
 	if ( ps->pm_time )
 	{
-		VectorScale(ps->velocity, 1.0, ps->velocity);
+		VectorScale(ps->velocity, 1.0f, ps->velocity);
 		return;
 	}
 
-	if ( ps->jumpOriginZ + 18.0 > ps->origin[2] )
+	if ( ps->jumpOriginZ + 18 > ps->origin[2] )
 	{
 		ps->pm_time = JUMP_LAND_SLOWDOWN_TIME;
-		VectorScale(ps->velocity, 0.64999998, ps->velocity);
+		VectorScale(ps->velocity, 0.65f, ps->velocity);
 		return;
 	}
 
 	ps->pm_time = JUMP_LAND_SLOWDOWN_TIME - FRAMETIME - 500;
-	VectorScale(ps->velocity, 0.5, ps->velocity);
+	VectorScale(ps->velocity, 0.5f, ps->velocity);
 }
 
 /*
@@ -250,7 +251,7 @@ void Jump_PushOffLadder( playerState_t *ps, pml_t *pml )
 
 	assert(ps->pm_flags & PMF_LADDER);
 
-	ps->velocity[2] = ps->velocity[2] * 0.75;
+	ps->velocity[2] = ps->velocity[2] * 0.75f;
 
 	VectorSet(flatForward, pml->forward[0], pml->forward[1], 0);
 	Vec3Normalize(flatForward);
@@ -261,7 +262,7 @@ void Jump_PushOffLadder( playerState_t *ps, pml_t *pml )
 	{
 		dot = DotProduct(flatForward, ps->vLadderVec);
 
-		VectorMA(flatForward, dot * -2.0, ps->vLadderVec, pushOffDir);
+		VectorMA(flatForward, dot * -2.0f, ps->vLadderVec, pushOffDir);
 		Vec3Normalize(pushOffDir);
 	}
 	else

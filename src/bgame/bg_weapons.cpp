@@ -833,11 +833,11 @@ void BG_WeaponFireRecoil( playerState_t *ps, vec3_t vGunSpeed, vec3_t kickAVel )
 	{
 		if ( fPosLerp == 1.0 )
 		{
-			fReducePercent = weapDef->adsGunKickReducedKickPercent * 0.0099999998;
+			fReducePercent = weapDef->adsGunKickReducedKickPercent * 0.01f;
 		}
 		else
 		{
-			fReducePercent = weapDef->hipGunKickReducedKickPercent * 0.0099999998;
+			fReducePercent = weapDef->hipGunKickReducedKickPercent * 0.01f;
 		}
 	}
 
@@ -1090,7 +1090,7 @@ void PM_AdjustAimSpreadScale( pmove_t *pm, pml_t *pml )
 				for ( i = 0; i < 2; i++ )
 				{
 					viewchange = I_fabs(AngleSubtract(SHORT2ANGLE( pm->cmd.angles[i] ), SHORT2ANGLE( pm->oldcmd.angles[i] )))
-					             * 0.0099999998 * weapDef->hipSpreadTurnAdd / pml->frametime + viewchange;
+					             * 0.01f * weapDef->hipSpreadTurnAdd / pml->frametime + viewchange;
 				}
 			}
 
@@ -1353,7 +1353,7 @@ void BG_CalculateWeaponPosition_Sway( playerState_t *ps, vec3_t swayViewAngles, 
 	weapon = BG_GetViewmodelWeaponIndex(ps);
 	weapDef = BG_GetWeaponDef(weapon);
 
-	dt = frametime * 0.001;
+	dt = frametime * 0.001f;
 
 	if ( !BG_IsAimDownSightWeapon(weapon) )
 	{
@@ -2190,9 +2190,8 @@ void BG_CalculateView_IdleAngles( viewState_t *vs, vec3_t angles )
 
 	*vs->weapIdleTime += ps->holdBreathScale * vs->frametime * 1000 * idleSpeed;
 
-	// Requires conversion to long double for higher precision
-	angles[1] += fTargScale * sin((long double)*vs->weapIdleTime * 0.00069999998) * 0.0099999998;
-	angles[0] += fTargScale * sin((long double)*vs->weapIdleTime * 0.001)         * 0.0099999998;
+	angles[1] += fTargScale * sin( *vs->weapIdleTime * 0.0007f ) * 0.01f;
+	angles[0] += fTargScale * sin( *vs->weapIdleTime * 0.001f )  * 0.01f;
 }
 
 /*
@@ -2275,10 +2274,9 @@ void BG_CalculateWeaponPosition_IdleAngles( weaponState_t *ws, vec3_t angles )
 
 	*ws->weapIdleTime += ws->frametime * 1000 * idleSpeed;
 
-	// Requires conversion to long double for higher precision
-	angles[2] += fTargScale * sin((long double)*ws->weapIdleTime * 0.00050000002) * 0.0099999998;
-	angles[1] += fTargScale * sin((long double)*ws->weapIdleTime * 0.00069999998) * 0.0099999998;
-	angles[0] += fTargScale * sin((long double)*ws->weapIdleTime * 0.001)         * 0.0099999998;
+	angles[2] += fTargScale * sin( *ws->weapIdleTime * 0.0005f ) * 0.01f;
+	angles[1] += fTargScale * sin( *ws->weapIdleTime * 0.0007f ) * 0.01f;
+	angles[0] += fTargScale * sin( *ws->weapIdleTime * 0.001f )  * 0.01f;
 }
 
 /*
@@ -2903,16 +2901,16 @@ void BG_CalculateView_BobAngles( viewState_t *vs, vec3_t angles )
 		return;
 	}
 
-	cycle = BG_GetBobCycle(ps) + 0.7853981633974483 + (M_PI * 2);
-	speed = vs->xyspeed * 0.16;
+	cycle = BG_GetBobCycle(ps) + QUARTER_PI + (M_PI * 2);
+	speed = vs->xyspeed * 0.16f;
 
 	vAngOfs[0] = -BG_GetVerticalBobFactor(ps, cycle, speed, 10);
 	vAngOfs[1] = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10);
 
-	cycle -= 0.4712389167638204;
-	speed *= 1.5;
+	cycle -= ( DEG_TO_RAD * 27 );
+	speed *= 1.5f;
 
-	vAngOfs[2] = I_fmin(BG_GetHorizontalBobFactor(ps, cycle, speed, 10), 0.f);
+	vAngOfs[2] = I_fmin(BG_GetHorizontalBobFactor(ps, cycle, speed, 10), 0.0f);
 
 	fPositionLerp = ps->fWeaponPosFrac;
 
@@ -3135,16 +3133,16 @@ void BG_CalculateWeaponPosition_BobOffset( weaponState_t *ws, vec3_t angles )
 	weapIndex = BG_GetViewmodelWeaponIndex(ws->ps);
 	weapDef = BG_GetWeaponDef(weapIndex);
 
-	cycle = BG_GetBobCycle(ps) + 0.7853981633974483 + (M_PI * 2);
-	speed = ws->xyspeed * 0.16;
+	cycle = BG_GetBobCycle(ps) + QUARTER_PI + (M_PI * 2);
+	speed = ws->xyspeed * 0.16f;
 
 	vAngOfs[0] = -BG_GetVerticalBobFactor(ps, cycle, speed, 10);
 	vAngOfs[1] = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10);
 
-	cycle -= 0.4712389167638204;
-	speed *= 1.5;
+	cycle -= ( DEG_TO_RAD * 27 );
+	speed *= 1.5f;
 
-	vAngOfs[2] = I_fmin(BG_GetHorizontalBobFactor(ps, cycle, speed, 10), 0.f);
+	vAngOfs[2] = I_fmin(BG_GetHorizontalBobFactor(ps, cycle, speed, 10), 0.0f);
 
 	fPositionLerp = ps->fWeaponPosFrac;
 
@@ -4169,15 +4167,15 @@ void BG_CalculateWeaponPosition_GunRecoil( weaponState_t *ws, vec3_t angles )
 
 	while ( fTotalTime > 0 )
 	{
-		if ( fTotalTime > 0.005 )
+		if ( fTotalTime > 0.005f )
 		{
-			fTimeStep = 0.0049999999;
+			fTimeStep = 0.005f;
 			fTotalTime -= 0.005;
 
 			bCanStop = BG_CalculateWeaponPosition_GunRecoil_SingleAngle(
 			               ws->vGunOffset,
 			               ws->vGunSpeed,
-			               0.0049999999,
+			               0.005f,
 			               weapDef->gunMaxPitch,
 			               fGunKickAccel,
 			               fGunKickSpeedMax,

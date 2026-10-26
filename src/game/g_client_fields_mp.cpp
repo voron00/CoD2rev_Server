@@ -340,7 +340,7 @@ ClientScr_GetArchiveTime
 void ClientScr_GetArchiveTime( gclient_t *pSelf, const game_client_field_t *pField )
 {
 	assert(pSelf);
-	Scr_AddFloat((float)pSelf->sess.archiveTime * 0.001);
+	Scr_AddFloat((float)pSelf->sess.archiveTime * 0.001f);
 }
 
 /*

@@ -2576,15 +2576,15 @@ static void ApplyKnockBack( gentity_t *pSelf, int damage, vec3_t localdir, int d
 	}
 
 	// figure momentum add, even if the damage won't be taken
-	knockbackMod = 0.30000001;
+	knockbackMod = 0.3f;
 
 	if ( pSelf->client->ps.pm_flags & PMF_PRONE )
 	{
-		knockbackMod = 0.02;
+		knockbackMod = 0.02f;
 	}
 	else if ( pSelf->client->ps.pm_flags & PMF_DUCKED )
 	{
-		knockbackMod = 0.15000001;
+		knockbackMod = 0.15f;
 	}
 
 	knockback = (int)(damage * knockbackMod);

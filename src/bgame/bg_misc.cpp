@@ -1176,9 +1176,9 @@ void BG_RegisterDvars()
 	friction = Dvar_RegisterFloat("friction", 5.5, 0, 100, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	stopspeed = Dvar_RegisterFloat("stopspeed", 100, 0, 1000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	bg_swingSpeed = Dvar_RegisterFloat("bg_swingSpeed", 0.2, 0, 1, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
-	bg_bobAmplitudeStanding = Dvar_RegisterFloat("bg_bobAmplitudeStanding", 0.0070000002, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_bobAmplitudeDucked = Dvar_RegisterFloat("bg_bobAmplitudeDucked", 0.0074999998, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	bg_bobAmplitudeProne = Dvar_RegisterFloat("bg_bobAmplitudeProne", 0.029999999, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_bobAmplitudeStanding = Dvar_RegisterFloat("bg_bobAmplitudeStanding", 0.007f, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_bobAmplitudeDucked = Dvar_RegisterFloat("bg_bobAmplitudeDucked", 0.0075f, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	bg_bobAmplitudeProne = Dvar_RegisterFloat("bg_bobAmplitudeProne", 0.03f, 0, 1, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	bg_bobMax = Dvar_RegisterFloat("bg_bobMax", 8, 0, 36, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	bg_aimSpreadMoveSpeedThreshold = Dvar_RegisterFloat("bg_aimSpreadMoveSpeedThreshold", 11, 0, 300, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_breath_hold_time = Dvar_RegisterFloat("player_breath_hold_time", 4.5, 0, 30, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
@@ -1192,10 +1192,10 @@ void BG_RegisterDvars()
 	player_toggleBinoculars = Dvar_RegisterBool("player_toggleBinoculars", true, DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_scopeExitOnDamage = Dvar_RegisterBool("player_scopeExitOnDamage", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_adsExitDelay = Dvar_RegisterInt("player_adsExitDelay", 0, 0, 1000, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_moveThreshhold = Dvar_RegisterFloat("player_moveThreshhold", 10, 0.0000000099999999, 20, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_moveThreshhold = Dvar_RegisterFloat("player_moveThreshhold", 10, 0.00000001f, 20, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_footstepsThreshhold = Dvar_RegisterFloat("player_footstepsThreshhold", 0, 0, 50000, DVAR_ROM | DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_strafeSpeedScale = Dvar_RegisterFloat("player_strafeSpeedScale", 0.80000001, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
-	player_backSpeedScale = Dvar_RegisterFloat("player_backSpeedScale", 0.69999999, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_strafeSpeedScale = Dvar_RegisterFloat("player_strafeSpeedScale", 0.8f, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
+	player_backSpeedScale = Dvar_RegisterFloat("player_backSpeedScale", 0.7f, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_spectateSpeedScale = Dvar_RegisterFloat("player_spectateSpeedScale", 2, 0, 20, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_turnAnims = Dvar_RegisterBool("player_turnAnims", false, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);
 	player_dmgtimer_timePerPoint = Dvar_RegisterFloat("player_dmgtimer_timePerPoint", 100, 0, FLT_MAX, DVAR_CHEAT | DVAR_CODINFO | DVAR_CHANGEABLE_RESET);

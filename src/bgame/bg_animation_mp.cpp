@@ -758,11 +758,11 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 
 			if ( vTorsoAngles[PITCH] > 0 )
 			{
-				vTorsoAngles[PITCH] = vTorsoAngles[PITCH] * 0.5;
+				vTorsoAngles[PITCH] = vTorsoAngles[PITCH] * 0.5f;
 			}
 			else
 			{
-				vTorsoAngles[PITCH] = vTorsoAngles[PITCH] * 0.25;
+				vTorsoAngles[PITCH] = vTorsoAngles[PITCH] * 0.25f;
 			}
 		}
 	}
@@ -773,7 +773,7 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 	VectorSet(tag_origin_offset, 0, 0, es->fTorsoHeight);
 	fLeanFrac = GetLeanFraction(ci->lerpLean);
 
-	vTorsoAngles[ROLL] = fLeanFrac * 50.0 * 0.92500001;
+	vTorsoAngles[ROLL] = fLeanFrac * 50 * 0.925f;
 	vHeadAngles[ROLL] = vTorsoAngles[ROLL];
 
 	if ( fLeanFrac != 0 )
@@ -782,22 +782,22 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 		{
 			if ( fLeanFrac > 0 )
 			{
-				tag_origin_offset[YAW] = -fLeanFrac * 2.5 + tag_origin_offset[YAW];
+				tag_origin_offset[YAW] = -fLeanFrac * 2.5f + tag_origin_offset[YAW];
 			}
 			else
 			{
-				tag_origin_offset[YAW] = -fLeanFrac * 12.5 + tag_origin_offset[YAW];
+				tag_origin_offset[YAW] = -fLeanFrac * 12.5f + tag_origin_offset[YAW];
 			}
 		}
 		else
 		{
 			if ( fLeanFrac > 0 )
 			{
-				tag_origin_offset[YAW] = -fLeanFrac * 2.5 + tag_origin_offset[YAW];
+				tag_origin_offset[YAW] = -fLeanFrac * 2.5f + tag_origin_offset[YAW];
 			}
 			else
 			{
-				tag_origin_offset[YAW] = -fLeanFrac * 5.0 + tag_origin_offset[YAW];
+				tag_origin_offset[YAW] = -fLeanFrac * 5.0f + tag_origin_offset[YAW];
 			}
 		}
 	}
@@ -811,24 +811,24 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 	{
 		if ( fLeanFrac != 0 )
 		{
-			vHeadAngles[ROLL] = vHeadAngles[ROLL] * 0.5;
+			vHeadAngles[ROLL] = vHeadAngles[ROLL] * 0.5f;
 		}
 
 		tag_origin_angles[PITCH] = tag_origin_angles[PITCH] + es->fTorsoPitch;
 
 		FastSinCos(vTorsoAngles[YAW] * DEG_TO_RAD, &s, &c);
 
-		tag_origin_offset[PITCH] = (1.0 - c) * -24.0 + tag_origin_offset[PITCH];
-		tag_origin_offset[YAW] = s * -12.0 + tag_origin_offset[YAW];
+		tag_origin_offset[PITCH] = (1.0f - c) * -24 + tag_origin_offset[PITCH];
+		tag_origin_offset[YAW] = s * -12 + tag_origin_offset[YAW];
 
 		if ( fLeanFrac * s > 0 )
 		{
-			tag_origin_offset[YAW] = -fLeanFrac * (1.0 - c) * 16.0 + tag_origin_offset[YAW];
+			tag_origin_offset[YAW] = -fLeanFrac * (1.0f - c) * 16 + tag_origin_offset[YAW];
 		}
 
 		angles[CONTROL_ANGLES_BACK_LOW][PITCH] = 0;
-		angles[CONTROL_ANGLES_BACK_LOW][YAW] = vTorsoAngles[ROLL] * -1.2;
-		angles[CONTROL_ANGLES_BACK_LOW][ROLL] = vTorsoAngles[ROLL] * 0.30000001;
+		angles[CONTROL_ANGLES_BACK_LOW][YAW] = vTorsoAngles[ROLL] * -1.2f;
+		angles[CONTROL_ANGLES_BACK_LOW][ROLL] = vTorsoAngles[ROLL] * 0.3f;
 
 		if ( es->fTorsoPitch != 0 || es->fWaistPitch != 0 )
 		{
@@ -836,12 +836,12 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 		}
 
 		angles[CONTROL_ANGLES_BACK_MID][PITCH] = 0;
-		angles[CONTROL_ANGLES_BACK_MID][YAW] = vTorsoAngles[YAW] * 0.1 - vTorsoAngles[ROLL] * 0.2;
-		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.2;
+		angles[CONTROL_ANGLES_BACK_MID][YAW] = vTorsoAngles[YAW] * 0.1f - vTorsoAngles[ROLL] * 0.2f;
+		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.2f;
 
 		angles[CONTROL_ANGLES_BACK_UP][PITCH] = vTorsoAngles[PITCH];
-		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.80000001 + vTorsoAngles[ROLL];
-		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.2;
+		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.8f + vTorsoAngles[ROLL];
+		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.2f;
 	}
 	else
 	{
@@ -851,44 +851,44 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 			{
 				if ( fLeanFrac <= 0 )
 				{
-					vTorsoAngles[ROLL] = vTorsoAngles[ROLL] * 1.25;
-					vHeadAngles[ROLL] = vHeadAngles[ROLL] * 1.25;
+					vTorsoAngles[ROLL] = vTorsoAngles[ROLL] * 1.25f;
+					vHeadAngles[ROLL] = vHeadAngles[ROLL] * 1.25f;
 				}
 			}
 			else
 			{
-				vTorsoAngles[ROLL] = vTorsoAngles[ROLL] * 1.25;
-				vHeadAngles[ROLL] = vHeadAngles[ROLL] * 1.25;
+				vTorsoAngles[ROLL] = vTorsoAngles[ROLL] * 1.25f;
+				vHeadAngles[ROLL] = vHeadAngles[ROLL] * 1.25f;
 			}
 		}
 
-		tag_origin_angles[ROLL] = fLeanFrac * 50.0 * 0.075000003 + tag_origin_angles[ROLL];
+		tag_origin_angles[ROLL] = fLeanFrac * 50 * 0.075f + tag_origin_angles[ROLL];
 
-		angles[CONTROL_ANGLES_BACK_LOW][PITCH] = vTorsoAngles[PITCH] * 0.2;
-		angles[CONTROL_ANGLES_BACK_LOW][YAW] = vTorsoAngles[YAW] * 0.40000001;
-		angles[CONTROL_ANGLES_BACK_LOW][ROLL] = vTorsoAngles[ROLL] * 0.5;
+		angles[CONTROL_ANGLES_BACK_LOW][PITCH] = vTorsoAngles[PITCH] * 0.2f;
+		angles[CONTROL_ANGLES_BACK_LOW][YAW] = vTorsoAngles[YAW] * 0.4f;
+		angles[CONTROL_ANGLES_BACK_LOW][ROLL] = vTorsoAngles[ROLL] * 0.5f;
 
 		if ( es->fTorsoPitch != 0 || es->fWaistPitch != 0 )
 		{
 			angles[CONTROL_ANGLES_BACK_LOW][PITCH] = AngleSubtract(es->fTorsoPitch, es->fWaistPitch) + angles[CONTROL_ANGLES_BACK_LOW][PITCH];
 		}
 
-		angles[CONTROL_ANGLES_BACK_MID][PITCH] = vTorsoAngles[PITCH] * 0.30000001;
-		angles[CONTROL_ANGLES_BACK_MID][YAW] = vTorsoAngles[YAW] * 0.40000001;
-		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.5;
+		angles[CONTROL_ANGLES_BACK_MID][PITCH] = vTorsoAngles[PITCH] * 0.3f;
+		angles[CONTROL_ANGLES_BACK_MID][YAW] = vTorsoAngles[YAW] * 0.4f;
+		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.5f;
 
-		angles[CONTROL_ANGLES_BACK_UP][PITCH] = vTorsoAngles[PITCH] * 0.5;
-		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.2;
-		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.60000002;
+		angles[CONTROL_ANGLES_BACK_UP][PITCH] = vTorsoAngles[PITCH] * 0.5f;
+		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.2f;
+		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.6f;
 	}
 
-	angles[CONTROL_ANGLES_NECK][PITCH] = vHeadAngles[PITCH] * 0.30000001;
-	angles[CONTROL_ANGLES_NECK][YAW] = vHeadAngles[YAW] * 0.30000001;
+	angles[CONTROL_ANGLES_NECK][PITCH] = vHeadAngles[PITCH] * 0.3f;
+	angles[CONTROL_ANGLES_NECK][YAW] = vHeadAngles[YAW] * 0.3f;
 	angles[CONTROL_ANGLES_NECK][ROLL] = 0;
 
-	angles[CONTROL_ANGLES_HEAD][PITCH] = vHeadAngles[PITCH] * 0.69999999;
-	angles[CONTROL_ANGLES_HEAD][YAW] = vHeadAngles[YAW] * 0.69999999;
-	angles[CONTROL_ANGLES_HEAD][ROLL] = vHeadAngles[ROLL] * -0.30000001;
+	angles[CONTROL_ANGLES_HEAD][PITCH] = vHeadAngles[PITCH] * 0.7f;
+	angles[CONTROL_ANGLES_HEAD][YAW] = vHeadAngles[YAW] * 0.7f;
+	angles[CONTROL_ANGLES_HEAD][ROLL] = vHeadAngles[ROLL] * -0.3f;
 
 	VectorClear(angles[CONTROL_ANGLES_PELVIS]);
 
@@ -897,7 +897,7 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 		angles[CONTROL_ANGLES_PELVIS][PITCH] = AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
 	}
 
-	for ( i = 0; i < CONTROL_ANGLES_COUNT; ++i )
+	for ( i = 0; i < CONTROL_ANGLES_COUNT; i++ )
 	{
 		VectorCopy(angles[i], info->angles[i]);
 	}
@@ -919,9 +919,9 @@ void BG_Player_DoControllers( DObj *obj, const gentity_s *ent, int *partBits, cl
 
 	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &info);
 
-	maxAngleChange = frametime * 0.36000001;
+	maxAngleChange = frametime * 0.36f;
 
-	for ( i = 0; i < CONTROL_ANGLES_COUNT; ++i )
+	for ( i = 0; i < CONTROL_ANGLES_COUNT; i++ )
 	{
 		BG_LerpAngles(info.angles[i], maxAngleChange, ci->control.angles[i]);
 		DObjSetControlTagAngles(obj, partBits, *controller_names[i], ci->control.angles[i]);
@@ -1798,7 +1798,7 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	// modify the speed depending on the delta
 	// so it doesn't seem so linear
 	swing = AngleSubtract( destination, *angle );
-	scale = I_fabs( swing ) * 0.050000001;
+	scale = I_fabs( swing ) * 0.05f;
 	if ( scale < 0.5 )
 	{
 		scale = 0.5;
@@ -1956,7 +1956,7 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 	}
 	else
 	{
-		vTorsoAngles[YAW] = moveDir * 0.30000001 + vHeadAngles[YAW];
+		vTorsoAngles[YAW] = moveDir * 0.3f + vHeadAngles[YAW];
 		clampTolerance = 90;
 	}
 
@@ -2023,14 +2023,14 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 	}
 	else if ( vHeadAngles[PITCH] <= 180 )
 	{
-		destination = vHeadAngles[0] * 0.60000002;
+		destination = vHeadAngles[0] * 0.6f;
 	}
 	else
 	{
-		destination = (vHeadAngles[0] + -360.0) * 0.60000002;
+		destination = (vHeadAngles[0] + -360) * 0.6f;
 	}
 
-	BG_SwingAngles(destination, 0, 45, 0.15000001, &ci->torso.pitchAngle, &ci->torso.pitching);
+	BG_SwingAngles(destination, 0, 45, 0.15f, &ci->torso.pitchAngle, &ci->torso.pitching);
 }
 
 /*
@@ -2364,14 +2364,14 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 				cycleLen = 1000;
 			}
 
-			fStartTime = (level_bgs.time % cycleLen) / cycleLen + ci->clientNum * 0.36000001;
+			fStartTime = (level_bgs.time % cycleLen) / cycleLen + ci->clientNum * 0.36f;
 			fStartTime = fStartTime - (int)fStartTime;
 		}
 	}
 
 	if ( oldanim )
 	{
-		XAnimClearGoalWeight(pAnimTree, oldAnimNum & ~ANIM_TOGGLEBIT, lf->animationTime * 0.001);
+		XAnimClearGoalWeight(pAnimTree, oldAnimNum & ~ANIM_TOGGLEBIT, lf->animationTime * WEIGHT_EPSILON);
 	}
 
 	if ( animIndex )
@@ -2391,24 +2391,24 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 
 			if ( bNew )
 			{
-				XAnimSetCompleteGoalWeight(pAnimTree, animIndex, 1.0, lf->animationTime * 0.001, 1.0, 0, 0, 0);
+				XAnimSetCompleteGoalWeight(pAnimTree, animIndex, 1.0f, lf->animationTime * WEIGHT_EPSILON, 1.0f, 0, 0, 0);
 			}
 			else
 			{
-				XAnimSetCompleteGoalWeightKnobAll(pAnimTree, animIndex, level_bgs.animData.generic_human.root.index, 1.0, 0.0, 1.0, 0, 0);
-				XAnimSetTime(pAnimTree, animIndex, 1.0);
+				XAnimSetCompleteGoalWeightKnobAll(pAnimTree, animIndex, level_bgs.animData.generic_human.root.index, 1.0f, 0.0f, 1.0f, 0, 0);
+				XAnimSetTime(pAnimTree, animIndex, 1.0f);
 			}
 		}
 		else
 		{
 			bNoWeight = qfalse;
 
-			if ( anim->moveSpeed != 0.0 )
+			if ( anim->moveSpeed != 0.0f )
 			{
-				bNoWeight = XAnimGetWeight(pAnimTree, animIndex) == 0.0;
+				bNoWeight = XAnimGetWeight(pAnimTree, animIndex) == 0.0f;
 			}
 
-			XAnimSetCompleteGoalWeight(pAnimTree, animIndex, 1.0, lf->animationTime * 0.001, 1.0, 0, anim->noteType, lf != &ci->legs);
+			XAnimSetCompleteGoalWeight(pAnimTree, animIndex, 1.0f, lf->animationTime * WEIGHT_EPSILON, 1.0f, 0, anim->noteType, lf != &ci->legs);
 
 			if ( bNoWeight )
 			{
@@ -2418,14 +2418,14 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 
 		if ( lf != &ci->legs )
 		{
-			XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.torsoAnim, 1.0, lf->animationTime * 0.001, 1.0, 0, anim->noteType, 0);
-			XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.legsAnim, 0.0099999998, lf->animationTime * 0.001, 1.0, 0, anim->noteType, 0);
+			XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.torsoAnim, 1.0f, lf->animationTime * WEIGHT_EPSILON, 1.0f, 0, anim->noteType, 0);
+			XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.legsAnim, 0.01f, lf->animationTime * WEIGHT_EPSILON, 1.0f, 0, anim->noteType, 0);
 		}
 	}
 	else if ( lf != &ci->legs )
 	{
-		XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.torsoAnim, 0.0, lf->animationTime * 0.001, 1.0, 0, 0, 0);
-		XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.legsAnim, 1.0, lf->animationTime * 0.001, 1.0, 0, 0, 0);
+		XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.torsoAnim, 0.0f, lf->animationTime * WEIGHT_EPSILON, 1.0f, 0, 0, 0);
+		XAnimSetCompleteGoalWeight(pAnimTree, level_bgs.animData.animScriptData.legsAnim, 1.0f, lf->animationTime * WEIGHT_EPSILON, 1.0f, 0, 0, 0);
 	}
 }
 
@@ -2552,7 +2552,7 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 			moveSpeed = Vec3Distance(lf->oldFramePos, es->pos.trBase);
 		}
 
-		lf->animSpeedScale = (moveSpeed / ((level_bgs.latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001)) / anim->moveSpeed;
+		lf->animSpeedScale = (moveSpeed / ((level_bgs.latestSnapshotTime - lf->oldFrameSnapshotTime) * 0.001f)) / anim->moveSpeed;
 		lf->oldFrameSnapshotTime = level_bgs.latestSnapshotTime;
 
 		VectorCopy(es->pos.trBase, lf->oldFramePos);
@@ -2590,7 +2590,7 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 				}
 			}
 		}
-		else if ( lf->animSpeedScale < 0.0099999998 && bNewAnim )
+		else if ( lf->animSpeedScale < 0.01f && bNewAnim )
 		{
 			lf->animSpeedScale = 0;
 		}

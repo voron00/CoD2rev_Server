@@ -524,7 +524,7 @@ void G_RunItem( gentity_t *ent )
 	{
 		Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
 
-		if ( !trace.startsolid && trace.fraction < 0.0099999998 && trace.normal[2] < 0.5 )
+		if ( !trace.startsolid && trace.fraction < 0.01f && trace.normal[2] < 0.5 )
 		{
 			VectorSubtract(origin, ent->r.currentOrigin, delta);
 			VectorMA(origin, 1.0 - DotProduct(delta, trace.normal), trace.normal, origin);
@@ -559,7 +559,7 @@ void G_RunItem( gentity_t *ent )
 		return;
 	}
 
-	if ( trace.fraction >= 0.0099999998 )
+	if ( trace.fraction >= 0.01f )
 	{
 		return;
 	}
@@ -1442,7 +1442,7 @@ qboolean Pickup_Health( gentity_t *ent, gentity_t *other )
 	}
 
 	oldHealth = other->health;
-	other->health += quantity * other->client->ps.stats[STAT_MAX_HEALTH] * 0.0099999998;
+	other->health += quantity * other->client->ps.stats[STAT_MAX_HEALTH] * 0.01f;
 
 	if ( other->health > max )
 	{

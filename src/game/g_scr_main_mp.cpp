@@ -5222,7 +5222,7 @@ void Scr_PlayFX()
 		Scr_PlayFX_Error("playFx called an up direction 0 or 180 degrees from forward", fxId);
 	}
 
-	if ( vecLength < 0.99900001 )
+	if ( vecLength < 0.999f )
 	{
 		VectorScale(axis[1], 1.0 / vecLength, axis[1]);
 		Vec3Cross(axis[0], axis[1], axis[2]);

@@ -679,7 +679,7 @@ int turret_UpdateTargetAngles( gentity_t *self, const vec3_t desiredAngles, qboo
 
 	for ( i = 0; i < 2; i++ )
 	{
-		fSpeed[i] = fSpeed[i] * 0.050000001;
+		fSpeed[i] = fSpeed[i] * 0.05f;
 		assert(fSpeed[i] >= 0);
 
 		fDelta = AngleSubtract(desiredAngles[i], self->s.angles2[i]);

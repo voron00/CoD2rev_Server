@@ -1559,7 +1559,7 @@ G_DObjUpdateServerTime
 */
 int G_DObjUpdateServerTime( gentity_t *ent, qboolean bNotify )
 {
-	return SV_DObjUpdateServerTime(ent, level.frameTime * 0.001, bNotify);
+	return SV_DObjUpdateServerTime(ent, level.frameTime * 0.001f, bNotify);
 }
 
 /*

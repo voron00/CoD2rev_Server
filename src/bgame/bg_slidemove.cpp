@@ -151,7 +151,7 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 
 		if ( trace.fraction < 1 )
 		{
-			if ( trace.normal[2] < 0.30000001 )
+			if ( trace.normal[2] < 0.3f )
 			{
 				VectorCopy(down_o, ps->origin);
 				VectorCopy(down_v, ps->velocity);
@@ -175,7 +175,7 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 	}
 
 	Vector2Subtract(ps->origin, start_o, vel);
-	bCloser = Dot2Product(flatDelta, ps->velocity) + 0.001 >= Dot2Product(vel, ps->velocity);
+	bCloser = Dot2Product(flatDelta, ps->velocity) + 0.001f >= Dot2Product(vel, ps->velocity);
 
 	if ( bCloser || jumping && Jump_IsPlayerAboveMax(ps) )
 	{
@@ -246,7 +246,7 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 
 	iDelta += 128;
 	BG_AddPredictableEventToPlayerstate(EV_STEP_VIEW, iDelta, ps);
-	VectorScale(ps->velocity, (1.0 - I_fabs(ps->origin[2] - start_o[2]) / fStepSize) * 0.80000001 + 0.19999999, ps->velocity);
+	VectorScale(ps->velocity, (1.0 - I_fabs(ps->origin[2] - start_o[2]) / fStepSize) * 0.8f + 0.2f, ps->velocity);
 	iDelta -= 128;
 
 	if ( abs(iDelta) < 4 )
@@ -415,7 +415,7 @@ qboolean PM_SlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 		//
 		for ( i = 0; i < numplanes; i++ )
 		{
-			if ( DotProduct(trace.normal, planes[i]) > 0.99900001 )
+			if ( DotProduct(trace.normal, planes[i]) > 0.999f )
 			{
 				// zinx - if it happens again, nudge the origin instead,
 				// and trace it, to make sure we don't end up in a solid
