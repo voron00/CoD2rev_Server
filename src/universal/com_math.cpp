@@ -2306,18 +2306,6 @@ float Vec3DistanceSq( const vec3_t v1, const vec3_t v2 )
 
 /*
 =================
-Vec3Lerp
-=================
-*/
-void Vec3Lerp( const vec3_t start, const vec3_t end, float fraction, vec3_t endpos )
-{
-	endpos[0] = (end[0] - start[0]) * fraction + start[0];
-	endpos[1] = (end[1] - start[1]) * fraction + start[1];
-	endpos[2] = (end[2] - start[2]) * fraction + start[2];
-}
-
-/*
-=================
 YawToAxis
 =================
 */

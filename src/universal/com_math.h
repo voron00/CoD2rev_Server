@@ -689,6 +689,18 @@ inline bool Vec4IsNormalized( const vec4_t v )
 }
 
 /*
+=================
+Vec3Lerp
+=================
+*/
+inline void Vec3Lerp( const vec3_t start, const vec3_t end, float fraction, vec3_t endpos )
+{
+	endpos[0] = (end[0] - start[0]) * fraction + start[0];
+	endpos[1] = (end[1] - start[1]) * fraction + start[1];
+	endpos[2] = (end[2] - start[2]) * fraction + start[2];
+}
+
+/*
 ==============
 FloatIsNegative
 ==============
@@ -771,7 +783,6 @@ vec_t vectosignedyaw(const vec3_t vec);
 int BoxDistSqrdExceeds(const vec3_t absmin, const vec3_t absmax, const vec3_t org, float fogOpaqueDistSqrd);
 float Vec3Distance(const vec3_t v1, const vec3_t v2);
 float Vec3DistanceSq(const vec3_t v1, const vec3_t v2);
-void Vec3Lerp(const vec3_t start, const vec3_t end, float fraction, vec3_t endpos);
 float DiffTrack(float tgt, float cur, float rate, float deltaTime);
 float DiffTrackAngle(float tgt, float cur, float rate, float deltaTime);
 float AngleNormalize180Accurate(float angle);
