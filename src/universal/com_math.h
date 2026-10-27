@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits.h>
+#include "../misc/sse_mathfun.h"
 
 typedef unsigned char byte;
 
@@ -100,17 +101,6 @@ I_rsqrt
 inline float I_rsqrt( const float value )
 {
 	return 1.0f / sqrtf( value );
-}
-
-/*
-==============
-FastSinCosDouble
-==============
-*/
-inline void FastSinCosDouble( double x, double *s, double *c )
-{
-	*s = sin(x);
-	*c = cos(x);
 }
 
 /*
@@ -639,13 +629,52 @@ inline float I_fabs( const float value )
 
 /*
 ==============
+FastSinCosDouble
+==============
+*/
+inline void FastSinCosDouble( double x, double *s, double *c )
+{
+#ifdef USE_SSE2
+	// fill the registers
+	v4sf vx = _mm_set_ps1(x);
+	v4sf vs = _mm_set_ps1(*s);
+	v4sf vc = _mm_set_ps1(*c);
+
+	// perform calculations
+	sincos_ps(vx, &vs, &vc);
+
+	// copy result
+	*s = vs[0];
+	*c = vc[0];
+#else
+	*s = sin(x);
+	*c = cos(x);
+#endif
+}
+
+/*
+==============
 FastSinCos
 ==============
 */
 inline void FastSinCos( float x, float *s, float *c )
 {
+#ifdef USE_SSE2
+	// fill the registers
+	v4sf vx = _mm_set_ps1(x);
+	v4sf vs = _mm_set_ps1(*s);
+	v4sf vc = _mm_set_ps1(*c);
+
+	// perform calculations
+	sincos_ps(vx, &vs, &vc);
+
+	// copy result
+	*s = vs[0];
+	*c = vc[0];
+#else
 	*s = sinf(x);
 	*c = cosf(x);
+#endif
 }
 
 /*
