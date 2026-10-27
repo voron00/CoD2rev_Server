@@ -2,7 +2,7 @@
 CC = gcc
 WINDRES=windres
 
-CFLAGS=-fno-pie -O1 -fno-omit-frame-pointer -mfpmath=387 -DNDEBUG
+CFLAGS=-fno-pie -O1 -march=native -fno-omit-frame-pointer -DNDEBUG
 LFLAGS=-no-pie
 
 ifeq ($(OS),Windows_NT)
