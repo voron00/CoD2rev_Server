@@ -1293,13 +1293,11 @@ void ClientEndFrame( gentity_t *ent )
 	client->ps.speed = g_speed->current.integer;
 
 #if LIBCOD_COMPILE_PLAYER == 1
-	int num = client->ps.clientNum;
-	extern int player_g_gravity[];
-	if (player_g_gravity[num] > 0)
-		client->ps.gravity = player_g_gravity[num];
-	extern int player_g_speed[];
-	if (player_g_speed[num] > 0)
-		client->ps.speed = player_g_speed[num];
+	if (client->libcod.gravity)
+		client->ps.gravity = client->libcod.gravity;
+
+	if (client->libcod.speed)
+		client->ps.speed = client->libcod.speed;
 #endif
 
 	client->currentAimSpreadScale = client->ps.aimSpreadScale / 255;
@@ -1484,6 +1482,10 @@ void ClientThink( int clientNum )
 	// mark the time we got info, so we can display the
 	// phone jack if they don't get any for a while
 	ent->client->lastCmdTime = level.time;
+
+#ifdef LIBCOD
+	UpdateClientFrameTime(ent->client);
+#endif
 
 	if ( g_synchronousClients->current.boolean )
 	{

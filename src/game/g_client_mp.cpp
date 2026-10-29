@@ -559,16 +559,17 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 		}
 	}
 
-#if LIBCOD_COMPILE_PLAYER == 1 // proxy support
-	extern char proxy_realip[MAX_CLIENTS][16];
-	char realIP[16];
-	strncpy(realIP, Info_ValueForKey(userinfo, "ip"), sizeof(proxy_realip[clientNum]) - 1);
+#ifdef LIBCOD // proxy support
+	 NET_StringToAdr( Info_ValueForKey( userinfo, "ip" ), &client->libcod.realIP );
+#endif
 
-	if (strlen(realIP) != 0)
-	{
-		strncpy(proxy_realip[clientNum], realIP, sizeof(proxy_realip[clientNum]) - 1);
-		Com_DPrintf("realip = %s\n", proxy_realip[clientNum]);
-	}
+#ifdef LIBCOD // // check for a banned ip (proxy)
+	 if ( SV_IsBannedIp(client->libcod.realIP) )
+	 {
+		 Com_Printf("rejected connection from permanently banned IP %s\n", NET_AdrToStringNoPort(client->libcod.realIP));
+		 G_FreeEntity(ent);
+		 return "error\n\x15You are permanently banned from this server";
+	 }
 #endif
 
 	// don't do the "xxx connected" messages if they were caried over from previous level

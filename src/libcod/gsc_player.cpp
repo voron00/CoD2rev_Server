@@ -342,29 +342,22 @@ void gsc_player_spectatorclient_get(scr_entref_t id)
 		stackPushEntity(&g_entities[entity->client->spectatorClient]);
 }
 
-char proxy_realip[MAX_CLIENTS][16] = {0};
 void gsc_player_getip(scr_entref_t id)
 {
-	if (id.entnum >= MAX_CLIENTS)
+	gentity_t *entity = &g_entities[id.entnum];
+	client_t *client = &svs.clients[id.entnum];
+
+	if (entity->client == NULL)
 	{
 		stackError("gsc_player_getip() entity %i is not a player", id.entnum);
 		stackPushUndefined();
 		return;
 	}
 
-	client_t *client = &svs.clients[id.entnum];
-
-	char tmp[16];
-	snprintf(tmp, sizeof(tmp), "%d.%d.%d.%d", client->netchan.remoteAddress.ip[0], client->netchan.remoteAddress.ip[1], client->netchan.remoteAddress.ip[2], client->netchan.remoteAddress.ip[3]);
-
-	char localip[16] = "127.0.0.1";
-
-	if (strcmp(localip, tmp) == 0)
-	{
-		snprintf(tmp, sizeof(tmp), "%s", proxy_realip[id.entnum]);
-	}
-
-	stackPushString(tmp);
+	if (entity->client->libcod.realIP.type == NA_IP || entity->client->libcod.realIP.type == NA_IPX)
+		stackPushString(NET_AdrToStringNoPort(entity->client->libcod.realIP));
+	else
+		stackPushString(NET_AdrToStringNoPort(client->netchan.remoteAddress));
 }
 
 void gsc_player_getping(scr_entref_t id)
@@ -619,7 +612,6 @@ void gsc_player_clearjumpstate(scr_entref_t id)
 	ps->jumpOriginZ = 0;
 }
 
-int player_g_speed[MAX_CLIENTS] = {0};
 void gsc_player_setg_speed(scr_entref_t id)
 {
 	int speed;
@@ -631,7 +623,9 @@ void gsc_player_setg_speed(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	gentity_t *entity = &g_entities[id.entnum];
+
+	if (entity->client == NULL)
 	{
 		stackError("gsc_player_setg_speed() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -645,11 +639,10 @@ void gsc_player_setg_speed(scr_entref_t id)
 		return;
 	}
 
-	player_g_speed[id.entnum] = speed;
+	entity->client->libcod.speed = speed;
 	stackPushBool(qtrue);
 }
 
-int player_g_gravity[MAX_CLIENTS] = {0};
 void gsc_player_setg_gravity(scr_entref_t id)
 {
 	int gravity;
@@ -661,7 +654,9 @@ void gsc_player_setg_gravity(scr_entref_t id)
 		return;
 	}
 
-	if (id.entnum >= MAX_CLIENTS)
+	gentity_t *entity = &g_entities[id.entnum];
+
+	if (entity->client == NULL)
 	{
 		stackError("gsc_player_setg_gravity() entity %i is not a player", id.entnum);
 		stackPushUndefined();
@@ -675,7 +670,7 @@ void gsc_player_setg_gravity(scr_entref_t id)
 		return;
 	}
 
-	player_g_gravity[id.entnum] = gravity;
+	entity->client->libcod.gravity = gravity;
 	stackPushBool(qtrue);
 }
 
@@ -737,13 +732,12 @@ void gsc_player_set_anim(scr_entref_t id)
 		return;
 	}
 
-	extern int custom_animation[MAX_CLIENTS];
 	int animationIndex = 0;
 
 	if (strcmp(animation, "none") != 0)
 		animationIndex = BG_AnimationIndexForString(animation);
 
-	custom_animation[id.entnum] = animationIndex;
+	entity->client->libcod.custom_animation = animationIndex;
 	stackPushBool(qtrue);
 }
 
@@ -860,21 +854,22 @@ void gsc_player_getlastgamestatesize(scr_entref_t id)
 		return;
 	}
 
-	extern int gamestate_size[MAX_CLIENTS];
-	stackPushInt(gamestate_size[id.entnum]);
+	client_t *client = &svs.clients[id.entnum];
+	stackPushInt(client->netchan.gamestate_size);
 }
 
 void gsc_player_getfps(scr_entref_t id)
 {
-	if (id.entnum >= MAX_CLIENTS)
+	gentity_t *entity = &g_entities[id.entnum];
+
+	if (entity->client == NULL)
 	{
 		stackError("gsc_player_getfps() entity %i is not a player", id.entnum);
 		stackPushUndefined();
 		return;
 	}
 
-	extern int clientfps[MAX_CLIENTS];
-	stackPushInt(clientfps[id.entnum]);
+	stackPushInt(entity->client->libcod.clientfps);
 }
 
 void gsc_player_isbot(scr_entref_t id)
@@ -890,30 +885,33 @@ void gsc_player_isbot(scr_entref_t id)
 	stackPushBool(client->bIsTestClient);
 }
 
-int player_disableitempickup[MAX_CLIENTS] = {0};
 void gsc_player_disableitempickup(scr_entref_t id)
 {
-	if (id.entnum >= MAX_CLIENTS)
+	gentity_t *entity = &g_entities[id.entnum];
+
+	if (entity->client == NULL)
 	{
 		stackError("gsc_player_disableitempickup() entity %i is not a player", id.entnum);
 		stackPushUndefined();
 		return;
 	}
 
-	player_disableitempickup[id.entnum] = 1;
+	entity->client->libcod.itemPickupDisabled = true;
 	stackPushBool(qtrue);
 }
 
 void gsc_player_enableitempickup(scr_entref_t id)
 {
-	if (id.entnum >= MAX_CLIENTS)
+	gentity_t *entity = &g_entities[id.entnum];
+
+	if (entity->client == NULL)
 	{
 		stackError("gsc_player_enableitempickup() entity %i is not a player", id.entnum);
 		stackPushUndefined();
 		return;
 	}
 
-	player_disableitempickup[id.entnum] = 0;
+	entity->client->libcod.itemPickupDisabled = false;
 	stackPushBool(qtrue);
 }
 

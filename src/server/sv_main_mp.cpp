@@ -277,7 +277,7 @@ int SV_CanReplaceServerCommand( client_t *client, const char *cmd )
 				continue;
 			return i;
 		default:
-			continue;;
+			continue;
 		}
 	}
 
@@ -1006,11 +1006,7 @@ void SV_UpdateBots()
 		if ( cl->netchan.remoteAddress.type != NA_BOT )
 			continue;
 
-#if LIBCOD_COMPILE_BOTS == 1
-		SV_BotUserMove_libcod(cl);
-#else
 		SV_BotUserMove(cl);
-#endif
 	}
 }
 

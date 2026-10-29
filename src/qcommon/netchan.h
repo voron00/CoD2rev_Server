@@ -48,6 +48,8 @@ typedef struct
 	netProfileInfo_t *pProf;
 #ifdef LIBCOD
 	int protocol;
+	int challenge_ping;
+	int gamestate_size;
 #endif
 } netchan_t;
 

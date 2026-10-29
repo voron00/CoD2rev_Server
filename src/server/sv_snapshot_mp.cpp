@@ -792,8 +792,7 @@ void SV_SendMessageToClient( msg_t *msg, client_t *client )
 
 #ifdef LIBCOD
 	// ignore any rate / snapshotMsec calculations when using fast download
-	extern int client_challenge_ping[MAX_CLIENTS];
-	if ( sv_fastDownload->current.boolean && *client->downloadName && !client->downloadingWWW && !client->clientDownloadingWWW && client_challenge_ping[client - svs.clients] <= 100 )
+	if ( sv_fastDownload->current.boolean && *client->downloadName && !client->downloadingWWW && !client->clientDownloadingWWW && client->netchan.challenge_ping <= 100 )
 	{
 		client->nextSnapshotTime = svs.time - 1;
 		return;
@@ -941,8 +940,7 @@ void SV_SendClientMessages( void )
 		numclients++;       // NERVE - SMF - net debugging
 
 #ifdef LIBCOD
-		extern int client_challenge_ping[MAX_CLIENTS];
-		qboolean bFastDl = sv_fastDownload->current.boolean && *c->downloadName && !c->downloadingWWW && !c->clientDownloadingWWW && client_challenge_ping[i] <= 100;
+		qboolean bFastDl = sv_fastDownload->current.boolean && *c->downloadName && !c->downloadingWWW && !c->clientDownloadingWWW && c->netchan.challenge_ping <= 100;
 		if ( bFastDl )
 		{
 			for ( int j = 0; j < MAX_DOWNLOAD_WINDOW; j++ )

@@ -125,8 +125,6 @@ int stackGetParamObject(int param, unsigned int *value);
 xfunction_t Scr_GetCustomFunction(const char **fname, qboolean *fdev);
 xmethod_t Scr_GetCustomMethod(const char **fname, qboolean *fdev);
 
-uint64_t Sys_Milliseconds64(void);
-
 extern dvar_t *sv_master[MAX_MASTER_SERVERS];
 extern dvar_t *fs_library;
 extern dvar_t *g_playerCollision;
@@ -150,8 +148,7 @@ void SV_MasterHeartbeat_libcod(const char *hbname);
 void SV_ResetPureClient_libcod(client_t *cl);
 void SV_CalcPings_libcod( void );
 void SV_CheckTimeouts_libcod( void );
-void SV_BotUserMove_libcod(client_t *client);
-void SV_ClientThink_libcod(client_t *cl, usercmd_t *cmd);
+void UpdateClientFrameTime(gclient_t *client);
 const char* NET_AdrToStringNoPort( netadr_t a );
 
 void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);

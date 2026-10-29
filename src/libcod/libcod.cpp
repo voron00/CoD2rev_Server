@@ -21,8 +21,6 @@ int codecallback_userinfochanged = 0;
 int codecallback_fire_grenade = 0;
 int codecallback_vid_restart = 0;
 
-int client_challenge_ping[MAX_CLIENTS] = {0};
-
 void RegisterLibcodDvars()
 {
 	sv_master[0] = Dvar_RegisterString("sv_master1", MASTER_SERVER_NAME, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
@@ -235,7 +233,7 @@ static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int per
 	leakyBucket_t *bucket = NULL;
 	int	i;
 	long hash = SVC_HashForAddress( address );
-	uint64_t now = Sys_Milliseconds64();
+	int now = Sys_Milliseconds();
 
 	for ( bucket = bucketHashes[ hash ]; bucket; bucket = bucket->next )
 	{
@@ -304,7 +302,7 @@ bool SVC_RateLimit( leakyBucket_t *bucket, int burst, int period )
 {
 	if ( bucket != NULL )
 	{
-		uint64_t now = Sys_Milliseconds64();
+		int now = Sys_Milliseconds();
 		int interval = now - bucket->lastTime;
 		int expired = interval / period;
 		int expiredRemainder = interval % period;
@@ -387,6 +385,9 @@ bool SV_IsBannedIp(netadr_t adr)
 	const char *token;
 	const char *text;
 
+	if (adr.type == NA_BAD || adr.type == NA_BOT || adr.type == NA_LOOPBACK)
+		return false;
+
 	if ( FS_ReadFile(IP_BAN_LIST_NAME, (void **)&file) < 0 )
 		return false;
 
@@ -414,75 +415,19 @@ bool SV_IsBannedIp(netadr_t adr)
 	return banned;
 }
 
-int clientfps[MAX_CLIENTS] = {0};
-int clientframes[MAX_CLIENTS] = {0};
-uint64_t clientframetime[MAX_CLIENTS] = {0};
-void SV_ClientThink_libcod(client_t *cl, usercmd_t *cmd)
+void UpdateClientFrameTime(gclient_t *client)
 {
-	cl->lastUsercmd = *cmd;
+	client->libcod.clientframes++;
 
-	if ( cl->state != CS_ACTIVE )
+	if (Sys_Milliseconds() - client->libcod.clientframetime >= 1000)
 	{
-		return;     // may have been kicked during the last usercmd
+		if (client->libcod.clientframes > 1000)
+			client->libcod.clientframes = 1000;
+
+		client->libcod.clientfps= client->libcod.clientframes;
+		client->libcod.clientframetime = Sys_Milliseconds();
+		client->libcod.clientframes = 0;
 	}
-
-	int clientnum = cl - svs.clients;
-	clientframes[clientnum]++;
-
-	if (Sys_Milliseconds64() - clientframetime[clientnum] >= 1000)
-	{
-		if (clientframes[clientnum] > 1000)
-			clientframes[clientnum] = 1000;
-
-		clientfps[clientnum] = clientframes[clientnum];
-		clientframetime[clientnum] = Sys_Milliseconds64();
-		clientframes[clientnum] = 0;
-	}
-
-	G_SetLastServerTime(cl - svs.clients, cmd->serverTime);
-	ClientThink(cl - svs.clients);
-}
-
-int bot_buttons[MAX_CLIENTS] = {0};
-int bot_weapon[MAX_CLIENTS] = {0};
-char bot_forwardmove[MAX_CLIENTS] = {0};
-char bot_rightmove[MAX_CLIENTS] = {0};
-void SV_BotUserMove_libcod(client_t *client)
-{
-	int num;
-	usercmd_t ucmd = {0};
-
-	if (client->gentity == NULL)
-		return;
-
-	num = client - svs.clients;
-	ucmd.serverTime = svs.time;
-
-	playerState_t *ps = SV_GameClientNum(num);
-	gentity_t *ent = SV_GentityNum(num);
-
-	if (bot_weapon[num])
-		ucmd.weapon = (byte)(bot_weapon[num] & 0xFF);
-	else
-		ucmd.weapon = (byte)(ps->weapon & 0xFF);
-
-	if (ent->client == NULL)
-		return;
-
-	if (ent->client->sess.archiveTime == 0)
-	{
-		ucmd.buttons = bot_buttons[num];
-
-		ucmd.forwardmove = bot_forwardmove[num];
-		ucmd.rightmove = bot_rightmove[num];
-
-		ucmd.angles[0] = ent->client->sess.cmd.angles[0];
-		ucmd.angles[1] = ent->client->sess.cmd.angles[1];
-		ucmd.angles[2] = ent->client->sess.cmd.angles[2];
-	}
-
-	client->deltaMessage = client->netchan.outgoingSequence - 1;
-	SV_ClientThink_libcod(client, &ucmd);
 }
 
 void SV_ResetPureClient_libcod(client_t *cl)

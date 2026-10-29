@@ -443,6 +443,24 @@ typedef struct
 	int psOffsetTime;
 } clientSession_t;
 
+#ifdef LIBCOD
+struct libcod_t
+{
+	netadr_t realIP;
+	int speed;
+	int gravity;
+	bool itemPickupDisabled;
+	int clientfps;
+	int clientframes;
+	int clientframetime;
+	int bot_buttons;
+	int bot_weapon;
+	char bot_forwardmove;
+	char bot_rightmove;
+	int custom_animation;
+};
+#endif
+
 struct gclient_s
 {
 	playerState_t ps;
@@ -494,6 +512,9 @@ struct gclient_s
 	int weapIdleTime;
 	int lastServerTime;
 	int lastSpawnTime;
+#ifdef LIBCOD
+	libcod_t libcod;
+#endif
 };
 
 #define CFOFS( x ) offsetof( gclient_t, x )

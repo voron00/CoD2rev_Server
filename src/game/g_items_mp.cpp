@@ -1121,9 +1121,13 @@ Touch_Item_Auto
 void Touch_Item_Auto( gentity_t *ent, gentity_t *other, qboolean bTouched )
 {
 #if LIBCOD_COMPILE_PLAYER == 1
-	extern int player_disableitempickup[MAX_CLIENTS];
-	if (player_disableitempickup[other->s.number])
-		return;
+	if ( other->client )
+	{
+		if ( other->client->libcod.itemPickupDisabled )
+		{
+			return;
+		}
+	}
 #endif
 	ent->active = qtrue;
 	Touch_Item(ent, other, bTouched);

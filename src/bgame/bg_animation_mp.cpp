@@ -223,10 +223,6 @@ static int defineStringsOffset;
 static animStringItem_t defineStr[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES];
 static int defineBits[NUM_ANIM_CONDITIONS][MAX_ANIM_DEFINES][2];
 
-#if LIBCOD_COMPILE_PLAYER == 1
-int custom_animation[MAX_CLIENTS] = {0};
-#endif
-
 /*
 ===============
 BG_PlayAnim
@@ -238,8 +234,12 @@ int BG_PlayAnim( playerState_t *ps, int animNum, int bodyPart, int forceDuration
 	qboolean wasSet = qfalse;
 
 #if LIBCOD_COMPILE_PLAYER == 1
-	if (custom_animation[ps->clientNum])
-		animNum = custom_animation[ps->clientNum];
+	gentity_t *entity = &g_entities[ps->clientNum];
+	if (entity->client)
+	{
+		if (entity->client->libcod.custom_animation)
+			animNum = entity->client->libcod.custom_animation;
+	}
 #endif
 
 	if ( forceDuration )

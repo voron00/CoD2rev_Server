@@ -1727,7 +1727,7 @@ void PM_WeaponUseAmmo(playerState_s *ps, int weaponIndex, int amount);
 int BG_GetBinocularWeaponIndex();
 
 WeaponDef* BG_LoadWeaponDef(const char *folderName, const char *weaponName);
-gitem_s* BG_FindItemForWeapon(int weapon);;
+gitem_s* BG_FindItemForWeapon(int weapon);
 
 int PM_GetViewHeightLerpTime(const playerState_s *ps, int iTarget, int bDown);
 void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler);

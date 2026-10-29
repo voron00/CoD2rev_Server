@@ -801,8 +801,7 @@ gotnewcl:
 	Netchan_Setup(NS_SERVER, &newcl->netchan, from, qport);
 #ifdef LIBCOD
 	newcl->netchan.protocol = version;
-	extern int client_challenge_ping[MAX_CLIENTS];
-	client_challenge_ping[clientNum] = ping;
+	newcl->netchan.challenge_ping = ping;
 #endif
 	// init the netchan queue
 	newcl->voicePacketCount = 0;
@@ -1483,11 +1482,8 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 		{
 			continue;
 		}
-#if LIBCOD_COMPILE_PLAYER == 1
-		SV_ClientThink_libcod(cl, &cmds[ i ]);
-#else
+
 		SV_ClientThink(cl, &cmds[ i ]);
-#endif
 	}
 }
 
@@ -1505,16 +1501,20 @@ void SV_BotUserMove( client_t *cl )
 		return;
 	}
 
-	memset(&ucmd, 0, sizeof(ucmd));
+	if ( cl->gentity->client == NULL )
+	{
+		return;
+	}
 
+	memset(&ucmd, 0, sizeof(ucmd));
 	ucmd.weapon = SV_GameClientNum(cl - svs.clients)->weapon;
 
 	if ( !G_GetClientArchiveTime(cl - svs.clients) )
 	{
-		if ( randomf() < 0.5 )
+		if ( randomf() < 0.5f )
 			ucmd.buttons |= BUTTON_ATTACK;
 
-		if ( randomf() < 0.5 )
+		if ( randomf() < 0.5f )
 			ucmd.buttons |= (BUTTON_USE | BUTTON_USERELOAD);
 
 		if ( randomf() < 0.33f )
@@ -1523,7 +1523,7 @@ void SV_BotUserMove( client_t *cl )
 		}
 		else
 		{
-			if ( randomf() < 0.5 )
+			if ( randomf() < 0.5f )
 				ucmd.forwardmove = BUTTON_BACK;
 		}
 
@@ -1533,26 +1533,41 @@ void SV_BotUserMove( client_t *cl )
 		}
 		else
 		{
-			if ( randomf() < 0.5 )
+			if ( randomf() < 0.5f )
 				ucmd.rightmove = BUTTON_BACK;
 		}
 
 		if ( randomf() < 0.33f )
-			ucmd.angles[0] = (int)(crandom() * 360.0);
+			ucmd.angles[0] = (int)(crandom() * 360);
 
 		if ( randomf() < 0.33f )
-			ucmd.angles[1] = (int)(crandom() * 360.0);
+			ucmd.angles[1] = (int)(crandom() * 360);
 
 		if ( randomf() < 0.33f )
-			ucmd.angles[2] = (int)(crandom() * 360.0);
+			ucmd.angles[2] = (int)(crandom() * 360);
 	}
 
-	cl->deltaMessage = cl->netchan.outgoingSequence - 1;
-#if LIBCOD_COMPILE_PLAYER == 1
-	SV_ClientThink_libcod(cl, &ucmd);
-#else
-	SV_ClientThink(cl, &ucmd);
+#if LIBCOD_COMPILE_BOTS == 1
+	if (cl->gentity->client->libcod.bot_weapon)
+		ucmd.weapon = cl->gentity->client->libcod.bot_weapon & 255;
+
+	if ( !G_GetClientArchiveTime(cl - svs.clients) )
+	{
+		ucmd.buttons = cl->gentity->client->libcod.bot_buttons;
+		ucmd.forwardmove = cl->gentity->client->libcod.bot_forwardmove;
+		ucmd.rightmove = cl->gentity->client->libcod.bot_rightmove;
+
+		ucmd.angles[0] = cl->gentity->client->sess.cmd.angles[0];
+		ucmd.angles[1] = cl->gentity->client->sess.cmd.angles[1];
+		ucmd.angles[2] = cl->gentity->client->sess.cmd.angles[2];
+	}
+
+	ucmd.serverTime = svs.time;
 #endif
+
+	cl->deltaMessage = cl->netchan.outgoingSequence - 1;
+
+	SV_ClientThink(cl, &ucmd);
 }
 
 /*
@@ -1625,9 +1640,6 @@ It will be resent if the client acknowledges a later message but has
 the wrong gamestate.
 ================
 */
-#if LIBCOD_COMPILE_PLAYER == 1
-int gamestate_size[MAX_CLIENTS] = {0};
-#endif
 void SV_SendClientGameState( client_t *client )
 {
 	int start;
@@ -1707,7 +1719,7 @@ void SV_SendClientGameState( client_t *client )
 	// NERVE - SMF - debug info
 	Com_DPrintf( "Sending %i bytes in gamestate to client: %i\n", msg.cursize, client - svs.clients );
 #if LIBCOD_COMPILE_PLAYER == 1
-	gamestate_size[client - svs.clients] = msg.cursize;
+	client->netchan.gamestate_size = msg.cursize;
 #endif
 	// deliver this to the client
 	SV_SendMessageToClient( &msg, client );
