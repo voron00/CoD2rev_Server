@@ -446,7 +446,6 @@ typedef struct
 #ifdef LIBCOD
 struct libcod_t
 {
-	netadr_t realIP;
 	int speed;
 	int gravity;
 	bool itemPickupDisabled;

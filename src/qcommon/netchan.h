@@ -50,6 +50,7 @@ typedef struct
 	int protocol;
 	int challenge_ping;
 	int gamestate_size;
+	netadr_t realIP;
 #endif
 } netchan_t;
 

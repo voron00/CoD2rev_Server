@@ -560,16 +560,15 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 	}
 
 #ifdef LIBCOD // proxy support
-	 NET_StringToAdr( Info_ValueForKey( userinfo, "ip" ), &client->libcod.realIP );
-#endif
-
-#ifdef LIBCOD // // check for a banned ip (proxy)
-	 if ( SV_IsBannedIp(client->libcod.realIP) )
-	 {
-		 Com_Printf("rejected connection from permanently banned IP %s\n", NET_AdrToStringNoPort(client->libcod.realIP));
-		 G_FreeEntity(ent);
-		 return "error\n\x15You are permanently banned from this server";
-	 }
+	client_t *c = &svs.clients[clientNum];
+	NET_StringToAdr( Info_ValueForKey( userinfo, "ip" ), &c->netchan.realIP );
+	//  check for a banned ip (proxy)
+	if ( SV_IsBannedIp(c->netchan.realIP) )
+	{
+		Com_Printf("rejected connection from permanently banned IP %s\n", NET_AdrToStringNoPort(c->netchan.realIP));
+		G_FreeEntity(ent);
+		return "error\n\x15You are permanently banned from this server";
+	}
 #endif
 
 	// don't do the "xxx connected" messages if they were caried over from previous level

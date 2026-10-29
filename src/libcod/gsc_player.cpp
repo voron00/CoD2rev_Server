@@ -344,18 +344,17 @@ void gsc_player_spectatorclient_get(scr_entref_t id)
 
 void gsc_player_getip(scr_entref_t id)
 {
-	gentity_t *entity = &g_entities[id.entnum];
-	client_t *client = &svs.clients[id.entnum];
-
-	if (entity->client == NULL)
+	if (id.entnum >= MAX_CLIENTS)
 	{
 		stackError("gsc_player_getip() entity %i is not a player", id.entnum);
 		stackPushUndefined();
 		return;
 	}
 
-	if (entity->client->libcod.realIP.type == NA_IP || entity->client->libcod.realIP.type == NA_IPX)
-		stackPushString(NET_AdrToStringNoPort(entity->client->libcod.realIP));
+	client_t *client = &svs.clients[id.entnum];
+
+	if (client->netchan.realIP.type != NA_BAD && client->netchan.realIP.type != NA_BOT && client->netchan.realIP.type != NA_LOOPBACK)
+		stackPushString(NET_AdrToStringNoPort(client->netchan.realIP));
 	else
 		stackPushString(NET_AdrToStringNoPort(client->netchan.remoteAddress));
 }
