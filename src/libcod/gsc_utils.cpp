@@ -824,7 +824,7 @@ void gsc_utils_sqrt()
 		return;
 	}
 
-	stackPushFloat(sqrt(x));
+	stackPushFloat(I_sqrt(x));
 }
 
 void gsc_utils_sqrtInv()
@@ -838,7 +838,7 @@ void gsc_utils_sqrtInv()
 		return;
 	}
 
-	stackPushFloat(Q_rsqrt(x));
+	stackPushFloat(I_rsqrt(x));
 }
 
 void gsc_make_localized_string()

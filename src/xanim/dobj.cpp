@@ -1021,7 +1021,7 @@ void DObjTraceline( DObj *obj, const vec3_t start, const vec3_t end, unsigned ch
 
 			if ( lowestPriority == currentPriority )
 			{
-				if ( sphereFraction - sqrtf(diff2 * invL2) >= trace->fraction )
+				if ( sphereFraction - I_sqrt(diff2 * invL2) >= trace->fraction )
 				{
 					continue;
 				}

@@ -1,7 +1,11 @@
 #pragma once
 
 #include <limits.h>
+
+#ifdef USE_SSE2
+#include <emmintrin.h>
 #include "../misc/sse_mathfun.h"
+#endif
 
 typedef unsigned char byte;
 
@@ -88,9 +92,14 @@ inline int Q_rint( float in )
 I_sqrt
 ==============
 */
-inline float I_sqrt( const float value )
+inline float I_sqrt( const float x )
 {
-	return sqrtf( value );
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return _mm_sqrt_ps(vx)[0];
+#else
+	return sqrtf( x );
+#endif
 }
 
 /*
@@ -98,9 +107,14 @@ inline float I_sqrt( const float value )
 I_rsqrt
 ==============
 */
-inline float I_rsqrt( const float value )
+inline float I_rsqrt( const float x )
 {
-	return 1.0f / sqrtf( value );
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return _mm_rsqrt_ps(vx)[0];
+#else
+	return 1.0f / sqrtf( x );
+#endif
 }
 
 /*
@@ -589,7 +603,7 @@ I_clamp
 */
 inline int I_clamp( const int val, const int min, const int max )
 {
-	return I_max (min, I_min( val, max ) );
+	return I_max( min, I_min( val, max ) );
 }
 
 /*
@@ -622,9 +636,18 @@ inline int I_side( const float x )
 I_fabs
 ==============
 */
-inline float I_fabs( const float value )
+inline float I_fabs( const float x )
 {
-	return fabs( value );
+#ifdef USE_SSE2
+	// fill the registers
+	v4sf vx = _mm_set_ps1(x);
+	// -0.f in binary has only the sign bit (bit 31) set to 1
+	v4sf mask = _mm_set1_ps(-0.f);
+	// Clear the sign bit using bitwise AND-NOT
+	return _mm_andnot_ps(mask, vx)[0];
+#else
+	return fabs( x );
+#endif
 }
 
 /*
@@ -757,28 +780,6 @@ FastCeil
 inline int const FastCeil( const float x )
 {
 	return ceil( x );
-}
-
-/*
-==============
-Q_rsqrt
-==============
-*/
-inline float Q_rsqrt( const float number )
-{
-	long i;
-	float x2, y;
-	const float threehalfs = 1.5F;
-
-	x2 = number * 0.5F;
-	y = number;
-	i = *(long*)&y;                        // evil floating point bit level hacking
-	i = 0x5f3759df - (i >> 1);               // what the fuck?
-	y = *(float*)&i;
-	y = y * (threehalfs - (x2 * y * y));   // 1st iteration
-//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
-
-	return y;
 }
 
 #define Vec3Length VectorLength
