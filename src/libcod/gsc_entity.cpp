@@ -15,6 +15,13 @@ void gsc_entity_setalive(scr_entref_t id)
 
 	gentity_t *entity = &g_entities[id.entnum];
 
+	if ( !entity->r.inuse )
+	{
+		stackError("gsc_entity_setalive() entity is not in use");
+		stackPushUndefined();
+		return;
+	}
+
 	entity->takedamage = isAlive;
 	stackPushBool(qtrue);
 }
@@ -31,6 +38,13 @@ void gsc_entity_setbounds(scr_entref_t id)
 	}
 
 	gentity_t *entity = &g_entities[id.entnum];
+
+	if ( !entity->r.inuse )
+	{
+		stackError("gsc_entity_setbounds() entity is not in use");
+		stackPushUndefined();
+		return;
+	}
 
 	vec3_t mins = {-height, -width, -width};
 	vec3_t maxs = {width, width, height};
