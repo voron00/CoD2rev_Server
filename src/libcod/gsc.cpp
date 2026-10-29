@@ -2,13 +2,12 @@
 
 #ifdef LIBCOD
 
-const char *stackGetParamTypeAsString(int param)
+const char *stackGetParamTypeAsString(unsigned long param)
 {
 	if (param >= Scr_GetNumParam())
 		return "UNDEFINED";
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	switch (var->type)
 	{
@@ -356,14 +355,12 @@ xmethod_t Scr_GetCustomMethod(const char **fname, qboolean *fdev)
 	return NULL;
 }
 
-int stackGetParamType(int param)
+int stackGetParamType(unsigned long param)
 {
 	if (param >= Scr_GetNumParam())
 		return STACK_UNDEFINED;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
-
+	VariableValue *var = &scrVmPub.top[-param];
 	return var->type;
 }
 
@@ -472,13 +469,12 @@ int stackGetParams(const char *params, ...)
 	return errors == 0; // success if no errors
 }
 
-int stackGetParamInt(int param, int *value)
+int stackGetParamInt(unsigned long param, int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type == STACK_FLOAT)
 	{
@@ -500,13 +496,12 @@ int stackGetParamInt(int param, int *value)
 	return 1;
 }
 
-int stackGetParamInt64(int param, long int *value)
+int stackGetParamInt64(unsigned long param, long int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type == STACK_FLOAT)
 	{
@@ -528,13 +523,12 @@ int stackGetParamInt64(int param, long int *value)
 	return 1;
 }
 
-int stackGetParamFunction(int param, int *value)
+int stackGetParamFunction(unsigned long param, int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type != STACK_FUNCTION)
 		return 0;
@@ -544,13 +538,12 @@ int stackGetParamFunction(int param, int *value)
 	return 1;
 }
 
-int stackGetParamString(int param, const char **value)
+int stackGetParamString(unsigned long param, const char **value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type != STACK_STRING)
 		return 0;
@@ -560,13 +553,12 @@ int stackGetParamString(int param, const char **value)
 	return 1;
 }
 
-int stackGetParamConstString(int param, unsigned int *value)
+int stackGetParamConstString(unsigned long param, unsigned int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type != STACK_STRING)
 		return 0;
@@ -576,13 +568,12 @@ int stackGetParamConstString(int param, unsigned int *value)
 	return 1;
 }
 
-int stackGetParamVector(int param, vec3_t value)
+int stackGetParamVector(unsigned long param, vec3_t value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type != STACK_VECTOR)
 		return 0;
@@ -592,13 +583,12 @@ int stackGetParamVector(int param, vec3_t value)
 	return 1;
 }
 
-int stackGetParamFloat(int param, float *value)
+int stackGetParamFloat(unsigned long param, float *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type == STACK_INT)
 	{
@@ -614,13 +604,12 @@ int stackGetParamFloat(int param, float *value)
 	return 1;
 }
 
-int stackGetParamObject(int param, unsigned int *value)
+int stackGetParamObject(unsigned long param, unsigned int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
 
-	VariableValue *var;
-	var = Scr_GetValue(param);
+	VariableValue *var = &scrVmPub.top[-param];
 
 	if (var->type != STACK_OBJECT)
 		return 0;
@@ -628,11 +617,6 @@ int stackGetParamObject(int param, unsigned int *value)
 	*value = var->u.pointerValue;
 
 	return 1;
-}
-
-VariableValue* Scr_GetValue(unsigned int param)
-{
-	return &scrVmPub.top[int(-param)];
 }
 
 #endif

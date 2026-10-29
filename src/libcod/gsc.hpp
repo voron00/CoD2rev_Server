@@ -107,20 +107,20 @@
 int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
 #endif
 
-int stackGetParamType(int param);
-const char *stackGetParamTypeAsString(int param);
+int stackGetParamType(unsigned long param);
+const char *stackGetParamTypeAsString(unsigned long param);
 
 int stackGetParams(const char *params, ...);
 void stackError(const char *format, ...);
 
-int stackGetParamInt(int param, int *value);
-int stackGetParamInt64(int param, long int *value);
-int stackGetParamFunction(int param, int *value);
-int stackGetParamString(int param, const char **value);
-int stackGetParamConstString(int param, unsigned int *value);
-int stackGetParamVector(int param, vec3_t value);
-int stackGetParamFloat(int param, float *value);
-int stackGetParamObject(int param, unsigned int *value);
+int stackGetParamInt(unsigned long param, int *value);
+int stackGetParamInt64(unsigned long param, long int *value);
+int stackGetParamFunction(unsigned long param, int *value);
+int stackGetParamString(unsigned long param, const char **value);
+int stackGetParamConstString(unsigned long param, unsigned int *value);
+int stackGetParamVector(unsigned long param, vec3_t value);
+int stackGetParamFloat(unsigned long param, float *value);
+int stackGetParamObject(unsigned long param, unsigned int *value);
 
 xfunction_t Scr_GetCustomFunction(const char **fname, qboolean *fdev);
 xmethod_t Scr_GetCustomMethod(const char **fname, qboolean *fdev);
@@ -154,6 +154,5 @@ const char* NET_AdrToStringNoPort( netadr_t a );
 void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
 void SV_AddLibcodCommands();
 const char *SV_ModifyConfigstringIwdChkSum( client_t *client, int index );
-VariableValue* Scr_GetValue(unsigned int param);
 
 #endif

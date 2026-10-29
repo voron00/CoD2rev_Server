@@ -854,10 +854,9 @@ void gsc_make_localized_string()
 
 	stackPushString(str);
 
-	VariableValue *var;
-	int param = 0;
+	unsigned long param = 0;
+	VariableValue *var = &scrVmPub.top[-param];
 
-	var = Scr_GetValue(param);
 	var->type = STACK_LOCALIZED_STRING;
 }
 
