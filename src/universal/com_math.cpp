@@ -187,7 +187,7 @@ float LerpAngle( float from, float to, float frac )
 	{
 		to += 360;
 	}
-	a = from + frac * (to - from);
+	a = I_lerp(from, to, frac);
 
 	return a;
 }

@@ -56,8 +56,6 @@ extern vec3_t bytedirs[NUMVERTEXNORMALS];
 
 #define SnapVector( v ) {v[0] = ( (int)( v[0] ) ); v[1] = ( (int)( v[1] ) ); v[2] = ( (int)( v[2] ) );}
 
-#define lerp(a, b, t) ((a) + (t) * ((b) - (a)))
-
 #define MAX_SHORT_PRODUCT_SQUARE ( Square ( SHRT_MAX ) )
 
 #define VEC_EPSILON         0.001f
@@ -85,6 +83,48 @@ Q_rint
 inline int Q_rint( float in )
 {
 	return floor( in + 0.5 );
+}
+
+/*
+==============
+I_lerp
+==============
+*/
+inline float I_lerp( float a, float b, float t )
+{
+#ifdef USE_SSE2
+	v4sf va = _mm_set_ps1(a);
+	v4sf vb = _mm_set_ps1(b);
+	v4sf vt = _mm_set_ps1(t);
+
+	v4sf vd = _mm_sub_ps(vb, va);
+	v4sf vp = _mm_mul_ps(vt, vd);
+
+	return _mm_add_ps(va, vp)[0];
+#else
+	return a + t * (b - a);
+#endif
+}
+
+/*
+==============
+I_lerpd
+==============
+*/
+inline long double I_lerpd( long double a, long double b, long double t )
+{
+#ifdef USE_SSE2
+	v4sd va = _mm_set_pd1(a);
+	v4sd vb = _mm_set_pd1(b);
+	v4sd vt = _mm_set_pd1(t);
+
+	v4sd vd = _mm_sub_pd(vb, va);
+	v4sd vp = _mm_mul_pd(vt, vd);
+
+	return _mm_add_pd(va, vp)[0];
+#else
+	return a + t * (b - a);
+#endif
 }
 
 /*
@@ -747,9 +787,9 @@ Vec3Lerp
 */
 inline void Vec3Lerp( const vec3_t start, const vec3_t end, float fraction, vec3_t endpos )
 {
-	endpos[0] = (end[0] - start[0]) * fraction + start[0];
-	endpos[1] = (end[1] - start[1]) * fraction + start[1];
-	endpos[2] = (end[2] - start[2]) * fraction + start[2];
+	endpos[0] = I_lerpd( start[0], end[0], fraction );
+	endpos[1] = I_lerpd( start[1], end[1], fraction );
+	endpos[2] = I_lerpd( start[2], end[2], fraction );
 }
 
 /*

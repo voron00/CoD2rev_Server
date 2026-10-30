@@ -74,7 +74,7 @@ int Bullet_GetDamage( const weaponParms *wp, float dist )
 	lerpAmount = (dist - wp->weapDef->maxDamageRange) / range;
 	assert(((lerpAmount >= 0.0) && (lerpAmount <= 1.0)));
 
-	return lerp( wp->weapDef->damage, wp->weapDef->minDamage, lerpAmount );
+	return I_lerp( wp->weapDef->damage, wp->weapDef->minDamage, lerpAmount );
 }
 
 /*

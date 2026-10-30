@@ -120,7 +120,7 @@ FloatLerp
 */
 float FloatLerp( float a, float b, float t )
 {
-	return ( b - a ) * t + a;
+	return I_lerp( a, b, t );
 }
 
 /*

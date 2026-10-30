@@ -694,7 +694,7 @@ bool SV_GetClientPositionsAtTime( int clientNum, int gametime, vec3_t pos )
 
 	for ( i = 0; i < 3; ++i )
 	{
-		pos[i] = lerp(startPos[i], endPos[i], progress);
+		pos[i] = I_lerp(startPos[i], endPos[i], progress);
 	}
 
 	return true;
