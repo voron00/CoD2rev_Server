@@ -1723,7 +1723,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 		for ( i = 0; i < MAX_OBJECTIVES; i++ )
 		{
 			MSG_WriteBits(msg, to->objective[i].state, OBJST_DONE);
-			MSG_WriteDeltaFields(msg, (byte *)&from->objective[i], (byte *)&to->objective[i], 0, ARRAY_COUNT( objectiveFields ), objectiveFields);
+			MSG_WriteDeltaFields(msg, (byte *)&from->objective[i], (byte *)&to->objective[i], qfalse, ARRAY_COUNT( objectiveFields ), objectiveFields);
 		}
 	}
 	else
@@ -1788,6 +1788,58 @@ int MSG_ReadValue( msg_t *msg, int bits )
 		value |= ~((1 << absbits) - 1);
 
 	return value;
+}
+
+/*
+==============
+MSG_GetField
+==============
+*/
+int MSG_GetField( const int *i, int size )
+{
+	switch ( size )
+	{
+		case 1:
+			return *(int8_t  *)i;
+		case 2:
+			return *(int16_t *)i;
+		case 4:
+			return *(int32_t *)i;
+	}
+
+	Com_Error(ERR_DROP, "unknown field size");
+	return 0;
+}
+
+/*
+==============
+MSG_CopyFieldOver
+==============
+*/
+void MSG_CopyFieldOver( const NetField *stateFields, byte *from, byte *to, int fieldNum )
+{
+	int field, size;
+	int *fromF, *toF;
+
+	size = sizeof( int32_t );
+
+	fromF = ( int *)&from[stateFields[fieldNum].offset];
+	toF = ( int *)&to[stateFields[fieldNum].offset];
+
+	field = MSG_GetField( fromF, size );
+
+	switch ( size )
+	{
+		case 1:
+			*(int8_t *)toF = field;
+			break;
+		case 2:
+			*(int16_t *)toF = field;
+			break;
+		case 4:
+			*(int32_t *)toF = field;
+			break;
+	}
 }
 
 /*
@@ -2558,26 +2610,44 @@ void MSG_WriteDeltaHudElems( msg_t *msg, hudelem_s *from, hudelem_s *to, int cou
 		}
 	}
 
-	MSG_WriteBits(msg, inuse, HUDELEM_BITS);
+	MSG_WriteBits( msg, inuse, HUDELEM_BITS );
 
 	for ( i = 0; i < inuse; i++ )
 	{
-		lc = 0;
-		for (j = 0, field = hudElemFields; j < ARRAY_COUNT(hudElemFields); j++)
+		int alignX, alignY;
+
+		assert(!(from[i].alignOrg & ~15));
+		assert(!(to[i].alignOrg & ~15));
+
+		alignX = (from[i].alignOrg >> 2) & 3;
+		assert(alignX == 0 || alignX == 1 || alignX == 2);
+
+		alignY = from[i].alignOrg & 3;
+		assert(alignY == 0 || alignY == 1 || alignY == 2);
+
+		alignX = (to[i].alignOrg >> 2) & 3;
+		assert(alignX == 0 || alignX == 1 || alignX == 2);
+
+		alignY = to[i].alignOrg & 3;
+		assert(alignY == 0 || alignY == 1 || alignY == 2);
+
+		for ( lc = 0, j = 0, field = hudElemFields; j < ARRAY_COUNT(hudElemFields); j++ )
 		{
-			fromF = ( int * )( (byte *)(from + i) + field[j].offset );
-			toF = ( int * )( (byte *)(to + i) + field[j].offset );
+			fromF = ( int * )( ( byte *)( from + i ) + field[j].offset );
+			toF = ( int * )( ( byte *)( to + i ) + field[j].offset );
+
 			if ( *fromF != *toF )
 			{
 				lc = j;
 			}
 		}
 
-		MSG_WriteBits(msg, lc, HUDELEM_BITS);
+		assert(lc+1 >= 0 && lc+1 < static_cast<int>( ARRAY_COUNT(hudElemFields) ));
+		MSG_WriteBits( msg, lc, HUDELEM_BITS );
 
-		for (j = 0, field = hudElemFields; j <= lc; j++)
+		for ( j = 0, field = hudElemFields; j <= lc; j++ )
 		{
-			MSG_WriteDeltaField(msg, (byte *)(from + i), (byte *)(to + i), &field[j]);
+			MSG_WriteDeltaField( msg, ( byte *)( from + i ), ( byte * )( to + i ), &field[j] );
 		}
 	}
 }
@@ -2587,42 +2657,55 @@ void MSG_WriteDeltaHudElems( msg_t *msg, hudelem_s *from, hudelem_s *to, int cou
 MSG_WriteDeltaFields
 ==============
 */
-void MSG_WriteDeltaFields( msg_t *msg, byte *from, byte *to, int lastChanged, int numFields, const NetField *stateFields )
+void MSG_WriteDeltaFields( msg_t *msg, byte *from, byte *to, qboolean force, int numFields, const NetField *stateFields )
 {
 	int *fromF, *toF;
-	int i;
+	int i, j;
 	const netField_t *field;
 
-	if ( lastChanged )
+	if ( force )
 	{
-writebit1:
-		MSG_WriteBit1(msg);
+		MSG_WriteBit1( msg );
 
 		for ( i = 0; i < numFields; i++ )
 		{
-			MSG_WriteDeltaField(msg, from, to, stateFields + i);
-		}
-	}
-	else
-	{
-		for ( i = 0, field = stateFields; i < numFields; i++ )
-		{
-			fromF = ( int * )( (byte *)from + field[i].offset );
-			toF = ( int * )( (byte *)to + field[i].offset );
-			if ( *fromF != *toF )
-			{
-				goto writebit1;
-			}
+			MSG_WriteDeltaField( msg, from, to, stateFields + i );
 		}
 
-		MSG_WriteBit0(msg);
+		return;
 	}
+
+	for ( i = 0, field = stateFields; i < numFields; i++ )
+	{
+		fromF = ( int * )( ( byte *)from + field[i].offset );
+		toF = ( int * )( ( byte *)to + field[i].offset );
+
+		if ( *fromF != *toF )
+		{
+			MSG_WriteBit1( msg );
+
+			for ( j = 0; j < numFields; j++ )
+			{
+				MSG_WriteDeltaField( msg, from, to, stateFields + j );
+			}
+
+			return;
+		}
+	}
+
+	MSG_WriteBit0( msg );
 }
 
 /*
-==============
+==================
 MSG_WriteDeltaStruct
-==============
+
+Writes part of a packetentities message, including the entity number.
+Can delta from either a baseline or a previous packet_entity
+If to is NULL, a remove entity update will be sent
+If force is not set, then nothing at all will be generated if the entity is
+identical, under the assumption that the in-order delta code will catch it.
+==================
 */
 void MSG_WriteDeltaStruct( msg_t *msg, byte *from, byte *to, qboolean force, int numFields, int indexBits, const netField_t *stateFields, qboolean bChangeBit )
 {
@@ -2630,63 +2713,56 @@ void MSG_WriteDeltaStruct( msg_t *msg, byte *from, byte *to, qboolean force, int
 	int i, lc;
 	const netField_t *field;
 
-	if ( to == NULL )
-	{
-		if ( bChangeBit )
-		{
-			MSG_WriteBit1(msg);
+	// a NULL to is a delta remove message
+	if ( to == NULL ) {
+		if ( bChangeBit ) {
+			MSG_WriteBit1 (msg );
 		}
-
-		MSG_WriteBits(msg, *(int *)from, indexBits);
-		MSG_WriteBit1(msg);
+		MSG_WriteBits( msg, *reinterpret_cast< unsigned * >( from ), indexBits );
+		MSG_WriteBit1( msg );
 		return;
 	}
 
 	lc = 0;
-	for ( i = 0, field = stateFields; i < numFields; i++, field++ )
-	{
-		fromF = ( int * )( (byte *)from + field->offset );
-		toF = ( int * )( (byte *)to + field->offset );
-		if ( *fromF != *toF )
-		{
-			lc = i + 1;
+	// build the change vector as bytes so it is endien independent
+	for ( i = 0, field = stateFields ; i < numFields ; i++, field++ ) {
+		fromF = (int *)( (byte *)from + field->offset );
+		toF = (int *)( (byte *)to + field->offset );
+		if ( *fromF != *toF ) {
+			lc = i+1;
 		}
 	}
 
+	assert(to);
 	assert(*reinterpret_cast< unsigned * >( to ) < (1u << indexBits));
 
-	if ( lc )
-	{
-		if ( bChangeBit )
-		{
-			MSG_WriteBit1(msg);
+	if ( lc == 0 ) {
+		// nothing at all changed
+		if ( !force ) {
+			return;		// nothing at all
 		}
-
-		MSG_WriteBits(msg, *(int *)to, indexBits);
-		MSG_WriteBit0(msg);
-		MSG_WriteBit1(msg);
-		MSG_WriteByte(msg, lc);
-
-		for (i = 0, field = stateFields; i < lc; i++, field++)
-		{
-			MSG_WriteDeltaField(msg, from, to, field);
+		if ( bChangeBit ) {
+			MSG_WriteBit1( msg );
 		}
+		// write two bits for no change
+		MSG_WriteBits( msg, *reinterpret_cast< unsigned * >( to ), indexBits );
+		MSG_WriteBit0( msg );		 	// not removed
+		MSG_WriteBit0( msg );			// no delta
+		return;
 	}
-	else
-	{
-		if ( !force )
-		{
-			return;
-		}
 
-		if ( bChangeBit )
-		{
-			MSG_WriteBit1(msg);
-		}
+	if ( bChangeBit ) {
+		MSG_WriteBit1( msg );
+	}
 
-		MSG_WriteBits(msg, *(int *)to, indexBits);
-		MSG_WriteBit0(msg);
-		MSG_WriteBit0(msg);
+	MSG_WriteBits( msg, *reinterpret_cast< unsigned * >( to ), indexBits );
+	MSG_WriteBit0( msg );				// not removed
+	MSG_WriteBit1( msg );				// we have a delta
+
+	MSG_WriteByte( msg, lc );			// # of changes
+
+	for ( i = 0, field = stateFields ; i < lc ; i++, field++ ) {
+		 MSG_WriteDeltaField( msg, from, to, field );
 	}
 }
 
@@ -2698,27 +2774,41 @@ MSG_ReadDeltaHudElems
 void MSG_ReadDeltaHudElems( msg_t *msg, hudelem_t *from, hudelem_t *to, int count )
 {
 	int *fromF, *toF;
-	int i, j, inuse, lc;
-	netField_t *field;
+	int i, field, inuse, lc, nextChanged;
 
 	assert(count == MAX_HUDELEMS_ARCHIVAL || count == MAX_HUDELEMS_CURRENT);
-	inuse = MSG_ReadBits(msg, HUDELEM_BITS);
+	inuse = MSG_ReadBits( msg, HUDELEM_BITS );
 
 	for ( i = 0; i < inuse; i++ )
 	{
-		lc = MSG_ReadBits(msg, HUDELEM_BITS);
+		lc = MSG_ReadBits( msg, HUDELEM_BITS );
 
-		for (j = 0, field = hudElemFields; j <= lc; j++)
+		for ( field = 0; field <= lc; field++ )
 		{
-			MSG_ReadDeltaField(msg, (byte *)(from + i), (byte *)(to + i), &field[j], qfalse);
+			MSG_ReadDeltaField( msg, ( byte *)( from + i ), ( byte *)( to + i ), hudElemFields + field, qfalse );
 		}
 
-		for (field = hudElemFields; j < ARRAY_COUNT(hudElemFields); j++)
+		for ( nextChanged = field; nextChanged < ARRAY_COUNT( hudElemFields ); nextChanged++ )
 		{
-			fromF = ( int * )( (byte *)(from + i) + field[j].offset );
-			toF = ( int * )( (byte *)(to + i) + field[j].offset );
-			*toF = *fromF;
+			MSG_CopyFieldOver( hudElemFields, ( byte *)( from + i ), ( byte *)( to + i ), nextChanged );
 		}
+
+		int alignX, alignY;
+
+		assert(!(from[i].alignOrg & ~15));
+		assert(!(to[i].alignOrg & ~15));
+
+		alignX = (from[i].alignOrg >> 2) & 3;
+		assert(alignX == 0 || alignX == 1 || alignX == 2);
+
+		alignY = from[i].alignOrg & 3;
+		assert(alignY == 0 || alignY == 1 || alignY == 2);
+
+		alignX = (to[i].alignOrg >> 2) & 3;
+		assert(alignX == 0 || alignX == 1 || alignX == 2);
+
+		alignY = to[i].alignOrg & 3;
+		assert(alignY == 0 || alignY == 1 || alignY == 2);
 	}
 
 	for ( i = inuse; i < count; i++ )
@@ -2740,23 +2830,23 @@ MSG_ReadDeltaStruct
 */
 void MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, unsigned int number, int numFields, int indexBits, const netField_t *stateFields )
 {
-	const NetField *field;
 	int *fromF, *toF;
-	int lc;
-	int i;
+	int lc, i;
 
-	if ( MSG_ReadBit(msg) == 1 )
+	assert(number < (1u << indexBits));
+
+	if ( MSG_ReadBit( msg ) == 1 )
 	{
 		return;
 	}
 
-	if ( MSG_ReadBit(msg) == 0 )
+	if ( MSG_ReadBit( msg ) == 0 )
 	{
-		Com_Memcpy(to, from, ( numFields + 1 ) * sizeof( int32_t ));
+		Com_Memcpy( to, from, ( numFields + 1 ) * sizeof( int32_t ) );
 		return;
 	}
 
-	lc = MSG_ReadByte(msg);
+	lc = MSG_ReadByte( msg );
 
 	if ( lc > numFields )
 	{
@@ -2764,18 +2854,16 @@ void MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, unsigned int number,
 		return;
 	}
 
-	*(int *)to = number;
+	*reinterpret_cast< unsigned * >( to ) = number;
 
-	for (i = 0, field = stateFields; i < lc; i++, field++)
+	for ( i = 0; i < lc; i++ )
 	{
-		MSG_ReadDeltaField(msg, from, to, field, qfalse);
+		MSG_ReadDeltaField( msg, from, to, stateFields + i, qfalse );
 	}
 
-	for (i = lc, field = stateFields + lc; i < numFields; i++, field++)
+	for ( i = lc; i < numFields; i++ )
 	{
-		fromF = ( int * )( (byte *)from + field->offset );
-		toF = ( int * )( (byte *)to + field->offset );
-		*toF = *fromF;
+		MSG_CopyFieldOver( stateFields, from, to, i );
 	}
 }
 
@@ -2786,24 +2874,21 @@ MSG_ReadDeltaFields
 */
 void MSG_ReadDeltaFields( msg_t *msg, byte *from, byte *to, int numFields, const NetField *stateFields )
 {
-	const NetField *field;
 	int *fromF, *toF;
 	int i;
 
-	if ( MSG_ReadBit(msg) )
+	if ( MSG_ReadBit( msg ) )
 	{
 		for ( i = 0; i < numFields; i++ )
 		{
-			MSG_ReadDeltaField(msg, from, to, stateFields + i, qfalse);
+			MSG_ReadDeltaField( msg, from, to, stateFields + i, qfalse );
 		}
 	}
 	else
 	{
-		for ( i = 0, field = stateFields; i < numFields; i++ )
+		for ( i = 0; i < numFields; i++ )
 		{
-			fromF = ( int * )( (byte *)from + field[i].offset );
-			toF = ( int * )( (byte *)to + field[i].offset );
-			*toF = *fromF;
+			MSG_CopyFieldOver( stateFields, from, to, i );
 		}
 	}
 }
