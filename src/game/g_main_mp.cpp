@@ -511,7 +511,7 @@ void CheckVote()
 			// same behavior as a timeout
 			SV_GameSendServerCommand( -1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101) );
 		}
-		else if ( level.voteYes > ceil( level.numVotingClients - ( level.voteYes + level.voteNo ) * g_voteAbstainWeight->current.decimal ) + level.voteNo )
+		else if ( level.voteYes > FastCeil( level.numVotingClients - ( level.voteYes + level.voteNo ) * g_voteAbstainWeight->current.decimal ) + level.voteNo )
 		{
 			// execute the command, then remove the vote
 			SV_GameSendServerCommand( -1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101) );

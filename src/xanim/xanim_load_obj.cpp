@@ -92,7 +92,7 @@ void ConsumeQuat( const unsigned char **pos, short *out )
 
 	if ( temp > 0 )
 	{
-		iQ[3] = ( int )floor( I_sqrt( ( float )temp ) + 0.5 );
+		iQ[3] = ( int )FastFloor( I_sqrt( ( float )temp ) + 0.5 );
 	}
 	else
 	{
@@ -121,7 +121,7 @@ void ConsumeQuat2( const unsigned char **pos, short *out )
 
 	if ( temp > 0 )
 	{
-		iQ[1] = ( int )floor( I_sqrt( ( float )temp ) + 0.5 );
+		iQ[1] = ( int )FastFloor( I_sqrt( ( float )temp ) + 0.5 );
 	}
 	else
 	{

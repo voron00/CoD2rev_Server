@@ -822,6 +822,32 @@ inline int const FastCeil( const float x )
 	return ceil( x );
 }
 
+/*
+==============
+FastFloor
+==============
+*/
+inline int const FastFloor( const float x )
+{
+	return floor( x );
+}
+
+/*
+=================
+RoundFloatArray
+=================
+*/
+inline void RoundFloatArray( vec3_t x, vec3_t y )
+{
+	for ( int i = 0; i < 3; i++ )
+	{
+		if ( x[i] < y[i] )
+			x[i] = FastCeil(x[i]);
+		else
+			x[i] = FastFloor(x[i]);
+	}
+}
+
 #define Vec3Length VectorLength
 
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
@@ -880,7 +906,6 @@ void MatrixInverseOrthogonal43(const float in[4][3], float out[4][3]);
 void ExpandBoundsToWidth(vec3_t mins, vec3_t maxs);
 void YawToAxis(float yaw, vec3_t axis[3]);
 void ProjectPointOnPlane(const vec3_t p, const vec3_t normal, vec3_t dst);
-void RoundFloatArray(vec3_t x, vec3_t y);
 void TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] );
 void RotatePoint( vec3_t point, const vec3_t matrix[3] );
 void AnglesSubtract( vec3_t v1, vec3_t v2, vec3_t v3 );

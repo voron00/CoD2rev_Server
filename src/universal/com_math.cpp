@@ -2324,22 +2324,6 @@ void YawToAxis( float yaw, vec3_t axis[3] )
 
 /*
 =================
-RoundFloatArray
-=================
-*/
-void RoundFloatArray( vec3_t x, vec3_t y )
-{
-	for ( int i = 0; i < 3; i++ )
-	{
-		if ( x[i] < y[i] )
-			x[i] = ceil(x[i]);
-		else
-			x[i] = floor(x[i]);
-	}
-}
-
-/*
-=================
 ClearBounds
 =================
 */
