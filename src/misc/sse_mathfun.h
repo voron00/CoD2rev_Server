@@ -712,3 +712,126 @@ inline void sincos_ps(v4sf x, v4sf *s, v4sf *c) {
   *c = _mm_xor_ps(xmm2, sign_bit_cos);
 }
 
+#ifdef USE_SSE2
+// Vectorized asin for 4 single-precision float channels using SSE2
+inline v4sf asin_ps(v4sf x) {
+  // Math constants
+  const v4sf one         = _mm_set1_ps(1.0f);
+  const v4sf half        = _mm_set1_ps(0.5f);
+  const v4sf pio2        = _mm_set1_ps(1.5707963268f); // pi / 2
+  const v4sf sign_mask   = _mm_set1_ps(-0.0f);        // 0x80000000
+
+  // Minimax polynomial coefficients for asin(x) / x on [0, 0.5]
+  const v4sf p0 = _mm_set1_ps(1.6666752422e-1f);
+  const v4sf p1 = _mm_set1_ps(7.4953002686e-2f);
+  const v4sf p2 = _mm_set1_ps(4.3958170427e-2f);
+  const v4sf p3 = _mm_set1_ps(1.2955240765e-2f);
+  const v4sf p4 = _mm_set1_ps(4.0083563484e-2f);
+
+  // Extract original sign and compute absolute value
+  v4sf x_sign = _mm_and_ps(x, sign_mask);
+  v4sf abs_x  = _mm_andnot_ps(sign_mask, x);
+
+  // Check strategy condition: is |x| > 0.5?
+  v4sf select_mask = _mm_cmpgt_ps(abs_x, half);
+
+  // Strategy 2 transformation: sqrt(0.5 * (1.0 - abs_x))
+  v4sf transform_x = _mm_mul_ps(half, _mm_sub_ps(one, abs_x));
+  transform_x        = _mm_sqrt_ps(transform_x);
+
+  // Select the correct polynomial input 'z' using bitwise operations
+  v4sf z = _mm_or_ps(
+    _mm_andnot_ps(select_mask, abs_x),
+                       _mm_and_ps(select_mask, transform_x)
+  );
+
+  // Horner's schema polynomial evaluation: poly = z + z^3 * P(z^2)
+  v4sf z2 = _mm_mul_ps(z, z);
+  v4sf poly = p4;
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p3);
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p2);
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p1);
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p0);
+  poly = _mm_add_ps(z, _mm_mul_ps(_mm_mul_ps(z2, z), poly)); // poly now holds asin(z)
+
+  // Reconstruct asin(|x|) based on the initial selection mask
+  // If |x| <= 0.5: asin_abs_x = poly
+  // If |x| >  0.5: asin_abs_x = pio2 - 2 * poly
+  v4sf asin_abs_x = _mm_or_ps(
+    _mm_andnot_ps(select_mask, poly),
+                                _mm_and_ps(select_mask, _mm_sub_ps(pio2, _mm_mul_ps(_mm_set1_ps(2.0f), poly)))
+  );
+
+  // Restore the original sign bit to get the final result
+  v4sf result = _mm_or_ps(asin_abs_x, x_sign);
+
+  return result;
+}
+
+// Vectorized acos for 4 single-precision float channels using SSE2
+inline v4sf acos_ps(v4sf x) {
+  // Math constants
+  const v4sf zero        = _mm_set1_ps(0.0f);
+  const v4sf one         = _mm_set1_ps(1.0f);
+  const v4sf half        = _mm_set1_ps(0.5f);
+  const v4sf pio2        = _mm_set1_ps(1.5707963268f); // pi / 2
+  const v4sf pi          = _mm_set1_ps(3.1415926535f);
+  const v4sf sign_mask   = _mm_set1_ps(-0.0f);        // 0x80000000
+
+  // Minimax polynomial coefficients for asin(x) / x on [0, 0.5]
+  const v4sf p0 = _mm_set1_ps(1.6666752422e-1f);
+  const v4sf p1 = _mm_set1_ps(7.4953002686e-2f);
+  const v4sf p2 = _mm_set1_ps(4.3958170427e-2f);
+  const v4sf p3 = _mm_set1_ps(1.2955240765e-2f);
+  const v4sf p4 = _mm_set1_ps(4.0083563484e-2f);
+
+  // Extract sign and compute absolute value
+  v4sf x_sign = _mm_and_ps(x, sign_mask);
+  v4sf abs_x  = _mm_andnot_ps(sign_mask, x);
+
+  // Check domain strategy boundary condition: is |x| > 0.5?
+  v4sf select_mask = _mm_cmpgt_ps(abs_x, half);
+
+  // Strategy 2 computation: transform to sqrt(0.5 * (1.0 - abs_x))
+  v4sf transform_x = _mm_mul_ps(half, _mm_sub_ps(one, abs_x));
+  transform_x        = _mm_sqrt_ps(transform_x);
+
+  // Combine strategies into standard poly operand 'z' using bit operations
+  v4sf z = _mm_or_ps(
+    _mm_andnot_ps(select_mask, abs_x),
+                       _mm_and_ps(select_mask, transform_x)
+  );
+
+  // Horner's schema polynomial evaluation: poly = z + z^3 * P(z^2)
+  v4sf z2 = _mm_mul_ps(z, z);
+  v4sf poly = p4;
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p3);
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p2);
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p1);
+  poly = _mm_add_ps(_mm_mul_ps(poly, z2), p0);
+  poly = _mm_add_ps(z, _mm_mul_ps(_mm_mul_ps(z2, z), poly)); // poly contains asin(z)
+
+  // Remap polynomial result based on initial boundary strategy select mask
+  // If |x| <= 0.5: asin_abs_x = poly
+  // If |x| >  0.5: asin_abs_x = pio2 - 2 * poly
+  v4sf asin_abs_x = _mm_or_ps(
+    _mm_andnot_ps(select_mask, poly),
+                                _mm_and_ps(select_mask, _mm_sub_ps(pio2, _mm_mul_ps(_mm_set1_ps(2.0f), poly)))
+  );
+
+  // Map intermediate results back to native acos outputs based on original sign
+  // If x >= 0: acos(x) = pio2 - asin_abs_x
+  // If x <  0: acos(x) = pi - (pio2 - asin_abs_x)
+  v4sf is_negative = _mm_cmpgt_ps(x_sign, zero);
+
+  v4sf acos_pos = _mm_sub_ps(pio2, asin_abs_x);
+  v4sf acos_neg = _mm_sub_ps(pi, acos_pos);
+
+  v4sf result = _mm_or_ps(
+    _mm_andnot_ps(is_negative, acos_pos),
+                            _mm_and_ps(is_negative, acos_neg)
+  );
+
+  return result;
+}
+#endif

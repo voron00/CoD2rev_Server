@@ -773,7 +773,7 @@ float BG_GetHorizontalBobFactor( const playerState_t *ps, float cycle, float spe
 		amplitude = maxAmp;
 	}
 
-	return sin(cycle) * amplitude;
+	return I_sin(cycle) * amplitude;
 }
 
 /*
@@ -804,7 +804,7 @@ float BG_GetVerticalBobFactor( const playerState_t *ps, float cycle, float speed
 		amplitude = maxAmp;
 	}
 
-	return (0.75 * (sin(cycle * 4.0 + asin(1)) * 0.2 + sin(cycle + cycle))) * amplitude;
+	return (0.75 * (I_sin(cycle * 4.0 + I_asin(1)) * 0.2 + I_sin(cycle + cycle))) * amplitude;
 }
 
 /*
@@ -2190,8 +2190,8 @@ void BG_CalculateView_IdleAngles( viewState_t *vs, vec3_t angles )
 
 	*vs->weapIdleTime += ps->holdBreathScale * vs->frametime * 1000 * idleSpeed;
 
-	angles[1] += fTargScale * sin( *vs->weapIdleTime * 0.0007f ) * 0.01f;
-	angles[0] += fTargScale * sin( *vs->weapIdleTime * 0.001f )  * 0.01f;
+	angles[1] += fTargScale * I_sin( *vs->weapIdleTime * 0.0007f ) * 0.01f;
+	angles[0] += fTargScale * I_sin( *vs->weapIdleTime * 0.001f )  * 0.01f;
 }
 
 /*
@@ -2274,9 +2274,9 @@ void BG_CalculateWeaponPosition_IdleAngles( weaponState_t *ws, vec3_t angles )
 
 	*ws->weapIdleTime += ws->frametime * 1000 * idleSpeed;
 
-	angles[2] += fTargScale * sin( *ws->weapIdleTime * 0.0005f ) * 0.01f;
-	angles[1] += fTargScale * sin( *ws->weapIdleTime * 0.0007f ) * 0.01f;
-	angles[0] += fTargScale * sin( *ws->weapIdleTime * 0.001f )  * 0.01f;
+	angles[2] += fTargScale * I_sin( *ws->weapIdleTime * 0.0005f ) * 0.01f;
+	angles[1] += fTargScale * I_sin( *ws->weapIdleTime * 0.0007f ) * 0.01f;
+	angles[0] += fTargScale * I_sin( *ws->weapIdleTime * 0.001f )  * 0.01f;
 }
 
 /*

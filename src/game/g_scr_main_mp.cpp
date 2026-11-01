@@ -3468,7 +3468,7 @@ void GScr_acos()
 		Scr_Error(va("%g out of range", n));
 	}
 
-	Scr_AddFloat( acos(n) * RAD_TO_DEG );
+	Scr_AddFloat( I_acos(n) * RAD_TO_DEG );
 }
 
 /*
@@ -3485,7 +3485,7 @@ void GScr_asin()
 		Scr_Error(va("%g out of range", n));
 	}
 
-	Scr_AddFloat( asin(n) * RAD_TO_DEG );
+	Scr_AddFloat( I_asin(n) * RAD_TO_DEG );
 }
 
 /*
@@ -3515,7 +3515,7 @@ GScr_cos
 */
 void GScr_cos()
 {
-	Scr_AddFloat( cos(Scr_GetFloat(0) * DEG_TO_RAD) );
+	Scr_AddFloat( I_cos(Scr_GetFloat(0) * DEG_TO_RAD) );
 }
 
 /*
@@ -3525,7 +3525,7 @@ GScr_sin
 */
 void GScr_sin()
 {
-	Scr_AddFloat( sin(Scr_GetFloat(0) * DEG_TO_RAD) );
+	Scr_AddFloat( I_sin(Scr_GetFloat(0) * DEG_TO_RAD) );
 }
 
 /*

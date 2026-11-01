@@ -1133,7 +1133,7 @@ AngleEigenTrace
 */
 float AngleEigenTrace( float angle )
 {
-	return Square( sin( angle * DEG_TO_RAD ) );
+	return Square( I_sin( angle * DEG_TO_RAD ) );
 }
 
 /*
@@ -1347,7 +1347,7 @@ float Q_acos(float c)
 {
 	float angle;
 
-	angle = acos(c);
+	angle = I_acos(c);
 
 	if (angle > M_PI)
 	{
@@ -1392,9 +1392,9 @@ VectorPolar
 */
 void VectorPolar( vec3_t v, float radius, float theta, float phi )
 {
-	v[0]=(float)(radius * cos(theta) * cos(phi));
-	v[1]=(float)(radius * sin(theta) * cos(phi));
-	v[2]=(float)(radius * sin(phi));
+	v[0]=(float)(radius * I_cos(theta) * I_cos(phi));
+	v[1]=(float)(radius * I_sin(theta) * I_cos(phi));
+	v[2]=(float)(radius * I_sin(phi));
 }
 
 /*

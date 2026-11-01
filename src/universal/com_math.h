@@ -692,6 +692,66 @@ inline float I_fabs( const float x )
 
 /*
 ==============
+I_sin
+==============
+*/
+inline float I_sin( const float x )
+{
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return sin_ps(vx)[0];
+#else
+	return sin( x );
+#endif
+}
+
+/*
+==============
+I_cos
+==============
+*/
+inline float I_cos( const float x )
+{
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return cos_ps(vx)[0];
+#else
+	return cos( x );
+#endif
+}
+
+/*
+==============
+I_asin
+==============
+*/
+inline float I_asin( const float x )
+{
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return asin_ps(vx)[0];
+#else
+	return asin( x );
+#endif
+}
+
+/*
+==============
+I_asin
+==============
+*/
+inline float I_acos( const float x )
+{
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return acos_ps(vx)[0];
+#else
+	return acos( x );
+#endif
+}
+
+/*
+==============
 FastSinCosDouble
 ==============
 */
