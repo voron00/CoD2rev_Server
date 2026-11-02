@@ -834,4 +834,62 @@ inline v4sf acos_ps(v4sf x) {
 
   return result;
 }
+
+// full float range, including INFs & NANs
+inline float sse2_floor(float x) {
+  v4sf kSignBit = _mm_set1_ps(-0.f);
+  v4sf kOne = _mm_set1_ps(1.f);
+  v4sf kMaxValue = _mm_set1_ps(2147483648.f); // this could be 8388608.f
+
+  // r = (float)(int)f;
+  v4sf f = _mm_set_ss(x);
+  v4sf r = _mm_cvtepi32_ps(_mm_cvttps_epi32(f));
+
+  // if (f < r) r -= 1;
+  r = _mm_sub_ss(r, _mm_and_ps(_mm_cmplt_ss(f, r), kOne));
+
+  // if (!(2**31 > abs(f))) r = f;
+  v4sf m = _mm_cmpgt_ss(kMaxValue, _mm_andnot_ps(kSignBit, f));
+  r = _mm_or_ps(_mm_and_ps(m, r), _mm_andnot_ps(m, f));
+
+  return _mm_cvtss_f32(r);
+}
+
+inline v4sf sse2_ceil(v4sf x) {
+  // 1. Truncate towards zero
+  v4si truncated_int = _mm_cvttps_epi32(x);
+  v4sf truncated_flt = _mm_cvtepi32_ps(truncated_int);
+
+  // 2. Determine if original is greater than truncated (x > truncated)
+  // This happens for positive fractions (e.g., 2.3 > 2.0)
+  v4sf mask_greater = _mm_cmpgt_ps(x, truncated_flt);
+
+  // 3. Create a conditional 1.0f vector where adjustments are needed
+  // _mm_and_ps zeroes out elements where mask is false, leaves 1.0f where true
+  v4sf one = _mm_set1_ps(1.0f);
+  v4sf adjustment = _mm_and_ps(mask_greater, one);
+
+  // 4. Add the adjustment to the truncated value
+  v4sf ceil_result = _mm_add_ps(truncated_flt, adjustment);
+
+  // 5. Mask out large numbers where rounding isn't necessary or safe.
+  // Floats >= 2^23 (8388608.0f) don't have fractional parts anymore.
+  // This also naturally preserves NaNs, Infinities, and prevents integer overflow.
+  v4sf max_roundable = _mm_set1_ps(8388608.0f);
+
+  // Get absolute value of x by clearing the sign bit
+  v4si sign_mask = _mm_set1_epi32(0x7FFFFFFF);
+  v4sf abs_x = _mm_and_ps(x, _mm_castsi128_ps(sign_mask));
+
+  // If |x| < 2^23, use our calculated ceil_result; otherwise, keep original x
+  v4sf mask_small = _mm_cmplt_ps(abs_x, max_roundable);
+
+  // Bitwise blend: (mask_small & ceil_result) | (~mask_small & x)
+  v4sf final_result = _mm_or_ps(
+    _mm_and_ps(mask_small, ceil_result),
+                                  _mm_andnot_ps(mask_small, x)
+  );
+
+  return final_result;
+}
 #endif

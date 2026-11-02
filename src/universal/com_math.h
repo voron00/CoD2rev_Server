@@ -3,7 +3,6 @@
 #include <limits.h>
 
 #ifdef USE_SSE2
-#include <emmintrin.h>
 #include "../misc/sse_mathfun.h"
 #endif
 
@@ -66,13 +65,31 @@ float Q_acos( float c );
 
 /*
 ==============
-Q_fabs
+FastCeil
 ==============
 */
-inline float Q_fabs( float f )
+inline int const FastCeil( const float x )
 {
-	int tmp = ( *(int*)&f ) & 0x7FFFFFFF;
-	return *(float*)&tmp;
+#ifdef USE_SSE2
+	v4sf vx = _mm_set_ps1(x);
+	return sse2_ceil(vx)[0];
+#else
+	return ceilf( x );
+#endif
+}
+
+/*
+==============
+FastFloor
+==============
+*/
+inline int const FastFloor( const float x )
+{
+#ifdef USE_SSE2
+	return sse2_floor( x );
+#else
+	return floorf( x );
+#endif
 }
 
 /*
@@ -82,7 +99,7 @@ Q_rint
 */
 inline int Q_rint( float in )
 {
-	return floor( in + 0.5 );
+	return FastFloor( in + 0.5f );
 }
 
 /*
@@ -870,26 +887,6 @@ FloatSign
 inline int const FloatSign( const float x )
 {
 	return -2 * FloatIsNegative( x ) + 1;
-}
-
-/*
-==============
-FastCeil
-==============
-*/
-inline int const FastCeil( const float x )
-{
-	return ceil( x );
-}
-
-/*
-==============
-FastFloor
-==============
-*/
-inline int const FastFloor( const float x )
-{
-	return floor( x );
 }
 
 /*
