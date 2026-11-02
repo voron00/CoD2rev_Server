@@ -1039,7 +1039,8 @@ void G_DObjUpdate( gentity_t *ent )
 		assert(ent->attachTagNames[i]);
 
 		dobjModels[numModels].boneName = SL_ConvertToString(ent->attachTagNames[i]);
-		dobjModels[numModels].ignoreCollision = ((int)ent->attachIgnoreCollision >> i) & 1;
+		dobjModels[numModels].ignoreCollision = (ent->attachIgnoreCollision >> i) & 1;
+		assert(dobjModels[numModels].ignoreCollision == 0 || dobjModels[numModels].ignoreCollision == 1);
 
 		numModels++;
 	}

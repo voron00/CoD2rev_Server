@@ -988,7 +988,8 @@ void BG_UpdatePlayerDObj( DObj *pDObj, entityState_t *es, clientInfo_t *ci, qboo
 		dobjModels[iNumModels].model = level_bgs.GetXModel(ci->attachModelNames[i]);
 		assert(dobjModels[iNumModels].model);
 		dobjModels[iNumModels].boneName = ci->attachTagNames[i];
-		dobjModels[iNumModels].ignoreCollision = (attachIgnoreCollision >> i) & qtrue;
+		dobjModels[iNumModels].ignoreCollision = (attachIgnoreCollision >> i) & 1;
+		assert(dobjModels[iNumModels].ignoreCollision == 0 || dobjModels[iNumModels].ignoreCollision == 1);
 		iNumModels++;
 	}
 

@@ -704,6 +704,7 @@ void DObjGetCreateParms( const DObj *obj, DObjModel_s *dobjModels, unsigned shor
 		dobjModels->model = obj->models[modelIndex];
 		dobjModels->boneName = 0;
 		dobjModels->ignoreCollision = obj->ignoreCollision & ( 1 << modelIndex );
+		assert(dobjModels->ignoreCollision == 0 || dobjModels->ignoreCollision == 1);
 
 		if ( obj->modelParents[modelIndex] == NO_BONEINDEX )
 		{
@@ -930,6 +931,7 @@ void DObjTraceline( DObj *obj, const vec3_t start, const vec3_t end, unsigned ch
 
 		size = parts->numBones;
 		ignoreCollision = obj->ignoreCollision & (1 << j);
+		assert(ignoreCollision == 0 || ignoreCollision == 1);
 
 		for ( localBoneIndex = 0; localBoneIndex < size; localBoneIndex++, boneMatrix++, globalBoneIndex++ )
 		{
