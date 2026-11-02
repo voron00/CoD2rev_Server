@@ -120,6 +120,8 @@ int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const
 	traceWork_t tw;
 	int i;
 
+	memset(&trace, 0, sizeof(trace));
+
 	assert(cm.numNodes);
 	assert(mins);
 	assert(maxs);

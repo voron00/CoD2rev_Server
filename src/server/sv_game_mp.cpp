@@ -692,6 +692,8 @@ qboolean SV_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t
 	vec2_t center;
 	unsigned int model;
 
+	memset(&trace, 0, sizeof(trace));
+
 	if ( !( gEnt->r.svFlags & ( SVF_CYLINDER | SVF_DISK ) ) )
 	{
 		model = SV_ClipHandleForEntity(gEnt);

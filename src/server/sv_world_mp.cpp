@@ -784,6 +784,8 @@ void SV_LocationalTraceToEntity( trace_t *results, const vec3_t start, const vec
 	svEntity_t *check;
 	gentity_t *ent;
 
+	memset(&ptrace, 0, sizeof(ptrace));
+
 	ent = SV_GentityNum(entIndex);
 	check = SV_SvEntityForGentity(ent);
 
@@ -817,6 +819,9 @@ void SV_SightTrace( int *hitNum, const vec3_t start, const vec3_t mins, const ve
 	sightclip_t clip;
 	sightpointtrace_t spt;
 	vec3_t temp;
+
+	memset(&clip, 0, sizeof(clip));
+	memset(&spt, 0, sizeof(spt));
 
 	*hitNum = CM_BoxSightTrace(*hitNum, start, end, mins, maxs, 0, contentmask);
 
@@ -876,6 +881,9 @@ int SV_TracePassed( const vec3_t start, const vec3_t mins, const vec3_t maxs, co
 	sightclip_t clip;
 	sightpointtrace_t spt;
 	vec3_t temp;
+
+	memset(&clip, 0, sizeof(clip));
+	memset(&spt, 0, sizeof(spt));
 
 	if ( CM_BoxSightTrace(0, start, end, mins, maxs, 0, contentmask) )
 	{
@@ -950,6 +958,9 @@ void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const ve
 	moveclip_t clip;
 	pointtrace_t pt;
 	vec3_t temp;
+
+	memset(&clip, 0, sizeof(clip));
+	memset(&pt, 0, sizeof(pt));
 
 	// clip to world
 	CM_BoxTrace(results, start, end, mins, maxs, 0, contentmask);

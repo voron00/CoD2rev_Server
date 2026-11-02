@@ -1181,6 +1181,8 @@ void StopFollowing( gentity_t *ent )
 	vec3_t vAngles;
 	gclient_t *client;
 
+	memset(&trace, 0, sizeof(trace));
+
 	client = ent->client;
 	assert(client);
 

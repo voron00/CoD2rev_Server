@@ -308,6 +308,8 @@ void Mantle_Check( pmove_t *pmove, pml_t *pml )
 	trace_t trace;
 	MantleResults mresults;
 
+	memset(&trace, 0, sizeof(trace));
+
 	Mantle_DebugPrint("====== Mantle Debug ======");
 
 	if ( !mantle_enable->current.boolean )
@@ -386,6 +388,8 @@ void Mantle_CalcEndPos( pmove_t *pm, MantleResults *mresults )
 	vec3_t end;
 	vec3_t start;
 	trace_t trace;
+
+	memset(&trace, 0, sizeof(trace));
 
 	ps = pm->ps;
 	assert(ps);
@@ -610,6 +614,8 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 	vec3_t end;
 	vec3_t start;
 	trace_t trace;
+
+	memset(&trace, 0, sizeof(trace));
 
 	ps = pmove->ps;
 	assert(ps);

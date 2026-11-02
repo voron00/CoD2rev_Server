@@ -480,6 +480,8 @@ void G_RunItem( gentity_t *ent )
 	trace_t trace;
 	vec3_t origin;
 
+	memset(&trace, 0, sizeof(trace));
+
 	assert(ent->s.eType != ET_PLAYER_CORPSE);
 
 	// if groundentity has been set to -1, it may have been pushed off an edge
@@ -608,6 +610,8 @@ void G_RunCorpseMove( gentity_t *ent )
 	int contents;
 	trace_t trace;
 	vec3_t origin;
+
+	memset(&trace, 0, sizeof(trace));
 
 	assert(ent->s.eType == ET_PLAYER_CORPSE);
 
@@ -754,6 +758,8 @@ void FinishSpawningItem( gentity_t *ent )
 	vec3_t end;
 	trace_t tr;
 
+	memset(&tr, 0, sizeof(tr));
+
 	ent->handler = ENT_HANDLER_ITEM;
 
 	if ( ent->spawnflags & 1 )  // suspended
@@ -849,6 +855,8 @@ gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
 	int ammoIndex;
 	int iDropClip;
 	int iDropAmmo;
+
+	memset(&trace, 0, sizeof(trace));
 
 	weapItem = &bg_itemlist[iWeaponIndex];
 

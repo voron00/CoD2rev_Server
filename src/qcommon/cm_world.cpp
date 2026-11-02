@@ -880,6 +880,8 @@ qboolean CM_PointTraceStaticModelsComplete( const vec3_t start, const vec3_t end
 {
 	staticmodeltrace_t clip;
 
+	memset(&clip, 0, sizeof(clip));
+
 	clip.contents = contentmask;
 
 	VectorCopy(start, clip.extents.start);

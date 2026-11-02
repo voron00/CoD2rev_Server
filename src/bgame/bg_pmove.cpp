@@ -335,6 +335,8 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 	int iSurfaceType;
 	playerState_t *ps;
 
+	memset(&trace, 0, sizeof(trace));
+
 	ps = pm->ps;
 	assert(ps);
 
@@ -435,6 +437,8 @@ void PM_UpdateLean( playerState_t *ps, float msec, usercmd_t *cmd,
 	vec3_t tmins;
 	vec3_t end;
 	vec3_t start;
+
+	memset(&trace, 0, sizeof(trace));
 
 	leaning = 0;
 	leanofs = 0;
@@ -1585,6 +1589,8 @@ void PM_FoliageSounds( pmove_t *pm )
 	int interval;
 	float speedFrac;
 
+	memset(&trace, 0, sizeof(trace));
+
 	ps = pm->ps;
 	assert(ps);
 
@@ -1904,6 +1910,8 @@ void PM_CheckLadderMove( pmove_t *pm, pml_t *pml )
 	trace_t trace;
 	vec3_t mins;
 	vec3_t maxs;
+
+	memset(&trace, 0, sizeof(trace));
 
 	assert(pm);
 	ps = pm->ps;
@@ -2469,6 +2477,8 @@ static void PM_GroundTraceMissed( pmove_t *pm, pml_t *pml )
 	vec3_t point;
 	playerState_t *ps;
 
+	memset(&trace, 0, sizeof(trace));
+
 	ps = pm->ps;
 
 	if ( pm->ps->groundEntityNum != ENTITYNUM_NONE )
@@ -2871,6 +2881,8 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 	trace_t trace;
 	qboolean bWasStanding;
 	qboolean bWasProne;
+
+	memset(&trace, 0, sizeof(trace));
 
 	assert(pm);
 	ps = pm->ps;
@@ -3305,6 +3317,8 @@ void PM_GroundTrace( pmove_t *pm, pml_t *pml )
 	trace_t trace;
 	vec3_t point;
 	vec3_t start;
+
+	memset(&trace, 0, sizeof(trace));
 
 	assert(pm);
 	ps = pm->ps;

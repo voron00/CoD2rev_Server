@@ -59,6 +59,8 @@ void Player_UpdateLookAtEntity( gentity_t *ent )
 	WeaponDef *weapDef;
 	playerState_t *ps;
 
+	memset(&trace, 0, sizeof(trace));
+
 	assert(ent);
 	assert(ent->client);
 	ps = &ent->client->ps;

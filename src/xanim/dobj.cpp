@@ -814,6 +814,8 @@ void DObjGeomTraceline( DObj *obj, const vec3_t localStart, const vec3_t localEn
 	XModel *model;
 	trace_t trace;
 
+	memset(&trace, 0, sizeof(trace));
+
 	results->partName = 0;
 	results->partGroup = 0;
 

@@ -5611,6 +5611,8 @@ void GScr_PlaceSpawnPoint( scr_entref_t entref )
 	vec3_t vStart;
 	trace_t trace;
 
+	memset(&trace, 0, sizeof(trace));
+
 	gentity_t *ent = GetEntity(entref);
 
 	VectorCopy(ent->r.currentOrigin, vStart);
@@ -5652,6 +5654,8 @@ void Scr_GrenadeExplosionEffect()
 	vec3_t vOrg;
 	trace_t trace;
 
+	memset(&trace, 0, sizeof(trace));
+
 	Scr_GetVector(0, vOrg);
 
 	VectorCopy(vOrg, vPos);
@@ -5679,6 +5683,8 @@ void Scr_PhysicsTrace()
 	vec3_t endpos;
 	vec3_t end;
 	vec3_t start;
+
+	memset(&trace, 0, sizeof(trace));
 
 	Scr_GetVector(0, start);
 	Scr_GetVector(1, end);
@@ -5730,6 +5736,8 @@ void Scr_BulletTrace()
 	vec3_t vEnd;
 	vec3_t vStart;
 	trace_t trace;
+
+	memset(&trace, 0, sizeof(trace));
 
 	gentity_t *pIgnoreEnt = NULL;
 	int iIgnoreEntNum = ENTITYNUM_NONE;

@@ -887,6 +887,7 @@ void gsc_utils_bullethiteffect()
 	entity->s.eventParm = DirToByte(normal);
 
 	trace_t trace;
+	memset(&trace, 0, sizeof(trace));
 
 	vec3_t end_origin = { origin[0] - (normal[0] * 10), origin[1] - (normal[1] * 10), origin[2] - (normal[2] * 10) };
 	G_TraceCapsule(&trace, origin, vec3_origin, vec3_origin, end_origin, 1023, 2065);

@@ -38,6 +38,8 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 	vec3_t start_v;
 	vec3_t start_o;
 
+	memset(&trace, 0, sizeof(trace));
+
 	fStepAmount = 0;
 
 	ps = pm->ps;
@@ -331,6 +333,8 @@ qboolean PM_SlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 	vec3_t endClipVelocity;
 	playerState_t *ps;
 	int permutation[MAX_CLIP_PLANES];
+
+	memset(&trace, 0, sizeof(trace));
 
 	ps = pm->ps;
 	assert(ps);

@@ -76,6 +76,8 @@ qboolean CM_TraceStaticModelComplete( cStaticModel_s *sm, const vec3_t start, co
 	vec3_t localEnd;
 	DObjAnimMat *pose;
 
+	memset(&trace, 0, sizeof(trace));
+
 	VectorSubtract(start, sm->origin, delta);
 	MatrixTransformVector(delta, sm->invScaledAxis, localStart);
 

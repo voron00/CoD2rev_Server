@@ -42,6 +42,8 @@ void TeamplayInfoMessage( gentity_t *ent )
 	vec3_t vForward;
 	int num, health;
 
+	memset(&trace, 0, sizeof(trace));
+
 	if ( ent->client->sess.sessionState != SESS_STATE_PLAYING )
 	{
 		G_GetPlayerViewOrigin(ent, vStart);

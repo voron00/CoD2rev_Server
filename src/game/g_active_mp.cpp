@@ -479,6 +479,8 @@ void G_TouchTriggers( gentity_t *ent )
 	void (*hitTouch)(gentity_t *, gentity_t *, int);
 	void (*entTouch)(gentity_t *, gentity_t *, int);
 
+	memset(&trace, 0, sizeof(trace));
+
 	assert(ent->client);
 
 	// dead clients don't activate triggers!

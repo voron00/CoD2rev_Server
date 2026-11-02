@@ -646,6 +646,8 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 	float damageAmount;
 	int i, e;
 
+	memset(&tr, 0, sizeof(tr));
+
 	if ( !attacker )
 	{
 		return qfalse;

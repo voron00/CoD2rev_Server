@@ -568,6 +568,8 @@ void turret_think_init( gentity_t *self )
 	turretInfo_s *pTurretInfo;
 	int numSteps = 30;
 
+	memset(&trace, 0, sizeof(trace));
+
 	assert(self);
 	assert(self->handler == ENT_HANDLER_TURRET_INIT);
 
@@ -1112,6 +1114,7 @@ void G_PlayerTurretPositionAndBlend( gentity_t *ent, gentity_t *pTurretEnt )
 	vec3_t endpos;
 
 	trace_t trace;
+	memset(&trace, 0, sizeof(trace));
 
 	VectorAngleMultiply(trans, localYaw);
 	Vector2Add(trans, tagMat->trans, localAxis[3]);

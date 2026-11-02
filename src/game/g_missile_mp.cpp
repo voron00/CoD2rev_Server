@@ -145,6 +145,8 @@ void G_ExplodeMissile( gentity_t *ent )
 	trace_t trace;
 	vec3_t origin;
 
+	memset(&trace, 0, sizeof(trace));
+
 	assert(ent);
 	assert(ent->s.weapon);
 
@@ -228,6 +230,9 @@ void G_RunMissile( gentity_t *ent )
 	trace_t tr;
 	vec3_t dir;
 	vec3_t origin;
+
+	memset(&trDown, 0, sizeof(trDown));
+	memset(&tr, 0, sizeof(tr));
 
 	assert(ent);
 

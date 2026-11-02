@@ -402,6 +402,8 @@ void Weapon_Melee( gentity_t *ent, weaponParms *wp, float range, float width, fl
 	gentity_t *tent, *traceEnt;
 	trace_t tr;
 
+	memset(&tr, 0, sizeof(tr));
+
 	assert(wp);
 	assert(wp->weapDef);
 
@@ -696,6 +698,8 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	vec3_t hitPos, reflect, dist;
 	gentity_t *traceEnt, *tent;
 	trace_t tr;
+
+	memset(&tr, 0, sizeof(tr));
 
 	if ( resursion > MAX_BULLET_RESURSIONS )
 	{

@@ -71,6 +71,8 @@ gentity_t *G_TestEntityPosition( gentity_t *ent, vec3_t org )
 	trace_t tr;
 	int mask;
 
+	memset(&tr, 0, sizeof(tr));
+
 	if ( ent->clipmask )
 	{
 //		if ( ent->r.contents == CONTENTS_CORPSE && ent->health <= 0 ) {	// Arnout: players waiting to be revived are important

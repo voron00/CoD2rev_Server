@@ -587,6 +587,8 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 	trace_t trace;
 	int contentMask;
 
+	memset(&trace, 0, sizeof(trace));
+
 	bFirstTraceHit = qfalse;
 	bLocational = qtrue;
 
