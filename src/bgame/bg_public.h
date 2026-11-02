@@ -159,9 +159,7 @@ typedef struct
 	int hash;
 } animStringItem_t;
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct animation_s
+typedef struct ALIGN_TO(8) animation_s
 {
 	char name[MAX_QPATH];
 	int initialLerp;
@@ -172,7 +170,6 @@ typedef struct animation_s
 	int64_t movetype;
 	int noteType;
 } animation_t;
-#pragma pack(pop)
 
 typedef struct
 {
@@ -210,7 +207,7 @@ typedef struct
 	animScriptItem_t *items[128];
 } animScript_t;
 
-typedef struct animScriptData_s
+typedef struct ALIGN_TO(8) animScriptData_s
 {
 	animation_s animations[MAX_MODEL_ANIMATIONS];
 	int numAnimations;
@@ -277,7 +274,7 @@ struct controller_info_t
 // this is regenerated each time a client's configstring changes,
 // usually as a result of a userinfo (name, model, etc) change
 #define MAX_MODEL_ATTACHMENTS   6
-typedef struct clientInfo_s
+typedef struct ALIGN_TO(4) clientInfo_s
 {
 	int infoValid;
 	int nextValid;
@@ -312,7 +309,7 @@ struct corpseInfo_t
 	XAnimTree_s *tree;
 	int entnum;
 	int time;
-	clientInfo_t ci;
+	ALIGN_TO(8) clientInfo_t ci;
 	byte falling;
 };
 
@@ -329,7 +326,7 @@ struct bgsAnim_t
 	} generic_human;
 };
 
-typedef struct __attribute__((aligned(8))) bgs_s
+typedef struct
 {
 	bgsAnim_t animData;
 	int time;
@@ -340,7 +337,7 @@ typedef struct __attribute__((aligned(8))) bgs_s
 	void (*CreateDObj)(DObjModel_s *, unsigned short, XAnimTree_s *, int);
 	void (*SafeDObjFree)(int);
 	void *(*AllocXAnim)(int);
-	clientInfo_t clientinfo[MAX_CLIENTS];
+	ALIGN_TO(8) clientInfo_t clientinfo[MAX_CLIENTS];
 } bgs_t;
 
 extern bgs_t level_bgs;

@@ -58,7 +58,7 @@ union XAnimDynamicIndices
 	uint16_t _2[1];
 };
 
-struct XAnimPartTransFrames
+struct ALIGN_TO(4) XAnimPartTransFrames
 {
 	float (*frames)[3];
 	XAnimDynamicIndices indices;
@@ -82,7 +82,7 @@ union XAnimPartQuatFrames
 	int16_t (*frames2)[2];
 };
 
-struct XAnimPartQuatDataFrames
+struct ALIGN_TO(4) XAnimPartQuatDataFrames
 {
 	XAnimPartQuatFrames u;
 	XAnimDynamicIndices indices;
@@ -125,7 +125,7 @@ struct XAnimDeltaPartTrans
 	XAnimDeltaPartTransData u;
 };
 
-struct XAnimDeltaPartQuatDataFrames
+struct ALIGN_TO(4) XAnimDeltaPartQuatDataFrames
 {
 	int16_t (*frames)[2];
 	XAnimDynamicIndices indices;
@@ -216,7 +216,6 @@ typedef struct XAnim_s
 	XAnimEntry entries[1];
 } XAnim;
 
-#pragma pack(push, 1)
 typedef struct XAnimTree_s
 {
 	XAnim_s *anims;
@@ -225,16 +224,15 @@ typedef struct XAnimTree_s
 	bool bUseGoalWeight;
 	uint16_t infoArray[1];
 } XAnimTree;
-#pragma pack(pop)
 
-struct XBoneInfo
+struct ALIGN_TO(4) XBoneInfo
 {
 	vec3_t bounds[2];
 	vec3_t offset;
 	float radiusSquared;
 };
 
-struct XAnimToXModel
+struct ALIGN_TO(4) XAnimToXModel
 {
 	int partBits[DOBJ_MAX_PART_BITS];
 	byte boneIndex[DOBJ_MAX_PARTS];
@@ -386,11 +384,11 @@ typedef struct
 	bool bad;
 } XModel;
 
-struct DObjModel_s
+struct ALIGN_TO(2) DObjModel_s
 {
 	XModel *model;
 	const char *boneName;
-	qboolean ignoreCollision;
+	bool ignoreCollision;
 };
 
 enum XAnimFlags
@@ -439,7 +437,7 @@ typedef struct DObj_s
 	vec3_t maxs;
 } DObj;
 
-struct XAnimState
+struct ALIGN_TO(4) XAnimState
 {
 	float time;
 	float oldTime;
@@ -457,7 +455,7 @@ union XAnimInfoUnion
 	XAnimParent animParent;
 };
 
-typedef struct
+typedef struct ALIGN_TO(4)
 {
 	uint16_t notifyChild;
 	int16_t notifyIndex;
@@ -486,21 +484,19 @@ struct XAnimSimpleRotPos
 
 #define MAX_CALC_ANIM_BUFFER 512
 
-struct XAnimCalcAnimInfo
+struct ALIGN_TO(8) XAnimCalcAnimInfo
 {
 	DObjAnimMat rotTransArray[MAX_CALC_ANIM_BUFFER];
 	int animPartBits[DOBJ_MAX_PART_BITS];
 	int ignorePartBits[DOBJ_MAX_PART_BITS];
 };
 
-#pragma pack(push, 1)
 struct XAnimTimeInfo
 {
 	bool childHasTimeForParent;
 	bool parentHasWeightForChild;
 	XAnimEntry *entry;
 };
-#pragma pack(pop)
 
 struct DObjTrace_s
 {

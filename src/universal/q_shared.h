@@ -138,6 +138,31 @@
 
 //=============================================================
 
+#if defined(__GNUC__) || defined(__clang__)
+// GCC and Clang
+#define PACKED_STRUCT     struct __attribute__((packed))
+#define ALIGNED_STRUCT(x) struct __attribute__((aligned(x)))
+#elif defined(_MSC_VER)
+// MSVC (Requires wrapping the struct or using pragmas)
+#define PACKED_STRUCT     __pragma(pack(push, 1)) struct
+#define ALIGNED_STRUCT(x) __declspec(align(x)) struct
+// Note: MSVC packing usually requires a trailing __pragma(pack(pop)) after the struct declaration
+# // For modern implementations (C11+)
+#elif __STDC_VERSION__ >= 201112L
+#include <stdalign.h>
+#define PACKED_STRUCT     _Alignas(1) struct
+#define ALIGNED_STRUCT(x) _Alignas(x) struct
+#endif
+
+// Using GCC/Clang attribute syntax directly via macro
+#define ATTR_PACKED __attribute__((packed))
+
+#if defined(__GNUC__)
+#define ALIGN_TO(x) __attribute__((aligned(x)))
+#else
+#define ALIGN_TO(x) _Alignas(x) // C11 Standard
+#endif
+
 #define qboolean int
 #define qtrue 1
 #define qfalse 0
@@ -216,7 +241,7 @@ typedef int	clipHandle_t;
 #define GAME_INIT_FRAMES    3
 #define FRAMETIME           100                 // msec
 
-typedef struct usercmd_s
+typedef struct ALIGN_TO(2) usercmd_s
 {
 	int serverTime;
 	int buttons;

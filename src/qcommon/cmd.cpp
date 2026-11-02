@@ -14,7 +14,7 @@ int			cmd_wait;
 cmd_t		cmd_text;
 byte		cmd_text_buf[MAX_CMD_BUFFER];
 
-typedef struct cmd_function_s
+typedef struct ALIGN_TO(4) cmd_function_s
 {
 	cmd_function_s *next;
 	char *name;

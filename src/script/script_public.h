@@ -30,10 +30,11 @@ enum
 	MT_NODE_SIZE = 0x10
 };
 
-struct __attribute__((aligned(8))) MemoryNode
+struct MemoryNode
 {
 	uint16_t prev;
 	uint16_t next;
+	unsigned int padding[3];
 };
 
 struct scrMemTreePub_t
@@ -41,7 +42,7 @@ struct scrMemTreePub_t
 	char *mt_buffer;
 };
 
-typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
+typedef struct ALIGN_TO(128) scrMemTreeGlob_s
 {
 	MemoryNode nodes[MEMORY_NODE_COUNT];
 	char leftBits[256];
@@ -52,9 +53,7 @@ typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
 	int totalAllocBuckets;
 } scrMemTreeGlob_t;
 
-#pragma pack(push)
-#pragma pack(1)
-struct VariableStackBuffer
+struct ALIGN_TO(4) VariableStackBuffer
 {
 	const char *pos;
 	uint16_t size;
@@ -63,7 +62,6 @@ struct VariableStackBuffer
 	unsigned char time;
 	char buf[1];
 };
-#pragma pack(pop)
 
 union VariableUnion
 {
@@ -311,7 +309,7 @@ typedef struct scr_anim_s
 	};
 } scr_anim_t;
 
-typedef struct __attribute__((aligned(128))) scrVmPub_s
+typedef struct ALIGN_TO(128) scrVmPub_s
 {
 	unsigned int *localVars;
 	VariableValue *maxstack;
@@ -360,7 +358,7 @@ struct scr_animtree_t
 	struct XAnim_s *anims;
 };
 
-typedef struct scrAnimPub_s
+typedef struct ALIGN_TO(4) scrAnimPub_s
 {
 	unsigned int animtrees;
 	unsigned int animtree_node;
@@ -429,7 +427,7 @@ struct OpcodeLookup
 	int profileUsage;
 };
 
-struct SourceBufferInfo
+struct ALIGN_TO(4) SourceBufferInfo
 {
 	const char *codePos;
 	char *buf;
@@ -889,7 +887,7 @@ inline struct scr_classStruct_t scrClassMap[] =
 
 #define SL_MAX_STRING_INDEX 0x10000
 
-typedef struct __attribute__((aligned(64))) scrVarGlob_s
+typedef struct ALIGN_TO(128) scrVarGlob_s
 {
 	VariableValueInternal variableList[SL_MAX_STRING_INDEX];
 } scrVarGlob_t;
@@ -1008,7 +1006,7 @@ byte* MT_GetRefByIndex(int index);
 int MT_GetIndexByRef(byte* p);
 void MT_DumpTree();
 
-struct __attribute__((aligned(4))) RefString
+struct ALIGN_TO(4) RefString
 {
 	union
 	{
@@ -1050,7 +1048,7 @@ struct HashEntry
 	};
 };
 
-typedef struct __attribute__((aligned(128))) scrStringGlob_s
+typedef struct ALIGN_TO(128) scrStringGlob_s
 {
 	HashEntry hashTable[HASH_TABLE_SIZE];
 	bool inited;

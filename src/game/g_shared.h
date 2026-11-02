@@ -99,7 +99,7 @@ typedef struct
 	vec3_t trDelta;
 } trajectory_t;
 
-typedef struct entityState_s
+typedef struct ALIGN_TO(4) entityState_s
 {
 	int number;
 	int eType;
@@ -246,7 +246,7 @@ typedef union
 	int rgba;
 } hudelem_color_t;
 
-typedef struct hudelem_s
+typedef struct ALIGN_TO(4) hudelem_s
 {
 	int type;
 	float x;
@@ -416,7 +416,7 @@ typedef struct playerTeamState_s
 	int location;
 } playerTeamState_t;
 
-typedef struct
+typedef struct ALIGN_TO(8)
 {
 	sessionState_t sessionState;
 	int forceSpectatorClient;
@@ -662,7 +662,7 @@ struct gentity_s
 #define FOFS( x ) offsetof( gentity_t, x )
 extern gentity_t g_entities[];
 
-typedef struct
+typedef struct ALIGN_TO(64)
 {
 	struct gclient_s *clients;
 	struct gentity_s *gentities;
@@ -819,7 +819,7 @@ typedef struct
 	int deletestruct;
 	int initstructs;
 	int createstruct;
-	corpseInfo_t playerCorpseInfo[MAX_PLAYER_CORPSES];
+	ALIGN_TO(8) corpseInfo_t playerCorpseInfo[MAX_PLAYER_CORPSES];
 } scr_data_t;
 
 extern scr_data_t g_scr_data;

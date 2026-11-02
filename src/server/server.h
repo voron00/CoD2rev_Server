@@ -71,7 +71,7 @@ enum
 	CS_ACTIVE
 };
 
-typedef struct
+typedef struct ALIGN_TO(4)
 {
 	netadr_t adr;
 	int challenge;
@@ -99,15 +99,13 @@ typedef struct
 
 #define MAX_VOICE_PACKET_DATA 256
 #define MAX_VOICE_PACKETS 40
-#pragma pack(push)
-#pragma pack(1)
-typedef struct
+
+typedef struct ALIGN_TO(1)
 {
 	byte talker;
 	byte data[MAX_VOICE_PACKET_DATA];
 	int dataSize;
 } VoicePacket_t;
-#pragma pack(pop)
 
 enum svscmd_type
 {
@@ -187,7 +185,7 @@ typedef struct archivedSnapshot_s
 	int size;
 } archivedSnapshot_t;
 
-typedef struct cachedClient_s
+typedef struct ALIGN_TO(8) cachedClient_s
 {
 	int playerStateExists;
 	clientState_t cs;
@@ -227,7 +225,7 @@ struct tempBanSlot_t
 	int banTime;
 };
 
-typedef struct
+typedef struct ALIGN_TO(128)
 {
 	qboolean initialized;
 	int time;
@@ -285,7 +283,7 @@ typedef struct svEntity_s
 	float linkmax[2];
 } svEntity_t;
 
-typedef struct
+typedef struct ALIGN_TO(4)
 {
 	serverState_t state;
 	qboolean restarting;

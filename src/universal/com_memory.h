@@ -29,16 +29,13 @@ struct hunkHeader_t
 	int dummy;
 };
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct fileData_s
+typedef struct ALIGN_TO(4) fileData_s
 {
 	void *data;
 	fileData_s *next;
 	unsigned char type;
 	char name[1];
 } fileData_t;
-#pragma pack(pop)
 
 enum filedata_type_t
 {

@@ -104,7 +104,7 @@ typedef struct cNode_s
 	int16_t children[2];
 } cNode_t;
 
-typedef struct cLeaf_s
+typedef struct ALIGN_TO(4) cLeaf_s
 {
 	uint16_t firstCollAabbIndex;
 	uint16_t collAabbCount;
@@ -134,7 +134,6 @@ typedef union cLeafBrushNodeData_s
 	cLeafBrushNodeChildren_t children;
 } cLeafBrushNodeData_t;
 
-#pragma pack(push, 2)
 typedef struct cLeafBrushNode_s
 {
 	byte axis;
@@ -142,7 +141,6 @@ typedef struct cLeafBrushNode_s
 	int contents;
 	cLeafBrushNodeData_t data;
 } cLeafBrushNode_t;
-#pragma pack(pop)
 
 typedef struct CollisionBorder
 {
@@ -176,7 +174,7 @@ typedef struct cmodel_s
 	cLeaf_t leaf;
 } cmodel_t;
 
-typedef struct __attribute__((aligned(16))) cbrush_s
+typedef struct ALIGN_TO(8) cbrush_s
 {
 	float mins[3];
 	int contents;
