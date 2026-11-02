@@ -65,7 +65,7 @@ unsigned int Scr_GetLocalVar( const char *pos )
 Scr_ReadShort
 ==============
 */
-short Scr_ReadShort( const char **pos )
+short Scr_ReadShort( const char *volatile *pos )
 {
 	short value = *(reinterpret_cast<const short *>(*pos));
 	*pos += sizeof(short);
@@ -78,7 +78,7 @@ short Scr_ReadShort( const char **pos )
 Scr_ReadInt
 ==============
 */
-int Scr_ReadInt( const char **pos )
+int Scr_ReadInt( const char *volatile *pos )
 {
 	int value = *(reinterpret_cast<const int *>(*pos));
 	*pos += sizeof(int);
@@ -91,7 +91,7 @@ int Scr_ReadInt( const char **pos )
 Scr_ReadVector
 ==============
 */
-const float* Scr_ReadVector( const char **pos )
+const float* Scr_ReadVector( const char *volatile *pos )
 {
 	const float *value = reinterpret_cast<const float *>(*pos);
 	*pos += sizeof(vec3_t);
@@ -104,7 +104,7 @@ const float* Scr_ReadVector( const char **pos )
 Scr_ReadIntArray
 ==============
 */
-const intptr_t* Scr_ReadIntArray( const char **pos, int count )
+const intptr_t* Scr_ReadIntArray( const char *volatile *pos, int count )
 {
 	const intptr_t *value = reinterpret_cast<const intptr_t *>(*pos);
 	*pos += sizeof(const intptr_t) * count;
@@ -117,7 +117,7 @@ const intptr_t* Scr_ReadIntArray( const char **pos, int count )
 Scr_ReadUnsignedShort
 ==============
 */
-unsigned short Scr_ReadUnsignedShort( const char **pos )
+unsigned short Scr_ReadUnsignedShort( const char *volatile *pos )
 {
 	unsigned short value = *(reinterpret_cast<const unsigned short *>(*pos));
 	*pos += sizeof(unsigned short);
@@ -130,7 +130,7 @@ unsigned short Scr_ReadUnsignedShort( const char **pos )
 Scr_ReadUnsigned
 ==============
 */
-uintptr_t Scr_ReadUnsigned( const char **pos )
+uintptr_t Scr_ReadUnsigned( const char *volatile *pos )
 {
 	uintptr_t value = *(reinterpret_cast<const uintptr_t *>(*pos));
 	*pos += sizeof(uintptr_t);
@@ -143,7 +143,7 @@ uintptr_t Scr_ReadUnsigned( const char **pos )
 Scr_ReadFloat
 ==============
 */
-float Scr_ReadFloat( const char **pos )
+float Scr_ReadFloat( const char *volatile *pos )
 {
 	float value = *(reinterpret_cast<const float *>(*pos));
 	*pos += sizeof(float);
@@ -156,7 +156,7 @@ float Scr_ReadFloat( const char **pos )
 Scr_ReadCodePos
 ==============
 */
-const char* Scr_ReadCodePos( const char **pos )
+const char* Scr_ReadCodePos( const char *volatile *pos )
 {
 	const char *value = *(reinterpret_cast<const char**>(const_cast<char *>(*pos)));
 	*pos += sizeof(const char *);
@@ -169,7 +169,7 @@ const char* Scr_ReadCodePos( const char **pos )
 Scr_ReadByte
 ==============
 */
-unsigned char Scr_ReadByte( const char **pos )
+unsigned char Scr_ReadByte( const char *volatile *pos )
 {
 	unsigned char value = *(reinterpret_cast<const unsigned char *>(*pos));
 	*pos += sizeof(unsigned char);
@@ -3077,16 +3077,22 @@ VM_Execute
 */
 unsigned int VM_Execute( function_stack_t fs )
 {
-	int jumpOffset, entnum, gCaseCount, waitTime;
-	unsigned int parentLocalId, builtinIndex, stringValue, id, threadId, classnum, removeCount;
-	unsigned int outparamcount, selfId, objectId, fieldValueId, caseValue, currentCaseValue, stackId;
-	VariableValue stackValue, tempValue;
-	VariableValue *value;
-	scr_entref_t entref;
-	const char *currentCodePos, *tempCodePos;
+	// State that lives across a longjmp (script error recovery) must be volatile,
+	// otherwise the compiler may restore stale register values after longjmp.
 
-	int gOpcode = 0;
-	int gParamCount = 0;
+	volatile int jumpOffset, gCaseCount;
+	volatile unsigned int parentLocalId, builtinIndex, stringValue, id, threadId, classnum;
+	volatile unsigned int selfId, objectId, fieldValueId, caseValue, currentCaseValue, stackId;
+	const char *volatile currentCodePos, *volatile tempCodePos;
+	VariableValue *volatile value;
+
+	volatile int gOpcode = 0, gParamCount = 0;
+
+	volatile int entnum, waitTime;
+	volatile unsigned int outparamcount, removeCount;
+
+	VariableValue stackValue, tempValue;
+	scr_entref_t entref;
 
 	g_script_error_level++;
 	assert(g_script_error_level >= 0 && g_script_error_level < MAX_VM_STACK_DEPTH + 1);
@@ -3273,7 +3279,7 @@ error:
 		case OP_ScriptThreadCall:
 		case OP_ScriptMethodThreadCall:
 			Scr_ReadCodePos(&fs.pos);
-			for ( outparamcount = Scr_ReadUnsigned(&fs.pos); outparamcount; outparamcount-- )
+			for ( outparamcount = Scr_ReadUnsigned(&fs.pos); outparamcount; outparamcount-=1 )
 			{
 				RemoveRefToValue(fs.top);
 				fs.top--;
@@ -3284,7 +3290,7 @@ error:
 
 		case OP_ScriptThreadCallPointer:
 		case OP_ScriptMethodThreadCallPointer:
-			for ( outparamcount = Scr_ReadUnsigned(&fs.pos); outparamcount; outparamcount-- )
+			for ( outparamcount = Scr_ReadUnsigned(&fs.pos); outparamcount; outparamcount-=1 )
 			{
 				RemoveRefToValue(fs.top);
 				fs.top--;
@@ -3368,7 +3374,7 @@ error:
 			{
 				currentCaseValue = Scr_ReadUnsigned(&fs.pos);
 				currentCodePos = Scr_ReadCodePos(&fs.pos);
-				gCaseCount--;
+				gCaseCount-=1;
 			}
 			if ( !currentCaseValue )
 			{
@@ -3463,7 +3469,7 @@ thread_return:
 					return fs.localId;
 				}
 
-				gParamCount--;
+				gParamCount-=1;
 				RemoveRefToObject(fs.localId);
 
 				fs.pos = scrVmPub.function_frame->fs.pos;
@@ -3659,7 +3665,7 @@ end:
 			while ( removeCount )
 			{
 				RemoveNextVariable(fs.localId);
-				removeCount--;
+				removeCount-=1;
 			}
 			continue;
 
@@ -4014,7 +4020,7 @@ post_builtin:
 				{
 					RemoveRefToValue(fs.top);
 					fs.top--;
-					outparamcount--;
+					outparamcount-=1;
 				}
 				while ( outparamcount );
 			}
@@ -4251,7 +4257,7 @@ thread_call:
 			scrVmPub.function_frame->topType = fs.startTop->type;
 
 			fs.startTop->type = VAR_PRECODEPOS;
-			gParamCount++;
+			gParamCount+=1;
 			goto function_call;
 
 		case OP_ScriptThreadCallPointer:
@@ -4817,7 +4823,7 @@ thread_call:
 					goto loop_dec_top;
 				}
 
-				gCaseCount--;
+				gCaseCount-=1;
 			}
 			while ( gCaseCount );
 
@@ -4870,7 +4876,7 @@ loop_dec_top:
 			continue;
 
 		case OP_thread_object:
-			++fs.top;
+			fs.top++;
 			fs.top->u.pointerValue = Scr_ReadUnsignedShort(&fs.pos);
 			fs.top->type = VAR_POINTER;
 			AddRefToObject(fs.top->u.pointerValue);
