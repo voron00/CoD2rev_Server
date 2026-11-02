@@ -981,7 +981,7 @@ void RuntimeError(const char *codePos, unsigned int index, const char *errorMsg,
 void Scr_ResetTimeout();
 void Scr_TerminateRunningThread(unsigned int localId);
 void Scr_SetLoading(int bLoading);
-VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValue *top, unsigned int localVarCount, unsigned int *localId);
+VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValue *top, unsigned int localVarCount, volatile unsigned int *localId);
 void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bool fromEndon);
 void Scr_CancelNotifyList(unsigned int notifyListOwnerId);
 unsigned short Scr_ExecThread(int callbackHook, unsigned int numArgs);
