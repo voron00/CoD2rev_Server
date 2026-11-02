@@ -49,8 +49,7 @@ COMMON_SOURCES=(
 	src/script/scr_yacc.cpp
 	src/universal/com_memory.cpp
 	src/universal/q_parse.cpp
-	tests/harness/gsc_main.cpp
-	tests/harness/support.cpp
+	tests/gsc_standalone.cpp
 )
 
 pass=0
