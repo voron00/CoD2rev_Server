@@ -870,26 +870,6 @@ inline void Vec3Lerp( const vec3_t start, const vec3_t end, float fraction, vec3
 }
 
 /*
-==============
-FloatIsNegative
-==============
-*/
-inline int const FloatIsNegative( const float x )
-{
-	return x < 0.0f;
-}
-
-/*
-==============
-FloatSign
-==============
-*/
-inline int const FloatSign( const float x )
-{
-	return -2 * FloatIsNegative( x ) + 1;
-}
-
-/*
 =================
 RoundFloatArray
 =================
@@ -905,6 +885,7 @@ inline void RoundFloatArray( vec3_t x, vec3_t y )
 	}
 }
 
+#define FloatSign( x ) ( x < 0.0f ? -1.0f : 1.0f )
 #define Vec3Length VectorLength
 
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
