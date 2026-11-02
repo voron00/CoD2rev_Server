@@ -148,7 +148,7 @@ run_harness() {
 run_case() {
 	local name=$1
 	local expect_mutant_fail=$2
-	local expected="$SCRIPT_DIR/gsc/expected/$name.out"
+	local expected="$SCRIPT_DIR/gsc/expected/$name.txt"
 	local fixed_out="$BUILD_DIR/$name.fixed.out"
 	local mutant_out="$BUILD_DIR/$name.mutant.out"
 	local fixed_rc mutant_rc
