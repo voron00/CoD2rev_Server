@@ -892,4 +892,46 @@ inline v4sf sse2_ceil(v4sf x) {
 
   return final_result;
 }
+
+inline float vector_length_squared_sse2(float x, float y, float z, float w) {
+  v4sf v     = _mm_set_ps(w, z, y, x);
+  v4sf v2    = _mm_mul_ps(v, v);
+
+  v4sf shuf1 = _mm_shuffle_ps(v2, v2, _MM_SHUFFLE(2, 3, 0, 1));
+  v4sf sums1 = _mm_add_ps(v2, shuf1);
+  v4sf shuf2 = _mm_shuffle_ps(sums1, sums1, _MM_SHUFFLE(1, 0, 3, 2));
+  v4sf sums2 = _mm_add_ps(sums1, shuf2);
+
+  return _mm_cvtss_f32(sums2);
+}
+
+inline float dot_product_sse2(float ax, float ay, float az, float aw,
+                              float bx, float by, float bz, float bw) {
+  v4sf va    = _mm_set_ps(aw, az, ay, ax);
+  v4sf vb    = _mm_set_ps(bw, bz, by, bx);
+
+  v4sf mul   = _mm_mul_ps(va, vb);
+  v4sf shuf1 = _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(2, 3, 0, 1));
+  v4sf sum1  = _mm_add_ps(mul, shuf1);
+  v4sf shuf2 = _mm_shuffle_ps(sum1, sum1, _MM_SHUFFLE(1, 0, 3, 2));
+  v4sf res   = _mm_add_ps(sum1, shuf2);
+
+  return _mm_cvtss_f32(res);
+}
+
+inline bool vector_compare_sse2(float ax, float ay, float az, float aw,
+                                 float bx, float by, float bz, float bw) {
+  v4sf va    = _mm_set_ps(aw, az, ay, ax);
+  v4sf vb    = _mm_set_ps(bw, bz, by, bx);
+
+  // Compare components for equality
+  v4sf cmpeq = _mm_cmpeq_ps(va, vb);
+
+  // Extract sign bits. If all 4 elements are equal,
+  // the mask is [0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]
+  // movemask gathers the 4 high bits -> 1111 in binary, which is 15.
+  int mask = _mm_movemask_ps(cmpeq);
+
+  return mask == 15; // Returns true only if all 4 components match
+}
 #endif

@@ -176,22 +176,16 @@ inline float I_rsqrt( const float x )
 
 /*
 ==============
-Vec4Length
+Vector2Compare
 ==============
 */
-inline float Vec4Length( const vec4_t v )
+inline bool Vector2Compare( const vec2_t v1, const vec2_t v2 )
 {
-	return I_sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
-}
-
-/*
-==============
-Vec4LengthSq
-==============
-*/
-inline float Vec4LengthSq( const vec4_t v )
-{
-	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
+#ifdef USE_SSE2
+	return vector_compare_sse2( v1[0], v1[1], 0.0f, 0.0f, v2[0], v2[1], 0.0f, 0.0f );
+#else
+	return v1[0] == v2[0] && v1[1] == v2[1];
+#endif
 }
 
 /*
@@ -201,23 +195,11 @@ VectorCompare
 */
 inline bool VectorCompare( const vec3_t v1, const vec3_t v2 )
 {
-	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2])
-		return false;
-
-	return true;
-}
-
-/*
-==============
-Vector2Compare
-==============
-*/
-inline bool Vector2Compare( const vec2_t v1, const vec2_t v2 )
-{
-	if (v1[0] != v2[0] || v1[1] != v2[1])
-		return false;
-
-	return true;
+#ifdef USE_SSE2
+	return vector_compare_sse2( v1[0], v1[1], v1[2], 0.0f, v2[0], v2[1], v2[2], 0.0f );
+#else
+	return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
+#endif
 }
 
 /*
@@ -227,40 +209,11 @@ Vector4Compare
 */
 inline bool Vector4Compare( const vec4_t v1, const vec4_t v2 )
 {
-	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2] || v1[3] != v2[3])
-		return false;
-
-	return true;
-}
-
-/*
-==============
-VectorLength
-==============
-*/
-inline float VectorLength( const vec3_t v )
-{
-	return I_sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
-}
-
-/*
-==============
-Vec2Length
-==============
-*/
-inline float Vec2Length( const vec2_t v )
-{
-	return I_sqrt( v[0] * v[0] + v[1] * v[1] );
-}
-
-/*
-==============
-VectorLengthSquared
-==============
-*/
-inline float VectorLengthSquared( const vec3_t v )
-{
-	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+#ifdef USE_SSE2
+	return vector_compare_sse2( v1[0], v1[1], v1[2], v1[3], v2[0], v2[1], v2[2], v2[3] );
+#else
+	return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2] && v1[3] == v2[3];
+#endif
 }
 
 /*
@@ -270,17 +223,73 @@ Vec2LengthSq
 */
 inline float Vec2LengthSq( const vec2_t v )
 {
+#ifdef USE_SSE2
+	return vector_length_squared_sse2( v[0], v[1], 0.0f, 0.0f );
+#else
 	return ( v[0] * v[0] + v[1] * v[1] );
+#endif
 }
 
 /*
 ==============
-DotProduct
+Vec2Length
 ==============
 */
-inline float DotProduct( const vec3_t a, const vec3_t b )
+inline float Vec2Length( const vec2_t v )
 {
-	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+	return I_sqrt( Vec2LengthSq( v ) );
+}
+
+/*
+==============
+Vec3LengthSq
+==============
+*/
+inline float Vec3LengthSq( const vec3_t v )
+{
+#ifdef USE_SSE2
+	return vector_length_squared_sse2( v[0], v[1], v[2], 0.0f );
+#else
+	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+#endif
+}
+
+#define VectorLengthSquared Vec3LengthSq
+
+/*
+==============
+VectorLength
+==============
+*/
+inline float Vec3Length( const vec3_t v )
+{
+	return I_sqrt( Vec3LengthSq( v ) );
+}
+
+#define VectorLength Vec3Length
+
+/*
+==============
+Vec4LengthSq
+==============
+*/
+inline float Vec4LengthSq( const vec4_t v )
+{
+#ifdef USE_SSE2
+	return vector_length_squared_sse2( v[0], v[1], v[2], v[3] );
+#else
+	return ( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3] );
+#endif
+}
+
+/*
+==============
+Vec4Length
+==============
+*/
+inline float Vec4Length( const vec4_t v )
+{
+	return I_sqrt( Vec4LengthSq( v ) );
 }
 
 /*
@@ -290,7 +299,25 @@ Dot2Product
 */
 inline float Dot2Product( const vec2_t a, const vec2_t b )
 {
+#ifdef USE_SSE2
+	return dot_product_sse2( a[0], a[1], 0.0f, 0.0f, b[0], b[1], 0.0f, 0.0f );
+#else
 	return a[0] * b[0] + a[1] * b[1];
+#endif
+}
+
+/*
+==============
+DotProduct
+==============
+*/
+inline float DotProduct( const vec3_t a, const vec3_t b )
+{
+#ifdef USE_SSE2
+	return dot_product_sse2( a[0], a[1], a[2], 0.0f, b[0], b[1], b[2], 0.0f );
+#else
+	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+#endif
 }
 
 /*
@@ -300,19 +327,11 @@ DotProduct4
 */
 inline float DotProduct4( const vec4_t a, const vec4_t b )
 {
+#ifdef USE_SSE2
+	return dot_product_sse2( a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3] );
+#else
 	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
-}
-
-/*
-==============
-VectorSubtract
-==============
-*/
-inline void VectorSubtract( const vec3_t a, const vec3_t b, vec3_t c )
-{
-	c[0] = a[0] - b[0];
-	c[1] = a[1] - b[1];
-	c[2] = a[2] - b[2];
+#endif
 }
 
 /*
@@ -322,8 +341,41 @@ Vector2Subtract
 */
 inline void Vector2Subtract( const vec2_t a, const vec2_t b, vec2_t c )
 {
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( a[0], a[1], 0.0f, 0.0f );
+	v4sf vb = _mm_setr_ps( b[0], b[1], 0.0f, 0.0f );
+
+	v4sf vc = _mm_sub_ps(va, vb);
+
+	c[0] = vc[0];
+	c[1] = vc[1];
+#else
 	c[0] = a[0] - b[0];
 	c[1] = a[1] - b[1];
+#endif
+}
+
+/*
+==============
+VectorSubtract
+==============
+*/
+inline void VectorSubtract( const vec3_t a, const vec3_t b, vec3_t c )
+{
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( a[0], a[1], a[2], 0.0f );
+	v4sf vb = _mm_setr_ps( b[0], b[1], b[2], 0.0f );
+
+	v4sf vc = _mm_sub_ps(va, vb);
+
+	c[0] = vc[0];
+	c[1] = vc[1];
+	c[2] = vc[2];
+#else
+	c[0] = a[0] - b[0];
+	c[1] = a[1] - b[1];
+	c[2] = a[2] - b[2];
+#endif
 }
 
 /*
@@ -333,22 +385,22 @@ VectorSubtract4
 */
 inline void VectorSubtract4( const vec4_t a, const vec4_t b, vec4_t c )
 {
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( a[0], a[1], a[2], a[3] );
+	v4sf vb = _mm_setr_ps( b[0], b[1], b[2], b[3] );
+
+	v4sf vc = _mm_sub_ps(va, vb);
+
+	c[0] = vc[0];
+	c[1] = vc[1];
+	c[2] = vc[2];
+	c[3] = vc[3];
+#else
 	c[0] = a[0] - b[0];
 	c[1] = a[1] - b[1];
 	c[2] = a[2] - b[2];
 	c[3] = a[3] - b[3];
-}
-
-/*
-==============
-VectorAdd
-==============
-*/
-inline void VectorAdd( const vec3_t a, const vec3_t b, vec3_t c )
-{
-	c[0] = a[0] + b[0];
-	c[1] = a[1] + b[1];
-	c[2] = a[2] + b[2];
+#endif
 }
 
 /*
@@ -358,8 +410,41 @@ Vector2Add
 */
 inline void Vector2Add( const vec2_t a, const vec2_t b, vec2_t c )
 {
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( a[0], a[1], 0.0f, 0.0f );
+	v4sf vb = _mm_setr_ps( b[0], b[1], 0.0f, 0.0f );
+
+	v4sf vc = _mm_add_ps(va, vb);
+
+	c[0] = vc[0];
+	c[1] = vc[1];
+#else
 	c[0] = a[0] + b[0];
 	c[1] = a[1] + b[1];
+#endif
+}
+
+/*
+==============
+VectorAdd
+==============
+*/
+inline void VectorAdd( const vec3_t a, const vec3_t b, vec3_t c )
+{
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( a[0], a[1], a[2], 0.0f );
+	v4sf vb = _mm_setr_ps( b[0], b[1], b[2], 0.0f );
+
+	v4sf vc = _mm_add_ps(va, vb);
+
+	c[0] = vc[0];
+	c[1] = vc[1];
+	c[2] = vc[2];
+#else
+	c[0] = a[0] + b[0];
+	c[1] = a[1] + b[1];
+	c[2] = a[2] + b[2];
+#endif
 }
 
 /*
@@ -369,10 +454,33 @@ VectorAdd4
 */
 inline void VectorAdd4( const vec4_t a, const vec4_t b, vec4_t c )
 {
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( a[0], a[1], a[2], a[3] );
+	v4sf vb = _mm_setr_ps( b[0], b[1], b[2], b[3] );
+
+	v4sf vc = _mm_add_ps(va, vb);
+
+	c[0] = vc[0];
+	c[1] = vc[1];
+	c[2] = vc[2];
+	c[3] = vc[3];
+#else
 	c[0] = a[0] + b[0];
 	c[1] = a[1] + b[1];
 	c[2] = a[2] + b[2];
 	c[3] = a[3] + b[3];
+#endif
+}
+
+/*
+==============
+Vector2Copy
+==============
+*/
+inline void Vector2Copy( const vec2_t a, vec2_t b )
+{
+	b[0] = a[0];
+	b[1] = a[1];
 }
 
 /*
@@ -385,17 +493,6 @@ inline void VectorCopy( const vec3_t a, vec3_t b )
 	b[0] = a[0];
 	b[1] = a[1];
 	b[2] = a[2];
-}
-
-/*
-==============
-Vector2Copy
-==============
-*/
-inline void Vector2Copy( const vec2_t a, vec2_t b )
-{
-	b[0] = a[0];
-	b[1] = a[1];
 }
 
 /*
@@ -413,12 +510,23 @@ inline void VectorCopy4( const vec4_t a, vec4_t b )
 
 /*
 ==============
-Vec2Multiply
+Vec2Scale
 ==============
 */
-inline float Vec2Multiply( const vec2_t v )
+inline void Vec2Scale( const vec2_t v, const float s, vec2_t o )
 {
-	return v[0] * v[0] + v[1] * v[1];
+#ifdef USE_SSE2
+	v4sf vv = _mm_setr_ps( v[0], v[1], 0.0f, 0.0f );
+	v4sf vs = _mm_set1_ps( s );
+
+	v4sf vo = _mm_mul_ps(vv, vs);
+
+	o[0] = vo[0];
+	o[1] = vo[1];
+#else
+	o[0] = s * v[0];
+	o[1] = s * v[1];
+#endif
 }
 
 /*
@@ -428,20 +536,20 @@ VectorScale
 */
 inline void VectorScale( const vec3_t v, const float s, vec3_t o )
 {
+#ifdef USE_SSE2
+	v4sf vv = _mm_setr_ps( v[0], v[1], v[2], 0.0f );
+	v4sf vs = _mm_set1_ps( s );
+
+	v4sf vo = _mm_mul_ps(vv, vs);
+
+	o[0] = vo[0];
+	o[1] = vo[1];
+	o[2] = vo[2];
+#else
 	o[0] = s * v[0];
 	o[1] = s * v[1];
 	o[2] = s * v[2];
-}
-
-/*
-==============
-Vec2Scale
-==============
-*/
-inline void Vec2Scale( const vec2_t v, const float s, vec2_t o )
-{
-	o[0] = s * v[0];
-	o[1] = s * v[1];
+#endif
 }
 
 /*
@@ -451,22 +559,22 @@ VectorScale4
 */
 inline void VectorScale4( const vec4_t v, const float s, vec4_t o )
 {
+#ifdef USE_SSE2
+	v4sf vv = _mm_setr_ps( v[0], v[1], v[2], v[3] );
+	v4sf vs = _mm_set1_ps( s );
+
+	v4sf vo = _mm_mul_ps(vv, vs);
+
+	o[0] = vo[0];
+	o[1] = vo[1];
+	o[2] = vo[2];
+	o[3] = vo[3];
+#else
 	o[0] = s * v[0];
 	o[1] = s * v[1];
 	o[2] = s * v[2];
 	o[3] = s * v[3];
-}
-
-/*
-==============
-VectorMA
-==============
-*/
-inline void VectorMA( const vec3_t v, const float s, const vec3_t b, vec3_t o )
-{
-	o[0] = s * b[0] + v[0];
-	o[1] = s * b[1] + v[1];
-	o[2] = s * b[2] + v[2];
+#endif
 }
 
 /*
@@ -476,8 +584,45 @@ VectorMA2
 */
 inline void VectorMA2( const vec2_t v, const float s, const vec2_t b, vec2_t o )
 {
+#ifdef USE_SSE2
+	v4sf vv = _mm_setr_ps( v[0], v[1], 0.0f, 0.0f );
+	v4sf vb = _mm_setr_ps( b[0], b[1], 0.0f, 0.0f );
+	v4sf vs = _mm_set1_ps( s );
+
+	v4sf vm = _mm_mul_ps(vb, vs);
+	v4sf vo = _mm_add_ps(vv, vm);
+
+	o[0] = vo[0];
+	o[1] = vo[1];
+#else
 	o[0] = s * b[0] + v[0];
 	o[1] = s * b[1] + v[1];
+#endif
+}
+
+/*
+==============
+VectorMA
+==============
+*/
+inline void VectorMA( const vec3_t v, const float s, const vec3_t b, vec3_t o )
+{
+#ifdef USE_SSE2
+	v4sf vv = _mm_setr_ps( v[0], v[1], v[2], 0.0f );
+	v4sf vb = _mm_setr_ps( b[0], b[1], b[2], 0.0f );
+	v4sf vs = _mm_set1_ps( s );
+
+	v4sf vm = _mm_mul_ps(vb, vs);
+	v4sf vo = _mm_add_ps(vv, vm);
+
+	o[0] = vo[0];
+	o[1] = vo[1];
+	o[2] = vo[2];
+#else
+	o[0] = s * b[0] + v[0];
+	o[1] = s * b[1] + v[1];
+	o[2] = s * b[2] + v[2];
+#endif
 }
 
 /*
@@ -487,10 +632,24 @@ VectorMA4
 */
 inline void VectorMA4( const vec4_t v, const float s, const vec4_t b, vec4_t o )
 {
+#ifdef USE_SSE2
+	v4sf vv = _mm_setr_ps( v[0], v[1], v[2], v[3] );
+	v4sf vb = _mm_setr_ps( b[0], b[1], b[2], b[3] );
+	v4sf vs = _mm_set1_ps( s );
+
+	v4sf vm = _mm_mul_ps(vb, vs);
+	v4sf vo = _mm_add_ps(vv, vm);
+
+	o[0] = vo[0];
+	o[1] = vo[1];
+	o[2] = vo[2];
+	o[3] = vo[3];
+#else
 	o[0] = s * b[0] + v[0];
 	o[1] = s * b[1] + v[1];
 	o[2] = s * b[2] + v[2];
 	o[3] = s * b[3] + v[3];
+#endif
 }
 
 /*
@@ -886,7 +1045,6 @@ inline void RoundFloatArray( vec3_t x, vec3_t y )
 }
 
 #define FloatSign( x ) ( x < 0.0f ? -1.0f : 1.0f )
-#define Vec3Length VectorLength
 
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
 void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);

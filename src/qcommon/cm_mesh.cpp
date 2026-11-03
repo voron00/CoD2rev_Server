@@ -774,7 +774,7 @@ void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, 
 				return;
 			}
 
-			a = Vec2Multiply(deltaOffset);
+			a = Vec2LengthSq(deltaOffset);
 			discriminant = Square(b) - a * c;
 
 			if ( discriminant <= 0.0 )
