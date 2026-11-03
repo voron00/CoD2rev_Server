@@ -384,11 +384,11 @@ typedef struct
 	bool bad;
 } XModel;
 
-struct ALIGN_TO(2) DObjModel_s
+struct DObjModel_s
 {
 	XModel *model;
 	const char *boneName;
-	bool ignoreCollision;
+	int ignoreCollision;
 };
 
 enum XAnimFlags
@@ -429,7 +429,7 @@ typedef struct DObj_s
 	int locked;
 	byte numModels;
 	byte numBones;
-	bool ignoreCollision;
+	byte ignoreCollision;
 	XModel *models[DOBJ_MAX_SUBMODELS];
 	byte modelParents[DOBJ_MAX_SUBMODELS];
 	byte matOffset[DOBJ_MAX_SUBMODELS];
