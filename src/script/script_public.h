@@ -967,7 +967,8 @@ unsigned int Scr_GetConstLowercaseString(unsigned long index);
 unsigned int Scr_GetObject(unsigned long index);
 void Scr_SetStructField(unsigned int structId, unsigned int index);
 
-unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned long paramcount);
+unsigned int VM_Execute( unsigned int localId, const char *pos, unsigned long paramcount );
+unsigned int VM_Execute( function_stack_t fs );
 
 void Scr_IncTime();
 void Scr_DecTime();
@@ -979,7 +980,7 @@ void RuntimeError(const char *codePos, unsigned int index, const char *errorMsg,
 void Scr_ResetTimeout();
 void Scr_TerminateRunningThread(unsigned int localId);
 void Scr_SetLoading(int bLoading);
-VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValue *top, unsigned int localVarCount, unsigned int *localId);
+VariableStackBuffer* VM_ArchiveStack( function_stack_t *stack );
 void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bool fromEndon);
 void Scr_CancelNotifyList(unsigned int notifyListOwnerId);
 unsigned short Scr_ExecThread(int callbackHook, unsigned int numArgs);
@@ -1369,4 +1370,3 @@ void IncInParam();
 void Scr_VM_Init();
 void VM_SetTime();
 void VM_Resume(unsigned int timeId);
-unsigned int VM_Execute(const char *pos, unsigned int localId, unsigned int localVarCount, VariableValue *top, VariableValue *startTop);
