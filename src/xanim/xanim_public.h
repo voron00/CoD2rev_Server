@@ -429,7 +429,7 @@ typedef struct DObj_s
 	int locked;
 	byte numModels;
 	byte numBones;
-	byte ignoreCollision;
+	bool ignoreCollision;
 	XModel *models[DOBJ_MAX_SUBMODELS];
 	byte modelParents[DOBJ_MAX_SUBMODELS];
 	byte matOffset[DOBJ_MAX_SUBMODELS];

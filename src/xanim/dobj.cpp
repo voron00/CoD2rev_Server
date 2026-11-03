@@ -865,7 +865,8 @@ void DObjTraceline( DObj *obj, const vec3_t start, const vec3_t end, unsigned ch
 	unsigned short classification;
 	XBoneHierarchy *hierarchy;
 	unsigned char parentIndex;
-	int ignoreCollision, i, j, globalBoneIndex, traceHitT, hitT, localBoneIndex, size;
+	int i, j, globalBoneIndex, traceHitT, hitT, localBoneIndex, size;
+	bool ignoreCollision;
 	XBoneInfo *boneInfo;
 	const unsigned char *pos;
 	unsigned short *names;
