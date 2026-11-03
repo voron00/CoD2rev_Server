@@ -150,6 +150,7 @@ void SV_CalcPings_libcod( void );
 void SV_CheckTimeouts_libcod( void );
 void UpdateClientFrameTime(gclient_t *client);
 const char* NET_AdrToStringNoPort( netadr_t a );
+int validate_ipv4_str(const char *ip_str);
 
 void PM_ProjectVelocity(const float *velIn, const float *normal, float *velOut);
 void SV_AddLibcodCommands();

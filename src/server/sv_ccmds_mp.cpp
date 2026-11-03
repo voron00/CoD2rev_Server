@@ -665,7 +665,14 @@ static void SV_Status_f( void )
 
 		Com_Printf( "%7i ", svs.time - cl->lastPacketTime );
 
+#ifdef LIBCOD // proxy support
+		if ( cl->netchan.realIP.type == NA_IP )
+			s = NET_AdrToString( cl->netchan.realIP );
+		else
+			s = NET_AdrToString( cl->netchan.remoteAddress );
+#else
 		s = NET_AdrToString( cl->netchan.remoteAddress );
+#endif
 		Com_Printf( "%s", s );
 		l = 22 - strlen( s );
 		for ( j = 0 ; j < l ; j++ )

@@ -353,25 +353,10 @@ void gsc_player_getip(scr_entref_t id)
 
 	client_t *client = &svs.clients[id.entnum];
 
-	if (client->netchan.realIP.type == NA_BAD)
-	{
+	if (client->netchan.realIP.type == NA_IP)
+		stackPushString(NET_AdrToStringNoPort(client->netchan.realIP));
+	else
 		stackPushString(NET_AdrToStringNoPort(client->netchan.remoteAddress));
-		return;
-	}
-
-	if (NET_IsLocalAddress(client->netchan.realIP))
-	{
-		stackPushString(NET_AdrToStringNoPort(client->netchan.remoteAddress));
-		return;
-	}
-
-	if (Sys_IsLANAddress(client->netchan.realIP))
-	{
-		stackPushString(NET_AdrToStringNoPort(client->netchan.remoteAddress));
-		return;
-	}
-
-	stackPushString(NET_AdrToStringNoPort(client->netchan.realIP));
 }
 
 void gsc_player_getping(scr_entref_t id)

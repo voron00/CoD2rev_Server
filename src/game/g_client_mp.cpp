@@ -563,9 +563,8 @@ const char *ClientConnect( int clientNum, unsigned short scriptPersId )
 	client_t *c = &svs.clients[clientNum];
 	value = Info_ValueForKey( userinfo, "ip" );
 
-	if ( strlen( value ) )
+	if ( validate_ipv4_str( value ) )
 	{
-		c->netchan.realIP.type = NA_IP;
 		NET_StringToAdr( value, &c->netchan.realIP );
 
 		//  check for a banned ip (proxy)

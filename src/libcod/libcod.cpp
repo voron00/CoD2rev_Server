@@ -94,6 +94,21 @@ const char* NET_AdrToStringNoPort( netadr_t a )
 	return s;
 }
 
+int validate_ipv4_str(const char *ip_str) {
+	int num1, num2, num3, num4;
+	char extra;
+
+	if (sscanf(ip_str, "%d.%d.%d.%d%c", &num1, &num2, &num3, &num4, &extra) == 4) {
+		if ((num1 >= 0 && num1 <= 255) &&
+			(num2 >= 0 && num2 <= 255) &&
+			(num3 >= 0 && num3 <= 255) &&
+			(num4 >= 0 && num4 <= 255)) {
+			return 1;
+			}
+	}
+	return 0;
+}
+
 void manymaps_prepare(const char *mapname, int read)
 {
 	char map_check[MAX_OSPATH];
