@@ -29,7 +29,7 @@ struct hunkHeader_t
 	int dummy;
 };
 
-typedef struct ALIGN_TO(4) fileData_s
+typedef struct fileData_s
 {
 	void *data;
 	fileData_s *next;

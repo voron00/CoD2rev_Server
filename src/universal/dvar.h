@@ -63,7 +63,7 @@ typedef struct
 	};
 } DvarValue;
 
-typedef struct ALIGN_TO(8) dvar_s
+typedef struct dvar_s
 {
 	const char *name;
 	unsigned short flags;

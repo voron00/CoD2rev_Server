@@ -241,7 +241,7 @@ typedef int	clipHandle_t;
 #define GAME_INIT_FRAMES    3
 #define FRAMETIME           100                 // msec
 
-typedef struct ALIGN_TO(2) usercmd_s
+typedef struct usercmd_s
 {
 	int serverTime;
 	int buttons;

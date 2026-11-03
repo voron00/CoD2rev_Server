@@ -58,7 +58,7 @@ union XAnimDynamicIndices
 	uint16_t _2[1];
 };
 
-struct ALIGN_TO(4) XAnimPartTransFrames
+struct XAnimPartTransFrames
 {
 	float (*frames)[3];
 	XAnimDynamicIndices indices;
@@ -82,7 +82,7 @@ union XAnimPartQuatFrames
 	int16_t (*frames2)[2];
 };
 
-struct ALIGN_TO(4) XAnimPartQuatDataFrames
+struct XAnimPartQuatDataFrames
 {
 	XAnimPartQuatFrames u;
 	XAnimDynamicIndices indices;
@@ -125,7 +125,7 @@ struct XAnimDeltaPartTrans
 	XAnimDeltaPartTransData u;
 };
 
-struct ALIGN_TO(4) XAnimDeltaPartQuatDataFrames
+struct XAnimDeltaPartQuatDataFrames
 {
 	int16_t (*frames)[2];
 	XAnimDynamicIndices indices;
@@ -225,14 +225,14 @@ typedef struct XAnimTree_s
 	uint16_t infoArray[1];
 } XAnimTree;
 
-struct ALIGN_TO(4) XBoneInfo
+struct XBoneInfo
 {
 	vec3_t bounds[2];
 	vec3_t offset;
 	float radiusSquared;
 };
 
-struct ALIGN_TO(4) XAnimToXModel
+struct XAnimToXModel
 {
 	int partBits[DOBJ_MAX_PART_BITS];
 	byte boneIndex[DOBJ_MAX_PARTS];
@@ -437,7 +437,7 @@ typedef struct DObj_s
 	vec3_t maxs;
 } DObj;
 
-struct ALIGN_TO(4) XAnimState
+struct XAnimState
 {
 	float time;
 	float oldTime;
@@ -455,7 +455,7 @@ union XAnimInfoUnion
 	XAnimParent animParent;
 };
 
-typedef struct ALIGN_TO(4)
+typedef struct
 {
 	uint16_t notifyChild;
 	int16_t notifyIndex;
@@ -484,7 +484,7 @@ struct XAnimSimpleRotPos
 
 #define MAX_CALC_ANIM_BUFFER 512
 
-struct ALIGN_TO(8) XAnimCalcAnimInfo
+struct XAnimCalcAnimInfo
 {
 	DObjAnimMat rotTransArray[MAX_CALC_ANIM_BUFFER];
 	int animPartBits[DOBJ_MAX_PART_BITS];

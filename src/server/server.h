@@ -71,7 +71,7 @@ enum
 	CS_ACTIVE
 };
 
-typedef struct ALIGN_TO(4)
+typedef struct
 {
 	netadr_t adr;
 	int challenge;
@@ -185,7 +185,7 @@ typedef struct archivedSnapshot_s
 	int size;
 } archivedSnapshot_t;
 
-typedef struct ALIGN_TO(8) cachedClient_s
+typedef struct cachedClient_s
 {
 	int playerStateExists;
 	clientState_t cs;
@@ -225,7 +225,7 @@ struct tempBanSlot_t
 	int banTime;
 };
 
-typedef struct ALIGN_TO(128)
+typedef struct
 {
 	qboolean initialized;
 	int time;
@@ -283,7 +283,7 @@ typedef struct svEntity_s
 	float linkmax[2];
 } svEntity_t;
 
-typedef struct ALIGN_TO(4)
+typedef struct
 {
 	serverState_t state;
 	qboolean restarting;

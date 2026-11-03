@@ -53,7 +53,7 @@ typedef struct ALIGN_TO(128) scrMemTreeGlob_s
 	int totalAllocBuckets;
 } scrMemTreeGlob_t;
 
-struct ALIGN_TO(4) VariableStackBuffer
+struct VariableStackBuffer
 {
 	const char *pos;
 	uint16_t size;
@@ -358,7 +358,7 @@ struct scr_animtree_t
 	struct XAnim_s *anims;
 };
 
-typedef struct ALIGN_TO(4) scrAnimPub_s
+typedef struct scrAnimPub_s
 {
 	unsigned int animtrees;
 	unsigned int animtree_node;
@@ -427,7 +427,7 @@ struct OpcodeLookup
 	int profileUsage;
 };
 
-struct ALIGN_TO(4) SourceBufferInfo
+struct SourceBufferInfo
 {
 	const char *codePos;
 	char *buf;

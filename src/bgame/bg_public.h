@@ -159,7 +159,7 @@ typedef struct
 	int hash;
 } animStringItem_t;
 
-typedef struct ALIGN_TO(8) animation_s
+typedef struct animation_s
 {
 	char name[MAX_QPATH];
 	int initialLerp;
@@ -207,7 +207,7 @@ typedef struct
 	animScriptItem_t *items[128];
 } animScript_t;
 
-typedef struct ALIGN_TO(8) animScriptData_s
+typedef struct animScriptData_s
 {
 	animation_s animations[MAX_MODEL_ANIMATIONS];
 	int numAnimations;
@@ -274,7 +274,7 @@ struct controller_info_t
 // this is regenerated each time a client's configstring changes,
 // usually as a result of a userinfo (name, model, etc) change
 #define MAX_MODEL_ATTACHMENTS   6
-typedef struct ALIGN_TO(4) clientInfo_s
+typedef struct clientInfo_s
 {
 	int infoValid;
 	int nextValid;
@@ -309,7 +309,7 @@ struct corpseInfo_t
 	XAnimTree_s *tree;
 	int entnum;
 	int time;
-	ALIGN_TO(8) clientInfo_t ci;
+	clientInfo_t ci;
 	byte falling;
 };
 
@@ -337,7 +337,7 @@ typedef struct
 	void (*CreateDObj)(DObjModel_s *, unsigned short, XAnimTree_s *, int);
 	void (*SafeDObjFree)(int);
 	void *(*AllocXAnim)(int);
-	ALIGN_TO(8) clientInfo_t clientinfo[MAX_CLIENTS];
+	clientInfo_t clientinfo[MAX_CLIENTS];
 } bgs_t;
 
 extern bgs_t level_bgs;

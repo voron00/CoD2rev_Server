@@ -104,7 +104,7 @@ typedef struct cNode_s
 	int16_t children[2];
 } cNode_t;
 
-typedef struct ALIGN_TO(4) cLeaf_s
+typedef struct cLeaf_s
 {
 	uint16_t firstCollAabbIndex;
 	uint16_t collAabbCount;
@@ -174,7 +174,7 @@ typedef struct cmodel_s
 	cLeaf_t leaf;
 } cmodel_t;
 
-typedef struct ALIGN_TO(8) cbrush_s
+typedef struct cbrush_s
 {
 	float mins[3];
 	int contents;
