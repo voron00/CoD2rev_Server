@@ -2801,7 +2801,7 @@ bool PM_IsAdsAllowed( playerState_t *ps, pml_t *pml )
 		}
 	}
 
-	if ( ps->pm_type >= PM_NORMAL_LINKED && ps->pm_type <= PM_DEAD_LINKED )
+	if ( ps->pm_type != PM_NORMAL && ps->pm_type != PM_NORMAL_LINKED )
 	{
 		return false;
 	}
