@@ -191,7 +191,7 @@ void G_ExplodeMissile( gentity_t *ent )
 
 	if ( weapDef->projExplosionEffect && weapDef->projExplosionEffect[0] )
 	{
-		ent->s.eFlags |= EF_UNKNOWN;
+		ent->s.eFlags |= EF_TIME_EFFECT;
 		//Server_SwitchToValidFxScheduler();
 		//fx = FX_RegisterEffect(weapDef->projExplosionEffect);
 		ent->s.time = level.time;

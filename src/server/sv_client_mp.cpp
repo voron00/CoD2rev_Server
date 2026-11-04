@@ -2329,7 +2329,7 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	// don't drop as long as previous command was a nextdl, after a dl is done, downloadName is set back to ""
 	// but we still need to read the next message to move to next download or send gamestate
 	// I don't like this hack though, it must have been working fine at some point, suspecting the fix is somewhere else
-	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !cl->downloadingWWW && !cl->clientDownloadingWWW )
+	if ( cl->serverId != sv_serverId_value && !*cl->downloadName && !cl->downloadingWWW && !cl->clientDownloadingWWW && !strstr(cl->lastClientCommandString, "nextdl") )
 	{
 		if ( (cl->serverId & 0xF0) == (sv_serverId_value & 0xF0) )   // TTimo - use a comparison here to catch multiple map_restart
 		{

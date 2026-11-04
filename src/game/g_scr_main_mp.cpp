@@ -2075,7 +2075,8 @@ void GScr_LogPrint()
 		iStringLen += l;
 	}
 
-	G_LogPrintf(string);
+	// New: Fixed potential format string crash
+	G_LogPrintf("%s", string);
 }
 
 /*

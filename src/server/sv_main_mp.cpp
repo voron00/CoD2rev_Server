@@ -240,6 +240,11 @@ int SV_CanReplaceServerCommand( client_t *client, const char *cmd )
 	int i;
 	int index;
 
+	// New: Exploit fix, taken over from IW4x
+#ifdef LIBCOD
+	return -1;
+#endif
+
 	for( i = client->reliableSent + 1; i <= client->reliableSequence; ++i)
 	{
 		index = i & (MAX_RELIABLE_COMMANDS - 1);

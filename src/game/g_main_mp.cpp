@@ -1145,7 +1145,11 @@ void G_RunFrameForEntity( gentity_t *ent )
 	assert(ent->r.maxs[2] >= ent->r.mins[2]);
 
 	// clear events that are too old
-	if ( ent->s.eFlags == EF_UNKNOWN )
+
+	// New: Fixed eFlags mask check here so that the effect entities of
+	// weapons with a projExplosionEffect are cleaned up after their effect
+	// duration
+	if ( ent->s.eFlags & EF_TIME_EFFECT )
 	{
 		if ( level.time > ent->s.time2 )
 		{

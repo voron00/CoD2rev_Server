@@ -1341,7 +1341,7 @@ enum ViewLockTypes
 #define EF_AIMASSIST    0x800       // guessed
 #define EF_MANTLE       0x4000      //
 #define EF_TAGCONNECT   0x8000      // Connected to another entity via tag
-#define EF_UNKNOWN      0x10000     //
+#define EF_TIME_EFFECT  0x10000     //
 #define EF_DEAD         0x20000     //
 #define EF_AIMDOWNSIGHT 0x40000     //
 #define EF_BODY_START   0x80000
