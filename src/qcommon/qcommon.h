@@ -380,13 +380,10 @@ void Huff_Compress( msg_t *buf, int offset );
 void Huff_Decompress( msg_t *buf, int offset );
 void Huff_Init( huffman_t *huff );
 void MSG_initHuffman();
-void Huff_addRef( huff_t* huff, byte ch );
-int  Huff_Receive( node_t *node, int *ch, byte *fin );
-void Huff_transmit( huff_t *huff, int ch, byte *fout );
-void Huff_offsetReceive( node_t *node, int *ch, byte *fin, int *offset );
-void Huff_offsetTransmit( huff_t *huff, int ch, byte *fout, int *offset );
-void Huff_putBit( int bit, byte *fout, int *offset );
-int  Huff_getBit( byte *fout, int *offset );
+
+void Huff_offsetReceive (node_t *node, int *ch, byte *fin, int *offset, int maxoffset);
+void Huff_offsetTransmit (huff_t *huff, int ch, byte *fout, int *offset, int maxoffset);
+void Huff_addRef(huff_t* huff, byte ch);
 
 void MSG_Init( msg_t *buf, byte *data, int length );
 void MSG_BeginReading( msg_t *msg );
@@ -395,8 +392,8 @@ void MSG_WriteBit0( msg_t* msg );
 void MSG_WriteBit1(msg_t *msg);
 int MSG_ReadBits(msg_t *msg, int bits);
 int MSG_ReadBit(msg_t *msg);
-int MSG_WriteBitsCompress( byte *from, byte *to, int fromSizeBytes );
-int MSG_ReadBitsCompress( byte *from, byte *to, int toSizeBytes );
+int MSG_WriteBitsCompress( byte *from, byte *to, int fromSizeBytes, int inputBufSize );
+int MSG_ReadBitsCompress( byte* from, byte* to, int toSizeBytes, int outputBufSize );
 void MSG_WriteByte( msg_t *msg, int c );
 void MSG_WriteData(msg_t *buf, const void *data, int length);
 void MSG_WriteShort( msg_t *msg, int c );

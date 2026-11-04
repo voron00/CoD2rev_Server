@@ -770,12 +770,10 @@ void MSG_WriteAngle16( msg_t *sb, float f )
 MSG_ReadBitsCompress
 ==============
 */
-int MSG_ReadBitsCompress( byte *from, byte *to, int toSizeBytes )
+int MSG_ReadBitsCompress( byte* from, byte* to, int toSizeBytes, int outputBufSize )
 {
 	byte *data;
-	int bit;
-	int bits;
-	int get;
+	int bit, bits, get;
 
 	bits = toSizeBytes * 8;
 	data = to;
@@ -783,9 +781,8 @@ int MSG_ReadBitsCompress( byte *from, byte *to, int toSizeBytes )
 
 	while ( bits > bit )
 	{
-		Huff_offsetReceive(msgHuff.decompressor.tree, &get, from, &bit);
-		*data = get;
-		*data++;
+		Huff_offsetReceive(msgHuff.decompressor.tree, &get, from, &bit, outputBufSize);
+		*data++ = get;
 	}
 
 	return data - to;
@@ -1262,19 +1259,18 @@ void MSG_WriteDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *
 MSG_WriteBitsCompress
 ==============
 */
-int MSG_WriteBitsCompress( byte *from, byte *to, int fromSizeBytes )
+int MSG_WriteBitsCompress( byte *from, byte *to, int fromSizeBytes, int inputBufSize )
 {
-	int bit;
-	int data;
+	int bit, data;
 
 	bit = 0;
 	data = fromSizeBytes;
 
 	while ( data )
 	{
-		Huff_offsetTransmit(&msgHuff.compressor, *from, to, &bit);
-		--data;
-		++from;
+		Huff_offsetTransmit(&msgHuff.compressor, *from, to, &bit, inputBufSize);
+		data--;
+		from++;
 	}
 
 	return (bit + 7) >> 3;

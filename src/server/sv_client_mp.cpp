@@ -2306,9 +2306,16 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 	int c;
 
 	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
-
 	MSG_Init(&decompressMsg, msgBuf, sizeof(msgBuf));
-	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msgBuf, msg->cursize - msg->readcount);
+
+	// New: Fix for potential decompression exploit, see CVE-2018-10718
+	// Note: This happens after packet defragmentation
+	decompressMsg.cursize = MSG_ReadBitsCompress( &msg->data[msg->readcount], msgBuf, msg->cursize - msg->readcount, decompressMsg.maxsize );
+	if ( (unsigned)decompressMsg.cursize >= decompressMsg.maxsize )
+	{
+		SV_DropClient(cl, "SV_ExecuteClientMessage: Client sent oversize message");
+		return;
+	}
 
 	// if this is a usercmd from a previous gamestate,
 	// ignore it or retransmit the current gamestate

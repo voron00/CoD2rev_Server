@@ -762,7 +762,8 @@ void SV_SendMessageToClient( msg_t *msg, client_t *client )
 	assert(msg->cursize >= SV_ENCODE_START);
 
 	memcpy(svCompressBuf, msg->data, SV_ENCODE_START);
-	compressedSize = MSG_WriteBitsCompress(msg->data + SV_ENCODE_START, svCompressBuf + SV_ENCODE_START, msg->cursize - SV_ENCODE_START) + SV_ENCODE_START;
+	compressedSize = MSG_WriteBitsCompress( msg->data + SV_ENCODE_START, svCompressBuf + SV_ENCODE_START, msg->cursize - SV_ENCODE_START, msg->maxsize << 3 ) + SV_ENCODE_START;
+	assert(compressedSize);
 
 	if ( client->dropReason )
 	{
