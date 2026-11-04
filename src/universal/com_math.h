@@ -61,6 +61,8 @@ extern vec3_t bytedirs[NUMVERTEXNORMALS];
 #define NORMALIZE_EPSILON   0.002f
 #define SIZE_EPSILON        0.0001f
 
+#define FloatSign( x ) ( x < 0.0f ? -1.0f : 1.0f )
+
 float Q_acos( float c );
 
 /*
@@ -107,28 +109,8 @@ inline int Q_rint( float in )
 I_lerp
 ==============
 */
-inline float I_lerp( float a, float b, float t )
-{
-#ifdef USE_SSE2
-	v4sf va = _mm_set_ps1(a);
-	v4sf vb = _mm_set_ps1(b);
-	v4sf vt = _mm_set_ps1(t);
-
-	v4sf vd = _mm_sub_ps(vb, va);
-	v4sf vp = _mm_mul_ps(vt, vd);
-
-	return _mm_add_ps(va, vp)[0];
-#else
-	return a + t * (b - a);
-#endif
-}
-
-/*
-==============
-I_lerpd
-==============
-*/
-inline long double I_lerpd( long double a, long double b, long double t )
+// lerp needs 64 bit float, otherwise trace will be inaccurate
+inline double I_lerp( double a, double b, double t )
 {
 #ifdef USE_SSE2
 	v4sd va = _mm_set_pd1(a);
@@ -1018,33 +1000,39 @@ inline bool Vec4IsNormalized( const vec4_t v )
 
 /*
 =================
+Vec2Lerp
+=================
+*/
+inline void Vec2Lerp( const vec2_t start, const vec2_t end, float fraction, vec2_t endpos )
+{
+	endpos[0] = I_lerp( start[0], end[0], fraction );
+	endpos[1] = I_lerp( start[1], end[1], fraction );
+}
+
+/*
+=================
 Vec3Lerp
 =================
 */
 inline void Vec3Lerp( const vec3_t start, const vec3_t end, float fraction, vec3_t endpos )
 {
-	endpos[0] = I_lerpd( start[0], end[0], fraction );
-	endpos[1] = I_lerpd( start[1], end[1], fraction );
-	endpos[2] = I_lerpd( start[2], end[2], fraction );
+	endpos[0] = I_lerp( start[0], end[0], fraction );
+	endpos[1] = I_lerp( start[1], end[1], fraction );
+	endpos[2] = I_lerp( start[2], end[2], fraction );
 }
 
 /*
 =================
-RoundFloatArray
+Vec4Lerp
 =================
 */
-inline void RoundFloatArray( vec3_t x, vec3_t y )
+inline void Vec4Lerp( const vec4_t start, const vec4_t end, float fraction, vec4_t endpos )
 {
-	for ( int i = 0; i < 3; i++ )
-	{
-		if ( x[i] < y[i] )
-			x[i] = FastCeil(x[i]);
-		else
-			x[i] = FastFloor(x[i]);
-	}
+	endpos[0] = I_lerp( start[0], end[0], fraction );
+	endpos[1] = I_lerp( start[1], end[1], fraction );
+	endpos[2] = I_lerp( start[2], end[2], fraction );
+	endpos[3] = I_lerp( start[3], end[3], fraction );
 }
-
-#define FloatSign( x ) ( x < 0.0f ? -1.0f : 1.0f )
 
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
 void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
@@ -1110,3 +1098,4 @@ float Vec2Distance(const vec2_t v1, const vec2_t v2);
 void CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );
 bool Vec3IsNormalized(const vec3_t v);
 bool Vec4IsNormalized(const vec4_t v);
+void SnapVectorTowards( vec3_t v, vec3_t to );

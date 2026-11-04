@@ -2488,3 +2488,28 @@ void RotatePoint( vec3_t point, const vec3_t matrix[3] )
 	point[1] = DotProduct( matrix[1], tvec );
 	point[2] = DotProduct( matrix[2], tvec );
 }
+
+/*
+======================
+SnapVectorTowards
+
+Round a vector to integers for more efficient network
+transmission, but make sure that it rounds towards a given point
+rather than blindly truncating.  This prevents it from truncating
+into a wall.
+======================
+//unlagged - attack prediction #3
+// moved to q_shared.c
+*/
+void SnapVectorTowards( vec3_t v, vec3_t to ) {
+	int		i;
+
+	for ( i = 0 ; i < 3 ; i++ ) {
+		if ( to[i] <= v[i] ) {
+			v[i] = FastFloor(v[i]);
+		} else {
+			v[i] = FastCeil(v[i]);
+		}
+	}
+}
+//unlagged - attack prediction #3

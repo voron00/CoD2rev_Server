@@ -212,9 +212,8 @@ CM_AllocWorldSector
 static unsigned short CM_AllocWorldSector( vec2_t mins, vec2_t maxs )
 {
 	worldSector_t *node;
-	unsigned short nodeIndex;
+	unsigned short nodeIndex, axis;
 	vec2_t size;
-	unsigned short axis;
 
 	nodeIndex = cm_world.freeHead;
 
@@ -227,7 +226,7 @@ static unsigned short CM_AllocWorldSector( vec2_t mins, vec2_t maxs )
 
 	axis = size[1] >= size[0];
 
-	if ( size[size[1] >= size[0]] <= 512 )
+	if ( size[axis] <= 512 )
 	{
 		return 0;
 	}
@@ -242,7 +241,7 @@ static unsigned short CM_AllocWorldSector( vec2_t mins, vec2_t maxs )
 	cm_world.freeHead = node->tree.parent;
 
 	node->tree.axis = axis;
-	node->tree.dist = (float)(maxs[axis] + mins[axis]) * 0.5;
+	node->tree.dist = ( maxs[axis] + mins[axis] ) * 0.5f;
 
 	assert(!node->tree.child[0]);
 	assert(!node->tree.child[1]);
@@ -653,21 +652,13 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 		assert(frac >= 0);
 		frac = I_fmin(frac, 1.0);
 
-		mid[0] = (float)((float)(p2[0] - p[0]) * frac) + p[0];
-		mid[1] = (float)((float)(p2[1] - p[1]) * frac) + p[1];
-		mid[2] = (float)((float)(p2[2] - p[2]) * frac) + p[2];
-		mid[3] = (float)((float)(p2[3] - p[3]) * frac) + p[3];
-
+		Vec4Lerp( p, p2, frac, mid );
 		CM_ClipMoveToEntities_r(clip, node->tree.child[side], p, mid, trace);
 
 		assert(frac2 <= 1.f);
 		frac2 = I_fmax(frac2, 0.0);
 
-		p[0] = (float)((float)(p2[0] - p[0]) * frac2) + p[0];
-		p[1] = (float)((float)(p2[1] - p[1]) * frac2) + p[1];
-		p[2] = (float)((float)(p2[2] - p[2]) * frac2) + p[2];
-		p[3] = (float)((float)(p2[3] - p[3]) * frac2) + p[3];
-
+		Vec4Lerp( p, p2, frac2, p );
 		nodeIndex = node->tree.child[1 - side];
 	}
 }
@@ -730,7 +721,7 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 		t1 = p[node->tree.axis] - node->tree.dist;
 		t2 = p2[node->tree.axis] - node->tree.dist;
 
-		if ( (float)(t1 * t2) >= 0.0 )
+		if ( (t1 * t2) >= 0.0f )
 		{
 			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 			continue;
@@ -741,22 +732,16 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 			return;
 		}
 
-		frac = t1 / (float)(t1 - t2);
+		frac = t1 / (t1 - t2);
 
 		assert(frac >= 0);
 		assert(frac <= 1.f);
 
-		mid[0] = (float)((float)(p2[0] - p[0]) * frac) + p[0];
-		mid[1] = (float)((float)(p2[1] - p[1]) * frac) + p[1];
-		mid[2] = (float)((float)(p2[2] - p[2]) * frac) + p[2];
-		mid[3] = (float)((float)(p2[3] - p[3]) * frac) + p[3];
-
+		Vec4Lerp( p, p2, frac, mid );
 		side = I_side(t2);
 
 		CM_PointTraceToEntities_r(clip, node->tree.child[side], p, mid, trace);
-
 		nodeIndex = node->tree.child[1 - side];
-
 		VectorCopy4(mid, p);
 	}
 }
@@ -837,7 +822,7 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 			t1 = p1[node->tree.axis] - node->tree.dist;
 			t2 = p2[node->tree.axis] - node->tree.dist;
 
-			if ( (float)(t1 * t2) < 0.0 )
+			if ( (t1 * t2) < 0.0f )
 			{
 				break;
 			}
@@ -846,16 +831,12 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 		}
 
 		assert(t1 - t2);
-
-		frac = t1 / (float)(t1 - t2);
+		frac = t1 / (t1 - t2);
 
 		assert(frac >= 0);
 		assert(frac <= 1.f);
 
-		mid[0] = (float)((float)(p2[0] - p1[0]) * frac) + p1[0];
-		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
-		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
-
+		Vec3Lerp( p1, p2, frac, mid );
 		side = I_side(t2);
 
 		if ( !CM_PointTraceStaticModelsComplete_r(clip, node->tree.child[side], p1, mid) )
@@ -864,7 +845,6 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 		}
 
 		nodeIndex = node->tree.child[1 - side];
-
 		VectorCopy(mid, p1);
 	}
 
@@ -940,7 +920,7 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 		t1 = p1[node->tree.axis] - node->tree.dist;
 		t2 = p2[node->tree.axis] - node->tree.dist;
 
-		if ( (float)(t1 * t2) >= 0.0 )
+		if ( (t1 * t2) >= 0.0f )
 		{
 			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 			continue;
@@ -952,23 +932,17 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 		}
 
 		assert(t1 - t2);
-
-		frac = t1 / (float)(t1 - t2);
+		frac = t1 / (t1 - t2);
 
 		assert(frac >= 0);
 		assert(frac <= 1.f);
 
-		mid[0] = (float)((float)(p2[0] - p1[0]) * frac) + p1[0];
-		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
-		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
-		mid[3] = (float)((float)(p2[3] - p1[3]) * frac) + p1[3];
-
+		Vec4Lerp( p1, p2, frac, mid );
 		side = I_side(t2);
 
 		CM_PointTraceStaticModels_r(tw, node->tree.child[side], p1, mid, trace);
 
 		nodeIndex = node->tree.child[1 - side];
-
 		VectorCopy4(mid, p1);
 	}
 }
@@ -1027,7 +1001,7 @@ static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned sho
 	t1 = p1[node->tree.axis] - node->tree.dist;
 	t2 = p2[node->tree.axis] - node->tree.dist;
 
-	if ( (float)(t1 * t2) >= 0.0 )
+	if ( (t1 * t2) >= 0.0f )
 	{
 		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[1 - I_side(I_fmin(t1, t2))], p1, p2);
 
@@ -1038,15 +1012,12 @@ static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned sho
 	}
 	else
 	{
-		frac = t1 / (float)(t1 - t2);
+		frac = t1 / (t1 - t2);
 
 		assert(frac >= 0);
 		assert(frac <= 1.f);
 
-		mid[0] = (float)((float)(p2[0] - p1[0]) * frac) + p1[0];
-		mid[1] = (float)((float)(p2[1] - p1[1]) * frac) + p1[1];
-		mid[2] = (float)((float)(p2[2] - p1[2]) * frac) + p1[2];
-
+		Vec3Lerp( p1, p2, frac, mid );
 		side = I_side(t2);
 
 		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[side], p1, mid);
@@ -1175,10 +1146,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 
 		assert(frac >= 0);
 		frac = I_fmin(frac, 1.0);
-
-		mid[0] = (float)((float)(p2[0] - p[0]) * frac) + p[0];
-		mid[1] = (float)((float)(p2[1] - p[1]) * frac) + p[1];
-		mid[2] = (float)((float)(p2[2] - p[2]) * frac) + p[2];
+		Vec3Lerp( p, p2, frac, mid );
 
 		hitNum = CM_ClipSightTraceToEntities_r(clip, node->tree.child[side], p, mid);
 
@@ -1190,10 +1158,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 		assert(frac2 <= 1.f);
 		frac2 = I_fmax(frac2, 0.0);
 
-		p[0] = (float)((float)(p2[0] - p[0]) * frac2) + p[0];
-		p[1] = (float)((float)(p2[1] - p[1]) * frac2) + p[1];
-		p[2] = (float)((float)(p2[2] - p[2]) * frac2) + p[2];
-
+		Vec3Lerp( p, p2, frac2, p );
 		nodeIndex = node->tree.child[1 - side];
 	}
 

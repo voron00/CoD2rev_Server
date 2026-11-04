@@ -739,7 +739,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace, vec3_t dir, vec3_t endpos 
 	ent->s.eFlags |= EF_NODRAW;
 	ent->flags |= FL_NODRAW;
 
-	RoundFloatArray(endpos, ent->s.pos.trBase);
+	SnapVectorTowards(endpos, ent->s.pos.trBase);
 	G_SetOrigin(ent, endpos);
 
 	// splash damage (doesn't apply to person directly hit)

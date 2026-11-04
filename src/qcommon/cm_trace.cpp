@@ -1450,10 +1450,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 
 		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
-
-		mid[0] = (p2[0] - p1[0]) * frac + p1[0];
-		mid[1] = (p2[1] - p1[1]) * frac + p1[1];
-		mid[2] = (p2[2] - p1[2]) * frac + p1[2];
+		Vec3Lerp( p1, p2, frac, mid );
 
 		hitNum = CM_SightTraceThroughLeafBrushNode_r(tw, &remoteNode[remoteNode->data.children.childOffset[side]], p1, mid);
 
@@ -1464,10 +1461,7 @@ static int CM_SightTraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_
 
 		assert(frac2 <= 1.0f + TRACE_EPSILON);
 		frac2 = I_fmax(frac2, 0.0);
-
-		p1[0] = (p2[0] - p1[0]) * frac2 + p1[0];
-		p1[1] = (p2[1] - p1[1]) * frac2 + p1[1];
-		p1[2] = (p2[2] - p1[2]) * frac2 + p1[2];
+		Vec3Lerp( p1, p2, frac2, p1 );
 
 		remoteNode += remoteNode->data.children.childOffset[1 - side];
 	}
@@ -1689,21 +1683,13 @@ static void CM_TraceThroughLeafBrushNode_r( traceWork_t *tw, cLeafBrushNode_t *n
 
 		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
-
-		mid[0] = (p2[0] - p1[0]) * frac + p1[0];
-		mid[1] = (p2[1] - p1[1]) * frac + p1[1];
-		mid[2] = (p2[2] - p1[2]) * frac + p1[2];
-		mid[3] = (p2[3] - p1[3]) * frac + p1[3];
+		Vec4Lerp( p1, p2, frac, mid );
 
 		CM_TraceThroughLeafBrushNode_r(tw, &node[node->data.children.childOffset[side]], p1, mid, trace);
 
 		assert(frac2 <= 1.0f + TRACE_EPSILON);
 		frac2 = I_fmax(frac2, 0.0);
-
-		p1[0] = (p2[0] - p1[0]) * frac2 + p1[0];
-		p1[1] = (p2[1] - p1[1]) * frac2 + p1[1];
-		p1[2] = (p2[2] - p1[2]) * frac2 + p1[2];
-		p1[3] = (p2[3] - p1[3]) * frac2 + p1[3];
+		Vec4Lerp( p1, p2, frac2, p1 );
 
 		node += node->data.children.childOffset[1 - side];
 	}
@@ -2065,21 +2051,13 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 
 		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
-
-		mid[0] = (p2[0] - p1[0]) * frac + p1[0];
-		mid[1] = (p2[1] - p1[1]) * frac + p1[1];
-		mid[2] = (p2[2] - p1[2]) * frac + p1[2];
-		mid[3] = (p2[3] - p1[3]) * frac + p1[3];
+		Vec4Lerp( p1, p2, frac, mid );
 
 		CM_TraceThroughTree(tw, node->children[side], p1, mid, trace);
 
 		assert(frac2 <= 1.0f);
 		frac2 = I_fmax(frac2, 0.0);
-
-		p1[0] = (p2[0] - p1[0]) * frac2 + p1[0];
-		p1[1] = (p2[1] - p1[1]) * frac2 + p1[1];
-		p1[2] = (p2[2] - p1[2]) * frac2 + p1[2];
-		p1[3] = (p2[3] - p1[3]) * frac2 + p1[3];
+		Vec4Lerp( p1, p2, frac2, p1 );
 
 		num = node->children[side ^ 1];
 	}
@@ -2224,10 +2202,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 
 		assert(frac >= 0.0f);
 		frac = I_fmin(frac, 1.0);
-
-		mid[0] = (p2[0] - p1[0]) * frac + p1[0];
-		mid[1] = (p2[1] - p1[1]) * frac + p1[1];
-		mid[2] = (p2[2] - p1[2]) * frac + p1[2];
+		Vec3Lerp( p1, p2, frac, mid );
 
 		hitNum = CM_SightTraceThroughTree(tw, node->children[side], p1, mid, trace);
 
@@ -2238,10 +2213,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 
 		assert(frac2 <= 1.0f);
 		frac2 = I_fmax(frac2, 0.0);
-
-		p1[0] = (p2[0] - p1[0]) * frac2 + p1[0];
-		p1[1] = (p2[1] - p1[1]) * frac2 + p1[1];
-		p1[2] = (p2[2] - p1[2]) * frac2 + p1[2];
+		Vec3Lerp( p1, p2, frac2, p1 );
 
 		num = node->children[side ^ 1];
 	}
