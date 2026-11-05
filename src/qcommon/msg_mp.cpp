@@ -773,19 +773,23 @@ MSG_ReadBitsCompress
 int MSG_ReadBitsCompress( byte* from, byte* to, int toSizeBytes, int outputBufSize )
 {
 	byte *data;
-	int bit, bits, get;
+	int bit, bits, get, i;
 
 	bits = toSizeBytes * 8;
 	data = to;
-	bit = 0;
 
-	while ( bits > bit )
+	if ( !bits )
 	{
-		Huff_offsetReceive(msgHuff.decompressor.tree, &get, from, &bit, outputBufSize);
+		return 0;
+	}
+
+	for ( bit = 0, i = 0; bit < bits && i < outputBufSize; i++ )
+	{
+		Huff_offsetReceive(msgHuff.decompressor.tree, &get, from, &bit, bits);
 		*data++ = get;
 	}
 
-	return data - to;
+	return i;
 }
 
 // Q3 TA freq. table.
