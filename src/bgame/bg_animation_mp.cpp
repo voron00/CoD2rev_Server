@@ -1073,10 +1073,10 @@ qboolean BG_IsMantleAnim( const clientInfo_t *ci, int animNum )
 {
 	animation_t *anim = BG_GetAnimationForIndex(ci->clientNum, animNum & ~ANIM_TOGGLEBIT);
 
-	return anim->movetype & ((1<<ANIM_MT_MANTLE_ROOT)|(1<<ANIM_MT_MANTLE_UP_57)|(1<<ANIM_MT_MANTLE_UP_51)
-	                         |(1<<ANIM_MT_MANTLE_UP_45)|(1<<ANIM_MT_MANTLE_UP_39)|(1<<ANIM_MT_MANTLE_UP_33)
-	                         |(1<<ANIM_MT_MANTLE_UP_27)|(1<<ANIM_MT_MANTLE_UP_21)|(1<<ANIM_MT_MANTLE_OVER_HIGH)
-	                         |(1<<ANIM_MT_MANTLE_OVER_MID)|(1<<ANIM_MT_MANTLE_OVER_LOW));
+	return anim->movetype & ((1LL<<ANIM_MT_MANTLE_ROOT)|(1LL<<ANIM_MT_MANTLE_UP_57)|(1LL<<ANIM_MT_MANTLE_UP_51)
+	                         |(1LL<<ANIM_MT_MANTLE_UP_45)|(1LL<<ANIM_MT_MANTLE_UP_39)|(1LL<<ANIM_MT_MANTLE_UP_33)
+	                         |(1LL<<ANIM_MT_MANTLE_UP_27)|(1LL<<ANIM_MT_MANTLE_UP_21)|(1LL<<ANIM_MT_MANTLE_OVER_HIGH)
+	                         |(1LL<<ANIM_MT_MANTLE_OVER_MID)|(1LL<<ANIM_MT_MANTLE_OVER_LOW));
 }
 
 /*
@@ -1088,7 +1088,7 @@ qboolean BG_IsProneAnim( const clientInfo_t *ci, int animNum )
 {
 	animation_t *anim = BG_GetAnimationForIndex(ci->clientNum, animNum & ~ANIM_TOGGLEBIT);
 
-	return anim->movetype & ((1<<ANIM_MT_IDLEPRONE)|(1<<ANIM_MT_WALKPRONE)|(1<<ANIM_MT_WALKPRONEBK));
+	return anim->movetype & ((1LL<<ANIM_MT_IDLEPRONE)|(1LL<<ANIM_MT_WALKPRONE)|(1LL<<ANIM_MT_WALKPRONEBK));
 }
 
 /*
@@ -1100,9 +1100,9 @@ qboolean BG_IsCrouchingAnim( const clientInfo_t *ci, int animNum ) // not sure a
 {
 	animation_t *anim = BG_GetAnimationForIndex(ci->clientNum, animNum & ~ANIM_TOGGLEBIT);
 
-	return anim->movetype & ((1<<ANIM_MT_IDLECR)|(1<<ANIM_MT_WALKCR)|(1<<ANIM_MT_WALKCRBK)
-	                         |(1<<ANIM_MT_RUNCR)|(1<<ANIM_MT_RUNCRBK)|(1<<ANIM_MT_TURNRIGHTCR)
-	                         |(1<<ANIM_MT_TURNLEFTCR));
+	return anim->movetype & ((1LL<<ANIM_MT_IDLECR)|(1LL<<ANIM_MT_WALKCR)|(1LL<<ANIM_MT_WALKCRBK)
+	                         |(1LL<<ANIM_MT_RUNCR)|(1LL<<ANIM_MT_RUNCRBK)|(1LL<<ANIM_MT_TURNRIGHTCR)
+	                         |(1LL<<ANIM_MT_TURNLEFTCR));
 }
 
 /*
@@ -1309,8 +1309,6 @@ void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScr
 						switch ( scriptItem->conditions[i].index )
 						{
 						case ANIM_COND_STRAFING:
-							break;
-						default:
 							switch ( scriptItem->conditions[i].value[0] )
 							{
 							case 1:
@@ -2706,6 +2704,11 @@ void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnim
 					BG_AnimParseError( "BG_AnimParseAnimScript: expected condition type string" );   // RF mod
 				}
 				defineType = BG_IndexForString( token, animConditionsStr, qfalse );
+
+				if ( animConditionsTable[defineType].type != ANIM_CONDTYPE_BITFLAGS )
+				{
+					BG_AnimParseError( "BG_AnimParseAnimScript: can not make a define of type '%s'", token );
+				}
 
 				// read in the define
 				token = Com_ParseOnLine( &text_p );
