@@ -195,12 +195,9 @@ void G_ExplodeMissile( gentity_t *ent )
 		//Server_SwitchToValidFxScheduler();
 		//fx = FX_RegisterEffect(weapDef->projExplosionEffect);
 		ent->s.time = level.time;
-		//ent->s.time2 = level.time + (int)(FX_GetEffectLength(fx) + 1.0);
+		//ent->s.time2 = level.time + (int)(FX_GetEffectLength(fx) + 1.0f);
 		//VoroN: HAX
-		if ( weapDef->offhandClass == OFFHAND_CLASS_SMOKE_GRENADE )
-			ent->s.time2 = level.time + 60000;
-		else
-			ent->s.time2 = level.time + 50;
+		ent->s.time2 = level.time + (int)(weapDef->projExplosionEffectLen + 1.0f);
 	}
 	else
 	{

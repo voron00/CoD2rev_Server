@@ -754,6 +754,114 @@ WeaponDef *BG_LoadDefaultWeaponDef()
 
 /*
 ===============
+BG_LoadProjExplosionEffect
+===============
+*/
+void BG_LoadProjExplosionEffectLen( WeaponDef *weapDef )
+{
+	char *f;
+	const char *token, *text;
+
+	if ( !weapDef->projExplosionEffect )
+	{
+		return;
+	}
+
+	if ( !weapDef->projExplosionEffect[0] )
+	{
+		return;
+	}
+
+	if ( FS_ReadFile(weapDef->projExplosionEffect, (void **)&f) < 0 )
+	{
+		Com_Printf("^3WARNING: Could not load weapon projExplosionEffect '%s'\n", weapDef->projExplosionEffect);
+		return;
+	}
+
+	text = f;
+
+	struct mLife
+	{
+		float min = 0;
+		float max = 0;
+	} life;
+
+	struct mSpawnDelay
+	{
+		float min = 0;
+		float max = 0;
+	} delay;
+
+	float maxLength = 0;
+
+	while ( 1 )
+	{
+		token = Com_Parse(&text);
+
+		if ( !token[0] )
+		{
+			break;
+		}
+
+		if ( strcmp( token, "life") == 0 )
+		{
+			token = Com_ParseRestOfLine(&text);
+
+			if ( token[0] )
+			{
+				float min, max = 0;
+
+				if (sscanf(token, "%g %g", &min, &max) == 2)
+				{
+					if ( min > life.min )
+						life.min = min;
+					if ( max > life.max )
+						life.max = max;
+				}
+				else if (sscanf(token, "%g", &max) == 1)
+				{
+					if ( max > life.max )
+						life.max = max;
+				}
+			}
+		}
+		else if ( strcmp( token, "delay") == 0 )
+		{
+			token = Com_ParseRestOfLine(&text);
+
+			if ( token[0] )
+			{
+				float min, max = 0;
+
+				if (sscanf(token, "%g %g", &min, &max) == 2)
+				{
+					if ( min > delay.min )
+						delay.min = min;
+					if ( max > delay.max )
+						delay.max = max;
+				}
+				else if (sscanf(token, "%g", &max) == 1)
+				{
+					if ( max > delay.max )
+						delay.max = max;
+				}
+			}
+		}
+
+		if ( life.max + delay.max > maxLength )
+			maxLength = life.max + delay.max;
+
+		Com_SkipRestOfLine(&text);
+	}
+
+	weapDef->projExplosionEffectLen = maxLength;
+	// Com_DPrintf("%s: %g\n", weapDef->szInternalName, weapDef->projExplosionEffectLen);
+
+	FS_FreeFile(f);
+}
+
+/*
+===============
 BG_LoadWeaponDefInternal
 ===============
 */
@@ -838,6 +946,8 @@ WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name )
 
 	I_strlwr(weapDef->ammoName);
 	I_strlwr(weapDef->clipName);
+
+	BG_LoadProjExplosionEffectLen(weapDef);
 
 	return weapDef;
 }

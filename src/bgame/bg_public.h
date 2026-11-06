@@ -717,6 +717,7 @@ typedef struct
 	float locationDamageMultipliers[19];
 	const char *fireRumble;
 	const char *meleeImpactRumble;
+	float projExplosionEffectLen; // custom field
 } WeaponDef;
 
 typedef struct

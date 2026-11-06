@@ -395,6 +395,7 @@ char *Com_ParseOnLine( const char *( *data_p ) );
 void Com_ParseReturnToMark( const char *( *text ), com_parse_mark_t *mark );
 void Com_ParseSetMark( const char *( *text ), com_parse_mark_t *mark );
 void Com_SkipRestOfLine( const char *( *data ) );
+const char *Com_ParseRestOfLine( const char *( *data_p ) );
 int Com_GetArgCountOnLine( const char *( *data_p ) );
 void Com_SetCSV( qboolean csv );
 void Com_ResetParseSessions();
