@@ -1034,6 +1034,175 @@ inline void Vec4Lerp( const vec4_t start, const vec4_t end, float fraction, vec4
 	endpos[3] = I_lerp( start[3], end[3], fraction );
 }
 
+/*
+=================
+Vec3Distance
+=================
+*/
+inline float Vec3Distance( const vec3_t v1, const vec3_t v2 )
+{
+	vec3_t dir;
+
+	VectorSubtract( v2, v1, dir );
+	return VectorLength( dir );
+}
+
+/*
+=================
+Vec3DistanceSq
+=================
+*/
+inline float Vec3DistanceSq( const vec3_t v1, const vec3_t v2 )
+{
+	vec3_t dir;
+
+	VectorSubtract( v2, v1, dir );
+	return VectorLengthSquared( dir );
+}
+
+/*
+===============
+Vec2Normalize
+===============
+*/
+inline float Vec2Normalize( vec2_t v )
+{
+	float length = Vec2Length(v);
+
+	if ( length != 0 )
+	{
+		Vec2Scale( v, 1.0f / length, v );
+	}
+	return length;
+}
+
+/*
+=================
+Vec2NormalizeTo
+=================
+*/
+inline float Vec2NormalizeTo( const vec2_t v, vec2_t out )
+{
+	float length = Vec2Length(v);
+
+	if ( length == 0 )
+	{
+		Vector2Clear( out );
+	}
+	else
+	{
+		Vec2Scale( v, 1.0f / length, out );
+	}
+	return length;
+}
+
+/*
+===============
+Vec3Normalize
+===============
+*/
+inline float Vec3Normalize( vec3_t v )
+{
+	float length = VectorLength(v);
+
+	if ( length != 0 )
+	{
+		VectorScale( v, 1.0f / length, v );
+	}
+	return length;
+}
+
+/*
+===============
+Vec3NormalizeTo
+===============
+*/
+inline float Vec3NormalizeTo( const vec3_t v, vec3_t out )
+{
+	float length = VectorLength(v);
+
+	if ( length == 0 )
+	{
+		VectorClear( out );
+	}
+	else
+	{
+		VectorScale( v, 1.0f / length, out );
+	}
+	return length;
+}
+
+/*
+=================
+Vec4Normalize
+=================
+*/
+inline float Vec4Normalize( vec4_t v )
+{
+	float length = Vec4Length(v);
+
+	if ( length != 0 )
+	{
+		VectorScale4( v, 1.0f / length, v );
+	}
+	return length;
+}
+
+/*
+===============
+Vec4NormalizeTo
+===============
+*/
+inline float Vec4NormalizeTo( const vec4_t v, vec4_t out )
+{
+	float length = Vec4Length(v);
+
+	if ( length == 0 )
+	{
+		Vector4Clear( out );
+	}
+	else
+	{
+		VectorScale4( v, 1.0f / length, out );
+	}
+	return length;
+}
+
+/*
+=================
+Vec3Cross
+=================
+*/
+inline void Vec3Cross( const vec3_t v0, const vec3_t v1, vec3_t cross )
+{
+	assert(v0 != cross);
+	assert(v1 != cross);
+
+#ifdef USE_SSE2
+	v4sf va = _mm_setr_ps( v0[0], v0[1], v0[2], 0.0f );
+	v4sf vb = _mm_setr_ps( v1[0], v1[1], v1[2], 0.0f );
+
+	v4sf a_yzx = _mm_shuffle_ps(va, va, _MM_SHUFFLE(3, 0, 2, 1)); // x,y,z,w -> y,z,x,w
+	v4sf b_zxy = _mm_shuffle_ps(vb, vb, _MM_SHUFFLE(3, 1, 0, 2)); // x,y,z,w -> z,x,y,w
+
+	v4sf a_zxy = _mm_shuffle_ps(va, va, _MM_SHUFFLE(3, 1, 0, 2)); // x,y,z,w -> z,x,y,w
+	v4sf b_yzx = _mm_shuffle_ps(vb, vb, _MM_SHUFFLE(3, 0, 2, 1)); // x,y,z,w -> y,z,x,w
+
+	v4sf mul1 = _mm_mul_ps(a_yzx, b_zxy);
+	v4sf mul2 = _mm_mul_ps(a_zxy, b_yzx);
+
+	v4sf res = _mm_sub_ps(mul1, mul2);
+
+	cross[0] = res[0];
+	cross[1] = res[1];
+	cross[2] = res[2];
+#else
+	cross[0] = v0[1] * v1[2] - v0[2] * v1[1];
+	cross[1] = v0[2] * v1[0] - v0[0] * v1[2];
+	cross[2] = v0[0] * v1[1] - v0[1] * v1[0];
+#endif
+}
+
 void MatrixTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
 void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
 void MatrixTransposeTransformVector(const vec3_t in1, const vec3_t in2[3], vec3_t out);
