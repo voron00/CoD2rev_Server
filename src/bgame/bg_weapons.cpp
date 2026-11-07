@@ -2793,17 +2793,25 @@ bool PM_IsAdsAllowed( playerState_t *ps, pml_t *pml )
 	assert(ps);
 	assert(pml);
 
-	if ( ps->pm_type == PM_NORMAL_LINKED )
+	switch ( ps->pm_type )
 	{
-		if ( pml->almostGroundPlane )
-		{
-			return false;
-		}
-	}
+		case PM_NORMAL_LINKED:
+			if ( pml->almostGroundPlane )
+			{
+				return false;
+			}
+			break;
 
-	if ( ps->pm_type != PM_NORMAL && ps->pm_type != PM_NORMAL_LINKED )
-	{
-		return false;
+		case PM_NOCLIP:
+		case PM_UFO:
+		case PM_SPECTATOR:
+		case PM_INTERMISSION:
+		case PM_DEAD:
+		case PM_DEAD_LINKED:
+			return false;
+
+		default:
+			break;
 	}
 
 	weapIndex = BG_GetViewmodelWeaponIndex(ps);
