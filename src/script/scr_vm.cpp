@@ -104,10 +104,10 @@ const float* Scr_ReadVector( const char **pos )
 Scr_ReadIntArray
 ==============
 */
-const long int* Scr_ReadIntArray( const char **pos, int count )
+const intptr_t* Scr_ReadIntArray( const char **pos, int count )
 {
-	const long int *value = reinterpret_cast<const long int *>(*pos);
-	*pos += sizeof(const long int) * count;
+	const intptr_t *value = reinterpret_cast<const intptr_t *>(*pos);
+	*pos += sizeof(const intptr_t) * count;
 
 	return value;
 }
@@ -130,10 +130,10 @@ unsigned short Scr_ReadUnsignedShort( const char **pos )
 Scr_ReadUnsigned
 ==============
 */
-unsigned long Scr_ReadUnsigned( const char **pos )
+uintptr_t Scr_ReadUnsigned( const char **pos )
 {
-	unsigned long value = *(reinterpret_cast<const unsigned long *>(*pos));
-	*pos += sizeof(unsigned long);
+	uintptr_t value = *(reinterpret_cast<const uintptr_t *>(*pos));
+	*pos += sizeof(uintptr_t);
 
 	return value;
 }
@@ -347,7 +347,7 @@ void Scr_Error( const char *error )
 Scr_GetPointerType
 ==============
 */
-int Scr_GetPointerType( unsigned long index )
+int Scr_GetPointerType( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -373,7 +373,7 @@ int Scr_GetPointerType( unsigned long index )
 Scr_GetTypeName
 ==============
 */
-const char* Scr_GetTypeName( unsigned long index )
+const char* Scr_GetTypeName( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -392,7 +392,7 @@ const char* Scr_GetTypeName( unsigned long index )
 Scr_GetType
 ==============
 */
-int Scr_GetType( unsigned long index )
+int Scr_GetType( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -411,7 +411,7 @@ int Scr_GetType( unsigned long index )
 Scr_GetObject
 ==============
 */
-unsigned int Scr_GetObject( unsigned long index )
+unsigned int Scr_GetObject( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -438,7 +438,7 @@ unsigned int Scr_GetObject( unsigned long index )
 Scr_GetEntityRef
 ==============
 */
-scr_entref_t Scr_GetEntityRef( unsigned long index )
+scr_entref_t Scr_GetEntityRef( scr_param_t index )
 {
 	VariableValue *value;
 	unsigned int id;
@@ -480,7 +480,7 @@ scr_entref_t Scr_GetEntityRef( unsigned long index )
 Scr_GetFunc
 ==============
 */
-unsigned int Scr_GetFunc( unsigned long index )
+unsigned int Scr_GetFunc( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -507,7 +507,7 @@ unsigned int Scr_GetFunc( unsigned long index )
 Scr_GetVector
 ==============
 */
-void Scr_GetVector( unsigned long index, vec3_t vectorValue )
+void Scr_GetVector( scr_param_t index, vec3_t vectorValue )
 {
 	VariableValue *value;
 
@@ -534,7 +534,7 @@ void Scr_GetVector( unsigned long index, vec3_t vectorValue )
 Scr_GetConstIString
 ==============
 */
-unsigned int Scr_GetConstIString( unsigned long index )
+unsigned int Scr_GetConstIString( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -561,7 +561,7 @@ unsigned int Scr_GetConstIString( unsigned long index )
 Scr_GetFloat
 ==============
 */
-float Scr_GetFloat( unsigned long index )
+float Scr_GetFloat( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -594,7 +594,7 @@ float Scr_GetFloat( unsigned long index )
 Scr_GetInt
 ==============
 */
-int Scr_GetInt( unsigned long index )
+int Scr_GetInt( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -620,7 +620,7 @@ int Scr_GetInt( unsigned long index )
 Scr_GetInt64
 ==============
 */
-long int Scr_GetInt64( unsigned long index )
+scr_int64_t Scr_GetInt64( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -833,7 +833,7 @@ void Scr_AddArray()
 Scr_GetAnimTree
 ==============
 */
-scr_animtree_t Scr_GetAnimTree( unsigned long index ) // untested
+scr_animtree_t Scr_GetAnimTree( scr_param_t index ) // untested
 {
 	VariableValue *value;
 	scr_animtree_t tree;
@@ -885,7 +885,7 @@ scr_animtree_t Scr_GetAnimTree( unsigned long index ) // untested
 Scr_GetAnim
 ==============
 */
-scr_anim_s Scr_GetAnim( unsigned long index, XAnimTree_s *tree )
+scr_anim_s Scr_GetAnim( scr_param_t index, XAnimTree_s *tree )
 {
 	VariableValue *value;
 	scr_anim_s anim;
@@ -963,7 +963,7 @@ void Scr_ClearOutParams()
 Scr_GetConstLowercaseString
 ==============
 */
-unsigned int Scr_GetConstLowercaseString( unsigned long index )
+unsigned int Scr_GetConstLowercaseString( scr_param_t index )
 {
 	unsigned int stringValue;
 	VariableValue *value;
@@ -1012,7 +1012,7 @@ unsigned int Scr_GetConstLowercaseString( unsigned long index )
 Scr_GetConstString
 ==============
 */
-unsigned int Scr_GetConstString( unsigned long index )
+unsigned int Scr_GetConstString( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -1070,7 +1070,7 @@ void Scr_Shutdown()
 Scr_GetDebugString
 ==============
 */
-const char* Scr_GetDebugString( unsigned long index )
+const char* Scr_GetDebugString( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -1092,7 +1092,7 @@ const char* Scr_GetDebugString( unsigned long index )
 Scr_GetStringIncludeNull
 ==============
 */
-const char* Scr_GetStringIncludeNull( unsigned long index )
+const char* Scr_GetStringIncludeNull( scr_param_t index )
 {
 	return SL_ConvertToString( Scr_GetConstString( index ) );
 }
@@ -1102,7 +1102,7 @@ const char* Scr_GetStringIncludeNull( unsigned long index )
 Scr_GetConstStringIncludeNull
 ==============
 */
-unsigned int Scr_GetConstStringIncludeNull( unsigned long index )
+unsigned int Scr_GetConstStringIncludeNull( scr_param_t index )
 {
 	if ( index < scrVmPub.outparamcount && scrVmPub.top[-index].type == VAR_UNDEFINED )
 	{
@@ -1511,7 +1511,7 @@ void Scr_AddInt( int value )
 Scr_AddInt64
 ==============
 */
-void Scr_AddInt64( long int value )
+void Scr_AddInt64( scr_int64_t value )
 {
 	IncInParam();
 
@@ -1590,7 +1590,7 @@ VariableValue GetEntityFieldValue( unsigned int classnum, int entnum, int offset
 Scr_NotifyNum
 ==============
 */
-void Scr_NotifyNum( int entnum, int classnum, unsigned int stringValue, unsigned long paramcount )
+void Scr_NotifyNum( int entnum, int classnum, unsigned int stringValue, scr_param_t paramcount )
 {
 	int type;
 	VariableValue *startTop;
@@ -2987,7 +2987,7 @@ void VM_Resume( unsigned int timeId )
 VM_Execute
 ==============
 */
-unsigned int VM_Execute( unsigned int localId, const char *pos, unsigned long paramcount )
+unsigned int VM_Execute( unsigned int localId, const char *pos, scr_param_t paramcount )
 {
 	function_stack_t fs;
 	int type;

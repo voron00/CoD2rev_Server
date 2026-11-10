@@ -98,7 +98,7 @@ void gsc_utils_printf()
 					break;
 
 				case STACK_INT64:
-					long int tmp_int64;
+					scr_int64_t tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
 					num += sprintf(&(result[num]), "%ld", tmp_int64);
 					break;
@@ -173,7 +173,7 @@ void gsc_utils_sprintf()
 					break;
 
 				case STACK_INT64:
-					long int tmp_int64;
+					scr_int64_t tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
 					num += sprintf(&(result[num]), "%ld", tmp_int64);
 					break;
@@ -471,7 +471,7 @@ void gsc_utils_float()
 		return;
 
 	case STACK_INT64:
-		long int asinteger64;
+		scr_int64_t asinteger64;
 		stackGetParamInt64(0, &asinteger64);
 		stackPushFloat( float(asinteger64) );
 		return;
@@ -568,7 +568,7 @@ void gsc_utils_fopen()
 		return;
 	}
 
-	stackPushInt64((intptr_t)file);
+	stackPushInt64((scr_int64_t)file);
 }
 
 void gsc_utils_fread()
@@ -854,7 +854,7 @@ void gsc_make_localized_string()
 
 	stackPushString(str);
 
-	unsigned long param = 0;
+	scr_param_t param = 0;
 	VariableValue *var = &scrVmPub.top[-param];
 
 	var->type = STACK_LOCALIZED_STRING;
@@ -932,7 +932,7 @@ void gsc_utils_remove_file()
 void gsc_utils_remotecommand()
 {
 	const char *sFrom;
-	long int pointerMsg;
+	scr_int64_t pointerMsg;
 
 	if (!stackGetParams("sl", &sFrom, &pointerMsg))
 	{

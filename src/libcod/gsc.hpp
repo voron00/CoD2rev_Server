@@ -107,20 +107,20 @@
 int Q_vsnprintf(char *s0, size_t size, const char *fmt, va_list args);
 #endif
 
-int stackGetParamType(unsigned long param);
-const char *stackGetParamTypeAsString(unsigned long param);
+int stackGetParamType(scr_param_t param);
+const char *stackGetParamTypeAsString(scr_param_t param);
 
 int stackGetParams(const char *params, ...);
 void stackError(const char *format, ...);
 
-int stackGetParamInt(unsigned long param, int *value);
-int stackGetParamInt64(unsigned long param, long int *value);
-int stackGetParamFunction(unsigned long param, int *value);
-int stackGetParamString(unsigned long param, const char **value);
-int stackGetParamConstString(unsigned long param, unsigned int *value);
-int stackGetParamVector(unsigned long param, vec3_t value);
-int stackGetParamFloat(unsigned long param, float *value);
-int stackGetParamObject(unsigned long param, unsigned int *value);
+int stackGetParamInt(scr_param_t param, int *value);
+int stackGetParamInt64(scr_param_t param, scr_int64_t *value);
+int stackGetParamFunction(scr_param_t param, int *value);
+int stackGetParamString(scr_param_t param, const char **value);
+int stackGetParamConstString(scr_param_t param, unsigned int *value);
+int stackGetParamVector(scr_param_t param, vec3_t value);
+int stackGetParamFloat(scr_param_t param, float *value);
+int stackGetParamObject(scr_param_t param, unsigned int *value);
 
 xfunction_t Scr_GetCustomFunction(const char **fname, qboolean *fdev);
 xmethod_t Scr_GetCustomMethod(const char **fname, qboolean *fdev);

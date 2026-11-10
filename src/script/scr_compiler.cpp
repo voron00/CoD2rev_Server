@@ -1222,10 +1222,10 @@ void EmitInteger( int value )
 EmitUnsigned
 ============
 */
-void EmitUnsigned( unsigned long value )
+void EmitUnsigned( uintptr_t value )
 {
-	scrCompileGlob.codePos = (byte *)TempMallocAlign( sizeof( unsigned long ) );
-	*(unsigned long *)scrCompileGlob.codePos = value;
+	scrCompileGlob.codePos = (byte *)TempMallocAlign( sizeof( uintptr_t ) );
+	*(uintptr_t *)scrCompileGlob.codePos = value;
 }
 
 /*
@@ -5023,7 +5023,7 @@ void EmitArrayVariableRef( sval_u expr, sval_u index, sval_u sourcePos, sval_u i
 EmitSwitchStatement
 ============
 */
-#define SWITCH_CASE_ENTRY_SIZE (sizeof(unsigned long) + sizeof(unsigned long))
+#define SWITCH_CASE_ENTRY_SIZE (sizeof(uintptr_t) + sizeof(uintptr_t))
 void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool lastStatement, unsigned int endSourcePos, scr_block_s *block )
 {
 	int num;

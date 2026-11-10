@@ -188,7 +188,7 @@ void async_sqlite_query_initialize()
 
 void gsc_async_sqlite_create_query()
 {
-	long int db;
+	scr_int64_t db;
 	const char *query;
 
 	if ( ! stackGetParams("ls", &db, &query))
@@ -310,7 +310,7 @@ void gsc_async_sqlite_create_query()
 
 void gsc_async_sqlite_create_query_nosave()
 {
-	long int db;
+	scr_int64_t db;
 	const char *query;
 
 	if ( ! stackGetParams("ls", &db, &query))
@@ -432,7 +432,7 @@ void gsc_async_sqlite_create_query_nosave()
 
 void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 {
-	long int db;
+	scr_int64_t db;
 	const char *query;
 
 	if ( ! stackGetParams("ls", &db, &query))
@@ -554,7 +554,7 @@ void gsc_async_sqlite_create_entity_query(scr_entref_t entid)
 
 void gsc_async_sqlite_create_entity_query_nosave(scr_entref_t entid)
 {
-	long int db;
+	scr_int64_t db;
 	const char *query;
 
 	if ( ! stackGetParams("ls", &db, &query))
@@ -929,12 +929,12 @@ void gsc_sqlite_open()
 	else
 		first_sqlite_db_store = newstore;
 
-	stackPushInt64((intptr_t)db);
+	stackPushInt64((scr_int64_t)db);
 }
 
 void gsc_sqlite_query()
 {
-	long int db;
+	scr_int64_t db;
 	const char *query;
 
 	if ( ! stackGetParams("ls", &db, &query))
@@ -1018,7 +1018,7 @@ void gsc_sqlite_query()
 
 void gsc_sqlite_close()
 {
-	long int db;
+	scr_int64_t db;
 
 	if ( ! stackGetParams("l", &db))
 	{

@@ -162,7 +162,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 				DeleteDC( hdcScaled );
 			}
 #endif
-			return ( long ) s_wcd.hbrEditBackground;
+			return ( long long ) s_wcd.hbrEditBackground;
 		}
 		break;
 
@@ -413,7 +413,7 @@ void Sys_CreateConsole( void ) {
 									 g_wv.hInstance, NULL );
 	SendMessageA( s_wcd.hwndBuffer, WM_SETFONT, ( WPARAM ) s_wcd.hfBufferFont, 0 );
 
-	s_wcd.SysInputLineWndProc = ( WNDPROC ) SetWindowLong( s_wcd.hwndInputLine, GWL_WNDPROC, ( long ) InputLineWndProc );
+	s_wcd.SysInputLineWndProc = ( WNDPROC ) SetWindowLongPtr( s_wcd.hwndInputLine, GWLP_WNDPROC, ( long long ) InputLineWndProc );
 	SendMessageA( s_wcd.hwndInputLine, WM_SETFONT, ( WPARAM ) s_wcd.hfBufferFont, 0 );
 
 	ShowWindow( s_wcd.hWnd, SW_SHOWDEFAULT );

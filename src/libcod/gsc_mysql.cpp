@@ -193,7 +193,7 @@ void gsc_mysql_async_getresult_and_free() //same as above, but takes the id of a
 			first_async_task = c->next;
 		if(c->save)
 		{
-			stackPushInt64((intptr_t)c->result);
+			stackPushInt64((scr_int64_t)c->result);
 		}
 		else
 			stackPushInt(0);
@@ -259,7 +259,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 			newconnection->prev = current;
 		}
 		current = newconnection;
-		stackPushInt64((intptr_t)newconnection->connection);
+		stackPushInt64((scr_int64_t)newconnection->connection);
 		stackPushArrayLast();
 	}
 	threadid_t async_handler;
@@ -269,7 +269,7 @@ void gsc_mysql_async_initializer()//returns array with mysql connection handlers
 void gsc_mysql_init()
 {
 	MYSQL *my = mysql_init(NULL);
-	stackPushInt64((intptr_t)my);
+	stackPushInt64((scr_int64_t)my);
 }
 
 void gsc_mysql_reuse_connection()
@@ -281,14 +281,14 @@ void gsc_mysql_reuse_connection()
 	}
 	else
 	{
-		stackPushInt64((intptr_t)cod_mysql_connection);
+		stackPushInt64((scr_int64_t)cod_mysql_connection);
 		return;
 	}
 }
 
 void gsc_mysql_real_connect()
 {
-	long int mysql;
+	scr_int64_t mysql;
 	int port;
 	const char *host, *user, *pass, *db;
 
@@ -299,7 +299,7 @@ void gsc_mysql_real_connect()
 		return;
 	}
 
-	mysql = (intptr_t)mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0);
+	mysql = (scr_int64_t)mysql_real_connect((MYSQL *)mysql, host, user, pass, db, port, NULL, 0);
 	bool reconnect = true;
 	mysql_options((MYSQL*)mysql, MYSQL_OPT_RECONNECT, &reconnect);
 	if(cod_mysql_connection == NULL)
@@ -309,7 +309,7 @@ void gsc_mysql_real_connect()
 
 void gsc_mysql_close()
 {
-	long int mysql;
+	scr_int64_t mysql;
 
 	if ( ! stackGetParams("l", &mysql))
 	{
@@ -324,7 +324,7 @@ void gsc_mysql_close()
 
 void gsc_mysql_query()
 {
-	long int mysql;
+	scr_int64_t mysql;
 	const char *query;
 
 	if ( ! stackGetParams("ls", &mysql, &query))
@@ -340,7 +340,7 @@ void gsc_mysql_query()
 
 void gsc_mysql_errno()
 {
-	long int mysql;
+	scr_int64_t mysql;
 
 	if ( ! stackGetParams("l", &mysql))
 	{
@@ -355,7 +355,7 @@ void gsc_mysql_errno()
 
 void gsc_mysql_error()
 {
-	long int mysql;
+	scr_int64_t mysql;
 
 	if ( ! stackGetParams("l", &mysql))
 	{
@@ -370,7 +370,7 @@ void gsc_mysql_error()
 
 void gsc_mysql_affected_rows()
 {
-	long int mysql;
+	scr_int64_t mysql;
 
 	if ( ! stackGetParams("l", &mysql))
 	{
@@ -385,7 +385,7 @@ void gsc_mysql_affected_rows()
 
 void gsc_mysql_store_result()
 {
-	long int mysql;
+	scr_int64_t mysql;
 
 	if ( ! stackGetParams("l", &mysql))
 	{
@@ -394,12 +394,12 @@ void gsc_mysql_store_result()
 		return;
 	}
 
-	stackPushInt64((intptr_t)mysql_store_result((MYSQL *)mysql));
+	stackPushInt64((scr_int64_t)mysql_store_result((MYSQL *)mysql));
 }
 
 void gsc_mysql_num_rows()
 {
-	long int result;
+	scr_int64_t result;
 
 	if ( ! stackGetParams("l", &result))
 	{
@@ -414,7 +414,7 @@ void gsc_mysql_num_rows()
 
 void gsc_mysql_num_fields()
 {
-	long int result;
+	scr_int64_t result;
 
 	if ( ! stackGetParams("l", &result))
 	{
@@ -429,7 +429,7 @@ void gsc_mysql_num_fields()
 
 void gsc_mysql_field_seek()
 {
-	long int result;
+	scr_int64_t result;
 	int offset;
 
 	if ( ! stackGetParams("li", &result, &offset))
@@ -445,7 +445,7 @@ void gsc_mysql_field_seek()
 
 void gsc_mysql_fetch_field()
 {
-	long int result;
+	scr_int64_t result;
 
 	if ( ! stackGetParams("l", &result))
 	{
@@ -466,7 +466,7 @@ void gsc_mysql_fetch_field()
 
 void gsc_mysql_fetch_row()
 {
-	long int result;
+	scr_int64_t result;
 
 	if ( ! stackGetParams("l", &result))
 	{
@@ -498,7 +498,7 @@ void gsc_mysql_fetch_row()
 
 void gsc_mysql_free_result()
 {
-	long int result;
+	scr_int64_t result;
 
 	if ( ! stackGetParams("l", &result))
 	{
@@ -518,7 +518,7 @@ void gsc_mysql_free_result()
 
 void gsc_mysql_real_escape_string()
 {
-	long int mysql;
+	scr_int64_t mysql;
 	const char *str;
 
 	if ( ! stackGetParams("ls", &mysql, &str))

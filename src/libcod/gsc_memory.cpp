@@ -13,12 +13,12 @@ void gsc_memory_malloc()
 		return;
 	}
 
-	stackPushInt64((intptr_t)malloc(bytes));
+	stackPushInt64((scr_int64_t)malloc(bytes));
 }
 
 void gsc_memory_free()
 {
-	long int memory;
+	scr_int64_t memory;
 
 	if ( ! stackGetParams("l", &memory))
 	{
@@ -33,7 +33,7 @@ void gsc_memory_free()
 
 void gsc_memory_int_get()
 {
-	long int memory;
+	scr_int64_t memory;
 
 	if ( ! stackGetParams("l", &memory))
 	{
@@ -42,12 +42,12 @@ void gsc_memory_int_get()
 		return;
 	}
 
-	stackPushInt64(*(int*)memory);
+	stackPushInt64(*(scr_int64_t*)memory);
 }
 
 void gsc_memory_int_set()
 {
-	long int memory;
+	scr_int64_t memory;
 	int value;
 
 	if ( ! stackGetParams("li", &memory, &value))
@@ -57,13 +57,13 @@ void gsc_memory_int_set()
 		return;
 	}
 
-	*(long int*)memory = value;
+	*(scr_int64_t*)memory = value;
 	stackPushInt(1);
 }
 
 void gsc_memory_memset()
 {
-	long int memory;
+	scr_int64_t memory;
 	int value, bytes;
 
 	if ( ! stackGetParams("lii", &memory, &value, &bytes))
@@ -80,14 +80,14 @@ void gsc_memory_memset()
 #include <vector>
 struct binarybuffer
 {
-	long int address;
+	scr_int64_t address;
 	int pos;
 	std::vector<char *> *strings;
 };
 
 void gsc_binarybuffer_new()
 {
-	long int address;
+	scr_int64_t address;
 	if ( ! stackGetParams("l", &address))
 	{
 		stackError("gsc_binarybuffer_new() argument is undefined or has a wrong type");
@@ -98,7 +98,7 @@ void gsc_binarybuffer_new()
 	bb->address = address;
 	bb->pos = 0;
 	bb->strings = new std::vector<char *>();
-	stackPushInt64((long int)bb);
+	stackPushInt64((scr_int64_t)bb);
 }
 
 void gsc_binarybuffer_free()

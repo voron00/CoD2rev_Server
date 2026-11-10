@@ -2,7 +2,7 @@
 
 #ifdef LIBCOD
 
-const char *stackGetParamTypeAsString(unsigned long param)
+const char *stackGetParamTypeAsString(scr_param_t param)
 {
 	if (param >= Scr_GetNumParam())
 		return "UNDEFINED";
@@ -355,7 +355,7 @@ xmethod_t Scr_GetCustomMethod(const char **fname, qboolean *fdev)
 	return NULL;
 }
 
-int stackGetParamType(unsigned long param)
+int stackGetParamType(scr_param_t param)
 {
 	if (param >= Scr_GetNumParam())
 		return STACK_UNDEFINED;
@@ -405,7 +405,7 @@ int stackGetParams(const char *params, ...)
 
 		case 'l':
 		{
-			long int *tmp = va_arg(args, long int *);
+			scr_int64_t *tmp = va_arg(args, scr_int64_t *);
 			if ( ! stackGetParamInt64(i, tmp))
 			{
 				Com_DPrintf("\nstackGetParams() Param %i is not an int64\n", i);
@@ -469,7 +469,7 @@ int stackGetParams(const char *params, ...)
 	return errors == 0; // success if no errors
 }
 
-int stackGetParamInt(unsigned long param, int *value)
+int stackGetParamInt(scr_param_t param, int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -496,7 +496,7 @@ int stackGetParamInt(unsigned long param, int *value)
 	return 1;
 }
 
-int stackGetParamInt64(unsigned long param, long int *value)
+int stackGetParamInt64(scr_param_t param, scr_int64_t *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -523,7 +523,7 @@ int stackGetParamInt64(unsigned long param, long int *value)
 	return 1;
 }
 
-int stackGetParamFunction(unsigned long param, int *value)
+int stackGetParamFunction(scr_param_t param, int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -538,7 +538,7 @@ int stackGetParamFunction(unsigned long param, int *value)
 	return 1;
 }
 
-int stackGetParamString(unsigned long param, const char **value)
+int stackGetParamString(scr_param_t param, const char **value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -553,7 +553,7 @@ int stackGetParamString(unsigned long param, const char **value)
 	return 1;
 }
 
-int stackGetParamConstString(unsigned long param, unsigned int *value)
+int stackGetParamConstString(scr_param_t param, unsigned int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -568,7 +568,7 @@ int stackGetParamConstString(unsigned long param, unsigned int *value)
 	return 1;
 }
 
-int stackGetParamVector(unsigned long param, vec3_t value)
+int stackGetParamVector(scr_param_t param, vec3_t value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -583,7 +583,7 @@ int stackGetParamVector(unsigned long param, vec3_t value)
 	return 1;
 }
 
-int stackGetParamFloat(unsigned long param, float *value)
+int stackGetParamFloat(scr_param_t param, float *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
@@ -604,7 +604,7 @@ int stackGetParamFloat(unsigned long param, float *value)
 	return 1;
 }
 
-int stackGetParamObject(unsigned long param, unsigned int *value)
+int stackGetParamObject(scr_param_t param, unsigned int *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;

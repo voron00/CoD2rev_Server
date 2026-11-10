@@ -278,7 +278,7 @@ unsigned int SL_GetStringForVector( const vec3_t v )
 SL_GetStringForInt
 ==============
 */
-unsigned int SL_GetStringForInt( long int i )
+unsigned int SL_GetStringForInt( scr_int64_t i )
 {
 	char tempString[128];
 
