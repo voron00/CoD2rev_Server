@@ -759,7 +759,7 @@ sval_u node0()
 
 	result.node = Scr_AllocNode(1);
 	result.node[0].node = NULL;
-	result.node[0].intValue = ENUM_NOP;
+	result.node[0].type = ENUM_NOP;
 
 	return result;
 }
@@ -771,7 +771,7 @@ sval_u node1( int type, sval_u val1 )
 
 	result.node = Scr_AllocNode(2);
 
-	result.node[0].intValue = type;
+	result.node[0].type = type;
 	result.node[1] = val1;
 
 	return result;
@@ -797,7 +797,7 @@ sval_u node2( int type, sval_u val1, sval_u val2 )
 
 	result.node = Scr_AllocNode(3);
 
-	result.node[0].intValue = type;
+	result.node[0].type = type;
 	result.node[1] = val1;
 	result.node[2] = val2;
 
@@ -811,7 +811,7 @@ sval_u node3( int type, sval_u val1, sval_u val2, sval_u val3 )
 
 	result.node = Scr_AllocNode(4);
 
-	result.node[0].intValue = type;
+	result.node[0].type = type;
 	result.node[1] = val1;
 	result.node[2] = val2;
 	result.node[3] = val3;
@@ -826,7 +826,7 @@ sval_u node4( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4 )
 
 	result.node = Scr_AllocNode(5);
 
-	result.node[0].intValue = type;
+	result.node[0].type = type;
 	result.node[1] = val1;
 	result.node[2] = val2;
 	result.node[3] = val3;
@@ -842,7 +842,7 @@ sval_u node5( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval
 
 	result.node = Scr_AllocNode(6);
 
-	result.node[0].intValue = type;
+	result.node[0].type = type;
 	result.node[1] = val1;
 	result.node[2] = val2;
 	result.node[3] = val3;
@@ -859,7 +859,7 @@ sval_u node6( sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, s
 
 	result.node = Scr_AllocNode(7);
 
-	result.node[0].intValue = ENUM_thread;
+	result.node[0].type = ENUM_thread;
 	result.node[1] = val1;
 	result.node[2] = val2;
 	result.node[3] = val3;
@@ -877,7 +877,7 @@ sval_u node7( sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, s
 
 	result.node = Scr_AllocNode(8);
 
-	result.node[0].intValue = ENUM_if_else;
+	result.node[0].type = ENUM_if_else;
 	result.node[1] = val1;
 	result.node[2] = val2;
 	result.node[3] = val3;
@@ -896,7 +896,7 @@ sval_u node8( sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, s
 
 	result.node = Scr_AllocNode(9);
 
-	result.node[0].intValue = ENUM_for;
+	result.node[0].type = ENUM_for;
 	result.node[1] = val1;
 	result.node[2] = val2;
 	result.node[3] = val3;
@@ -2369,97 +2369,97 @@ yyreduce:
 				break;
 			case 8:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_bit_or;
+				valstack[4].type = OP_bit_or;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 9:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_bit_ex_or;
+				valstack[4].type = OP_bit_ex_or;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 10:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_bit_and;
+				valstack[4].type = OP_bit_and;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 11:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_equality;
+				valstack[4].type = OP_equality;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 12:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_inequality;
+				valstack[4].type = OP_inequality;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 13:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_less;
+				valstack[4].type = OP_less;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 14:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_greater;
+				valstack[4].type = OP_greater;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 15:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_less_equal;
+				valstack[4].type = OP_less_equal;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 16:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_greater_equal;
+				valstack[4].type = OP_greater_equal;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 17:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_shift_left;
+				valstack[4].type = OP_shift_left;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 18:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_shift_right;
+				valstack[4].type = OP_shift_right;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 19:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_plus;
+				valstack[4].type = OP_plus;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 20:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_minus;
+				valstack[4].type = OP_minus;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 21:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_multiply;
+				valstack[4].type = OP_multiply;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 22:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_divide;
+				valstack[4].type = OP_divide;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
 			case 23:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_mod;
+				valstack[4].type = OP_mod;
 				yyval.val = node4(ENUM_binary, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				yyval.pos = yyvsp[-1].pos;
 				break;
@@ -2694,52 +2694,52 @@ yyreduce:
 				break;
 			case 73:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_bit_or;
+				valstack[4].type = OP_bit_or;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 74:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_bit_ex_or;
+				valstack[4].type = OP_bit_ex_or;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 75:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_bit_and;
+				valstack[4].type = OP_bit_and;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 76:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_shift_left;
+				valstack[4].type = OP_shift_left;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 77:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_shift_right;
+				valstack[4].type = OP_shift_right;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 78:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_plus;
+				valstack[4].type = OP_plus;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 79:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_minus;
+				valstack[4].type = OP_minus;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 80:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_multiply;
+				valstack[4].type = OP_multiply;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 81:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_divide;
+				valstack[4].type = OP_divide;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 82:
 				valstack[5].sourcePosValue = yyvsp[-1].pos;
-				valstack[4].intValue = OP_mod;
+				valstack[4].type = OP_mod;
 				yyval.val = node4(ENUM_binary_equals, yyvsp[-2].val, yyvsp->val, valstack[4], valstack[5]);
 				break;
 			case 83:
