@@ -620,7 +620,7 @@ int Scr_GetInt( scr_param_t index )
 Scr_GetInt64
 ==============
 */
-scr_int64_t Scr_GetInt64( scr_param_t index )
+int64_t Scr_GetInt64( scr_param_t index )
 {
 	VariableValue *value;
 
@@ -1511,7 +1511,7 @@ void Scr_AddInt( int value )
 Scr_AddInt64
 ==============
 */
-void Scr_AddInt64( scr_int64_t value )
+void Scr_AddInt64( int64_t value )
 {
 	IncInParam();
 

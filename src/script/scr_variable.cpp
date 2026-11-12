@@ -1682,7 +1682,7 @@ bool Scr_CastString( VariableValue *value )
 
 	case VAR_INT64:
 		value->type = VAR_STRING;
-		value->u.stringValue = SL_GetStringForInt(value->u.int64Value);
+		value->u.stringValue = SL_GetStringForInt64(value->u.int64Value);
 		return true;
 
 	case VAR_FLOAT:
@@ -4708,7 +4708,7 @@ void Scr_CastWeakerStringPair( VariableValue *value1, VariableValue *value2 )
 
 			case VAR_INT64:
 				value2->type = VAR_STRING;
-				value2->u.int64Value = SL_GetStringForInt(value2->u.int64Value);
+				value2->u.int64Value = SL_GetStringForInt64(value2->u.int64Value);
 				return;
 			}
 			return;
@@ -4750,7 +4750,7 @@ void Scr_CastWeakerStringPair( VariableValue *value1, VariableValue *value2 )
 
 			case VAR_INT64:
 				value1->type = VAR_STRING;
-				value1->u.int64Value = SL_GetStringForInt(value1->u.int64Value);
+				value1->u.int64Value = SL_GetStringForInt64(value1->u.int64Value);
 				return;
 			}
 			return;

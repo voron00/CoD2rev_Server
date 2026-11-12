@@ -278,9 +278,22 @@ unsigned int SL_GetStringForVector( const vec3_t v )
 SL_GetStringForInt
 ==============
 */
-unsigned int SL_GetStringForInt( scr_int64_t i )
+unsigned int SL_GetStringForInt( int i )
 {
 	char tempString[128];
+
+	sprintf( tempString, "%i", i );
+	return SL_GetString_( tempString, 0 );
+}
+
+/*
+==============
+SL_GetStringForInt64
+==============
+*/
+unsigned int SL_GetStringForInt64( int64_t i )
+{
+	char tempString[256];
 
 	sprintf( tempString, "%li", i );
 	return SL_GetString_( tempString, 0 );

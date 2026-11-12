@@ -17,7 +17,6 @@ typedef struct scr_method_s
 	qboolean       developer;
 } scr_method_t;
 
-typedef intptr_t  scr_int64_t;
 typedef uintptr_t scr_param_t;
 
 enum
@@ -69,7 +68,7 @@ struct VariableStackBuffer
 union VariableUnion
 {
 	int intValue;
-	scr_int64_t int64Value;
+	int64_t int64Value;
 	float floatValue;
 	unsigned int stringValue;
 	const float *vectorValue;
@@ -933,7 +932,7 @@ unsigned int Scr_GetNumParam();
 void Scr_AddUndefined();
 void Scr_AddBool(bool value);
 void Scr_AddInt(int value);
-void Scr_AddInt64(scr_int64_t value);
+void Scr_AddInt64(int64_t value);
 void Scr_AddFloat(float value);
 void Scr_AddAnim(scr_anim_s value);
 void Scr_AddObject(unsigned int id);
@@ -950,7 +949,7 @@ scr_entref_t Scr_GetEntityRef( scr_param_t index );
 unsigned short Scr_ExecEntThreadNum(int entnum, int classnum, int handle, unsigned int paramcount);
 void Scr_FreeThread(unsigned short handle);
 int Scr_GetInt(scr_param_t index);
-scr_int64_t Scr_GetInt64(scr_param_t index);
+int64_t Scr_GetInt64(scr_param_t index);
 float Scr_GetFloat(scr_param_t index);
 unsigned int Scr_GetConstString(scr_param_t index);
 unsigned int Scr_GetConstStringIncludeNull(scr_param_t index);
@@ -1073,7 +1072,8 @@ unsigned int SL_FindLowercaseString(const char *upperstring);
 unsigned int SL_FindString(const char *string);
 unsigned int SL_GetString_(const char *str, unsigned int user);
 unsigned int SL_GetString(const char *str, unsigned int user);
-unsigned int SL_GetStringForInt(scr_int64_t i);
+unsigned int SL_GetStringForInt(int i);
+unsigned int SL_GetStringForInt64(int64_t i);
 unsigned int SL_GetStringForFloat(float f);
 unsigned int SL_GetStringForVector(const float *v);
 int SL_GetStringLen(unsigned int stringValue);

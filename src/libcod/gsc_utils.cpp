@@ -98,7 +98,7 @@ void gsc_utils_printf()
 					break;
 
 				case STACK_INT64:
-					scr_int64_t tmp_int64;
+					int64_t tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
 					num += sprintf(&(result[num]), "%ld", tmp_int64);
 					break;
@@ -173,7 +173,7 @@ void gsc_utils_sprintf()
 					break;
 
 				case STACK_INT64:
-					scr_int64_t tmp_int64;
+					int64_t tmp_int64;
 					stackGetParamInt64(param, &tmp_int64);
 					num += sprintf(&(result[num]), "%ld", tmp_int64);
 					break;
@@ -471,7 +471,7 @@ void gsc_utils_float()
 		return;
 
 	case STACK_INT64:
-		scr_int64_t asinteger64;
+		int64_t asinteger64;
 		stackGetParamInt64(0, &asinteger64);
 		stackPushFloat( float(asinteger64) );
 		return;
@@ -549,7 +549,6 @@ void gsc_utils_scandir()
 
 void gsc_utils_fopen()
 {
-	FILE *file;
 	const char *filename, *mode;
 
 	if ( ! stackGetParams("ss", &filename, &mode))
@@ -559,7 +558,7 @@ void gsc_utils_fopen()
 		return;
 	}
 
-	file = fopen(filename, mode);
+	FILE *file = fopen(filename, mode);
 
 	if (!file)
 	{
@@ -568,12 +567,12 @@ void gsc_utils_fopen()
 		return;
 	}
 
-	stackPushInt64((scr_int64_t)file);
+	stackPushInt64( reinterpret_cast<int64_t>( file ) );
 }
 
 void gsc_utils_fread()
 {
-	FILE *file;
+	int64_t file;
 
 	if ( ! stackGetParams("l", &file))
 	{
@@ -590,9 +589,9 @@ void gsc_utils_fread()
 	}
 
 	char buffer[256];
-	int ret = fread(buffer, 1, 255, file);
+	int ret = fread( buffer, 1, sizeof( buffer ) - 1, reinterpret_cast<FILE*>( file ) );
 
-	if ( ! ret)
+	if ( !ret )
 	{
 		stackPushUndefined();
 		return;
@@ -604,7 +603,7 @@ void gsc_utils_fread()
 
 void gsc_utils_fwrite()
 {
-	FILE *file;
+	int64_t file;
 	const char *buffer;
 
 	if ( ! stackGetParams("ls", &file, &buffer))
@@ -614,19 +613,19 @@ void gsc_utils_fwrite()
 		return;
 	}
 
-	if (!file)
+	if ( !file )
 	{
 		stackError("gsc_utils_fwrite() returned a error");
 		stackPushUndefined();
 		return;
 	}
 
-	stackPushInt(fwrite(buffer, 1, strlen(buffer), file));
+	stackPushInt( fwrite( buffer, 1, strlen( buffer ), reinterpret_cast<FILE*>( file ) ) );
 }
 
 void gsc_utils_fclose()
 {
-	FILE *file;
+	int64_t file;
 
 	if ( ! stackGetParams("l", &file))
 	{
@@ -635,19 +634,19 @@ void gsc_utils_fclose()
 		return;
 	}
 
-	if (!file)
+	if ( !file )
 	{
 		stackError("gsc_utils_fclose() returned a error");
 		stackPushUndefined();
 		return;
 	}
 
-	stackPushInt( fclose(file) );
+	stackPushInt( fclose( reinterpret_cast<FILE*>( file ) ) );
 }
 
 void gsc_utils_fsize()
 {
-	FILE *file;
+	int64_t file;
 
 	if ( ! stackGetParams("l", &file))
 	{
@@ -656,7 +655,7 @@ void gsc_utils_fsize()
 		return;
 	}
 
-	if (!file)
+	if ( !file )
 	{
 		stackError("gsc_utils_fsize() returned a error");
 		stackPushUndefined();
@@ -664,14 +663,14 @@ void gsc_utils_fsize()
 	}
 
 	struct stat buf;
-	fstat(fileno(file), &buf);
+	fstat( fileno( reinterpret_cast<FILE*>( file ) ) , &buf );
 
 	stackPushInt( buf.st_size );
 }
 
 void gsc_utils_ftime()
 {
-	FILE *file;
+	int64_t file;
 
 	if ( ! stackGetParams("l", &file))
 	{
@@ -680,7 +679,7 @@ void gsc_utils_ftime()
 		return;
 	}
 
-	if (!file)
+	if ( !file )
 	{
 		stackError("gsc_utils_ftime() returned a error");
 		stackPushUndefined();
@@ -688,7 +687,7 @@ void gsc_utils_ftime()
 	}
 
 	struct stat buf;
-	fstat(fileno(file), &buf);
+	fstat( fileno( reinterpret_cast<FILE*>( file ) ), &buf );
 
 	const char *timestring = ctime(&buf.st_mtime);
 	char stripped_time[128];
@@ -932,9 +931,9 @@ void gsc_utils_remove_file()
 void gsc_utils_remotecommand()
 {
 	const char *sFrom;
-	scr_int64_t pointerMsg;
+	int64_t msg;
 
-	if (!stackGetParams("sl", &sFrom, &pointerMsg))
+	if (!stackGetParams("sl", &sFrom, &msg))
 	{
 		stackError("gsc_utils_remotecommand() one or more arguments is undefined or has a wrong type");
 		return;
@@ -942,9 +941,8 @@ void gsc_utils_remotecommand()
 
 	netadr_t from;
 
-	msg_t * msg = (msg_t *)pointerMsg;
-	NET_StringToAdr(sFrom, &from);
-	SVC_RemoteCommand(from, msg);
+	NET_StringToAdr( sFrom, &from );
+	SVC_RemoteCommand( from, reinterpret_cast<msg_t*>( msg ) );
 }
 
 #endif

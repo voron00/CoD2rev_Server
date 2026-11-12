@@ -114,7 +114,7 @@ int stackGetParams(const char *params, ...);
 void stackError(const char *format, ...);
 
 int stackGetParamInt(scr_param_t param, int *value);
-int stackGetParamInt64(scr_param_t param, scr_int64_t *value);
+int stackGetParamInt64(scr_param_t param, int64_t *value);
 int stackGetParamFunction(scr_param_t param, int *value);
 int stackGetParamString(scr_param_t param, const char **value);
 int stackGetParamConstString(scr_param_t param, unsigned int *value);

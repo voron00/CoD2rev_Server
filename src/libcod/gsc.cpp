@@ -405,7 +405,7 @@ int stackGetParams(const char *params, ...)
 
 		case 'l':
 		{
-			scr_int64_t *tmp = va_arg(args, scr_int64_t *);
+			int64_t *tmp = va_arg(args, int64_t *);
 			if ( ! stackGetParamInt64(i, tmp))
 			{
 				Com_DPrintf("\nstackGetParams() Param %i is not an int64\n", i);
@@ -496,7 +496,7 @@ int stackGetParamInt(scr_param_t param, int *value)
 	return 1;
 }
 
-int stackGetParamInt64(scr_param_t param, scr_int64_t *value)
+int stackGetParamInt64(scr_param_t param, int64_t *value)
 {
 	if (param >= Scr_GetNumParam())
 		return 0;
