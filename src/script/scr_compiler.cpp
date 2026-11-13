@@ -3576,7 +3576,7 @@ void EmitAnimation( sval_u anim, sval_u sourcePos )
 {
 	EmitOpcode(OP_GetAnimation, 1, CALL_NONE);
 	AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
-	EmitUnsigned(ULONG_MAX);
+	EmitUnsigned(UINTPTR_MAX);
 
 	Scr_EmitAnimation((char *)scrCompileGlob.codePos, anim.stringValue, sourcePos.sourcePosValue);
 	Scr_CompileRemoveRefToString(anim.stringValue);
