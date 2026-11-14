@@ -1907,8 +1907,11 @@ void Scr_CastVector( VariableValue *value )
 			break;
 
 		case VAR_INTEGER:
-		case VAR_INT64:
 			vec[2 - i] = (float)value[i].u.intValue;
+			break;
+
+		case VAR_INT64:
+			vec[2 - i] = (float)value[i].u.int64Value;
 			break;
 
 		default:

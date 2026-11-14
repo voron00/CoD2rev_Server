@@ -579,6 +579,12 @@ float Scr_GetFloat( scr_param_t index )
 		return (float)value->u.intValue;
 	}
 
+	// cast to float
+	if ( value->type == VAR_INT64 )
+	{
+		return (float)value->u.int64Value;
+	}
+
 	if ( value->type != VAR_FLOAT )
 	{
 		scrVarPub.error_index = index + 1;
@@ -4368,7 +4374,7 @@ thread_call:
 
 		case OP_JumpOnFalse:
 			Scr_CastBool(fs.top);
-			assert(fs.top->type == VAR_INTEGER);
+			assert(fs.top->type == VAR_INTEGER || fs.top->type == VAR_INT64);
 			jumpOffset = Scr_ReadUnsignedShort(&fs.pos);
 			if ( !fs.top->u.intValue )
 			{
@@ -4379,7 +4385,7 @@ thread_call:
 
 		case OP_JumpOnTrue:
 			Scr_CastBool(fs.top);
-			assert(fs.top->type == VAR_INTEGER);
+			assert(fs.top->type == VAR_INTEGER || fs.top->type == VAR_INT64);
 			jumpOffset = Scr_ReadUnsignedShort(&fs.pos);
 			if ( fs.top->u.intValue )
 			{
@@ -4390,7 +4396,7 @@ thread_call:
 
 		case OP_JumpOnFalseExpr:
 			Scr_CastBool(fs.top);
-			assert(fs.top->type == VAR_INTEGER);
+			assert(fs.top->type == VAR_INTEGER || fs.top->type == VAR_INT64);
 			jumpOffset = Scr_ReadUnsignedShort(&fs.pos);
 			if ( fs.top->u.intValue )
 			{
@@ -4402,7 +4408,7 @@ thread_call:
 
 		case OP_JumpOnTrueExpr:
 			Scr_CastBool(fs.top);
-			assert(fs.top->type == VAR_INTEGER);
+			assert(fs.top->type == VAR_INTEGER || fs.top->type == VAR_INT64);
 			jumpOffset = Scr_ReadUnsignedShort(&fs.pos);
 			if ( !fs.top->u.intValue )
 			{
