@@ -480,7 +480,7 @@ unsigned int GetHashCode( const char *str, unsigned int len )
 	{
 		hash = *str + 31 * hash;
 
-		*str++;
+		str++;
 		len--;
 	}
 
@@ -692,7 +692,7 @@ void CreateCanonicalFilename( char *newFilename, const char *filename, int count
 			do
 			{
 				c = *filename;
-				*filename++;
+				filename++;
 			}
 			while ( c == '\\' );
 		}
@@ -700,7 +700,7 @@ void CreateCanonicalFilename( char *newFilename, const char *filename, int count
 		while ( c >= ' ' )
 		{
 			*newFilename = tolower(c);
-			*newFilename++;
+			newFilename++;
 
 			--count;
 
@@ -715,7 +715,7 @@ void CreateCanonicalFilename( char *newFilename, const char *filename, int count
 			}
 
 			c = *filename;
-			*filename++;
+			filename++;
 
 			if ( c == '\\' )
 			{

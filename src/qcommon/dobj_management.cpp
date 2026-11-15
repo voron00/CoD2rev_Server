@@ -1,6 +1,6 @@
 #include "qcommon.h"
 
-#define DOBJ_HANDLE_MAX 2 << 10
+#define DOBJ_HANDLE_MAX ( 2 << 10 )
 
 DObj objBuf[DOBJ_HANDLE_MAX];
 

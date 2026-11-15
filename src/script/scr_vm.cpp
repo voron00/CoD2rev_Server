@@ -2014,7 +2014,7 @@ int Scr_AddLocalVars( unsigned int localId )
 
 	for ( fieldIndex = FindPrevSibling(localId); fieldIndex; fieldIndex = FindPrevSibling(fieldIndex) )
 	{
-		*scrVmPub.localVars++;
+		scrVmPub.localVars++;
 		*scrVmPub.localVars = fieldIndex;
 
 		localVarCount++;

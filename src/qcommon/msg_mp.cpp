@@ -1605,7 +1605,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 #if PROTOCOL_VERSION == 115 and defined LIBCOD
 		if ( protocol == 119 )
 		{
-			if ( statsbits & ( 1 << STAT_SPAWN_COUNT - 1 ) )
+			if ( statsbits & ( 1 << ( STAT_SPAWN_COUNT - 1 ) ) )
 				MSG_WriteByte( msg, to->stats[STAT_SPAWN_COUNT] );
 		}
 		else
@@ -2307,7 +2307,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 #if PROTOCOL_VERSION == 115 and defined LIBCOD
 		if ( protocol == 119 )
 		{
-			if ( bits & ( 1 << STAT_SPAWN_COUNT - 1 ) )
+			if ( bits & ( 1 << ( STAT_SPAWN_COUNT - 1 ) ) )
 				to->stats[STAT_SPAWN_COUNT] = MSG_ReadByte(msg);
 		}
 		else
@@ -2473,8 +2473,8 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 		{
 			// send as small integer
 			MSG_WriteBit0( msg );
-			MSG_WriteBits( msg, trunc + FLOAT_INT_BIAS, 5 );
-			MSG_WriteByte( msg, trunc + FLOAT_INT_BIAS >> 5 );
+			MSG_WriteBits( msg, ( trunc + FLOAT_INT_BIAS ), 5 );
+			MSG_WriteByte( msg, ( trunc + FLOAT_INT_BIAS ) >> 5 );
 //					if ( print ) {
 //						Com_Printf( "%s:%i ", field->name, trunc );
 //					}
@@ -2506,8 +2506,8 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 		{
 			// send as small integer
 			MSG_WriteBit0( msg );
-			MSG_WriteBits( msg, trunc + HUDELEM_COORD_BIAS, 2 );
-			MSG_WriteByte( msg, trunc + HUDELEM_COORD_BIAS >> 2 );
+			MSG_WriteBits( msg, ( trunc + HUDELEM_COORD_BIAS ), 2 );
+			MSG_WriteByte( msg, ( trunc + HUDELEM_COORD_BIAS ) >> 2 );
 //					if ( print ) {
 //						Com_Printf( "%s:%i ", field->name, trunc );
 //					}

@@ -5017,7 +5017,7 @@ void Scr_AddFieldsForFile( const char *filename )
 		targetPos += 2;
 
 		*targetPos = type;
-		*targetPos++;
+		targetPos++;
 
 		*targetPos = 0;
 	}
